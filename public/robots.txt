@@ -1,0 +1,13 @@
+User-agent: *
+Allow: /
+
+# Disallow admin/private areas
+Disallow: /dashboard/
+Disallow: /login
+Disallow: /api/
+
+# Crawl delay
+Crawl-delay: 1
+
+# Sitemap
+Sitemap: https://www.imobiliarialemos.com.br/sitemap.xml
