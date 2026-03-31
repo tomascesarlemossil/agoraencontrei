@@ -23,6 +23,6 @@ RUN pnpm --filter @agoraencontrei/database generate
 # Build API
 RUN pnpm --filter @agoraencontrei/api build
 
-EXPOSE 3100
+EXPOSE ${PORT:-3100}
 
 CMD ["node", "apps/api/dist/server.js"]
