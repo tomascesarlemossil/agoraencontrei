@@ -63,6 +63,9 @@ export function HeroSearchForm() {
   const [suggestions, setSuggestions] = useState<{ neighborhood: string; city: string }[]>([])
   const [showSuggestions, setShowSuggestions] = useState(false)
   const neighborhoodRef = useRef<HTMLDivElement>(null)
+  const [aiQuery, setAiQuery] = useState('')
+  const [aiLoading, setAiLoading] = useState(false)
+  const [aiApplied, setAiApplied] = useState(false)
 
   // Fetch neighborhood suggestions
   useEffect(() => {
@@ -97,6 +100,20 @@ export function HeroSearchForm() {
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
   }, [])
+
+  async function handleAiSearch() {
+    if (!aiQuery.trim() || aiLoading) return
+    setAiLoading(true)
+    setAiApplied(false)
+    const result = await interpretSearch(aiQuery)
+    if (result.purpose === 'SALE' || result.purpose === 'RENT') setPurpose(result.purpose as 'SALE' | 'RENT')
+    if (result.city) setCity(result.city)
+    if (result.neighborhood) setNeighborhood(result.neighborhood)
+    if (result.maxPrice) setMaxPrice(result.maxPrice)
+    if (result.bedrooms) setBedrooms(result.bedrooms)
+    setAiLoading(false)
+    setAiApplied(true)
+  }
 
   function buildParams() {
     const params = new URLSearchParams()
@@ -175,6 +192,32 @@ export function HeroSearchForm() {
 
       {/* Search form card */}
       <form onSubmit={handleSearch} className="rounded-3xl bg-white shadow-2xl overflow-visible">
+        {/* AI Search */}
+        <div className="flex items-center gap-3 px-5 py-4 border-b rounded-t-3xl" style={{ borderColor: '#f0ece4', background: 'linear-gradient(135deg, #fffdf8, #fff)' }}>
+          <Sparkles className="w-5 h-5 flex-shrink-0" style={{ color: '#C9A84C' }} />
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-semibold uppercase tracking-wide mb-0.5" style={{ color: '#C9A84C' }}>Busca Inteligente com IA</p>
+            <div className="flex items-center gap-2">
+              <input
+                value={aiQuery}
+                onChange={e => { setAiQuery(e.target.value); setAiApplied(false) }}
+                onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), handleAiSearch())}
+                placeholder="Ex: apartamento 2 quartos no Centro até R$ 2.000/mês"
+                className="flex-1 text-sm text-gray-800 placeholder-gray-400 focus:outline-none bg-transparent font-medium"
+              />
+              <button
+                type="button"
+                onClick={handleAiSearch}
+                disabled={aiLoading || !aiQuery.trim()}
+                className="text-xs font-semibold px-3 py-1.5 rounded-lg transition-all disabled:opacity-40 flex-shrink-0"
+                style={{ backgroundColor: aiApplied ? '#22c55e' : '#C9A84C', color: 'white' }}
+              >
+                {aiLoading ? '...' : aiApplied ? 'Aplicado!' : 'Buscar'}
+              </button>
+            </div>
+          </div>
+        </div>
+
         {/* City */}
         <label className="flex items-start gap-4 px-5 py-4 border-b cursor-pointer hover:bg-gray-50 transition-colors" style={{ borderColor: '#f0ece4' }}>
           <MapPin className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: '#1B2B5B' }} />
@@ -300,11 +343,6 @@ export function HeroSearchForm() {
         </span>
       </button>
 
-      {/* AI hint */}
-      <p className="text-white/20 text-xs mt-3 flex items-center justify-center gap-1">
-        <Sparkles className="w-3 h-3" />
-        Busca inteligente com IA também disponível
-      </p>
     </div>
   )
 }
