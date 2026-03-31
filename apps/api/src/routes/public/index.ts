@@ -505,4 +505,67 @@ export default async function publicRoutes(app: FastifyInstance) {
       })),
     })
   })
+
+  // GET /api/v1/public/map-clusters — neighborhoods with property count + avg coordinates
+  app.get('/map-clusters', async (req, reply) => {
+    const company = await resolveCompany(app)
+    if (!company) return reply.status(503).send({ error: 'SERVICE_UNAVAILABLE' })
+
+    const { purpose, type } = req.query as { purpose?: string; type?: string }
+
+    const where: any = {
+      companyId: company.id,
+      status: 'ACTIVE',
+      neighborhood: { not: null },
+      ...(purpose && { purpose: purpose.toUpperCase() }),
+      ...(type && { type: type.toUpperCase() }),
+    }
+
+    const clusters = await app.prisma.property.groupBy({
+      by: ['neighborhood', 'city', 'state'],
+      where,
+      _count: { id: true },
+      _avg:   { latitude: true, longitude: true },
+      orderBy: { _count: { id: 'desc' } },
+    })
+
+    return reply.send(clusters.map(c => ({
+      neighborhood: c.neighborhood,
+      city:         c.city,
+      state:        c.state,
+      count:        c._count.id,
+      lat:          c._avg.latitude,
+      lng:          c._avg.longitude,
+    })))
+  })
+
+  // GET /api/v1/public/neighborhoods — unique neighborhoods for autocomplete
+  app.get('/neighborhoods', async (req, reply) => {
+    const company = await resolveCompany(app)
+    if (!company) return reply.status(503).send({ error: 'SERVICE_UNAVAILABLE' })
+
+    const { city, purpose } = req.query as { city?: string; purpose?: string }
+
+    const where: any = {
+      companyId: company.id,
+      status: 'ACTIVE',
+      neighborhood: { not: null },
+      ...(city    && { city:    { contains: city,    mode: 'insensitive' } }),
+      ...(purpose && { purpose: purpose.toUpperCase() }),
+    }
+
+    const rows = await app.prisma.property.groupBy({
+      by: ['neighborhood', 'city'],
+      where,
+      _count: { id: true },
+      orderBy: { _count: { id: 'desc' } },
+      take: 100,
+    })
+
+    return reply.send(rows.map(r => ({
+      neighborhood: r.neighborhood,
+      city:         r.city,
+      count:        r._count.id,
+    })))
+  })
 }

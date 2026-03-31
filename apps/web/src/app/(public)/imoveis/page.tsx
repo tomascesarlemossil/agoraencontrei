@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import dynamic from 'next/dynamic'
 import { PropertyFiltersForm } from './PropertyFiltersForm'
 import { LoadMoreProperties } from './LoadMoreProperties'
 
@@ -12,16 +13,26 @@ export const revalidate = 300
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 
+// Dynamically import map to avoid SSR
+const MapSearchClient = dynamic(() => import('./MapSearchWrapper'), {
+  ssr: false,
+  loading: () => (
+    <div className="rounded-2xl bg-gray-100 animate-pulse" style={{ height: 580 }} />
+  ),
+})
+
 interface SearchParams {
   page?: string
   search?: string
   type?: string
   purpose?: string
   city?: string
+  neighborhood?: string
   minPrice?: string
   maxPrice?: string
   bedrooms?: string
   sortBy?: string
+  view?: string
 }
 
 async function fetchProperties(params: SearchParams) {
@@ -31,6 +42,7 @@ async function fetchProperties(params: SearchParams) {
   if (params.type)     qs.set('type', params.type)
   if (params.purpose)  qs.set('purpose', params.purpose)
   if (params.city)     qs.set('city', params.city)
+  if (params.neighborhood) qs.set('neighborhood', params.neighborhood)
   if (params.minPrice) qs.set('minPrice', params.minPrice)
   if (params.maxPrice) qs.set('maxPrice', params.maxPrice)
   if (params.bedrooms) qs.set('bedrooms', params.bedrooms)
@@ -56,7 +68,8 @@ function formatPrice(price: number | null, priceRent: number | null, purpose: st
 }
 
 export default async function ImoveisPage({ searchParams }: { searchParams: SearchParams }) {
-  const { data: properties, meta } = await fetchProperties(searchParams)
+  const isMapView = searchParams.view === 'map'
+  const { data: properties, meta } = isMapView ? { data: [], meta: { total: 0, page: 1, totalPages: 1 } } : await fetchProperties(searchParams)
 
   const title = searchParams.purpose === 'SALE'
     ? 'Imóveis à Venda'
@@ -66,22 +79,71 @@ export default async function ImoveisPage({ searchParams }: { searchParams: Sear
     ? 'Temporada'
     : 'Todos os Imóveis'
 
+  // Build URL for switching view
+  const viewParams = new URLSearchParams(searchParams as Record<string, string>)
+  viewParams.delete('view')
+  const listViewUrl = `/imoveis?${viewParams}`
+  viewParams.set('view', 'map')
+  const mapViewUrl = `/imoveis?${viewParams}`
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>
-          {title}
-        </h1>
-        <p className="text-gray-400 text-sm mt-0.5">
-          {meta.total > 0
-            ? `${meta.total.toLocaleString('pt-BR')} ${meta.total !== 1 ? 'imóveis' : 'imóvel'} encontrado${meta.total !== 1 ? 's' : ''}`
-            : 'Nenhum imóvel encontrado'}
-        </p>
+      <div className="mb-6 flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>
+            {title}
+          </h1>
+          {!isMapView && (
+            <p className="text-gray-400 text-sm mt-0.5">
+              {meta.total > 0
+                ? `${meta.total.toLocaleString('pt-BR')} ${meta.total !== 1 ? 'imóveis' : 'imóvel'} encontrado${meta.total !== 1 ? 's' : ''}`
+                : 'Nenhum imóvel encontrado'}
+            </p>
+          )}
+        </div>
+
+        {/* List / Map toggle */}
+        <div
+          className="flex rounded-xl p-0.5 flex-shrink-0"
+          style={{ backgroundColor: '#f0ece4' }}
+        >
+          <Link
+            href={listViewUrl}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all"
+            style={!isMapView
+              ? { backgroundColor: 'white', color: '#1B2B5B', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }
+              : { color: '#9ca3af' }}
+          >
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+            </svg>
+            Lista
+          </Link>
+          <Link
+            href={mapViewUrl}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all"
+            style={isMapView
+              ? { backgroundColor: 'white', color: '#1B2B5B', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }
+              : { color: '#9ca3af' }}
+          >
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+            </svg>
+            Mapa
+          </Link>
+        </div>
       </div>
 
       <PropertyFiltersForm initialValues={searchParams as Record<string, string | undefined>} />
 
-      {properties.length === 0 ? (
+      {isMapView ? (
+        <MapSearchClient
+          initialPurpose={searchParams.purpose}
+          initialCity={searchParams.city}
+          initialMaxPrice={searchParams.maxPrice}
+          initialBedrooms={searchParams.bedrooms}
+        />
+      ) : properties.length === 0 ? (
         <div className="text-center py-20">
           <p className="text-4xl mb-4">🏠</p>
           <p className="text-gray-500 text-lg font-medium">Nenhum imóvel encontrado</p>
