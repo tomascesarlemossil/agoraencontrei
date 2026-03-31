@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "web",
+      "runtimeExecutable": "/Users/tomaslemos/.nvm_local/bin/pnpm",
+      "runtimeArgs": ["--filter", "@agoraencontrei/web", "dev"],
+      "port": 3000
+    }
+  ]
+}

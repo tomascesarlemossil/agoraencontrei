@@ -1,0 +1,248 @@
+'use client'
+
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+import { cn } from '@/lib/utils'
+import { useAuth } from '@/hooks/useAuth'
+import { useState, useEffect } from 'react'
+import {
+  LayoutDashboard,
+  Building2,
+  Users,
+  UserCheck,
+  TrendingUp,
+  Settings,
+  LogOut,
+  ChevronRight,
+  Home,
+  Banknote,
+  Globe,
+  MessageCircle,
+  Zap,
+  Bell,
+  FileText,
+  BriefcaseBusiness,
+  Sparkles,
+  Megaphone,
+  AlertTriangle,
+  Menu,
+  X,
+  ChevronDown,
+  Receipt,
+  RefreshCw,
+  Scissors,
+  BarChart3,
+  Landmark,
+} from 'lucide-react'
+import { useNotifications } from '@/stores/notifications.store'
+
+const navItems = [
+  { href: '/dashboard',                    icon: LayoutDashboard,  label: 'Painel' },
+  { href: '/dashboard/corretor',           icon: BriefcaseBusiness,label: 'Meu Painel' },
+  { href: '/dashboard/properties',         icon: Building2,        label: 'Imóveis' },
+  { href: '/dashboard/leads',              icon: UserCheck,        label: 'Leads' },
+  { href: '/dashboard/contacts',           icon: Users,            label: 'Contatos' },
+  { href: '/dashboard/deals',              icon: TrendingUp,       label: 'Negócios' },
+  { href: '/dashboard/financiamentos',     icon: Landmark,         label: 'Financiamentos' },
+  { href: '/dashboard/inbox',              icon: MessageCircle,    label: 'Lemos.chat' },
+  { href: '/dashboard/portals',            icon: Globe,            label: 'Portais' },
+  { href: '/dashboard/automations',        icon: Zap,              label: 'Automações' },
+  { href: '/dashboard/fiscal',             icon: FileText,         label: 'Notas Fiscais' },
+  { href: '/dashboard/crm/renovacoes',     icon: AlertTriangle,    label: 'Renovações' },
+  { href: '/dashboard/marketing/campanhas',icon: Megaphone,        label: 'Campanhas' },
+  { href: '/dashboard/ai-visual',          icon: Sparkles,         label: 'IA Visual' },
+]
+
+const lemosbankSubItems = [
+  { href: '/dashboard/lemosbank',              icon: Banknote,   label: 'Visão Geral' },
+  { href: '/dashboard/contratos',              icon: FileText,   label: 'Contratos' },
+  { href: '/dashboard/clientes',               icon: Users,      label: 'Clientes' },
+  { href: '/dashboard/lemosbank/cobrancas',    icon: Receipt,    label: 'Cobranças' },
+  { href: '/dashboard/lemosbank/repasses',     icon: RefreshCw,  label: 'Repasses' },
+  { href: '/dashboard/lemosbank/rescisoes',    icon: Scissors,   label: 'Rescisões' },
+  { href: '/dashboard/lemosbank/relatorios',   icon: BarChart3,  label: 'Relatórios' },
+]
+
+const bottomItems = [
+  { href: '/dashboard/notifications', icon: Bell, label: 'Notificações' },
+  { href: '/dashboard/settings', icon: Settings, label: 'Configurações' },
+]
+
+function NavContent({ onClose }: { onClose?: () => void }) {
+  const pathname = usePathname()
+  const { user, logout } = useAuth()
+  const unreadCount = useNotifications(s => s.unreadCount)
+
+  return (
+    <div className="flex flex-col h-full">
+      {/* Logo */}
+      <div className="flex items-center gap-2 px-6 py-5 border-b border-white/10">
+        <Home className="h-6 w-6 text-blue-400 flex-shrink-0" />
+        <div className="min-w-0">
+          <p className="font-bold text-sm leading-none text-white">AgoraEncontrei</p>
+          <p className="text-xs text-white/50 mt-0.5 truncate">{user?.company?.name ?? 'Imobiliária'}</p>
+        </div>
+        {onClose && (
+          <button onClick={onClose} className="ml-auto text-white/40 hover:text-white">
+            <X className="h-5 w-5" />
+          </button>
+        )}
+      </div>
+
+      {/* Nav */}
+      <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
+        {navItems.map(({ href, icon: Icon, label }) => {
+          const active = pathname === href || (href !== '/dashboard' && pathname.startsWith(href))
+          return (
+            <Link
+              key={href}
+              href={href}
+              onClick={onClose}
+              className={cn(
+                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
+                active
+                  ? 'bg-blue-600/30 text-white'
+                  : 'text-white/60 hover:bg-white/10 hover:text-white',
+              )}
+            >
+              <Icon className="h-4 w-4 flex-shrink-0" />
+              <span className="truncate">{label}</span>
+              {active && <ChevronRight className="ml-auto h-3 w-3 flex-shrink-0" />}
+            </Link>
+          )
+        })}
+
+        {/* ── Lemosbank Section ─────────────────────────────── */}
+        {(() => {
+          const lemosbankActive = pathname.startsWith('/dashboard/lemosbank') ||
+            pathname.startsWith('/dashboard/contratos') ||
+            pathname.startsWith('/dashboard/clientes')
+          return (
+            <div>
+              <div className={cn(
+                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium',
+                lemosbankActive ? 'text-white' : 'text-white/60',
+              )}>
+                <Banknote className="h-4 w-4 flex-shrink-0" />
+                <span className="truncate">Lemosbank</span>
+                <ChevronDown className={cn('ml-auto h-3 w-3 flex-shrink-0 transition-transform', lemosbankActive && 'rotate-180')} />
+              </div>
+              <div className={cn('ml-3 pl-3 border-l border-white/10 space-y-0.5', lemosbankActive ? 'block' : 'hidden')}>
+                {lemosbankSubItems.map(({ href, icon: Icon, label }) => {
+                  const active = pathname === href || (href !== '/dashboard/lemosbank' && pathname.startsWith(href) && href !== '/dashboard/contratos' && href !== '/dashboard/clientes')
+                    || pathname === href
+                  return (
+                    <Link
+                      key={href}
+                      href={href}
+                      onClick={onClose}
+                      className={cn(
+                        'flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors',
+                        active
+                          ? 'bg-blue-600/20 text-blue-300'
+                          : 'text-white/50 hover:bg-white/5 hover:text-white/80',
+                      )}
+                    >
+                      <Icon className="h-3.5 w-3.5 flex-shrink-0" />
+                      <span className="truncate">{label}</span>
+                    </Link>
+                  )
+                })}
+              </div>
+            </div>
+          )
+        })()}
+      </nav>
+
+      {/* Bottom */}
+      <div className="px-3 py-3 border-t border-white/10 space-y-0.5">
+        {bottomItems.map(({ href, icon: Icon, label }) => (
+          <Link
+            key={href}
+            href={href}
+            onClick={onClose}
+            className="relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-white/60 hover:bg-white/10 hover:text-white transition-colors"
+          >
+            <Icon className="h-4 w-4" />
+            <span>{label}</span>
+            {label === 'Notificações' && unreadCount > 0 && (
+              <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+                {unreadCount > 99 ? '99+' : unreadCount}
+              </span>
+            )}
+          </Link>
+        ))}
+        <button
+          onClick={() => { onClose?.(); logout() }}
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-white/60 hover:bg-red-500/20 hover:text-red-400 transition-colors"
+        >
+          <LogOut className="h-4 w-4" />
+          Sair
+        </button>
+      </div>
+
+      {/* User */}
+      <div className="px-4 py-3 border-t border-white/10 flex items-center gap-3">
+        <div className="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center text-xs font-bold text-white flex-shrink-0">
+          {user?.name?.charAt(0).toUpperCase() ?? 'U'}
+        </div>
+        <div className="min-w-0">
+          <p className="text-xs font-medium text-white truncate">{user?.name ?? 'Usuário'}</p>
+          <p className="text-xs text-white/40 truncate">{user?.email ?? ''}</p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export function Sidebar() {
+  const [mobileOpen, setMobileOpen] = useState(false)
+  const pathname = usePathname()
+
+  // Fecha drawer ao trocar de rota
+  useEffect(() => {
+    setMobileOpen(false)
+  }, [pathname])
+
+  return (
+    <>
+      {/* ── Desktop sidebar ─────────────────────────────────────────── */}
+      <aside className="hidden md:flex flex-col w-60 h-screen bg-sidebar text-sidebar-foreground border-r border-white/10 flex-shrink-0">
+        <NavContent />
+      </aside>
+
+      {/* ── Mobile: top bar ─────────────────────────────────────────── */}
+      <div className="md:hidden fixed top-0 left-0 right-0 z-40 flex items-center gap-3 px-4 py-3 bg-gray-900 border-b border-white/10">
+        <button
+          onClick={() => setMobileOpen(true)}
+          className="text-white/70 hover:text-white p-1"
+          aria-label="Abrir menu"
+        >
+          <Menu className="h-5 w-5" />
+        </button>
+        <div className="flex items-center gap-2">
+          <Home className="h-5 w-5 text-blue-400" />
+          <span className="text-sm font-bold text-white">AgoraEncontrei</span>
+        </div>
+      </div>
+
+      {/* ── Mobile: spacer para não sobrepor conteúdo ────────────────── */}
+      <div className="md:hidden h-14 flex-shrink-0" />
+
+      {/* ── Mobile: drawer overlay ──────────────────────────────────── */}
+      {mobileOpen && (
+        <div className="md:hidden fixed inset-0 z-50 flex">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={() => setMobileOpen(false)}
+          />
+          {/* Drawer */}
+          <aside className="relative z-10 flex flex-col w-72 max-w-[85vw] h-full bg-gray-900 border-r border-white/10 overflow-hidden">
+            <NavContent onClose={() => setMobileOpen(false)} />
+          </aside>
+        </div>
+      )}
+    </>
+  )
+}

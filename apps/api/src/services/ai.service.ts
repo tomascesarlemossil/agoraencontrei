@@ -1,0 +1,372 @@
+/**
+ * AI Agent Service — Anthropic Claude
+ * Agents: PDF extractor, Audio transcriber, Copywriter, Lead Scorer
+ */
+import Anthropic from '@anthropic-ai/sdk'
+import { env } from '../utils/env.js'
+
+const getClient = () => {
+  if (!env.ANTHROPIC_API_KEY) throw new Error('ANTHROPIC_API_KEY not configured')
+  return new Anthropic({ apiKey: env.ANTHROPIC_API_KEY })
+}
+
+// ── PDF Extractor ────────────────────────────────────────────────────────────
+
+export interface PropertyExtract {
+  title?: string
+  type?: string
+  totalArea?: number
+  builtArea?: number
+  bedrooms?: number
+  bathrooms?: number
+  parkingSpaces?: number
+  street?: string
+  neighborhood?: string
+  city?: string
+  state?: string
+  price?: number
+  description?: string
+  features?: string[]
+  rawText?: string
+}
+
+export async function extractFromPdf(base64Pdf: string): Promise<PropertyExtract> {
+  const client = getClient()
+
+  const response = await client.messages.create({
+    model: 'claude-opus-4-6',
+    max_tokens: 2048,
+    messages: [
+      {
+        role: 'user',
+        content: [
+          {
+            type: 'document',
+            source: { type: 'base64', media_type: 'application/pdf', data: base64Pdf },
+          },
+          {
+            type: 'text',
+            text: `Extraia as informações do imóvel deste documento e retorne um JSON com os campos:
+title, type (HOUSE/APARTMENT/LAND/COMMERCIAL), totalArea, builtArea, bedrooms, bathrooms, parkingSpaces,
+street, neighborhood, city, state, price (número), description, features (array de strings).
+Retorne APENAS o JSON válido, sem markdown.`,
+          },
+        ],
+      },
+    ],
+  })
+
+  const text = response.content[0].type === 'text' ? response.content[0].text : '{}'
+  try {
+    return JSON.parse(text)
+  } catch {
+    return { rawText: text }
+  }
+}
+
+// ── Audio Transcriber ────────────────────────────────────────────────────────
+
+export interface AudioTranscript {
+  text: string
+  intent?: string    // "schedule_visit", "price_inquiry", "document_request", "other"
+  entities?: {
+    propertyId?: string
+    date?: string
+    phone?: string
+  }
+  suggestedAction?: string
+}
+
+export async function transcribeAudio(base64Audio: string, mimeType = 'audio/ogg'): Promise<AudioTranscript> {
+  const client = getClient()
+
+  const response = await client.messages.create({
+    model: 'claude-opus-4-6',
+    max_tokens: 1024,
+    messages: [
+      {
+        role: 'user',
+        content: [
+          {
+            type: 'text',
+            text: `Transcreva este áudio e identifique a intenção. Retorne JSON com os campos:
+text (transcrição), intent (schedule_visit/price_inquiry/document_request/other),
+entities (propertyId, date, phone se mencionados), suggestedAction (ação sugerida no CRM).
+O áudio está em base64: ${base64Audio.substring(0, 100)}...
+Retorne APENAS JSON válido.`,
+          },
+        ],
+      },
+    ],
+  })
+
+  const text = response.content[0].type === 'text' ? response.content[0].text : '{}'
+  try {
+    return JSON.parse(text)
+  } catch {
+    return { text: text, intent: 'other' }
+  }
+}
+
+// ── Copywriter ────────────────────────────────────────────────────────────────
+
+export interface CopywriteInput {
+  title: string
+  type: string
+  purpose: string
+  totalArea?: number
+  builtArea?: number
+  bedrooms?: number
+  bathrooms?: number
+  parkingSpaces?: number
+  city?: string
+  neighborhood?: string
+  price?: number
+  priceRent?: number
+  features?: string[]
+  portal: 'olx' | 'zap' | 'vivareal' | 'facebook' | 'instagram' | 'generic'
+}
+
+export interface CopywriteOutput {
+  title: string
+  description: string
+  hashtags?: string[]
+}
+
+const PORTAL_INSTRUCTIONS: Record<string, string> = {
+  olx: 'Texto direto e objetivo para OLX. Máximo 2000 caracteres. Sem emojis excessivos.',
+  zap: 'Texto profissional para ZAP Imóveis. Destaque diferenciais. Máximo 3000 caracteres.',
+  vivareal: 'Texto detalhado para Viva Real. Inclua todos os cômodos e características.',
+  facebook: 'Texto engajante para Facebook Marketplace. Use emojis moderadamente. Máximo 1500 chars.',
+  instagram: 'Texto curto e impactante para Instagram (caption). Inclua hashtags relevantes. Máximo 500 chars.',
+  generic: 'Texto completo e profissional para divulgação geral.',
+}
+
+export async function copywriteProperty(input: CopywriteInput): Promise<CopywriteOutput> {
+  const client = getClient()
+
+  const specs = [
+    input.bedrooms && `${input.bedrooms} quarto(s)`,
+    input.bathrooms && `${input.bathrooms} banheiro(s)`,
+    input.parkingSpaces && `${input.parkingSpaces} vaga(s)`,
+    input.totalArea && `${input.totalArea}m² total`,
+    input.builtArea && `${input.builtArea}m² construídos`,
+  ].filter(Boolean).join(', ')
+
+  const price = input.purpose === 'RENT'
+    ? input.priceRent && `R$ ${input.priceRent.toLocaleString('pt-BR')}/mês`
+    : input.price && `R$ ${input.price.toLocaleString('pt-BR')}`
+
+  const instruction = PORTAL_INSTRUCTIONS[input.portal] ?? PORTAL_INSTRUCTIONS.generic
+
+  const response = await client.messages.create({
+    model: 'claude-sonnet-4-6',
+    max_tokens: 1024,
+    messages: [
+      {
+        role: 'user',
+        content: `Crie um anúncio imobiliário para o seguinte imóvel:
+Título: ${input.title}
+Tipo: ${input.type} (${input.purpose})
+Localização: ${input.neighborhood ?? ''}, ${input.city ?? ''}
+Características: ${specs}
+Preço: ${price ?? 'A consultar'}
+Diferenciais: ${input.features?.join(', ') ?? 'não informado'}
+
+Instrução do portal: ${instruction}
+
+Retorne JSON com: title (título otimizado), description (texto do anúncio), hashtags (array, apenas se for instagram/facebook).
+Retorne APENAS JSON válido.`,
+      },
+    ],
+  })
+
+  const text = response.content[0].type === 'text' ? response.content[0].text : '{}'
+  try {
+    return JSON.parse(text)
+  } catch {
+    return { title: input.title, description: text }
+  }
+}
+
+// ── Lead Scorer ────────────────────────────────────────────────────────────────
+
+export interface LeadScoreInput {
+  lead: {
+    source?: string
+    interest?: string
+    budget?: number
+    status?: string
+    score?: number
+    createdAt: string
+    lastContactAt?: string
+  }
+  activitiesCount: number
+  dealsCount: number
+  hasPhone: boolean
+  hasEmail: boolean
+  hasContact: boolean
+}
+
+export async function scoreLead(input: LeadScoreInput): Promise<{ score: number; reasoning: string }> {
+  const client = getClient()
+
+  const response = await client.messages.create({
+    model: 'claude-haiku-4-5-20251001',
+    max_tokens: 256,
+    messages: [
+      {
+        role: 'user',
+        content: `Pontue este lead imobiliário de 0 a 100:
+- Fonte: ${input.lead.source ?? 'desconhecida'}
+- Interesse: ${input.lead.interest ?? 'não informado'}
+- Orçamento: ${input.lead.budget ? `R$ ${input.lead.budget}` : 'não informado'}
+- Status: ${input.lead.status}
+- Tem telefone: ${input.hasPhone}
+- Tem e-mail: ${input.hasEmail}
+- Já é contato: ${input.hasContact}
+- Atividades registradas: ${input.activitiesCount}
+- Negócios abertos: ${input.dealsCount}
+- Criado em: ${input.lead.createdAt}
+- Último contato: ${input.lead.lastContactAt ?? 'nunca'}
+
+Critérios: leads com orçamento definido (+20), telefone (+15), e-mail (+10), atividades recentes (+10 cada até 20), fonte whatsapp/portal (+10), negócio aberto (+15).
+Retorne JSON: {"score": número, "reasoning": "explicação curta"}.`,
+      },
+    ],
+  })
+
+  const text = response.content[0].type === 'text' ? response.content[0].text : '{}'
+  try {
+    return JSON.parse(text)
+  } catch {
+    return { score: input.lead.score ?? 0, reasoning: 'Erro ao calcular score' }
+  }
+}
+
+// ── Property Search Interpreter ────────────────────────────────────────────────
+
+export interface SearchFilters {
+  type?: string
+  purpose?: string
+  bedrooms?: number
+  minPrice?: number
+  maxPrice?: number
+  city?: string
+  neighborhood?: string
+  search?: string
+}
+
+export async function interpretSearchQuery(query: string): Promise<SearchFilters> {
+  const client = getClient()
+
+  const response = await client.messages.create({
+    model: 'claude-sonnet-4-6',
+    max_tokens: 256,
+    messages: [
+      {
+        role: 'user',
+        content: `Você é um parser de busca imobiliária brasileiro. Interprete a busca abaixo, corrija erros de escrita e extraia todos os filtros possíveis.
+
+Busca: "${query}"
+
+REGRAS OBRIGATÓRIAS:
+
+1. TIPO DO IMÓVEL — detecte mesmo abreviado ou errado:
+   casa/casinha/cs → HOUSE
+   apartamento/apto/ap/apartamen → APARTMENT
+   terreno/lote/terra → LAND
+   fazenda/sítio/sitio/chácara/chacara → FARM
+   galpão/galpao/barracão → WAREHOUSE
+   escritório/sala comercial → OFFICE
+   loja/ponto comercial → STORE
+   cobertura/penthouse → PENTHOUSE
+   kitnet/kitinete/studio/quitinete → KITNET
+
+2. FINALIDADE — detecte mesmo informal:
+   venda/vender/comprar/compro/a venda/vendo → SALE
+   aluguel/alugar/aluga/alugando/locação/locar → RENT
+   temporada/veraneio → SEASON
+
+3. QUARTOS — qualquer número seguido de: quartos/qts/q/dorms/dormitórios/suítes
+
+4. PREÇO — converta SEMPRE para número inteiro (sem R$, sem pontos):
+   "500 mil" → 500000
+   "1 milhão" / "1 mi" → 1000000
+   "250k" → 250000
+   "800 mil reais" → 800000
+   "até X" / "no maximo X" / "max X" → maxPrice
+   "a partir de X" / "minimo X" / "de X" → minPrice
+   faixa "de X a Y" / "entre X e Y" → minPrice + maxPrice
+
+5. CIDADE — identifique qualquer cidade brasileira mencionada, mesmo com erros de grafia. Corrija o nome para a grafia correta:
+   "guarulhos" → "Guarulhos"
+   "s paulo" / "sp" / "são paulo" → "São Paulo"
+   "rj" / "rio" → "Rio de Janeiro"
+   "campinas" → "Campinas"
+   Corrija o nome da cidade para a grafia correta em português.
+
+6. BAIRRO — se mencionado, extraia no campo neighborhood
+
+7. CARACTERÍSTICAS EXTRAS — coloque em search (piscina, varanda, churrasqueira, condomínio, etc.)
+
+EXEMPLOS:
+"guarulhos ate 500 mil" → {"city":"Guarulhos","maxPrice":500000,"search":""}
+"apto 3 qts aluguel sp 2000 reais" → {"type":"APARTMENT","purpose":"RENT","bedrooms":3,"city":"São Paulo","maxPrice":2000,"search":""}
+"casa franca 2 quartos" → {"type":"HOUSE","bedrooms":2,"city":"Franca","search":""}
+"kitnet alugar" → {"type":"KITNET","purpose":"RENT","search":""}
+"imovel com piscina guarulhos" → {"city":"Guarulhos","search":"piscina"}
+"fazenda riberao preto ate 2 mi" → {"type":"FARM","city":"Ribeirão Preto","maxPrice":2000000,"search":""}
+
+IMPORTANTE: Seja agressivo na extração. Prefira extrair um campo com confiança média a não extrair nada. Se não há campo search útil, retorne "".
+
+Retorne SOMENTE JSON válido, sem markdown, sem explicação.`,
+      },
+    ],
+  })
+
+  const text = response.content[0].type === 'text' ? response.content[0].text : '{}'
+  try {
+    return JSON.parse(text)
+  } catch {
+    return { search: query }
+  }
+}
+
+// ── Análise qualitativa de mercado para endpoint de avaliação ────────────────
+
+export async function analyzarMercado(params: {
+  cidade: string
+  tipo: string
+  finalidade?: string
+  area: number
+  quartos?: number
+  mediaM2: number
+  valorEstimado: number
+  totalComparaveis: number
+}): Promise<string> {
+  const client = getClient()
+
+  const { cidade, tipo, finalidade, area, quartos, mediaM2, valorEstimado, totalComparaveis } = params
+
+  const response = await client.messages.create({
+    model: 'claude-haiku-4-5-20251001',
+    max_tokens: 300,
+    messages: [
+      {
+        role: 'user',
+        content: `Você é um corretor imobiliário especialista. Analise brevemente o mercado para este imóvel em 2-3 frases diretas em português:
+
+Imóvel: ${tipo} em ${cidade}${quartos ? `, ${quartos} quartos` : ''}, ${area}m²
+Finalidade: ${finalidade === 'RENT' ? 'Aluguel' : 'Venda'}
+Preço médio/m² na região: R$ ${mediaM2.toLocaleString('pt-BR')}/m²
+Valor estimado: R$ ${valorEstimado.toLocaleString('pt-BR')}
+Comparáveis encontrados: ${totalComparaveis}
+
+Responda com análise objetiva do mercado, tendência de preços e dica para o proprietário. Máximo 3 frases.`,
+      },
+    ],
+  })
+
+  return (response.content[0] as any).text ?? ''
+}

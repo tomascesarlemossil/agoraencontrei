@@ -1,0 +1,149 @@
+import 'dotenv/config'
+import Fastify from 'fastify'
+import { env } from './utils/env.js'
+
+// ── Plugins ────────────────────────────────────────────────────────────────
+import corsPlugin from './plugins/cors.js'
+import helmetPlugin from './plugins/helmet.js'
+import jwtPlugin from './plugins/jwt.js'
+import prismaPlugin from './plugins/prisma.js'
+import rateLimitPlugin from './plugins/rate-limit.js'
+import swaggerPlugin from './plugins/swagger.js'
+import redisPlugin from './plugins/redis.js'
+import automationPlugin from './plugins/automation.js'
+import multipart from '@fastify/multipart'
+
+// ── Routes ─────────────────────────────────────────────────────────────────
+import healthRoutes from './routes/health.js'
+import authRoutes from './routes/auth/index.js'
+import usersRoutes from './routes/users/index.js'
+import propertiesRoutes from './routes/properties/index.js'
+import leadsRoutes from './routes/leads/index.js'
+import contactsRoutes from './routes/contacts/index.js'
+import dealsRoutes from './routes/deals/index.js'
+import activitiesRoutes from './routes/activities/index.js'
+import reportsRoutes from './routes/reports/index.js'
+import portalsRoutes from './routes/portals/index.js'
+import whatsappRoutes from './routes/whatsapp/index.js'
+import inboxRoutes from './routes/inbox/index.js'
+import agentsRoutes from './routes/agents/index.js'
+import uploadRoutes from './routes/upload/index.js'
+import automationsRoutes from './routes/automations/index.js'
+import eventsRoutes from './routes/events/index.js'
+import publicRoutes from './routes/public/index.js'
+import financeRoutes from './routes/finance/index.js'
+import invoiceRoutes from './routes/finance/invoices.js'
+import fiscalRoutes from './routes/fiscal/index.js'
+import corretorRoutes from './routes/users/corretor.js'
+import aiVisualRoutes from './routes/ai-visual/index.js'
+import renovacoesRoutes from './routes/crm/renovacoes.js'
+import campanhasRoutes from './routes/marketing/campanhas.js'
+import financingsRoutes from './routes/financings/index.js'
+
+const app = Fastify({
+  logger: {
+    level: env.LOG_LEVEL,
+    ...(env.NODE_ENV === 'development' && {
+      transport: {
+        target: 'pino-pretty',
+        options: { colorize: true, translateTime: 'SYS:standard' },
+      },
+    }),
+  },
+  trustProxy: true,
+  ajv: {
+    customOptions: {
+      removeAdditional: 'all',
+      coerceTypes: 'array',
+      useDefaults: true,
+    },
+  },
+})
+
+async function bootstrap() {
+  // ── Core Plugins ────────────────────────────────────────────────────────
+  await app.register(corsPlugin)
+  await app.register(helmetPlugin)
+  await app.register(rateLimitPlugin)
+  await app.register(jwtPlugin)
+  await app.register(prismaPlugin)
+  await app.register(redisPlugin)
+  await app.register(automationPlugin)
+  await app.register(multipart, { limits: { fileSize: 50 * 1024 * 1024 } }) // 50MB
+
+  // ── Swagger (development only) ──────────────────────────────────────────
+  if (env.NODE_ENV !== 'production') {
+    await app.register(swaggerPlugin)
+  }
+
+  // ── Routes ──────────────────────────────────────────────────────────────
+  await app.register(healthRoutes, { prefix: '/health' })
+  await app.register(authRoutes,   { prefix: '/api/v1/auth' })
+  await app.register(usersRoutes,  { prefix: '/api/v1/users' })
+  await app.register(propertiesRoutes, { prefix: '/api/v1/properties' })
+  await app.register(leadsRoutes,  { prefix: '/api/v1/leads' })
+  await app.register(contactsRoutes,  { prefix: '/api/v1/contacts' })
+  await app.register(dealsRoutes,     { prefix: '/api/v1/deals' })
+  await app.register(activitiesRoutes, { prefix: '/api/v1/activities' })
+  await app.register(reportsRoutes,   { prefix: '/api/v1/reports' })
+  await app.register(portalsRoutes,   { prefix: '/api/v1/portals' })
+  await app.register(whatsappRoutes,  { prefix: '/api/v1/whatsapp' })
+  await app.register(inboxRoutes,     { prefix: '/api/v1/inbox' })
+  await app.register(agentsRoutes,    { prefix: '/api/v1/agents' })
+  await app.register(uploadRoutes,      { prefix: '/api/v1/upload' })
+  await app.register(automationsRoutes, { prefix: '/api/v1/automations' })
+  await app.register(eventsRoutes,      { prefix: '/api/v1/events' })
+  await app.register(publicRoutes,      { prefix: '/api/v1/public' })
+  await app.register(financeRoutes,     { prefix: '/api/v1/finance' })
+  await app.register(invoiceRoutes,     { prefix: '/api/v1/finance/invoices' })
+  await app.register(fiscalRoutes,      { prefix: '/api/v1/fiscal' })
+  await app.register(corretorRoutes,    { prefix: '/api/v1/corretor' })
+  await app.register(aiVisualRoutes,    { prefix: '/api/v1/ai-visual' })
+  await app.register(renovacoesRoutes,  { prefix: '/api/v1/crm/renovacoes' })
+  await app.register(campanhasRoutes,    { prefix: '/api/v1/marketing/campanhas' })
+  await app.register(financingsRoutes,   { prefix: '/api/v1/financings' })
+
+  // ── 404 Handler ─────────────────────────────────────────────────────────
+  app.setNotFoundHandler((_req, reply) => {
+    reply.status(404).send({ error: 'NOT_FOUND', message: 'Route not found' })
+  })
+
+  // ── Error Handler ────────────────────────────────────────────────────────
+  app.setErrorHandler((error, _req, reply) => {
+    // Zod validation errors → 400
+    if (error.name === 'ZodError' || (error as any).issues) {
+      return reply.status(400).send({
+        error: 'VALIDATION_ERROR',
+        message: error.message,
+      })
+    }
+    app.log.error(error)
+    const statusCode = error.statusCode ?? 500
+    reply.status(statusCode).send({
+      error: error.code ?? 'INTERNAL_ERROR',
+      message: env.NODE_ENV === 'production' && statusCode === 500
+        ? 'Internal server error'
+        : error.message,
+    })
+  })
+
+  const address = await app.listen({ port: env.PORT, host: '0.0.0.0' })
+  app.log.info(`🚀 AgoraEncontrei API running at ${address}`)
+  app.log.info(`📚 Swagger docs: ${address}/docs`)
+}
+
+// Graceful shutdown
+const signals = ['SIGINT', 'SIGTERM'] as const
+for (const signal of signals) {
+  process.on(signal, async () => {
+    await app.close()
+    process.exit(0)
+  })
+}
+
+bootstrap().catch((err) => {
+  console.error('Fatal startup error:', err)
+  process.exit(1)
+})
+
+export default app
