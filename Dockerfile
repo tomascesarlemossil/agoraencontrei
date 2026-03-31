@@ -1,4 +1,7 @@
-FROM node:22-alpine AS base
+FROM node:22-slim AS base
+
+# Install OpenSSL (required by Prisma) and other deps
+RUN apt-get update -y && apt-get install -y openssl ca-certificates && rm -rf /var/lib/apt/lists/*
 
 # Install pnpm
 RUN corepack enable && corepack prepare pnpm@latest --activate
@@ -23,6 +26,6 @@ RUN pnpm --filter @agoraencontrei/database generate
 # Build API
 RUN pnpm --filter @agoraencontrei/api build
 
-EXPOSE ${PORT:-3100}
+EXPOSE 3100
 
 CMD ["node", "apps/api/dist/server.js"]
