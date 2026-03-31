@@ -128,6 +128,16 @@ export default async function PropertyDetailPage({ params }: { params: { slug: s
 
   const allImages = [property.coverImage, ...(property.images ?? [])].filter(Boolean)
 
+  // Extract YouTube video ID from various URL formats
+  function getYouTubeId(url?: string | null): string | null {
+    if (!url) return null
+    const m = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/)
+    if (m) return m[1]
+    if (/^[a-zA-Z0-9_-]{11}$/.test(url.trim())) return url.trim()
+    return null
+  }
+  const youtubeId = getYouTubeId(property.videoUrl)
+
   // Build characteristics array (only items with values)
   const characteristics = [
     property.category && { icon: <IconHouse />, value: CATEGORY_LABEL[property.category] ?? property.category, label: 'Finalidade' },
@@ -162,6 +172,20 @@ export default async function PropertyDetailPage({ params }: { params: { slug: s
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* ── Left — main content ─────────────────────────────────────── */}
           <div className="lg:col-span-2 space-y-5">
+
+            {/* Video — shown first if available */}
+            {youtubeId && (
+              <div className="bg-black rounded-2xl overflow-hidden aspect-video w-full shadow-lg">
+                <iframe
+                  src={`https://www.youtube.com/embed/${youtubeId}?rel=0&modestbranding=1&autoplay=0`}
+                  title={property.title}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  className="w-full h-full"
+                  style={{ border: 0 }}
+                />
+              </div>
+            )}
 
             {/* Gallery */}
             <PropertyGallery

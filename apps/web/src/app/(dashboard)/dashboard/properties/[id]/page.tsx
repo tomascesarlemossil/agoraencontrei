@@ -93,6 +93,7 @@ export default function PropertyDetailPage() {
       latitude: property.latitude ?? '',
       longitude: property.longitude ?? '',
       features: property.features ?? [],
+      videoUrl: property.videoUrl ?? '',
     } : undefined,
   })
 
@@ -248,6 +249,11 @@ export default function PropertyDetailPage() {
                 <Label className="text-white/70">Descrição</Label>
                 <textarea {...register('description')} rows={4}
                   className="w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-white resize-none focus:outline-none focus:ring-2 focus:ring-ring" />
+              </div>
+              <div className="col-span-full space-y-1.5">
+                <Label className="text-white/70">Vídeo YouTube (URL ou ID)</Label>
+                <Input {...register('videoUrl')} placeholder="https://youtube.com/watch?v=... ou ID do vídeo" className="bg-white/5 border-white/10 text-white placeholder:text-white/30" />
+                <p className="text-[11px] text-white/30">Cole o link do YouTube ou apenas o ID do vídeo. Será exibido antes das fotos no anúncio.</p>
               </div>
             </div>
           </div>

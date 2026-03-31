@@ -54,6 +54,7 @@ const CreatePropertyBody = z.object({
   coverImage:   z.string().url().optional(),
   images:       z.array(z.string().url()).default([]),
   reference:    z.string().optional(),
+  videoUrl:     z.string().url().optional().or(z.literal('')),
   metaTitle:    z.string().optional(),
   metaDescription: z.string().optional(),
   metaKeywords: z.array(z.string()).default([]),
