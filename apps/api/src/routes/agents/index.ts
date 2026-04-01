@@ -5,6 +5,7 @@ import {
   transcribeAudio,
   copywriteProperty,
   scoreLead,
+  generateDocument,
   type CopywriteInput,
 } from '../../services/ai.service.js'
 import { env } from '../../utils/env.js'
@@ -293,5 +294,36 @@ export default async function agentsRoutes(app: FastifyInstance) {
       take: 50,
     })
     return reply.send(jobs)
+  })
+
+  // POST /api/v1/agents/documents/generate — AI document generation
+  app.post('/documents/generate', {
+    schema: { tags: ['agents'], summary: 'Generate document with AI' },
+  }, async (req, reply) => {
+    if (!env.ANTHROPIC_API_KEY) {
+      return reply.status(503).send({ error: 'AI_NOT_CONFIGURED' })
+    }
+
+    const body = z.object({
+      templateId: z.string(),
+      templateContent: z.string(),
+      formData: z.record(z.string()).default({}),
+      userInstructions: z.string().default(''),
+      images: z.array(z.object({
+        base64: z.string(),
+        mediaType: z.string(),
+        description: z.string(),
+      })).optional(),
+    }).parse(req.body)
+
+    const result = await generateDocument({
+      templateId: body.templateId,
+      templateContent: body.templateContent,
+      formData: body.formData,
+      userInstructions: body.userInstructions,
+      images: body.images,
+    })
+
+    return reply.send(result)
   })
 }

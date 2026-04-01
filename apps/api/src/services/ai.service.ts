@@ -370,3 +370,96 @@ Responda com análise objetiva do mercado, tendência de preços e dica para o p
 
   return (response.content[0] as any).text ?? ''
 }
+
+// ── Document Generator ────────────────────────────────────────────────────────
+
+export interface DocumentGenerateInput {
+  templateId: string
+  templateContent: string  // the template HTML/text structure
+  formData: Record<string, string>
+  userInstructions: string
+  images?: Array<{ base64: string; mediaType: string; description: string }>
+}
+
+export interface DocumentGenerateResult {
+  html: string
+  title: string
+  suggestedFilename: string
+}
+
+export async function generateDocument(input: DocumentGenerateInput): Promise<DocumentGenerateResult> {
+  const client = getClient()
+
+  const systemPrompt = `Você é um assistente jurídico especializado em documentos imobiliários da Imobiliária Lemos.
+Sua tarefa é gerar documentos profissionais em HTML completo, pronto para impressão em A4.
+
+REGRAS OBRIGATÓRIAS:
+1. Retorne APENAS HTML válido, sem markdown, sem explicações
+2. Use o template fornecido como base estrutural
+3. Preencha todos os campos com os dados fornecidos
+4. Onde não houver dados, use _____________________ (linha em branco para preenchimento manual)
+5. Mantenha linguagem jurídica formal
+6. O HTML deve ter CSS inline para impressão A4 profissional
+7. Use o cabeçalho padrão da Imobiliária Lemos
+
+CABEÇALHO PADRÃO:
+- Nome: IMOBILIÁRIA LEMOS
+- Endereço: Rua Simão Caleiro, 2383 · Vila França · Franca/SP · CEP 14401-155
+- Telefone: (16) 3723-0045
+- CRECI: 61053-F
+- Responsável: Noêmia Pires Lemos da Silva
+
+ESTILO CSS A4:
+- Fonte: Arial, tamanho 11-12pt
+- Margens: 2cm todos os lados
+- Linha de assinatura: borda inferior simples, 8cm de largura
+- Cabeçalho azul marinho (#1B2B5B)
+- Títulos em negrito, centralizados
+
+Retorne o HTML completo começando com <!DOCTYPE html>`
+
+  const userContent: any[] = []
+
+  // Add images if provided
+  if (input.images?.length) {
+    for (const img of input.images) {
+      userContent.push({
+        type: 'image',
+        source: { type: 'base64', media_type: img.mediaType, data: img.base64 },
+      })
+      userContent.push({ type: 'text', text: `Imagem acima: ${img.description}` })
+    }
+  }
+
+  userContent.push({
+    type: 'text',
+    text: `TEMPLATE BASE:
+${input.templateContent}
+
+DADOS FORNECIDOS:
+${Object.entries(input.formData).map(([k, v]) => `${k}: ${v}`).join('\n')}
+
+INSTRUÇÕES ADICIONAIS:
+${input.userInstructions}
+
+Gere o documento HTML completo seguindo o template e preenchendo com os dados acima.`,
+  })
+
+  const response = await client.messages.create({
+    model: 'claude-opus-4-6',
+    max_tokens: 8192,
+    system: systemPrompt,
+    messages: [{ role: 'user', content: userContent }],
+  })
+
+  const html = response.content[0].type === 'text' ? response.content[0].text : '<p>Erro ao gerar documento</p>'
+
+  // Extract title from first heading
+  const titleMatch = html.match(/<h[12][^>]*>([^<]+)<\/h[12]>/i)
+  const title = titleMatch ? titleMatch[1].trim() : input.templateId.replace(/-/g, ' ').toUpperCase()
+
+  const date = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')
+  const suggestedFilename = `${title.toLowerCase().replace(/\s+/g, '_')}_${date}.html`
+
+  return { html, title, suggestedFilename }
+}

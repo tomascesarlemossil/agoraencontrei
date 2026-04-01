@@ -33,6 +33,7 @@ import {
   Scissors,
   BarChart3,
   Landmark,
+  Wand2,
 } from 'lucide-react'
 import { useNotifications } from '@/stores/notifications.store'
 
@@ -51,6 +52,7 @@ const navItems = [
   { href: '/dashboard/crm/renovacoes',     icon: AlertTriangle,    label: 'Renovações' },
   { href: '/dashboard/marketing/campanhas',icon: Megaphone,        label: 'Campanhas' },
   { href: '/dashboard/ai-visual',          icon: Sparkles,         label: 'IA Visual' },
+  { href: '/dashboard/documentos',         icon: Wand2,            label: 'Criar Documentos IA' },
 ]
 
 const lemosbankSubItems = [
