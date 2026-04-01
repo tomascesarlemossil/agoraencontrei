@@ -112,6 +112,9 @@ const CreatePropertyBody = z.object({
   commercialConditions: z.string().optional(),
   yearLastReformed: z.number().int().optional(),
   keyLocation:  z.string().optional(),
+  // Additional property fields
+  totalFloors:  z.number().int().min(0).optional(),
+  isPremium:    z.boolean().optional(),
 })
 
 function buildSlug(title: string, reference?: string | null): string {

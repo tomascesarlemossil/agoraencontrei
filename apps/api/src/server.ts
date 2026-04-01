@@ -108,6 +108,7 @@ async function runMigrations(prisma: any) {
     ['commercialConditions',     'TEXT'],
     ['yearLastReformed',         'INTEGER'],
     ['keyLocation',              'TEXT'],
+    ['totalFloors',              'INTEGER'],
   ]
   for (const [col, type] of columns) {
     try {

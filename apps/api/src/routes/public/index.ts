@@ -95,7 +95,6 @@ const PUBLIC_PROPERTY_SELECT = {
   sunExposure: true,
   position: true,
   closedCondo: true,
-  condoName: true,
   region: true,
   referencePoint: true,
   yearLastReformed: true,

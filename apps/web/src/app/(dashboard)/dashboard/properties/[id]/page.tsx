@@ -160,6 +160,7 @@ export default function PropertyDetailPage() {
       valueUnderConsultation: p.valueUnderConsultation ?? false,
       priceNegotiable: p.priceNegotiable ?? false,
       isFeatured: p.isFeatured ?? false,
+      isPremium: p.isPremium ?? false,
       // Location
       zipCode: p.zipCode ?? '',
       street: p.street ?? '',
@@ -321,7 +322,6 @@ export default function PropertyDetailPage() {
             <p className="text-white/40 text-sm mt-0.5">
               {TYPE_LABELS[p.type] ?? p.type} · {PURPOSE_LABELS[p.purpose] ?? p.purpose}
               {p.reference ? ` · Ref: ${p.reference}` : ''}
-              {p.externalId ? ` · ID Internet: ${p.externalId}` : ''}
             </p>
           </div>
         </div>
@@ -734,13 +734,13 @@ export default function PropertyDetailPage() {
               <Section title="Opções de Publicação">
                 <div className="flex flex-wrap gap-6">
                   <Controller name="isFeatured" control={control} render={({ field }) => (
-                    <CheckField label="Destaque" checked={field.value} onChange={field.onChange} />
+                    <CheckField label="Imóvel em Destaque" checked={field.value} onChange={field.onChange} />
                   )} />
-                  <Controller name="valueUnderConsultation" control={control} render={({ field }) => (
-                    <CheckField label="Valor Sob Consulta" checked={field.value} onChange={field.onChange} />
+                  <Controller name="isPremium" control={control} render={({ field }) => (
+                    <CheckField label="Premium" checked={field.value} onChange={field.onChange} />
                   )} />
-                  <Controller name="priceNegotiable" control={control} render={({ field }) => (
-                    <CheckField label="Valor Negociável" checked={field.value} onChange={field.onChange} />
+                  <Controller name="authorizedPublish" control={control} render={({ field }) => (
+                    <CheckField label="Autorizado para Publicar" checked={field.value} onChange={field.onChange} />
                   )} />
                 </div>
               </Section>

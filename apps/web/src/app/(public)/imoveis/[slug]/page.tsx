@@ -16,6 +16,22 @@ export const revalidate = 300
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 
+// Constants defined before generateMetadata to avoid ReferenceError
+const PURPOSE_LABEL: Record<string, string> = {
+  SALE: 'Venda', RENT: 'Aluguel', BOTH: 'Venda/Aluguel', SEASON: 'Temporada',
+}
+const PURPOSE_COLOR: Record<string, { bg: string; text: string }> = {
+  SALE:   { bg: '#C9A84C', text: '#1B2B5B' },
+  RENT:   { bg: '#1B2B5B', text: 'white' },
+  BOTH:   { bg: '#1B2B5B', text: 'white' },
+  SEASON: { bg: '#7C3AED', text: 'white' },
+}
+const TYPE_LABEL: Record<string, string> = {
+  HOUSE: 'Casa', APARTMENT: 'Apartamento', LAND: 'Terreno', FARM: 'Chácara/Sítio',
+  RANCH: 'Rancho', WAREHOUSE: 'Galpão', OFFICE: 'Escritório', STORE: 'Loja',
+  STUDIO: 'Studio', PENTHOUSE: 'Cobertura', CONDO: 'Condomínio', KITNET: 'Kitnet',
+}
+
 async function fetchProperty(slug: string) {
   try {
     const res = await fetch(`${API_URL}/api/v1/public/properties/${slug}`, {
@@ -43,22 +59,6 @@ export async function generateMetadata({ params }: { params: { slug: string } })
       type: 'website',
     },
   }
-}
-
-const PURPOSE_LABEL: Record<string, string> = {
-  SALE: 'Venda', RENT: 'Aluguel', BOTH: 'Venda/Aluguel', SEASON: 'Temporada',
-}
-const PURPOSE_COLOR: Record<string, { bg: string; text: string }> = {
-  SALE:   { bg: '#C9A84C', text: '#1B2B5B' },
-  RENT:   { bg: '#1B2B5B', text: 'white' },
-  BOTH:   { bg: '#1B2B5B', text: 'white' },
-  SEASON: { bg: '#7C3AED', text: 'white' },
-}
-
-const TYPE_LABEL: Record<string, string> = {
-  HOUSE: 'Casa', APARTMENT: 'Apartamento', LAND: 'Terreno', FARM: 'Chácara/Sítio',
-  RANCH: 'Rancho', WAREHOUSE: 'Galpão', OFFICE: 'Escritório', STORE: 'Loja',
-  STUDIO: 'Studio', PENTHOUSE: 'Cobertura', CONDO: 'Condomínio', KITNET: 'Kitnet',
 }
 
 const LAND_FACE: Record<string, string> = {
