@@ -8,89 +8,203 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { ArrowLeft, Save } from 'lucide-react'
+import {
+  ArrowLeft, Save, Home, MapPin, Settings, Globe, Briefcase, Shield,
+} from 'lucide-react'
 import Link from 'next/link'
+import { useState } from 'react'
+import { cn } from '@/lib/utils'
 import { PropertyFeaturesEditor } from '@/components/dashboard/PropertyFeaturesEditor'
 
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+const STATUSES   = [['ACTIVE','Ativo'],['INACTIVE','Inativo'],['SOLD','Vendido'],['RENTED','Alugado'],['PENDING','Pendente'],['DRAFT','Rascunho']]
+const TYPES      = [['HOUSE','Casa'],['APARTMENT','Apartamento'],['LAND','Terreno'],['FARM','Chácara/Sítio'],['RANCH','Rancho'],['WAREHOUSE','Galpão'],['OFFICE','Escritório'],['STORE','Loja/Comercial'],['STUDIO','Studio'],['PENTHOUSE','Cobertura'],['CONDO','Condomínio'],['KITNET','Kitnet']]
+const PURPOSES   = [['SALE','Venda'],['RENT','Aluguel'],['BOTH','Venda e Aluguel'],['SEASON','Temporada']]
+const CATEGORIES = [['RESIDENTIAL','Residencial'],['COMMERCIAL','Comercial'],['RURAL','Rural'],['INDUSTRIAL','Industrial']]
+const STANDARDS  = [['','Padrão'],['SIMPLE','Simples'],['NORMAL','Normal'],['HIGH','Alto'],['LUXURY','Luxo']]
+const CURRENT_STATES = [['','Estado Atual'],['VACANT','Desocupado'],['OCCUPIED_OWNER','Ocupado Proprietário'],['OCCUPIED_TENANT','Ocupado Inquilino'],['UNDER_CONSTRUCTION','Em Construção']]
+const KEY_LOCATIONS  = [['','Local das Chaves'],['NOT_INFORMED','Não informado'],['OFFICE','Escritório'],['OWNER','Com o Proprietário'],['ONSITE','No Local']]
+const FACES = [['','Face'],['NORTH','Norte'],['SOUTH','Sul'],['EAST','Leste'],['WEST','Oeste'],['NORTHEAST','Nordeste'],['NORTHWEST','Noroeste'],['SOUTHEAST','Sudeste'],['SOUTHWEST','Sudoeste']]
+
+const TABS = [
+  { id: 'cadastro',    label: 'Cadastro',    icon: Home },
+  { id: 'localizacao', label: 'Localização', icon: MapPin },
+  { id: 'detalhes',    label: 'Detalhes',    icon: Settings },
+  { id: 'anuncios',    label: 'Anúncios',    icon: Globe },
+  { id: 'captacao',    label: 'Captação',    icon: Briefcase },
+  { id: 'confidencial',label: 'Confidencial',icon: Shield },
+]
+
+// ─── Zod Schema ───────────────────────────────────────────────────────────────
+
 const schema = z.object({
-  title:        z.string().min(3, 'Mínimo 3 caracteres'),
-  type:         z.string().min(1, 'Selecione o tipo'),
-  purpose:      z.string().min(1, 'Selecione a finalidade'),
-  category:     z.string().default('RESIDENTIAL'),
-  status:       z.string().default('ACTIVE'),
-  price:        z.coerce.number().positive().optional().or(z.literal('')),
-  priceRent:    z.coerce.number().positive().optional().or(z.literal('')),
-  description:  z.string().optional(),
-  street:       z.string().optional(),
-  number:       z.string().optional(),
-  neighborhood: z.string().optional(),
-  city:         z.string().optional(),
-  state:        z.string().max(2).optional(),
-  zipCode:      z.string().optional(),
-  latitude:     z.coerce.number().optional().or(z.literal('')),
-  longitude:    z.coerce.number().optional().or(z.literal('')),
-  totalArea:    z.coerce.number().positive().optional().or(z.literal('')),
-  builtArea:    z.coerce.number().positive().optional().or(z.literal('')),
-  landArea:     z.coerce.number().positive().optional().or(z.literal('')),
-  bedrooms:     z.coerce.number().int().min(0).default(0),
-  suites:       z.coerce.number().int().min(0).default(0),
-  bathrooms:    z.coerce.number().int().min(0).default(0),
-  parkingSpaces: z.coerce.number().int().min(0).default(0),
-  yearBuilt:    z.coerce.number().int().min(1900).optional().or(z.literal('')),
-  reference:    z.string().optional(),
-  condoFee:     z.coerce.number().optional().or(z.literal('')),
-  iptu:         z.coerce.number().optional().or(z.literal('')),
-  features:     z.array(z.string()).default([]),
+  // Cadastro
+  title:                  z.string().min(3, 'Mínimo 3 caracteres'),
+  type:                   z.string().min(1, 'Selecione o tipo'),
+  purpose:                z.string().min(1, 'Selecione a finalidade'),
+  category:               z.string().default('RESIDENTIAL'),
+  status:                 z.string().default('ACTIVE'),
+  reference:              z.string().optional(),
+  auxReference:           z.string().optional(),
+  currentState:           z.string().optional(),
+  occupation:             z.string().optional(),
+  standard:               z.string().optional(),
+  description:            z.string().optional(),
+  descriptionInternal:    z.string().optional(),
+  videoUrl:               z.string().optional(),
+  virtualTourUrl:         z.string().optional(),
+  price:                  z.coerce.number().positive().optional().or(z.literal('')),
+  priceRent:              z.coerce.number().positive().optional().or(z.literal('')),
+  priceSeason:            z.coerce.number().positive().optional().or(z.literal('')),
+  pricePromo:             z.coerce.number().positive().optional().or(z.literal('')),
+  condoFee:               z.coerce.number().optional().or(z.literal('')),
+  iptu:                   z.coerce.number().optional().or(z.literal('')),
+  priceNegotiable:        z.boolean().default(false),
+  valueUnderConsultation: z.boolean().default(false),
+  allowExchange:          z.boolean().default(false),
+  isFeatured:             z.boolean().default(false),
+  isPremium:              z.boolean().default(false),
+  // Localização
+  zipCode:                z.string().optional(),
+  street:                 z.string().optional(),
+  number:                 z.string().optional(),
+  complement:             z.string().optional(),
+  neighborhood:           z.string().optional(),
+  commercialNeighborhood: z.string().optional(),
+  city:                   z.string().optional(),
+  state:                  z.string().max(2).optional(),
+  country:                z.string().optional(),
+  region:                 z.string().optional(),
+  referencePoint:         z.string().optional(),
+  latitude:               z.coerce.number().optional().or(z.literal('')),
+  longitude:              z.coerce.number().optional().or(z.literal('')),
+  condoName:              z.string().optional(),
+  adminCompany:           z.string().optional(),
+  constructionCompany:    z.string().optional(),
+  closedCondo:            z.boolean().default(false),
+  signOnSite:             z.boolean().default(false),
+  // Detalhes
+  bedrooms:               z.coerce.number().int().min(0).default(0),
+  suites:                 z.coerce.number().int().min(0).default(0),
+  suitesWithCloset:       z.coerce.number().int().min(0).default(0),
+  demiSuites:             z.coerce.number().int().min(0).default(0),
+  bathrooms:              z.coerce.number().int().min(0).default(0),
+  rooms:                  z.coerce.number().int().min(0).default(0),
+  livingRooms:            z.coerce.number().int().min(0).default(0),
+  diningRooms:            z.coerce.number().int().min(0).default(0),
+  tvRooms:                z.coerce.number().int().min(0).default(0),
+  parkingSpaces:          z.coerce.number().int().min(0).default(0),
+  garagesCovered:         z.coerce.number().int().min(0).default(0),
+  garagesOpen:            z.coerce.number().int().min(0).default(0),
+  elevators:              z.coerce.number().int().min(0).default(0),
+  floor:                  z.coerce.number().optional().or(z.literal('')),
+  totalFloors:            z.coerce.number().optional().or(z.literal('')),
+  totalArea:              z.coerce.number().positive().optional().or(z.literal('')),
+  builtArea:              z.coerce.number().positive().optional().or(z.literal('')),
+  landArea:               z.coerce.number().positive().optional().or(z.literal('')),
+  commonArea:             z.coerce.number().positive().optional().or(z.literal('')),
+  ceilingHeight:          z.coerce.number().positive().optional().or(z.literal('')),
+  landDimensions:         z.string().optional(),
+  landFace:               z.string().optional(),
+  sunExposure:            z.string().optional(),
+  position:               z.string().optional(),
+  yearBuilt:              z.coerce.number().int().min(1900).optional().or(z.literal('')),
+  yearLastReformed:       z.coerce.number().int().min(1900).optional().or(z.literal('')),
+  features:               z.array(z.string()).default([]),
+  // Anúncios / SEO
+  metaTitle:              z.string().optional(),
+  metaDescription:        z.string().optional(),
+  metaKeywords:           z.string().optional(),
+  // Captação
+  captorName:             z.string().optional(),
+  captorCommissionPct:    z.coerce.number().optional().or(z.literal('')),
+  exclusivityContract:    z.boolean().default(false),
+  commercialConditions:   z.string().optional(),
+  keyLocation:            z.string().optional(),
+  // Confidencial
+  cib:                    z.string().optional(),
+  iptuRegistration:       z.string().optional(),
+  cartorioMatricula:      z.string().optional(),
+  electricityInfo:        z.string().optional(),
+  waterInfo:              z.string().optional(),
+  documentationPending:   z.boolean().default(false),
+  documentationNotes:     z.string().optional(),
+  isReserved:             z.boolean().default(false),
+  authorizedPublish:      z.boolean().default(false),
 })
+
 type FormData = z.infer<typeof schema>
 
-const TYPES = [
-  ['HOUSE','Casa'], ['APARTMENT','Apartamento'], ['LAND','Terreno'],
-  ['FARM','Fazenda'], ['RANCH','Sítio'], ['WAREHOUSE','Galpão'],
-  ['OFFICE','Escritório'], ['STORE','Loja'], ['STUDIO','Studio'],
-  ['PENTHOUSE','Cobertura'], ['CONDO','Condomínio'], ['KITNET','Kitnet'],
-]
-const PURPOSES = [['SALE','Venda'], ['RENT','Aluguel'], ['BOTH','Venda e Aluguel'], ['SEASON','Temporada']]
-const CATEGORIES = [['RESIDENTIAL','Residencial'], ['COMMERCIAL','Comercial'], ['RURAL','Rural'], ['INDUSTRIAL','Industrial']]
-const STATUSES = [['ACTIVE','Ativo'], ['DRAFT','Rascunho'], ['INACTIVE','Inativo'], ['PENDING','Pendente']]
+// ─── Helper components ────────────────────────────────────────────────────────
 
 function FieldRow({ children }: { children: React.ReactNode }) {
-  return <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">{children}</div>
+  return <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">{children}</div>
 }
 
-function Field({ label, error, children }: { label: string; error?: string; children: React.ReactNode }) {
+function Field({ label, error, children, span }: { label: string; error?: string; children: React.ReactNode; span?: string }) {
   return (
-    <div className="space-y-1.5">
-      <Label className="text-white/70">{label}</Label>
+    <div className={cn('space-y-1.5', span)}>
+      <Label className="text-white/60 text-xs">{label}</Label>
       {children}
       {error && <p className="text-xs text-red-400">{error}</p>}
     </div>
   )
 }
 
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="bg-white/5 rounded-xl border border-white/10 p-5 space-y-4">
+      <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider">{title}</h3>
+      {children}
+    </div>
+  )
+}
+
+function CheckField({ label, checked, onChange }: { label: string; checked: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <label className="flex items-center gap-2 cursor-pointer">
+      <input type="checkbox" checked={checked} onChange={e => onChange(e.target.checked)}
+        className="w-4 h-4 rounded border-white/20 bg-white/5 text-blue-500 cursor-pointer" />
+      <span className="text-sm text-white/70">{label}</span>
+    </label>
+  )
+}
+
+function NumInput({ reg, label, span }: { reg: any; label: string; span?: string }) {
+  return (
+    <Field label={label} span={span}>
+      <Input {...reg} type="number" min={0} className="bg-white/5 border-white/10 text-white h-9" />
+    </Field>
+  )
+}
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
+
 export default function NewPropertyPage() {
   const router = useRouter()
   const { getValidToken } = useAuth()
+  const [activeTab, setActiveTab] = useState('cadastro')
 
   const { register, handleSubmit, control, watch, setValue, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
       type: '', purpose: '', category: 'RESIDENTIAL', status: 'ACTIVE',
-      bedrooms: 0, suites: 0, bathrooms: 0, parkingSpaces: 0,
+      bedrooms: 0, suites: 0, suitesWithCloset: 0, demiSuites: 0,
+      bathrooms: 0, rooms: 0, livingRooms: 0, diningRooms: 0, tvRooms: 0,
+      parkingSpaces: 0, garagesCovered: 0, garagesOpen: 0, elevators: 0,
+      priceNegotiable: false, valueUnderConsultation: false, allowExchange: false,
+      isFeatured: false, isPremium: false, closedCondo: false, signOnSite: false,
+      exclusivityContract: false, documentationPending: false,
+      isReserved: false, authorizedPublish: false,
       features: [],
     },
   })
-
-  const purpose = watch('purpose')
 
   const mutation = useMutation({
     mutationFn: async (data: FormData) => {
@@ -101,187 +215,463 @@ export default function NewPropertyPage() {
       }
       return propertiesApi.create(token!, clean as any)
     },
-    onSuccess: (prop) => router.push(`/dashboard/properties/${prop.id}`),
+    onSuccess: (prop: any) => router.push(`/dashboard/properties/${prop.id}`),
   })
 
+  const inputCls = 'bg-white/5 border-white/10 text-white h-9 placeholder:text-white/30'
+  const textareaCls = 'w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white resize-none focus:outline-none focus:ring-2 focus:ring-ring placeholder:text-white/30'
+  const selectTriggerCls = 'bg-white/5 border-white/10 text-white h-9'
+
   return (
-    <div className="p-6 max-w-4xl mx-auto space-y-6">
+    <div className="p-4 sm:p-6 max-w-5xl mx-auto space-y-5">
       {/* Header */}
       <div className="flex items-center gap-4">
         <Link href="/dashboard/properties">
-          <Button variant="ghost" size="icon" className="text-white/60 hover:text-white">
+          <Button variant="ghost" size="icon" className="text-white/60 hover:text-white h-8 w-8">
             <ArrowLeft className="h-4 w-4" />
           </Button>
         </Link>
         <div>
-          <h1 className="text-2xl font-bold text-white">Cadastrar Imóvel</h1>
+          <h1 className="text-xl font-bold text-white">Cadastrar Imóvel</h1>
           <p className="text-white/40 text-sm">Preencha os dados do imóvel</p>
         </div>
       </div>
 
-      <form onSubmit={handleSubmit((d) => mutation.mutate(d))} className="space-y-6">
-        {/* Identificação */}
-        <section className="bg-white/5 rounded-xl border border-white/10 p-5 space-y-4">
-          <h2 className="text-sm font-semibold text-white/60 uppercase tracking-wider">Identificação</h2>
-          <Field label="Título *" error={errors.title?.message}>
-            <Input {...register('title')} className="bg-white/5 border-white/10 text-white" placeholder="Ex: Apartamento 3 quartos no Itaim" />
-          </Field>
-          <FieldRow>
-            <Field label="Tipo *" error={errors.type?.message}>
-              <Controller name="type" control={control} render={({ field }) => (
-                <Select value={field.value} onValueChange={field.onChange}>
-                  <SelectTrigger className="bg-white/5 border-white/10 text-white">
-                    <SelectValue placeholder="Selecionar..." />
-                  </SelectTrigger>
-                  <SelectContent>{TYPES.map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}</SelectContent>
-                </Select>
-              )} />
-            </Field>
-            <Field label="Finalidade *" error={errors.purpose?.message}>
-              <Controller name="purpose" control={control} render={({ field }) => (
-                <Select value={field.value} onValueChange={field.onChange}>
-                  <SelectTrigger className="bg-white/5 border-white/10 text-white">
-                    <SelectValue placeholder="Selecionar..." />
-                  </SelectTrigger>
-                  <SelectContent>{PURPOSES.map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}</SelectContent>
-                </Select>
-              )} />
-            </Field>
-            <Field label="Categoria">
-              <Controller name="category" control={control} render={({ field }) => (
-                <Select value={field.value} onValueChange={field.onChange}>
-                  <SelectTrigger className="bg-white/5 border-white/10 text-white"><SelectValue /></SelectTrigger>
-                  <SelectContent>{CATEGORIES.map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}</SelectContent>
-                </Select>
-              )} />
-            </Field>
-            <Field label="Status">
-              <Controller name="status" control={control} render={({ field }) => (
-                <Select value={field.value} onValueChange={field.onChange}>
-                  <SelectTrigger className="bg-white/5 border-white/10 text-white"><SelectValue /></SelectTrigger>
-                  <SelectContent>{STATUSES.map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}</SelectContent>
-                </Select>
-              )} />
-            </Field>
-            <Field label="Código de referência">
-              <Input {...register('reference')} className="bg-white/5 border-white/10 text-white" placeholder="REF-001" />
-            </Field>
-          </FieldRow>
-          <Field label="Descrição">
-            <textarea
-              {...register('description')}
-              rows={3}
-              className="w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-ring resize-none"
-              placeholder="Descreva o imóvel..."
+      <form onSubmit={handleSubmit((d) => mutation.mutate(d))} className="space-y-4">
+        {/* Tab navigation */}
+        <div className="flex gap-1 bg-white/5 rounded-xl p-1 overflow-x-auto">
+          {TABS.map(tab => (
+            <button key={tab.id} type="button" onClick={() => setActiveTab(tab.id)}
+              className={cn(
+                'flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold whitespace-nowrap transition-all',
+                activeTab === tab.id
+                  ? 'bg-white/15 text-white'
+                  : 'text-white/40 hover:text-white/70'
+              )}>
+              <tab.icon className="h-3.5 w-3.5" />
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {/* ── TAB: CADASTRO ───────────────────────────────────────────────── */}
+        {activeTab === 'cadastro' && (
+          <div className="space-y-4">
+            <Section title="Identificação">
+              <Field label="Título do imóvel *" error={errors.title?.message} span="col-span-full">
+                <Input {...register('title')} className={inputCls} placeholder="Ex: Apartamento 3 quartos no Itaim" />
+              </Field>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <Field label="Tipo *" error={errors.type?.message}>
+                  <Controller name="type" control={control} render={({ field }) => (
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <SelectTrigger className={selectTriggerCls}><SelectValue placeholder="Selecionar..." /></SelectTrigger>
+                      <SelectContent>{TYPES.map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}</SelectContent>
+                    </Select>
+                  )} />
+                </Field>
+                <Field label="Finalidade *" error={errors.purpose?.message}>
+                  <Controller name="purpose" control={control} render={({ field }) => (
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <SelectTrigger className={selectTriggerCls}><SelectValue placeholder="Selecionar..." /></SelectTrigger>
+                      <SelectContent>{PURPOSES.map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}</SelectContent>
+                    </Select>
+                  )} />
+                </Field>
+                <Field label="Categoria">
+                  <Controller name="category" control={control} render={({ field }) => (
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <SelectTrigger className={selectTriggerCls}><SelectValue /></SelectTrigger>
+                      <SelectContent>{CATEGORIES.map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}</SelectContent>
+                    </Select>
+                  )} />
+                </Field>
+                <Field label="Situação">
+                  <Controller name="status" control={control} render={({ field }) => (
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <SelectTrigger className={selectTriggerCls}><SelectValue /></SelectTrigger>
+                      <SelectContent>{STATUSES.map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}</SelectContent>
+                    </Select>
+                  )} />
+                </Field>
+                <Field label="Estado Atual">
+                  <Controller name="currentState" control={control} render={({ field }) => (
+                    <Select value={field.value || ''} onValueChange={field.onChange}>
+                      <SelectTrigger className={selectTriggerCls}><SelectValue placeholder="Selecione" /></SelectTrigger>
+                      <SelectContent>{CURRENT_STATES.map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}</SelectContent>
+                    </Select>
+                  )} />
+                </Field>
+                <Field label="Padrão">
+                  <Controller name="standard" control={control} render={({ field }) => (
+                    <Select value={field.value || ''} onValueChange={field.onChange}>
+                      <SelectTrigger className={selectTriggerCls}><SelectValue placeholder="Selecione" /></SelectTrigger>
+                      <SelectContent>{STANDARDS.map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}</SelectContent>
+                    </Select>
+                  )} />
+                </Field>
+                <Field label="Código de Referência">
+                  <Input {...register('reference')} className={inputCls} placeholder="REF-001" />
+                </Field>
+                <Field label="Ref. Auxiliar">
+                  <Input {...register('auxReference')} className={inputCls} />
+                </Field>
+              </div>
+            </Section>
+
+            <Section title="Valores">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <Field label="Preço Venda (R$)">
+                  <Input {...register('price')} type="number" className={inputCls} placeholder="0,00" />
+                </Field>
+                <Field label="Preço Aluguel (R$)">
+                  <Input {...register('priceRent')} type="number" className={inputCls} placeholder="0,00" />
+                </Field>
+                <Field label="Preço Temporada (R$)">
+                  <Input {...register('priceSeason')} type="number" className={inputCls} placeholder="0,00" />
+                </Field>
+                <Field label="Preço Promocional (R$)">
+                  <Input {...register('pricePromo')} type="number" className={inputCls} placeholder="0,00" />
+                </Field>
+                <Field label="Condomínio (R$)">
+                  <Input {...register('condoFee')} type="number" className={inputCls} placeholder="0,00" />
+                </Field>
+                <Field label="IPTU (R$/ano)">
+                  <Input {...register('iptu')} type="number" className={inputCls} placeholder="0,00" />
+                </Field>
+              </div>
+              <div className="flex flex-wrap gap-6 pt-1">
+                <Controller name="priceNegotiable" control={control} render={({ field }) => (
+                  <CheckField label="Valor Negociável" checked={field.value} onChange={field.onChange} />
+                )} />
+                <Controller name="valueUnderConsultation" control={control} render={({ field }) => (
+                  <CheckField label="Valor Sob Consulta" checked={field.value} onChange={field.onChange} />
+                )} />
+                <Controller name="allowExchange" control={control} render={({ field }) => (
+                  <CheckField label="Aceita Permuta" checked={field.value} onChange={field.onChange} />
+                )} />
+                <Controller name="isFeatured" control={control} render={({ field }) => (
+                  <CheckField label="Imóvel em Destaque" checked={field.value} onChange={field.onChange} />
+                )} />
+                <Controller name="isPremium" control={control} render={({ field }) => (
+                  <CheckField label="Premium" checked={field.value} onChange={field.onChange} />
+                )} />
+              </div>
+            </Section>
+
+            <Section title="Descrição Pública">
+              <textarea {...register('description')} rows={5} className={textareaCls}
+                placeholder="Descrição que será publicada no site e portais..." />
+            </Section>
+
+            <Section title="Descrição Interna (não publicada)">
+              <textarea {...register('descriptionInternal')} rows={4} className={textareaCls}
+                placeholder="Informações internas, histórico, observações do corretor..." />
+              <p className="text-xs text-white/30">* Esta informação é de uso interno e NÃO será divulgada no site e portais.</p>
+            </Section>
+
+            <Section title="Vídeo e Tour Virtual">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Field label="Vídeo YouTube (URL ou ID)">
+                  <Input {...register('videoUrl')} placeholder="https://youtube.com/watch?v=..." className={inputCls} />
+                </Field>
+                <Field label="Tour Virtual (URL)">
+                  <Input {...register('virtualTourUrl')} placeholder="https://..." className={inputCls} />
+                </Field>
+              </div>
+            </Section>
+          </div>
+        )}
+
+        {/* ── TAB: LOCALIZAÇÃO ────────────────────────────────────────────── */}
+        {activeTab === 'localizacao' && (
+          <div className="space-y-4">
+            <Section title="Endereço">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <Field label="CEP">
+                  <div className="flex gap-2">
+                    <Input {...register('zipCode')} placeholder="00000-000" className={inputCls} maxLength={9} />
+                  </div>
+                </Field>
+                <Field label="Endereço" span="sm:col-span-2">
+                  <Input {...register('street')} className={inputCls} />
+                </Field>
+                <Field label="Número">
+                  <Input {...register('number')} className={inputCls} />
+                </Field>
+                <Field label="Complemento">
+                  <Input {...register('complement')} className={inputCls} />
+                </Field>
+                <Field label="Bairro Comercial (exibido no site)">
+                  <Input {...register('commercialNeighborhood')} className={inputCls} />
+                </Field>
+                <Field label="Bairro Oficial">
+                  <Input {...register('neighborhood')} className={inputCls} />
+                </Field>
+                <Field label="Cidade">
+                  <Input {...register('city')} className={inputCls} />
+                </Field>
+                <Field label="UF">
+                  <Input {...register('state')} maxLength={2} className={cn(inputCls, 'uppercase')} placeholder="SP" />
+                </Field>
+                <Field label="País">
+                  <Input {...register('country')} className={inputCls} defaultValue="BR" />
+                </Field>
+                <Field label="Região">
+                  <Input {...register('region')} className={inputCls} />
+                </Field>
+                <Field label="Ponto de Referência" span="sm:col-span-2">
+                  <Input {...register('referencePoint')} className={inputCls} />
+                </Field>
+              </div>
+            </Section>
+
+            <Section title="Coordenadas GPS">
+              <div className="grid grid-cols-2 gap-4">
+                <Field label="Latitude">
+                  <Input {...register('latitude')} type="number" step="any" placeholder="-20.123456" className={inputCls} />
+                </Field>
+                <Field label="Longitude">
+                  <Input {...register('longitude')} type="number" step="any" placeholder="-47.654321" className={inputCls} />
+                </Field>
+              </div>
+            </Section>
+
+            <Section title="Condomínio / Empreendimento">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                <Controller name="closedCondo" control={control} render={({ field }) => (
+                  <div className="col-span-full">
+                    <CheckField label="Condomínio Fechado" checked={field.value} onChange={field.onChange} />
+                  </div>
+                )} />
+                <Field label="Nome do Condomínio / Empreendimento" span="sm:col-span-2">
+                  <Input {...register('condoName')} className={inputCls} />
+                </Field>
+                <Field label="Administradora">
+                  <Input {...register('adminCompany')} className={inputCls} />
+                </Field>
+                <Field label="Construtora">
+                  <Input {...register('constructionCompany')} className={inputCls} />
+                </Field>
+                <Controller name="signOnSite" control={control} render={({ field }) => (
+                  <div className="col-span-full">
+                    <CheckField label="Placa no local" checked={field.value} onChange={field.onChange} />
+                  </div>
+                )} />
+              </div>
+            </Section>
+          </div>
+        )}
+
+        {/* ── TAB: DETALHES ───────────────────────────────────────────────── */}
+        {activeTab === 'detalhes' && (
+          <div className="space-y-4">
+            <Section title="Cômodos">
+              <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-3">
+                <NumInput reg={register('bedrooms')} label="Dormitórios" />
+                <NumInput reg={register('suites')} label="Suítes" />
+                <NumInput reg={register('suitesWithCloset')} label="Suítes c/ Closet" />
+                <NumInput reg={register('demiSuites')} label="Demi-suítes" />
+                <NumInput reg={register('bathrooms')} label="Banheiros" />
+                <NumInput reg={register('rooms')} label="Salas (total)" />
+                <NumInput reg={register('livingRooms')} label="Sala de Estar" />
+                <NumInput reg={register('diningRooms')} label="Sala de Jantar" />
+                <NumInput reg={register('tvRooms')} label="Salas de TV" />
+                <NumInput reg={register('parkingSpaces')} label="Vagas (total)" />
+                <NumInput reg={register('garagesCovered')} label="Gar. Cobertas" />
+                <NumInput reg={register('garagesOpen')} label="Gar. Descobertas" />
+                <NumInput reg={register('elevators')} label="Elevadores" />
+                <NumInput reg={register('totalFloors')} label="Nº de Andares" />
+                <NumInput reg={register('floor')} label="Andar" />
+              </div>
+            </Section>
+
+            <Section title="Áreas">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <Field label="Área Construída (m²)">
+                  <Input {...register('builtArea')} type="number" step="0.01" className={inputCls} />
+                </Field>
+                <Field label="Área Útil (m²)">
+                  <Input {...register('totalArea')} type="number" step="0.01" className={inputCls} />
+                </Field>
+                <Field label="Área Total Terreno (m²)">
+                  <Input {...register('landArea')} type="number" step="0.01" className={inputCls} />
+                </Field>
+                <Field label="Área Comum (m²)">
+                  <Input {...register('commonArea')} type="number" step="0.01" className={inputCls} />
+                </Field>
+                <Field label="Pé Direto (m)">
+                  <Input {...register('ceilingHeight')} type="number" step="0.01" className={inputCls} />
+                </Field>
+                <Field label="Dimensão Terreno">
+                  <Input {...register('landDimensions')} placeholder="Ex: 10x20" className={inputCls} />
+                </Field>
+                <Field label="Face">
+                  <Controller name="landFace" control={control} render={({ field }) => (
+                    <Select value={field.value || ''} onValueChange={field.onChange}>
+                      <SelectTrigger className={selectTriggerCls}><SelectValue placeholder="Selecione" /></SelectTrigger>
+                      <SelectContent>{FACES.map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}</SelectContent>
+                    </Select>
+                  )} />
+                </Field>
+                <Field label="Insolamento">
+                  <Input {...register('sunExposure')} placeholder="Sol da manhã / tarde" className={inputCls} />
+                </Field>
+                <Field label="Posição">
+                  <Input {...register('position')} placeholder="Frente / Fundos / Meio" className={inputCls} />
+                </Field>
+                <Field label="Ano de Construção">
+                  <Input {...register('yearBuilt')} type="number" className={inputCls} />
+                </Field>
+                <Field label="Ano Última Reforma">
+                  <Input {...register('yearLastReformed')} type="number" className={inputCls} />
+                </Field>
+              </div>
+            </Section>
+
+            <PropertyFeaturesEditor
+              selected={watch('features') ?? []}
+              onChange={(f) => setValue('features', f)}
             />
-          </Field>
-        </section>
+          </div>
+        )}
 
-        {/* Valores */}
-        <section className="bg-white/5 rounded-xl border border-white/10 p-5 space-y-4">
-          <h2 className="text-sm font-semibold text-white/60 uppercase tracking-wider">Valores</h2>
-          <FieldRow>
-            {(purpose === 'SALE' || purpose === 'BOTH' || !purpose) && (
-              <Field label="Preço de venda (R$)">
-                <Input {...register('price')} type="number" className="bg-white/5 border-white/10 text-white" placeholder="0,00" />
+        {/* ── TAB: ANÚNCIOS / SEO ─────────────────────────────────────────── */}
+        {activeTab === 'anuncios' && (
+          <div className="space-y-4">
+            <Section title="Opções de Publicação">
+              <div className="flex flex-wrap gap-6">
+                <Controller name="isFeatured" control={control} render={({ field }) => (
+                  <CheckField label="Imóvel em Destaque" checked={field.value} onChange={field.onChange} />
+                )} />
+                <Controller name="isPremium" control={control} render={({ field }) => (
+                  <CheckField label="Premium" checked={field.value} onChange={field.onChange} />
+                )} />
+                <Controller name="authorizedPublish" control={control} render={({ field }) => (
+                  <CheckField label="Autorizado para Publicar" checked={field.value} onChange={field.onChange} />
+                )} />
+              </div>
+            </Section>
+
+            <Section title="SEO — Otimização para Buscadores">
+              <Field label="Título SEO">
+                <Input {...register('metaTitle')} maxLength={70}
+                  placeholder="Título para Google (máx. 70 caracteres)"
+                  className={inputCls} />
               </Field>
-            )}
-            {(purpose === 'RENT' || purpose === 'BOTH' || purpose === 'SEASON') && (
-              <Field label="Preço de aluguel (R$)">
-                <Input {...register('priceRent')} type="number" className="bg-white/5 border-white/10 text-white" placeholder="0,00" />
+              <Field label="Descrição SEO">
+                <textarea {...register('metaDescription')} rows={3} maxLength={160}
+                  placeholder="Descrição para Google (máx. 160 caracteres)"
+                  className={textareaCls} />
               </Field>
-            )}
-            <Field label="Condomínio (R$)">
-              <Input {...register('condoFee')} type="number" className="bg-white/5 border-white/10 text-white" placeholder="0,00" />
-            </Field>
-            <Field label="IPTU (R$/ano)">
-              <Input {...register('iptu')} type="number" className="bg-white/5 border-white/10 text-white" placeholder="0,00" />
-            </Field>
-          </FieldRow>
-        </section>
+              <Field label="Palavras-chave (separadas por vírgula)">
+                <Input {...register('metaKeywords')}
+                  placeholder="apartamento, itaim, 3 quartos..."
+                  className={inputCls} />
+              </Field>
+              <p className="text-xs text-white/30">* Se deixar em branco, o título e descrição do imóvel serão usados automaticamente.</p>
+            </Section>
+          </div>
+        )}
 
-        {/* Localização */}
-        <section className="bg-white/5 rounded-xl border border-white/10 p-5 space-y-4">
-          <h2 className="text-sm font-semibold text-white/60 uppercase tracking-wider">Localização</h2>
-          <FieldRow>
-            <Field label="CEP">
-              <Input {...register('zipCode')} className="bg-white/5 border-white/10 text-white" placeholder="00000-000" />
-            </Field>
-            <Field label="Rua / Logradouro">
-              <Input {...register('street')} className="bg-white/5 border-white/10 text-white" />
-            </Field>
-            <Field label="Número">
-              <Input {...register('number')} className="bg-white/5 border-white/10 text-white" />
-            </Field>
-            <Field label="Bairro">
-              <Input {...register('neighborhood')} className="bg-white/5 border-white/10 text-white" />
-            </Field>
-            <Field label="Cidade">
-              <Input {...register('city')} className="bg-white/5 border-white/10 text-white" />
-            </Field>
-            <Field label="Estado (UF)">
-              <Input {...register('state')} maxLength={2} className="bg-white/5 border-white/10 text-white uppercase" placeholder="SP" />
-            </Field>
-            <Field label="Latitude">
-              <Input {...register('latitude')} type="number" step="any" className="bg-white/5 border-white/10 text-white" placeholder="-20.123456" />
-            </Field>
-            <Field label="Longitude">
-              <Input {...register('longitude')} type="number" step="any" className="bg-white/5 border-white/10 text-white" placeholder="-47.654321" />
-            </Field>
-          </FieldRow>
-        </section>
+        {/* ── TAB: CAPTAÇÃO ───────────────────────────────────────────────── */}
+        {activeTab === 'captacao' && (
+          <div className="space-y-4">
+            <Section title="Captador Principal">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                <Field label="Nome do Captador" span="sm:col-span-2">
+                  <Input {...register('captorName')} className={inputCls} />
+                </Field>
+                <Field label="Comissão (%)">
+                  <Input {...register('captorCommissionPct')} type="number" step="0.01" min={0} max={100} className={inputCls} />
+                </Field>
+              </div>
+            </Section>
 
-        {/* Características */}
-        <section className="bg-white/5 rounded-xl border border-white/10 p-5 space-y-4">
-          <h2 className="text-sm font-semibold text-white/60 uppercase tracking-wider">Características</h2>
-          <FieldRow>
-            <Field label="Área Terreno (m²)">
-              <Input {...register('totalArea')} type="number" step="0.01" className="bg-white/5 border-white/10 text-white" />
-            </Field>
-            <Field label="Área Construída (m²)">
-              <Input {...register('builtArea')} type="number" step="0.01" className="bg-white/5 border-white/10 text-white" />
-            </Field>
-            <Field label="Área do Terreno (m²)">
-              <Input {...register('landArea')} type="number" step="0.01" className="bg-white/5 border-white/10 text-white" />
-            </Field>
-            <Field label="Ano de construção">
-              <Input {...register('yearBuilt')} type="number" className="bg-white/5 border-white/10 text-white" placeholder="2010" />
-            </Field>
-            <Field label="Quartos">
-              <Input {...register('bedrooms')} type="number" min={0} className="bg-white/5 border-white/10 text-white" />
-            </Field>
-            <Field label="Suítes">
-              <Input {...register('suites')} type="number" min={0} className="bg-white/5 border-white/10 text-white" />
-            </Field>
-            <Field label="Banheiros">
-              <Input {...register('bathrooms')} type="number" min={0} className="bg-white/5 border-white/10 text-white" />
-            </Field>
-            <Field label="Vagas de garagem">
-              <Input {...register('parkingSpaces')} type="number" min={0} className="bg-white/5 border-white/10 text-white" />
-            </Field>
-          </FieldRow>
-        </section>
+            <Section title="Condições Comerciais">
+              <textarea {...register('commercialConditions')} rows={4}
+                placeholder="Condições de venda, prazo, observações comerciais..."
+                className={textareaCls} />
+            </Section>
 
-        {/* Itens do Imóvel */}
-        <PropertyFeaturesEditor
-          selected={watch('features') ?? []}
-          onChange={(f) => setValue('features', f)}
-        />
+            <Section title="Exclusividade">
+              <Controller name="exclusivityContract" control={control} render={({ field }) => (
+                <CheckField label="Contrato de Exclusividade" checked={field.value} onChange={field.onChange} />
+              )} />
+            </Section>
 
-        {/* Actions */}
-        <div className="flex items-center justify-end gap-3">
+            <Section title="Controle de Chaves">
+              <Field label="Local das Chaves">
+                <Controller name="keyLocation" control={control} render={({ field }) => (
+                  <Select value={field.value || ''} onValueChange={field.onChange}>
+                    <SelectTrigger className={cn(selectTriggerCls, 'max-w-xs')}><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectContent>{KEY_LOCATIONS.map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}</SelectContent>
+                  </Select>
+                )} />
+              </Field>
+            </Section>
+          </div>
+        )}
+
+        {/* ── TAB: CONFIDENCIAL ───────────────────────────────────────────── */}
+        {activeTab === 'confidencial' && (
+          <div className="space-y-4">
+            <Section title="Documentação">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                <Field label="CIB (Código Imobiliário Brasileiro)">
+                  <Input {...register('cib')} className={inputCls} />
+                </Field>
+                <Field label="Cadastro Prefeitura (Nº IPTU / INCRA)">
+                  <Input {...register('iptuRegistration')} className={inputCls} />
+                </Field>
+                <Field label="Cartório de Imóveis (Nº Matrícula)">
+                  <Input {...register('cartorioMatricula')} className={inputCls} />
+                </Field>
+                <Field label="Eletricidade (Concessionária)">
+                  <Input {...register('electricityInfo')} className={inputCls} />
+                </Field>
+                <Field label="Água e Saneamento">
+                  <Input {...register('waterInfo')} className={inputCls} />
+                </Field>
+              </div>
+              <div className="pt-2">
+                <Controller name="documentationPending" control={control} render={({ field }) => (
+                  <CheckField label="Documentação Pendente" checked={field.value} onChange={field.onChange} />
+                )} />
+              </div>
+              <Field label="Observações de Documentação">
+                <textarea {...register('documentationNotes')} rows={3} className={textareaCls} />
+              </Field>
+            </Section>
+
+            <Section title="Reserva e Publicação">
+              <div className="flex flex-wrap gap-6">
+                <Controller name="isReserved" control={control} render={({ field }) => (
+                  <CheckField label="Imóvel Reservado" checked={field.value} onChange={field.onChange} />
+                )} />
+                <Controller name="authorizedPublish" control={control} render={({ field }) => (
+                  <CheckField label="Autorizado para Publicar" checked={field.value} onChange={field.onChange} />
+                )} />
+              </div>
+            </Section>
+          </div>
+        )}
+
+        {/* Bottom action bar */}
+        <div className="flex items-center justify-between gap-3 pt-2 border-t border-white/10">
           <Link href="/dashboard/properties">
             <Button variant="ghost" className="text-white/60 hover:text-white" type="button">Cancelar</Button>
           </Link>
-          <Button type="submit" disabled={mutation.isPending} className="gap-2 min-w-[140px]">
-            <Save className="h-4 w-4" />
-            {mutation.isPending ? 'Salvando...' : 'Cadastrar Imóvel'}
-          </Button>
+          <div className="flex items-center gap-3">
+            {mutation.isError && (
+              <p className="text-sm text-red-400">{(mutation.error as Error).message}</p>
+            )}
+            <Button type="submit" disabled={mutation.isPending} className="gap-2 min-w-[160px]">
+              <Save className="h-4 w-4" />
+              {mutation.isPending ? 'Cadastrando...' : 'Cadastrar Imóvel'}
+            </Button>
+          </div>
         </div>
-
-        {mutation.isError && (
-          <p className="text-sm text-red-400 text-center">{(mutation.error as Error).message}</p>
-        )}
       </form>
     </div>
   )

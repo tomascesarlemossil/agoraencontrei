@@ -5,6 +5,8 @@ import {
   getCharge,
   getPixQrCode,
   cancelCharge,
+  getBalance,
+  getPaymentsList,
   type AsaasBillingType,
 } from '../../services/asaas.service.js'
 import { env } from '../../utils/env.js'
@@ -169,6 +171,34 @@ export default async function invoiceRoutes(app: FastifyInstance) {
     })
 
     return reply.send({ invoice: updated })
+  })
+
+  // GET /api/v1/finance/invoices/asaas/balance — saldo da conta Asaas
+  app.get('/asaas/balance', async (req, reply) => {
+    if (!env.ASAAS_API_KEY) return reply.status(503).send({ error: 'ASAAS_NOT_CONFIGURED' })
+    try {
+      const balance = await getBalance()
+      return reply.send(balance)
+    } catch (err: any) {
+      return reply.status(502).send({ error: 'ASAAS_ERROR', message: err.message })
+    }
+  })
+
+  // GET /api/v1/finance/invoices/asaas/payments — cobranças na conta Asaas
+  app.get('/asaas/payments', async (req, reply) => {
+    if (!env.ASAAS_API_KEY) return reply.status(503).send({ error: 'ASAAS_NOT_CONFIGURED' })
+    const q = req.query as Record<string, string>
+    try {
+      const result = await getPaymentsList({
+        status: q.status,
+        limit:  q.limit  ? parseInt(q.limit,  10) : 20,
+        offset: q.offset ? parseInt(q.offset, 10) : 0,
+        externalReference: q.externalReference,
+      })
+      return reply.send(result)
+    } catch (err: any) {
+      return reply.status(502).send({ error: 'ASAAS_ERROR', message: err.message })
+    }
   })
 
   // POST /api/v1/finance/invoices/webhook — recebe eventos do Asaas

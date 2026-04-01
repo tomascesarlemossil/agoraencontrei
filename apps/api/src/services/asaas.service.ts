@@ -5,8 +5,9 @@
 
 import { env } from '../utils/env.js'
 
-const BASE_URL = env.ASAAS_BASE_URL ?? 'https://www.asaas.com/api/v3'
-const API_KEY  = env.ASAAS_API_KEY  ?? ''
+const BASE_URL   = env.ASAAS_BASE_URL  ?? 'https://www.asaas.com/api/v3'
+const API_KEY    = env.ASAAS_API_KEY   ?? ''
+export const WALLET_ID = env.ASAAS_WALLET_ID ?? ''
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -126,6 +127,48 @@ export async function getPixQrCode(
 
 export async function cancelCharge(asaasId: string): Promise<{ deleted: boolean }> {
   return asaasFetch(`/payments/${asaasId}`, { method: 'DELETE' })
+}
+
+// ── Account / Balance ────────────────────────────────────────────────────────
+
+export interface AsaasBalance {
+  balance: number
+  totalBalance: number
+  withdrawnBalance: number
+}
+
+export async function getBalance(): Promise<AsaasBalance> {
+  return asaasFetch<AsaasBalance>('/finance/balance')
+}
+
+export interface AsaasTransfer {
+  id: string
+  value: number
+  status: string
+  transferDate: string
+  type: string
+  bankAccount?: { bank: { code: string; name: string }; agency: string; account: string }
+}
+
+export async function listTransfers(
+  params?: { limit?: number; offset?: number },
+): Promise<{ data: AsaasTransfer[]; totalCount: number }> {
+  const qs = new URLSearchParams()
+  if (params?.limit)  qs.set('limit',  String(params.limit))
+  if (params?.offset) qs.set('offset', String(params.offset))
+  return asaasFetch(`/transfers?${qs}`)
+}
+
+export async function getPaymentsList(params?: {
+  status?: string; limit?: number; offset?: number; customer?: string; externalReference?: string
+}): Promise<{ data: AsaasCharge[]; totalCount: number }> {
+  const qs = new URLSearchParams()
+  if (params?.status)            qs.set('status', params.status)
+  if (params?.limit)             qs.set('limit',  String(params.limit))
+  if (params?.offset)            qs.set('offset', String(params.offset))
+  if (params?.customer)          qs.set('customer', params.customer)
+  if (params?.externalReference) qs.set('externalReference', params.externalReference)
+  return asaasFetch(`/payments?${qs}`)
 }
 
 // ── Webhook payload type ─────────────────────────────────────────────────────

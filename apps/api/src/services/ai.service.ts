@@ -463,3 +463,88 @@ Gere o documento HTML completo seguindo o template e preenchendo com os dados ac
 
   return { html, title, suggestedFilename }
 }
+
+// ── Document identification from natural language ─────────────────────────────
+
+export interface DocumentIdentifyInput {
+  text: string
+  templateIds: string[]  // list of available template IDs to choose from
+  images?: Array<{ base64: string; mediaType: string }>
+}
+
+export interface DocumentIdentifyResult {
+  templateId: string
+  confidence: number         // 0-100
+  extractedData: Record<string, string>
+  reasoning: string
+}
+
+export async function identifyDocument(input: DocumentIdentifyInput): Promise<DocumentIdentifyResult> {
+  const client = getClient()
+
+  const systemPrompt = `Você é um especialista em documentos imobiliários da Imobiliária Lemos.
+Sua tarefa é:
+1. Identificar qual tipo de documento o usuário quer criar com base no texto/descrição
+2. Extrair todos os dados mencionados (nomes, CPFs, endereços, valores, datas, etc.)
+3. Se imagens forem fornecidas, extrair dados dos documentos fotografados (RG, CPF, comprovante de residência, etc.)
+
+TEMPLATES DISPONÍVEIS:
+${input.templateIds.join('\n')}
+
+Retorne APENAS um JSON válido com esta estrutura:
+{
+  "templateId": "id-do-template-identificado",
+  "confidence": 85,
+  "extractedData": {
+    "nome_campo": "valor_extraido"
+  },
+  "reasoning": "Breve explicação de por que escolheu este template"
+}
+
+Para os campos extraídos, use os nomes de campos padrão dos templates:
+- locador_nome, locador_cpf, locatario_nome, locatario_cpf
+- vendedor_nome, vendedor_cpf, comprador_nome, comprador_cpf
+- imovel_endereco, imovel_bairro, valor_aluguel, valor_venda
+- data_inicio, data_fim, data_assinatura
+- etc.`
+
+  const userContent: any[] = []
+
+  if (input.images?.length) {
+    for (const img of input.images) {
+      userContent.push({
+        type: 'image',
+        source: { type: 'base64', media_type: img.mediaType, data: img.base64 },
+      })
+    }
+    userContent.push({ type: 'text', text: 'Extraia os dados das imagens acima (documentos pessoais, comprovantes, etc.)' })
+  }
+
+  userContent.push({
+    type: 'text',
+    text: `Texto do usuário: "${input.text}"\n\nIdentifique o tipo de documento e extraia todos os dados mencionados. Retorne apenas o JSON.`,
+  })
+
+  const response = await client.messages.create({
+    model: 'claude-opus-4-6',
+    max_tokens: 2048,
+    system: systemPrompt,
+    messages: [{ role: 'user', content: userContent }],
+  })
+
+  const raw = response.content[0].type === 'text' ? response.content[0].text.trim() : '{}'
+
+  try {
+    // Extract JSON from response (may be wrapped in markdown code blocks)
+    const jsonMatch = raw.match(/\{[\s\S]*\}/)
+    if (!jsonMatch) throw new Error('No JSON found')
+    return JSON.parse(jsonMatch[0]) as DocumentIdentifyResult
+  } catch {
+    return {
+      templateId: input.templateIds[0] ?? 'contrato-locacao-residencial',
+      confidence: 30,
+      extractedData: {},
+      reasoning: 'Não foi possível identificar o documento com precisão.',
+    }
+  }
+}

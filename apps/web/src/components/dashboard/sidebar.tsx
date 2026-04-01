@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/hooks/useAuth'
@@ -82,11 +83,17 @@ function NavContent({ onClose }: { onClose?: () => void }) {
   return (
     <div className="flex flex-col h-full">
       {/* Logo */}
-      <div className="flex items-center gap-2 px-6 py-5 border-b border-white/10">
-        <Home className="h-6 w-6 text-blue-400 flex-shrink-0" />
+      <div className="flex items-center gap-2 px-4 py-4 border-b border-white/10">
+        <Image
+          src="/logo-lemos.png"
+          alt="Imobiliária Lemos"
+          width={40}
+          height={40}
+          className="rounded-full flex-shrink-0 object-cover"
+        />
         <div className="min-w-0">
-          <p className="font-bold text-sm leading-none text-white">AgoraEncontrei</p>
-          <p className="text-xs text-white/50 mt-0.5 truncate">{user?.company?.name ?? 'Imobiliária'}</p>
+          <p className="font-bold text-sm leading-none text-white" style={{ fontFamily: 'Georgia, serif' }}>IMOBILIÁRIA</p>
+          <p className="text-xs font-bold leading-none mt-0.5 truncate" style={{ color: '#C9A84C', fontFamily: 'Georgia, serif' }}>LEMOS</p>
         </div>
         {onClose && (
           <button onClick={onClose} className="ml-auto text-white/40 hover:text-white">

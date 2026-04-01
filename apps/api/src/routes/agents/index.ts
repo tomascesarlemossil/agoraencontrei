@@ -6,6 +6,7 @@ import {
   copywriteProperty,
   scoreLead,
   generateDocument,
+  identifyDocument,
   type CopywriteInput,
 } from '../../services/ai.service.js'
 import { env } from '../../utils/env.js'
@@ -294,6 +295,32 @@ export default async function agentsRoutes(app: FastifyInstance) {
       take: 50,
     })
     return reply.send(jobs)
+  })
+
+  // POST /api/v1/agents/documents/identify — identify document type from NL + OCR images
+  app.post('/documents/identify', {
+    schema: { tags: ['agents'], summary: 'Identify document type from natural language + images' },
+  }, async (req, reply) => {
+    if (!env.ANTHROPIC_API_KEY) {
+      return reply.status(503).send({ error: 'AI_NOT_CONFIGURED' })
+    }
+
+    const body = z.object({
+      text: z.string().min(1),
+      templateIds: z.array(z.string()).min(1),
+      images: z.array(z.object({
+        base64: z.string(),
+        mediaType: z.string(),
+      })).optional(),
+    }).parse(req.body)
+
+    const result = await identifyDocument({
+      text: body.text,
+      templateIds: body.templateIds,
+      images: body.images,
+    })
+
+    return reply.send(result)
   })
 
   // POST /api/v1/agents/documents/generate — AI document generation

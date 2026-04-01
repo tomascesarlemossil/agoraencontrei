@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { useEffect, useRef, useState } from 'react'
 import { Menu, X, ChevronDown, LayoutDashboard, UserCheck, Users } from 'lucide-react'
 
@@ -68,13 +69,15 @@ export function Navbar() {
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-3 group">
-          <div
-            className="h-9 w-9 rounded-lg flex items-center justify-center text-white font-bold text-base flex-shrink-0"
-            style={{ backgroundColor: '#C9A84C' }}
-          >
-            IL
-          </div>
+        <Link href="/" className="flex items-center gap-2 group">
+          <Image
+            src="/logo-lemos.png"
+            alt="Imobiliária Lemos"
+            width={44}
+            height={44}
+            className="rounded-full flex-shrink-0 object-cover"
+            priority
+          />
           <div>
             <p className="font-bold text-white text-sm leading-none tracking-wide" style={{ fontFamily: 'Georgia, serif' }}>
               IMOBILIÁRIA

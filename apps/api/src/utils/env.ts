@@ -46,8 +46,9 @@ const envSchema = z.object({
   PUBLIC_COMPANY_ID: z.string().optional(),
 
   // Asaas — cobranças e boletos
-  ASAAS_API_KEY:  z.string().optional(),
-  ASAAS_BASE_URL: z.string().default('https://www.asaas.com/api/v3'),
+  ASAAS_API_KEY:    z.string().optional(),
+  ASAAS_BASE_URL:   z.string().default('https://www.asaas.com/api/v3'),
+  ASAAS_WALLET_ID:  z.string().optional(),
 
   // Email
   SMTP_HOST: z.string().optional(),
