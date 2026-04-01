@@ -2,13 +2,24 @@
 
 import { useState, useCallback } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
-import { BedDouble, Bath, Car, Maximize, Loader2 } from 'lucide-react'
+import { BedDouble, Bath, Car, Maximize, Loader2, Building2 } from 'lucide-react'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 
 const PURPOSE_LABEL: Record<string, string> = {
   SALE: 'Venda', RENT: 'Aluguel', BOTH: 'Venda/Aluguel', SEASON: 'Temporada',
+}
+
+// Known fake/placeholder image patterns from Buscaimo platform
+const FAKE_IMAGE_PATTERNS = [
+  'send.png', 'telefone.png', 'logotopo.png', 'foto_vazio.png',
+  'foto-corretor.png', 'logo_uso.png', 'logo_rodape.png',
+  '/images/logo', '/images/banner', 'whatsapp',
+]
+
+function isRealImage(url: string | null | undefined): boolean {
+  if (!url) return false
+  return !FAKE_IMAGE_PATTERNS.some(pat => url.includes(pat))
 }
 
 function formatPrice(price: number | null, priceRent: number | null, purpose: string) {
@@ -19,6 +30,9 @@ function formatPrice(price: number | null, priceRent: number | null, purpose: st
 }
 
 function PropertyCard({ p }: { p: any }) {
+  const [imgError, setImgError] = useState(false)
+  const realImage = isRealImage(p.coverImage) && !imgError ? p.coverImage : null
+
   return (
     <Link
       href={`/imoveis/${p.slug}`}
@@ -26,16 +40,20 @@ function PropertyCard({ p }: { p: any }) {
       style={{ borderColor: '#e8e4dc' }}
     >
       <div className="relative h-52 overflow-hidden" style={{ backgroundColor: '#f0ece4' }}>
-        {p.coverImage ? (
-          <Image
-            src={p.coverImage}
+        {realImage ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={realImage}
             alt={p.title}
-            fill
-            className="object-cover group-hover:scale-105 transition-transform duration-500"
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            loading="lazy"
+            onError={() => setImgError(true)}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           />
         ) : (
-          <div className="absolute inset-0 flex items-center justify-center text-4xl opacity-30">🏠</div>
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 opacity-20">
+            <Building2 className="w-10 h-10" style={{ color: '#1B2B5B' }} />
+            <span className="text-xs font-medium text-gray-500">Foto em breve</span>
+          </div>
         )}
         <div className="absolute top-3 left-3 flex gap-1.5">
           <span

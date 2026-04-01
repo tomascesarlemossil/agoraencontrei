@@ -14,6 +14,16 @@ import {
   ChevronLeft, ChevronRight, SlidersHorizontal, X, Filter,
 } from 'lucide-react'
 
+const FAKE_IMAGE_PATTERNS = [
+  'send.png', 'telefone.png', 'logotopo.png', 'foto_vazio.png',
+  'foto-corretor.png', 'logo_uso.png', 'logo_rodape.png',
+  '/images/logo', '/images/banner', 'whatsapp',
+]
+function isRealImage(url: string | null | undefined): boolean {
+  if (!url) return false
+  return !FAKE_IMAGE_PATTERNS.some(pat => url.includes(pat))
+}
+
 const TYPE_LABELS: Record<string, string> = {
   HOUSE: 'Casa',
   APARTMENT: 'Apartamento',
@@ -452,7 +462,8 @@ function FilterChip({ label, onRemove }: { label: string; onRemove: () => void }
 }
 
 function PropertyCard({ property: p }: { property: PropertySummary }) {
-  const coverImage = p.coverImage ?? p.images?.[0]
+  const rawImage = p.coverImage ?? p.images?.[0]
+  const coverImage = isRealImage(rawImage) ? rawImage : null
 
   return (
     <Link href={`/dashboard/properties/${p.id}`}>
@@ -463,6 +474,7 @@ function PropertyCard({ property: p }: { property: PropertySummary }) {
             <img
               src={coverImage}
               alt={p.title}
+              loading="lazy"
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
             />
           ) : (

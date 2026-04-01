@@ -3,10 +3,20 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { X, PenLine, Trash2, Search, MapPin, BedDouble, Maximize } from 'lucide-react'
-import Image from 'next/image'
+// next/image removed — using <img> for external CDN images
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 const FRANCA_CENTER: [number, number] = [-20.5394, -47.4008]
+
+const FAKE_IMAGE_PATTERNS = [
+  'send.png', 'telefone.png', 'logotopo.png', 'foto_vazio.png',
+  'foto-corretor.png', 'logo_uso.png', 'logo_rodape.png',
+  '/images/logo', '/images/banner', 'whatsapp',
+]
+function isRealImage(url: string | null | undefined): boolean {
+  if (!url) return false
+  return !FAKE_IMAGE_PATTERNS.some(pat => url.includes(pat))
+}
 const NOMINATIM_DELAY = 1100 // ms between geocoding requests
 
 interface Cluster {
@@ -510,17 +520,17 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
                   href={`/imoveis/${p.slug}`}
                   className="group block bg-white rounded-xl border border-gray-100 overflow-hidden hover:shadow-md transition-all"
                 >
-                  <div className="relative h-28 bg-gray-100">
-                    {p.coverImage ? (
-                      <Image
-                        src={p.coverImage}
+                  <div className="relative h-28 overflow-hidden" style={{ backgroundColor: '#f0ece4' }}>
+                    {isRealImage(p.coverImage) ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={p.coverImage!}
                         alt={p.title}
-                        fill
-                        sizes="(max-width:640px) 50vw, 25vw"
-                        className="object-cover group-hover:scale-105 transition-transform duration-300"
+                        loading="lazy"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
                     ) : (
-                      <div className="h-full flex items-center justify-center text-2xl">🏠</div>
+                      <div className="h-full flex items-center justify-center opacity-20">🏠</div>
                     )}
                     <span
                       className="absolute top-1.5 left-1.5 text-xs font-bold px-1.5 py-0.5 rounded-full"
