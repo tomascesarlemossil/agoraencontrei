@@ -147,11 +147,18 @@ export default async function usersRoutes(app: FastifyInstance) {
     return reply.send({ success: true, settings: newSettings })
   })
 
-  // GET /api/v1/users/:id
+  // GET /api/v1/users/:id  (also handles /company as fallback for old builds)
   app.get('/:id', {
     schema: { tags: ['users'] },
   }, async (req, reply) => {
     const { id } = req.params as { id: string }
+
+    // Fallback: if id is "company", return the company info
+    if (id === 'company') {
+      const company = await app.prisma.company.findUnique({ where: { id: req.user.cid } })
+      if (!company) return reply.status(404).send({ error: 'NOT_FOUND' })
+      return reply.send(company)
+    }
 
     // Users can only see themselves unless admin/manager
     if (id !== req.user.sub && !['SUPER_ADMIN', 'ADMIN', 'MANAGER'].includes(req.user.role)) {
@@ -172,11 +179,35 @@ export default async function usersRoutes(app: FastifyInstance) {
     return reply.send(user)
   })
 
-  // PATCH /api/v1/users/:id
+  // PATCH /api/v1/users/:id  (also handles /company as fallback for old builds)
   app.patch('/:id', {
     schema: { tags: ['users'] },
   }, async (req, reply) => {
     const { id } = req.params as { id: string }
+
+    // Fallback: if id is "company", update company info
+    if (id === 'company') {
+      if (!['SUPER_ADMIN', 'ADMIN'].includes(req.user.role)) {
+        return reply.status(403).send({ error: 'FORBIDDEN' })
+      }
+      const { z } = await import('zod')
+      const companyBody = z.object({
+        name: z.string().min(2).max(100).optional(),
+        tradeName: z.string().optional(),
+        cnpj: z.string().optional(),
+        creci: z.string().optional(),
+        phone: z.string().optional(),
+        email: z.string().email().optional(),
+        website: z.string().optional(),
+        logoUrl: z.string().url().optional().or(z.literal('')),
+        address: z.string().optional(),
+        city: z.string().optional(),
+        state: z.string().max(2).optional(),
+        zipCode: z.string().optional(),
+      }).parse(req.body)
+      const updated = await app.prisma.company.update({ where: { id: req.user.cid }, data: companyBody })
+      return reply.send(updated)
+    }
 
     if (id !== req.user.sub && !['SUPER_ADMIN', 'ADMIN'].includes(req.user.role)) {
       return reply.status(403).send({ error: 'FORBIDDEN' })
