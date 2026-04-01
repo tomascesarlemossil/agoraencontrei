@@ -2,6 +2,7 @@ import 'dotenv/config'
 import Fastify from 'fastify'
 import { env } from './utils/env.js'
 
+// ── v2026.04.01 ────────────────────────────────────────────────────────────
 // ── Plugins ────────────────────────────────────────────────────────────────
 import corsPlugin from './plugins/cors.js'
 import helmetPlugin from './plugins/helmet.js'
