@@ -10,79 +10,146 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { formatCurrency } from '@/lib/utils'
 import {
-  Plus,
-  Search,
-  Building2,
-  MapPin,
-  BedDouble,
-  Bath,
-  Car,
-  Eye,
-  ChevronLeft,
-  ChevronRight,
+  Plus, Search, Building2, MapPin, BedDouble, Bath, Car, Eye,
+  ChevronLeft, ChevronRight, SlidersHorizontal, X, Filter,
 } from 'lucide-react'
 
 const TYPE_LABELS: Record<string, string> = {
-  house: 'Casa',
-  apartment: 'Apartamento',
-  land: 'Terreno',
-  commercial: 'Comercial',
-  rural: 'Rural',
-  studio: 'Studio',
-  condo: 'Condomínio',
-  office: 'Escritório',
+  HOUSE: 'Casa',
+  APARTMENT: 'Apartamento',
+  LAND: 'Terreno',
+  FARM: 'Chácara/Sítio',
+  RANCH: 'Fazenda',
+  WAREHOUSE: 'Galpão',
+  OFFICE: 'Escritório',
+  STORE: 'Loja/Comercial',
+  STUDIO: 'Studio',
+  PENTHOUSE: 'Cobertura',
+  CONDO: 'Condomínio',
+  KITNET: 'Kitnet',
 }
 
 const PURPOSE_LABELS: Record<string, string> = {
-  sale: 'Venda',
-  rent: 'Aluguel',
-  both: 'Venda/Aluguel',
+  SALE: 'Venda',
+  RENT: 'Aluguel',
+  BOTH: 'Venda/Aluguel',
+  SEASON: 'Temporada',
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  active: 'bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-400',
-  sold: 'bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-400',
-  rented: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-950 dark:text-yellow-400',
-  inactive: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
-  pending: 'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-400',
+  ACTIVE: 'bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-400',
+  SOLD: 'bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-400',
+  RENTED: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-950 dark:text-yellow-400',
+  INACTIVE: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
+  PENDING: 'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-400',
+  DRAFT: 'bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-400',
 }
 
 const STATUS_LABELS: Record<string, string> = {
-  active: 'Ativo',
-  sold: 'Vendido',
-  rented: 'Alugado',
-  inactive: 'Inativo',
-  pending: 'Pendente',
+  ACTIVE: 'Ativo',
+  SOLD: 'Vendido',
+  RENTED: 'Alugado',
+  INACTIVE: 'Inativo',
+  PENDING: 'Pendente',
+  DRAFT: 'Rascunho',
+}
+
+interface Filters {
+  search: string
+  status: string
+  purpose: string
+  type: string
+  city: string
+  neighborhood: string
+  minPrice: string
+  maxPrice: string
+  bedrooms: string
+  minArea: string
+  maxArea: string
+  sortBy: string
+  sortOrder: string
+}
+
+const DEFAULT_FILTERS: Filters = {
+  search: '', status: '', purpose: '', type: '',
+  city: '', neighborhood: '', minPrice: '', maxPrice: '',
+  bedrooms: '', minArea: '', maxArea: '',
+  sortBy: 'createdAt', sortOrder: 'desc',
+}
+
+function filtersToApi(f: Filters) {
+  return {
+    search: f.search || undefined,
+    status: f.status || undefined,
+    purpose: f.purpose || undefined,
+    type: f.type || undefined,
+    city: f.city || undefined,
+    neighborhood: f.neighborhood || undefined,
+    minPrice: f.minPrice ? Number(f.minPrice) : undefined,
+    maxPrice: f.maxPrice ? Number(f.maxPrice) : undefined,
+    bedrooms: f.bedrooms ? Number(f.bedrooms) : undefined,
+    minArea: f.minArea ? Number(f.minArea) : undefined,
+    maxArea: f.maxArea ? Number(f.maxArea) : undefined,
+    sortBy: f.sortBy || 'createdAt',
+    sortOrder: (f.sortOrder || 'desc') as 'asc' | 'desc',
+  }
+}
+
+function activeFilterCount(f: Filters) {
+  const check = [
+    f.search, f.status, f.purpose, f.type, f.city, f.neighborhood,
+    f.minPrice, f.maxPrice, f.bedrooms, f.minArea, f.maxArea,
+  ]
+  return check.filter(Boolean).length
 }
 
 export default function PropertiesPage() {
   const { accessToken } = useAuthStore()
   const [page, setPage] = useState(1)
-  const [search, setSearch] = useState('')
-  const [debouncedSearch, setDebouncedSearch] = useState('')
+  const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS)
+  const [showAdvanced, setShowAdvanced] = useState(false)
+  // Debounced filters applied to query
+  const [appliedFilters, setAppliedFilters] = useState<Filters>(DEFAULT_FILTERS)
 
-  function handleSearch(value: string) {
-    setSearch(value)
-    clearTimeout((window as any).__searchTimeout)
-    ;(window as any).__searchTimeout = setTimeout(() => {
-      setDebouncedSearch(value)
-      setPage(1)
-    }, 400)
+  function applyFilters(f: Filters) {
+    setAppliedFilters(f)
+    setPage(1)
+  }
+
+  function handleFieldChange(field: keyof Filters, value: string) {
+    const next = { ...filters, [field]: value }
+    setFilters(next)
+    // Auto-apply text search with debounce
+    if (field === 'search') {
+      clearTimeout((window as any).__searchTimeout)
+      ;(window as any).__searchTimeout = setTimeout(() => applyFilters(next), 400)
+    }
+  }
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    applyFilters(filters)
+  }
+
+  function clearFilters() {
+    setFilters(DEFAULT_FILTERS)
+    applyFilters(DEFAULT_FILTERS)
   }
 
   const { data, isLoading } = useQuery({
-    queryKey: ['properties', page, debouncedSearch],
+    queryKey: ['properties', page, appliedFilters],
     queryFn: () =>
       propertiesApi.listProtected(accessToken!, {
         page,
         limit: 12,
-        search: debouncedSearch || undefined,
+        ...filtersToApi(appliedFilters),
       }),
     enabled: !!accessToken,
   })
 
   const properties = data?.data ?? []
   const meta = data?.meta
+  const activeCount = activeFilterCount(appliedFilters)
 
   return (
     <div className="p-6 space-y-6">
@@ -91,7 +158,7 @@ export default function PropertiesPage() {
         <div>
           <h1 className="text-2xl font-bold">Imóveis</h1>
           <p className="text-muted-foreground text-sm mt-1">
-            {meta ? `${meta.total} imóveis cadastrados` : 'Carregando...'}
+            {meta ? `${meta.total} imóvel(is) encontrado(s)` : 'Carregando...'}
           </p>
         </div>
         <Link href="/dashboard/properties/new">
@@ -102,16 +169,225 @@ export default function PropertiesPage() {
         </Link>
       </div>
 
-      {/* Search */}
-      <div className="relative max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          className="pl-9"
-          placeholder="Buscar por título, referência, cidade..."
-          value={search}
-          onChange={(e) => handleSearch(e.target.value)}
-        />
-      </div>
+      {/* Filter Panel */}
+      <form onSubmit={handleSubmit} className="rounded-2xl border bg-card p-4 space-y-3">
+        {/* Row 1: Search + quick filters */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2">
+          {/* Search */}
+          <div className="relative lg:col-span-2">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+            <Input
+              className="pl-9"
+              placeholder="Ref., título, bairro, cidade..."
+              value={filters.search}
+              onChange={e => handleFieldChange('search', e.target.value)}
+            />
+          </div>
+
+          {/* Status */}
+          <select
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            value={filters.status}
+            onChange={e => handleFieldChange('status', e.target.value)}
+          >
+            <option value="">Todos os status</option>
+            <option value="ACTIVE">Ativo</option>
+            <option value="INACTIVE">Inativo</option>
+            <option value="SOLD">Vendido</option>
+            <option value="RENTED">Alugado</option>
+            <option value="PENDING">Pendente</option>
+          </select>
+
+          {/* Purpose */}
+          <select
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            value={filters.purpose}
+            onChange={e => handleFieldChange('purpose', e.target.value)}
+          >
+            <option value="">Venda + Aluguel</option>
+            <option value="SALE">Venda</option>
+            <option value="RENT">Aluguel</option>
+            <option value="BOTH">Venda/Aluguel</option>
+          </select>
+
+          {/* Type */}
+          <select
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            value={filters.type}
+            onChange={e => handleFieldChange('type', e.target.value)}
+          >
+            <option value="">Todos os tipos</option>
+            <option value="HOUSE">Casa</option>
+            <option value="APARTMENT">Apartamento</option>
+            <option value="LAND">Terreno</option>
+            <option value="FARM">Chácara/Sítio</option>
+            <option value="WAREHOUSE">Galpão</option>
+            <option value="OFFICE">Escritório</option>
+            <option value="STORE">Loja/Comercial</option>
+            <option value="STUDIO">Studio</option>
+            <option value="PENTHOUSE">Cobertura</option>
+            <option value="KITNET">Kitnet</option>
+          </select>
+        </div>
+
+        {/* Toggle advanced + actions */}
+        <div className="flex items-center gap-3 pt-1">
+          <button
+            type="button"
+            onClick={() => setShowAdvanced(v => !v)}
+            className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <SlidersHorizontal className="h-3.5 w-3.5" />
+            {showAdvanced ? 'Menos filtros' : 'Mais filtros'}
+            {activeCount > 0 && (
+              <span className="ml-1 px-1.5 py-0.5 rounded-full text-xs font-bold bg-primary text-primary-foreground">
+                {activeCount}
+              </span>
+            )}
+          </button>
+
+          <div className="flex-1" />
+
+          {activeCount > 0 && (
+            <button
+              type="button"
+              onClick={clearFilters}
+              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-destructive transition-colors"
+            >
+              <X className="h-3.5 w-3.5" /> Limpar filtros
+            </button>
+          )}
+
+          <Button type="submit" size="sm">
+            <Filter className="h-3.5 w-3.5" />
+            Filtrar
+          </Button>
+        </div>
+
+        {/* Advanced filters */}
+        {showAdvanced && (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 pt-3 border-t">
+            <div>
+              <label className="block text-xs font-medium text-muted-foreground mb-1.5">Cidade</label>
+              <Input
+                placeholder="Ex: Franca"
+                value={filters.city}
+                onChange={e => handleFieldChange('city', e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-muted-foreground mb-1.5">Bairro</label>
+              <Input
+                placeholder="Ex: Centro"
+                value={filters.neighborhood}
+                onChange={e => handleFieldChange('neighborhood', e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-muted-foreground mb-1.5">Preço mínimo</label>
+              <Input
+                type="number"
+                placeholder="R$ 0"
+                value={filters.minPrice}
+                onChange={e => handleFieldChange('minPrice', e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-muted-foreground mb-1.5">Preço máximo</label>
+              <Input
+                type="number"
+                placeholder="Sem limite"
+                value={filters.maxPrice}
+                onChange={e => handleFieldChange('maxPrice', e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-muted-foreground mb-1.5">Quartos (mín.)</label>
+              <select
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                value={filters.bedrooms}
+                onChange={e => handleFieldChange('bedrooms', e.target.value)}
+              >
+                <option value="">Todos</option>
+                <option value="1">1+</option>
+                <option value="2">2+</option>
+                <option value="3">3+</option>
+                <option value="4">4+</option>
+                <option value="5">5+</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-muted-foreground mb-1.5">Ordenar por</label>
+              <select
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                value={`${filters.sortBy}_${filters.sortOrder}`}
+                onChange={e => {
+                  const [sb, so] = e.target.value.split('_')
+                  setFilters(f => ({ ...f, sortBy: sb, sortOrder: so }))
+                }}
+              >
+                <option value="createdAt_desc">Mais recentes</option>
+                <option value="createdAt_asc">Mais antigos</option>
+                <option value="price_asc">Menor preço</option>
+                <option value="price_desc">Maior preço</option>
+                <option value="views_desc">Mais visitados</option>
+                <option value="updatedAt_desc">Última atualização</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-muted-foreground mb-1.5">Área mín. (m²)</label>
+              <Input
+                type="number"
+                placeholder="0"
+                value={filters.minArea}
+                onChange={e => handleFieldChange('minArea', e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-muted-foreground mb-1.5">Área máx. (m²)</label>
+              <Input
+                type="number"
+                placeholder="Sem limite"
+                value={filters.maxArea}
+                onChange={e => handleFieldChange('maxArea', e.target.value)}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Active filter chips */}
+        {activeCount > 0 && (
+          <div className="flex flex-wrap gap-1.5 pt-2">
+            {appliedFilters.search && (
+              <FilterChip label={`"${appliedFilters.search}"`} onRemove={() => { const f = { ...filters, search: '' }; setFilters(f); applyFilters(f) }} />
+            )}
+            {appliedFilters.status && (
+              <FilterChip label={STATUS_LABELS[appliedFilters.status] ?? appliedFilters.status} onRemove={() => { const f = { ...filters, status: '' }; setFilters(f); applyFilters(f) }} />
+            )}
+            {appliedFilters.purpose && (
+              <FilterChip label={PURPOSE_LABELS[appliedFilters.purpose] ?? appliedFilters.purpose} onRemove={() => { const f = { ...filters, purpose: '' }; setFilters(f); applyFilters(f) }} />
+            )}
+            {appliedFilters.type && (
+              <FilterChip label={TYPE_LABELS[appliedFilters.type] ?? appliedFilters.type} onRemove={() => { const f = { ...filters, type: '' }; setFilters(f); applyFilters(f) }} />
+            )}
+            {appliedFilters.city && (
+              <FilterChip label={appliedFilters.city} onRemove={() => { const f = { ...filters, city: '' }; setFilters(f); applyFilters(f) }} />
+            )}
+            {appliedFilters.neighborhood && (
+              <FilterChip label={appliedFilters.neighborhood} onRemove={() => { const f = { ...filters, neighborhood: '' }; setFilters(f); applyFilters(f) }} />
+            )}
+            {appliedFilters.minPrice && (
+              <FilterChip label={`≥ ${formatCurrency(Number(appliedFilters.minPrice))}`} onRemove={() => { const f = { ...filters, minPrice: '' }; setFilters(f); applyFilters(f) }} />
+            )}
+            {appliedFilters.maxPrice && (
+              <FilterChip label={`≤ ${formatCurrency(Number(appliedFilters.maxPrice))}`} onRemove={() => { const f = { ...filters, maxPrice: '' }; setFilters(f); applyFilters(f) }} />
+            )}
+            {appliedFilters.bedrooms && (
+              <FilterChip label={`${appliedFilters.bedrooms}+ quartos`} onRemove={() => { const f = { ...filters, bedrooms: '' }; setFilters(f); applyFilters(f) }} />
+            )}
+          </div>
+        )}
+      </form>
 
       {/* Grid */}
       {isLoading ? (
@@ -125,9 +401,9 @@ export default function PropertiesPage() {
           <Building2 className="h-16 w-16 text-muted-foreground/30 mb-4" />
           <h3 className="font-semibold text-lg">Nenhum imóvel encontrado</h3>
           <p className="text-muted-foreground text-sm mt-1">
-            {debouncedSearch ? 'Tente outro termo de busca' : 'Cadastre seu primeiro imóvel'}
+            {activeCount > 0 ? 'Tente ajustar os filtros' : 'Cadastre seu primeiro imóvel'}
           </p>
-          {!debouncedSearch && (
+          {activeCount === 0 && (
             <Link href="/dashboard/properties/new" className="mt-4">
               <Button>
                 <Plus className="h-4 w-4" />
@@ -148,31 +424,30 @@ export default function PropertiesPage() {
       {meta && meta.totalPages > 1 && (
         <div className="flex items-center justify-between pt-2">
           <p className="text-sm text-muted-foreground">
-            Página {meta.page} de {meta.totalPages}
+            Página {meta.page} de {meta.totalPages} · {meta.total} imóvel(is)
           </p>
           <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setPage((p) => p - 1)}
-              disabled={page === 1}
-            >
-              <ChevronLeft className="h-4 w-4" />
-              Anterior
+            <Button variant="outline" size="sm" onClick={() => setPage(p => p - 1)} disabled={page === 1}>
+              <ChevronLeft className="h-4 w-4" /> Anterior
             </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setPage((p) => p + 1)}
-              disabled={page === meta.totalPages}
-            >
-              Próxima
-              <ChevronRight className="h-4 w-4" />
+            <Button variant="outline" size="sm" onClick={() => setPage(p => p + 1)} disabled={page === meta.totalPages}>
+              Próxima <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
         </div>
       )}
     </div>
+  )
+}
+
+function FilterChip({ label, onRemove }: { label: string; onRemove: () => void }) {
+  return (
+    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary">
+      {label}
+      <button type="button" onClick={onRemove} className="hover:text-destructive transition-colors">
+        <X className="h-3 w-3" />
+      </button>
+    </span>
   )
 }
 
@@ -195,10 +470,10 @@ function PropertyCard({ property: p }: { property: PropertySummary }) {
               <Building2 className="h-12 w-12 text-muted-foreground/30" />
             </div>
           )}
-          {/* Badges */}
+          {/* Status badge */}
           <div className="absolute top-2 left-2 flex gap-1">
-            <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_COLORS[p.status] ?? STATUS_COLORS.inactive}`}>
-              {STATUS_LABELS[p.status] ?? p.status}
+            <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_COLORS[p.status?.toUpperCase()] ?? STATUS_COLORS.INACTIVE}`}>
+              {STATUS_LABELS[p.status?.toUpperCase()] ?? p.status}
             </span>
             {p.isFeatured && (
               <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-yellow-100 text-yellow-700">
@@ -214,11 +489,19 @@ function PropertyCard({ property: p }: { property: PropertySummary }) {
         </div>
 
         <CardContent className="p-4">
-          {/* Ref + type */}
-          <div className="flex items-center gap-2 mb-1">
+          {/* Ref + type + purpose */}
+          <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+            {p.reference && (
+              <span className="text-xs bg-muted px-1.5 py-0.5 rounded font-mono">
+                {p.reference}
+              </span>
+            )}
             <span className="text-xs text-muted-foreground">
-              {p.reference && `Ref. ${p.reference} · `}
-              {TYPE_LABELS[p.type] ?? p.type} · {PURPOSE_LABELS[p.purpose] ?? p.purpose}
+              {TYPE_LABELS[p.type?.toUpperCase()] ?? p.type}
+            </span>
+            <span className="text-xs text-muted-foreground">·</span>
+            <span className="text-xs text-muted-foreground">
+              {PURPOSE_LABELS[p.purpose?.toUpperCase()] ?? p.purpose}
             </span>
           </div>
 
@@ -237,17 +520,17 @@ function PropertyCard({ property: p }: { property: PropertySummary }) {
 
           {/* Features */}
           <div className="flex items-center gap-3 text-xs text-muted-foreground mb-3">
-            {p.bedrooms > 0 && (
+            {(p.bedrooms ?? 0) > 0 && (
               <span className="flex items-center gap-1">
                 <BedDouble className="h-3 w-3" /> {p.bedrooms}
               </span>
             )}
-            {p.bathrooms > 0 && (
+            {(p.bathrooms ?? 0) > 0 && (
               <span className="flex items-center gap-1">
                 <Bath className="h-3 w-3" /> {p.bathrooms}
               </span>
             )}
-            {p.parkingSpaces > 0 && (
+            {(p.parkingSpaces ?? 0) > 0 && (
               <span className="flex items-center gap-1">
                 <Car className="h-3 w-3" /> {p.parkingSpaces}
               </span>
@@ -261,13 +544,16 @@ function PropertyCard({ property: p }: { property: PropertySummary }) {
           <div className="border-t pt-3">
             {p.price && (
               <p className="font-bold text-primary">
-                {formatCurrency(p.price)}
+                {formatCurrency(Number(p.price))}
               </p>
             )}
             {p.priceRent && (
               <p className={`text-sm font-semibold ${p.price ? 'text-muted-foreground' : 'text-primary'}`}>
-                {formatCurrency(p.priceRent)}/mês
+                {formatCurrency(Number(p.priceRent))}/mês
               </p>
+            )}
+            {!p.price && !p.priceRent && (
+              <p className="text-sm text-muted-foreground italic">Consulte o valor</p>
             )}
           </div>
         </CardContent>

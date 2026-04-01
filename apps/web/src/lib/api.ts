@@ -359,11 +359,15 @@ export interface PropertyFilters {
   search?: string
   type?: string
   purpose?: string
+  status?: string
   city?: string
   neighborhood?: string
+  state?: string
   minPrice?: number
   maxPrice?: number
   bedrooms?: number
+  minArea?: number
+  maxArea?: number
   sortBy?: string
   sortOrder?: string
 }

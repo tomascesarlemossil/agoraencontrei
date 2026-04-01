@@ -15,6 +15,8 @@ const PublicFilters = z.object({
   maxPrice:     z.coerce.number().optional(),
   bedrooms:     z.coerce.number().int().optional(),
   minArea:      z.coerce.number().optional(),
+  maxArea:      z.coerce.number().optional(),
+  bathrooms:    z.coerce.number().int().optional(),
   isFeatured:   z.coerce.boolean().optional(),
   sortBy:       z.enum(['createdAt', 'price', 'priceRent', 'views']).default('createdAt'),
   sortOrder:    z.enum(['asc', 'desc']).default('desc'),
@@ -114,6 +116,7 @@ export default async function publicRoutes(app: FastifyInstance) {
           { description:  { contains: filters.search, mode: 'insensitive' } },
           { neighborhood: { contains: filters.search, mode: 'insensitive' } },
           { city:         { contains: filters.search, mode: 'insensitive' } },
+          { reference:    { contains: filters.search, mode: 'insensitive' } },
         ],
       }),
       ...(filters.type         && { type:    filters.type.toUpperCase() }),
@@ -121,15 +124,29 @@ export default async function publicRoutes(app: FastifyInstance) {
       ...(filters.city         && { city:    { equals: filters.city,         mode: 'insensitive' } }),
       ...(filters.neighborhood && { neighborhood: { equals: filters.neighborhood, mode: 'insensitive' } }),
       ...(filters.state        && { state:   { equals: filters.state,        mode: 'insensitive' } }),
-      ...(filters.bedrooms     && { bedrooms: { gte: filters.bedrooms } }),
-      ...(filters.minArea      && { totalArea: { gte: filters.minArea } }),
-      ...(filters.isFeatured   && { isFeatured: true }),
+      ...(filters.bedrooms  && { bedrooms:  { gte: filters.bedrooms } }),
+      ...(filters.bathrooms && { bathrooms: { gte: filters.bathrooms } }),
+      ...(filters.minArea   && { totalArea: { gte: filters.minArea } }),
+      ...(filters.maxArea   && { totalArea: { lte: filters.maxArea } }),
+      ...(filters.isFeatured && { isFeatured: true }),
     }
 
+    // Price filter: use priceRent for RENT, price for SALE, or both fields for unspecified
     if (filters.minPrice || filters.maxPrice) {
-      where.price = {
+      const priceRange = {
         ...(filters.minPrice && { gte: filters.minPrice }),
         ...(filters.maxPrice && { lte: filters.maxPrice }),
+      }
+      if (filters.purpose === 'RENT') {
+        where.priceRent = priceRange
+      } else if (filters.purpose === 'SALE') {
+        where.price = priceRange
+      } else {
+        where.OR = [
+          ...(where.OR ?? []),
+          { price: priceRange },
+          { priceRent: priceRange },
+        ]
       }
     }
 

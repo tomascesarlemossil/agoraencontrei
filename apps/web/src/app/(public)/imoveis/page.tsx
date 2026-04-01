@@ -31,6 +31,9 @@ interface SearchParams {
   minPrice?: string
   maxPrice?: string
   bedrooms?: string
+  minArea?: string
+  maxArea?: string
+  bathrooms?: string
   sortBy?: string
   view?: string
 }
@@ -45,8 +48,11 @@ async function fetchProperties(params: SearchParams) {
   if (params.neighborhood) qs.set('neighborhood', params.neighborhood)
   if (params.minPrice) qs.set('minPrice', params.minPrice)
   if (params.maxPrice) qs.set('maxPrice', params.maxPrice)
-  if (params.bedrooms) qs.set('bedrooms', params.bedrooms)
-  if (params.sortBy)   qs.set('sortBy', params.sortBy)
+  if (params.bedrooms)  qs.set('bedrooms', params.bedrooms)
+  if (params.minArea)   qs.set('minArea', params.minArea)
+  if (params.maxArea)   qs.set('maxArea', params.maxArea)
+  if (params.bathrooms) qs.set('bathrooms', params.bathrooms)
+  if (params.sortBy)    qs.set('sortBy', params.sortBy)
   qs.set('limit', '48')
 
   try {
