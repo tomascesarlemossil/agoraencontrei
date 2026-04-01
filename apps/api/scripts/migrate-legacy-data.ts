@@ -413,7 +413,7 @@ async function stepC(companyId: string) {
         const rows: any[] = []
 
         for (const r of chunk) {
-          const dateStr = r.DATALAN?.trim()
+          const dateStr = String(r.DATALAN ?? '').trim()
           if (!dateStr || dateStr.length < 8) { skipped2++; continue }
 
           const y = parseInt(dateStr.slice(0, 4), 10)
@@ -423,18 +423,20 @@ async function stepC(companyId: string) {
           const transactionDate = new Date(y, m - 1, d)
           if (isNaN(transactionDate.getTime())) { skipped2++; continue }
 
-          const amount = parseFloat(r.VALOR?.trim() || '0')
+          const amount = parseFloat(String(r.VALOR ?? '0').trim() || '0')
           if (!amount) { skipped2++; continue }
 
-          const debcred    = r.DEBCRED?.trim()
+          const debcred    = String(r.DEBCRED ?? '').trim()
           const type       = debcred === 'C' ? 'INCOME' : 'EXPENSE'
-          const contractId = r.CODCON?.trim() ? (contractMap.get(r.CODCON.trim()) ?? null) : null
-          const desc       = [r.DESCRICAO?.trim(), r.NOTA?.trim()].filter(Boolean).join(' — ') || null
-          const category   = TIPOLAN_CATEGORY[r.TIPOLAN?.trim() ?? ''] ?? r.TIPOLAN?.trim() ?? null
+          const codcon     = String(r.CODCON ?? '').trim()
+          const contractId = codcon ? (contractMap.get(codcon) ?? null) : null
+          const desc       = [String(r.DESCRICAO ?? '').trim(), String(r.NOTA ?? '').trim()].filter(Boolean).join(' — ') || null
+          const tipolanStr = String(r.TIPOLAN ?? '').trim()
+          const category   = TIPOLAN_CATEGORY[tipolanStr] ?? tipolanStr ?? null
 
           rows.push({
             companyId,
-            legacyId:        r.CODLAN?.trim() || null,
+            legacyId:        String(r.CODLAN ?? '').trim() || null,
             transactionDate,
             amount,
             type,
