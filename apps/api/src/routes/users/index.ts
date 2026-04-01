@@ -87,9 +87,13 @@ export default async function usersRoutes(app: FastifyInstance) {
     preHandler: [app.authenticate],
     schema: { tags: ['users'], summary: 'Get company info' },
   }, async (req, reply) => {
-    const company = await app.prisma.company.findUnique({ where: { id: req.user.cid } })
-    if (!company) return reply.status(404).send({ error: 'NOT_FOUND' })
-    return reply.send(company)
+    // Use user→company relation (same as auth/me) to avoid direct company lookup issues
+    const user = await app.prisma.user.findUnique({
+      where: { id: req.user.sub },
+      include: { company: true },
+    })
+    if (!user?.company) return reply.status(404).send({ error: 'NOT_FOUND' })
+    return reply.send(user.company)
   })
 
   // PATCH /api/v1/users/company — update own company info (admin only)
