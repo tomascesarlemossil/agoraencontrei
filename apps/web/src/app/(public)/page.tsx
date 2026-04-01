@@ -4,6 +4,7 @@ import Image from 'next/image'
 import { Search, BedDouble, Bath, Car, Maximize, ArrowRight, Star, Shield, Clock, TrendingUp } from 'lucide-react'
 import { HeroSearchForm } from './HeroSearchForm'
 import { HeroBackground } from './HeroBackground'
+import { SmartQuiz } from './SmartQuiz'
 
 export const metadata: Metadata = {
   title: 'Imobiliária Lemos — Franca/SP | Comprar, Alugar e Avaliar Imóveis',
@@ -262,6 +263,9 @@ export default async function HomePage() {
           </div>
         </section>
       )}
+
+      {/* ── SMART QUIZ ──────────────────────────────────────────────── */}
+      <SmartQuiz />
 
       {/* ── WHY LEMOS ───────────────────────────────────────────────── */}
       <section style={{ backgroundColor: '#1B2B5B' }} className="py-16">
