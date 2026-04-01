@@ -12,7 +12,11 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
 import { Controller, useForm } from 'react-hook-form'
-import { ArrowLeft, Edit, Save, X, MapPin, BedDouble, Bath, Car, Ruler, Eye, Calendar, ImagePlus, Trash2, Star, Upload, Phone, Mail, User, ZoomIn } from 'lucide-react'
+import {
+  ArrowLeft, Edit, Save, X, MapPin, BedDouble, Bath, Car, Ruler, Eye,
+  Calendar, ImagePlus, Trash2, Star, Upload, Phone, Mail, User, ZoomIn,
+  Home, Globe, Settings, Shield, Briefcase, Building2,
+} from 'lucide-react'
 import Link from 'next/link'
 import { useState, useRef } from 'react'
 import { cn } from '@/lib/utils'
@@ -30,8 +34,8 @@ const STATUS_BADGE: Record<string, string> = {
 }
 
 const TYPE_LABELS: Record<string, string> = {
-  HOUSE:'Casa', APARTMENT:'Apartamento', LAND:'Terreno', FARM:'Fazenda',
-  RANCH:'Sítio', WAREHOUSE:'Galpão', OFFICE:'Escritório', STORE:'Loja',
+  HOUSE:'Casa', APARTMENT:'Apartamento', LAND:'Terreno', FARM:'Chácara/Sítio',
+  RANCH:'Rancho', WAREHOUSE:'Galpão', OFFICE:'Escritório', STORE:'Loja/Comercial',
   STUDIO:'Studio', PENTHOUSE:'Cobertura', CONDO:'Condomínio', KITNET:'Kitnet',
 }
 const PURPOSE_LABELS: Record<string, string> = {
@@ -39,6 +43,22 @@ const PURPOSE_LABELS: Record<string, string> = {
 }
 
 const STATUSES = [['ACTIVE','Ativo'],['INACTIVE','Inativo'],['SOLD','Vendido'],['RENTED','Alugado'],['PENDING','Pendente'],['DRAFT','Rascunho']]
+const TYPES = Object.entries(TYPE_LABELS)
+const PURPOSES = Object.entries(PURPOSE_LABELS)
+const CATEGORIES = [['RESIDENTIAL','Residencial'],['COMMERCIAL','Comercial'],['RURAL','Rural'],['INDUSTRIAL','Industrial']]
+const STANDARDS = [['','Padrão'],['SIMPLE','Simples'],['NORMAL','Normal'],['HIGH','Alto'],['LUXURY','Luxo']]
+const CURRENT_STATES = [['','Estado Atual'],['VACANT','Desocupado'],['OCCUPIED_OWNER','Ocupado Proprietário'],['OCCUPIED_TENANT','Ocupado Inquilino'],['UNDER_CONSTRUCTION','Em Construção']]
+const KEY_LOCATIONS = [['','Local das Chaves'],['NOT_INFORMED','Não informado'],['OFFICE','Escritório'],['OWNER','Com o Proprietário'],['ONSITE','No Local']]
+const FACES = [['','Face'],['NORTH','Norte'],['SOUTH','Sul'],['EAST','Leste'],['WEST','Oeste'],['NORTHEAST','Nordeste'],['NORTHWEST','Noroeste'],['SOUTHEAST','Sudeste'],['SOUTHWEST','Sudoeste']]
+
+const TABS = [
+  { id: 'cadastro',    label: 'Cadastro',    icon: Home },
+  { id: 'localizacao', label: 'Localização', icon: MapPin },
+  { id: 'detalhes',    label: 'Detalhes',    icon: Settings },
+  { id: 'anuncios',    label: 'Anúncios',    icon: Globe },
+  { id: 'captacao',    label: 'Captação',    icon: Briefcase },
+  { id: 'confidencial',label: 'Confidencial',icon: Shield },
+]
 
 function fmt(v?: number | null) {
   if (!v) return null
@@ -54,12 +74,53 @@ function Stat({ icon: Icon, label }: { icon: React.ComponentType<any>; label: st
   )
 }
 
+function FieldRow({ children }: { children: React.ReactNode }) {
+  return <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">{children}</div>
+}
+
+function Field({ label, children, span }: { label: string; children: React.ReactNode; span?: string }) {
+  return (
+    <div className={cn("space-y-1.5", span)}>
+      <Label className="text-white/60 text-xs">{label}</Label>
+      {children}
+    </div>
+  )
+}
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="bg-white/5 rounded-xl border border-white/10 p-5 space-y-4">
+      <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider">{title}</h3>
+      {children}
+    </div>
+  )
+}
+
+function CheckField({ label, checked, onChange }: { label: string; checked: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <label className="flex items-center gap-2 cursor-pointer">
+      <input type="checkbox" checked={checked} onChange={e => onChange(e.target.checked)}
+        className="w-4 h-4 rounded border-white/20 bg-white/5 text-blue-500 cursor-pointer" />
+      <span className="text-sm text-white/70">{label}</span>
+    </label>
+  )
+}
+
+function NumInput({ reg, label, span }: { reg: any; label: string; span?: string }) {
+  return (
+    <Field label={label} span={span}>
+      <Input {...reg} type="number" min={0} className="bg-white/5 border-white/10 text-white h-9" />
+    </Field>
+  )
+}
+
 export default function PropertyDetailPage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
   const qc = useQueryClient()
   const { getValidToken } = useAuth()
   const [editing, setEditing] = useState(false)
+  const [activeTab, setActiveTab] = useState('cadastro')
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
 
   const { data: property, isLoading } = useQuery<PropertyDetail>({
@@ -70,30 +131,102 @@ export default function PropertyDetailPage() {
     },
   })
 
+  const p = property as any
+
   const { register, handleSubmit, control, reset, watch, setValue } = useForm({
-    values: property ? {
-      title: property.title,
-      status: property.status,
-      price: property.price ?? '',
-      priceRent: property.priceRent ?? '',
-      description: property.description ?? '',
-      neighborhood: property.neighborhood ?? '',
-      city: property.city ?? '',
-      state: property.state ?? '',
-      bedrooms: property.bedrooms,
-      suites: property.suites ?? 0,
-      bathrooms: property.bathrooms,
-      parkingSpaces: property.parkingSpaces,
-      totalArea: property.totalArea ?? '',
-      builtArea: property.builtArea ?? '',
-      landArea: property.landArea ?? '',
-      yearBuilt: property.yearBuilt ?? '',
-      condoFee: property.condoFee ?? '',
-      iptu: property.iptu ?? '',
-      latitude: property.latitude ?? '',
-      longitude: property.longitude ?? '',
-      features: property.features ?? [],
-      videoUrl: property.videoUrl ?? '',
+    values: p ? {
+      // Cadastro
+      title: p.title ?? '',
+      type: p.type ?? 'HOUSE',
+      purpose: p.purpose ?? 'SALE',
+      category: p.category ?? 'RESIDENTIAL',
+      status: p.status ?? 'ACTIVE',
+      currentState: p.currentState ?? '',
+      occupation: p.occupation ?? '',
+      standard: p.standard ?? '',
+      auxReference: p.auxReference ?? '',
+      description: p.description ?? '',
+      descriptionInternal: p.descriptionInternal ?? '',
+      videoUrl: p.videoUrl ?? '',
+      virtualTourUrl: p.virtualTourUrl ?? '',
+      // Pricing
+      price: p.price ?? '',
+      priceRent: p.priceRent ?? '',
+      pricePromo: p.pricePromo ?? '',
+      pricePerM2: p.pricePerM2 ?? '',
+      condoFee: p.condoFee ?? '',
+      iptu: p.iptu ?? '',
+      allowExchange: p.allowExchange ?? false,
+      valueUnderConsultation: p.valueUnderConsultation ?? false,
+      priceNegotiable: p.priceNegotiable ?? false,
+      isFeatured: p.isFeatured ?? false,
+      // Location
+      zipCode: p.zipCode ?? '',
+      street: p.street ?? '',
+      number: p.number ?? '',
+      complement: p.complement ?? '',
+      neighborhood: p.neighborhood ?? '',
+      commercialNeighborhood: p.commercialNeighborhood ?? '',
+      city: p.city ?? '',
+      state: p.state ?? '',
+      country: p.country ?? 'BR',
+      region: p.region ?? '',
+      referencePoint: p.referencePoint ?? '',
+      latitude: p.latitude ?? '',
+      longitude: p.longitude ?? '',
+      closedCondo: p.closedCondo ?? false,
+      condoName: p.condoName ?? '',
+      adminCompany: p.adminCompany ?? '',
+      constructionCompany: p.constructionCompany ?? '',
+      signOnSite: p.signOnSite ?? false,
+      // Details - rooms
+      bedrooms: p.bedrooms ?? 0,
+      suites: p.suites ?? 0,
+      suitesWithCloset: p.suitesWithCloset ?? 0,
+      demiSuites: p.demiSuites ?? 0,
+      bathrooms: p.bathrooms ?? 0,
+      rooms: p.rooms ?? 0,
+      livingRooms: p.livingRooms ?? 0,
+      diningRooms: p.diningRooms ?? 0,
+      tvRooms: p.tvRooms ?? 0,
+      parkingSpaces: p.parkingSpaces ?? 0,
+      garagesCovered: p.garagesCovered ?? 0,
+      garagesOpen: p.garagesOpen ?? 0,
+      elevators: p.elevators ?? 0,
+      totalFloors: p.totalFloors ?? '',
+      floor: p.floor ?? '',
+      // Details - areas
+      totalArea: p.totalArea ?? '',
+      builtArea: p.builtArea ?? '',
+      landArea: p.landArea ?? '',
+      commonArea: p.commonArea ?? '',
+      ceilingHeight: p.ceilingHeight ?? '',
+      landDimensions: p.landDimensions ?? '',
+      landFace: p.landFace ?? '',
+      sunExposure: p.sunExposure ?? '',
+      position: p.position ?? '',
+      yearBuilt: p.yearBuilt ?? '',
+      yearLastReformed: p.yearLastReformed ?? '',
+      features: p.features ?? [],
+      // SEO
+      metaTitle: p.metaTitle ?? '',
+      metaDescription: p.metaDescription ?? '',
+      // Captação
+      captorName: p.captorName ?? '',
+      captorCommissionPct: p.captorCommissionPct ?? '',
+      exclusivityContract: p.exclusivityContract ?? false,
+      commercialConditions: p.commercialConditions ?? '',
+      keyLocation: p.keyLocation ?? '',
+      // Confidencial
+      cib: p.cib ?? '',
+      iptuRegistration: p.iptuRegistration ?? '',
+      cartorioMatricula: p.cartorioMatricula ?? '',
+      electricityInfo: p.electricityInfo ?? '',
+      waterInfo: p.waterInfo ?? '',
+      documentationPending: p.documentationPending ?? false,
+      documentationNotes: p.documentationNotes ?? '',
+      isReserved: p.isReserved ?? false,
+      authorizedPublish: p.authorizedPublish ?? false,
     } : undefined,
   })
 
@@ -142,8 +275,8 @@ export default function PropertyDetailPage() {
         const { url } = await uploadApi.upload(token!, file)
         urls.push(url)
       }
-      const existing = property?.images ?? []
-      const cover = property?.coverImage ?? urls[0]
+      const existing = p?.images ?? []
+      const cover = p?.coverImage ?? urls[0]
       await saveImages(cover, [...existing, ...urls])
     } catch (e: any) {
       alert(e.message || 'Erro ao fazer upload')
@@ -157,44 +290,38 @@ export default function PropertyDetailPage() {
     const url = urlInput.trim()
     setUrlInput('')
     setShowUrlInput(false)
-    const existing = property?.images ?? []
-    const cover = property?.coverImage ?? url
+    const existing = p?.images ?? []
+    const cover = p?.coverImage ?? url
     await saveImages(cover, [...existing, url])
-  }
-
-  const handleSetCover = async (url: string) => {
-    await saveImages(url, property?.images ?? [])
-  }
-
-  const handleRemoveImage = async (url: string) => {
-    const newImages = (property?.images ?? []).filter((u: string) => u !== url)
-    const newCover = property?.coverImage === url ? newImages[0] : property?.coverImage
-    await saveImages(newCover, newImages)
   }
 
   if (isLoading) return <div className="p-6 text-white/40 text-center py-20">Carregando...</div>
   if (!property) return <div className="p-6 text-red-400 text-center py-20">Imóvel não encontrado</div>
 
+  const allPhotos = [...(p.coverImage ? [p.coverImage] : []), ...(p.images ?? []).filter((u: string) => u !== p.coverImage)]
+
   return (
-    <div className="p-6 max-w-4xl mx-auto space-y-6">
+    <div className="p-4 sm:p-6 max-w-5xl mx-auto space-y-5">
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
-        <div className="flex items-start gap-4">
+        <div className="flex items-start gap-3">
           <Link href="/dashboard/properties">
-            <Button variant="ghost" size="icon" className="text-white/60 hover:text-white mt-1">
+            <Button variant="ghost" size="icon" className="text-white/60 hover:text-white mt-1 h-8 w-8">
               <ArrowLeft className="h-4 w-4" />
             </Button>
           </Link>
           <div>
             <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="text-xl font-bold text-white">{property.title}</h1>
-              <Badge className={cn('border-0 text-xs', STATUS_BADGE[property.status] ?? 'bg-white/10 text-white/40')}>
-                {property.status}
+              <h1 className="text-lg font-bold text-white leading-tight">{p.title}</h1>
+              <Badge className={cn('border-0 text-xs', STATUS_BADGE[p.status] ?? 'bg-white/10 text-white/40')}>
+                {STATUSES.find(s => s[0] === p.status)?.[1] ?? p.status}
               </Badge>
+              {p.isFeatured && <Badge className="border-0 text-xs bg-yellow-500/20 text-yellow-400">★ Destaque</Badge>}
             </div>
-            <p className="text-white/40 text-sm mt-1">
-              {TYPE_LABELS[property.type] ?? property.type} · {PURPOSE_LABELS[property.purpose] ?? property.purpose}
-              {property.reference ? ` · Ref: ${property.reference}` : ''}
+            <p className="text-white/40 text-sm mt-0.5">
+              {TYPE_LABELS[p.type] ?? p.type} · {PURPOSE_LABELS[p.purpose] ?? p.purpose}
+              {p.reference ? ` · Ref: ${p.reference}` : ''}
+              {p.externalId ? ` · ID Internet: ${p.externalId}` : ''}
             </p>
           </div>
         </div>
@@ -202,21 +329,26 @@ export default function PropertyDetailPage() {
           {!editing ? (
             <>
               <Button variant="outline" size="sm" onClick={() => setEditing(true)}
-                className="border-white/20 text-white/70 hover:text-white gap-2">
+                className="border-white/20 text-white/70 hover:text-white gap-2 h-8">
                 <Edit className="h-3.5 w-3.5" /> Editar
               </Button>
-              <Button variant="ghost" size="sm" onClick={() => deleteMutation.mutate()}
-                className="text-red-400 hover:bg-red-500/10 hover:text-red-300"
+              <Link href={`/imoveis/${p.slug}`} target="_blank">
+                <Button variant="ghost" size="sm" className="text-white/50 hover:text-white gap-1.5 h-8">
+                  <Eye className="h-3.5 w-3.5" /> Ver no site
+                </Button>
+              </Link>
+              <Button variant="ghost" size="sm" onClick={() => { if (confirm('Desativar este imóvel?')) deleteMutation.mutate() }}
+                className="text-red-400 hover:bg-red-500/10 hover:text-red-300 h-8"
                 disabled={deleteMutation.isPending}>
-                {deleteMutation.isPending ? '...' : <X className="h-4 w-4" />}
+                <X className="h-4 w-4" />
               </Button>
             </>
           ) : (
             <>
               <Button variant="ghost" size="sm" onClick={() => { setEditing(false); reset() }}
-                className="text-white/60">Cancelar</Button>
+                className="text-white/60 h-8">Cancelar</Button>
               <Button size="sm" onClick={handleSubmit((d) => updateMutation.mutate(d))}
-                disabled={updateMutation.isPending} className="gap-2">
+                disabled={updateMutation.isPending} className="gap-2 h-8">
                 <Save className="h-3.5 w-3.5" />
                 {updateMutation.isPending ? 'Salvando...' : 'Salvar'}
               </Button>
@@ -225,261 +357,539 @@ export default function PropertyDetailPage() {
         </div>
       </div>
 
+      {/* ── PHOTOS section (always visible) ──────────────────────────────── */}
+      <div className="bg-white/5 rounded-xl border border-white/10 p-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider">
+            Fotos ({allPhotos.length})
+          </h3>
+          <div className="flex gap-2">
+            <button onClick={() => setShowUrlInput(v => !v)}
+              className="flex items-center gap-1.5 text-xs text-white/50 hover:text-white transition-colors px-2 py-1 rounded-lg hover:bg-white/10">
+              <ImagePlus className="h-3.5 w-3.5" /> URL
+            </button>
+            <button onClick={() => fileInputRef.current?.click()} disabled={uploadingImages}
+              className="flex items-center gap-1.5 text-xs text-white/50 hover:text-white transition-colors px-2 py-1 rounded-lg hover:bg-white/10 disabled:opacity-40">
+              <Upload className="h-3.5 w-3.5" /> {uploadingImages ? 'Enviando...' : 'Upload'}
+            </button>
+            <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden"
+              onChange={(e) => handleFileUpload(e.target.files)} />
+          </div>
+        </div>
+        {showUrlInput && (
+          <div className="flex gap-2">
+            <input value={urlInput} onChange={e => setUrlInput(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handleAddUrl()}
+              placeholder="Cole a URL da imagem (https://...)"
+              className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-1 focus:ring-white/20" />
+            <button onClick={handleAddUrl} className="px-3 py-1.5 bg-white/10 rounded-lg text-xs text-white hover:bg-white/20 transition-colors">
+              Adicionar
+            </button>
+          </div>
+        )}
+        {allPhotos.length === 0 ? (
+          <div className="py-6 text-center text-white/30 text-sm">
+            <ImagePlus className="h-7 w-7 mx-auto mb-2 opacity-30" />
+            Nenhuma foto. Adicione por URL ou upload.
+          </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2">
+              {allPhotos.map((url: string, idx: number) => (
+                <div key={url} className="relative group rounded-lg overflow-hidden aspect-video bg-white/5">
+                  <img src={url} alt="" className="w-full h-full object-cover" />
+                  {url === p.coverImage && (
+                    <div className="absolute top-1 left-1 bg-[#C9A84C] text-[#1B2B5B] text-[10px] font-bold px-1 py-0.5 rounded flex items-center gap-0.5">
+                      <Star className="h-2 w-2 fill-current" /> Capa
+                    </div>
+                  )}
+                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5">
+                    <button onClick={() => setLightboxIndex(idx)}
+                      className="p-1 bg-white/20 rounded hover:bg-white/30 text-white">
+                      <ZoomIn className="h-3 w-3" />
+                    </button>
+                    {url !== p.coverImage && (
+                      <button onClick={async () => await saveImages(url, p.images ?? [])}
+                        className="text-[10px] bg-[#C9A84C] text-[#1B2B5B] px-1.5 py-0.5 rounded font-semibold">
+                        Capa
+                      </button>
+                    )}
+                    <button onClick={async () => {
+                      const imgs = (p.images ?? []).filter((u: string) => u !== url)
+                      const cover = p.coverImage === url ? imgs[0] : p.coverImage
+                      await saveImages(cover, imgs)
+                    }} className="p-1 bg-red-500/80 rounded hover:bg-red-500 text-white">
+                      <Trash2 className="h-3 w-3" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+            {lightboxIndex !== null && (
+              <PropertyImageLightbox images={allPhotos} startIndex={lightboxIndex}
+                title={p.title} onClose={() => setLightboxIndex(null)} />
+            )}
+          </>
+        )}
+      </div>
+
+      {/* ── TABS ─────────────────────────────────────────────────────────── */}
       {editing ? (
-        /* Edit Form */
         <div className="space-y-4">
-          {/* Identificação */}
-          <div className="bg-white/5 rounded-xl border border-white/10 p-5 space-y-4">
-            <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider">Identificação</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="col-span-full space-y-1.5">
-                <Label className="text-white/70">Título</Label>
-                <Input {...register('title')} className="bg-white/5 border-white/10 text-white" />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-white/70">Status</Label>
-                <Controller name="status" control={control} render={({ field }) => (
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger className="bg-white/5 border-white/10 text-white"><SelectValue /></SelectTrigger>
-                    <SelectContent>{STATUSES.map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}</SelectContent>
-                  </Select>
+          {/* Tab navigation */}
+          <div className="flex gap-1 bg-white/5 rounded-xl p-1 overflow-x-auto">
+            {TABS.map(tab => (
+              <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+                className={cn(
+                  'flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold whitespace-nowrap transition-all',
+                  activeTab === tab.id
+                    ? 'bg-white/15 text-white'
+                    : 'text-white/40 hover:text-white/70'
+                )}>
+                <tab.icon className="h-3.5 w-3.5" />
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {/* ── TAB: CADASTRO ─────────────────────────────────────────── */}
+          {activeTab === 'cadastro' && (
+            <div className="space-y-4">
+              <Section title="Identificação">
+                <Field label="Título do imóvel" span="col-span-full sm:col-span-2">
+                  <Input {...register('title')} className="bg-white/5 border-white/10 text-white" />
+                </Field>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  <Field label="Tipo">
+                    <Controller name="type" control={control} render={({ field }) => (
+                      <Select value={field.value} onValueChange={field.onChange}>
+                        <SelectTrigger className="bg-white/5 border-white/10 text-white h-9"><SelectValue /></SelectTrigger>
+                        <SelectContent>{TYPES.map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}</SelectContent>
+                      </Select>
+                    )} />
+                  </Field>
+                  <Field label="Finalidade">
+                    <Controller name="purpose" control={control} render={({ field }) => (
+                      <Select value={field.value} onValueChange={field.onChange}>
+                        <SelectTrigger className="bg-white/5 border-white/10 text-white h-9"><SelectValue /></SelectTrigger>
+                        <SelectContent>{PURPOSES.map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}</SelectContent>
+                      </Select>
+                    )} />
+                  </Field>
+                  <Field label="Categoria">
+                    <Controller name="category" control={control} render={({ field }) => (
+                      <Select value={field.value} onValueChange={field.onChange}>
+                        <SelectTrigger className="bg-white/5 border-white/10 text-white h-9"><SelectValue /></SelectTrigger>
+                        <SelectContent>{CATEGORIES.map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}</SelectContent>
+                      </Select>
+                    )} />
+                  </Field>
+                  <Field label="Situação">
+                    <Controller name="status" control={control} render={({ field }) => (
+                      <Select value={field.value} onValueChange={field.onChange}>
+                        <SelectTrigger className="bg-white/5 border-white/10 text-white h-9"><SelectValue /></SelectTrigger>
+                        <SelectContent>{STATUSES.map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}</SelectContent>
+                      </Select>
+                    )} />
+                  </Field>
+                  <Field label="Estado Atual">
+                    <Controller name="currentState" control={control} render={({ field }) => (
+                      <Select value={field.value || ''} onValueChange={field.onChange}>
+                        <SelectTrigger className="bg-white/5 border-white/10 text-white h-9"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                        <SelectContent>{CURRENT_STATES.map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}</SelectContent>
+                      </Select>
+                    )} />
+                  </Field>
+                  <Field label="Padrão">
+                    <Controller name="standard" control={control} render={({ field }) => (
+                      <Select value={field.value || ''} onValueChange={field.onChange}>
+                        <SelectTrigger className="bg-white/5 border-white/10 text-white h-9"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                        <SelectContent>{STANDARDS.map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}</SelectContent>
+                      </Select>
+                    )} />
+                  </Field>
+                  <Field label="Ref. Auxiliar">
+                    <Input {...register('auxReference')} className="bg-white/5 border-white/10 text-white h-9" />
+                  </Field>
+                </div>
+              </Section>
+
+              <Section title="Valores">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  <Field label="Preço Venda (R$)">
+                    <Input {...register('price')} type="number" className="bg-white/5 border-white/10 text-white h-9" />
+                  </Field>
+                  <Field label="Preço Aluguel (R$)">
+                    <Input {...register('priceRent')} type="number" className="bg-white/5 border-white/10 text-white h-9" />
+                  </Field>
+                  <Field label="Preço Promocional (R$)">
+                    <Input {...register('pricePromo')} type="number" className="bg-white/5 border-white/10 text-white h-9" />
+                  </Field>
+                  <Field label="Preço por M² (R$)">
+                    <Input {...register('pricePerM2')} type="number" className="bg-white/5 border-white/10 text-white h-9" />
+                  </Field>
+                  <Field label="Condomínio (R$)">
+                    <Input {...register('condoFee')} type="number" className="bg-white/5 border-white/10 text-white h-9" />
+                  </Field>
+                  <Field label="IPTU (R$/ano)">
+                    <Input {...register('iptu')} type="number" className="bg-white/5 border-white/10 text-white h-9" />
+                  </Field>
+                </div>
+                <div className="flex flex-wrap gap-6 pt-1">
+                  <Controller name="allowExchange" control={control} render={({ field }) => (
+                    <CheckField label="Aceita Permuta" checked={field.value} onChange={field.onChange} />
+                  )} />
+                  <Controller name="priceNegotiable" control={control} render={({ field }) => (
+                    <CheckField label="Valor Negociável" checked={field.value} onChange={field.onChange} />
+                  )} />
+                  <Controller name="valueUnderConsultation" control={control} render={({ field }) => (
+                    <CheckField label="Valor Sob Consulta" checked={field.value} onChange={field.onChange} />
+                  )} />
+                  <Controller name="isFeatured" control={control} render={({ field }) => (
+                    <CheckField label="Imóvel em Destaque" checked={field.value} onChange={field.onChange} />
+                  )} />
+                </div>
+              </Section>
+
+              <Section title="Descrição Pública">
+                <textarea {...register('description')} rows={5}
+                  className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white resize-none focus:outline-none focus:ring-2 focus:ring-ring placeholder:text-white/30"
+                  placeholder="Descrição que será publicada no site e portais..." />
+              </Section>
+
+              <Section title="Descrição Interna (não publicada)">
+                <textarea {...register('descriptionInternal')} rows={4}
+                  className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white resize-none focus:outline-none focus:ring-2 focus:ring-ring placeholder:text-white/30"
+                  placeholder="Informações internas, histórico, observações do corretor..." />
+                <p className="text-xs text-white/30">* Esta informação é de uso interno e NÃO será divulgada no site e portais.</p>
+              </Section>
+
+              <Section title="Vídeo e Tour Virtual">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Field label="Vídeo YouTube (URL ou ID)">
+                    <Input {...register('videoUrl')} placeholder="https://youtube.com/watch?v=..." className="bg-white/5 border-white/10 text-white h-9 placeholder:text-white/30" />
+                  </Field>
+                  <Field label="Tour Virtual (URL)">
+                    <Input {...register('virtualTourUrl')} placeholder="https://..." className="bg-white/5 border-white/10 text-white h-9 placeholder:text-white/30" />
+                  </Field>
+                </div>
+              </Section>
+            </div>
+          )}
+
+          {/* ── TAB: LOCALIZAÇÃO ──────────────────────────────────────── */}
+          {activeTab === 'localizacao' && (
+            <div className="space-y-4">
+              <Section title="Endereço">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  <Field label="CEP">
+                    <Input {...register('zipCode')} placeholder="00000-000" className="bg-white/5 border-white/10 text-white h-9" maxLength={9} />
+                  </Field>
+                  <Field label="Endereço" span="sm:col-span-2">
+                    <Input {...register('street')} className="bg-white/5 border-white/10 text-white h-9" />
+                  </Field>
+                  <Field label="Número">
+                    <Input {...register('number')} className="bg-white/5 border-white/10 text-white h-9" />
+                  </Field>
+                  <Field label="Complemento">
+                    <Input {...register('complement')} className="bg-white/5 border-white/10 text-white h-9" />
+                  </Field>
+                  <Field label="Bairro Comercial (exibido no site)">
+                    <Input {...register('commercialNeighborhood')} className="bg-white/5 border-white/10 text-white h-9" />
+                  </Field>
+                  <Field label="Bairro Oficial">
+                    <Input {...register('neighborhood')} className="bg-white/5 border-white/10 text-white h-9" />
+                  </Field>
+                  <Field label="Cidade">
+                    <Input {...register('city')} className="bg-white/5 border-white/10 text-white h-9" />
+                  </Field>
+                  <Field label="UF">
+                    <Input {...register('state')} maxLength={2} className="bg-white/5 border-white/10 text-white h-9 uppercase" placeholder="SP" />
+                  </Field>
+                  <Field label="País">
+                    <Input {...register('country')} className="bg-white/5 border-white/10 text-white h-9" defaultValue="BR" />
+                  </Field>
+                  <Field label="Região">
+                    <Input {...register('region')} className="bg-white/5 border-white/10 text-white h-9" />
+                  </Field>
+                  <Field label="Ponto de Referência" span="sm:col-span-2">
+                    <Input {...register('referencePoint')} className="bg-white/5 border-white/10 text-white h-9" />
+                  </Field>
+                </div>
+              </Section>
+
+              <Section title="Coordenadas GPS">
+                <div className="grid grid-cols-2 gap-4">
+                  <Field label="Latitude">
+                    <Input {...register('latitude')} type="number" step="any" placeholder="-20.123456" className="bg-white/5 border-white/10 text-white h-9" />
+                  </Field>
+                  <Field label="Longitude">
+                    <Input {...register('longitude')} type="number" step="any" placeholder="-47.654321" className="bg-white/5 border-white/10 text-white h-9" />
+                  </Field>
+                </div>
+              </Section>
+
+              <Section title="Condomínio / Empreendimento">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                  <Controller name="closedCondo" control={control} render={({ field }) => (
+                    <div className="col-span-full">
+                      <CheckField label="Condomínio Fechado" checked={field.value} onChange={field.onChange} />
+                    </div>
+                  )} />
+                  <Field label="Nome do Condomínio / Empreendimento" span="sm:col-span-2">
+                    <Input {...register('condoName')} className="bg-white/5 border-white/10 text-white h-9" />
+                  </Field>
+                  <Field label="Administradora">
+                    <Input {...register('adminCompany')} className="bg-white/5 border-white/10 text-white h-9" />
+                  </Field>
+                  <Field label="Construtora">
+                    <Input {...register('constructionCompany')} className="bg-white/5 border-white/10 text-white h-9" />
+                  </Field>
+                  <Controller name="signOnSite" control={control} render={({ field }) => (
+                    <div className="col-span-full">
+                      <CheckField label="Placa no local" checked={field.value} onChange={field.onChange} />
+                    </div>
+                  )} />
+                </div>
+              </Section>
+            </div>
+          )}
+
+          {/* ── TAB: DETALHES ─────────────────────────────────────────── */}
+          {activeTab === 'detalhes' && (
+            <div className="space-y-4">
+              <Section title="Cômodos">
+                <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-3">
+                  <NumInput reg={register('bedrooms')} label="Dormitórios" />
+                  <NumInput reg={register('suites')} label="Suítes" />
+                  <NumInput reg={register('suitesWithCloset')} label="Suítes c/ Closet" />
+                  <NumInput reg={register('demiSuites')} label="Demi-suítes" />
+                  <NumInput reg={register('bathrooms')} label="Banheiros" />
+                  <NumInput reg={register('rooms')} label="Salas (total)" />
+                  <NumInput reg={register('livingRooms')} label="Sala de Estar" />
+                  <NumInput reg={register('diningRooms')} label="Sala de Jantar" />
+                  <NumInput reg={register('tvRooms')} label="Salas de TV" />
+                  <NumInput reg={register('parkingSpaces')} label="Vagas (total)" />
+                  <NumInput reg={register('garagesCovered')} label="Gar. Cobertas" />
+                  <NumInput reg={register('garagesOpen')} label="Gar. Descobertas" />
+                  <NumInput reg={register('elevators')} label="Elevadores" />
+                  <NumInput reg={register('totalFloors')} label="Nº de Andares" />
+                  <NumInput reg={register('floor')} label="Andar" />
+                </div>
+              </Section>
+
+              <Section title="Áreas">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  <Field label="Área Construída (m²)">
+                    <Input {...register('builtArea')} type="number" step="0.01" className="bg-white/5 border-white/10 text-white h-9" />
+                  </Field>
+                  <Field label="Área Útil (m²)">
+                    <Input {...register('totalArea')} type="number" step="0.01" className="bg-white/5 border-white/10 text-white h-9" />
+                  </Field>
+                  <Field label="Área Total Terreno (m²)">
+                    <Input {...register('landArea')} type="number" step="0.01" className="bg-white/5 border-white/10 text-white h-9" />
+                  </Field>
+                  <Field label="Área Comum (m²)">
+                    <Input {...register('commonArea')} type="number" step="0.01" className="bg-white/5 border-white/10 text-white h-9" />
+                  </Field>
+                  <Field label="Pé Direto (m)">
+                    <Input {...register('ceilingHeight')} type="number" step="0.01" className="bg-white/5 border-white/10 text-white h-9" />
+                  </Field>
+                  <Field label="Dimensão Terreno">
+                    <Input {...register('landDimensions')} placeholder="Ex: 10x20" className="bg-white/5 border-white/10 text-white h-9" />
+                  </Field>
+                  <Field label="Face">
+                    <Controller name="landFace" control={control} render={({ field }) => (
+                      <Select value={field.value || ''} onValueChange={field.onChange}>
+                        <SelectTrigger className="bg-white/5 border-white/10 text-white h-9"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                        <SelectContent>{FACES.map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}</SelectContent>
+                      </Select>
+                    )} />
+                  </Field>
+                  <Field label="Insolamento">
+                    <Input {...register('sunExposure')} placeholder="Sol da manhã / tarde" className="bg-white/5 border-white/10 text-white h-9" />
+                  </Field>
+                  <Field label="Posição">
+                    <Input {...register('position')} placeholder="Frente / Fundos / Meio" className="bg-white/5 border-white/10 text-white h-9" />
+                  </Field>
+                  <Field label="Ano de Construção">
+                    <Input {...register('yearBuilt')} type="number" className="bg-white/5 border-white/10 text-white h-9" />
+                  </Field>
+                  <Field label="Ano Última Reforma">
+                    <Input {...register('yearLastReformed')} type="number" className="bg-white/5 border-white/10 text-white h-9" />
+                  </Field>
+                </div>
+              </Section>
+
+              <PropertyFeaturesEditor
+                selected={watch('features') ?? []}
+                onChange={(f) => setValue('features', f)}
+              />
+            </div>
+          )}
+
+          {/* ── TAB: ANÚNCIOS ─────────────────────────────────────────── */}
+          {activeTab === 'anuncios' && (
+            <div className="space-y-4">
+              <Section title="Opções de Publicação">
+                <div className="flex flex-wrap gap-6">
+                  <Controller name="isFeatured" control={control} render={({ field }) => (
+                    <CheckField label="Destaque" checked={field.value} onChange={field.onChange} />
+                  )} />
+                  <Controller name="valueUnderConsultation" control={control} render={({ field }) => (
+                    <CheckField label="Valor Sob Consulta" checked={field.value} onChange={field.onChange} />
+                  )} />
+                  <Controller name="priceNegotiable" control={control} render={({ field }) => (
+                    <CheckField label="Valor Negociável" checked={field.value} onChange={field.onChange} />
+                  )} />
+                </div>
+              </Section>
+
+              <Section title="SEO — Otimização para Buscadores">
+                <Field label="Título SEO">
+                  <Input {...register('metaTitle')} maxLength={70}
+                    placeholder="Título para Google (máx. 70 caracteres)"
+                    className="bg-white/5 border-white/10 text-white h-9 placeholder:text-white/30" />
+                </Field>
+                <Field label="Descrição SEO">
+                  <textarea {...register('metaDescription')} rows={3} maxLength={160}
+                    placeholder="Descrição para Google (máx. 160 caracteres)"
+                    className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white resize-none focus:outline-none focus:ring-2 focus:ring-ring placeholder:text-white/30" />
+                </Field>
+                <p className="text-xs text-white/30">* Se deixar em branco, o título e descrição do imóvel serão usados automaticamente.</p>
+              </Section>
+            </div>
+          )}
+
+          {/* ── TAB: CAPTAÇÃO ─────────────────────────────────────────── */}
+          {activeTab === 'captacao' && (
+            <div className="space-y-4">
+              <Section title="Captador Principal">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                  <Field label="Nome do Captador" span="sm:col-span-2">
+                    <Input {...register('captorName')} className="bg-white/5 border-white/10 text-white h-9" />
+                  </Field>
+                  <Field label="Comissão (%)">
+                    <Input {...register('captorCommissionPct')} type="number" step="0.01" min={0} max={100}
+                      className="bg-white/5 border-white/10 text-white h-9" />
+                  </Field>
+                </div>
+              </Section>
+
+              <Section title="Condições Comerciais">
+                <textarea {...register('commercialConditions')} rows={4}
+                  placeholder="Condições de venda, prazo, observações comerciais..."
+                  className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white resize-none focus:outline-none focus:ring-2 focus:ring-ring placeholder:text-white/30" />
+              </Section>
+
+              <Section title="Exclusividade">
+                <Controller name="exclusivityContract" control={control} render={({ field }) => (
+                  <CheckField label="Contrato de Exclusividade" checked={field.value} onChange={field.onChange} />
                 )} />
-              </div>
-              <div className="col-span-full space-y-1.5">
-                <Label className="text-white/70">Descrição</Label>
-                <textarea {...register('description')} rows={4}
-                  className="w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-white resize-none focus:outline-none focus:ring-2 focus:ring-ring" />
-              </div>
-              <div className="col-span-full space-y-1.5">
-                <Label className="text-white/70">Vídeo YouTube (URL ou ID)</Label>
-                <Input {...register('videoUrl')} placeholder="https://youtube.com/watch?v=... ou ID do vídeo" className="bg-white/5 border-white/10 text-white placeholder:text-white/30" />
-                <p className="text-[11px] text-white/30">Cole o link do YouTube ou apenas o ID do vídeo. Será exibido antes das fotos no anúncio.</p>
-              </div>
-            </div>
-          </div>
+              </Section>
 
-          {/* Valores */}
-          <div className="bg-white/5 rounded-xl border border-white/10 p-5 space-y-4">
-            <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider">Valores</h3>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              <div className="space-y-1.5">
-                <Label className="text-white/70">Venda (R$)</Label>
-                <Input {...register('price')} type="number" className="bg-white/5 border-white/10 text-white" />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-white/70">Aluguel (R$)</Label>
-                <Input {...register('priceRent')} type="number" className="bg-white/5 border-white/10 text-white" />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-white/70">Condomínio (R$)</Label>
-                <Input {...register('condoFee')} type="number" className="bg-white/5 border-white/10 text-white" />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-white/70">IPTU (R$/ano)</Label>
-                <Input {...register('iptu')} type="number" className="bg-white/5 border-white/10 text-white" />
-              </div>
-            </div>
-          </div>
+              <Section title="Controle de Chaves">
+                <Field label="Local das Chaves">
+                  <Controller name="keyLocation" control={control} render={({ field }) => (
+                    <Select value={field.value || ''} onValueChange={field.onChange}>
+                      <SelectTrigger className="bg-white/5 border-white/10 text-white h-9 max-w-xs"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                      <SelectContent>{KEY_LOCATIONS.map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}</SelectContent>
+                    </Select>
+                  )} />
+                </Field>
+              </Section>
 
-          {/* Localização */}
-          <div className="bg-white/5 rounded-xl border border-white/10 p-5 space-y-4">
-            <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider">Localização</h3>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-              <div className="space-y-1.5">
-                <Label className="text-white/70">Cidade</Label>
-                <Input {...register('city')} className="bg-white/5 border-white/10 text-white" />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-white/70">Bairro</Label>
-                <Input {...register('neighborhood')} className="bg-white/5 border-white/10 text-white" />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-white/70">Estado (UF)</Label>
-                <Input {...register('state')} maxLength={2} className="bg-white/5 border-white/10 text-white uppercase" placeholder="SP" />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-white/70">Latitude</Label>
-                <Input {...register('latitude')} type="number" step="any" className="bg-white/5 border-white/10 text-white" placeholder="-20.123456" />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-white/70">Longitude</Label>
-                <Input {...register('longitude')} type="number" step="any" className="bg-white/5 border-white/10 text-white" placeholder="-47.654321" />
-              </div>
+              <Section title="Auditoria">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs text-white/40">
+                  <div><p className="text-white/30 mb-0.5">Cadastrado em</p><p>{p.createdAt ? new Date(p.createdAt).toLocaleString('pt-BR') : '—'}</p></div>
+                  <div><p className="text-white/30 mb-0.5">Atualizado em</p><p>{p.updatedAt ? new Date(p.updatedAt).toLocaleString('pt-BR') : '—'}</p></div>
+                  <div><p className="text-white/30 mb-0.5">Publicado em</p><p>{p.publishedAt ? new Date(p.publishedAt).toLocaleString('pt-BR') : '—'}</p></div>
+                  <div><p className="text-white/30 mb-0.5">Visualizações</p><p>{p.views ?? 0}</p></div>
+                </div>
+              </Section>
             </div>
-          </div>
+          )}
 
-          {/* Características */}
-          <div className="bg-white/5 rounded-xl border border-white/10 p-5 space-y-4">
-            <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider">Características</h3>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              <div className="space-y-1.5">
-                <Label className="text-white/70">Quartos</Label>
-                <Input {...register('bedrooms')} type="number" min={0} className="bg-white/5 border-white/10 text-white" />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-white/70">Suítes</Label>
-                <Input {...register('suites')} type="number" min={0} className="bg-white/5 border-white/10 text-white" />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-white/70">Banheiros</Label>
-                <Input {...register('bathrooms')} type="number" min={0} className="bg-white/5 border-white/10 text-white" />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-white/70">Vagas</Label>
-                <Input {...register('parkingSpaces')} type="number" min={0} className="bg-white/5 border-white/10 text-white" />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-white/70">Área Terreno (m²)</Label>
-                <Input {...register('totalArea')} type="number" step="0.01" className="bg-white/5 border-white/10 text-white" />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-white/70">Área Construída (m²)</Label>
-                <Input {...register('builtArea')} type="number" step="0.01" className="bg-white/5 border-white/10 text-white" />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-white/70">Área do Terreno (m²)</Label>
-                <Input {...register('landArea')} type="number" step="0.01" className="bg-white/5 border-white/10 text-white" />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-white/70">Ano de construção</Label>
-                <Input {...register('yearBuilt')} type="number" className="bg-white/5 border-white/10 text-white" />
-              </div>
+          {/* ── TAB: CONFIDENCIAL ─────────────────────────────────────── */}
+          {activeTab === 'confidencial' && (
+            <div className="space-y-4">
+              <Section title="Documentação">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                  <Field label="CIB (Código Imobiliário Brasileiro)">
+                    <Input {...register('cib')} className="bg-white/5 border-white/10 text-white h-9" />
+                  </Field>
+                  <Field label="Cadastro Prefeitura (Nº IPTU / INCRA)">
+                    <Input {...register('iptuRegistration')} className="bg-white/5 border-white/10 text-white h-9" />
+                  </Field>
+                  <Field label="Cartório de Imóveis (Nº Matrícula)">
+                    <Input {...register('cartorioMatricula')} className="bg-white/5 border-white/10 text-white h-9" />
+                  </Field>
+                  <Field label="Eletricidade (Concessionária)">
+                    <Input {...register('electricityInfo')} className="bg-white/5 border-white/10 text-white h-9" />
+                  </Field>
+                  <Field label="Água e Saneamento">
+                    <Input {...register('waterInfo')} className="bg-white/5 border-white/10 text-white h-9" />
+                  </Field>
+                </div>
+                <div className="pt-2">
+                  <Controller name="documentationPending" control={control} render={({ field }) => (
+                    <CheckField label="Documentação Pendente" checked={field.value} onChange={field.onChange} />
+                  )} />
+                </div>
+                <Field label="Observações de Documentação">
+                  <textarea {...register('documentationNotes')} rows={3}
+                    className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white resize-none focus:outline-none focus:ring-2 focus:ring-ring placeholder:text-white/30" />
+                </Field>
+              </Section>
+
+              <Section title="Reserva e Publicação">
+                <div className="flex flex-wrap gap-6">
+                  <Controller name="isReserved" control={control} render={({ field }) => (
+                    <CheckField label="Imóvel Reservado" checked={field.value} onChange={field.onChange} />
+                  )} />
+                  <Controller name="authorizedPublish" control={control} render={({ field }) => (
+                    <CheckField label="Autorizado para Publicar" checked={field.value} onChange={field.onChange} />
+                  )} />
+                </div>
+              </Section>
             </div>
-          </div>
+          )}
 
-          {/* Itens / Features */}
-          <PropertyFeaturesEditor
-            selected={watch('features') ?? []}
-            onChange={(f) => setValue('features', f)}
-          />
+          {/* Bottom save bar */}
+          <div className="flex justify-end gap-3 pt-2 border-t border-white/10">
+            <Button variant="ghost" onClick={() => { setEditing(false); reset() }} className="text-white/60">Cancelar</Button>
+            <Button onClick={handleSubmit((d) => updateMutation.mutate(d))}
+              disabled={updateMutation.isPending} className="gap-2 min-w-[120px]">
+              <Save className="h-3.5 w-3.5" />
+              {updateMutation.isPending ? 'Salvando...' : 'Salvar Alterações'}
+            </Button>
+          </div>
         </div>
       ) : (
-        /* View Mode */
+        /* ── VIEW MODE ───────────────────────────────────────────────────── */
         <div className="space-y-4">
-          {/* Image Gallery Management */}
-          <div className="bg-white/5 rounded-xl border border-white/10 p-5 space-y-3">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider">Fotos do Imóvel</h3>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setShowUrlInput(v => !v)}
-                  className="flex items-center gap-1.5 text-xs text-white/50 hover:text-white transition-colors px-2 py-1 rounded-lg hover:bg-white/10"
-                >
-                  <ImagePlus className="h-3.5 w-3.5" /> Adicionar URL
-                </button>
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={uploadingImages}
-                  className="flex items-center gap-1.5 text-xs text-white/50 hover:text-white transition-colors px-2 py-1 rounded-lg hover:bg-white/10 disabled:opacity-40"
-                >
-                  <Upload className="h-3.5 w-3.5" /> {uploadingImages ? 'Enviando...' : 'Upload'}
-                </button>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  className="hidden"
-                  onChange={(e) => handleFileUpload(e.target.files)}
-                />
-              </div>
-            </div>
-
-            {showUrlInput && (
-              <div className="flex gap-2">
-                <input
-                  value={urlInput}
-                  onChange={e => setUrlInput(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && handleAddUrl()}
-                  placeholder="Cole a URL da imagem (https://...)"
-                  className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-1 focus:ring-white/20"
-                />
-                <button onClick={handleAddUrl} className="px-3 py-1.5 bg-white/10 rounded-lg text-xs text-white hover:bg-white/20 transition-colors">
-                  Adicionar
-                </button>
-              </div>
-            )}
-
-            {(!property.coverImage && (!property.images || property.images.length === 0)) ? (
-              <div className="py-8 text-center text-white/30 text-sm">
-                <ImagePlus className="h-8 w-8 mx-auto mb-2 opacity-30" />
-                Nenhuma foto cadastrada. Adicione fotos por URL ou upload.
-              </div>
-            ) : (() => {
-              const allPhotos = [...(property.coverImage ? [property.coverImage] : []), ...(property.images ?? []).filter((u: string) => u !== property.coverImage)]
-              return (
-              <>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
-                {allPhotos.map((url: string, idx: number) => (
-                  <div key={url} className="relative group rounded-xl overflow-hidden aspect-video bg-white/5">
-                    <img src={url} alt="" className="w-full h-full object-cover" />
-                    {url === property.coverImage && (
-                      <div className="absolute top-1.5 left-1.5 bg-[#C9A84C] text-[#1B2B5B] text-xs font-bold px-1.5 py-0.5 rounded-md flex items-center gap-1">
-                        <Star className="h-2.5 w-2.5 fill-current" /> Capa
-                      </div>
-                    )}
-                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                      {/* View full */}
-                      <button
-                        onClick={() => setLightboxIndex(idx)}
-                        className="p-1.5 bg-white/20 rounded-lg hover:bg-white/30 text-white"
-                        title="Ver foto"
-                      >
-                        <ZoomIn className="h-3.5 w-3.5" />
-                      </button>
-                      {url !== property.coverImage && (
-                        <button
-                          onClick={() => handleSetCover(url)}
-                          className="text-xs bg-[#C9A84C] text-[#1B2B5B] px-2 py-1 rounded-lg font-semibold hover:brightness-110"
-                        >
-                          Definir capa
-                        </button>
-                      )}
-                      <button
-                        onClick={() => handleRemoveImage(url)}
-                        className="p-1.5 bg-red-500/80 rounded-lg hover:bg-red-500 text-white"
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              {lightboxIndex !== null && (
-                <PropertyImageLightbox
-                  images={allPhotos}
-                  startIndex={lightboxIndex}
-                  title={property.title}
-                  onClose={() => setLightboxIndex(null)}
-                />
-              )}
-              </>
-              )
-            })()}
-          </div>
-
           {/* Price + Stats */}
           <div className="bg-white/5 rounded-xl border border-white/10 p-5 grid grid-cols-2 lg:grid-cols-4 gap-4">
-            {property.price && (
+            {p.price && (
               <div>
                 <p className="text-xs text-white/40 mb-1">Venda</p>
-                <p className="text-lg font-bold text-white">{fmt(property.price)}</p>
+                <p className="text-lg font-bold text-white">{fmt(p.price)}</p>
               </div>
             )}
-            {property.priceRent && (
+            {p.priceRent && (
               <div>
                 <p className="text-xs text-white/40 mb-1">Aluguel</p>
-                <p className="text-lg font-bold text-white">{fmt(property.priceRent)}/mês</p>
+                <p className="text-lg font-bold text-white">{fmt(p.priceRent)}/mês</p>
               </div>
             )}
-            {property.condoFee && (
+            {p.condoFee && (
               <div>
                 <p className="text-xs text-white/40 mb-1">Condomínio</p>
-                <p className="text-sm font-medium text-white/70">{fmt(property.condoFee)}</p>
+                <p className="text-sm font-medium text-white/70">{fmt(p.condoFee)}</p>
               </div>
             )}
             <div className="flex items-center gap-1.5 text-white/50 text-sm">
-              <Eye className="h-4 w-4" /> {property.views} visualizações
+              <Eye className="h-4 w-4" /> {p.views} visualizações
             </div>
           </div>
 
@@ -487,47 +897,48 @@ export default function PropertyDetailPage() {
           <div className="bg-white/5 rounded-xl border border-white/10 p-5 space-y-3">
             <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider">Características</h3>
             <div className="flex flex-wrap gap-4">
-              {property.bedrooms > 0 && <Stat icon={BedDouble} label={`${property.bedrooms} quarto${property.bedrooms > 1 ? 's' : ''}`} />}
-              {property.suites > 0 && <Stat icon={BedDouble} label={`${property.suites} suíte${property.suites > 1 ? 's' : ''}`} />}
-              {property.bathrooms > 0 && <Stat icon={Bath} label={`${property.bathrooms} banheiro${property.bathrooms > 1 ? 's' : ''}`} />}
-              {property.parkingSpaces > 0 && <Stat icon={Car} label={`${property.parkingSpaces} vaga${property.parkingSpaces > 1 ? 's' : ''}`} />}
-              {property.totalArea && <Stat icon={Ruler} label={`${property.totalArea} m² total`} />}
-              {property.builtArea && <Stat icon={Ruler} label={`${property.builtArea} m² construído`} />}
-              {property.yearBuilt && <Stat icon={Calendar} label={`Construído em ${property.yearBuilt}`} />}
+              {p.bedrooms > 0 && <Stat icon={BedDouble} label={`${p.bedrooms} quarto${p.bedrooms > 1 ? 's' : ''}`} />}
+              {p.suites > 0 && <Stat icon={BedDouble} label={`${p.suites} suíte${p.suites > 1 ? 's' : ''}`} />}
+              {p.bathrooms > 0 && <Stat icon={Bath} label={`${p.bathrooms} banheiro${p.bathrooms > 1 ? 's' : ''}`} />}
+              {p.parkingSpaces > 0 && <Stat icon={Car} label={`${p.parkingSpaces} vaga${p.parkingSpaces > 1 ? 's' : ''}`} />}
+              {p.totalArea && <Stat icon={Ruler} label={`${p.totalArea} m² útil`} />}
+              {p.builtArea && <Stat icon={Ruler} label={`${p.builtArea} m² construído`} />}
+              {p.landArea && <Stat icon={Ruler} label={`${p.landArea} m² terreno`} />}
+              {p.yearBuilt && <Stat icon={Calendar} label={`Construído em ${p.yearBuilt}`} />}
             </div>
           </div>
 
           {/* Address */}
-          {(property.city || property.neighborhood) && (
+          {(p.city || p.neighborhood) && (
             <div className="bg-white/5 rounded-xl border border-white/10 p-5">
               <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-2">Localização</h3>
               <div className="flex items-start gap-2 text-white/70">
                 <MapPin className="h-4 w-4 mt-0.5 flex-shrink-0 text-white/30" />
                 <p className="text-sm">
-                  {[property.street, property.number, property.complement].filter(Boolean).join(', ')}
-                  {property.street && <br />}
-                  {[property.neighborhood, property.city, property.state].filter(Boolean).join(', ')}
+                  {[p.street, p.number, p.complement].filter(Boolean).join(', ')}
+                  {p.street && <br />}
+                  {[p.neighborhood, p.city, p.state].filter(Boolean).join(', ')}
                 </p>
               </div>
             </div>
           )}
 
           {/* Description */}
-          {property.description && (
+          {p.description && (
             <div className="bg-white/5 rounded-xl border border-white/10 p-5">
               <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-2">Descrição</h3>
-              <p className="text-sm text-white/70 leading-relaxed whitespace-pre-line">{property.description}</p>
+              <p className="text-sm text-white/70 leading-relaxed whitespace-pre-line">{p.description}</p>
             </div>
           )}
 
-          {/* Proprietários */}
-          {property.owners && property.owners.length > 0 && (
+          {/* Owner */}
+          {p.owners && p.owners.length > 0 && (
             <div className="bg-white/5 rounded-xl border border-white/10 p-5">
               <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-3">
-                Proprietário{property.owners.length > 1 ? 's' : ''}
+                Proprietário{p.owners.length > 1 ? 's' : ''}
               </h3>
               <div className="space-y-3">
-                {property.owners.map((o) => (
+                {p.owners.map((o: any) => (
                   <div key={o.contact.id} className="flex items-start gap-3">
                     <div className="h-9 w-9 rounded-full bg-emerald-500/20 flex items-center justify-center text-sm font-bold text-emerald-400 flex-shrink-0">
                       <User className="h-4 w-4" />
@@ -535,18 +946,9 @@ export default function PropertyDetailPage() {
                     <div className="min-w-0">
                       <p className="text-sm font-medium text-white">{o.contact.name}</p>
                       {o.contact.cpf && <p className="text-xs text-white/40">CPF: {o.contact.cpf}</p>}
-                      {o.contact.cnpj && <p className="text-xs text-white/40">CNPJ: {o.contact.cnpj}</p>}
                       <div className="flex flex-wrap gap-x-4 gap-y-0.5 mt-0.5">
-                        {o.contact.phone && (
-                          <div className="flex items-center gap-1 text-xs text-white/50">
-                            <Phone className="h-3 w-3" />{o.contact.phone}
-                          </div>
-                        )}
-                        {o.contact.email && (
-                          <div className="flex items-center gap-1 text-xs text-white/50">
-                            <Mail className="h-3 w-3" />{o.contact.email}
-                          </div>
-                        )}
+                        {o.contact.phone && <div className="flex items-center gap-1 text-xs text-white/50"><Phone className="h-3 w-3" />{o.contact.phone}</div>}
+                        {o.contact.email && <div className="flex items-center gap-1 text-xs text-white/50"><Mail className="h-3 w-3" />{o.contact.email}</div>}
                       </div>
                     </div>
                   </div>
@@ -556,11 +958,11 @@ export default function PropertyDetailPage() {
           )}
 
           {/* Features */}
-          {property.features && property.features.length > 0 && (
+          {p.features && p.features.length > 0 && (
             <div className="bg-white/5 rounded-xl border border-white/10 p-5">
               <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-3">Diferenciais</h3>
               <div className="flex flex-wrap gap-2">
-                {property.features.map((f) => (
+                {p.features.map((f: string) => (
                   <span key={f} className="px-3 py-1 bg-white/10 rounded-full text-xs text-white/70">{f}</span>
                 ))}
               </div>
@@ -568,18 +970,34 @@ export default function PropertyDetailPage() {
           )}
 
           {/* Broker */}
-          {property.user && (
+          {p.user && (
             <div className="bg-white/5 rounded-xl border border-white/10 p-5">
               <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-3">Corretor Responsável</h3>
               <div className="flex items-center gap-3">
                 <div className="h-9 w-9 rounded-full bg-blue-500 flex items-center justify-center text-sm font-bold text-white">
-                  {property.user.name.charAt(0)}
+                  {p.user.name.charAt(0)}
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-white">{property.user.name}</p>
-                  {property.user.creciNumber && <p className="text-xs text-white/40">CRECI {property.user.creciNumber}</p>}
-                  {property.user.phone && <p className="text-xs text-white/40">{property.user.phone}</p>}
+                  <p className="text-sm font-medium text-white">{p.user.name}</p>
+                  {p.user.creciNumber && <p className="text-xs text-white/40">CRECI {p.user.creciNumber}</p>}
+                  {p.user.phone && <p className="text-xs text-white/40">{p.user.phone}</p>}
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* Confidential info summary */}
+          {(p.captorName || p.cib || p.isReserved || p.documentationPending) && (
+            <div className="bg-white/5 rounded-xl border border-white/10 p-5">
+              <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-3">Info. Confidenciais</h3>
+              <div className="flex flex-wrap gap-x-6 gap-y-2 text-xs text-white/50">
+                {p.captorName && <span>Captador: <span className="text-white/70">{p.captorName}</span></span>}
+                {p.cib && <span>CIB: <span className="text-white/70">{p.cib}</span></span>}
+                {p.keyLocation && <span>Chaves: <span className="text-white/70">{KEY_LOCATIONS.find(k => k[0] === p.keyLocation)?.[1] ?? p.keyLocation}</span></span>}
+                {p.isReserved && <Badge className="bg-orange-500/20 text-orange-400 border-0 text-[10px]">Reservado</Badge>}
+                {p.documentationPending && <Badge className="bg-red-500/20 text-red-400 border-0 text-[10px]">Doc. Pendente</Badge>}
+                {p.exclusivityContract && <Badge className="bg-purple-500/20 text-purple-400 border-0 text-[10px]">Exclusividade</Badge>}
+                {p.authorizedPublish && <Badge className="bg-emerald-500/20 text-emerald-400 border-0 text-[10px]">Autorizado Publicar</Badge>}
               </div>
             </div>
           )}

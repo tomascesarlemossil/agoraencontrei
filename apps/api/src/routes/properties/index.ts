@@ -58,6 +58,60 @@ const CreatePropertyBody = z.object({
   metaTitle:    z.string().optional(),
   metaDescription: z.string().optional(),
   metaKeywords: z.array(z.string()).default([]),
+  // Extended pricing
+  pricePromo:   z.number().optional(),
+  pricePerM2:   z.number().optional(),
+  allowExchange: z.boolean().optional(),
+  valueUnderConsultation: z.boolean().optional(),
+  // Commercial details
+  currentState: z.string().optional(),
+  occupation:   z.string().optional(),
+  standard:     z.string().optional(),
+  auxReference: z.string().optional(),
+  // Extended location
+  commercialNeighborhood: z.string().optional(),
+  region:       z.string().optional(),
+  referencePoint: z.string().optional(),
+  closedCondo:  z.boolean().optional(),
+  adminCompany: z.string().optional(),
+  constructionCompany: z.string().optional(),
+  signOnSite:   z.boolean().optional(),
+  // Rooms breakdown
+  suitesWithCloset: z.number().int().min(0).optional(),
+  demiSuites:   z.number().int().min(0).optional(),
+  rooms:        z.number().int().min(0).optional(),
+  livingRooms:  z.number().int().min(0).optional(),
+  diningRooms:  z.number().int().min(0).optional(),
+  tvRooms:      z.number().int().min(0).optional(),
+  garagesCovered: z.number().int().min(0).optional(),
+  garagesOpen:  z.number().int().min(0).optional(),
+  elevators:    z.number().int().min(0).optional(),
+  // Extended areas
+  commonArea:   z.number().optional(),
+  ceilingHeight: z.number().optional(),
+  landDimensions: z.string().optional(),
+  landFace:     z.string().optional(),
+  sunExposure:  z.string().optional(),
+  position:     z.string().optional(),
+  // Internal notes
+  descriptionInternal: z.string().optional(),
+  // Confidential
+  cib:          z.string().optional(),
+  iptuRegistration: z.string().optional(),
+  cartorioMatricula: z.string().optional(),
+  electricityInfo: z.string().optional(),
+  waterInfo:    z.string().optional(),
+  documentationPending: z.boolean().optional(),
+  documentationNotes: z.string().optional(),
+  isReserved:   z.boolean().optional(),
+  authorizedPublish: z.boolean().optional(),
+  // Captação
+  captorName:   z.string().optional(),
+  captorCommissionPct: z.number().optional(),
+  exclusivityContract: z.boolean().optional(),
+  commercialConditions: z.string().optional(),
+  yearLastReformed: z.number().int().optional(),
+  keyLocation:  z.string().optional(),
 })
 
 function buildSlug(title: string, reference?: string | null): string {

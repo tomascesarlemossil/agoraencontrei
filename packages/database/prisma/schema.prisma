@@ -399,6 +399,68 @@ model Property {
   isHighlighted   Boolean          @default(false)
   featuredUntil   DateTime?
 
+  // Extended pricing
+  pricePromo      Decimal?         @db.Decimal(12, 2)   // Preço promocional
+  pricePerM2      Decimal?         @db.Decimal(10, 2)   // Preço por M²
+  allowExchange   Boolean          @default(false)       // Aceita permuta
+  valueUnderConsultation Boolean   @default(false)       // Valor sob consulta
+
+  // Commercial details
+  currentState    String?          // Desocupado / Ocupado Proprietário / Ocupado Inquilino
+  occupation      String?          // Residencial / Comercial / Misto
+  standard        String?          // SIMPLE / NORMAL / HIGH / LUXURY
+  auxReference    String?          // Referência auxiliar
+
+  // Extended location
+  commercialNeighborhood String?   // Bairro comercial (exibido no site)
+  region          String?          // Região
+  referencePoint  String?          // Ponto de referência
+  closedCondo     Boolean          @default(false)
+  adminCompany    String?          // Administradora
+  constructionCompany String?      // Construtora
+  signOnSite      Boolean          @default(false)       // Placa no local
+
+  // Extended rooms breakdown
+  suitesWithCloset Int             @default(0)
+  demiSuites      Int              @default(0)
+  rooms           Int              @default(0)           // Salas (total)
+  livingRooms     Int              @default(0)           // Sala de estar
+  diningRooms     Int              @default(0)           // Sala de jantar
+  tvRooms         Int              @default(0)           // Salas de TV
+  garagesCovered  Int              @default(0)
+  garagesOpen     Int              @default(0)
+  elevators       Int              @default(0)
+
+  // Extended areas
+  commonArea      Float?           // Área comum
+  ceilingHeight   Float?           // Pé direto
+  landDimensions  String?          // Dimensão terreno (ex: 10x20)
+  landFace        String?          // Face do terreno
+  sunExposure     String?          // Insolamento
+  position        String?          // Posição (frente/fundos/meio)
+
+  // Internal notes (not published)
+  descriptionInternal String?
+
+  // Confidential / documentation
+  cib             String?          // Código Imobiliário Brasileiro
+  iptuRegistration String?         // Cadastro Prefeitura / INCRA
+  cartorioMatricula String?        // Cartório - Nº Matrícula
+  electricityInfo String?          // Eletricidade (concessionária)
+  waterInfo       String?          // Água e Saneamento
+  documentationPending Boolean     @default(false)
+  documentationNotes String?       // Obs. documentação
+  isReserved      Boolean          @default(false)
+  authorizedPublish Boolean        @default(false)       // Autorizado para publicar
+
+  // Captação
+  captorName      String?          // Nome do captador principal
+  captorCommissionPct Float?       // Comissão do captador (%)
+  exclusivityContract Boolean      @default(false)
+  commercialConditions String?     // Condições comerciais
+  yearLastReformed Int?            // Ano da última reforma
+  keyLocation     String?          // Local das chaves
+
   // Import metadata
   importSource    String?          // "univen_xls", "manual", "portal_xml"
   importedAt      DateTime?

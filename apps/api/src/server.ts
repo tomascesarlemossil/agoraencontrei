@@ -60,6 +60,64 @@ const app = Fastify({
   },
 })
 
+async function runMigrations(prisma: any) {
+  const columns = [
+    ['pricePromo',               'DECIMAL(12,2)'],
+    ['pricePerM2',               'DECIMAL(10,2)'],
+    ['allowExchange',            'BOOLEAN NOT NULL DEFAULT false'],
+    ['valueUnderConsultation',   'BOOLEAN NOT NULL DEFAULT false'],
+    ['currentState',             'TEXT'],
+    ['occupation',               'TEXT'],
+    ['standard',                 'TEXT'],
+    ['auxReference',             'TEXT'],
+    ['commercialNeighborhood',   'TEXT'],
+    ['region',                   'TEXT'],
+    ['referencePoint',           'TEXT'],
+    ['closedCondo',              'BOOLEAN NOT NULL DEFAULT false'],
+    ['adminCompany',             'TEXT'],
+    ['constructionCompany',      'TEXT'],
+    ['signOnSite',               'BOOLEAN NOT NULL DEFAULT false'],
+    ['suitesWithCloset',         'INTEGER NOT NULL DEFAULT 0'],
+    ['demiSuites',               'INTEGER NOT NULL DEFAULT 0'],
+    ['rooms',                    'INTEGER NOT NULL DEFAULT 0'],
+    ['livingRooms',              'INTEGER NOT NULL DEFAULT 0'],
+    ['diningRooms',              'INTEGER NOT NULL DEFAULT 0'],
+    ['tvRooms',                  'INTEGER NOT NULL DEFAULT 0'],
+    ['garagesCovered',           'INTEGER NOT NULL DEFAULT 0'],
+    ['garagesOpen',              'INTEGER NOT NULL DEFAULT 0'],
+    ['elevators',                'INTEGER NOT NULL DEFAULT 0'],
+    ['commonArea',               'DOUBLE PRECISION'],
+    ['ceilingHeight',            'DOUBLE PRECISION'],
+    ['landDimensions',           'TEXT'],
+    ['landFace',                 'TEXT'],
+    ['sunExposure',              'TEXT'],
+    ['position',                 'TEXT'],
+    ['descriptionInternal',      'TEXT'],
+    ['cib',                      'TEXT'],
+    ['iptuRegistration',         'TEXT'],
+    ['cartorioMatricula',        'TEXT'],
+    ['electricityInfo',          'TEXT'],
+    ['waterInfo',                'TEXT'],
+    ['documentationPending',     'BOOLEAN NOT NULL DEFAULT false'],
+    ['documentationNotes',       'TEXT'],
+    ['isReserved',               'BOOLEAN NOT NULL DEFAULT false'],
+    ['authorizedPublish',        'BOOLEAN NOT NULL DEFAULT false'],
+    ['captorName',               'TEXT'],
+    ['captorCommissionPct',      'DOUBLE PRECISION'],
+    ['exclusivityContract',      'BOOLEAN NOT NULL DEFAULT false'],
+    ['commercialConditions',     'TEXT'],
+    ['yearLastReformed',         'INTEGER'],
+    ['keyLocation',              'TEXT'],
+  ]
+  for (const [col, type] of columns) {
+    try {
+      await prisma.$executeRawUnsafe(
+        `ALTER TABLE properties ADD COLUMN IF NOT EXISTS "${col}" ${type}`
+      )
+    } catch { /* column already exists or unsupported */ }
+  }
+}
+
 async function bootstrap() {
   // ── Core Plugins ────────────────────────────────────────────────────────
   await app.register(corsPlugin)
@@ -67,6 +125,7 @@ async function bootstrap() {
   await app.register(rateLimitPlugin)
   await app.register(jwtPlugin)
   await app.register(prismaPlugin)
+  await runMigrations(app.prisma).catch(e => app.log.warn('Migration warning:', e.message))
   await app.register(redisPlugin)
   await app.register(automationPlugin)
   await app.register(multipart, { limits: { fileSize: 50 * 1024 * 1024 } }) // 50MB
