@@ -152,6 +152,47 @@ export default async function usersRoutes(app: FastifyInstance) {
     return reply.send({ success: true })
   })
 
+  // GET /api/v1/users/company — get own company info
+  app.get('/company', {
+    preHandler: [app.authenticate],
+    schema: { tags: ['users'], summary: 'Get company info' },
+  }, async (req, reply) => {
+    const company = await app.prisma.company.findUnique({ where: { id: req.user.cid } })
+    if (!company) return reply.status(404).send({ error: 'NOT_FOUND' })
+    return reply.send(company)
+  })
+
+  // PATCH /api/v1/users/company — update own company info (admin only)
+  app.patch('/company', {
+    preHandler: [app.authenticate],
+    schema: { tags: ['users'], summary: 'Update company info' },
+  }, async (req, reply) => {
+    if (!['SUPER_ADMIN', 'ADMIN'].includes(req.user.role)) {
+      return reply.status(403).send({ error: 'FORBIDDEN' })
+    }
+    const { z } = await import('zod')
+    const body = z.object({
+      name:            z.string().min(2).max(100).optional(),
+      tradeName:       z.string().optional(),
+      cnpj:            z.string().optional(),
+      creci:           z.string().optional(),
+      phone:           z.string().optional(),
+      email:           z.string().email().optional(),
+      website:         z.string().optional(),
+      logoUrl:         z.string().url().optional().or(z.literal('')),
+      address:         z.string().optional(),
+      city:            z.string().optional(),
+      state:           z.string().max(2).optional(),
+      zipCode:         z.string().optional(),
+    }).parse(req.body)
+
+    const updated = await app.prisma.company.update({
+      where: { id: req.user.cid },
+      data: body,
+    })
+    return reply.send(updated)
+  })
+
   // PATCH /api/v1/users/site-settings — update public site configuration (hero video etc.)
   app.patch('/site-settings', {
     preHandler: [app.authenticate],

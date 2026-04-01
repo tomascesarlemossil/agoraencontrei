@@ -74,6 +74,10 @@ function NavContent({ onClose }: { onClose?: () => void }) {
   const pathname = usePathname()
   const { user, logout } = useAuth()
   const unreadCount = useNotifications(s => s.unreadCount)
+  const lemosbankActive = pathname.startsWith('/dashboard/lemosbank') ||
+    pathname.startsWith('/dashboard/contratos') ||
+    pathname.startsWith('/dashboard/clientes')
+  const [lemosbankOpen, setLemosbankOpen] = useState(lemosbankActive)
 
   return (
     <div className="flex flex-col h-full">
@@ -115,45 +119,42 @@ function NavContent({ onClose }: { onClose?: () => void }) {
         })}
 
         {/* ── Lemosbank Section ─────────────────────────────── */}
-        {(() => {
-          const lemosbankActive = pathname.startsWith('/dashboard/lemosbank') ||
-            pathname.startsWith('/dashboard/contratos') ||
-            pathname.startsWith('/dashboard/clientes')
-          return (
-            <div>
-              <div className={cn(
-                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium',
-                lemosbankActive ? 'text-white' : 'text-white/60',
-              )}>
-                <Banknote className="h-4 w-4 flex-shrink-0" />
-                <span className="truncate">Lemosbank</span>
-                <ChevronDown className={cn('ml-auto h-3 w-3 flex-shrink-0 transition-transform', lemosbankActive && 'rotate-180')} />
-              </div>
-              <div className={cn('ml-3 pl-3 border-l border-white/10 space-y-0.5', lemosbankActive ? 'block' : 'hidden')}>
-                {lemosbankSubItems.map(({ href, icon: Icon, label }) => {
-                  const active = pathname === href || (href !== '/dashboard/lemosbank' && pathname.startsWith(href) && href !== '/dashboard/contratos' && href !== '/dashboard/clientes')
-                    || pathname === href
-                  return (
-                    <Link
-                      key={href}
-                      href={href}
-                      onClick={onClose}
-                      className={cn(
-                        'flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors',
-                        active
-                          ? 'bg-blue-600/20 text-blue-300'
-                          : 'text-white/50 hover:bg-white/5 hover:text-white/80',
-                      )}
-                    >
-                      <Icon className="h-3.5 w-3.5 flex-shrink-0" />
-                      <span className="truncate">{label}</span>
-                    </Link>
-                  )
-                })}
-              </div>
+        <div>
+          <button
+            onClick={() => setLemosbankOpen(o => !o)}
+            className={cn(
+              'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors hover:bg-white/5',
+              (lemosbankActive || lemosbankOpen) ? 'text-white' : 'text-white/60',
+            )}
+          >
+            <Banknote className="h-4 w-4 flex-shrink-0" />
+            <span className="truncate">Lemosbank</span>
+            <ChevronDown className={cn('ml-auto h-3 w-3 flex-shrink-0 transition-transform', (lemosbankOpen || lemosbankActive) && 'rotate-180')} />
+          </button>
+          {(lemosbankOpen || lemosbankActive) && (
+            <div className="ml-3 pl-3 border-l border-white/10 space-y-0.5">
+              {lemosbankSubItems.map(({ href, icon: Icon, label }) => {
+                const active = pathname === href || (href !== '/dashboard/lemosbank' && pathname.startsWith(href))
+                return (
+                  <Link
+                    key={href}
+                    href={href}
+                    onClick={onClose}
+                    className={cn(
+                      'flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors',
+                      active
+                        ? 'bg-blue-600/20 text-blue-300'
+                        : 'text-white/50 hover:bg-white/5 hover:text-white/80',
+                    )}
+                  >
+                    <Icon className="h-3.5 w-3.5 flex-shrink-0" />
+                    <span className="truncate">{label}</span>
+                  </Link>
+                )
+              })}
             </div>
-          )
-        })()}
+          )}
+        </div>
       </nav>
 
       {/* Bottom */}
