@@ -281,7 +281,7 @@ export function AIVisualPublicButton({ propertySlug, images, title }: Props) {
                       required
                       placeholder="Descreva a reforma ou decoração desejada... Ex: quero um quarto moderno com paredes cinza, cama king, iluminação LED embutida e closet planejado."
                       className="w-full rounded-xl border px-4 py-3 text-sm text-gray-800 placeholder:text-gray-400 resize-none focus:outline-none focus:ring-2 transition-all"
-                      style={{ borderColor: '#ddd9d0', focusRingColor: '#C9A84C' }}
+                      style={{ borderColor: '#ddd9d0' }}
                       onFocus={e => (e.target.style.borderColor = '#C9A84C')}
                       onBlur={e => (e.target.style.borderColor = '#ddd9d0')}
                     />
