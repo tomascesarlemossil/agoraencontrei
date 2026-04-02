@@ -1,14 +1,17 @@
 'use client'
 
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import { useAuthStore } from '@/stores/auth.store'
 import {
   Sparkles, FileText, Download, Printer, Image as ImageIcon, X,
   ChevronRight, Loader2, Camera, CheckCircle2, AlertCircle,
-  PanelRightClose, PanelRightOpen, Wand2,
+  PanelRightClose, PanelRightOpen, Wand2, Menu,
 } from 'lucide-react'
 import { VoiceInputButton } from '@/components/ui/VoiceInputButton'
 import { TEMPLATES, CATEGORIES, type DocTemplate } from './templates'
+
+// IDs de todos os templates disponíveis — enviados ao backend para orientar a IA
+const ALL_TEMPLATE_IDS = TEMPLATES.map(t => `${t.id} — ${t.title} (${t.category})`)
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 
@@ -116,8 +119,21 @@ export default function DocumentosPage() {
   const [generating, setGenerating] = useState(false)
   const [generatedHtml, setGeneratedHtml] = useState('')
 
-  // sidebar
-  const [sidebarOpen, setSidebarOpen] = useState(true)
+  // sidebar — fechado por padrão em mobile (< 768px)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 768px)')
+    const handler = (e: MediaQueryListEvent | MediaQueryList) => {
+      setIsMobile(!e.matches)
+      if (e.matches && !sidebarOpen) setSidebarOpen(true)
+      if (!e.matches) setSidebarOpen(false)
+    }
+    handler(mq) // run on mount
+    mq.addEventListener('change', handler as any)
+    return () => mq.removeEventListener('change', handler as any)
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // refs
   const cameraInputRef = useRef<HTMLInputElement>(null)
@@ -156,6 +172,7 @@ export default function DocumentosPage() {
         },
         body: JSON.stringify({
           text: text || 'Analise as imagens enviadas e identifique o tipo de documento necessário.',
+          templateIds: ALL_TEMPLATE_IDS,
           images: uploadedImages.map(({ base64, mediaType, description }) => ({
             base64, mediaType, description,
           })),
@@ -265,7 +282,7 @@ export default function DocumentosPage() {
     setStep('command')
     setIdentifyResult(null)
     setGeneratedHtml('')
-    // scroll to top / focus textarea
+    if (isMobile) setSidebarOpen(false) // fechar drawer no mobile ao escolher
   }
 
   // ── keyboard shortcut ────────────────────────────────────────────────────────
@@ -278,46 +295,65 @@ export default function DocumentosPage() {
 
   // ── render ──────────────────────────────────────────────────────────────────
   return (
-    <div className="flex h-full bg-[#0d1b3e] text-white min-h-screen">
+    <div className="flex h-full bg-[#0d1b3e] text-white min-h-screen relative">
+
+      {/* ── Mobile sidebar overlay backdrop ──────────────────────────────────── */}
+      {isMobile && sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/60 z-30 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
 
       {/* ── MAIN AREA ────────────────────────────────────────────────────────── */}
       <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
 
         {/* Page header */}
-        <div className="flex items-center justify-between px-6 pt-6 pb-2 flex-shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center text-xl"
+        <div className="flex items-center justify-between px-4 sm:px-6 pt-4 sm:pt-6 pb-2 flex-shrink-0">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center text-lg sm:text-xl flex-shrink-0"
               style={{ background: 'linear-gradient(135deg, #C9A84C, #e8c66a)' }}>
               🤖
             </div>
-            <div>
-              <h1 className="text-base font-bold text-white leading-tight">Agente IA de Documentos</h1>
-              <p className="text-[11px] text-white/40">Descreva ou fotografe — a IA identifica e gera</p>
+            <div className="min-w-0">
+              <h1 className="text-sm sm:text-base font-bold text-white leading-tight truncate">Agente IA de Documentos</h1>
+              <p className="text-[10px] sm:text-[11px] text-white/40 truncate">Descreva ou fotografe — a IA identifica e gera</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0 ml-2">
             {step !== 'command' && (
               <button
                 onClick={handleReset}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 hover:border-white/20 text-xs text-white/60 hover:text-white transition-all"
+                className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 hover:border-white/20 text-xs text-white/60 hover:text-white transition-all"
               >
-                <X className="w-3 h-3" /> Novo documento
+                <X className="w-3 h-3" /> Novo
               </button>
             )}
+            {/* Mobile: X button to reset */}
+            {step !== 'command' && (
+              <button
+                onClick={handleReset}
+                className="sm:hidden flex items-center justify-center w-8 h-8 rounded-lg bg-white/5 border border-white/10 text-white/60"
+                title="Novo documento"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+            {/* Templates toggle */}
             <button
               onClick={() => setSidebarOpen(p => !p)}
               title={sidebarOpen ? 'Fechar modelos' : 'Ver modelos'}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 hover:border-white/20 text-xs text-white/60 hover:text-white transition-all"
+              className="flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 hover:border-white/20 text-xs text-white/60 hover:text-white transition-all"
             >
               {sidebarOpen
-                ? <><PanelRightClose className="w-3.5 h-3.5" /> Fechar modelos</>
-                : <><PanelRightOpen className="w-3.5 h-3.5" /> Ver modelos ({TEMPLATES.length})</>}
+                ? <><PanelRightClose className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Fechar modelos</span></>
+                : <><Menu className="w-3.5 h-3.5 sm:hidden" /><PanelRightOpen className="w-3.5 h-3.5 hidden sm:block" /> <span className="hidden sm:inline">Modelos ({TEMPLATES.length})</span></>}
             </button>
           </div>
         </div>
 
         {/* Step indicators */}
-        <div className="flex items-center gap-2 px-6 py-3 flex-shrink-0">
+        <div className="flex items-center gap-2 px-4 sm:px-6 py-3 flex-shrink-0 overflow-x-auto scrollbar-none">
           {[
             { key: 'command', label: '1. Comando', num: 1 },
             { key: 'identified', label: '2. Identificado', num: 2 },
@@ -344,7 +380,7 @@ export default function DocumentosPage() {
           })}
         </div>
 
-        <div className="flex-1 px-6 pb-8 space-y-5">
+        <div className="flex-1 px-4 sm:px-6 pb-8 space-y-4 sm:space-y-5">
 
           {/* ── STEP 1: Command area ───────────────────────────────────────── */}
           <div className={`rounded-2xl border transition-all ${step === 'command' ? 'border-yellow-400/30 bg-white/[0.03]' : 'border-white/10 bg-white/[0.02]'}`}>
@@ -398,7 +434,7 @@ export default function DocumentosPage() {
                 multiple onChange={handleImageUpload} className="hidden" />
 
               {/* Action row */}
-              <div className="flex items-center gap-3 mt-4">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-4">
                 {/* Camera button */}
                 <button
                   onClick={() => cameraInputRef.current?.click()}
@@ -607,15 +643,27 @@ export default function DocumentosPage() {
 
       {/* ── RIGHT SIDEBAR: Template library ─────────────────────────────────── */}
       {sidebarOpen && (
-        <div className="w-72 flex-shrink-0 border-l border-white/10 flex flex-col min-h-screen bg-[#0a1730]">
+        <div className={`
+          flex flex-col bg-[#0a1730] border-white/10
+          ${isMobile
+            ? 'fixed top-0 right-0 h-full w-72 max-w-[85vw] z-40 shadow-2xl border-l'
+            : 'w-72 flex-shrink-0 border-l min-h-screen'
+          }
+        `}>
           {/* Sidebar header */}
           <div className="px-4 pt-5 pb-3 border-b border-white/10 flex-shrink-0">
             <div className="flex items-center gap-2">
               <FileText className="w-4 h-4 text-yellow-400" />
               <span className="text-xs font-bold text-white">Modelos</span>
-              <span className="ml-auto text-[10px] text-white/50 bg-white/5 rounded-full px-2 py-0.5">
+              <span className="text-[10px] text-white/50 bg-white/5 rounded-full px-2 py-0.5">
                 {TEMPLATES.length}
               </span>
+              <button
+                onClick={() => setSidebarOpen(false)}
+                className="ml-auto w-6 h-6 flex items-center justify-center rounded-md bg-white/5 hover:bg-white/10 text-white/50 hover:text-white transition-colors"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
             </div>
             <p className="text-[10px] text-white/50 mt-1">Clique para pré-preencher o comando</p>
           </div>

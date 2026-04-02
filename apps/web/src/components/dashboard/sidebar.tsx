@@ -40,22 +40,22 @@ import {
 import { useNotifications } from '@/stores/notifications.store'
 
 const navItems = [
-  { href: '/dashboard',                    icon: LayoutDashboard,  label: 'Painel' },
-  { href: '/dashboard/corretor',           icon: BriefcaseBusiness,label: 'Meu Painel' },
-  { href: '/dashboard/properties',         icon: Building2,        label: 'Imóveis' },
-  { href: '/dashboard/leads',              icon: UserCheck,        label: 'Leads' },
-  { href: '/dashboard/contacts',           icon: Users,            label: 'Contatos' },
-  { href: '/dashboard/deals',              icon: TrendingUp,       label: 'Negócios' },
-  { href: '/dashboard/financiamentos',     icon: Landmark,         label: 'Financiamentos' },
-  { href: '/dashboard/inbox',              icon: MessageCircle,    label: 'Lemos.chat' },
-  { href: '/dashboard/portals',            icon: Globe,            label: 'Portais' },
-  { href: '/dashboard/automations',        icon: Zap,              label: 'Automações' },
-  { href: '/dashboard/fiscal',             icon: FileText,         label: 'Notas Fiscais' },
-  { href: '/dashboard/crm/renovacoes',     icon: AlertTriangle,    label: 'Renovações' },
-  { href: '/dashboard/marketing/campanhas',icon: Megaphone,        label: 'Campanhas' },
-  { href: '/dashboard/ai-visual',          icon: Sparkles,         label: 'IA Visual' },
-  { href: '/dashboard/documentos',         icon: Wand2,            label: 'Criar Documentos IA' },
-  { href: '/dashboard/blog',              icon: BookOpen,         label: 'Blog' },
+  { href: '/dashboard',                    icon: LayoutDashboard,  label: 'Painel',                highlight: false },
+  { href: '/dashboard/documentos',         icon: Wand2,            label: 'Agente IA Documentos',  highlight: true  },
+  { href: '/dashboard/corretor',           icon: BriefcaseBusiness,label: 'Meu Painel',            highlight: false },
+  { href: '/dashboard/properties',         icon: Building2,        label: 'Imóveis',               highlight: false },
+  { href: '/dashboard/leads',              icon: UserCheck,        label: 'Leads',                 highlight: false },
+  { href: '/dashboard/contacts',           icon: Users,            label: 'Contatos',              highlight: false },
+  { href: '/dashboard/deals',              icon: TrendingUp,       label: 'Negócios',              highlight: false },
+  { href: '/dashboard/financiamentos',     icon: Landmark,         label: 'Financiamentos',        highlight: false },
+  { href: '/dashboard/inbox',              icon: MessageCircle,    label: 'Lemos.chat',            highlight: false },
+  { href: '/dashboard/portals',            icon: Globe,            label: 'Portais',               highlight: false },
+  { href: '/dashboard/automations',        icon: Zap,              label: 'Automações',            highlight: false },
+  { href: '/dashboard/fiscal',             icon: FileText,         label: 'Notas Fiscais',         highlight: false },
+  { href: '/dashboard/crm/renovacoes',     icon: AlertTriangle,    label: 'Renovações',            highlight: false },
+  { href: '/dashboard/marketing/campanhas',icon: Megaphone,        label: 'Campanhas',             highlight: false },
+  { href: '/dashboard/ai-visual',          icon: Sparkles,         label: 'IA Visual',             highlight: false },
+  { href: '/dashboard/blog',               icon: BookOpen,         label: 'Blog',                  highlight: false },
 ]
 
 const lemosbankSubItems = [
@@ -106,7 +106,7 @@ function NavContent({ onClose }: { onClose?: () => void }) {
 
       {/* Nav */}
       <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
-        {navItems.map(({ href, icon: Icon, label }) => {
+        {navItems.map(({ href, icon: Icon, label, highlight }) => {
           const active = pathname === href || (href !== '/dashboard' && pathname.startsWith(href))
           return (
             <Link
@@ -116,11 +116,16 @@ function NavContent({ onClose }: { onClose?: () => void }) {
               className={cn(
                 'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
                 active
-                  ? 'bg-blue-600/30 text-white'
-                  : 'text-white/60 hover:bg-white/10 hover:text-white',
+                  ? highlight
+                    ? 'text-white border border-yellow-400/40'
+                    : 'bg-blue-600/30 text-white'
+                  : highlight
+                    ? 'text-yellow-400/80 hover:text-yellow-300 hover:bg-yellow-400/5 border border-yellow-400/20'
+                    : 'text-white/60 hover:bg-white/10 hover:text-white',
               )}
+              style={active && highlight ? { background: 'linear-gradient(135deg, rgba(201,168,76,0.2), rgba(232,198,106,0.1))' } : undefined}
             >
-              <Icon className="h-4 w-4 flex-shrink-0" />
+              <Icon className={cn('h-4 w-4 flex-shrink-0', highlight && !active && 'text-yellow-400/70')} />
               <span className="truncate">{label}</span>
               {active && <ChevronRight className="ml-auto h-3 w-3 flex-shrink-0" />}
             </Link>

@@ -302,25 +302,29 @@ export default async function agentsRoutes(app: FastifyInstance) {
     schema: { tags: ['agents'], summary: 'Identify document type from natural language + images' },
   }, async (req, reply) => {
     if (!env.ANTHROPIC_API_KEY) {
-      return reply.status(503).send({ error: 'AI_NOT_CONFIGURED' })
+      return reply.status(503).send({ error: 'AI_NOT_CONFIGURED', message: 'Chave da IA não configurada no servidor.' })
     }
 
     const body = z.object({
       text: z.string().min(1),
-      templateIds: z.array(z.string()).min(1),
+      templateIds: z.array(z.string()).optional().default([]),
       images: z.array(z.object({
         base64: z.string(),
         mediaType: z.string(),
+        description: z.string().optional(),
       })).optional(),
     }).parse(req.body)
 
     const result = await identifyDocument({
       text: body.text,
       templateIds: body.templateIds,
-      images: body.images,
+      images: body.images?.map(({ base64, mediaType }) => ({ base64, mediaType })),
     })
 
-    return reply.send(result)
+    // Normalise confidence: AI may return 0-100 or 0-1 scale
+    const confidence = result.confidence > 1 ? result.confidence / 100 : result.confidence
+
+    return reply.send({ ...result, confidence })
   })
 
   // POST /api/v1/agents/documents/generate — AI document generation
