@@ -378,6 +378,7 @@ export interface DocumentGenerateInput {
   templateContent: string  // the template HTML/text structure
   formData: Record<string, string>
   userInstructions: string
+  previousHtml?: string  // existing document HTML for correction/refinement requests
   images?: Array<{ base64: string; mediaType: string; description: string }>
 }
 
@@ -431,9 +432,29 @@ Retorne o HTML completo começando com <!DOCTYPE html>`
     }
   }
 
-  userContent.push({
-    type: 'text',
-    text: `TEMPLATE BASE:
+  if (input.previousHtml) {
+    // Correction mode: include a snippet of the existing document for context
+    const htmlSnippet = input.previousHtml.length > 3000
+      ? input.previousHtml.slice(0, 3000) + '\n... [documento continua] ...'
+      : input.previousHtml
+
+    userContent.push({
+      type: 'text',
+      text: `DOCUMENTO ATUAL (que deve ser CORRIGIDO conforme instrução do usuário):
+${htmlSnippet}
+
+INSTRUÇÃO DE CORREÇÃO DO USUÁRIO:
+${input.userInstructions}
+
+DADOS ATUALIZADOS:
+${Object.entries(input.formData).map(([k, v]) => `${k}: ${v}`).join('\n')}
+
+Aplique as correções solicitadas e retorne o documento HTML completo atualizado.`,
+    })
+  } else {
+    userContent.push({
+      type: 'text',
+      text: `TEMPLATE BASE:
 ${input.templateContent}
 
 DADOS FORNECIDOS:
@@ -443,7 +464,8 @@ INSTRUÇÕES ADICIONAIS:
 ${input.userInstructions}
 
 Gere o documento HTML completo seguindo o template e preenchendo com os dados acima.`,
-  })
+    })
+  }
 
   const response = await client.messages.create({
     model: 'claude-opus-4-6',

@@ -3,12 +3,13 @@
 import { useState } from 'react'
 import { Plus, X } from 'lucide-react'
 
-// Curated list based on real Imobiliária Lemos data
+// Curated list based on real Imobiliária Lemos / Univen data
 const PRESET_FEATURES = [
   // Ambientes
   'Sala de Estar', 'Sala de TV', 'Sala de Jantar', 'Cozinha', 'Cozinha americana',
   'Cozinha planejada', 'Copa', 'Lavabo', 'Banheiro', 'Banheiro auxiliar',
   'Banheiro empregada', 'Closet', 'Edícula', 'Dormitório empregada', 'Despensa', 'Hall',
+  'Escritório', 'Biblioteca', 'Estar íntimo', 'Suíte master', 'Brinquedoteca',
   // Lazer
   'Piscina', 'Piscina aquecida', 'Piscina privativa', 'Piscina infantil',
   'Churrasqueira', 'Varanda', 'Varanda gourmet', 'Sacada frente', 'Sacada fundo',
@@ -16,26 +17,31 @@ const PRESET_FEATURES = [
   'Salão de festas', 'Salão gourmet', 'Salão de jogos', 'Sala de cinema',
   'Sauna', 'Sauna privativa', 'Academia', 'Playground', 'Quadra esportiva',
   'Campo de futebol', 'SPA', 'Ofurô', 'Adega', 'Bar',
-  // Segurança e comodidades
-  'Portão eletrônico', 'Portaria 24h', 'Guarita', 'Zelador', 'Interfone',
-  'Fechadura eletrônica', 'Automatizado',
+  // Segurança
+  'Portão eletrônico', 'Portaria 24h', 'Segurança 24h', 'Guarita', 'Zelador',
+  'Interfone', 'Fechadura eletrônica', 'Automatizado', 'Câmeras de segurança',
+  'Alarme', 'Cerca elétrica', 'Portão automático',
   // Infraestrutura
   'Ar condicionado', 'Aquecimento solar', 'Água quente', 'Lareira',
-  'Elevador de serviço', 'Hidrômetro individual', 'Reservatório de água',
-  'Poço artesiano', 'Energia', 'Água', 'Esgoto', 'Pavimentação',
+  'Elevador', 'Elevador de serviço', 'Hidrômetro individual', 'Reservatório de água',
+  'Poço artesiano', 'Energia solar', 'Gerador', 'Lavanderia',
+  'Energia', 'Água', 'Esgoto', 'Pavimentação',
   // Acabamentos
   'Porcelanato', 'Mármore', 'Laminado', 'Piso cerâmica', 'Piso frio',
   'Roupeiro', 'Armários', 'Box Blindex',
   // Área externa
-  'Murado', 'Quintal', 'Garagem Fechada', 'Área de lazer', 'Área de Serviço',
-  'Área de serviço', 'Entrada de serviço', 'Junto ao muro',
+  'Murado', 'Quintal', 'Pomar', 'Garagem Fechada', 'Área de lazer', 'Área de Serviço',
+  'Entrada de serviço', 'Junto ao muro',
+  // Vistas e posição
+  'Vista mar', 'Vista montanha', 'Vista cidade', 'Vista livre', 'Sol da manhã',
+  'Sol da tarde', 'Rua silenciosa',
+  // Diferenciais
+  'Reformado recentemente', 'Pronto para morar', 'Documentação ok', 'Aceita pets',
+  'Mobiliado', 'Semi-mobiliado', 'Acesso deficientes',
   // Rural
   'Pasto', 'Celeiro', 'Cerca', 'Curral', 'Chiqueiro', 'Baias',
   'Fornalha', 'Forno', 'Forno Pão/Pizza', 'Fogão á lenha', 'Rio',
-  'Casa caseiro', 'Área verde', 'Vista livre', 'Sol da tarde', 'Rua silenciosa',
-  // Outros
-  'Reformado', 'Acesso deficientes', 'Biblioteca', 'Brinquedoteca',
-  'Estar íntimo', 'Suíte master',
+  'Casa caseiro', 'Área verde',
 ]
 
 interface Props {

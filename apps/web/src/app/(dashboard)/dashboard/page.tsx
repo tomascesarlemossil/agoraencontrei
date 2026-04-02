@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '@/stores/auth.store'
 import { propertiesApi, leadsApi } from '@/lib/api'
@@ -39,6 +40,7 @@ export default function DashboardPage() {
       icon: Building2,
       color: 'text-blue-500',
       bg: 'bg-blue-50 dark:bg-blue-950',
+      href: '/dashboard/properties',
     },
     {
       title: 'Leads Recebidos',
@@ -47,6 +49,7 @@ export default function DashboardPage() {
       icon: UserCheck,
       color: 'text-green-500',
       bg: 'bg-green-50 dark:bg-green-950',
+      href: '/dashboard/leads',
     },
     {
       title: 'Imóveis Vendidos',
@@ -55,6 +58,7 @@ export default function DashboardPage() {
       icon: TrendingUp,
       color: 'text-purple-500',
       bg: 'bg-purple-50 dark:bg-purple-950',
+      href: '/dashboard/properties?status=SOLD',
     },
     {
       title: 'Cidades com Imóveis',
@@ -63,6 +67,7 @@ export default function DashboardPage() {
       icon: Home,
       color: 'text-orange-500',
       bg: 'bg-orange-50 dark:bg-orange-950',
+      href: '/dashboard/properties',
     },
   ]
 
@@ -81,100 +86,112 @@ export default function DashboardPage() {
       {/* KPIs */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         {kpis.map((kpi) => (
-          <Card key={kpi.title}>
-            <CardContent className="p-6">
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">{kpi.title}</p>
-                  <p className="text-2xl font-bold mt-1">{kpi.value}</p>
-                  <p className="text-xs text-muted-foreground mt-1">{kpi.sub}</p>
+          <Link key={kpi.title} href={kpi.href} className="block cursor-pointer hover:ring-2 hover:ring-primary/30 rounded-xl transition-all">
+            <Card className="h-full">
+              <CardContent className="p-6">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">{kpi.title}</p>
+                    <p className="text-2xl font-bold mt-1">{kpi.value}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{kpi.sub}</p>
+                  </div>
+                  <div className={`p-2 rounded-lg ${kpi.bg}`}>
+                    <kpi.icon className={`h-5 w-5 ${kpi.color}`} />
+                  </div>
                 </div>
-                <div className={`p-2 rounded-lg ${kpi.bg}`}>
-                  <kpi.icon className={`h-5 w-5 ${kpi.color}`} />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </Link>
         ))}
       </div>
 
       {/* Two column section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Imóveis por tipo */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Imóveis por Tipo</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {stats?.byType?.length ? (
-              <div className="space-y-3">
-                {stats.byType.map((item) => (
-                  <div key={item.type} className="flex items-center justify-between">
-                    <span className="text-sm capitalize">{translateType(item.type)}</span>
-                    <div className="flex items-center gap-2">
-                      <div className="w-32 h-2 rounded-full bg-secondary overflow-hidden">
-                        <div
-                          className="h-full bg-primary rounded-full"
-                          style={{ width: `${(item._count / (stats.total || 1)) * 100}%` }}
-                        />
+        <Link href="/dashboard/properties" className="block cursor-pointer hover:ring-2 hover:ring-primary/30 rounded-xl transition-all">
+          <Card className="h-full">
+            <CardHeader>
+              <CardTitle className="text-base">Imóveis por Tipo</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {stats?.byType?.length ? (
+                <div className="space-y-3">
+                  {stats.byType.map((item) => (
+                    <div key={item.type} className="flex items-center justify-between">
+                      <span className="text-sm capitalize">{translateType(item.type)}</span>
+                      <div className="flex items-center gap-2">
+                        <div className="w-32 h-2 rounded-full bg-secondary overflow-hidden">
+                          <div
+                            className="h-full bg-primary rounded-full"
+                            style={{ width: `${(item._count / (stats.total || 1)) * 100}%` }}
+                          />
+                        </div>
+                        <span className="text-sm font-medium w-8 text-right">{item._count}</span>
                       </div>
-                      <span className="text-sm font-medium w-8 text-right">{item._count}</span>
                     </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">Nenhum imóvel cadastrado</p>
-            )}
-          </CardContent>
-        </Card>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">Nenhum imóvel cadastrado</p>
+              )}
+            </CardContent>
+          </Card>
+        </Link>
 
         {/* Top cidades */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Top 5 Cidades</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {stats?.byCityTop5?.length ? (
-              <div className="space-y-3">
-                {stats.byCityTop5.map((item, i) => (
-                  <div key={item.city} className="flex items-center gap-3">
-                    <span className="text-xs text-muted-foreground w-4">{i + 1}</span>
-                    <span className="text-sm flex-1">{item.city}</span>
-                    <span className="text-sm font-medium">{item._count} imóveis</span>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">Nenhuma cidade registrada</p>
-            )}
-          </CardContent>
-        </Card>
+        <Link href="/dashboard/properties" className="block cursor-pointer hover:ring-2 hover:ring-primary/30 rounded-xl transition-all">
+          <Card className="h-full">
+            <CardHeader>
+              <CardTitle className="text-base">Top 5 Cidades</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {stats?.byCityTop5?.length ? (
+                <div className="space-y-3">
+                  {stats.byCityTop5.map((item, i) => (
+                    <div key={item.city} className="flex items-center gap-3">
+                      <span className="text-xs text-muted-foreground w-4">{i + 1}</span>
+                      <span className="text-sm flex-1">{item.city}</span>
+                      <span className="text-sm font-medium">{item._count} imóveis</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">Nenhuma cidade registrada</p>
+              )}
+            </CardContent>
+          </Card>
+        </Link>
       </div>
 
       {/* Status summary */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <StatusCard
-          icon={CheckCircle}
-          label="Disponíveis"
-          value={stats?.active ?? 0}
-          color="text-green-500"
-          bg="bg-green-50 dark:bg-green-950"
-        />
-        <StatusCard
-          icon={Clock}
-          label="Alugados"
-          value={stats?.rented ?? 0}
-          color="text-yellow-500"
-          bg="bg-yellow-50 dark:bg-yellow-950"
-        />
-        <StatusCard
-          icon={AlertCircle}
-          label="Vendidos"
-          value={stats?.sold ?? 0}
-          color="text-red-500"
-          bg="bg-red-50 dark:bg-red-950"
-        />
+        <Link href="/dashboard/properties" className="block cursor-pointer hover:ring-2 hover:ring-primary/30 rounded-xl transition-all">
+          <StatusCard
+            icon={CheckCircle}
+            label="Disponíveis"
+            value={stats?.active ?? 0}
+            color="text-green-500"
+            bg="bg-green-50 dark:bg-green-950"
+          />
+        </Link>
+        <Link href="/dashboard/properties" className="block cursor-pointer hover:ring-2 hover:ring-primary/30 rounded-xl transition-all">
+          <StatusCard
+            icon={Clock}
+            label="Alugados"
+            value={stats?.rented ?? 0}
+            color="text-yellow-500"
+            bg="bg-yellow-50 dark:bg-yellow-950"
+          />
+        </Link>
+        <Link href="/dashboard/properties?status=SOLD" className="block cursor-pointer hover:ring-2 hover:ring-primary/30 rounded-xl transition-all">
+          <StatusCard
+            icon={AlertCircle}
+            label="Vendidos"
+            value={stats?.sold ?? 0}
+            color="text-red-500"
+            bg="bg-red-50 dark:bg-red-950"
+          />
+        </Link>
       </div>
     </div>
   )

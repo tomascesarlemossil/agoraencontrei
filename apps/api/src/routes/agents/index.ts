@@ -298,12 +298,15 @@ export default async function agentsRoutes(app: FastifyInstance) {
   })
 
   // POST /api/v1/agents/documents/identify — identify document type from NL + OCR images
+  // Also cross-references existing clients, contacts and properties in the DB
   app.post('/documents/identify', {
     schema: { tags: ['agents'], summary: 'Identify document type from natural language + images' },
   }, async (req, reply) => {
     if (!env.ANTHROPIC_API_KEY) {
       return reply.status(503).send({ error: 'AI_NOT_CONFIGURED', message: 'Chave da IA não configurada no servidor.' })
     }
+
+    const cid = req.user.cid
 
     const body = z.object({
       text: z.string().min(1),
@@ -324,7 +327,63 @@ export default async function agentsRoutes(app: FastifyInstance) {
     // Normalise confidence: AI may return 0-100 or 0-1 scale
     const confidence = result.confidence > 1 ? result.confidence / 100 : result.confidence
 
-    return reply.send({ ...result, confidence })
+    // ── Cross-reference extracted data with existing DB records ──────────────
+    const extracted = result.extractedData ?? {}
+    const dbMatches: Record<string, any> = {}
+
+    // Helper: search by name or CPF across clients and contacts
+    const names = [
+      extracted.locatario_nome, extracted.locador_nome, extracted.comprador_nome,
+      extracted.vendedor_nome, extracted.fiador_nome, extracted.nome_completo,
+      extracted.nome,
+    ].filter(Boolean)
+
+    const cpfs = [
+      extracted.locatario_cpf, extracted.locador_cpf, extracted.comprador_cpf,
+      extracted.vendedor_cpf, extracted.fiador_cpf, extracted.cpf,
+    ].filter(Boolean).map((c: string) => c.replace(/\D/g, ''))
+
+    // Search clients
+    if (names.length || cpfs.length) {
+      const [clientsByName, contactsByName] = await Promise.all([
+        names.length
+          ? app.prisma.client.findMany({
+              where: { companyId: cid, name: { in: names, mode: 'insensitive' } },
+              select: { id: true, name: true, document: true, phone: true, email: true, roles: true },
+              take: 5,
+            })
+          : Promise.resolve([]),
+        names.length
+          ? app.prisma.contact.findMany({
+              where: { companyId: cid, name: { contains: names[0], mode: 'insensitive' } },
+              select: { id: true, name: true, email: true, phone: true, company: true },
+              take: 3,
+            })
+          : Promise.resolve([]),
+      ])
+
+      if (clientsByName.length) dbMatches.clients = clientsByName
+      if (contactsByName.length) dbMatches.contacts = contactsByName
+    }
+
+    // Search properties by address
+    const imovelAddr = extracted.imovel_endereco || extracted.endereco
+    if (imovelAddr && imovelAddr.length > 5) {
+      const props = await app.prisma.property.findMany({
+        where: {
+          companyId: cid,
+          OR: [
+            { street: { contains: imovelAddr.split(',')[0], mode: 'insensitive' } },
+            { title: { contains: imovelAddr.split(',')[0], mode: 'insensitive' } },
+          ],
+        },
+        select: { id: true, title: true, street: true, neighborhood: true, city: true, price: true, priceRent: true, reference: true },
+        take: 3,
+      })
+      if (props.length) dbMatches.properties = props
+    }
+
+    return reply.send({ ...result, confidence, dbMatches })
   })
 
   // POST /api/v1/agents/documents/generate — AI document generation
@@ -340,6 +399,7 @@ export default async function agentsRoutes(app: FastifyInstance) {
       templateContent: z.string(),
       formData: z.record(z.string()).default({}),
       userInstructions: z.string().default(''),
+      previousHtml: z.string().optional(),
       images: z.array(z.object({
         base64: z.string(),
         mediaType: z.string(),
@@ -352,6 +412,7 @@ export default async function agentsRoutes(app: FastifyInstance) {
       templateContent: body.templateContent,
       formData: body.formData,
       userInstructions: body.userInstructions,
+      previousHtml: body.previousHtml,
       images: body.images,
     })
 

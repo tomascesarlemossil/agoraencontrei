@@ -548,6 +548,57 @@ export default async function financeRoutes(app: FastifyInstance) {
 
   // ── NEW ENDPOINTS ────────────────────────────────────────────────────────────
 
+  // POST /api/v1/finance/contracts — Create new contract
+  app.post('/contracts', async (req, reply) => {
+    const cid = req.user.cid
+    const body = req.body as {
+      propertyAddress?:    string
+      legacyPropertyCode?: string
+      tenantName?:         string
+      tenantId?:           string
+      landlordId?:         string
+      guarantorId?:        string
+      rentValue?:          number
+      tenantDueDay?:       number
+      landlordDueDay?:     number
+      startDate?:          string
+      rescissionDate?:     string
+      adjustmentIndex?:    string
+      adjustmentPercent?:  number
+      penalty?:            number
+      commission?:         number
+      contractHtml?:       string
+      guaranteeType?:      string
+      status?:             string
+    }
+
+    const created = await app.prisma.contract.create({
+      data: {
+        companyId:         cid,
+        propertyAddress:   body.propertyAddress   ?? null,
+        legacyPropertyCode: body.legacyPropertyCode ?? null,
+        tenantName:        body.tenantName         ?? null,
+        tenantId:          body.tenantId           ?? null,
+        landlordId:        body.landlordId         ?? null,
+        guarantorId:       body.guarantorId        ?? null,
+        rentValue:         body.rentValue          ?? null,
+        tenantDueDay:      body.tenantDueDay       ?? null,
+        landlordDueDay:    body.landlordDueDay     ?? null,
+        startDate:         body.startDate          ? new Date(body.startDate)      : null,
+        rescissionDate:    body.rescissionDate     ? new Date(body.rescissionDate) : null,
+        adjustmentIndex:   body.adjustmentIndex    ?? null,
+        adjustmentPercent: body.adjustmentPercent  ?? null,
+        penalty:           body.penalty            ?? null,
+        commission:        body.commission         ?? null,
+        contractHtml:      body.contractHtml       ?? null,
+        status:            (body.status as any)    ?? 'ACTIVE',
+        isActive:          (body.status ?? 'ACTIVE') === 'ACTIVE',
+      },
+    })
+
+    return reply.status(201).send(created)
+  })
+
   // PATCH /api/v1/finance/contracts/:id — Edit contract fields
   app.patch('/contracts/:id', async (req, reply) => {
     const { id } = req.params as { id: string }
@@ -559,6 +610,7 @@ export default async function financeRoutes(app: FastifyInstance) {
       endDate?:         string   // stored as rescissionDate (planned end)
       adjustmentIndex?: string
       observations?:    string   // stored in the closest text field (no-op if field absent)
+      contractHtml?:    string
     }
 
     const contract = await app.prisma.contract.findFirst({
@@ -575,6 +627,7 @@ export default async function financeRoutes(app: FastifyInstance) {
         ...(body.startDate       !== undefined && { startDate:        new Date(body.startDate) }),
         ...(body.endDate         !== undefined && { rescissionDate:   new Date(body.endDate) }),
         ...(body.adjustmentIndex !== undefined && { adjustmentIndex:  body.adjustmentIndex }),
+        ...(body.contractHtml    !== undefined && { contractHtml:     body.contractHtml }),
       },
     })
 

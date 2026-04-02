@@ -5,8 +5,16 @@ import { PropertyFiltersForm } from './PropertyFiltersForm'
 import { LoadMoreProperties } from './LoadMoreProperties'
 
 export const metadata: Metadata = {
-  title: 'Imóveis à Venda e Aluguel | Franca e Região',
-  description: 'Encontre casas, apartamentos, terrenos e imóveis comerciais para comprar ou alugar em Franca e região. Imobiliária Lemos — CRECI 279051.',
+  title: 'Imóveis à Venda e Aluguel em Franca/SP | Imobiliária Lemos',
+  description: 'Encontre casas à venda, apartamentos para alugar, terrenos e imóveis comerciais em Franca/SP e região. Imobiliária Lemos — CRECI 279051. Mais de 900 imóveis disponíveis.',
+  keywords: 'imóveis franca sp, casas à venda franca sp, apartamentos para alugar franca sp, comprar casa franca sp, alugar apartamento franca sp, terrenos à venda franca sp, imóveis comerciais franca sp, casas franca bairros, apartamentos franca bairros, imóvel franca creci, imobiliária franca sp, casas baratas franca sp, apartamentos baratos franca sp, imóveis novos franca sp, imóveis usados franca sp, casas 2 quartos franca sp, casas 3 quartos franca sp, apartamentos 1 quarto franca sp, condomínio franca sp, sobrado franca sp, terreno loteamento franca sp, sala comercial franca sp, galpão franca sp, imóvel temporada franca sp',
+  openGraph: {
+    title: 'Imóveis à Venda e Aluguel em Franca/SP | Imobiliária Lemos',
+    description: 'Mais de 900 imóveis disponíveis em Franca/SP. Casas, apartamentos, terrenos e comerciais para comprar ou alugar. CRECI 279051.',
+    type: 'website',
+    locale: 'pt_BR',
+    siteName: 'Imobiliária Lemos',
+  },
 }
 
 export const revalidate = 300

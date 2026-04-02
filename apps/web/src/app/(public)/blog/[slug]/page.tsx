@@ -68,6 +68,13 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
   const shareUrl = `${WEB_URL}/blog/${post.slug}`
   const shareText = encodeURIComponent(post.title)
 
+  // Extract YouTube video ID
+  function extractYouTubeId(url: string): string | null {
+    const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([^&\s?#]+)/)
+    return match ? match[1] : null
+  }
+  const videoId = post.videoUrl ? extractYouTubeId(post.videoUrl) : null
+
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
@@ -87,11 +94,21 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
           Voltar ao Blog
         </Link>
 
-        {/* Cover image */}
-        {post.coverImage && (
+        {/* YouTube embed (takes priority over cover image when available) */}
+        {videoId ? (
+          <div className="w-full aspect-video rounded-2xl overflow-hidden mb-8">
+            <iframe
+              src={`https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&rel=0&modestbranding=1`}
+              className="w-full h-full border-0"
+              allow="autoplay; encrypted-media"
+              allowFullScreen
+              title={post.title}
+            />
+          </div>
+        ) : post.coverImage ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={post.coverImage} alt={post.title} className="w-full h-64 sm:h-96 object-cover rounded-2xl mb-8" />
-        )}
+        ) : null}
 
         {/* Meta */}
         <div className="flex flex-wrap items-center gap-3 mb-4 text-sm text-gray-500">

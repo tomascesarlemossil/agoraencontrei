@@ -69,11 +69,98 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   if (!p) return { title: 'Imóvel não encontrado' }
   const title = p.metaTitle || `${p.title} | Imobiliária Lemos`
   const description = p.metaDescription || p.description?.slice(0, 160) || `${TYPE_LABEL[p.type] ?? p.type} em ${p.city}`
+  const images = [p.coverImage, ...(p.images ?? [])].filter(Boolean).slice(0, 4)
+  const keywords = Array.isArray(p.metaKeywords) && p.metaKeywords.length > 0
+    ? p.metaKeywords.join(', ')
+    : `${TYPE_LABEL[p.type] ?? p.type}, ${p.city ?? 'Franca'}, imóvel à ${p.purpose === 'RENT' ? 'locação' : 'venda'}, Imobiliária Lemos`
   return {
     title: { absolute: title },
     description,
-    openGraph: { title, description, images: p.coverImage ? [p.coverImage] : [], type: 'website' },
+    keywords,
+    openGraph: {
+      title,
+      description,
+      images: images.map(url => ({ url, width: 1200, height: 630, alt: p.title })),
+      type: 'website',
+      url: `${SITE_URL}/imoveis/${p.slug}`,
+      siteName: 'Imobiliária Lemos — AgoraEncontrei',
+      locale: 'pt_BR',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: images.slice(0, 1),
+    },
+    alternates: {
+      canonical: `${SITE_URL}/imoveis/${p.slug}`,
+    },
   }
+}
+
+function buildJsonLd(p: any, siteUrl: string) {
+  const allImages = [p.coverImage, ...(p.images ?? [])].filter(Boolean)
+  const price = Number(p.price) || Number(p.priceRent) || 0
+  const purposeLabel = p.purpose === 'RENT' || p.purpose === 'SEASON' ? 'ForRent' : 'ForSale'
+
+  const jsonLd: Record<string, unknown> = {
+    '@context': 'https://schema.org',
+    '@type': 'RealEstateListing',
+    name: p.title,
+    description: p.description?.slice(0, 500) || p.title,
+    url: `${siteUrl}/imoveis/${p.slug}`,
+    ...(allImages.length > 0 && { image: allImages }),
+    datePosted: p.publishedAt || p.createdAt,
+    ...(price > 0 && {
+      offers: {
+        '@type': 'Offer',
+        price: price.toString(),
+        priceCurrency: 'BRL',
+        availability: 'https://schema.org/InStock',
+        itemCondition: 'https://schema.org/UsedCondition',
+        businessFunction: `https://schema.org/${purposeLabel}`,
+      },
+    }),
+    address: {
+      '@type': 'PostalAddress',
+      ...(p.street && { streetAddress: `${p.street}${p.number ? `, ${p.number}` : ''}` }),
+      addressLocality: p.city ?? 'Franca',
+      addressRegion: p.state ?? 'SP',
+      postalCode: p.zipCode ?? '',
+      addressCountry: 'BR',
+    },
+    geo: (p.latitude && p.longitude) ? {
+      '@type': 'GeoCoordinates',
+      latitude: p.latitude,
+      longitude: p.longitude,
+    } : undefined,
+    numberOfRooms: p.bedrooms || undefined,
+    floorSize: (p.totalArea || p.builtArea) ? {
+      '@type': 'QuantitativeValue',
+      value: p.totalArea || p.builtArea,
+      unitCode: 'MTK',
+    } : undefined,
+    amenityFeature: (p.features ?? []).map((f: string) => ({
+      '@type': 'LocationFeatureSpecification',
+      name: f,
+      value: true,
+    })),
+    seller: {
+      '@type': 'RealEstateAgent',
+      name: 'Imobiliária Lemos',
+      url: siteUrl,
+      telephone: '+55-16-3713-3276',
+      address: {
+        '@type': 'PostalAddress',
+        addressLocality: 'Franca',
+        addressRegion: 'SP',
+        addressCountry: 'BR',
+      },
+    },
+  }
+
+  // Remove undefined values
+  return JSON.parse(JSON.stringify(jsonLd))
 }
 
 function fmtCurrency(v: number, decimals = 2) {
@@ -188,8 +275,15 @@ export default async function PropertyDetailPage({ params }: { params: { slug: s
   }
   const youtubeId = getYouTubeId(p.videoUrl)
 
+  const jsonLd = buildJsonLd(p, SITE_URL)
+
   return (
     <div style={{ backgroundColor: '#f5f3ef' }} className="min-h-screen">
+      {/* JSON-LD Structured Data */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
 
       {/* ── Breadcrumb ─────────────────────────────────────── */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-4 pb-2">

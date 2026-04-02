@@ -15,7 +15,7 @@ import { Controller, useForm } from 'react-hook-form'
 import {
   ArrowLeft, Edit, Save, X, MapPin, BedDouble, Bath, Car, Ruler, Eye,
   Calendar, ImagePlus, Trash2, Star, Upload, Phone, Mail, User, ZoomIn,
-  Home, Globe, Settings, Shield, Briefcase, Building2,
+  Home, Globe, Settings, Shield, Briefcase, Building2, Search,
 } from 'lucide-react'
 import Link from 'next/link'
 import { useState, useRef } from 'react'
@@ -213,6 +213,12 @@ export default function PropertyDetailPage() {
       // SEO
       metaTitle: p.metaTitle ?? '',
       metaDescription: p.metaDescription ?? '',
+      metaKeywords: Array.isArray(p.metaKeywords) ? p.metaKeywords.join(', ') : (p.metaKeywords ?? ''),
+      // Portais
+      publishOlx: !!(p.portalDescriptions as any)?.olx,
+      publishZap: !!(p.portalDescriptions as any)?.zap,
+      publishVivaReal: !!(p.portalDescriptions as any)?.vivareal,
+      publishFacebook: !!(p.portalDescriptions as any)?.facebook,
       // Captação
       captorName: p.captorName ?? '',
       captorCommissionPct: p.captorCommissionPct ?? '',
@@ -235,9 +241,19 @@ export default function PropertyDetailPage() {
   const updateMutation = useMutation({
     mutationFn: async (data: any) => {
       const token = await getValidToken()
+      const { publishOlx, publishZap, publishVivaReal, publishFacebook, metaKeywords, ...rest } = data
       const clean: Record<string, unknown> = {}
-      for (const [k, v] of Object.entries(data)) {
+      for (const [k, v] of Object.entries(rest)) {
         if (v !== '' && v !== undefined) clean[k] = v
+      }
+      // Store portal toggles in portalDescriptions JSON
+      clean.portalDescriptions = {
+        ...((p?.portalDescriptions as any) ?? {}),
+        olx: publishOlx, zap: publishZap, vivareal: publishVivaReal, facebook: publishFacebook,
+      }
+      // Convert comma-separated keywords to array
+      if (metaKeywords) {
+        clean.metaKeywords = metaKeywords.split(',').map((k: string) => k.trim()).filter(Boolean)
       }
       return propertiesApi.update(token!, id, clean)
     },
@@ -746,18 +762,95 @@ export default function PropertyDetailPage() {
                 </div>
               </Section>
 
+              {/* Portais */}
+              <Section title="Portais de Publicação">
+                <p className="text-xs text-white/50 -mt-1">Selecione em quais portais este imóvel será publicado.</p>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {([
+                    ['publishOlx',      'OLX',          '#FF6500'],
+                    ['publishZap',      'Zap Imóveis',  '#7C3AED'],
+                    ['publishVivaReal', 'Viva Real',    '#16A34A'],
+                    ['publishFacebook', 'Facebook Mkt', '#1877F2'],
+                  ] as const).map(([name, label, color]) => (
+                    <Controller key={name} name={name as any} control={control} render={({ field }) => (
+                      <button
+                        type="button"
+                        onClick={() => field.onChange(!field.value)}
+                        className={cn(
+                          'flex items-center gap-2 px-3 py-2.5 rounded-xl border text-sm font-semibold transition-all',
+                          field.value
+                            ? 'border-white/30 bg-white/15 text-white'
+                            : 'border-white/10 bg-white/5 text-white/40 hover:text-white/60'
+                        )}
+                      >
+                        <span
+                          className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                          style={{ backgroundColor: field.value ? color : 'rgba(255,255,255,0.2)' }}
+                        />
+                        {label}
+                      </button>
+                    )} />
+                  ))}
+                </div>
+              </Section>
+
               <Section title="SEO — Otimização para Buscadores">
-                <Field label="Título SEO">
-                  <Input {...register('metaTitle')} maxLength={70}
-                    placeholder="Título para Google (máx. 70 caracteres)"
-                    className="bg-white/5 border-white/10 text-white h-9 placeholder:text-white/40" />
-                </Field>
-                <Field label="Descrição SEO">
-                  <textarea {...register('metaDescription')} rows={3} maxLength={160}
-                    placeholder="Descrição para Google (máx. 160 caracteres)"
-                    className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white resize-none focus:outline-none focus:ring-2 focus:ring-ring placeholder:text-white/40" />
-                </Field>
-                <p className="text-xs text-white/50">* Se deixar em branco, o título e descrição do imóvel serão usados automaticamente.</p>
+                <div className="space-y-3">
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-white/60 text-xs">Título SEO</Label>
+                      <span className={cn('text-xs tabular-nums', (watch('metaTitle')?.length ?? 0) > 50 ? (watch('metaTitle')?.length ?? 0) > 60 ? 'text-red-400' : 'text-yellow-400' : 'text-white/30')}>
+                        {watch('metaTitle')?.length ?? 0}/60
+                      </span>
+                    </div>
+                    <Input {...register('metaTitle')} maxLength={60}
+                      placeholder="Ex: Apartamento 3 quartos em Franca SP | Imobiliária Lemos"
+                      className="bg-white/5 border-white/10 text-white h-9 placeholder:text-white/40" />
+                    <p className="text-xs text-white/40">Ideal: até 60 caracteres. Aparece como título no Google.</p>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-white/60 text-xs">Meta Descrição</Label>
+                      <span className={cn('text-xs tabular-nums', (watch('metaDescription')?.length ?? 0) > 130 ? (watch('metaDescription')?.length ?? 0) > 160 ? 'text-red-400' : 'text-yellow-400' : 'text-white/30')}>
+                        {watch('metaDescription')?.length ?? 0}/160
+                      </span>
+                    </div>
+                    <textarea {...register('metaDescription')} rows={3} maxLength={160}
+                      placeholder="Descreva o imóvel em até 160 caracteres para aparecer no Google..."
+                      className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white resize-none focus:outline-none focus:ring-2 focus:ring-ring placeholder:text-white/40" />
+                    <p className="text-xs text-white/40">Ideal: 120–160 caracteres. Aparece como descrição no Google.</p>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label className="text-white/60 text-xs">Palavras-chave (separadas por vírgula)</Label>
+                    <Input {...register('metaKeywords')}
+                      placeholder="apartamento, 3 quartos, Franca, imóvel à venda..."
+                      className="bg-white/5 border-white/10 text-white h-9 placeholder:text-white/40" />
+                  </div>
+
+                  {/* Google Preview */}
+                  {(watch('metaTitle') || watch('metaDescription')) && (
+                    <div className="mt-4 rounded-xl border border-white/10 bg-white/5 p-4 space-y-2">
+                      <div className="flex items-center gap-1.5 mb-2">
+                        <Search className="h-3.5 w-3.5 text-white/30" />
+                        <span className="text-xs text-white/30 uppercase tracking-wider font-semibold">Prévia no Google</span>
+                      </div>
+                      <div className="bg-white rounded-lg p-4 space-y-1">
+                        <p className="text-xs text-[#006621] truncate">www.agoraencontrei.com.br/imoveis/{p?.slug ?? '...'}</p>
+                        <p className="text-[#1a0dab] text-base font-medium leading-snug line-clamp-1">
+                          {watch('metaTitle') || p?.title || 'Título do imóvel | Imobiliária Lemos'}
+                        </p>
+                        <p className="text-[#545454] text-sm leading-snug line-clamp-2">
+                          {watch('metaDescription') || p?.description || 'Descrição do imóvel aparecerá aqui. Preencha a meta descrição para controlar o que o Google exibe nos resultados de busca.'}
+                        </p>
+                      </div>
+                      <p className="text-xs text-white/30">* Prévia aproximada — o Google pode exibir de forma diferente.</p>
+                    </div>
+                  )}
+
+                  <p className="text-xs text-white/50">* Se deixar em branco, o título e descrição do imóvel serão usados automaticamente.</p>
+                </div>
               </Section>
             </div>
           )}

@@ -115,6 +115,10 @@ const CreatePropertyBody = z.object({
   // Additional property fields
   totalFloors:  z.number().int().min(0).optional(),
   isPremium:    z.boolean().optional(),
+  // Portal publication toggles (stored in portalDescriptions JSON)
+  portalDescriptions: z.record(z.unknown()).optional(),
+  // SEO slug override
+  slug:         z.string().optional(),
 })
 
 function buildSlug(title: string, reference?: string | null): string {
@@ -285,6 +289,7 @@ export default async function propertiesRoutes(app: FastifyInstance) {
         price: body.price ? body.price : undefined,
         priceRent: body.priceRent ? body.priceRent : undefined,
         publishedAt: body.status === 'ACTIVE' ? new Date() : undefined,
+        portalDescriptions: body.portalDescriptions as any,
       },
     })
 
@@ -325,6 +330,7 @@ export default async function propertiesRoutes(app: FastifyInstance) {
       data: {
         ...body,
         ...(body.status === 'ACTIVE' && !existing.publishedAt && { publishedAt: new Date() }),
+        ...(body.portalDescriptions !== undefined && { portalDescriptions: body.portalDescriptions as any }),
       },
     })
 

@@ -5,7 +5,7 @@ import { Calendar, Tag, Eye, ArrowRight, TrendingUp, Home, DollarSign, Gavel, Bo
 export const metadata: Metadata = {
   title: 'Blog Imobiliário | Imobiliária Lemos — Dicas, Notícias e Mercado',
   description: 'Fique por dentro do mercado imobiliário de Franca e região. Dicas para comprar e alugar imóveis, financiamento imobiliário, leilões, legislação e muito mais.',
-  keywords: 'imóveis franca, comprar imóvel franca, alugar imóvel franca, financiamento imobiliário, mercado imobiliário, leilão imóvel, administração imóveis, investimento imobiliário, ITBI, IPTU, escritura imóvel, vistoria imóvel, contrato locação, lei do inquilinato',
+  keywords: 'imóveis franca sp, comprar imóvel franca sp, alugar imóvel franca sp, financiamento imobiliário franca, mercado imobiliário franca, leilão imóvel franca, administração imóveis franca, investimento imobiliário franca, ITBI franca sp, IPTU franca sp, escritura imóvel franca, vistoria imóvel franca, contrato locação franca, lei do inquilinato, dicas compra imóvel, como financiar imóvel caixa, FGTS compra imóvel, minha casa minha vida franca, imóvel franca creci, imobiliária franca sp blog, casas à venda franca sp dicas, apartamentos para alugar franca dicas',
   openGraph: {
     type: 'website',
     locale: 'pt_BR',
@@ -50,11 +50,27 @@ function CategoryBadge({ category }: { category: string | null }) {
   )
 }
 
+function extractYouTubeId(url: string): string | null {
+  const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([^&\s?#]+)/)
+  return match ? match[1] : null
+}
+
 function PostCard({ post }: { post: any }) {
   const date = post.publishedAt ? new Date(post.publishedAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' }) : ''
+  const videoId = post.videoUrl ? extractYouTubeId(post.videoUrl) : null
   return (
     <Link href={`/blog/${post.slug}`} className="group bg-white rounded-2xl overflow-hidden border hover:shadow-xl hover:border-transparent transition-all duration-300" style={{ borderColor: '#e8e4dc' }}>
-      {post.coverImage ? (
+      {videoId ? (
+        <div className="w-full h-48 relative overflow-hidden">
+          <iframe
+            src={`https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&loop=1&playlist=${videoId}&controls=0&modestbranding=1&rel=0`}
+            className="absolute inset-0 w-full h-full border-0"
+            allow="autoplay; encrypted-media"
+            allowFullScreen
+            title={post.title}
+          />
+        </div>
+      ) : post.coverImage ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={post.coverImage} alt={post.title} className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-500" />
       ) : (

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuthStore } from '@/stores/auth.store'
-import { FileText, CheckCircle, XCircle, Clock, ChevronLeft, ChevronRight, Pencil, X } from 'lucide-react'
+import { FileText, CheckCircle, XCircle, Clock, ChevronLeft, ChevronRight, Pencil, X, Plus } from 'lucide-react'
 import { SearchInputWithVoice } from '@/components/ui/SearchInputWithVoice'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { financeApi, type LegacyContract } from '@/lib/api'
@@ -210,9 +210,18 @@ export default function ContratosPage() {
             {isInactive ? 'Contratos inativos (encerrados e cancelados)' : 'Contratos ativos em vigor'}
           </p>
         </div>
-        {meta && (
-          <span className="ml-auto text-sm text-gray-400">{meta.total.toLocaleString('pt-BR')} contratos</span>
-        )}
+        <div className="ml-auto flex items-center gap-3">
+          {meta && (
+            <span className="text-sm text-gray-400">{meta.total.toLocaleString('pt-BR')} contratos</span>
+          )}
+          <button
+            onClick={() => router.push('/dashboard/contratos/novo')}
+            className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-xl hover:bg-purple-700 transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            Novo Contrato
+          </button>
+        </div>
       </div>
 
       {/* Active / Inactive top tabs */}

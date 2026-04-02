@@ -5,7 +5,7 @@ import { useAuthStore } from '@/stores/auth.store'
 import {
   Sparkles, FileText, Download, Printer, Image as ImageIcon, X,
   ChevronRight, Loader2, Camera, CheckCircle2, AlertCircle,
-  PanelRightClose, PanelRightOpen, Wand2, Menu,
+  PanelRightClose, PanelRightOpen, Wand2, Menu, History, RefreshCw,
 } from 'lucide-react'
 import { VoiceInputButton } from '@/components/ui/VoiceInputButton'
 import { TEMPLATES, CATEGORIES, type DocTemplate } from './templates'
@@ -32,6 +32,39 @@ interface IdentifyResult {
 }
 
 type Step = 'command' | 'identified' | 'generated'
+
+interface DocHistoryItem {
+  id: string
+  templateId: string
+  templateTitle: string
+  templateIcon: string
+  generatedAt: string
+  html: string
+  formData: Record<string, string>
+}
+
+const HISTORY_KEY = 'document_history'
+const HISTORY_LIMIT = 50
+
+function loadHistory(): DocHistoryItem[] {
+  try {
+    return JSON.parse(localStorage.getItem(HISTORY_KEY) ?? '[]')
+  } catch {
+    return []
+  }
+}
+
+function saveToHistory(item: DocHistoryItem) {
+  try {
+    const history = loadHistory()
+    const updated = [item, ...history.filter(h => h.id !== item.id)].slice(0, HISTORY_LIMIT)
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(updated))
+  } catch {}
+}
+
+function generateUUID(): string {
+  return crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`
+}
 
 // ── helpers ────────────────────────────────────────────────────────────────────
 function toBase64(file: File): Promise<string> {
@@ -124,6 +157,13 @@ export default function DocumentosPage() {
   const [generating, setGenerating] = useState(false)
   const [generatedHtml, setGeneratedHtml] = useState('')
 
+  // history state
+  const [history, setHistory] = useState<DocHistoryItem[]>([])
+
+  // refinement state
+  const [refinementText, setRefinementText] = useState('')
+  const [refining, setRefining] = useState(false)
+
   // sidebar — fechado por padrão em mobile (< 768px)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
@@ -139,6 +179,11 @@ export default function DocumentosPage() {
     mq.addEventListener('change', handler as any)
     return () => mq.removeEventListener('change', handler as any)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Load history from localStorage on mount
+  useEffect(() => {
+    setHistory(loadHistory())
+  }, [])
 
   // refs
   const cameraInputRef = useRef<HTMLInputElement>(null)
@@ -231,6 +276,20 @@ export default function DocumentosPage() {
       if (data.html) {
         setGeneratedHtml(data.html)
         setStep('generated')
+        // Save to localStorage history
+        if (selectedTemplate) {
+          const histItem: DocHistoryItem = {
+            id: generateUUID(),
+            templateId: selectedTemplate.id,
+            templateTitle: selectedTemplate.title,
+            templateIcon: selectedTemplate.icon,
+            generatedAt: new Date().toISOString(),
+            html: data.html,
+            formData,
+          }
+          saveToHistory(histItem)
+          setHistory(loadHistory())
+        }
       } else {
         setGeneratedHtml('<p style="color:red;font-family:sans-serif;padding:2rem">Erro ao gerar documento. Verifique se a chave da IA está configurada no servidor.</p>')
         setStep('generated')
@@ -240,6 +299,51 @@ export default function DocumentosPage() {
       setStep('generated')
     } finally {
       setGenerating(false)
+    }
+  }
+
+  // ── step 3: apply refinement correction ─────────────────────────────────────
+  async function handleApplyRefinement() {
+    if (!refinementText.trim() || !selectedTemplate) return
+    setRefining(true)
+    try {
+      const res = await fetch(`${API_URL}/api/v1/agents/documents/generate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          templateId: selectedTemplate.id,
+          templateContent: selectedTemplate.content,
+          formData,
+          userInstructions: refinementText,
+          previousHtml: generatedHtml,
+          images: uploadedImages.map(({ base64, mediaType, description }) => ({
+            base64, mediaType, description,
+          })),
+        }),
+      })
+      const data = await res.json()
+      if (data.html) {
+        setGeneratedHtml(data.html)
+        setRefinementText('')
+        // Save updated version to history
+        const histItem: DocHistoryItem = {
+          id: generateUUID(),
+          templateId: selectedTemplate.id,
+          templateTitle: selectedTemplate.title,
+          templateIcon: selectedTemplate.icon,
+          generatedAt: new Date().toISOString(),
+          html: data.html,
+          formData,
+        }
+        saveToHistory(histItem)
+        setHistory(loadHistory())
+      }
+    } catch {}
+    finally {
+      setRefining(false)
     }
   }
 
@@ -276,6 +380,30 @@ export default function DocumentosPage() {
     setSelectedTemplate(null)
     setFormData({})
     setGeneratedHtml('')
+    setRefinementText('')
+  }
+
+  // ── download helper for history items ────────────────────────────────────────
+  function downloadHistoryItem(item: DocHistoryItem) {
+    const blob = new Blob([item.html], { type: 'text/html;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${item.templateId}_${new Date(item.generatedAt).toLocaleDateString('pt-BR').replace(/\//g, '-')}.html`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  // ── reopen history item ───────────────────────────────────────────────────────
+  function reopenHistoryItem(item: DocHistoryItem) {
+    const tmpl = TEMPLATES.find(t => t.id === item.templateId)
+    if (!tmpl) return
+    setSelectedTemplate(tmpl)
+    setFormData(item.formData)
+    setGeneratedHtml(item.html)
+    setIdentifyResult({ templateId: item.templateId, extractedData: item.formData, confidence: 1 })
+    setStep('generated')
+    setRefinementText('')
   }
 
   // ── sidebar template click ──────────────────────────────────────────────────
@@ -620,6 +748,76 @@ export default function DocumentosPage() {
                   }}
                   title="Documento gerado"
                 />
+              </div>
+
+              {/* ── Refinement via IA ─────────────────────────────── */}
+              <div className="px-5 py-4 border-t border-white/10">
+                <p className="text-[11px] font-semibold text-white/50 mb-2 uppercase tracking-wider">
+                  Solicitar correção ou alteração via IA
+                </p>
+                <div className="relative">
+                  <textarea
+                    value={refinementText}
+                    onChange={e => setRefinementText(e.target.value)}
+                    placeholder="Ex: Altere o valor do aluguel para R$2.500, corrija o nome do locatário para 'Maria Aparecida'..."
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 pr-10 text-white placeholder:text-white/25 outline-none focus:border-yellow-400/40 resize-none transition-colors"
+                    style={{ fontSize: '14px', minHeight: '80px' }}
+                  />
+                  <span className="absolute right-3 top-3">
+                    <VoiceInputButton onResult={(text) => setRefinementText(prev => prev ? prev + ' ' + text : text)} dark />
+                  </span>
+                </div>
+                <div className="flex justify-end mt-2">
+                  <button
+                    onClick={handleApplyRefinement}
+                    disabled={refining || !refinementText.trim()}
+                    className="flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-bold transition-all hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed"
+                    style={{ background: 'linear-gradient(135deg, #C9A84C, #e8c66a)', color: '#1B2B5B' }}
+                  >
+                    {refining
+                      ? <><Loader2 className="w-4 h-4 animate-spin" /> Aplicando...</>
+                      : <><Wand2 className="w-4 h-4" /> Aplicar correção</>}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ── DOCUMENT HISTORY ──────────────────────────────────────────── */}
+          {history.length > 0 && (
+            <div className="rounded-2xl border border-white/10 bg-white/[0.02] overflow-hidden">
+              <div className="flex items-center gap-2 px-5 py-3.5 border-b border-white/10">
+                <History className="w-4 h-4 text-yellow-400" />
+                <span className="text-sm font-semibold text-white">Histórico de documentos</span>
+                <span className="text-[10px] text-white/40 bg-white/5 rounded-full px-2 py-0.5">últimos {Math.min(history.length, 5)}</span>
+              </div>
+              <div className="divide-y divide-white/5">
+                {history.slice(0, 5).map(item => (
+                  <div key={item.id} className="flex items-center gap-3 px-5 py-3 hover:bg-white/[0.02] transition-colors">
+                    <span className="text-xl flex-shrink-0">{item.templateIcon}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-white/80 truncate">{item.templateTitle}</p>
+                      <p className="text-[11px] text-white/40">
+                        {new Date(item.generatedAt).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <button
+                        onClick={() => downloadHistoryItem(item)}
+                        className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 hover:border-white/20 text-xs text-white/60 hover:text-white transition-all"
+                      >
+                        <Download className="w-3 h-3" /> Baixar
+                      </button>
+                      <button
+                        onClick={() => reopenHistoryItem(item)}
+                        className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all hover:brightness-110"
+                        style={{ background: 'linear-gradient(135deg, #C9A84C, #e8c66a)', color: '#1B2B5B' }}
+                      >
+                        <RefreshCw className="w-3 h-3" /> Reabrir
+                      </button>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           )}
