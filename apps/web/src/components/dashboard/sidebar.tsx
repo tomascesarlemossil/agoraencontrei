@@ -39,6 +39,7 @@ import {
   Archive,
 } from 'lucide-react'
 import { useNotifications } from '@/stores/notifications.store'
+import { UserAvatar } from '@/components/ui/UserAvatar'
 
 const topNavItems = [
   { href: '/dashboard',            icon: LayoutDashboard, label: 'Painel',               highlight: false },
@@ -255,12 +256,15 @@ function NavContent({ onClose }: { onClose?: () => void }) {
 
       {/* User */}
       <div className="px-4 py-3 border-t border-white/10 flex items-center gap-3">
-        <div className="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center text-xs font-bold text-white flex-shrink-0">
-          {user?.name?.charAt(0).toUpperCase() ?? 'U'}
-        </div>
+        <UserAvatar
+          name={user?.name}
+          avatarUrl={(user as any)?.avatarUrl}
+          size="sm"
+          showRing
+        />
         <div className="min-w-0">
           <p className="text-xs font-medium text-white truncate">{user?.name ?? 'Usuário'}</p>
-          <p className="text-xs text-white/40 truncate">{user?.email ?? ''}</p>
+          <p className="text-[10px] text-white/40 truncate">{(user as any)?.role ?? user?.email ?? ''}</p>
         </div>
       </div>
     </div>
