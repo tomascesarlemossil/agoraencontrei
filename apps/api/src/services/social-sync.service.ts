@@ -72,29 +72,58 @@ export async function fetchInstagramPosts(accessToken: string, limit = 20): Prom
 
 /**
  * Fetch YouTube videos via Data API v3
- * Uses channelId directly (UCKpTcdWhQZIPMX8EF_nNckw) — no search step needed
+ * Uses uploads playlist pagination to retrieve ALL videos from the channel.
  *
- * Fallback: RSS feed (no API key required) via youtube.com/feeds/videos.xml
+ * Fallback: YouTube RSS feed (free, no key required, ~15 most recent videos)
  */
-export async function fetchYouTubeVideos(apiKeyOrNull: string | null, channelId: string, limit = 20): Promise<YouTubeVideo[]> {
-  // Primary: YouTube Data API v3 (requires API key)
+export async function fetchYouTubeVideos(apiKeyOrNull: string | null, channelId: string, limit = 500): Promise<YouTubeVideo[]> {
+  // Primary: YouTube Data API v3 — uploads playlist with full pagination
   if (apiKeyOrNull) {
     try {
-      const videosUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&type=video&order=date&maxResults=${limit}&key=${apiKeyOrNull}`
-      const videosRes = await fetch(videosUrl)
-      if (!videosRes.ok) throw new Error(`YouTube API error: ${videosRes.status}`)
-      const videosData = await videosRes.json()
-      if (videosData.error) throw new Error(videosData.error.message)
+      // Step 1: Get uploads playlist ID
+      const channelRes = await fetch(
+        `https://www.googleapis.com/youtube/v3/channels?part=contentDetails&id=${channelId}&key=${apiKeyOrNull}`
+      )
+      if (!channelRes.ok) throw new Error(`YouTube channels API error: ${channelRes.status}`)
+      const channelData = await channelRes.json()
+      if (channelData.error) throw new Error(channelData.error.message)
+      const uploadsPlaylistId = channelData.items?.[0]?.contentDetails?.relatedPlaylists?.uploads
+      if (!uploadsPlaylistId) throw new Error('Could not find uploads playlist')
 
-      return (videosData.items ?? []).map((item: any) => ({
-        id: item.id.videoId,
-        title: item.snippet.title,
-        description: item.snippet.description,
-        thumbnailUrl: item.snippet.thumbnails?.medium?.url ?? item.snippet.thumbnails?.default?.url ?? '',
-        publishedAt: item.snippet.publishedAt,
-        videoId: item.id.videoId,
-        channelTitle: item.snippet.channelTitle,
-      }))
+      // Step 2: Paginate through the uploads playlist (50 per page)
+      const videos: YouTubeVideo[] = []
+      let pageToken: string | undefined
+
+      do {
+        const pageParam = pageToken ? `&pageToken=${pageToken}` : ''
+        const playlistRes = await fetch(
+          `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${uploadsPlaylistId}&maxResults=50${pageParam}&key=${apiKeyOrNull}`
+        )
+        if (!playlistRes.ok) throw new Error(`YouTube playlistItems API error: ${playlistRes.status}`)
+        const playlistData = await playlistRes.json()
+        if (playlistData.error) throw new Error(playlistData.error.message)
+
+        for (const item of playlistData.items ?? []) {
+          const snippet = item.snippet
+          const videoId = snippet?.resourceId?.videoId
+          if (!videoId) continue
+          videos.push({
+            id: videoId,
+            title: snippet.title ?? '',
+            description: snippet.description ?? '',
+            thumbnailUrl: snippet.thumbnails?.medium?.url ?? snippet.thumbnails?.default?.url ?? `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`,
+            publishedAt: snippet.publishedAt ?? new Date().toISOString(),
+            videoId,
+            channelTitle: snippet.videoOwnerChannelTitle ?? 'Imobiliária Lemos',
+          })
+          if (videos.length >= limit) break
+        }
+
+        pageToken = videos.length < limit ? playlistData.nextPageToken : undefined
+      } while (pageToken)
+
+      console.log(`[social-sync] YouTube API fetched ${videos.length} videos`)
+      return videos
     } catch (err) {
       console.error('[social-sync] YouTube API failed, falling back to RSS:', err)
     }

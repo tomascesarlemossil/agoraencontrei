@@ -80,6 +80,11 @@ export const authApi = {
   me: (token: string) =>
     request<User & { company: Company }>('/api/v1/auth/me', { token }),
 
+  googleLogin: (credential: string) =>
+    request<{ user: User; accessToken: string; refreshToken: string; expiresIn: number }>(
+      '/api/v1/auth/google', { method: 'POST', body: JSON.stringify({ credential }) }
+    ),
+
   changePassword: (token: string, currentPassword: string, newPassword: string) =>
     request('/api/v1/auth/change-password', {
       method: 'POST', token,

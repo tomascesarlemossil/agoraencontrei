@@ -1,5 +1,6 @@
 import * as argon2 from 'argon2'
 import { nanoid } from 'nanoid'
+import { OAuth2Client } from 'google-auth-library'
 import type { FastifyInstance } from 'fastify'
 import type { PrismaClient, User } from '@prisma/client'
 import type { JwtPayload } from '../plugins/jwt.js'
@@ -193,6 +194,91 @@ export class AuthService {
         },
       },
     })
+  }
+
+  // ── Google OAuth ─────────────────────────────────────────────────────────
+
+  async googleLogin(credential: string, ipAddress?: string, userAgent?: string) {
+    if (!env.GOOGLE_CLIENT_ID) {
+      throw Object.assign(new Error('Google OAuth não configurado'), { statusCode: 501, code: 'GOOGLE_NOT_CONFIGURED' })
+    }
+
+    const client = new OAuth2Client(env.GOOGLE_CLIENT_ID)
+    const ticket = await client.verifyIdToken({
+      idToken: credential,
+      audience: env.GOOGLE_CLIENT_ID,
+    })
+    const payload = ticket.getPayload()
+    if (!payload?.sub || !payload?.email) {
+      throw Object.assign(new Error('Token Google inválido'), { statusCode: 401, code: 'INVALID_GOOGLE_TOKEN' })
+    }
+
+    const { sub: googleId, email, name, picture } = payload
+
+    // Find existing user by Google OAuth account
+    let user = await this.prisma.user.findFirst({
+      where: { oauthAccounts: { some: { provider: 'google', providerUserId: googleId } } },
+    })
+
+    if (!user) {
+      // Try finding by email
+      user = await this.prisma.user.findUnique({ where: { email: email.toLowerCase() } })
+
+      if (user) {
+        // Link Google account to existing user
+        await this.prisma.oAuthAccount.upsert({
+          where: { provider_providerUserId: { provider: 'google', providerUserId: googleId } },
+          create: { userId: user.id, provider: 'google', providerUserId: googleId },
+          update: {},
+        })
+      } else {
+        // Create new user + company
+        const company = await this.prisma.company.findFirst({ where: { isActive: true } })
+          ?? await this.prisma.company.create({ data: { name: (name ?? email) + ' Imobiliária' } })
+
+        user = await this.prisma.user.create({
+          data: {
+            companyId: company.id,
+            name: name ?? email,
+            email: email.toLowerCase(),
+            avatarUrl: picture ?? null,
+            role: 'ADMIN',
+            status: 'ACTIVE',
+            emailVerifiedAt: new Date(),
+            oauthAccounts: {
+              create: { provider: 'google', providerUserId: googleId },
+            },
+          },
+        })
+      }
+    }
+
+    if (user.status === 'SUSPENDED' || user.status === 'INACTIVE') {
+      throw Object.assign(new Error('Conta inativa'), { statusCode: 403, code: 'ACCOUNT_INACTIVE' })
+    }
+
+    const tokens = await this.generateTokens(user, user.companyId)
+
+    await this.prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } })
+
+    await this.prisma.auditLog.create({
+      data: {
+        companyId: user.companyId,
+        userId: user.id,
+        action: 'user.login.google',
+        resource: 'user',
+        resourceId: user.id,
+        ipAddress,
+        userAgent,
+      },
+    })
+
+    const safeUser = await this.prisma.user.findUniqueOrThrow({
+      where: { id: user.id },
+      select: this.userSelect,
+    })
+
+    return { user: safeUser, ...tokens }
   }
 
   // ── Change Password ──────────────────────────────────────────────────────

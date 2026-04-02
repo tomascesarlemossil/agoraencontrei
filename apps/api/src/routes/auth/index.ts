@@ -27,6 +27,10 @@ const ChangePasswordBody = z.object({
   newPassword: z.string().min(8).max(128),
 })
 
+const GoogleLoginBody = z.object({
+  credential: z.string().min(1),
+})
+
 // ── Routes ───────────────────────────────────────────────────────────────────
 
 export default async function authRoutes(app: FastifyInstance) {
@@ -129,6 +133,36 @@ export default async function authRoutes(app: FastifyInstance) {
   }, async (req, reply) => {
     const user = await svc.me(req.user.sub)
     return reply.send(user)
+  })
+
+  // POST /api/v1/auth/google — Sign in with Google
+  app.post('/google', {
+    config: { rateLimit: { max: 20, timeWindow: '15 minutes' } },
+    schema: { tags: ['auth'], summary: 'Sign in with Google' },
+  }, async (req, reply) => {
+    const parsed = GoogleLoginBody.safeParse(req.body)
+    if (!parsed.success) return reply.status(400).send({ error: 'VALIDATION_ERROR', message: parsed.error.message })
+
+    const result = await svc.googleLogin(
+      parsed.data.credential,
+      req.headers['x-forwarded-for'] as string ?? req.ip,
+      req.headers['user-agent'],
+    )
+
+    reply.setCookie('refresh_token', result.refreshToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none',
+      path: '/api/v1/auth',
+      maxAge: 30 * 24 * 60 * 60,
+    })
+
+    return reply.send({
+      user: result.user,
+      accessToken: result.accessToken,
+      refreshToken: result.refreshToken,
+      expiresIn: result.expiresIn,
+    })
   })
 
   // POST /api/v1/auth/change-password

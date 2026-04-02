@@ -29,6 +29,15 @@ export function useAuth() {
     [setAuth, router],
   )
 
+  const googleLogin = useCallback(
+    async (credential: string) => {
+      const data = await authApi.googleLogin(credential)
+      setAuth(data.user as any, data.accessToken, data.expiresIn, data.refreshToken)
+      router.push('/dashboard')
+    },
+    [setAuth, router],
+  )
+
   const logout = useCallback(async () => {
     try {
       await authApi.logout()
@@ -39,5 +48,5 @@ export function useAuth() {
     router.push('/login')
   }, [clearAuth, router])
 
-  return { user, accessToken, isAuthenticated, getValidToken, login, logout }
+  return { user, accessToken, isAuthenticated, getValidToken, login, googleLogin, logout }
 }

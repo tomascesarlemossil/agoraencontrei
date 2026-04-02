@@ -30,6 +30,7 @@
     "dotenv": "^16.4.5",
     "fastify": "^4.28.1",
     "fastify-plugin": "^5.1.0",
+    "google-auth-library": "^10.6.2",
     "ioredis": "^5.10.1",
     "nanoid": "^5.0.9",
     "node-fetch": "^3.3.2",
