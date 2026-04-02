@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { useEffect, useRef, useState } from 'react'
-import { Menu, X, ChevronDown, LayoutDashboard, UserCheck, Users } from 'lucide-react'
+import { Menu, X, ChevronDown, LayoutDashboard, UserCheck, Users, CreditCard, BarChart3, ClipboardList, Home, Calculator, Building, Wrench } from 'lucide-react'
 
 const NAV_LINKS = [
   { href: '/imoveis?purpose=SALE', label: 'Comprar' },
@@ -11,6 +11,16 @@ const NAV_LINKS = [
   { href: '/imoveis', label: 'Todos os Imóveis' },
   { href: '/avaliacao', label: 'Avaliação Gratuita' },
   { href: '/blog', label: 'Blog' },
+]
+
+const SERVICOS_MENU = [
+  { href: '/servicos', icon: <Wrench className="w-4 h-4" />, label: 'Nossos Serviços', desc: 'Visão geral de todos os serviços', color: '#1B2B5B' },
+  { href: '/anunciar', icon: <Building className="w-4 h-4" />, label: 'Cadastre seu Imóvel', desc: 'Venda ou alugue seu imóvel conosco', color: '#dc2626' },
+  { href: '/servicos/2via-boleto', icon: <CreditCard className="w-4 h-4" />, label: '2ª Via de Boleto', desc: 'Solicite a segunda via rapidamente', color: '#C9A84C' },
+  { href: '/servicos/extrato-proprietario', icon: <BarChart3 className="w-4 h-4" />, label: 'Extrato do Proprietário', desc: 'Consulte repasses e extratos', color: '#C9A84C' },
+  { href: '/financiamentos', icon: <Calculator className="w-4 h-4" />, label: 'Financiamentos', desc: 'Simule e financie seu imóvel', color: '#2563eb' },
+  { href: '/servicos/fichas-cadastrais', icon: <ClipboardList className="w-4 h-4" />, label: 'Fichas Cadastrais', desc: 'Propostas e cadastros online', color: '#16a34a' },
+  { href: '/financiamentos#simulador', icon: <Home className="w-4 h-4" />, label: 'Simule seu Financiamento', desc: 'Calcule parcelas e taxas', color: '#2563eb' },
 ]
 
 const ACCESS_AREAS = [
@@ -41,7 +51,9 @@ export function Navbar() {
   const [scrolled, setScrolled] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const [accessOpen, setAccessOpen] = useState(false)
+  const [servicosOpen, setServicosOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
+  const servicosRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 60)
@@ -53,6 +65,9 @@ export function Navbar() {
     function handleClickOutside(e: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
         setAccessOpen(false)
+      }
+      if (servicosRef.current && !servicosRef.current.contains(e.target as Node)) {
+        setServicosOpen(false)
       }
     }
     document.addEventListener('mousedown', handleClickOutside)
@@ -100,6 +115,47 @@ export function Navbar() {
               {link.label}
             </Link>
           ))}
+
+          {/* Serviços dropdown */}
+          <div className="relative" ref={servicosRef}>
+            <button
+              onClick={() => setServicosOpen(v => !v)}
+              className="flex items-center gap-1 px-4 py-2 text-sm font-medium text-white/80 hover:text-white rounded-lg transition-colors hover:bg-white/10"
+            >
+              Serviços
+              <ChevronDown className={`w-3.5 h-3.5 transition-transform ${servicosOpen ? 'rotate-180' : ''}`} />
+            </button>
+
+            {servicosOpen && (
+              <div
+                className="absolute left-0 top-full mt-2 w-72 rounded-xl shadow-2xl border overflow-hidden"
+                style={{ backgroundColor: '#152347', borderColor: 'rgba(255,255,255,0.1)' }}
+              >
+                <div className="px-4 py-2.5 border-b" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
+                  <p className="text-white/40 text-xs uppercase tracking-wider font-semibold">Serviços Disponíveis</p>
+                </div>
+                {SERVICOS_MENU.map(item => (
+                  <Link
+                    key={item.label}
+                    href={item.href}
+                    onClick={() => setServicosOpen(false)}
+                    className="flex items-start gap-3 px-4 py-3 hover:bg-white/5 transition-colors group"
+                  >
+                    <div
+                      className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5"
+                      style={{ backgroundColor: `${item.color}22`, color: item.color }}
+                    >
+                      {item.icon}
+                    </div>
+                    <div>
+                      <p className="text-white text-sm font-medium group-hover:text-white/90">{item.label}</p>
+                      <p className="text-white/40 text-xs mt-0.5">{item.desc}</p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
         </nav>
 
         {/* CTA + Acesso + mobile menu */}
@@ -177,6 +233,23 @@ export function Navbar() {
               {link.label}
             </Link>
           ))}
+
+          {/* Serviços section in mobile */}
+          <div className="pt-2 border-t border-white/10 mt-2 space-y-1">
+            <p className="px-3 py-1 text-white/30 text-xs uppercase tracking-wider">Serviços</p>
+            {SERVICOS_MENU.map(item => (
+              <Link
+                key={item.label}
+                href={item.href}
+                onClick={() => setMenuOpen(false)}
+                className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+              >
+                <span style={{ color: item.color }}>{item.icon}</span>
+                {item.label}
+              </Link>
+            ))}
+          </div>
+
           <div className="pt-2 border-t border-white/10 mt-2 space-y-1">
             <p className="px-3 py-1 text-white/30 text-xs uppercase tracking-wider">Área de Acesso</p>
             {ACCESS_AREAS.map(area => (

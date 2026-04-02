@@ -41,6 +41,7 @@ import renovacoesRoutes from './routes/crm/renovacoes.js'
 import campanhasRoutes from './routes/marketing/campanhas.js'
 import financingsRoutes from './routes/financings/index.js'
 import blogRoutes from './routes/blog/index.js'
+import socialRoutes from './routes/social/index.js'
 
 const app = Fastify({
   logger: {
@@ -165,6 +166,7 @@ async function bootstrap() {
   await app.register(campanhasRoutes,    { prefix: '/api/v1/marketing/campanhas' })
   await app.register(financingsRoutes,   { prefix: '/api/v1/financings' })
   await app.register(blogRoutes,         { prefix: '/api/v1/blog' })
+  await app.register(socialRoutes,       { prefix: '/api/v1/social' })
 
   // ── 404 Handler ─────────────────────────────────────────────────────────
   app.setNotFoundHandler((_req, reply) => {

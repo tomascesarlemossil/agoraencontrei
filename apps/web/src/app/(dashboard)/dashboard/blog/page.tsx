@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Plus, Edit2, Trash2, Eye, EyeOff, Star, ExternalLink, X, Save, Loader2, Globe } from 'lucide-react'
+import { Plus, Edit2, Trash2, Eye, EyeOff, Star, ExternalLink, X, Save, Loader2, Globe, RefreshCw } from 'lucide-react'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 
@@ -51,6 +51,7 @@ export default function BlogManagementPage() {
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState<string | null>(null)
   const [tab, setTab] = useState<'content' | 'seo'>('content')
+  const [syncing, setSyncing] = useState(false)
 
   async function fetchPosts() {
     setLoading(true)
@@ -66,6 +67,21 @@ export default function BlogManagementPage() {
   }
 
   useEffect(() => { fetchPosts() }, [])
+
+  async function syncSocial() {
+    setSyncing(true)
+    try {
+      const res = await fetch(`${API_URL}/api/v1/social/sync`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${getToken()}` },
+      })
+      const data = await res.json()
+      alert(JSON.stringify(data.results ?? data.message, null, 2))
+      fetchPosts()
+    } catch { /* ignore */ } finally {
+      setSyncing(false)
+    }
+  }
 
   async function savePost() {
     if (!editing?.title?.trim()) return
@@ -115,13 +131,22 @@ export default function BlogManagementPage() {
           <h1 className="text-2xl font-bold text-white">Blog</h1>
           <p className="text-white/60 text-sm mt-0.5">Gerencie artigos e conteúdo para SEO</p>
         </div>
-        <button
-          onClick={() => setEditing({ ...EMPTY_POST })}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all hover:brightness-110"
-          style={{ backgroundColor: '#C9A84C', color: '#1B2B5B' }}
-        >
-          <Plus className="w-4 h-4" /> Novo Post
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={syncSocial}
+            disabled={syncing}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all hover:brightness-110 border border-white/20 text-white/70 hover:text-white disabled:opacity-50"
+          >
+            {syncing ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />} Sincronizar Redes Sociais
+          </button>
+          <button
+            onClick={() => setEditing({ ...EMPTY_POST })}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all hover:brightness-110"
+            style={{ backgroundColor: '#C9A84C', color: '#1B2B5B' }}
+          >
+            <Plus className="w-4 h-4" /> Novo Post
+          </button>
+        </div>
       </div>
 
       {loading ? (
