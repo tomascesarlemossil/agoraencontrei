@@ -10,17 +10,21 @@ interface VoiceInputButtonProps {
   dark?: boolean  // dark background variant (dashboard)
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type SpeechRecognitionCtor = new () => any
+
 declare global {
   interface Window {
-    SpeechRecognition: typeof SpeechRecognition
-    webkitSpeechRecognition: typeof SpeechRecognition
+    SpeechRecognition?: SpeechRecognitionCtor
+    webkitSpeechRecognition?: SpeechRecognitionCtor
   }
 }
 
 export function VoiceInputButton({ onResult, className, dark = false }: VoiceInputButtonProps) {
   const [listening, setListening] = useState(false)
   const [supported, setSupported] = useState(true)
-  const recogRef = useRef<SpeechRecognition | null>(null)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const recogRef = useRef<any>(null)
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
@@ -42,7 +46,8 @@ export function VoiceInputButton({ onResult, className, dark = false }: VoiceInp
     r.interimResults = false
     r.maxAlternatives = 1
 
-    r.onresult = (e: SpeechRecognitionEvent) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    r.onresult = (e: any) => {
       const text = e.results[0]?.[0]?.transcript ?? ''
       if (text) onResult(text)
       setListening(false)
