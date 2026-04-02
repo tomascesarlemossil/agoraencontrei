@@ -8,6 +8,7 @@ import {
   Phone, Mail,
 } from 'lucide-react'
 import { LeadCaptureForm } from './LeadCaptureForm'
+import { JsonLdScript } from './JsonLdScript'
 import { PropostaOnline } from './PropostaOnline'
 import { ScheduleVisitModal } from '../ScheduleVisitModal'
 import { PropertyGallery } from '@/components/public/PropertyGallery'
@@ -279,11 +280,8 @@ export default async function PropertyDetailPage({ params }: { params: { slug: s
 
   return (
     <div style={{ backgroundColor: '#f5f3ef' }} className="min-h-screen">
-      {/* JSON-LD Structured Data */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
+      {/* JSON-LD Structured Data — client component to avoid React 18 script hoisting hydration mismatch */}
+      <JsonLdScript data={jsonLd} />
 
       {/* ── Breadcrumb ─────────────────────────────────────── */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-4 pb-2">
