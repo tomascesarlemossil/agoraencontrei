@@ -3,12 +3,14 @@
 import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@/hooks/useAuth'
+import { useAuthStore } from '@/stores/auth.store'
 import { usersApi, authApi, type User } from '@/lib/api'
 import { cn } from '@/lib/utils'
 import {
   Building2, Users, User as UserIcon, Shield, Globe, Youtube, Upload, CheckCircle2,
-  Plus, Trash2, Loader2, Eye, EyeOff, Save, Settings, Plug,
+  Plus, Trash2, Loader2, Eye, EyeOff, Save, Settings, Plug, Camera, X,
 } from 'lucide-react'
+import { UserAvatar } from '@/components/ui/UserAvatar'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 
@@ -124,6 +126,7 @@ function SaveButton({ loading, saved }: { loading: boolean; saved: boolean }) {
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function SettingsPage() {
   const { getValidToken, user } = useAuth()
+  const { updateUser } = useAuthStore()
   const qc = useQueryClient()
 
   const TABS = [
@@ -301,6 +304,9 @@ export default function SettingsPage() {
   // ── Profile ───────────────────────────────────────────────────────────────
   const [profile, setProfile] = useState({ name: '', phone: '', creciNumber: '', bio: '' })
   const [profileSaved, setProfileSaved] = useState(false)
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
+  const [avatarFile, setAvatarFile] = useState<File | null>(null)
+  const [avatarUploading, setAvatarUploading] = useState(false)
 
   useEffect(() => {
     if (user) {
@@ -308,12 +314,53 @@ export default function SettingsPage() {
     }
   }, [user])
 
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setAvatarFile(file)
+    const reader = new FileReader()
+    reader.onload = ev => setAvatarPreview(ev.target?.result as string)
+    reader.readAsDataURL(file)
+  }
+
+  const uploadAvatar = async (): Promise<string | undefined> => {
+    if (!avatarFile) return undefined
+    setAvatarUploading(true)
+    try {
+      const token = await getValidToken()
+      const fd = new FormData()
+      fd.append('file', avatarFile)
+      fd.append('folder', 'avatars')
+      const res = await fetch(`${API_URL}/api/v1/upload`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: fd,
+      })
+      if (res.ok) {
+        const data = await res.json()
+        return data.url
+      }
+    } finally {
+      setAvatarUploading(false)
+    }
+  }
+
   const updateProfileMutation = useMutation({
     mutationFn: async () => {
       const token = await getValidToken()
-      return usersApi.update(token!, user!.id, profile)
+      let avatarUrl: string | undefined
+      if (avatarFile) {
+        avatarUrl = await uploadAvatar()
+      }
+      return usersApi.update(token!, user!.id, { ...profile, ...(avatarUrl ? { avatarUrl } : {}) })
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['me'] }); setProfileSaved(true); setTimeout(() => setProfileSaved(false), 3000) },
+    onSuccess: (data) => {
+      qc.invalidateQueries({ queryKey: ['me'] })
+      if (avatarPreview) updateUser({ avatarUrl: avatarPreview } as any)
+      setAvatarFile(null)
+      setProfileSaved(true)
+      setTimeout(() => setProfileSaved(false), 3000)
+    },
   })
 
   // ── Security ──────────────────────────────────────────────────────────────
@@ -411,10 +458,12 @@ export default function SettingsPage() {
                 </div>
               ) : teamUsers?.map((u: User) => (
                 <div key={u.id} className="flex items-center gap-4 bg-white/5 rounded-xl border border-white/10 px-4 py-3 hover:border-white/20 transition-colors">
-                  <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0"
-                    style={{ background: 'linear-gradient(135deg, #1B2B5B, #2d4a99)', color: 'white' }}>
-                    {u.name.charAt(0).toUpperCase()}
-                  </div>
+                  <UserAvatar
+                    name={u.name}
+                    avatarUrl={(u as any).avatarUrl}
+                    size="md"
+                    showRing
+                  />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <p className="text-sm font-medium text-white">{u.name}</p>
@@ -473,16 +522,50 @@ export default function SettingsPage() {
         {activeTab === 'perfil' && (
           <form onSubmit={e => { e.preventDefault(); updateProfileMutation.mutate() }} className="space-y-4">
             {/* Avatar */}
-            <Section title="Avatar">
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-2xl font-bold flex-shrink-0"
-                  style={{ background: 'linear-gradient(135deg, #1B2B5B, #2d4a99)', color: 'white' }}>
-                  {user?.name?.charAt(0).toUpperCase() ?? 'U'}
+            <Section title="Foto de Perfil">
+              <div className="flex items-center gap-5">
+                <div className="relative group">
+                  <UserAvatar
+                    name={user?.name}
+                    avatarUrl={avatarPreview ?? (user as any)?.avatarUrl}
+                    size="xl"
+                    showRing
+                    className="rounded-2xl"
+                  />
+                  <label
+                    htmlFor="avatar-upload"
+                    className="absolute inset-0 rounded-2xl bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                  >
+                    <Camera className="w-5 h-5 text-white" />
+                  </label>
+                  <input
+                    id="avatar-upload"
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleAvatarChange}
+                  />
+                  {avatarFile && (
+                    <button
+                      type="button"
+                      onClick={() => { setAvatarFile(null); setAvatarPreview(null) }}
+                      className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center"
+                    >
+                      <X className="w-3 h-3 text-white" />
+                    </button>
+                  )}
                 </div>
                 <div>
                   <p className="text-white font-semibold">{user?.name}</p>
                   <p className="text-white/40 text-sm">{user?.email}</p>
                   <p className="text-white/60 text-xs mt-0.5">{ROLE_LABELS[user?.role ?? ''] ?? user?.role}</p>
+                  <label
+                    htmlFor="avatar-upload"
+                    className="mt-2 inline-flex items-center gap-1.5 text-xs text-[#C9A84C] hover:text-[#e8c66a] cursor-pointer transition-colors"
+                  >
+                    <Camera className="w-3 h-3" />
+                    {avatarFile ? 'Trocar foto selecionada' : 'Carregar foto'}
+                  </label>
                 </div>
               </div>
             </Section>
