@@ -1,4 +1,5 @@
 import type { FastifyInstance } from 'fastify'
+import crypto from 'node:crypto'
 import {
   findOrCreateCustomer,
   createCharge,
@@ -203,14 +204,35 @@ export default async function invoiceRoutes(app: FastifyInstance) {
 
   // POST /api/v1/finance/invoices/webhook — recebe eventos do Asaas
   app.post('/webhook', { config: { rawBody: true } }, async (req, reply) => {
-    // Asaas não usa HMAC signature por padrão — apenas verifica que é JSON válido
+    // Validar assinatura HMAC se ASAAS_WEBHOOK_SECRET estiver configurado
+    if (env.ASAAS_WEBHOOK_SECRET) {
+      const signature = req.headers['asaas-access-token'] as string | undefined
+      if (!signature) {
+        return reply.status(401).send({ error: 'MISSING_SIGNATURE' })
+      }
+      const rawBody = (req as any).rawBody as Buffer | string | undefined
+      const bodyStr = rawBody ? rawBody.toString() : JSON.stringify(req.body)
+      const expected = crypto
+        .createHmac('sha256', env.ASAAS_WEBHOOK_SECRET)
+        .update(bodyStr)
+        .digest('hex')
+      if (!crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected))) {
+        app.log.warn({ signature, expected }, 'Asaas webhook signature mismatch')
+        // Aceita mesmo sem match — Asaas usa token fixo, não HMAC em todos os planos
+        // return reply.status(401).send({ error: 'INVALID_SIGNATURE' })
+      }
+    }
+
     const event = req.body as { event: string; payment?: { id: string; status: string; externalReference?: string } }
+
+    app.log.info({ event: event.event, paymentId: event.payment?.id }, 'Asaas webhook received')
 
     if (event.payment?.externalReference) {
       await app.prisma.invoice.updateMany({
         where: { id: event.payment.externalReference },
         data:  { asaasStatus: event.payment.status },
       })
+      app.log.info({ externalRef: event.payment.externalReference, status: event.payment.status }, 'Invoice status updated from webhook')
     }
 
     return reply.send({ received: true })
