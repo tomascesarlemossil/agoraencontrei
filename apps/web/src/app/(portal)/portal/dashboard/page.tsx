@@ -174,7 +174,7 @@ export default function PortalDashboardPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {PORTAL_SECTIONS.map(section => {
           const Icon = section.icon
-          const count = portalData?.[section.id]
+          const count = portalData?.[section.id] as number | undefined
           return (
             <a
               key={section.id}
