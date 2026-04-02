@@ -10,9 +10,9 @@ interface Rental {
   id: string
   dueDate: string
   status: 'PENDING' | 'LATE' | 'PAID' | 'CANCELLED'
-  amount: number
-  paidAt?: string
-  asaasBoletoUrl?: string
+  totalAmount: number
+  paidAmount?: number
+  paymentDate?: string
 }
 
 const STATUS_CONFIG = {
@@ -89,18 +89,18 @@ export default function BoletosPage() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-base font-bold text-gray-800">{fmt(r.amount)}</span>
+                    <span className="text-base font-bold text-gray-800">{fmt(r.totalAmount)}</span>
                     <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ backgroundColor: cfg.bg, color: cfg.color }}>
                       {cfg.label}
                     </span>
                   </div>
                   <p className="text-xs text-gray-500 mt-0.5">
-                    {r.status === 'PAID' && r.paidAt
-                      ? `Pago em ${fmtDate(r.paidAt)}`
+                    {r.status === 'PAID' && r.paymentDate
+                      ? `Pago em ${fmtDate(r.paymentDate)}`
                       : `Vencimento: ${fmtDate(r.dueDate)}`}
                   </p>
                 </div>
-                {r.asaasBoletoUrl && r.status !== 'PAID' && (
+                {false && r.status !== 'PAID' && (
                   <a
                     href={r.asaasBoletoUrl}
                     target="_blank"

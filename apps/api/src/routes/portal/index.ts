@@ -57,7 +57,7 @@ export default async function portalRoutes(app: FastifyInstance) {
       where: { contractId },
       orderBy: { dueDate: 'desc' },
       take: 6,
-      select: { id: true, dueDate: true, status: true, amount: true, paidAt: true },
+      select: { id: true, dueDate: true, status: true, totalAmount: true, paidAmount: true, paymentDate: true },
     }) : []
 
     return reply.send({
@@ -116,8 +116,8 @@ export default async function portalRoutes(app: FastifyInstance) {
       orderBy: { dueDate: 'desc' },
       take: 24,
       select: {
-        id: true, dueDate: true, status: true, amount: true,
-        paidAt: true, asaasBoletoUrl: true,
+        id: true, dueDate: true, status: true, totalAmount: true,
+        paidAmount: true, paymentDate: true,
       },
     })
     return reply.send({ rentals })
