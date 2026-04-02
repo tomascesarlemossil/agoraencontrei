@@ -175,4 +175,71 @@ export default async function authRoutes(app: FastifyInstance) {
     await svc.changePassword(req.user.sub, parsed.data.currentPassword, parsed.data.newPassword)
     return reply.send({ success: true, message: 'Senha alterada com sucesso' })
   })
+
+  // POST /api/v1/auth/portal-login — Login for portal (proprietários/inquilinos) via CPF + birthdate
+  app.post('/portal-login', async (req, reply) => {
+    const { cpf, birthDate } = req.body as { cpf?: string; birthDate?: string }
+
+    if (!cpf || !birthDate) {
+      return reply.status(400).send({ error: 'MISSING_FIELDS', message: 'CPF e data de nascimento são obrigatórios' })
+    }
+
+    // Normalize CPF: remove dots, dashes
+    const cpfNorm = cpf.replace(/\D/g, '')
+
+    // Look up client by CPF (document field)
+    const client = await app.prisma.$queryRawUnsafe<any[]>(
+      `SELECT c.id, c.name, c.document, c."birthDate", c.email, c.phone, c.roles,
+              co."landlordName", co."tenantName", co.id as "contractId", co.status as "contractStatus",
+              co."rentValue", co."propertyAddress", co."startDate"
+       FROM clients c
+       LEFT JOIN contracts co ON (co."tenantId" = c.id OR co."landlordId" = c.id) AND co."isActive" = true
+       WHERE c.document = $1
+       LIMIT 1`,
+      cpfNorm
+    )
+
+    if (!client.length) {
+      return reply.status(401).send({ error: 'NOT_FOUND', message: 'CPF não encontrado' })
+    }
+
+    const cl = client[0]
+
+    // Verify birthdate
+    if (cl.birthDate) {
+      const dbDate = new Date(cl.birthDate).toISOString().split('T')[0]
+      const inputDate = birthDate.trim()
+      // Accept YYYY-MM-DD or DD/MM/YYYY
+      const normalizedInput = inputDate.includes('/')
+        ? inputDate.split('/').reverse().join('-')
+        : inputDate
+      if (dbDate !== normalizedInput) {
+        return reply.status(401).send({ error: 'INVALID_CREDENTIALS', message: 'Data de nascimento incorreta' })
+      }
+    }
+
+    // Return portal token (simple JWT)
+    const token = app.jwt.sign(
+      { sub: cl.id, name: cl.name, type: 'portal', roles: cl.roles || [] },
+      { expiresIn: '24h' }
+    )
+
+    return reply.send({
+      token,
+      client: {
+        id: cl.id,
+        name: cl.name,
+        email: cl.email,
+        phone: cl.phone,
+        roles: cl.roles,
+        contract: cl.contractId ? {
+          id: cl.contractId,
+          status: cl.contractStatus,
+          rentValue: cl.rentValue,
+          propertyAddress: cl.propertyAddress,
+          startDate: cl.startDate,
+        } : null,
+      },
+    })
+  })
 }
