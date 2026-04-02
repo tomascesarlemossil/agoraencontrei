@@ -111,7 +111,7 @@ export default function HistoricoPage() {
   }
 
   // Get unique months for filter
-  const months = [...new Set(stats.map(s => s.month).filter(Boolean))].sort().reverse()
+  const months = Array.from(new Set(stats.map(s => s.month).filter(Boolean))).sort().reverse()
 
   const handleDownload = (doc: Document) => {
     window.open(`${API_URL}/api/v1/documents/${doc.id}/download`, '_blank')
