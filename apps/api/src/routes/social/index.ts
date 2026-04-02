@@ -97,10 +97,6 @@ export default async function socialRoutes(app: FastifyInstance) {
   })
 
   // Register social post routes (property publisher)
-  try {
-    const { default: socialPostRoutes } = await import('./posts.js')
-    app.register(socialPostRoutes, { prefix: '/post' })
-  } catch {
-    // posts.ts not yet available — skip
-  }
+  const { default: socialPostRoutes } = await import('./posts.js')
+  app.register(socialPostRoutes, { prefix: '/post' })
 }

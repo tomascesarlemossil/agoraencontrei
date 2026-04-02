@@ -23,6 +23,7 @@ import { cn } from '@/lib/utils'
 import { uploadApi } from '@/lib/api'
 import { PropertyImageLightbox } from '@/components/dashboard/PropertyImageLightbox'
 import { PropertyFeaturesEditor } from '@/components/dashboard/PropertyFeaturesEditor'
+import { SocialPostPanel } from './SocialPostPanel'
 
 const STATUS_BADGE: Record<string, string> = {
   ACTIVE:   'bg-emerald-500/20 text-emerald-400',
@@ -1001,6 +1002,9 @@ export default function PropertyDetailPage() {
               </div>
             </div>
           )}
+
+          {/* Social Media Publishing Panel */}
+          <SocialPostPanel propertyId={p.id} />
         </div>
       )}
     </div>

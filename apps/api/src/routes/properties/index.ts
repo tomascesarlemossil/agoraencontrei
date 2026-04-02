@@ -328,6 +328,27 @@ export default async function propertiesRoutes(app: FastifyInstance) {
       },
     })
 
+    // Auto-post to Instagram when property becomes ACTIVE
+    if (body.status === 'ACTIVE' && existing.status !== 'ACTIVE') {
+      ;(async () => {
+        try {
+          const { generatePropertyCaption } = await import('../../services/caption-generator.service.js')
+          const { publishPropertyToInstagram } = await import('../../services/instagram-publisher.service.js')
+          const { env } = await import('../../utils/env.js')
+
+          const token = env.INSTAGRAM_PAGE_ACCESS_TOKEN
+          const igUserId = env.INSTAGRAM_BUSINESS_ACCOUNT_ID
+
+          if (token && igUserId && updated.coverImage) {
+            const { caption, hashtags } = await generatePropertyCaption(updated as any)
+            await publishPropertyToInstagram(updated.coverImage, `${caption}\n\n${hashtags}`, igUserId, token)
+          }
+        } catch (err) {
+          app.log.warn({ err }, '[auto-post] Failed to auto-post to Instagram')
+        }
+      })()
+    }
+
     return reply.send(updated)
   })
 

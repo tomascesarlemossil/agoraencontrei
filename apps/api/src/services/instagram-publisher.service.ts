@@ -11,8 +11,6 @@
  * Then: GET https://graph.facebook.com/v25.0/{page-id}?fields=instagram_business_account&access_token={token}
  */
 
-import { env } from '../utils/env.js'
-
 const FB_API = 'https://graph.facebook.com/v25.0'
 
 interface PublishResult {
@@ -175,5 +173,3 @@ export async function publishCarouselToInstagram(
   }
 }
 
-// Re-export env for convenience (used in routes)
-export { env }

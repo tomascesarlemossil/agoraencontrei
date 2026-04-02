@@ -11,8 +11,10 @@ import { Input } from '@/components/ui/input'
 import { formatCurrency } from '@/lib/utils'
 import {
   Plus, Search, Building2, MapPin, BedDouble, Bath, Car, Eye,
-  ChevronLeft, ChevronRight, SlidersHorizontal, X, Filter,
+  ChevronLeft, ChevronRight, SlidersHorizontal, X, Filter, Instagram, Loader2, CheckSquare, Square,
 } from 'lucide-react'
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 
 const FAKE_IMAGE_PATTERNS = [
   'send.png', 'telefone.png', 'logotopo.png', 'foto_vazio.png',
@@ -120,6 +122,11 @@ export default function PropertiesPage() {
   const [showAdvanced, setShowAdvanced] = useState(false)
   // Debounced filters applied to query
   const [appliedFilters, setAppliedFilters] = useState<Filters>(DEFAULT_FILTERS)
+  // Bulk Instagram post
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [bulkPosting, setBulkPosting] = useState(false)
+  const [bulkResult, setBulkResult] = useState<string | null>(null)
+  const [selectMode, setSelectMode] = useState(false)
 
   function applyFilters(f: Filters) {
     setAppliedFilters(f)
@@ -144,6 +151,39 @@ export default function PropertiesPage() {
   function clearFilters() {
     setFilters(DEFAULT_FILTERS)
     applyFilters(DEFAULT_FILTERS)
+  }
+
+  function toggleSelect(id: string) {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  async function bulkPostToInstagram() {
+    if (selectedIds.size === 0) return
+    setBulkPosting(true)
+    setBulkResult(null)
+    try {
+      const res = await fetch(`${API_URL}/api/v1/social/post/batch`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken ?? ''}`,
+        },
+        body: JSON.stringify({ propertyIds: Array.from(selectedIds), account: 'lemos', delayMs: 30000 }),
+      })
+      const data = await res.json()
+      setBulkResult(data.message ?? 'Posts agendados!')
+      setSelectedIds(new Set())
+      setSelectMode(false)
+    } catch {
+      setBulkResult('Erro ao agendar posts.')
+    } finally {
+      setBulkPosting(false)
+    }
   }
 
   const { data, isLoading } = useQuery({
@@ -171,13 +211,46 @@ export default function PropertiesPage() {
             {meta ? `${meta.total} imóvel(is) encontrado(s)` : 'Carregando...'}
           </p>
         </div>
-        <Link href="/dashboard/properties/new">
-          <Button>
-            <Plus className="h-4 w-4" />
-            Novo Imóvel
+        <div className="flex items-center gap-2">
+          {/* Bulk Instagram post toggle */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => { setSelectMode(v => !v); setSelectedIds(new Set()); setBulkResult(null) }}
+          >
+            <Instagram className="h-4 w-4" />
+            {selectMode ? 'Cancelar' : 'Publicar no Instagram'}
           </Button>
-        </Link>
+          <Link href="/dashboard/properties/new">
+            <Button>
+              <Plus className="h-4 w-4" />
+              Novo Imóvel
+            </Button>
+          </Link>
+        </div>
       </div>
+
+      {/* Bulk Instagram action bar */}
+      {selectMode && (
+        <div className="flex items-center gap-3 p-3 rounded-xl border border-pink-500/30 bg-pink-500/5">
+          <Instagram className="h-4 w-4 text-pink-400 flex-shrink-0" />
+          <p className="text-sm text-pink-300 flex-1">
+            {selectedIds.size === 0
+              ? 'Clique nos imóveis para selecionar'
+              : `${selectedIds.size} imóvel(is) selecionado(s) — serão publicados com 30s de intervalo`}
+          </p>
+          {bulkResult && <p className="text-xs text-green-400">{bulkResult}</p>}
+          <Button
+            size="sm"
+            disabled={selectedIds.size === 0 || bulkPosting}
+            onClick={bulkPostToInstagram}
+            style={{ background: 'linear-gradient(135deg, #E1306C, #833AB4)', color: 'white', border: 'none' }}
+          >
+            {bulkPosting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Instagram className="h-4 w-4" />}
+            Publicar {selectedIds.size > 0 ? `(${selectedIds.size})` : ''}
+          </Button>
+        </div>
+      )}
 
       {/* Filter Panel */}
       <form onSubmit={handleSubmit} className="rounded-2xl border bg-card p-4 space-y-3">
@@ -425,7 +498,13 @@ export default function PropertiesPage() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
           {properties.map((p) => (
-            <PropertyCard key={p.id} property={p} />
+            <PropertyCard
+              key={p.id}
+              property={p}
+              selectMode={selectMode}
+              selected={selectedIds.has(p.id)}
+              onSelect={() => toggleSelect(p.id)}
+            />
           ))}
         </div>
       )}
@@ -461,9 +540,54 @@ function FilterChip({ label, onRemove }: { label: string; onRemove: () => void }
   )
 }
 
-function PropertyCard({ property: p }: { property: PropertySummary }) {
+function PropertyCard({
+  property: p,
+  selectMode = false,
+  selected = false,
+  onSelect,
+}: {
+  property: PropertySummary
+  selectMode?: boolean
+  selected?: boolean
+  onSelect?: () => void
+}) {
   const rawImage = p.coverImage ?? p.images?.[0]
   const coverImage = isRealImage(rawImage) ? rawImage : null
+
+  if (selectMode) {
+    return (
+      <div onClick={onSelect} className="cursor-pointer">
+        <Card className={`overflow-hidden transition-all group ${selected ? 'ring-2 ring-pink-500' : 'hover:shadow-md'}`}>
+          <div className="relative h-44 bg-muted overflow-hidden">
+            {coverImage ? (
+              <img src={coverImage} alt={p.title} loading="lazy" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center"><Building2 className="h-12 w-12 text-muted-foreground/30" /></div>
+            )}
+            <div className="absolute top-2 left-2 flex gap-1">
+              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_COLORS[p.status?.toUpperCase()] ?? STATUS_COLORS.INACTIVE}`}>
+                {STATUS_LABELS[p.status?.toUpperCase()] ?? p.status}
+              </span>
+            </div>
+            <div className="absolute top-2 right-2">
+              {selected
+                ? <CheckSquare className="h-5 w-5 text-pink-400 drop-shadow" />
+                : <Square className="h-5 w-5 text-white/60 drop-shadow" />}
+            </div>
+          </div>
+          <CardContent className="p-4">
+            <h3 className="font-semibold text-sm leading-snug line-clamp-2 mb-1">{p.title}</h3>
+            {(p.neighborhood || p.city) && (
+              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                <MapPin className="h-3 w-3 flex-shrink-0" />
+                <span className="truncate">{[p.neighborhood, p.city].filter(Boolean).join(', ')}</span>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
 
   return (
     <Link href={`/dashboard/properties/${p.id}`}>
