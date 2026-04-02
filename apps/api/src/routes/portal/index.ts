@@ -136,6 +136,19 @@ export default async function portalRoutes(app: FastifyInstance) {
     return reply.send({ documents: docs })
   })
 
+  // GET /api/v1/portal/documentos — all documents for this client
+  app.get('/documentos', { preHandler: [portalAuth] }, async (req: any, reply) => {
+    const clientId = req.user.sub
+    const docs = await app.prisma.$queryRawUnsafe<any[]>(
+      `SELECT id, name, type, month, year, "fileSize", "mimeType", "createdAt"
+       FROM documents
+       WHERE "clientId" = $1
+       ORDER BY year DESC, month DESC, name ASC`,
+      clientId
+    )
+    return reply.send({ documents: docs })
+  })
+
   // GET /api/v1/portal/documentos/:id/download — serve file for portal user
   app.get('/documentos/:id/download', { preHandler: [portalAuth] }, async (req: any, reply) => {
     const clientId = req.user.sub
@@ -149,7 +162,7 @@ export default async function portalRoutes(app: FastifyInstance) {
     const contractIds = contracts.map((c: any) => c.id)
 
     const rows = await app.prisma.$queryRawUnsafe<any[]>(
-      `SELECT name, "mimeType", "fileData", "fileUrl"
+      `SELECT name, "mimeType", "fileData"
        FROM documents
        WHERE id = $1 AND ("clientId" = $2 OR "contractId" = ANY($3::text[]))`,
       id, clientId, contractIds
@@ -157,7 +170,6 @@ export default async function portalRoutes(app: FastifyInstance) {
     if (!rows.length) return reply.status(404).send({ error: 'NOT_FOUND' })
     const doc = rows[0]
 
-    if (doc.fileUrl) return reply.redirect(doc.fileUrl)
     if (!doc.fileData) return reply.status(404).send({ error: 'NO_FILE' })
 
     reply.header('Content-Type', doc.mimeType || 'application/pdf')
