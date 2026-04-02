@@ -20,7 +20,7 @@ function getGradient(name: string): [string, string] {
   for (let i = 0; i < name.length; i++) {
     hash = name.charCodeAt(i) + ((hash << 5) - hash)
   }
-  return GRADIENTS[Math.abs(hash) % GRADIENTS.length]
+  return GRADIENTS[Math.abs(hash) % GRADIENTS.length] as [string, string]
 }
 
 function getInitials(name: string): string {
