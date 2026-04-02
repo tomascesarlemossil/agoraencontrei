@@ -182,10 +182,10 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
           </div>
 
           <div className="border-t border-white/10 pt-6 flex flex-col sm:flex-row justify-between items-center gap-3">
-            <p className="text-white/30 text-xs">
+            <p className="text-white/50 text-xs">
               © {new Date().getFullYear()} Imobiliária Lemos. Todos os direitos reservados.
             </p>
-            <p className="text-white/20 text-xs">Fundada em 2002 · CRECI 279051</p>
+            <p className="text-white/50 text-xs">Fundada em 2002 · CRECI 279051</p>
           </div>
         </div>
       </footer>

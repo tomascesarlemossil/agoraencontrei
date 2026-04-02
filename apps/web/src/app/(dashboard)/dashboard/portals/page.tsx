@@ -129,7 +129,7 @@ export default function PortalsPage() {
                   <p className="text-sm font-semibold text-white">{p.name}</p>
                 </div>
                 {canManage && (
-                  <Button variant="ghost" size="icon" className="h-7 w-7 text-white/30 hover:text-white"
+                  <Button variant="ghost" size="icon" className="h-7 w-7 text-white/50 hover:text-white"
                     onClick={() => {
                       setCfgApiKey(cfg?.apiKey ?? '')
                       setCfgActive(cfg?.isActive ?? false)
@@ -160,9 +160,9 @@ export default function PortalsPage() {
         <h2 className="text-lg font-semibold text-white">Publicações Recentes</h2>
         {!publications?.data.length ? (
           <div className="bg-white/5 rounded-xl border border-white/10 py-16 flex flex-col items-center text-center">
-            <Globe className="h-12 w-12 text-white/20 mb-3" />
+            <Globe className="h-12 w-12 text-white/40 mb-3" />
             <p className="text-white/40">Nenhuma publicação ainda</p>
-            <p className="text-white/30 text-xs mt-1">Clique em "Publicar Imóvel" para começar</p>
+            <p className="text-white/50 text-xs mt-1">Clique em "Publicar Imóvel" para começar</p>
           </div>
         ) : (
           <div className="bg-white/5 rounded-xl border border-white/10 overflow-hidden">
@@ -183,7 +183,7 @@ export default function PortalsPage() {
                         </Badge>
                       </div>
                       {pub.publishedAt && (
-                        <p className="text-xs text-white/30 mt-0.5">
+                        <p className="text-xs text-white/50 mt-0.5">
                           {new Date(pub.publishedAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })}
                         </p>
                       )}
@@ -193,7 +193,7 @@ export default function PortalsPage() {
                         <StatusIcon className="h-3 w-3" />{st.label}
                       </Badge>
                       {canManage && pub.status !== 'removed' && (
-                        <Button variant="ghost" size="icon" className="h-7 w-7 text-white/20 hover:text-red-400"
+                        <Button variant="ghost" size="icon" className="h-7 w-7 text-white/40 hover:text-red-400"
                           onClick={() => removeMutation.mutate(pub.id)}>
                           <Trash2 className="h-3.5 w-3.5" />
                         </Button>

@@ -6,9 +6,22 @@ import { useAuthStore } from '@/stores/auth.store'
 import Link from 'next/link'
 import {
   ChevronRight, BarChart3, FileText, Users, Receipt, List,
-  TrendingUp, Building2, ArrowLeft, Download, Printer,
+  TrendingUp, Building2, ArrowLeft, Download, Printer, MessageCircle, Mail,
 } from 'lucide-react'
 import { financeApi, type FinanceSummary, type LegacyContract } from '@/lib/api'
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
+
+async function apiFetch(path: string, token: string, opts?: RequestInit) {
+  const res = await fetch(`${API_URL}${path}`, {
+    ...opts,
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json', ...(opts?.headers as any) },
+    credentials: 'include',
+  })
+  if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.message ?? 'Erro') }
+  if (res.status === 204) return null
+  return res.json()
+}
 
 const fmt = (v: number | null | undefined) =>
   v == null
@@ -30,6 +43,13 @@ const REPORT_CATEGORIES = [
     color: 'bg-green-50 text-green-600',
     title: 'Relatórios Gerenciais',
     description: 'Receita mensal, fluxo de caixa, repasses e indicadores de performance',
+  },
+  {
+    id: 'proprietarios',
+    icon: Users,
+    color: 'bg-orange-50 text-orange-600',
+    title: 'Relatório de Proprietários',
+    description: 'Repasses, comissões e pagamentos por proprietário no mês',
   },
   {
     id: 'contratos',
@@ -335,6 +355,174 @@ function RecibosReport({ token }: { token: string }) {
   )
 }
 
+// ── Proprietários Report ──────────────────────────────────────────────────────
+function ProprietariosReport({ token }: { token: string }) {
+  const now = new Date()
+  const defaultMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+  const [month, setMonth] = useState(defaultMonth)
+  const [sendingEmail, setSendingEmail] = useState<string | null>(null)
+  const [sendingWA, setSendingWA] = useState<string | null>(null)
+  const [emailInput, setEmailInput] = useState('')
+  const [phoneInput, setPhoneInput] = useState('')
+  const [actionMsg, setActionMsg] = useState<{ id: string; type: 'success' | 'error'; text: string } | null>(null)
+
+  const { data, isLoading, refetch } = useQuery({
+    queryKey: ['finance-report-proprietarios', month],
+    queryFn: () =>
+      apiFetch(`/api/v1/finance/reports/proprietarios?month=${month}`, token),
+  })
+
+  const items: any[] = data?.data ?? data ?? []
+
+  const handleSendEmail = async (item: any) => {
+    if (!emailInput.trim()) return
+    try {
+      await apiFetch(`/api/v1/finance/rentals/${item.rentalId ?? item.id}/send-email`, token, {
+        method: 'POST',
+        body: JSON.stringify({ email: emailInput }),
+      })
+      setActionMsg({ id: item.id, type: 'success', text: 'Email enviado!' })
+    } catch (e: any) {
+      setActionMsg({ id: item.id, type: 'error', text: e.message })
+    } finally {
+      setSendingEmail(null)
+      setEmailInput('')
+    }
+  }
+
+  const handleSendWA = async (item: any) => {
+    if (!phoneInput.trim()) return
+    try {
+      await apiFetch(`/api/v1/finance/rentals/${item.rentalId ?? item.id}/send-whatsapp`, token, {
+        method: 'POST',
+        body: JSON.stringify({ phone: phoneInput }),
+      })
+      setActionMsg({ id: item.id, type: 'success', text: 'WhatsApp enviado!' })
+    } catch (e: any) {
+      setActionMsg({ id: item.id, type: 'error', text: e.message })
+    } finally {
+      setSendingWA(null)
+      setPhoneInput('')
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-3 flex-wrap">
+        <div>
+          <label className="block text-xs font-medium text-gray-500 mb-1">Mês de referência</label>
+          <input
+            type="month"
+            value={month}
+            onChange={e => setMonth(e.target.value)}
+            className="px-3 py-2 text-sm rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-400"
+          />
+        </div>
+        <button
+          onClick={() => window.print()}
+          className="flex items-center gap-1.5 px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50 mt-5"
+        >
+          <Printer className="w-4 h-4" />
+          Imprimir Relatório
+        </button>
+      </div>
+
+      {isLoading ? (
+        <div className="h-40 bg-gray-50 rounded-xl animate-pulse" />
+      ) : items.length === 0 ? (
+        <p className="text-center text-gray-400 py-10">Nenhum dado encontrado para {month}</p>
+      ) : (
+        <div className="overflow-x-auto rounded-xl border border-gray-100">
+          <table className="w-full text-sm">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="text-left p-3 text-gray-500 font-medium">Proprietário</th>
+                <th className="text-left p-3 text-gray-500 font-medium hidden md:table-cell">Imóvel</th>
+                <th className="text-right p-3 text-gray-500 font-medium">Aluguel</th>
+                <th className="text-right p-3 text-gray-500 font-medium">Valor Pago</th>
+                <th className="text-right p-3 text-gray-500 font-medium hidden lg:table-cell">Data Pgto</th>
+                <th className="text-right p-3 text-gray-500 font-medium">Comissão</th>
+                <th className="text-right p-3 text-gray-500 font-medium">Repasse Líquido</th>
+                <th className="text-center p-3 text-gray-500 font-medium">Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.map((item: any) => (
+                <tr key={item.id ?? item.rentalId} className="border-t border-gray-50 hover:bg-gray-50">
+                  <td className="p-3 text-gray-800 font-medium">{item.landlordName ?? item.landlord?.name ?? '—'}</td>
+                  <td className="p-3 text-gray-500 text-xs truncate max-w-[180px] hidden md:table-cell">{item.propertyAddress ?? item.address ?? '—'}</td>
+                  <td className="p-3 text-right font-semibold text-blue-600">{fmt(item.rentAmount ?? item.aluguel)}</td>
+                  <td className="p-3 text-right text-green-600 font-medium">{fmt(item.paidAmount ?? item.valorPago)}</td>
+                  <td className="p-3 text-right text-gray-500 text-xs hidden lg:table-cell">
+                    {item.paymentDate ? new Date(item.paymentDate).toLocaleDateString('pt-BR') : '—'}
+                  </td>
+                  <td className="p-3 text-right text-orange-600">{fmt(item.commission ?? item.comissao)}</td>
+                  <td className="p-3 text-right font-bold text-gray-900">{fmt(item.netRepasse ?? item.repasseLiquido)}</td>
+                  <td className="p-3">
+                    <div className="flex items-center justify-center gap-1.5">
+                      {/* Email inline */}
+                      {sendingEmail === (item.id ?? item.rentalId) ? (
+                        <div className="flex gap-1 items-center">
+                          <input
+                            type="email"
+                            value={emailInput}
+                            onChange={e => setEmailInput(e.target.value)}
+                            placeholder="email@..."
+                            className="text-xs border border-gray-200 rounded px-1.5 py-1 w-32 focus:outline-none"
+                            autoFocus
+                          />
+                          <button onClick={() => handleSendEmail(item)} className="text-xs bg-blue-600 text-white px-2 py-1 rounded">OK</button>
+                          <button onClick={() => { setSendingEmail(null); setEmailInput('') }} className="text-xs text-gray-400">✕</button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => { setSendingEmail(item.id ?? item.rentalId); setSendingWA(null) }}
+                          title="Enviar por Email"
+                          className="p-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors"
+                        >
+                          <Mail className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                      {/* WhatsApp inline */}
+                      {sendingWA === (item.id ?? item.rentalId) ? (
+                        <div className="flex gap-1 items-center">
+                          <input
+                            type="tel"
+                            value={phoneInput}
+                            onChange={e => setPhoneInput(e.target.value)}
+                            placeholder="(11) 9..."
+                            className="text-xs border border-gray-200 rounded px-1.5 py-1 w-28 focus:outline-none"
+                            autoFocus
+                          />
+                          <button onClick={() => handleSendWA(item)} className="text-xs bg-green-600 text-white px-2 py-1 rounded">OK</button>
+                          <button onClick={() => { setSendingWA(null); setPhoneInput('') }} className="text-xs text-gray-400">✕</button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => { setSendingWA(item.id ?? item.rentalId); setSendingEmail(null) }}
+                          title="Enviar por WhatsApp"
+                          className="p-1.5 bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition-colors"
+                        >
+                          <MessageCircle className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+                    {actionMsg?.id === (item.id ?? item.rentalId) && (
+                      <p className={`text-xs mt-1 text-center ${actionMsg.type === 'success' ? 'text-green-600' : 'text-red-600'}`}>
+                        {actionMsg.text}
+                      </p>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── Listagens Report ──────────────────────────────────────────────────────────
 function ListagensReport() {
   return (
@@ -372,12 +560,13 @@ export default function RelatoriosPage() {
   function renderReport() {
     if (!token) return null
     switch (activeReport) {
-      case 'operacional': return <OperacionalReport token={token} />
-      case 'gerencial':   return <GerencialReport token={token} />
-      case 'contratos':   return <ContratosReport token={token} />
-      case 'recibos':     return <RecibosReport token={token} />
-      case 'listagens':   return <ListagensReport />
-      default:            return null
+      case 'operacional':   return <OperacionalReport token={token} />
+      case 'gerencial':     return <GerencialReport token={token} />
+      case 'proprietarios': return <ProprietariosReport token={token} />
+      case 'contratos':     return <ContratosReport token={token} />
+      case 'recibos':       return <RecibosReport token={token} />
+      case 'listagens':     return <ListagensReport />
+      default:              return null
     }
   }
 

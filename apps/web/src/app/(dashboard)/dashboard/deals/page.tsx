@@ -70,7 +70,7 @@ function DealCard({ deal, onMove }: { deal: Deal; onMove: (id: string, status: s
         {next && (
           <button
             onClick={() => onMove(deal.id, next)}
-            className="text-white/30 hover:text-blue-400 transition-colors flex-shrink-0"
+            className="text-white/50 hover:text-blue-400 transition-colors flex-shrink-0"
             title={`Mover para ${next}`}
           >
             <ArrowRight className="h-4 w-4" />
@@ -214,7 +214,7 @@ export default function DealsPage() {
                       />
                     ))}
                     {!cards.length && (
-                      <p className="text-xs text-white/20 text-center py-4">Nenhum negócio</p>
+                      <p className="text-xs text-white/40 text-center py-4">Nenhum negócio</p>
                     )}
                   </div>
                 </div>
@@ -232,7 +232,7 @@ export default function DealsPage() {
           <div className="bg-white/5 rounded-xl border border-white/10 overflow-hidden">
             {!list?.data.length ? (
               <div className="py-20 text-center">
-                <TrendingUp className="h-12 w-12 text-white/20 mx-auto mb-3" />
+                <TrendingUp className="h-12 w-12 text-white/40 mx-auto mb-3" />
                 <p className="text-white/40">Nenhum negócio cadastrado</p>
               </div>
             ) : (

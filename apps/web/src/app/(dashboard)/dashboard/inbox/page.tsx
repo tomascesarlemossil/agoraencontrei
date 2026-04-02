@@ -94,7 +94,7 @@ export default function InboxPage() {
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" />
           <Input placeholder="Buscar..." value={search} onChange={(e) => { setSearch(e.target.value); setPage(1) }}
-            className="pl-9 bg-white/5 border-white/10 text-white placeholder:text-white/30 w-52" />
+            className="pl-9 bg-white/5 border-white/10 text-white placeholder:text-white/40 w-52" />
         </div>
         <div className="flex gap-1">
           {['all', 'bot', 'open', 'assigned', 'resolved'].map((s) => (
@@ -115,9 +115,9 @@ export default function InboxPage() {
           <div className="py-20 text-center text-white/40">Carregando...</div>
         ) : !conversations.length ? (
           <div className="py-20 flex flex-col items-center text-center">
-            <MessageCircle className="h-14 w-14 text-white/20 mb-3" />
+            <MessageCircle className="h-14 w-14 text-white/40 mb-3" />
             <p className="text-white/40">Nenhuma conversa encontrada</p>
-            <p className="text-white/30 text-xs mt-1">As mensagens do WhatsApp aparecem aqui automaticamente</p>
+            <p className="text-white/50 text-xs mt-1">As mensagens do WhatsApp aparecem aqui automaticamente</p>
           </div>
         ) : (
           <div className="divide-y divide-white/5">
@@ -157,10 +157,10 @@ export default function InboxPage() {
 
                   {/* Right */}
                   <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                    <span className="text-xs text-white/30">{fmtTime(conv.lastMessageAt)}</span>
+                    <span className="text-xs text-white/50">{fmtTime(conv.lastMessageAt)}</span>
                     {conv.assignedTo && (
                       <div className="flex items-center gap-1">
-                        <Users className="h-3 w-3 text-white/30" />
+                        <Users className="h-3 w-3 text-white/50" />
                         <span className="text-xs text-white/40">{conv.assignedTo.name}</span>
                       </div>
                     )}

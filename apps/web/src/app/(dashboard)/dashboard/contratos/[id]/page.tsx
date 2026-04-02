@@ -74,7 +74,7 @@ export default function ContratoDetailPage() {
   if (!contract) {
     return (
       <div className="p-6 text-center py-20">
-        <FileText className="h-10 w-10 text-white/20 mx-auto mb-3" />
+        <FileText className="h-10 w-10 text-white/40 mx-auto mb-3" />
         <p className="text-white/40">Contrato não encontrado</p>
       </div>
     )

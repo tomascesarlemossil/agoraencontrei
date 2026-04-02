@@ -108,7 +108,7 @@ function FinancingCard({
         {nextStage && onAdvance && (
           <button
             onClick={e => { e.stopPropagation(); onAdvance(item.id, nextStage) }}
-            className="text-white/30 hover:text-blue-400 transition-colors flex-shrink-0"
+            className="text-white/50 hover:text-blue-400 transition-colors flex-shrink-0"
             title="Avançar etapa"
           >
             <ArrowRight className="h-4 w-4" />
@@ -133,7 +133,7 @@ function FinancingCard({
         {item.financedValue ? (
           <span className="text-xs font-semibold text-emerald-400">{fmtCurrency(Number(item.financedValue))}</span>
         ) : (
-          <span className="text-xs text-white/30">—</span>
+          <span className="text-xs text-white/50">—</span>
         )}
         {item.term && (
           <span className="text-[11px] text-white/40">{item.term} meses</span>
@@ -290,12 +290,12 @@ export default function FinanciamentosPage() {
       {/* Filters */}
       <div className="flex gap-3 flex-wrap">
         <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/50" />
           <Input
             placeholder="Buscar por cliente, banco..."
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="pl-9 bg-[#1a1a2e] border-white/10 text-white placeholder:text-white/30"
+            className="pl-9 bg-[#1a1a2e] border-white/10 text-white placeholder:text-white/40"
           />
         </div>
         <Select value={filterStage} onValueChange={setFilterStage}>
@@ -331,7 +331,7 @@ export default function FinanciamentosPage() {
                       <FinancingCard key={item.id} item={item} onAdvance={advanceStage} onClick={openEdit} />
                     ))}
                     {stageItems.length === 0 && (
-                      <p className="text-xs text-white/20 text-center py-4">Nenhum</p>
+                      <p className="text-xs text-white/40 text-center py-4">Nenhum</p>
                     )}
                   </div>
                 </div>
@@ -362,7 +362,7 @@ export default function FinanciamentosPage() {
                         </button>
                       )}
                       {stageItems.length === 0 && (
-                        <p className="text-xs text-white/20 text-center py-2">Nenhum</p>
+                        <p className="text-xs text-white/40 text-center py-2">Nenhum</p>
                       )}
                     </div>
                   </div>
@@ -399,7 +399,7 @@ export default function FinanciamentosPage() {
                     {item.term && <p className="text-xs text-white/40">{item.term} meses</p>}
                   </div>
                   <Badge className={cn('text-xs', stage?.bg, stage?.color, 'border')}>{stage?.label}</Badge>
-                  <ChevronRight className="h-4 w-4 text-white/20" />
+                  <ChevronRight className="h-4 w-4 text-white/40" />
                 </div>
               )
             })
@@ -438,15 +438,15 @@ export default function FinanciamentosPage() {
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label>Nome do Cliente</Label>
-                <Input {...register('clientName')} placeholder="Nome completo" className="bg-white/5 border-white/10 text-white placeholder:text-white/30" />
+                <Input {...register('clientName')} placeholder="Nome completo" className="bg-white/5 border-white/10 text-white placeholder:text-white/40" />
               </div>
               <div className="space-y-1.5">
                 <Label>Telefone</Label>
-                <Input {...register('clientPhone')} placeholder="(00) 00000-0000" className="bg-white/5 border-white/10 text-white placeholder:text-white/30" />
+                <Input {...register('clientPhone')} placeholder="(00) 00000-0000" className="bg-white/5 border-white/10 text-white placeholder:text-white/40" />
               </div>
               <div className="space-y-1.5 col-span-2">
                 <Label>E-mail</Label>
-                <Input {...register('clientEmail')} type="email" placeholder="cliente@email.com" className="bg-white/5 border-white/10 text-white placeholder:text-white/30" />
+                <Input {...register('clientEmail')} type="email" placeholder="cliente@email.com" className="bg-white/5 border-white/10 text-white placeholder:text-white/40" />
                 {errors.clientEmail && <p className="text-xs text-red-400">{errors.clientEmail.message}</p>}
               </div>
             </div>
@@ -455,11 +455,11 @@ export default function FinanciamentosPage() {
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label>Banco</Label>
-                <Input {...register('bank')} placeholder="Ex: Caixa, Itaú, Bradesco" className="bg-white/5 border-white/10 text-white placeholder:text-white/30" />
+                <Input {...register('bank')} placeholder="Ex: Caixa, Itaú, Bradesco" className="bg-white/5 border-white/10 text-white placeholder:text-white/40" />
               </div>
               <div className="space-y-1.5">
                 <Label>Link do Simulador</Label>
-                <Input {...register('simulatorLink')} placeholder="https://..." className="bg-white/5 border-white/10 text-white placeholder:text-white/30" />
+                <Input {...register('simulatorLink')} placeholder="https://..." className="bg-white/5 border-white/10 text-white placeholder:text-white/40" />
                 {errors.simulatorLink && <p className="text-xs text-red-400">{errors.simulatorLink.message}</p>}
               </div>
             </div>
@@ -468,33 +468,33 @@ export default function FinanciamentosPage() {
             <div className="grid grid-cols-3 gap-3">
               <div className="space-y-1.5">
                 <Label>Valor do Imóvel (R$)</Label>
-                <Input {...register('propertyValue')} type="number" placeholder="0" className="bg-white/5 border-white/10 text-white placeholder:text-white/30" />
+                <Input {...register('propertyValue')} type="number" placeholder="0" className="bg-white/5 border-white/10 text-white placeholder:text-white/40" />
               </div>
               <div className="space-y-1.5">
                 <Label>Valor Financiado (R$)</Label>
-                <Input {...register('financedValue')} type="number" placeholder="0" className="bg-white/5 border-white/10 text-white placeholder:text-white/30" />
+                <Input {...register('financedValue')} type="number" placeholder="0" className="bg-white/5 border-white/10 text-white placeholder:text-white/40" />
               </div>
               <div className="space-y-1.5">
                 <Label>Entrada (R$)</Label>
-                <Input {...register('downPayment')} type="number" placeholder="0" className="bg-white/5 border-white/10 text-white placeholder:text-white/30" />
+                <Input {...register('downPayment')} type="number" placeholder="0" className="bg-white/5 border-white/10 text-white placeholder:text-white/40" />
               </div>
               <div className="space-y-1.5">
                 <Label>FGTS (R$)</Label>
-                <Input {...register('fgtsValue')} type="number" placeholder="0" className="bg-white/5 border-white/10 text-white placeholder:text-white/30" />
+                <Input {...register('fgtsValue')} type="number" placeholder="0" className="bg-white/5 border-white/10 text-white placeholder:text-white/40" />
               </div>
               <div className="space-y-1.5">
                 <Label>Parcela Mensal (R$)</Label>
-                <Input {...register('monthlyPayment')} type="number" placeholder="0" className="bg-white/5 border-white/10 text-white placeholder:text-white/30" />
+                <Input {...register('monthlyPayment')} type="number" placeholder="0" className="bg-white/5 border-white/10 text-white placeholder:text-white/40" />
               </div>
               <div className="space-y-1.5">
                 <Label>Prazo (meses)</Label>
-                <Input {...register('term')} type="number" placeholder="360" className="bg-white/5 border-white/10 text-white placeholder:text-white/30" />
+                <Input {...register('term')} type="number" placeholder="360" className="bg-white/5 border-white/10 text-white placeholder:text-white/40" />
               </div>
             </div>
 
             <div className="space-y-1.5">
               <Label>Taxa de Juros (% a.a.)</Label>
-              <Input {...register('rate')} type="number" step="0.01" placeholder="10.99" className="bg-white/5 border-white/10 text-white placeholder:text-white/30 w-40" />
+              <Input {...register('rate')} type="number" step="0.01" placeholder="10.99" className="bg-white/5 border-white/10 text-white placeholder:text-white/40 w-40" />
             </div>
 
             {/* Notes */}
@@ -504,7 +504,7 @@ export default function FinanciamentosPage() {
                 {...register('notes')}
                 rows={3}
                 placeholder="Observações sobre este financiamento..."
-                className="w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/30 resize-none focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/40 resize-none focus:outline-none focus:ring-1 focus:ring-blue-500"
               />
             </div>
 

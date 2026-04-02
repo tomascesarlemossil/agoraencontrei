@@ -25,6 +25,8 @@ const envSchema = z.object({
   // AI
   ANTHROPIC_API_KEY: z.string().optional(),
   OPENAI_API_KEY: z.string().optional(),
+  MNML_API_KEY: z.string().optional(),
+  GOOGLE_IMAGEN_API_KEY: z.string().optional(),
 
   // WhatsApp Cloud API
   WHATSAPP_TOKEN: z.string().optional(),

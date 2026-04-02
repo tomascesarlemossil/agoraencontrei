@@ -1,4 +1,7 @@
 import type { FastifyInstance } from 'fastify'
+import nodemailer from 'nodemailer'
+import { createCharge, findOrCreateCustomer } from '../../services/asaas.service.js'
+import { env } from '../../utils/env.js'
 
 export default async function financeRoutes(app: FastifyInstance) {
   app.addHook('preHandler', app.authenticate)
@@ -81,7 +84,7 @@ export default async function financeRoutes(app: FastifyInstance) {
           ],
         },
       }),
-      // Contratos a vencer nos próximos 30 dias (rescissão agendada)
+      // Contratos a vencer nos próximos 30 dias (rescisão agendada)
       app.prisma.contract.count({
         where: {
           companyId: cid,
@@ -541,5 +544,435 @@ export default async function financeRoutes(app: FastifyInstance) {
     })
 
     return reply.send(updated)
+  })
+
+  // ── NEW ENDPOINTS ────────────────────────────────────────────────────────────
+
+  // PATCH /api/v1/finance/contracts/:id — Edit contract fields
+  app.patch('/contracts/:id', async (req, reply) => {
+    const { id } = req.params as { id: string }
+    const body = req.body as {
+      rentValue?:       number
+      dueDay?:          number   // maps to tenantDueDay
+      landlordDueDay?:  number
+      startDate?:       string
+      endDate?:         string   // stored as rescissionDate (planned end)
+      adjustmentIndex?: string
+      observations?:    string   // stored in the closest text field (no-op if field absent)
+    }
+
+    const contract = await app.prisma.contract.findFirst({
+      where: { id, companyId: req.user.cid },
+    })
+    if (!contract) return reply.status(404).send({ error: 'NOT_FOUND' })
+
+    const updated = await app.prisma.contract.update({
+      where: { id },
+      data: {
+        ...(body.rentValue       !== undefined && { rentValue:        body.rentValue }),
+        ...(body.dueDay          !== undefined && { tenantDueDay:     body.dueDay }),
+        ...(body.landlordDueDay  !== undefined && { landlordDueDay:   body.landlordDueDay }),
+        ...(body.startDate       !== undefined && { startDate:        new Date(body.startDate) }),
+        ...(body.endDate         !== undefined && { rescissionDate:   new Date(body.endDate) }),
+        ...(body.adjustmentIndex !== undefined && { adjustmentIndex:  body.adjustmentIndex }),
+      },
+    })
+
+    return reply.send(updated)
+  })
+
+  // ── Receipt HTML builder (shared helper) ─────────────────────────────────────
+  function buildReceiptHtml(
+    rental: {
+      dueDate?: Date | string | null
+      paymentDate?: Date | string | null
+      totalAmount?: any
+      rentAmount?: any
+      paidAmount?: any
+      penaltyAmount?: any
+    },
+    contract: {
+      tenantName?: string | null
+      propertyAddress?: string | null
+    },
+  ): string {
+    const fmt = (v: number) =>
+      v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+
+    const dueDate     = rental.dueDate     ? new Date(rental.dueDate)     : null
+    const paymentDate = rental.paymentDate ? new Date(rental.paymentDate) : null
+
+    const monthYear = dueDate
+      ? dueDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
+      : '—'
+
+    const fmtDate = (d: Date | null) =>
+      d ? d.toLocaleDateString('pt-BR') : '—'
+
+    const totalAmount   = Number(rental.totalAmount   ?? rental.rentAmount ?? 0)
+    const paidAmount    = Number(rental.paidAmount    ?? totalAmount)
+    const penaltyAmount = Number(rental.penaltyAmount ?? 0)
+
+    return `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<style>
+  body { font-family: Arial, sans-serif; font-size: 13px; color: #222; margin: 0; padding: 24px; }
+  .header { text-align: center; border-bottom: 2px solid #222; padding-bottom: 12px; margin-bottom: 20px; }
+  .header h1 { margin: 0 0 4px; font-size: 18px; text-transform: uppercase; }
+  .header p  { margin: 2px 0; font-size: 12px; }
+  .title { text-align: center; font-size: 15px; font-weight: bold; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 1px; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+  td { padding: 6px 8px; border: 1px solid #ccc; vertical-align: top; }
+  td.label { font-weight: bold; width: 40%; background: #f5f5f5; }
+  .total-row td { font-weight: bold; background: #e8f4e8; font-size: 14px; }
+  .footer { margin-top: 40px; border-top: 1px solid #aaa; padding-top: 16px; text-align: center; font-size: 11px; color: #555; }
+  .signature { margin-top: 50px; border-top: 1px solid #222; width: 60%; margin-left: auto; margin-right: auto; padding-top: 8px; text-align: center; font-size: 12px; }
+</style>
+</head>
+<body>
+  <div class="header">
+    <h1>Imobiliária Lemos</h1>
+    <p>CRECI 61053-F</p>
+    <p>Rua Simão Caleiro, 2383 — Franca/SP</p>
+    <p>Tel: (16) 3723-0045</p>
+  </div>
+
+  <div class="title">Recibo de Aluguel — ${monthYear}</div>
+
+  <table>
+    <tr><td class="label">Locatário</td><td>${contract.tenantName ?? '—'}</td></tr>
+    <tr><td class="label">Imóvel</td><td>${contract.propertyAddress ?? '—'}</td></tr>
+    <tr><td class="label">Vencimento</td><td>${fmtDate(dueDate)}</td></tr>
+    <tr><td class="label">Data de Pagamento</td><td>${fmtDate(paymentDate)}</td></tr>
+    <tr><td class="label">Valor do Aluguel</td><td>${fmt(totalAmount)}</td></tr>
+    ${penaltyAmount > 0 ? `<tr><td class="label">Multa</td><td>${fmt(penaltyAmount)}</td></tr>` : ''}
+    <tr class="total-row"><td class="label">Total Pago</td><td>${fmt(paidAmount)}</td></tr>
+  </table>
+
+  <p>Declaro ter recebido a importância acima referente ao aluguel do imóvel descrito, dando plena, geral e irrevogável quitação.</p>
+
+  <div class="signature">
+    Imobiliária Lemos<br/>
+    Franca, ${new Date().toLocaleDateString('pt-BR')}
+  </div>
+
+  <div class="footer">
+    Este recibo foi gerado eletronicamente pelo sistema Lemos Bank.
+  </div>
+</body>
+</html>`
+  }
+
+  // GET /api/v1/finance/rentals/:id/recibo — Generate receipt HTML
+  app.get('/rentals/:id/recibo', async (req, reply) => {
+    const { id } = req.params as { id: string }
+
+    const rental = await app.prisma.rental.findFirst({
+      where: { id, companyId: req.user.cid },
+      include: {
+        contract: {
+          select: {
+            tenantName: true,
+            propertyAddress: true,
+            landlordName: true,
+          },
+        },
+      },
+    })
+    if (!rental) return reply.status(404).send({ error: 'NOT_FOUND' })
+
+    const html = buildReceiptHtml(rental, rental.contract ?? {})
+    return reply.send({ html })
+  })
+
+  // GET /api/v1/finance/reports/proprietarios — Owner payment report
+  app.get('/reports/proprietarios', async (req, reply) => {
+    const cid = req.user.cid
+    const q = req.query as Record<string, string>
+    const month      = q.month      // YYYY-MM required
+    const contractId = q.contractId // optional filter
+
+    if (!month) {
+      return reply.status(400).send({ error: 'MONTH_REQUIRED', message: 'Forneça month no formato YYYY-MM' })
+    }
+
+    const [y, m] = month.split('-').map(Number)
+    if (!y || !m) return reply.status(400).send({ error: 'INVALID_MONTH' })
+
+    const periodStart = new Date(y, m - 1, 1)
+    const periodEnd   = new Date(y, m, 0, 23, 59, 59)
+
+    const where: any = {
+      companyId: cid,
+      status:    'PAID',
+      paymentDate: { gte: periodStart, lte: periodEnd },
+      ...(contractId && { contractId }),
+    }
+
+    const rentals = await app.prisma.rental.findMany({
+      where,
+      include: {
+        contract: {
+          select: {
+            id: true,
+            legacyId: true,
+            tenantName: true,
+            landlordName: true,
+            propertyAddress: true,
+            rentValue: true,
+            commission: true,
+            landlord: { select: { id: true, name: true, email: true, phone: true } },
+          },
+        },
+      },
+      orderBy: { paymentDate: 'asc' },
+    })
+
+    // Group by contractId
+    const grouped = new Map<string, any>()
+    for (const rental of rentals) {
+      const c = rental.contract
+      if (!c) continue
+
+      if (!grouped.has(c.id)) {
+        const rentValue     = Number(c.rentValue  ?? 0)
+        const commission    = Number(c.commission ?? 0) // %
+        const netToLandlord = commission > 0
+          ? rentValue - (rentValue * commission / 100)
+          : rentValue
+
+        grouped.set(c.id, {
+          contractId:      c.id,
+          legacyId:        c.legacyId,
+          landlordName:    c.landlord?.name ?? c.landlordName,
+          landlord:        c.landlord,
+          tenantName:      c.tenantName,
+          propertyAddress: c.propertyAddress,
+          rentValue:       Math.round(rentValue     * 100) / 100,
+          commission,
+          netToLandlord:   Math.round(netToLandlord * 100) / 100,
+          payments:        [] as any[],
+          totalAmountPaid: 0,
+          totalPenalty:    0,
+        })
+      }
+
+      const entry        = grouped.get(c.id)!
+      const paidAmount   = Number(rental.paidAmount   ?? rental.totalAmount ?? 0)
+      const penaltyAmount = Number(rental.penaltyAmount ?? 0)
+
+      entry.payments.push({
+        rentalId:    rental.id,
+        dueDate:     rental.dueDate,
+        paymentDate: rental.paymentDate,
+        amountPaid:  Math.round(paidAmount    * 100) / 100,
+        penalty:     Math.round(penaltyAmount * 100) / 100,
+      })
+      entry.totalAmountPaid += paidAmount
+      entry.totalPenalty    += penaltyAmount
+    }
+
+    const data = Array.from(grouped.values()).map(e => ({
+      ...e,
+      totalAmountPaid: Math.round(e.totalAmountPaid * 100) / 100,
+      totalPenalty:    Math.round(e.totalPenalty    * 100) / 100,
+    }))
+
+    return reply.send({ data, total: data.length, period: month })
+  })
+
+  // POST /api/v1/finance/rentals/:id/send-email — Send receipt via email
+  app.post('/rentals/:id/send-email', async (req, reply) => {
+    const { id } = req.params as { id: string }
+    const body = req.body as { to: string; subject?: string; message?: string }
+
+    if (!env.SMTP_HOST || !env.SMTP_USER || !env.SMTP_PASS) {
+      return reply.status(503).send({ error: 'SMTP_NOT_CONFIGURED' })
+    }
+
+    const rental = await app.prisma.rental.findFirst({
+      where: { id, companyId: req.user.cid },
+      include: {
+        contract: {
+          select: {
+            tenantName: true,
+            propertyAddress: true,
+            landlordName: true,
+          },
+        },
+      },
+    })
+    if (!rental) return reply.status(404).send({ error: 'NOT_FOUND' })
+
+    const html = buildReceiptHtml(rental, rental.contract ?? {})
+
+    const transporter = nodemailer.createTransport({
+      host:   env.SMTP_HOST,
+      port:   env.SMTP_PORT ?? 587,
+      secure: (env.SMTP_PORT ?? 587) === 465,
+      auth: {
+        user: env.SMTP_USER,
+        pass: env.SMTP_PASS,
+      },
+    })
+
+    const dueDate = rental.dueDate
+      ? new Date(rental.dueDate).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
+      : ''
+
+    await transporter.sendMail({
+      from:    env.SMTP_FROM ?? env.SMTP_USER,
+      to:      body.to,
+      subject: body.subject ?? `Recibo de Aluguel — ${dueDate} — Imobiliária Lemos`,
+      html:    body.message
+        ? `<p>${body.message}</p><hr/>${html}`
+        : html,
+    })
+
+    return reply.send({ sent: true, to: body.to })
+  })
+
+  // POST /api/v1/finance/rentals/:id/send-whatsapp — Send receipt via WhatsApp
+  app.post('/rentals/:id/send-whatsapp', async (req, reply) => {
+    const { id } = req.params as { id: string }
+    const body = req.body as { phone: string; message?: string }
+
+    if (!env.WHATSAPP_TOKEN || !env.WHATSAPP_PHONE_ID) {
+      return reply.status(503).send({ error: 'WHATSAPP_NOT_CONFIGURED' })
+    }
+
+    const rental = await app.prisma.rental.findFirst({
+      where: { id, companyId: req.user.cid },
+      include: {
+        contract: {
+          select: {
+            tenantName: true,
+            propertyAddress: true,
+          },
+        },
+      },
+    })
+    if (!rental) return reply.status(404).send({ error: 'NOT_FOUND' })
+
+    const totalAmount = Number(rental.totalAmount ?? rental.rentAmount ?? 0)
+    const dueDate     = rental.dueDate
+      ? new Date(rental.dueDate).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
+      : ''
+    const fmtCurrency = (v: number) =>
+      v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+
+    const textMessage = body.message ?? [
+      `*Recibo de Aluguel — Imobiliária Lemos*`,
+      `CRECI 61053-F | (16) 3723-0045`,
+      ``,
+      `Locatário: ${rental.contract?.tenantName ?? '—'}`,
+      `Imóvel: ${rental.contract?.propertyAddress ?? '—'}`,
+      `Referência: ${dueDate}`,
+      `Valor pago: ${fmtCurrency(Number(rental.paidAmount ?? totalAmount))}`,
+      ``,
+      `Obrigado!`,
+    ].join('\n')
+
+    // Normalize phone: strip non-digits, ensure country code
+    const phone = body.phone.replace(/\D/g, '')
+
+    const waRes = await fetch(
+      `https://graph.facebook.com/v19.0/${env.WHATSAPP_PHONE_ID}/messages`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type':  'application/json',
+          'Authorization': `Bearer ${env.WHATSAPP_TOKEN}`,
+        },
+        body: JSON.stringify({
+          messaging_product: 'whatsapp',
+          to:   phone,
+          type: 'text',
+          text: { body: textMessage },
+        }),
+      },
+    )
+
+    if (!waRes.ok) {
+      const errBody = await waRes.text()
+      app.log.error({ errBody }, 'WhatsApp send error')
+      return reply.status(502).send({ error: 'WHATSAPP_SEND_FAILED', detail: errBody })
+    }
+
+    return reply.send({ sent: true })
+  })
+
+  // POST /api/v1/finance/charges — Create avulsa (individual) charge via Asaas
+  // Creates an Invoice record (which tracks asaasId) linked to the contract.
+  app.post('/charges', async (req, reply) => {
+    const cid = req.user.cid
+    const body = req.body as {
+      contractId:   string
+      description:  string
+      amount:       number
+      dueDate:      string   // YYYY-MM-DD
+      billingType?: 'BOLETO' | 'PIX'
+    }
+
+    if (!body.contractId || !body.description || !body.amount || !body.dueDate) {
+      return reply.status(400).send({
+        error: 'MISSING_FIELDS',
+        required: ['contractId', 'description', 'amount', 'dueDate'],
+      })
+    }
+
+    // Find contract + tenant info
+    const contract = await app.prisma.contract.findFirst({
+      where: { id: body.contractId, companyId: cid },
+      include: {
+        tenant: {
+          select: { id: true, name: true, document: true, email: true, phone: true },
+        },
+      },
+    })
+    if (!contract) return reply.status(404).send({ error: 'CONTRACT_NOT_FOUND' })
+    if (!contract.tenant?.document) {
+      return reply.status(422).send({
+        error:   'TENANT_NO_DOCUMENT',
+        message: 'O locatário não possui CPF/CNPJ cadastrado para cobrança Asaas.',
+      })
+    }
+
+    // Create or find Asaas customer for the tenant
+    const asaasCustomer = await findOrCreateCustomer({
+      name:    contract.tenant.name,
+      cpfCnpj: contract.tenant.document,
+      email:   contract.tenant.email  ?? undefined,
+      phone:   contract.tenant.phone  ?? undefined,
+    })
+
+    // Create Asaas charge
+    const asaasCharge = await createCharge({
+      customer:          asaasCustomer.id,
+      billingType:       body.billingType ?? 'PIX',
+      value:             body.amount,
+      dueDate:           body.dueDate,
+      description:       body.description,
+      externalReference: contract.legacyId ?? contract.id,
+    })
+
+    // Persist invoice record in DB with asaasId for tracking
+    const invoice = await app.prisma.invoice.create({
+      data: {
+        companyId:       cid,
+        contractId:      contract.id,
+        dueDate:         new Date(body.dueDate),
+        amount:          body.amount,
+        mensagem:        body.description,
+        asaasId:         asaasCharge.id,
+        asaasStatus:     asaasCharge.status ?? 'PENDING',
+        asaasBankSlipUrl: asaasCharge.bankSlipUrl ?? null,
+        asaasPixCode:    asaasCharge.pixCode ?? null,
+      },
+    })
+
+    return reply.status(201).send({ invoice, asaasCharge })
   })
 }

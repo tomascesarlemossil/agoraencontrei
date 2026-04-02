@@ -85,6 +85,17 @@ export default function AIVisualPage() {
     enabled: !!token,
   })
 
+  const { data: configData } = useQuery({
+    queryKey: ['ai-visual-config'],
+    queryFn: () => apiFetch('/api/v1/ai-visual/config', token!),
+    enabled: !!token,
+  })
+  const missingKeys = configData ? [
+    ...(!configData.mnml    ? ['MNML_API_KEY']           : []),
+    ...(!configData.imagen  ? ['GOOGLE_IMAGEN_API_KEY']  : []),
+    ...(!configData.anthropic ? ['ANTHROPIC_API_KEY']    : []),
+  ] : []
+
   const createMutation = useMutation({
     mutationFn: (body: any) => apiFetch('/api/v1/ai-visual/jobs', token!, {
       method: 'POST', body: JSON.stringify(body),
@@ -140,16 +151,18 @@ export default function AIVisualPage() {
         </button>
       </div>
 
-      {/* Configuração aviso */}
-      <div className="flex items-start gap-3 p-4 rounded-xl border" style={{ backgroundColor: 'rgba(201,168,76,0.06)', borderColor: 'rgba(201,168,76,0.2)' }}>
-        <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: '#C9A84C' }} />
-        <div className="text-sm" style={{ color: '#1B2B5B' }}>
-          <strong>Configuração necessária:</strong> Para ativar os recursos de IA, configure as chaves no Railway:
-          <code className="ml-1 text-xs bg-white px-1 py-0.5 rounded border font-mono">VERAS_API_KEY</code>,{' '}
-          <code className="text-xs bg-white px-1 py-0.5 rounded border font-mono">MNML_API_KEY</code>,{' '}
-          <code className="text-xs bg-white px-1 py-0.5 rounded border font-mono">GOOGLE_IMAGEN_API_KEY</code>
+      {/* Configuração aviso — só exibe se alguma chave estiver faltando */}
+      {missingKeys.length > 0 && (
+        <div className="flex items-start gap-3 p-4 rounded-xl border" style={{ backgroundColor: 'rgba(201,168,76,0.06)', borderColor: 'rgba(201,168,76,0.2)' }}>
+          <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: '#C9A84C' }} />
+          <div className="text-sm" style={{ color: '#1B2B5B' }}>
+            <strong>Configuração necessária:</strong> Configure as seguintes chaves no Railway para ativar os recursos:
+            {missingKeys.map(k => (
+              <code key={k} className="ml-1 text-xs bg-white px-1 py-0.5 rounded border font-mono">{k}</code>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Stats */}
       {statsData && (

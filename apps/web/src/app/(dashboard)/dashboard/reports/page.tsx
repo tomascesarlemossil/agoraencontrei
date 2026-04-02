@@ -168,7 +168,7 @@ export default function ReportsPage() {
                 <h2 className="text-sm font-medium text-white">Ranking de Corretores</h2>
               </div>
               {data.brokerRanking.length === 0 ? (
-                <p className="text-white/30 text-sm text-center py-8">Nenhum negócio fechado no período</p>
+                <p className="text-white/50 text-sm text-center py-8">Nenhum negócio fechado no período</p>
               ) : (
                 <div className="space-y-3">
                   {data.brokerRanking.map((entry, i) => (
@@ -203,7 +203,7 @@ export default function ReportsPage() {
                 <h2 className="text-sm font-medium text-white">Negócios Fechados por Mês</h2>
               </div>
               {data.dealsByMonth.length === 0 ? (
-                <p className="text-white/30 text-sm text-center py-8">Nenhum dado no período</p>
+                <p className="text-white/50 text-sm text-center py-8">Nenhum dado no período</p>
               ) : (
                 <div className="space-y-2">
                   {(() => {
@@ -233,7 +233,7 @@ export default function ReportsPage() {
               <h2 className="text-sm font-medium text-white">Últimos Negócios Fechados</h2>
             </div>
             {data.recentDeals.length === 0 ? (
-              <p className="text-white/30 text-sm text-center py-8">Nenhum negócio fechado</p>
+              <p className="text-white/50 text-sm text-center py-8">Nenhum negócio fechado</p>
             ) : (
               <div className="space-y-2">
                 {data.recentDeals.map((d) => (

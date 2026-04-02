@@ -60,12 +60,12 @@ function TimelineItem({ a }: { a: Activity }) {
       <div className="pb-4 flex-1 min-w-0">
         <div className="flex items-center justify-between gap-2">
           <p className="text-sm font-medium text-white">{a.title}</p>
-          <time className="text-xs text-white/30 flex-shrink-0">
+          <time className="text-xs text-white/50 flex-shrink-0">
             {new Date(a.createdAt).toLocaleDateString('pt-BR', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' })}
           </time>
         </div>
         {a.description && <p className="text-xs text-white/50 mt-0.5">{a.description}</p>}
-        {a.user && <p className="text-xs text-white/30 mt-0.5">por {a.user.name}</p>}
+        {a.user && <p className="text-xs text-white/50 mt-0.5">por {a.user.name}</p>}
       </div>
     </div>
   )
@@ -180,7 +180,7 @@ export default function DealDetailPage() {
             <div className="bg-white/5 rounded-xl border border-white/10 p-4">
               <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-2">Contato</h3>
               <div className="flex items-center gap-2">
-                <User className="h-4 w-4 text-white/30" />
+                <User className="h-4 w-4 text-white/50" />
                 <p className="text-sm text-white">{deal.contact.name}</p>
               </div>
             </div>
@@ -206,7 +206,7 @@ export default function DealDetailPage() {
                 {deal.properties.map((dp: any) => (
                   <Link key={dp.property.id} href={`/dashboard/properties/${dp.property.id}`}
                     className="flex items-center gap-2 text-sm text-white/70 hover:text-white transition-colors">
-                    <TrendingUp className="h-3.5 w-3.5 text-white/30" />
+                    <TrendingUp className="h-3.5 w-3.5 text-white/50" />
                     {dp.property.title}
                   </Link>
                 ))}
@@ -248,7 +248,7 @@ export default function DealDetailPage() {
                 </div>
               )}
               {deal.commissions?.length === 0 && !showCommForm && (
-                <p className="text-xs text-white/30 text-center py-2">Nenhuma comissão</p>
+                <p className="text-xs text-white/50 text-center py-2">Nenhuma comissão</p>
               )}
               {deal.commissions?.map((c) => (
                 <div key={c.id} className="border-t border-white/5 pt-2 mt-2">
@@ -282,7 +282,7 @@ export default function DealDetailPage() {
               </Select>
               <Input value={newNote} onChange={(e) => setNewNote(e.target.value)}
                 placeholder="Descreva a atividade..."
-                className="flex-1 bg-white/5 border-white/10 text-white placeholder:text-white/30 text-sm"
+                className="flex-1 bg-white/5 border-white/10 text-white placeholder:text-white/40 text-sm"
                 onKeyDown={(e) => e.key === 'Enter' && newNote.trim() && addActivityMutation.mutate()} />
               <Button size="sm" disabled={!newNote.trim() || addActivityMutation.isPending}
                 onClick={() => addActivityMutation.mutate()} className="gap-1">
@@ -294,7 +294,7 @@ export default function DealDetailPage() {
           <div className="bg-white/5 rounded-xl border border-white/10 p-4">
             <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-4">Timeline</h3>
             {!activities?.data.length ? (
-              <p className="text-white/30 text-sm text-center py-8">Nenhuma atividade registrada</p>
+              <p className="text-white/50 text-sm text-center py-8">Nenhuma atividade registrada</p>
             ) : (
               <div>{activities.data.map((a) => <TimelineItem key={a.id} a={a} />)}</div>
             )}

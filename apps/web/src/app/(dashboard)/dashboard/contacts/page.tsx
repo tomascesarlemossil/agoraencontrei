@@ -108,7 +108,7 @@ export default function ContactsPage() {
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" />
         <Input
           placeholder="Buscar por nome, e-mail, CPF..."
-          className="pl-9 bg-white/5 border-white/10 text-white placeholder:text-white/30"
+          className="pl-9 bg-white/5 border-white/10 text-white placeholder:text-white/40"
           value={search}
           onChange={(e) => { setSearch(e.target.value); setPage(1) }}
         />
@@ -120,7 +120,7 @@ export default function ContactsPage() {
           <div className="py-20 text-center text-white/40">Carregando...</div>
         ) : !data?.data.length ? (
           <div className="py-20 text-center">
-            <User className="h-12 w-12 text-white/20 mx-auto mb-3" />
+            <User className="h-12 w-12 text-white/40 mx-auto mb-3" />
             <p className="text-white/40">Nenhum contato encontrado</p>
           </div>
         ) : (

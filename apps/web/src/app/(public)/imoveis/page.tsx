@@ -100,7 +100,7 @@ export default async function ImoveisPage({ searchParams }: { searchParams: Sear
             {title}
           </h1>
           {!isMapView && (
-            <p className="text-gray-400 text-sm mt-0.5">
+            <p className="text-gray-500 text-sm mt-0.5">
               {meta.total > 0
                 ? `${meta.total.toLocaleString('pt-BR')} ${meta.total !== 1 ? 'imóveis' : 'imóvel'} encontrado${meta.total !== 1 ? 's' : ''}`
                 : 'Nenhum imóvel encontrado'}

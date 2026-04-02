@@ -69,12 +69,12 @@ function TimelineItem({ a }: { a: Activity }) {
       <div className="pb-4 flex-1 min-w-0">
         <div className="flex items-center justify-between gap-2">
           <p className="text-sm font-medium text-white">{a.title}</p>
-          <time className="text-xs text-white/30 flex-shrink-0">
+          <time className="text-xs text-white/50 flex-shrink-0">
             {new Date(a.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
           </time>
         </div>
         {a.description && <p className="text-xs text-white/50 mt-0.5">{a.description}</p>}
-        {a.user && <p className="text-xs text-white/30 mt-0.5">por {a.user.name}</p>}
+        {a.user && <p className="text-xs text-white/50 mt-0.5">por {a.user.name}</p>}
       </div>
     </div>
   )
@@ -166,28 +166,28 @@ export default function ContactDetailPage() {
             <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider">Informações</h3>
             {contact.phone && (
               <a href={`tel:${contact.phone}`} className="flex items-center gap-2 text-sm text-white/70 hover:text-white transition-colors">
-                <Phone className="h-4 w-4 text-white/30" /> {contact.phone}
+                <Phone className="h-4 w-4 text-white/50" /> {contact.phone}
               </a>
             )}
             {contact.email && (
               <a href={`mailto:${contact.email}`} className="flex items-center gap-2 text-sm text-white/70 hover:text-white transition-colors">
-                <Mail className="h-4 w-4 text-white/30" /> {contact.email}
+                <Mail className="h-4 w-4 text-white/50" /> {contact.email}
               </a>
             )}
             {(contact.city || contact.state) && (
               <div className="flex items-center gap-2 text-sm text-white/50">
-                <MapPin className="h-4 w-4 text-white/30" />
+                <MapPin className="h-4 w-4 text-white/50" />
                 {[contact.city, contact.state].filter(Boolean).join(', ')}
               </div>
             )}
             {contact.cpf && (
               <div className="flex items-center gap-2 text-sm text-white/50">
-                <User className="h-4 w-4 text-white/30" /> CPF: {contact.cpf}
+                <User className="h-4 w-4 text-white/50" /> CPF: {contact.cpf}
               </div>
             )}
             {contact.cnpj && (
               <div className="flex items-center gap-2 text-sm text-white/50">
-                <Building2 className="h-4 w-4 text-white/30" /> CNPJ: {contact.cnpj}
+                <Building2 className="h-4 w-4 text-white/50" /> CNPJ: {contact.cnpj}
               </div>
             )}
           </div>
@@ -254,7 +254,7 @@ export default function ContactDetailPage() {
                 value={newNote}
                 onChange={(e) => setNewNote(e.target.value)}
                 placeholder="Descreva a atividade..."
-                className="flex-1 bg-white/5 border-white/10 text-white placeholder:text-white/30 text-sm"
+                className="flex-1 bg-white/5 border-white/10 text-white placeholder:text-white/40 text-sm"
                 onKeyDown={(e) => e.key === 'Enter' && newNote.trim() && addActivityMutation.mutate()}
               />
               <Button size="sm" disabled={!newNote.trim() || addActivityMutation.isPending}
@@ -268,7 +268,7 @@ export default function ContactDetailPage() {
           <div className="bg-white/5 rounded-xl border border-white/10 p-4">
             <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-4">Timeline</h3>
             {!activities?.data.length ? (
-              <p className="text-white/30 text-sm text-center py-8">Nenhuma atividade registrada</p>
+              <p className="text-white/50 text-sm text-center py-8">Nenhuma atividade registrada</p>
             ) : (
               <div>{activities.data.map((a) => <TimelineItem key={a.id} a={a} />)}</div>
             )}

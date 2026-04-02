@@ -33,11 +33,11 @@ const ROLE_COLORS: Record<string, string> = {
 function DarkInput({ label, ...props }: React.InputHTMLAttributes<HTMLInputElement> & { label?: string }) {
   return (
     <div>
-      {label && <label className="text-xs font-semibold text-white/50 mb-1.5 block">{label}</label>}
+      {label && <label className="text-xs font-semibold text-white/70 mb-1.5 block">{label}</label>}
       <input
         {...props}
         className={cn(
-          'bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-white/20 outline-none focus:border-yellow-400/50 w-full transition-colors',
+          'bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-white/40 outline-none focus:border-yellow-400/50 w-full transition-colors',
           props.className,
         )}
       />
@@ -48,11 +48,11 @@ function DarkInput({ label, ...props }: React.InputHTMLAttributes<HTMLInputEleme
 function DarkTextarea({ label, ...props }: React.TextareaHTMLAttributes<HTMLTextAreaElement> & { label?: string }) {
   return (
     <div>
-      {label && <label className="text-xs font-semibold text-white/50 mb-1.5 block">{label}</label>}
+      {label && <label className="text-xs font-semibold text-white/70 mb-1.5 block">{label}</label>}
       <textarea
         {...props}
         className={cn(
-          'bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-white/20 outline-none focus:border-yellow-400/50 w-full transition-colors resize-none',
+          'bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-white/40 outline-none focus:border-yellow-400/50 w-full transition-colors resize-none',
           props.className,
         )}
       />
@@ -63,7 +63,7 @@ function DarkTextarea({ label, ...props }: React.TextareaHTMLAttributes<HTMLText
 function DarkSelect({ label, children, ...props }: React.SelectHTMLAttributes<HTMLSelectElement> & { label?: string }) {
   return (
     <div>
-      {label && <label className="text-xs font-semibold text-white/50 mb-1.5 block">{label}</label>}
+      {label && <label className="text-xs font-semibold text-white/70 mb-1.5 block">{label}</label>}
       <select
         {...props}
         className={cn(
@@ -101,7 +101,7 @@ function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (v: 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="bg-white/5 rounded-2xl border border-white/10 p-5 space-y-4">
-      <h3 className="text-xs font-bold text-white/40 uppercase tracking-widest">{title}</h3>
+      <h3 className="text-xs font-bold text-white/60 uppercase tracking-widest">{title}</h3>
       {children}
     </div>
   )
@@ -307,7 +307,7 @@ export default function SettingsPage() {
           <h1 className="text-2xl font-bold text-white flex items-center gap-2">
             <Settings className="w-6 h-6 text-yellow-400" /> Configurações
           </h1>
-          <p className="text-white/40 text-sm mt-1">Gerencie sua empresa, equipe e preferências do sistema</p>
+          <p className="text-white/60 text-sm mt-1">Gerencie sua empresa, equipe e preferências do sistema</p>
         </div>
 
         {/* Tabs */}
@@ -318,7 +318,7 @@ export default function SettingsPage() {
                 'flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all',
                 activeTab === id
                   ? 'bg-yellow-500/20 text-yellow-400 shadow'
-                  : 'text-white/50 hover:text-white hover:bg-white/5',
+                  : 'text-white/70 hover:text-white hover:bg-white/5',
               )}>
               <Icon className="w-4 h-4" />{label}
             </button>
@@ -362,7 +362,7 @@ export default function SettingsPage() {
         {activeTab === 'equipe' && (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <p className="text-white/50 text-sm">{teamUsers?.length ?? 0} membros na equipe</p>
+              <p className="text-white/70 text-sm">{teamUsers?.length ?? 0} membros na equipe</p>
               <button onClick={() => setShowNewUser(true)}
                 className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold"
                 style={{ background: 'linear-gradient(135deg, #1B2B5B, #2d4a99)', color: 'white' }}>
@@ -372,7 +372,7 @@ export default function SettingsPage() {
 
             <div className="space-y-2">
               {loadingTeam ? (
-                <div className="text-center py-12 text-white/30">
+                <div className="text-center py-12 text-white/60">
                   <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" /> Carregando...
                 </div>
               ) : teamUsers?.map((u: User) => (
@@ -384,16 +384,16 @@ export default function SettingsPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <p className="text-sm font-medium text-white">{u.name}</p>
-                      {u.id === user?.id && <span className="text-[10px] text-white/30 bg-white/5 px-1.5 py-0.5 rounded">você</span>}
+                      {u.id === user?.id && <span className="text-[10px] text-white/60 bg-white/10 px-1.5 py-0.5 rounded">você</span>}
                     </div>
-                    <p className="text-xs text-white/40">{u.email}</p>
+                    <p className="text-xs text-white/60">{u.email}</p>
                   </div>
                   <span className={cn('text-[10px] font-bold px-2.5 py-1 rounded-full border', ROLE_COLORS[u.role] ?? 'bg-white/10 text-white/50 border-white/10')}>
                     {ROLE_LABELS[u.role] ?? u.role}
                   </span>
                   {u.id !== user?.id && (
                     <button onClick={() => { if (confirm(`Remover ${u.name}?`)) deleteUserMutation.mutate(u.id) }}
-                      className="text-white/20 hover:text-red-400 transition-colors ml-1">
+                      className="text-white/50 hover:text-red-400 transition-colors ml-1">
                       <Trash2 className="w-4 h-4" />
                     </button>
                   )}
@@ -406,7 +406,7 @@ export default function SettingsPage() {
               <div className="bg-white/5 rounded-2xl border border-yellow-400/30 p-5 space-y-4">
                 <div className="flex items-center justify-between">
                   <h3 className="text-sm font-bold text-white">Novo Membro</h3>
-                  <button onClick={() => setShowNewUser(false)} className="text-white/30 hover:text-white text-xs">Cancelar</button>
+                  <button onClick={() => setShowNewUser(false)} className="text-white/60 hover:text-white text-xs">Cancelar</button>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <DarkInput label="Nome *" value={newUser.name} onChange={e => setNewUser(p => ({ ...p, name: e.target.value }))} placeholder="Nome completo" />
@@ -448,7 +448,7 @@ export default function SettingsPage() {
                 <div>
                   <p className="text-white font-semibold">{user?.name}</p>
                   <p className="text-white/40 text-sm">{user?.email}</p>
-                  <p className="text-white/30 text-xs mt-0.5">{ROLE_LABELS[user?.role ?? ''] ?? user?.role}</p>
+                  <p className="text-white/60 text-xs mt-0.5">{ROLE_LABELS[user?.role ?? ''] ?? user?.role}</p>
                 </div>
               </div>
             </Section>
@@ -478,7 +478,7 @@ export default function SettingsPage() {
                 <DarkInput label="Nova Senha" type={showPwd ? 'text' : 'password'} value={pwd.next} onChange={e => setPwd(p => ({ ...p, next: e.target.value }))} placeholder="Mínimo 8 caracteres" />
                 <DarkInput label="Confirmar Nova Senha" type={showPwd ? 'text' : 'password'} value={pwd.confirm} onChange={e => { setPwd(p => ({ ...p, confirm: e.target.value })); setPwdError('') }} placeholder="Repita a nova senha" />
                 <button type="button" onClick={() => setShowPwd(v => !v)}
-                  className="flex items-center gap-1.5 text-xs text-white/40 hover:text-white/70">
+                  className="flex items-center gap-1.5 text-xs text-white/60 hover:text-white/90">
                   {showPwd ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                   {showPwd ? 'Ocultar senhas' : 'Mostrar senhas'}
                 </button>
@@ -503,7 +503,7 @@ export default function SettingsPage() {
                 </div>
                 <div>
                   <p className="text-sm text-white">Sessão atual ativa</p>
-                  <p className="text-xs text-white/40">Última atividade: agora</p>
+                  <p className="text-xs text-white/60">Última atividade: agora</p>
                 </div>
               </div>
             </Section>

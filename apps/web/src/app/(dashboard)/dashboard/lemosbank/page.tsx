@@ -131,12 +131,15 @@ export default function LemosbankPage() {
             <p className="text-sm text-gray-500">Dashboard Financeiro</p>
           </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <Link href="/dashboard/clientes" className="px-3 py-1.5 rounded-lg border border-gray-200 text-sm hover:bg-gray-50 text-gray-600">
             Clientes
           </Link>
           <Link href="/dashboard/contratos" className="px-3 py-1.5 rounded-lg border border-gray-200 text-sm hover:bg-gray-50 text-gray-600">
             Contratos
+          </Link>
+          <Link href="/dashboard/lemosbank/cobrancas" className="px-3 py-1.5 rounded-lg border border-yellow-300 bg-yellow-50 text-yellow-700 text-sm hover:bg-yellow-100">
+            Cobranças
           </Link>
           <Link href="/dashboard/lemosbank/relatorios" className="px-3 py-1.5 rounded-lg bg-blue-600 text-white text-sm hover:bg-blue-700">
             Relatórios
@@ -499,7 +502,7 @@ export default function LemosbankPage() {
       </div>
 
       {/* Quick links */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Link href="/dashboard/clientes" className="flex items-center gap-4 p-5 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
           <div className="p-3 rounded-xl bg-indigo-50">
             <Users className="w-6 h-6 text-indigo-600" />
@@ -520,13 +523,23 @@ export default function LemosbankPage() {
           </div>
           <ChevronRight className="w-4 h-4 text-gray-300 ml-auto" />
         </Link>
+        <Link href="/dashboard/lemosbank/cobrancas" className="flex items-center gap-4 p-5 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+          <div className="p-3 rounded-xl bg-yellow-50">
+            <CheckCircle className="w-6 h-6 text-yellow-600" />
+          </div>
+          <div>
+            <p className="font-semibold text-gray-900">Cobranças</p>
+            <p className="text-sm text-gray-500">Dar baixa, email, WhatsApp, avulsa</p>
+          </div>
+          <ChevronRight className="w-4 h-4 text-gray-300 ml-auto" />
+        </Link>
         <Link href="/dashboard/lemosbank/relatorios" className="flex items-center gap-4 p-5 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
           <div className="p-3 rounded-xl bg-blue-50">
             <BarChart3 className="w-6 h-6 text-blue-600" />
           </div>
           <div>
             <p className="font-semibold text-gray-900">Relatórios</p>
-            <p className="text-sm text-gray-500">Operacionais, gerenciais e listagens</p>
+            <p className="text-sm text-gray-500">Operacionais, gerenciais e proprietários</p>
           </div>
           <ChevronRight className="w-4 h-4 text-gray-300 ml-auto" />
         </Link>

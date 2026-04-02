@@ -52,12 +52,12 @@ function TimelineItem({ activity }: { activity: Activity }) {
       <div className="pb-4 flex-1 min-w-0">
         <div className="flex items-center justify-between gap-2">
           <p className="text-sm font-medium text-white">{activity.title}</p>
-          <time className="text-xs text-white/30 flex-shrink-0">
+          <time className="text-xs text-white/50 flex-shrink-0">
             {new Date(activity.createdAt).toLocaleDateString('pt-BR', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' })}
           </time>
         </div>
         {activity.description && <p className="text-xs text-white/50 mt-0.5">{activity.description}</p>}
-        {activity.user && <p className="text-xs text-white/30 mt-0.5">por {activity.user.name}</p>}
+        {activity.user && <p className="text-xs text-white/50 mt-0.5">por {activity.user.name}</p>}
       </div>
     </div>
   )
@@ -143,12 +143,12 @@ export default function LeadDetailPage() {
             <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider">Contato</h3>
             {lead?.phone && (
               <a href={`tel:${lead.phone}`} className="flex items-center gap-2 text-sm text-white/70 hover:text-white transition-colors">
-                <Phone className="h-4 w-4 text-white/30" /> {lead.phone}
+                <Phone className="h-4 w-4 text-white/50" /> {lead.phone}
               </a>
             )}
             {lead?.email && (
               <a href={`mailto:${lead.email}`} className="flex items-center gap-2 text-sm text-white/70 hover:text-white transition-colors">
-                <Mail className="h-4 w-4 text-white/30" /> {lead.email}
+                <Mail className="h-4 w-4 text-white/50" /> {lead.email}
               </a>
             )}
             {lead?.budget && (
@@ -207,7 +207,7 @@ export default function LeadDetailPage() {
                 value={newNote}
                 onChange={(e) => setNewNote(e.target.value)}
                 placeholder="Descreva a atividade..."
-                className="flex-1 bg-white/5 border-white/10 text-white placeholder:text-white/30 text-sm"
+                className="flex-1 bg-white/5 border-white/10 text-white placeholder:text-white/40 text-sm"
                 onKeyDown={(e) => e.key === 'Enter' && newNote.trim() && addActivityMutation.mutate()}
               />
               <Button
@@ -225,7 +225,7 @@ export default function LeadDetailPage() {
           <div className="bg-white/5 rounded-xl border border-white/10 p-4">
             <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-4">Timeline</h3>
             {!activities?.data.length ? (
-              <p className="text-white/30 text-sm text-center py-8">Nenhuma atividade registrada</p>
+              <p className="text-white/50 text-sm text-center py-8">Nenhuma atividade registrada</p>
             ) : (
               <div>
                 {activities.data.map((a) => <TimelineItem key={a.id} activity={a} />)}

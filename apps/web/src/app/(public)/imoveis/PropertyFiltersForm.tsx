@@ -80,14 +80,14 @@ export function PropertyFiltersForm({ initialValues }: Props) {
             name="search"
             defaultValue={initialValues.search}
             placeholder="Buscar bairro, cidade, código..."
-            className="w-full pl-9 pr-3 py-2.5 text-sm rounded-xl border focus:outline-none focus:ring-2 focus:ring-[#1B2B5B] transition-all"
+            className="w-full pl-9 pr-3 py-2.5 text-sm rounded-xl border focus:outline-none focus:ring-2 focus:ring-[#1B2B5B] transition-all text-gray-800 placeholder:text-gray-400"
             style={{ borderColor: '#e0dbd0' }}
           />
         </div>
         <select
           name="purpose"
           defaultValue={initialValues.purpose ?? ''}
-          className="px-3 py-2.5 text-sm rounded-xl border focus:outline-none appearance-none"
+          className="px-3 py-2.5 text-sm rounded-xl border focus:outline-none appearance-none text-gray-800"
           style={{ borderColor: '#e0dbd0' }}
         >
           {PURPOSE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
@@ -95,7 +95,7 @@ export function PropertyFiltersForm({ initialValues }: Props) {
         <select
           name="type"
           defaultValue={initialValues.type ?? ''}
-          className="px-3 py-2.5 text-sm rounded-xl border focus:outline-none appearance-none"
+          className="px-3 py-2.5 text-sm rounded-xl border focus:outline-none appearance-none text-gray-800"
           style={{ borderColor: '#e0dbd0' }}
         >
           {TYPE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
@@ -103,7 +103,7 @@ export function PropertyFiltersForm({ initialValues }: Props) {
         <select
           name="sortBy"
           defaultValue={initialValues.sortBy ?? 'createdAt'}
-          className="px-3 py-2.5 text-sm rounded-xl border focus:outline-none appearance-none"
+          className="px-3 py-2.5 text-sm rounded-xl border focus:outline-none appearance-none text-gray-800"
           style={{ borderColor: '#e0dbd0' }}
         >
           {SORT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
@@ -125,7 +125,7 @@ export function PropertyFiltersForm({ initialValues }: Props) {
           <button
             type="button"
             onClick={clearFilters}
-            className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 transition-colors"
+            className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 transition-colors"
           >
             <X className="w-3 h-3" /> Limpar
           </button>
@@ -150,7 +150,7 @@ export function PropertyFiltersForm({ initialValues }: Props) {
               type="number"
               defaultValue={initialValues.minPrice}
               placeholder="0"
-              className="w-full px-3 py-2 text-sm rounded-xl border focus:outline-none"
+              className="w-full px-3 py-2 text-sm rounded-xl border focus:outline-none text-gray-800 placeholder:text-gray-400"
               style={{ borderColor: '#e0dbd0' }}
             />
           </div>
@@ -161,7 +161,7 @@ export function PropertyFiltersForm({ initialValues }: Props) {
               type="number"
               defaultValue={initialValues.maxPrice}
               placeholder="Sem limite"
-              className="w-full px-3 py-2 text-sm rounded-xl border focus:outline-none"
+              className="w-full px-3 py-2 text-sm rounded-xl border focus:outline-none text-gray-800 placeholder:text-gray-400"
               style={{ borderColor: '#e0dbd0' }}
             />
           </div>
@@ -191,7 +191,7 @@ export function PropertyFiltersForm({ initialValues }: Props) {
               name="city"
               defaultValue={initialValues.city}
               placeholder="Ex: Franca"
-              className="w-full px-3 py-2 text-sm rounded-xl border focus:outline-none"
+              className="w-full px-3 py-2 text-sm rounded-xl border focus:outline-none text-gray-800 placeholder:text-gray-400"
               style={{ borderColor: '#e0dbd0' }}
             />
           </div>
@@ -201,7 +201,7 @@ export function PropertyFiltersForm({ initialValues }: Props) {
               name="neighborhood"
               defaultValue={initialValues.neighborhood}
               placeholder="Ex: Centro"
-              className="w-full px-3 py-2 text-sm rounded-xl border focus:outline-none"
+              className="w-full px-3 py-2 text-sm rounded-xl border focus:outline-none text-gray-800 placeholder:text-gray-400"
               style={{ borderColor: '#e0dbd0' }}
             />
           </div>
@@ -212,7 +212,7 @@ export function PropertyFiltersForm({ initialValues }: Props) {
               type="number"
               defaultValue={initialValues.minArea}
               placeholder="0"
-              className="w-full px-3 py-2 text-sm rounded-xl border focus:outline-none"
+              className="w-full px-3 py-2 text-sm rounded-xl border focus:outline-none text-gray-800 placeholder:text-gray-400"
               style={{ borderColor: '#e0dbd0' }}
             />
           </div>
@@ -223,7 +223,7 @@ export function PropertyFiltersForm({ initialValues }: Props) {
               type="number"
               defaultValue={initialValues.maxArea}
               placeholder="Sem limite"
-              className="w-full px-3 py-2 text-sm rounded-xl border focus:outline-none"
+              className="w-full px-3 py-2 text-sm rounded-xl border focus:outline-none text-gray-800 placeholder:text-gray-400"
               style={{ borderColor: '#e0dbd0' }}
             />
           </div>

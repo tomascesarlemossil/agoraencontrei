@@ -139,6 +139,15 @@ export default async function aiVisualRoutes(app: FastifyInstance) {
     return reply.status(204).send()
   })
 
+  // GET /api/v1/ai-visual/config — returns which integrations are configured
+  app.get('/config', async (_req, reply) => {
+    return reply.send({
+      mnml:   !!env.MNML_API_KEY,
+      imagen: !!env.GOOGLE_IMAGEN_API_KEY,
+      anthropic: !!env.ANTHROPIC_API_KEY,
+    })
+  })
+
   // GET /api/v1/ai-visual/stats
   app.get('/stats', async (req, reply) => {
     const cid = req.user.cid

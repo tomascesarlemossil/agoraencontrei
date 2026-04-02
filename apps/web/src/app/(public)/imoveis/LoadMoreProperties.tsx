@@ -76,7 +76,7 @@ function PropertyCard({ p }: { p: any }) {
         <p className="font-semibold text-gray-900 line-clamp-2 text-sm leading-snug group-hover:text-[#1B2B5B] transition-colors">
           {p.title}
         </p>
-        <p className="text-xs text-gray-400 mt-1 truncate">
+        <p className="text-xs text-gray-500 mt-1 truncate">
           {[p.neighborhood, p.city].filter(Boolean).join(' · ')}
         </p>
         <div className="flex items-center gap-3 mt-2.5 text-xs text-gray-500">
@@ -143,7 +143,7 @@ export function LoadMoreProperties({ initialProperties, initialTotal, initialTot
       </div>
 
       {properties.length > 0 && (
-        <div className="mt-8 text-center text-sm text-gray-400">
+        <div className="mt-8 text-center text-sm text-gray-500">
           Mostrando {properties.length} de {initialTotal.toLocaleString('pt-BR')} imóveis
         </div>
       )}

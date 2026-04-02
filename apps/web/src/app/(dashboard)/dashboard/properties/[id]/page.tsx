@@ -68,7 +68,7 @@ function fmt(v?: number | null) {
 function Stat({ icon: Icon, label }: { icon: React.ComponentType<any>; label: string }) {
   return (
     <div className="flex items-center gap-1.5 text-sm text-white/60">
-      <Icon className="h-4 w-4 text-white/30" />
+      <Icon className="h-4 w-4 text-white/50" />
       {label}
     </div>
   )
@@ -381,14 +381,14 @@ export default function PropertyDetailPage() {
             <input value={urlInput} onChange={e => setUrlInput(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleAddUrl()}
               placeholder="Cole a URL da imagem (https://...)"
-              className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-1 focus:ring-white/20" />
+              className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white placeholder:text-white/40 focus:outline-none focus:ring-1 focus:ring-white/20" />
             <button onClick={handleAddUrl} className="px-3 py-1.5 bg-white/10 rounded-lg text-xs text-white hover:bg-white/20 transition-colors">
               Adicionar
             </button>
           </div>
         )}
         {allPhotos.length === 0 ? (
-          <div className="py-6 text-center text-white/30 text-sm">
+          <div className="py-6 text-center text-white/50 text-sm">
             <ImagePlus className="h-7 w-7 mx-auto mb-2 opacity-30" />
             Nenhuma foto. Adicione por URL ou upload.
           </div>
@@ -553,24 +553,24 @@ export default function PropertyDetailPage() {
 
               <Section title="Descrição Pública">
                 <textarea {...register('description')} rows={5}
-                  className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white resize-none focus:outline-none focus:ring-2 focus:ring-ring placeholder:text-white/30"
+                  className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white resize-none focus:outline-none focus:ring-2 focus:ring-ring placeholder:text-white/40"
                   placeholder="Descrição que será publicada no site e portais..." />
               </Section>
 
               <Section title="Descrição Interna (não publicada)">
                 <textarea {...register('descriptionInternal')} rows={4}
-                  className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white resize-none focus:outline-none focus:ring-2 focus:ring-ring placeholder:text-white/30"
+                  className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white resize-none focus:outline-none focus:ring-2 focus:ring-ring placeholder:text-white/40"
                   placeholder="Informações internas, histórico, observações do corretor..." />
-                <p className="text-xs text-white/30">* Esta informação é de uso interno e NÃO será divulgada no site e portais.</p>
+                <p className="text-xs text-white/50">* Esta informação é de uso interno e NÃO será divulgada no site e portais.</p>
               </Section>
 
               <Section title="Vídeo e Tour Virtual">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Field label="Vídeo YouTube (URL ou ID)">
-                    <Input {...register('videoUrl')} placeholder="https://youtube.com/watch?v=..." className="bg-white/5 border-white/10 text-white h-9 placeholder:text-white/30" />
+                    <Input {...register('videoUrl')} placeholder="https://youtube.com/watch?v=..." className="bg-white/5 border-white/10 text-white h-9 placeholder:text-white/40" />
                   </Field>
                   <Field label="Tour Virtual (URL)">
-                    <Input {...register('virtualTourUrl')} placeholder="https://..." className="bg-white/5 border-white/10 text-white h-9 placeholder:text-white/30" />
+                    <Input {...register('virtualTourUrl')} placeholder="https://..." className="bg-white/5 border-white/10 text-white h-9 placeholder:text-white/40" />
                   </Field>
                 </div>
               </Section>
@@ -749,14 +749,14 @@ export default function PropertyDetailPage() {
                 <Field label="Título SEO">
                   <Input {...register('metaTitle')} maxLength={70}
                     placeholder="Título para Google (máx. 70 caracteres)"
-                    className="bg-white/5 border-white/10 text-white h-9 placeholder:text-white/30" />
+                    className="bg-white/5 border-white/10 text-white h-9 placeholder:text-white/40" />
                 </Field>
                 <Field label="Descrição SEO">
                   <textarea {...register('metaDescription')} rows={3} maxLength={160}
                     placeholder="Descrição para Google (máx. 160 caracteres)"
-                    className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white resize-none focus:outline-none focus:ring-2 focus:ring-ring placeholder:text-white/30" />
+                    className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white resize-none focus:outline-none focus:ring-2 focus:ring-ring placeholder:text-white/40" />
                 </Field>
-                <p className="text-xs text-white/30">* Se deixar em branco, o título e descrição do imóvel serão usados automaticamente.</p>
+                <p className="text-xs text-white/50">* Se deixar em branco, o título e descrição do imóvel serão usados automaticamente.</p>
               </Section>
             </div>
           )}
@@ -779,7 +779,7 @@ export default function PropertyDetailPage() {
               <Section title="Condições Comerciais">
                 <textarea {...register('commercialConditions')} rows={4}
                   placeholder="Condições de venda, prazo, observações comerciais..."
-                  className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white resize-none focus:outline-none focus:ring-2 focus:ring-ring placeholder:text-white/30" />
+                  className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white resize-none focus:outline-none focus:ring-2 focus:ring-ring placeholder:text-white/40" />
               </Section>
 
               <Section title="Exclusividade">
@@ -801,10 +801,10 @@ export default function PropertyDetailPage() {
 
               <Section title="Auditoria">
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs text-white/40">
-                  <div><p className="text-white/30 mb-0.5">Cadastrado em</p><p>{p.createdAt ? new Date(p.createdAt).toLocaleString('pt-BR') : '—'}</p></div>
-                  <div><p className="text-white/30 mb-0.5">Atualizado em</p><p>{p.updatedAt ? new Date(p.updatedAt).toLocaleString('pt-BR') : '—'}</p></div>
-                  <div><p className="text-white/30 mb-0.5">Publicado em</p><p>{p.publishedAt ? new Date(p.publishedAt).toLocaleString('pt-BR') : '—'}</p></div>
-                  <div><p className="text-white/30 mb-0.5">Visualizações</p><p>{p.views ?? 0}</p></div>
+                  <div><p className="text-white/50 mb-0.5">Cadastrado em</p><p>{p.createdAt ? new Date(p.createdAt).toLocaleString('pt-BR') : '—'}</p></div>
+                  <div><p className="text-white/50 mb-0.5">Atualizado em</p><p>{p.updatedAt ? new Date(p.updatedAt).toLocaleString('pt-BR') : '—'}</p></div>
+                  <div><p className="text-white/50 mb-0.5">Publicado em</p><p>{p.publishedAt ? new Date(p.publishedAt).toLocaleString('pt-BR') : '—'}</p></div>
+                  <div><p className="text-white/50 mb-0.5">Visualizações</p><p>{p.views ?? 0}</p></div>
                 </div>
               </Section>
             </div>
@@ -838,7 +838,7 @@ export default function PropertyDetailPage() {
                 </div>
                 <Field label="Observações de Documentação">
                   <textarea {...register('documentationNotes')} rows={3}
-                    className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white resize-none focus:outline-none focus:ring-2 focus:ring-ring placeholder:text-white/30" />
+                    className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white resize-none focus:outline-none focus:ring-2 focus:ring-ring placeholder:text-white/40" />
                 </Field>
               </Section>
 
@@ -913,7 +913,7 @@ export default function PropertyDetailPage() {
             <div className="bg-white/5 rounded-xl border border-white/10 p-5">
               <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-2">Localização</h3>
               <div className="flex items-start gap-2 text-white/70">
-                <MapPin className="h-4 w-4 mt-0.5 flex-shrink-0 text-white/30" />
+                <MapPin className="h-4 w-4 mt-0.5 flex-shrink-0 text-white/50" />
                 <p className="text-sm">
                   {[p.street, p.number, p.complement].filter(Boolean).join(', ')}
                   {p.street && <br />}

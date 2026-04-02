@@ -55,7 +55,7 @@ function MessageBubble({ msg }: { msg: Message }) {
           <p className="text-xs text-white/50 italic mb-1">📄 Documento</p>
         )}
         <p className="leading-relaxed whitespace-pre-wrap">{msg.content || '—'}</p>
-        <p className={cn('text-xs mt-1', isOut ? 'text-white/60 text-right' : 'text-white/30')}>
+        <p className={cn('text-xs mt-1', isOut ? 'text-white/60 text-right' : 'text-white/50')}>
           {fmtTime(msg.createdAt)}
           {isOut && msg.status === 'read' && ' ✓✓'}
           {isOut && msg.status === 'delivered' && ' ✓✓'}
@@ -162,7 +162,7 @@ export default function ConversationPage() {
             <div key={date}>
               <div className="flex items-center gap-2 my-3">
                 <div className="flex-1 h-px bg-white/10" />
-                <span className="text-xs text-white/30 flex-shrink-0">{date}</span>
+                <span className="text-xs text-white/50 flex-shrink-0">{date}</span>
                 <div className="flex-1 h-px bg-white/10" />
               </div>
               <div className="space-y-1.5">
@@ -171,7 +171,7 @@ export default function ConversationPage() {
             </div>
           ))}
           {messages.length === 0 && (
-            <div className="flex flex-col items-center justify-center h-48 text-white/30">
+            <div className="flex flex-col items-center justify-center h-48 text-white/50">
               <p className="text-sm">Nenhuma mensagem ainda</p>
             </div>
           )}
@@ -184,7 +184,7 @@ export default function ConversationPage() {
             value={text}
             onChange={(e) => setText(e.target.value)}
             placeholder="Digite uma mensagem..."
-            className="flex-1 bg-white/5 border-white/10 text-white placeholder:text-white/30"
+            className="flex-1 bg-white/5 border-white/10 text-white placeholder:text-white/40"
             onKeyDown={(e) => e.key === 'Enter' && text.trim() && sendMutation.mutate()}
           />
           <Button
@@ -237,9 +237,9 @@ export default function ConversationPage() {
             <p className="text-xs font-semibold text-white/40 uppercase tracking-wider">Lead</p>
             <Link href={`/dashboard/leads/${conversation.lead.id}`}
               className="flex items-center gap-2 text-sm text-white/70 hover:text-white transition-colors">
-              <User className="h-3.5 w-3.5 text-white/30" />
+              <User className="h-3.5 w-3.5 text-white/50" />
               {conversation.lead.name}
-              <LinkIcon className="h-3 w-3 text-white/30 ml-auto" />
+              <LinkIcon className="h-3 w-3 text-white/50 ml-auto" />
             </Link>
           </div>
         )}
@@ -250,9 +250,9 @@ export default function ConversationPage() {
             <p className="text-xs font-semibold text-white/40 uppercase tracking-wider">Contato</p>
             <Link href={`/dashboard/contacts/${conversation.contact.id}`}
               className="flex items-center gap-2 text-sm text-white/70 hover:text-white transition-colors">
-              <User className="h-3.5 w-3.5 text-white/30" />
+              <User className="h-3.5 w-3.5 text-white/50" />
               {conversation.contact.name}
-              <LinkIcon className="h-3 w-3 text-white/30 ml-auto" />
+              <LinkIcon className="h-3 w-3 text-white/50 ml-auto" />
             </Link>
           </div>
         )}

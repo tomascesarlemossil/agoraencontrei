@@ -218,8 +218,8 @@ export default function NewPropertyPage() {
     onSuccess: (prop: any) => router.push(`/dashboard/properties/${prop.id}`),
   })
 
-  const inputCls = 'bg-white/5 border-white/10 text-white h-9 placeholder:text-white/30'
-  const textareaCls = 'w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white resize-none focus:outline-none focus:ring-2 focus:ring-ring placeholder:text-white/30'
+  const inputCls = 'bg-white/5 border-white/10 text-white h-9 placeholder:text-white/40'
+  const textareaCls = 'w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white resize-none focus:outline-none focus:ring-2 focus:ring-ring placeholder:text-white/40'
   const selectTriggerCls = 'bg-white/5 border-white/10 text-white h-9'
 
   return (
@@ -367,7 +367,7 @@ export default function NewPropertyPage() {
             <Section title="Descrição Interna (não publicada)">
               <textarea {...register('descriptionInternal')} rows={4} className={textareaCls}
                 placeholder="Informações internas, histórico, observações do corretor..." />
-              <p className="text-xs text-white/30">* Esta informação é de uso interno e NÃO será divulgada no site e portais.</p>
+              <p className="text-xs text-white/50">* Esta informação é de uso interno e NÃO será divulgada no site e portais.</p>
             </Section>
 
             <Section title="Vídeo e Tour Virtual">
@@ -569,7 +569,7 @@ export default function NewPropertyPage() {
                   placeholder="apartamento, itaim, 3 quartos..."
                   className={inputCls} />
               </Field>
-              <p className="text-xs text-white/30">* Se deixar em branco, o título e descrição do imóvel serão usados automaticamente.</p>
+              <p className="text-xs text-white/50">* Se deixar em branco, o título e descrição do imóvel serão usados automaticamente.</p>
             </Section>
           </div>
         )}
