@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
+import { createAuditLog } from '../../services/audit.service.js'
 
 const toUpper = (v: unknown) => typeof v === 'string' ? v.toUpperCase() : v
 
@@ -304,6 +305,15 @@ export default async function propertiesRoutes(app: FastifyInstance) {
       },
     })
 
+    await createAuditLog({
+      prisma: app.prisma as any, req,
+      action: 'property.create',
+      resource: 'property',
+      resourceId: property.id,
+      before: null,
+      after: property as any,
+    })
+
     return reply.status(201).send(property)
   })
 
@@ -332,6 +342,15 @@ export default async function propertiesRoutes(app: FastifyInstance) {
         ...(body.status === 'ACTIVE' && !existing.publishedAt && { publishedAt: new Date() }),
         ...(body.portalDescriptions !== undefined && { portalDescriptions: body.portalDescriptions as any }),
       },
+    })
+
+    await createAuditLog({
+      prisma: app.prisma as any, req,
+      action: 'property.update',
+      resource: 'property',
+      resourceId: id,
+      before: existing as any,
+      after:  updated  as any,
     })
 
     // Auto-post to Instagram when property becomes ACTIVE
@@ -369,9 +388,23 @@ export default async function propertiesRoutes(app: FastifyInstance) {
       return reply.status(403).send({ error: 'FORBIDDEN' })
     }
 
+    const toDelete = await app.prisma.property.findFirst({
+      where: { id, companyId: req.user.cid },
+      select: { id: true, title: true, status: true, reference: true },
+    })
+
     await app.prisma.property.update({
       where: { id, companyId: req.user.cid },
       data: { status: 'INACTIVE' },
+    })
+
+    await createAuditLog({
+      prisma: app.prisma as any, req,
+      action: 'property.delete',
+      resource: 'property',
+      resourceId: id,
+      before: toDelete as any,
+      after:  { ...toDelete, status: 'INACTIVE' } as any,
     })
 
     return reply.send({ success: true })

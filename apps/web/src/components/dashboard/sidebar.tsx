@@ -37,6 +37,7 @@ import {
   Wand2,
   BookOpen,
   Archive,
+  History,
 } from 'lucide-react'
 import { useNotifications } from '@/stores/notifications.store'
 import { UserAvatar } from '@/components/ui/UserAvatar'
@@ -76,8 +77,9 @@ const lemosbankSubItems = [
 ]
 
 const bottomItems = [
-  { href: '/dashboard/notifications', icon: Bell, label: 'Notificações' },
-  { href: '/dashboard/settings', icon: Settings, label: 'Configurações' },
+  { href: '/dashboard/historico-alteracoes', icon: History,  label: 'Hist. Alterações' },
+  { href: '/dashboard/notifications',        icon: Bell,     label: 'Notificações' },
+  { href: '/dashboard/settings',             icon: Settings, label: 'Configurações' },
 ]
 
 function NavContent({ onClose }: { onClose?: () => void }) {

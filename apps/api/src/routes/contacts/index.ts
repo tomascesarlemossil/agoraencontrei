@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
+import { createAuditLog } from '../../services/audit.service.js'
 
 const toUpper = (v: unknown) => typeof v === 'string' ? v.toUpperCase() : v
 
@@ -120,6 +121,15 @@ export default async function contactsRoutes(app: FastifyInstance) {
       },
     })
 
+    await createAuditLog({
+      prisma: app.prisma as any, req,
+      action: 'contact.create',
+      resource: 'contact',
+      resourceId: contact.id,
+      before: null,
+      after: contact as any,
+    })
+
     return reply.status(201).send(contact)
   })
 
@@ -143,6 +153,15 @@ export default async function contactsRoutes(app: FastifyInstance) {
       },
     })
 
+    await createAuditLog({
+      prisma: app.prisma as any, req,
+      action: 'contact.update',
+      resource: 'contact',
+      resourceId: id,
+      before: existing as any,
+      after:  updated  as any,
+    })
+
     return reply.send(updated)
   })
 
@@ -160,6 +179,16 @@ export default async function contactsRoutes(app: FastifyInstance) {
     if (!existing) return reply.status(404).send({ error: 'NOT_FOUND' })
 
     await app.prisma.contact.delete({ where: { id: existing.id } })
+
+    await createAuditLog({
+      prisma: app.prisma as any, req,
+      action: 'contact.delete',
+      resource: 'contact',
+      resourceId: existing.id,
+      before: existing as any,
+      after: null,
+    })
+
     return reply.send({ success: true })
   })
 }

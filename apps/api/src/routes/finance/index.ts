@@ -2,6 +2,7 @@ import type { FastifyInstance } from 'fastify'
 import nodemailer from 'nodemailer'
 import { createCharge, findOrCreateCustomer } from '../../services/asaas.service.js'
 import { env } from '../../utils/env.js'
+import { createAuditLog } from '../../services/audit.service.js'
 
 export default async function financeRoutes(app: FastifyInstance) {
   app.addHook('preHandler', app.authenticate)
@@ -518,6 +519,15 @@ export default async function financeRoutes(app: FastifyInstance) {
       },
     })
 
+    await createAuditLog({
+      prisma: app.prisma as any, req,
+      action: 'contract.rescission',
+      resource: 'contract',
+      resourceId: id,
+      before: { status: contract.status, isActive: contract.isActive },
+      after:  { status: updated.status, isActive: false, rescissionDate: updated.rescissionDate },
+    })
+
     return reply.send(updated)
   })
 
@@ -541,6 +551,15 @@ export default async function financeRoutes(app: FastifyInstance) {
         paidAmount:  body.paidAmount   ?? Number(rental.totalAmount ?? rental.rentAmount ?? 0),
         paymentDate: body.paymentDate  ? new Date(body.paymentDate) : new Date(),
       },
+    })
+
+    await createAuditLog({
+      prisma: app.prisma as any, req,
+      action: 'rental.pay',
+      resource: 'rental',
+      resourceId: id,
+      before: { status: rental.status, paidAmount: rental.paidAmount },
+      after:  { status: 'PAID', paidAmount: updated.paidAmount, paymentDate: updated.paymentDate },
     })
 
     return reply.send(updated)
@@ -596,6 +615,15 @@ export default async function financeRoutes(app: FastifyInstance) {
       },
     })
 
+    await createAuditLog({
+      prisma: app.prisma as any, req,
+      action: 'contract.create',
+      resource: 'contract',
+      resourceId: created.id,
+      before: null,
+      after: created as any,
+    })
+
     return reply.status(201).send(created)
   })
 
@@ -629,6 +657,15 @@ export default async function financeRoutes(app: FastifyInstance) {
         ...(body.adjustmentIndex !== undefined && { adjustmentIndex:  body.adjustmentIndex }),
         ...(body.contractHtml    !== undefined && { contractHtml:     body.contractHtml }),
       },
+    })
+
+    await createAuditLog({
+      prisma: app.prisma as any, req,
+      action: 'contract.update',
+      resource: 'contract',
+      resourceId: id,
+      before: contract as any,
+      after:  updated  as any,
     })
 
     return reply.send(updated)
