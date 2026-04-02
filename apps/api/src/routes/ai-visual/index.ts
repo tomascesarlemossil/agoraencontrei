@@ -5,7 +5,7 @@
  */
 import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
-import { env } from '../../utils/env.js'
+import { env } from '../../utils/env.js' // used in /config and /stats routes
 
 const CreateJobBody = z.object({
   tipo:       z.enum(['render', 'staging', 'enhance_batch']),
@@ -47,29 +47,23 @@ export default async function aiVisualRoutes(app: FastifyInstance) {
       },
     })
 
-    // Enqueue via BullMQ if Redis is available
-    if (env.REDIS_URL) {
+    // Enqueue via shared BullMQ queue (decorated by automation plugin)
+    const visualAIQueue = (app as any).visualAIQueue
+    if (visualAIQueue) {
       try {
-        const { Queue } = await import('bullmq')
-        const { Redis } = await import('ioredis')
-        const conn = new Redis(env.REDIS_URL, { maxRetriesPerRequest: null })
-        const vq   = new Queue('visual-ai', { connection: conn })
-        await vq.add('process', {
-          jobId:   job.id,
-          tipo:    body.tipo,
-          inputUrl: body.inputUrl,
-          style:   body.style,
+        await visualAIQueue.add('process', {
+          jobId:      job.id,
+          tipo:       body.tipo,
+          inputUrl:   body.inputUrl,
+          style:      body.style,
           propertyId: body.propertyId,
-          companyId: cid,
+          companyId:  cid,
         }, {
           attempts: 2,
           backoff: { type: 'fixed', delay: 5000 },
           removeOnComplete: { count: 100 },
-          removeOnFail: { count: 200 },
-          priority: 10, // low priority — heavy job
+          removeOnFail:     { count: 200 },
         })
-        await vq.close()
-        await conn.quit()
       } catch (err) {
         app.log.warn({ err }, 'visual-ai: failed to enqueue (non-fatal)')
       }

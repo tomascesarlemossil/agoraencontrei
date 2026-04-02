@@ -1,8 +1,11 @@
 /**
  * Marketing Campanhas — E-mail / WhatsApp broadcast
+ * Uses BullMQ 'campaigns' queue for async delivery.
+ * Scheduled campaigns use BullMQ delay option.
  */
 import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
+import type { Queue } from 'bullmq'
 
 const CreateCampanhaBody = z.object({
   nome:        z.string().min(2).max(200),
@@ -14,8 +17,8 @@ const CreateCampanhaBody = z.object({
 
 const SEGMENT_WHERE: Record<string, any> = {
   todos_clientes: {},
-  proprietarios:  { type: 'OWNER' },
-  inquilinos:     { type: 'TENANT' },
+  proprietarios:  { roles: { has: 'LANDLORD' } },
+  inquilinos:     { roles: { has: 'TENANT' } },
   leads_frios:    null, // handled separately via Lead model
   custom:         {},
 }
@@ -104,56 +107,32 @@ export default async function campanhasRoutes(app: FastifyInstance) {
       return reply.status(409).send({ error: 'ALREADY_SENT' })
     }
 
-    // Update status to SENDING, fire async processing
-    await app.prisma.marketingCampaign.update({
-      where: { id },
-      data:  { status: 'SENDING' },
-    })
+    const campaignsQueue = (app as any).campaignsQueue as Queue | null
+    if (!campaignsQueue) {
+      return reply.status(503).send({ error: 'QUEUE_UNAVAILABLE', message: 'Redis não configurado' })
+    }
 
-    // Fire-and-forget broadcast (simplified; in production use BullMQ)
-    setImmediate(async () => {
-      try {
-        const count = await countSegmento(app, cid, campanha.segmento)
+    // Compute delay for scheduled campaigns
+    const delayMs = campanha.agendadoPara
+      ? Math.max(0, campanha.agendadoPara.getTime() - Date.now())
+      : 0
 
-        if (campanha.tipo === 'whatsapp' && campanha.segmento !== 'leads_frios') {
-          // Fetch clients for this segment
-          const where = SEGMENT_WHERE[campanha.segmento] ?? {}
-          const clients = await app.prisma.client.findMany({
-            where: { companyId: cid, ...where, phone: { not: null } },
-            select: { id: true, phone: true },
-            take: 1000,
-          })
+    await campaignsQueue.add(
+      'send',
+      { campanhaId: id, companyId: cid },
+      {
+        delay: delayMs,
+        attempts: 2,
+        backoff: { type: 'exponential', delay: 5000 },
+        removeOnComplete: { count: 100 },
+        removeOnFail:     { count: 200 },
+      },
+    )
 
-          let sent = 0
-          for (const client of clients) {
-            try {
-              const whatsappService = await import('../../services/whatsapp.service.js')
-              await (whatsappService as any).sendMessage?.(client.phone!, campanha.mensagem)
-              sent++
-            } catch { /* skip individual errors */ }
-          }
+    const status = delayMs > 0 ? 'SCHEDULED' : 'SENDING'
+    await app.prisma.marketingCampaign.update({ where: { id }, data: { status } })
 
-          await app.prisma.marketingCampaign.update({
-            where: { id },
-            data:  { status: 'SENT', totalEnviados: sent },
-          })
-        } else {
-          // Email or leads_frios — log only (no SMTP configured)
-          await app.prisma.marketingCampaign.update({
-            where: { id },
-            data:  { status: 'SENT', totalEnviados: count },
-          })
-        }
-      } catch (err) {
-        app.log.error({ err, id }, 'Campaign send failed')
-        await app.prisma.marketingCampaign.update({
-          where: { id },
-          data:  { status: 'DRAFT' },
-        })
-      }
-    })
-
-    return reply.send({ success: true, message: 'Campanha em processamento' })
+    return reply.send({ success: true, message: delayMs > 0 ? 'Campanha agendada' : 'Campanha em processamento' })
   })
 
   // POST /api/v1/marketing/campanhas/:id/cancelar
