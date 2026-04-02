@@ -14,7 +14,7 @@ import {
 import { Controller, useForm } from 'react-hook-form'
 import {
   ArrowLeft, Edit, Save, X, MapPin, BedDouble, Bath, Car, Ruler, Eye,
-  Calendar, ImagePlus, Trash2, Star, Upload, Phone, Mail, User, ZoomIn,
+  Calendar, ImagePlus, Trash2, Star, Upload, Phone, Mail, User as UserIcon, ZoomIn,
   Home, Globe, Settings, Shield, Briefcase, Building2, Search,
 } from 'lucide-react'
 import Link from 'next/link'
@@ -1059,7 +1059,7 @@ export default function PropertyDetailPage() {
                 {p.owners.map((o: any) => (
                   <div key={o.contact.id} className="flex items-start gap-3">
                     <div className="h-9 w-9 rounded-full bg-emerald-500/20 flex items-center justify-center text-sm font-bold text-emerald-400 flex-shrink-0">
-                      <User className="h-4 w-4" />
+                      <UserIcon className="h-4 w-4" />
                     </div>
                     <div className="min-w-0">
                       <p className="text-sm font-medium text-white">{o.contact.name}</p>
