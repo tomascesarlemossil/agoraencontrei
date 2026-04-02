@@ -1,10 +1,14 @@
 /**
  * Scheduled Jobs — emits automation triggers based on time-based conditions
  * Runs every 30 minutes via setInterval (wired in automation.ts plugin)
+ *
+ * Social media jobs run once per day at ~09:00 BRT (UTC-3 = 12:00 UTC)
  */
 
 import type { FastifyInstance } from 'fastify'
 import { emitAutomation } from './automation.emitter.js'
+import { syncYouTubeToBlog, syncInstagramToBlog } from './social-sync.service.js'
+import { env } from '../utils/env.js'
 
 export async function runScheduledJobs(app: FastifyInstance) {
   const now = new Date()
@@ -179,5 +183,43 @@ export async function runScheduledJobs(app: FastifyInstance) {
     }
   } catch (err) {
     app.log.error({ err }, '[scheduled] contrato_vencendo_30d failed')
+  }
+
+  // ── Daily social media sync — once per day at ~12:00 UTC (09:00 BRT) ────
+  const hour = now.getUTCHours()
+  const minute = now.getUTCMinutes()
+  if (hour === 12 && minute < 30) {
+    // YouTube: sync new videos to blog
+    try {
+      const company = await app.prisma.company.findFirst({ where: { isActive: true } })
+      const companyId = env.PUBLIC_COMPANY_ID ?? company?.id
+      if (companyId) {
+        const channelId = env.YOUTUBE_CHANNEL_ID ?? 'UCKpTcdWhQZIPMX8EF_nNckw'
+        const ytSynced = await syncYouTubeToBlog(app.prisma as any, companyId, env.YOUTUBE_API_KEY ?? null, channelId)
+        if (ytSynced > 0) app.log.info(`[scheduled] YouTube: synced ${ytSynced} new videos`)
+
+        // Instagram @tomaslemosbr
+        if (env.INSTAGRAM_TOKEN_TOMAS) {
+          const igSynced = await syncInstagramToBlog(app.prisma as any, companyId, env.INSTAGRAM_TOKEN_TOMAS, 'tomaslemosbr')
+          if (igSynced > 0) app.log.info(`[scheduled] Instagram @tomaslemosbr: synced ${igSynced} new posts`)
+        }
+
+        // Instagram @imobiliarialemos
+        if (env.INSTAGRAM_TOKEN_LEMOS) {
+          const igSynced = await syncInstagramToBlog(app.prisma as any, companyId, env.INSTAGRAM_TOKEN_LEMOS, 'imobiliarialemos')
+          if (igSynced > 0) app.log.info(`[scheduled] Instagram @imobiliarialemos: synced ${igSynced} new posts`)
+        }
+
+        // Daily property post to Instagram
+        try {
+          const { runDailySocialPost } = await import('../jobs/daily-social-post.js')
+          runDailySocialPost(app).catch((err: Error) => app.log.error(err, '[scheduled] daily-social-post failed'))
+        } catch {
+          // daily-social-post not configured — skip silently
+        }
+      }
+    } catch (err) {
+      app.log.error({ err }, '[scheduled] social daily sync failed')
+    }
   }
 }
