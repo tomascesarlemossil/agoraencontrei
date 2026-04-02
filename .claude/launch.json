@@ -2,9 +2,15 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "web",
-      "runtimeExecutable": "/Users/tomaslemos/.nvm_local/bin/pnpm",
-      "runtimeArgs": ["--filter", "@agoraencontrei/web", "dev"],
+      "name": "AgoraEncontrei — Next.js Web",
+      "runtimeExecutable": "/Users/tomaslemos/.nvm_local/bin/node",
+      "runtimeArgs": [
+        "/Users/tomaslemos/Downloads/squads/agoraencontrei/apps/web/node_modules/next/dist/bin/next",
+        "dev",
+        "--port",
+        "3000"
+      ],
+      "cwd": "/Users/tomaslemos/Downloads/squads/agoraencontrei/apps/web",
       "port": 3000
     }
   ]

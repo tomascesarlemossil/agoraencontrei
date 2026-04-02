@@ -11,6 +11,11 @@ export const metadata: Metadata = {
   },
   description: 'Encontre o imóvel dos seus sonhos em Franca e região. Compra, venda e locação. CRECI 279051.',
   metadataBase: new URL('https://www.agoraencontrei.com.br'),
+  keywords: 'imóveis franca, casas franca, apartamentos franca, terrenos franca, imobiliária franca, comprar imóvel franca, alugar imóvel franca, financiamento imobiliário, leilão imóvel, CRECI 279051, imobiliária lemos, aluguel franca sp, investimento imóvel franca',
+  authors: [{ name: 'Imobiliária Lemos', url: 'https://www.agoraencontrei.com.br' }],
+  creator: 'Imobiliária Lemos',
+  publisher: 'Imobiliária Lemos',
+  robots: { index: true, follow: true, googleBot: { index: true, follow: true } },
 }
 
 const FOOTER_IMOVEIS = [

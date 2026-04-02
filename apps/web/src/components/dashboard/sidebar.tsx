@@ -35,6 +35,7 @@ import {
   BarChart3,
   Landmark,
   Wand2,
+  BookOpen,
 } from 'lucide-react'
 import { useNotifications } from '@/stores/notifications.store'
 
@@ -54,6 +55,7 @@ const navItems = [
   { href: '/dashboard/marketing/campanhas',icon: Megaphone,        label: 'Campanhas' },
   { href: '/dashboard/ai-visual',          icon: Sparkles,         label: 'IA Visual' },
   { href: '/dashboard/documentos',         icon: Wand2,            label: 'Criar Documentos IA' },
+  { href: '/dashboard/blog',              icon: BookOpen,         label: 'Blog' },
 ]
 
 const lemosbankSubItems = [

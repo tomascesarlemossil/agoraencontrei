@@ -9,6 +9,7 @@ import {
 } from 'lucide-react'
 import { LeadCaptureForm } from './LeadCaptureForm'
 import { PropostaOnline } from './PropostaOnline'
+import { ScheduleVisitModal } from '../ScheduleVisitModal'
 import { PropertyGallery } from '@/components/public/PropertyGallery'
 import { PropertyMap } from '@/components/public/PropertyMap'
 import { SimilarProperties } from '@/components/public/SimilarProperties'
@@ -376,12 +377,11 @@ export default async function PropertyDetailPage({ params }: { params: { slug: s
             {/* ── Action Buttons ────────────────────────────── */}
             <div className="bg-white rounded-2xl border shadow-sm p-4" style={{ borderColor: '#ddd9d0' }}>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                <a href={`https://wa.me/${whatsappNum}?text=${visitMsg}`} target="_blank" rel="noreferrer"
-                  className="flex flex-col items-center justify-center gap-1.5 py-3.5 px-2 rounded-xl border-2 text-xs font-semibold transition-all hover:shadow-md hover:bg-gray-50"
-                  style={{ borderColor: '#ddd9d0', color: '#1B2B5B' }}>
-                  <Calendar className="w-5 h-5" style={{ color: '#C9A84C' }} />
-                  Agendar Visita
-                </a>
+                <ScheduleVisitModal
+                  propertyId={p.id}
+                  propertyTitle={p.title ?? 'Imóvel'}
+                  propertySlug={p.slug ?? ''}
+                />
                 {youtubeId && (
                   <a href={p.videoUrl} target="_blank" rel="noreferrer"
                     className="flex flex-col items-center justify-center gap-1.5 py-3.5 px-2 rounded-xl border-2 text-xs font-semibold transition-all hover:shadow-md hover:bg-gray-50"
@@ -718,12 +718,11 @@ function BrokerCard({ broker, whatsappNum, whatsappMsg, visitMsg, p }: {
             Fale com o corretor
           </a>
 
-          <a href={`https://wa.me/${whatsappNum}?text=${visitMsg}`} target="_blank" rel="noreferrer"
-            className="flex items-center justify-center gap-2.5 w-full py-3.5 rounded-xl text-sm font-bold transition-all hover:scale-[1.02] border-2"
-            style={{ borderColor: '#1B2B5B', color: '#1B2B5B' }}>
-            <Calendar className="w-5 h-5" />
-            Agendar Visita
-          </a>
+          <ScheduleVisitModal
+            propertyId={p.id}
+            propertyTitle={p.title ?? 'Imóvel'}
+            propertySlug={p.slug ?? ''}
+          />
 
           <a href={`tel:${broker?.phone ?? '1637230045'}`}
             className="flex items-center justify-center gap-2.5 w-full py-3.5 rounded-xl text-sm font-bold transition-all hover:shadow-md"

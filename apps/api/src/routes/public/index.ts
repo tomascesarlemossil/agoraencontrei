@@ -589,6 +589,10 @@ export default async function publicRoutes(app: FastifyInstance) {
     })))
   })
 
+  // POST /api/v1/public/visits — schedule a visit (public, no auth)
+  const { default: visitRoutes } = await import('./visits.js')
+  app.register(visitRoutes, { prefix: '/visits' })
+
   // GET /api/v1/public/neighborhoods — unique neighborhoods for autocomplete
   app.get('/neighborhoods', async (req, reply) => {
     const company = await resolveCompany(app)

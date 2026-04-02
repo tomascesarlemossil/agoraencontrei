@@ -22,11 +22,29 @@ function isRealImage(url: string | null | undefined): boolean {
   return !FAKE_IMAGE_PATTERNS.some(pat => url.includes(pat))
 }
 
-function formatPrice(price: number | null, priceRent: number | null, purpose: string) {
-  const formatter = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })
-  if (purpose === 'RENT' && priceRent) return `${formatter.format(priceRent)}/mês`
-  if (price) return formatter.format(price)
-  return 'Consulte'
+const fmt = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })
+
+function PriceDisplay({ price, priceRent, purpose }: { price: number | null; priceRent: number | null; purpose: string }) {
+  const hasSale = (purpose === 'SALE' || purpose === 'BOTH') && price
+  const hasRent = (purpose === 'RENT' || purpose === 'BOTH' || purpose === 'SEASON') && priceRent
+
+  if (purpose === 'BOTH' && hasSale && hasRent) {
+    return (
+      <div className="mt-3 space-y-0.5">
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-medium text-gray-500">Venda</span>
+          <span className="text-sm font-bold" style={{ color: '#C9A84C' }}>{fmt.format(Number(price))}</span>
+        </div>
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-medium text-gray-500">Locação</span>
+          <span className="text-sm font-bold" style={{ color: '#1B2B5B' }}>{fmt.format(Number(priceRent))}/mês</span>
+        </div>
+      </div>
+    )
+  }
+  if (hasRent) return <p className="text-base font-bold mt-3" style={{ color: '#1B2B5B' }}>{fmt.format(Number(priceRent))}/mês</p>
+  if (hasSale) return <p className="text-base font-bold mt-3" style={{ color: '#1B2B5B' }}>{fmt.format(Number(price))}</p>
+  return <p className="text-sm font-medium mt-3 text-gray-400">Consulte</p>
 }
 
 function PropertyCard({ p }: { p: any }) {
@@ -85,9 +103,7 @@ function PropertyCard({ p }: { p: any }) {
           {p.parkingSpaces > 0 && <span className="flex items-center gap-1"><Car className="w-3.5 h-3.5" /> {p.parkingSpaces}</span>}
           {p.totalArea > 0 && <span className="flex items-center gap-1"><Maximize className="w-3.5 h-3.5" /> {p.totalArea}m²</span>}
         </div>
-        <p className="text-base font-bold mt-3" style={{ color: '#1B2B5B' }}>
-          {formatPrice(p.price, p.priceRent, p.purpose)}
-        </p>
+        <PriceDisplay price={p.price} priceRent={p.priceRent} purpose={p.purpose} />
       </div>
     </Link>
   )

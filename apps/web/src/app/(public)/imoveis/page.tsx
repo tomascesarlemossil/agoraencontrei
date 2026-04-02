@@ -38,7 +38,7 @@ interface SearchParams {
   view?: string
 }
 
-async function fetchProperties(params: SearchParams) {
+function buildQs(params: SearchParams, overrides?: Record<string, string>) {
   const qs = new URLSearchParams()
   if (params.page)     qs.set('page', params.page)
   if (params.search)   qs.set('search', params.search)
@@ -54,9 +54,13 @@ async function fetchProperties(params: SearchParams) {
   if (params.bathrooms) qs.set('bathrooms', params.bathrooms)
   if (params.sortBy)    qs.set('sortBy', params.sortBy)
   qs.set('limit', '48')
+  if (overrides) Object.entries(overrides).forEach(([k, v]) => v ? qs.set(k, v) : qs.delete(k))
+  return qs
+}
 
+async function fetchProperties(params: SearchParams) {
   try {
-    const res = await fetch(`${API_URL}/api/v1/public/properties?${qs}`, {
+    const res = await fetch(`${API_URL}/api/v1/public/properties?${buildQs(params)}`, {
       next: { revalidate: 60 },
     })
     if (!res.ok) return { data: [], meta: { total: 0, page: 1, totalPages: 1 } }
@@ -64,6 +68,35 @@ async function fetchProperties(params: SearchParams) {
   } catch {
     return { data: [], meta: { total: 0, page: 1, totalPages: 1 } }
   }
+}
+
+// Fetch "closest alternatives" when exact search yields 0 results
+async function fetchAlternatives(params: SearchParams) {
+  const attempts: Record<string, string>[] = [
+    // Relax price
+    { maxPrice: '', minPrice: '' },
+    // Relax bedrooms
+    { bedrooms: '' },
+    // Relax neighborhood but keep city + type + purpose
+    { neighborhood: '', search: '' },
+    // Relax type but keep city + purpose
+    { type: '', neighborhood: '', search: '' },
+    // Just city + purpose
+    { type: '', neighborhood: '', search: '', maxPrice: '', minPrice: '', bedrooms: '' },
+    // Just purpose
+    { type: '', neighborhood: '', search: '', city: '', maxPrice: '', minPrice: '', bedrooms: '' },
+  ]
+
+  for (const override of attempts) {
+    try {
+      const qs = buildQs(params, { ...override, limit: '8', page: '1' })
+      const res = await fetch(`${API_URL}/api/v1/public/properties?${qs}`, { next: { revalidate: 60 } })
+      if (!res.ok) continue
+      const data = await res.json()
+      if ((data.data ?? []).length > 0) return { items: data.data, relaxedBy: override }
+    } catch {}
+  }
+  return { items: [], relaxedBy: {} }
 }
 
 function formatPrice(price: number | null, priceRent: number | null, purpose: string) {
@@ -76,6 +109,13 @@ function formatPrice(price: number | null, priceRent: number | null, purpose: st
 export default async function ImoveisPage({ searchParams }: { searchParams: SearchParams }) {
   const isMapView = searchParams.view === 'map'
   const { data: properties, meta } = isMapView ? { data: [], meta: { total: 0, page: 1, totalPages: 1 } } : await fetchProperties(searchParams)
+
+  // If no results, try to find closest alternatives
+  const hasActiveSearch = !!(searchParams.search || searchParams.type || searchParams.city ||
+    searchParams.neighborhood || searchParams.maxPrice || searchParams.bedrooms)
+  const alternatives = (!isMapView && properties.length === 0 && hasActiveSearch)
+    ? await fetchAlternatives(searchParams)
+    : { items: [], relaxedBy: {} }
 
   const title = searchParams.purpose === 'SALE'
     ? 'Imóveis à Venda'
@@ -150,17 +190,45 @@ export default async function ImoveisPage({ searchParams }: { searchParams: Sear
           initialBedrooms={searchParams.bedrooms}
         />
       ) : properties.length === 0 ? (
-        <div className="text-center py-20">
-          <p className="text-4xl mb-4">🏠</p>
-          <p className="text-gray-500 text-lg font-medium">Nenhum imóvel encontrado</p>
-          <p className="text-gray-400 text-sm mt-1">Tente ajustar os filtros ou ampliar a busca.</p>
-          <Link
-            href="/imoveis"
-            className="inline-block mt-6 px-6 py-2.5 rounded-xl text-sm font-semibold transition-all hover:brightness-110"
-            style={{ backgroundColor: '#1B2B5B', color: 'white' }}
-          >
-            Ver todos os imóveis
-          </Link>
+        <div className="text-center py-12">
+          <p className="text-5xl mb-4">🔍</p>
+          <p className="text-gray-700 text-xl font-bold mb-1">Nenhum imóvel encontrado com esses filtros</p>
+          <p className="text-gray-400 text-sm mb-6">Tente ajustar ou remover alguns filtros para ampliar a busca.</p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center mb-10">
+            <Link
+              href="/imoveis"
+              className="inline-block px-6 py-2.5 rounded-xl text-sm font-semibold transition-all hover:brightness-110"
+              style={{ backgroundColor: '#1B2B5B', color: 'white' }}
+            >
+              Ver todos os imóveis
+            </Link>
+            <a
+              href="https://wa.me/5516981010004?text=Olá! Não encontrei o imóvel que procuro no site. Pode me ajudar?"
+              target="_blank"
+              rel="noreferrer"
+              className="inline-block px-6 py-2.5 rounded-xl text-sm font-semibold border-2 transition-all hover:bg-gray-50"
+              style={{ borderColor: '#25D366', color: '#25D366' }}
+            >
+              Falar com corretor
+            </a>
+          </div>
+          {/* Closest alternatives */}
+          {alternatives.items.length > 0 && (
+            <div className="text-left">
+              <p className="text-base font-bold mb-1" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>
+                Imóveis mais próximos da sua busca:
+              </p>
+              <p className="text-sm text-gray-400 mb-5">
+                Não encontramos exatamente o que você procura, mas separamos opções similares:
+              </p>
+              <LoadMoreProperties
+                initialProperties={alternatives.items}
+                initialTotal={alternatives.items.length}
+                initialTotalPages={1}
+                searchParams={{}}
+              />
+            </div>
+          )}
         </div>
       ) : (
         <LoadMoreProperties

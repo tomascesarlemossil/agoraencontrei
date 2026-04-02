@@ -154,6 +154,7 @@ model Company {
   fiscalNotes       FiscalNote[]
   visualAIJobs      VisualAIJob[]
   marketingCampaigns MarketingCampaign[]
+  blogPosts         BlogPost[]
 
   @@map("companies")
 }
@@ -1266,4 +1267,49 @@ model MarketingCampaign {
   @@index([companyId])
   @@index([status])
   @@map("marketing_campaigns")
+}
+
+// ── Blog Posts ─────────────────────────────────────────────────────────────
+
+model BlogPost {
+  id          String   @id @default(cuid())
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id])
+
+  title       String
+  slug        String
+  excerpt     String?  @db.Text
+  content     String   @db.Text
+  coverImage  String?
+
+  // SEO
+  seoTitle       String?
+  seoDescription String?
+  seoKeywords    String?  // comma-separated
+
+  // Organization
+  category    String?  // imoveis, financiamento, mercado, dicas, noticias, legislacao
+  tags        String?  // comma-separated
+
+  // Source (for auto-imported news)
+  source      String?  // e.g. "CNN Brasil", "Valor Econômico"
+  sourceUrl   String?
+  isAutoImported Boolean @default(false)
+
+  // Status
+  published   Boolean  @default(false)
+  publishedAt DateTime?
+  featured    Boolean  @default(false)
+
+  // Author
+  authorName  String   @default("Equipe Imobiliária Lemos")
+
+  views       Int      @default(0)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([companyId, slug])
+  @@index([companyId, published, publishedAt])
+  @@map("blog_posts")
 }

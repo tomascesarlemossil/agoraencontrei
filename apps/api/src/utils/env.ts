@@ -59,6 +59,11 @@ const envSchema = z.object({
   SMTP_USER: z.string().optional(),
   SMTP_PASS: z.string().optional(),
   SMTP_FROM: z.string().email().optional(),
+
+  // Social Media Integration
+  INSTAGRAM_TOKEN_LEMOS: z.string().optional(),    // @imobiliarialemos access token
+  INSTAGRAM_TOKEN_TOMAS: z.string().optional(),    // @tomaslemosbr access token
+  YOUTUBE_API_KEY: z.string().optional(),          // YouTube Data API v3 key
 })
 
 function parseEnv() {
