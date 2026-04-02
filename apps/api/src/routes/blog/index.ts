@@ -78,10 +78,9 @@ export default async function blogRoutes(app: FastifyInstance) {
   })
 
   // ─── AUTHENTICATED ROUTES ─────────────────────────────────────
-  app.addHook('preHandler', app.authenticate)
 
   // GET /api/v1/blog/admin/posts — all posts (admin)
-  app.get('/admin/posts', async (req, reply) => {
+  app.get('/admin/posts', { preHandler: [app.authenticate] }, async (req, reply) => {
     const cid = req.user.cid
     const q = req.query as Record<string, string>
     const page  = parseInt(q.page  ?? '1',  10)
@@ -104,7 +103,7 @@ export default async function blogRoutes(app: FastifyInstance) {
   })
 
   // POST /api/v1/blog — create post
-  app.post('/', async (req, reply) => {
+  app.post('/', { preHandler: [app.authenticate] }, async (req, reply) => {
     const cid  = req.user.cid
     const body = req.body as any
     const baseSlug = slugify(body.title)
@@ -138,7 +137,7 @@ export default async function blogRoutes(app: FastifyInstance) {
   })
 
   // PATCH /api/v1/blog/:id — update post
-  app.patch('/:id', async (req, reply) => {
+  app.patch('/:id', { preHandler: [app.authenticate] }, async (req, reply) => {
     const { id } = req.params as { id: string }
     const cid  = req.user.cid
     const body = req.body as any
@@ -170,7 +169,7 @@ export default async function blogRoutes(app: FastifyInstance) {
   })
 
   // DELETE /api/v1/blog/:id
-  app.delete('/:id', async (req, reply) => {
+  app.delete('/:id', { preHandler: [app.authenticate] }, async (req, reply) => {
     const { id } = req.params as { id: string }
     const existing = await app.prisma.blogPost.findFirst({ where: { id, companyId: req.user.cid } })
     if (!existing) return reply.status(404).send({ error: 'NOT_FOUND' })
