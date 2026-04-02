@@ -9,7 +9,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { formatCurrency } from '@/lib/utils'
 import Link from 'next/link'
-import { UserCheck, Search, Phone, Mail, Star, ChevronLeft, ChevronRight } from 'lucide-react'
+import { UserCheck, Phone, Mail, Star, ChevronLeft, ChevronRight } from 'lucide-react'
+import { SearchInputWithVoice } from '@/components/ui/SearchInputWithVoice'
 
 const STATUS_COLORS: Record<string, string> = {
   new: 'bg-blue-100 text-blue-700',
@@ -56,15 +57,14 @@ export default function LeadsPage() {
         </div>
       </div>
 
-      <div className="relative max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          className="pl-9"
-          placeholder="Buscar por nome, e-mail, telefone..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-      </div>
+      <SearchInputWithVoice
+        containerClassName="max-w-md"
+        placeholder="Buscar por nome, e-mail, telefone..."
+        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        onVoiceResult={(t) => setSearch(t)}
+      />
 
       {isLoading ? (
         <div className="space-y-3">

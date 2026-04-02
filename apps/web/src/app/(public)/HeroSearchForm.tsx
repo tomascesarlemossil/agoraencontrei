@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { useState, useTransition, useEffect, useRef } from 'react'
 import { MapPin, Home, DollarSign, BedDouble, Search, Map, ChevronDown, Sparkles, Loader2, ArrowRight } from 'lucide-react'
+import { VoiceInputButton } from '@/components/ui/VoiceInputButton'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 
@@ -252,6 +253,7 @@ export function HeroSearchForm() {
                 style={{ borderColor: aiQuery ? '#1B2B5B' : '#e5e7eb' }}
                 autoFocus
               />
+              <VoiceInputButton onResult={text => { setAiQuery(text); setTimeout(handleAiSearch, 300) }} />
               <button
                 type="button"
                 onClick={handleAiSearch}

@@ -4,7 +4,8 @@ import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '@/stores/auth.store'
 import { useRouter } from 'next/navigation'
-import { Users, Search, Phone, Mail, MapPin, BadgeCheck } from 'lucide-react'
+import { Users, Phone, Mail, MapPin, BadgeCheck } from 'lucide-react'
+import { SearchInputWithVoice } from '@/components/ui/SearchInputWithVoice'
 import { financeApi, type LegacyClient } from '@/lib/api'
 
 const ROLE_LABELS: Record<string, { label: string; color: string }> = {
@@ -27,9 +28,10 @@ export default function ClientesPage() {
   const token = useAuthStore(s => s.accessToken)
   const router = useRouter()
 
-  const [page, setPage]     = useState(1)
-  const [search, setSearch] = useState('')
-  const [role, setRole]     = useState('')
+  const [page, setPage]           = useState(1)
+  const [search, setSearch]       = useState('')
+  const [searchInput, setSearchInput] = useState('')
+  const [role, setRole]           = useState('')
 
   const params: Record<string, string> = { page: String(page), limit: '20' }
   if (search) params.search = search
@@ -46,8 +48,7 @@ export default function ClientesPage() {
 
   function handleSearch(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
-    const fd = new FormData(e.currentTarget)
-    setSearch((fd.get('search') as string) ?? '')
+    setSearch(searchInput)
     setPage(1)
   }
 
@@ -69,15 +70,14 @@ export default function ClientesPage() {
       {/* Filters */}
       <div className="flex flex-wrap gap-3">
         <form onSubmit={handleSearch} className="flex gap-2 flex-1 min-w-60">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input
-              name="search"
-              defaultValue={search}
-              placeholder="Buscar por nome, CPF, e-mail..."
-              className="w-full pl-9 pr-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
-          </div>
+          <SearchInputWithVoice
+            value={searchInput}
+            onChange={e => setSearchInput(e.target.value)}
+            onVoiceResult={(t) => { setSearchInput(t); setSearch(t); setPage(1) }}
+            placeholder="Buscar por nome, CPF, e-mail..."
+            containerClassName="flex-1"
+            className="w-full py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
           <button type="submit" className="px-4 py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700">
             Buscar
           </button>

@@ -8,6 +8,7 @@ import {
   ChevronRight, BarChart3, FileText, Users, Receipt, List,
   TrendingUp, Building2, ArrowLeft, Download, Printer, MessageCircle, Mail,
 } from 'lucide-react'
+import { SearchInputWithVoice } from '@/components/ui/SearchInputWithVoice'
 import { financeApi, type FinanceSummary, type LegacyContract } from '@/lib/api'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
@@ -222,11 +223,13 @@ function ContratosReport({ token, activeOnly }: { token: string; activeOnly?: bo
   return (
     <div className="space-y-4">
       <div className="flex gap-3 flex-wrap">
-        <input
+        <SearchInputWithVoice
           value={search}
           onChange={e => { setSearch(e.target.value); setPage(1) }}
+          onVoiceResult={(t) => { setSearch(t); setPage(1) }}
           placeholder="Buscar inquilino, proprietário, endereço..."
-          className="flex-1 min-w-48 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          containerClassName="flex-1 min-w-48"
+          className="w-full py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
         <div className="flex rounded-lg border border-gray-200 overflow-hidden text-sm">
           {[['', 'Todos'], ['ACTIVE', 'Ativos'], ['FINISHED', 'Encerrados'], ['CANCELED', 'Cancelados']].map(([v, l]) => (

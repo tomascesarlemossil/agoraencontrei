@@ -7,6 +7,7 @@ import {
   ChevronRight, Loader2, Camera, CheckCircle2, AlertCircle,
   PanelRightClose, PanelRightOpen, Wand2,
 } from 'lucide-react'
+import { VoiceInputButton } from '@/components/ui/VoiceInputButton'
 import { TEMPLATES, CATEGORIES, type DocTemplate } from './templates'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
@@ -351,14 +352,19 @@ export default function DocumentosPage() {
               <label className="block text-xs font-semibold text-white/50 mb-3 uppercase tracking-wider">
                 O que você precisa?
               </label>
-              <textarea
-                value={command}
-                onChange={e => setCommand(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder={`Descreva o documento que precisa... ex: 'Contrato de locação para João Silva, imóvel na Rua X, aluguel R$2.000'`}
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 text-white placeholder:text-white/25 outline-none focus:border-yellow-400/40 resize-none transition-colors"
-                style={{ fontSize: '16px', minHeight: '120px' }}
-              />
+              <div className="relative">
+                <textarea
+                  value={command}
+                  onChange={e => setCommand(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder={`Descreva o documento que precisa... ex: 'Contrato de locação para João Silva, imóvel na Rua X, aluguel R$2.000'`}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 pr-10 text-white placeholder:text-white/25 outline-none focus:border-yellow-400/40 resize-none transition-colors"
+                  style={{ fontSize: '16px', minHeight: '120px' }}
+                />
+                <span className="absolute right-3 top-3">
+                  <VoiceInputButton onResult={(text) => setCommand(prev => prev ? prev + ' ' + text : text)} dark />
+                </span>
+              </div>
 
               {/* Uploaded image previews */}
               {uploadedImages.length > 0 && (

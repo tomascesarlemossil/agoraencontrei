@@ -1,8 +1,9 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useTransition, useState } from 'react'
+import { useTransition, useState, useRef } from 'react'
 import { Search, SlidersHorizontal, X } from 'lucide-react'
+import { VoiceInputButton } from '@/components/ui/VoiceInputButton'
 
 interface Props {
   initialValues: Record<string, string | undefined>
@@ -43,6 +44,8 @@ export function PropertyFiltersForm({ initialValues }: Props) {
   const [showAdvanced, setShowAdvanced] = useState(
     !!(initialValues.minPrice || initialValues.maxPrice || initialValues.bedrooms)
   )
+  const [searchValue, setSearchValue] = useState(initialValues.search ?? '')
+  const formRef = useRef<HTMLFormElement>(null)
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -68,21 +71,31 @@ export function PropertyFiltersForm({ initialValues }: Props) {
 
   return (
     <form
+      ref={formRef}
       onSubmit={handleSubmit}
       className="rounded-2xl p-5 mb-6 border bg-white"
       style={{ borderColor: '#e8e4dc' }}
     >
       {/* Main row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-        <div className="relative lg:col-span-2">
+        <div className="relative lg:col-span-2 flex items-center">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
           <input
             name="search"
-            defaultValue={initialValues.search}
+            value={searchValue}
+            onChange={e => setSearchValue(e.target.value)}
             placeholder="Buscar bairro, cidade, código..."
-            className="w-full pl-9 pr-3 py-2.5 text-sm rounded-xl border focus:outline-none focus:ring-2 focus:ring-[#1B2B5B] transition-all text-gray-800 placeholder:text-gray-400"
+            className="w-full pl-9 pr-9 py-2.5 text-sm rounded-xl border focus:outline-none focus:ring-2 focus:ring-[#1B2B5B] transition-all text-gray-800 placeholder:text-gray-400"
             style={{ borderColor: '#e0dbd0' }}
           />
+          <span className="absolute right-2 top-1/2 -translate-y-1/2">
+            <VoiceInputButton
+              onResult={text => {
+                setSearchValue(text)
+                setTimeout(() => formRef.current?.requestSubmit(), 300)
+              }}
+            />
+          </span>
         </div>
         <select
           name="purpose"

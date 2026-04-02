@@ -7,7 +7,7 @@ import { usersApi, authApi, type User } from '@/lib/api'
 import { cn } from '@/lib/utils'
 import {
   Building2, Users, User as UserIcon, Shield, Globe, Youtube, Upload, CheckCircle2,
-  Plus, Trash2, Loader2, Eye, EyeOff, Save, Settings,
+  Plus, Trash2, Loader2, Eye, EyeOff, Save, Settings, Plug,
 } from 'lucide-react'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
@@ -127,11 +127,12 @@ export default function SettingsPage() {
   const qc = useQueryClient()
 
   const TABS = [
-    { id: 'empresa',    label: 'Empresa',    icon: Building2, show: true },
-    { id: 'equipe',     label: 'Equipe',     icon: Users,     show: ['SUPER_ADMIN', 'ADMIN'].includes(user?.role ?? '') },
-    { id: 'perfil',     label: 'Perfil',     icon: UserIcon,  show: true },
-    { id: 'seguranca',  label: 'Segurança',  icon: Shield,    show: true },
-    { id: 'site',       label: 'Site & IA',  icon: Globe,     show: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'].includes(user?.role ?? '') },
+    { id: 'empresa',      label: 'Empresa',       icon: Building2, show: true },
+    { id: 'equipe',       label: 'Equipe',        icon: Users,     show: ['SUPER_ADMIN', 'ADMIN'].includes(user?.role ?? '') },
+    { id: 'perfil',       label: 'Perfil',        icon: UserIcon,  show: true },
+    { id: 'seguranca',    label: 'Segurança',     icon: Shield,    show: true },
+    { id: 'site',         label: 'Site & IA',     icon: Globe,     show: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'].includes(user?.role ?? '') },
+    { id: 'integracoes',  label: 'Integrações',   icon: Plug,      show: ['SUPER_ADMIN', 'ADMIN'].includes(user?.role ?? '') },
   ].filter(t => t.show)
 
   const [activeTab, setActiveTab] = useState('empresa')
@@ -187,6 +188,30 @@ export default function SettingsPage() {
     onSuccess: () => { setEmpresaSaved(true); setTimeout(() => setEmpresaSaved(false), 3000) },
   })
 
+  // ── Integrations ──────────────────────────────────────────────────────────
+  const [integrations, setIntegrations] = useState({
+    instagramTokenTomas: '',
+    instagramTokenLemos: '',
+    instagramBusinessAccountId: '',
+    instagramPageAccessToken: '',
+    youtubeApiKey: '',
+    googleClientId: '',
+  })
+  const [integSaved, setIntegSaved] = useState(false)
+
+  const saveIntegrationsMutation = useMutation({
+    mutationFn: async () => {
+      const token = await getValidToken()
+      const res = await fetch(`${API_URL}/api/v1/users/site-settings`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(integrations),
+      })
+      return res.json()
+    },
+    onSuccess: () => { setIntegSaved(true); setTimeout(() => setIntegSaved(false), 3000) },
+  })
+
   // ── Site Settings ──────────────────────────────────────────────────────────
   const [videoType, setVideoType] = useState<'youtube' | 'upload'>('youtube')
   const [videoUrl, setVideoUrl] = useState('')
@@ -222,6 +247,15 @@ export default function SettingsPage() {
       if (savedSiteSettings.heroVideoUrl) setVideoUrl(savedSiteSettings.heroVideoUrl)
       if (savedSiteSettings.heroVideoType) setVideoType(savedSiteSettings.heroVideoType)
       setSiteSettings(prev => ({ ...prev, ...savedSiteSettings }))
+      setIntegrations(prev => ({
+        ...prev,
+        instagramTokenTomas:       savedSiteSettings.instagramTokenTomas       ?? '',
+        instagramTokenLemos:       savedSiteSettings.instagramTokenLemos       ?? '',
+        instagramBusinessAccountId: savedSiteSettings.instagramBusinessAccountId ?? '',
+        instagramPageAccessToken:  savedSiteSettings.instagramPageAccessToken  ?? '',
+        youtubeApiKey:             savedSiteSettings.youtubeApiKey             ?? '',
+        googleClientId:            savedSiteSettings.googleClientId            ?? '',
+      }))
     }
   }, [savedSiteSettings])
 
@@ -572,6 +606,86 @@ export default function SettingsPage() {
                 style={{ background: 'linear-gradient(135deg, #C9A84C, #e8c66a)', color: '#1B2B5B' }}>
                 {saveSiteSettingsMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : siteSaved ? <CheckCircle2 className="w-4 h-4" /> : <Save className="w-4 h-4" />}
                 {siteSaved ? 'Salvo!' : 'Salvar configurações'}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ── INTEGRAÇÕES ─────────────────────────────────────────────── */}
+        {activeTab === 'integracoes' && (
+          <div className="space-y-4">
+            <Section title="Instagram — @tomaslemosbr (Pessoal)">
+              <div className="space-y-3">
+                <p className="text-xs text-white/40">Token de acesso para sincronizar posts do Instagram de Tomas Lemos para o blog.</p>
+                <DarkInput
+                  label="Instagram Access Token (@tomaslemosbr)"
+                  type="password"
+                  value={integrations.instagramTokenTomas}
+                  onChange={e => setIntegrations(p => ({ ...p, instagramTokenTomas: e.target.value }))}
+                  placeholder="EAAxxxxxxx..."
+                />
+              </div>
+            </Section>
+
+            <Section title="Instagram — @imobiliarialemos (Imobiliária)">
+              <div className="space-y-3">
+                <p className="text-xs text-white/40">Tokens para sincronizar posts e publicar no Instagram da Imobiliária Lemos.</p>
+                <DarkInput
+                  label="Instagram Access Token (@imobiliarialemos)"
+                  type="password"
+                  value={integrations.instagramTokenLemos}
+                  onChange={e => setIntegrations(p => ({ ...p, instagramTokenLemos: e.target.value }))}
+                  placeholder="EAAxxxxxxx..."
+                />
+                <DarkInput
+                  label="Instagram Business Account ID"
+                  value={integrations.instagramBusinessAccountId}
+                  onChange={e => setIntegrations(p => ({ ...p, instagramBusinessAccountId: e.target.value }))}
+                  placeholder="17841400000000000"
+                />
+                <DarkInput
+                  label="Facebook Page Access Token (para publicação)"
+                  type="password"
+                  value={integrations.instagramPageAccessToken}
+                  onChange={e => setIntegrations(p => ({ ...p, instagramPageAccessToken: e.target.value }))}
+                  placeholder="EAAxxxxxxx..."
+                />
+              </div>
+            </Section>
+
+            <Section title="YouTube — @tomaslemosbr">
+              <div className="space-y-3">
+                <p className="text-xs text-white/40">Chave de API para sincronizar vídeos do YouTube para o blog automaticamente.</p>
+                <DarkInput
+                  label="YouTube Data API v3 Key"
+                  type="password"
+                  value={integrations.youtubeApiKey}
+                  onChange={e => setIntegrations(p => ({ ...p, youtubeApiKey: e.target.value }))}
+                  placeholder="AIzaSy..."
+                />
+              </div>
+            </Section>
+
+            <Section title="Google Sign-In">
+              <div className="space-y-3">
+                <p className="text-xs text-white/40">Client ID do Google OAuth para login com Google no sistema e site.</p>
+                <DarkInput
+                  label="Google OAuth Client ID"
+                  value={integrations.googleClientId}
+                  onChange={e => setIntegrations(p => ({ ...p, googleClientId: e.target.value }))}
+                  placeholder="xxxxxx.apps.googleusercontent.com"
+                />
+              </div>
+            </Section>
+
+            <div className="flex justify-end">
+              <button
+                onClick={() => saveIntegrationsMutation.mutate()}
+                disabled={saveIntegrationsMutation.isPending}
+                className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold disabled:opacity-50"
+                style={{ background: 'linear-gradient(135deg, #C9A84C, #e8c66a)', color: '#1B2B5B' }}>
+                {saveIntegrationsMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : integSaved ? <CheckCircle2 className="w-4 h-4" /> : <Save className="w-4 h-4" />}
+                {integSaved ? 'Salvo!' : 'Salvar tokens'}
               </button>
             </div>
           </div>

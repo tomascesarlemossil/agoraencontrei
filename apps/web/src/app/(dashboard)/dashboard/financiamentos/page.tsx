@@ -33,7 +33,6 @@ import {
   XCircle,
   Building2,
   ArrowRight,
-  Search,
   ExternalLink,
   Phone,
   Mail,
@@ -41,6 +40,7 @@ import {
   Landmark,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { SearchInputWithVoice } from '@/components/ui/SearchInputWithVoice'
 
 // ── Stage config ─────────────────────────────────────────────────────────────
 
@@ -289,15 +289,15 @@ export default function FinanciamentosPage() {
 
       {/* Filters */}
       <div className="flex gap-3 flex-wrap">
-        <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/50" />
-          <Input
-            placeholder="Buscar por cliente, banco..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="pl-9 bg-[#1a1a2e] border-white/10 text-white placeholder:text-white/40"
-          />
-        </div>
+        <SearchInputWithVoice
+          placeholder="Buscar por cliente, banco..."
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          onVoiceResult={(t) => setSearch(t)}
+          dark
+          containerClassName="flex-1 min-w-[200px]"
+          className="w-full bg-[#1a1a2e] border border-white/10 text-white placeholder:text-white/40 rounded-md px-3 py-2 text-sm"
+        />
         <Select value={filterStage} onValueChange={setFilterStage}>
           <SelectTrigger className="w-[180px] bg-[#1a1a2e] border-white/10 text-white">
             <SelectValue placeholder="Todas etapas" />

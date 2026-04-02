@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuthStore } from '@/stores/auth.store'
-import { FileText, Search, CheckCircle, XCircle, Clock, ChevronLeft, ChevronRight, Pencil, X } from 'lucide-react'
+import { FileText, CheckCircle, XCircle, Clock, ChevronLeft, ChevronRight, Pencil, X } from 'lucide-react'
+import { SearchInputWithVoice } from '@/components/ui/SearchInputWithVoice'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { financeApi, type LegacyContract } from '@/lib/api'
 
@@ -250,15 +251,14 @@ export default function ContratosPage() {
 
       {/* Search */}
       <form onSubmit={handleSearch} className="flex gap-2">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input
-            value={searchInput}
-            onChange={e => setSearchInput(e.target.value)}
-            placeholder="Buscar por inquilino, proprietário, endereço ou código..."
-            className="w-full pl-9 pr-3 py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
-          />
-        </div>
+        <SearchInputWithVoice
+          value={searchInput}
+          onChange={e => setSearchInput(e.target.value)}
+          onVoiceResult={(t) => { setSearchInput(t); setSearch(t); setPage(1) }}
+          placeholder="Buscar por inquilino, proprietário, endereço ou código..."
+          containerClassName="flex-1"
+          className="w-full py-2 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+        />
         <button type="submit" className="px-4 py-2 bg-purple-600 text-white text-sm rounded-xl hover:bg-purple-700">
           Buscar
         </button>

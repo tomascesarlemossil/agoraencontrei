@@ -25,7 +25,8 @@ import {
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Plus, Search, User, Building2, Phone, Mail, MapPin } from 'lucide-react'
+import { Plus, User, Building2, Phone, Mail, MapPin } from 'lucide-react'
+import { SearchInputWithVoice } from '@/components/ui/SearchInputWithVoice'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
@@ -104,15 +105,15 @@ export default function ContactsPage() {
       </div>
 
       {/* Search */}
-      <div className="relative max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" />
-        <Input
-          placeholder="Buscar por nome, e-mail, CPF..."
-          className="pl-9 bg-white/5 border-white/10 text-white placeholder:text-white/40"
-          value={search}
-          onChange={(e) => { setSearch(e.target.value); setPage(1) }}
-        />
-      </div>
+      <SearchInputWithVoice
+        containerClassName="max-w-md"
+        placeholder="Buscar por nome, e-mail, CPF..."
+        className="w-full bg-white/5 border-white/10 text-white placeholder:text-white/40 rounded-md border px-3 py-2 text-sm"
+        value={search}
+        dark
+        onChange={(e) => { setSearch(e.target.value); setPage(1) }}
+        onVoiceResult={(t) => { setSearch(t); setPage(1) }}
+      />
 
       {/* Table */}
       <div className="bg-white/5 rounded-xl border border-white/10 overflow-hidden">

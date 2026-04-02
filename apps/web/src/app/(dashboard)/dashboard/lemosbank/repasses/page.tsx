@@ -5,8 +5,9 @@ import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '@/stores/auth.store'
 import Link from 'next/link'
 import {
-  ArrowLeft, RefreshCw, Search, CheckCircle, Clock, Phone, Mail, ChevronRight,
+  ArrowLeft, RefreshCw, CheckCircle, Clock, Phone, Mail, ChevronRight,
 } from 'lucide-react'
+import { SearchInputWithVoice } from '@/components/ui/SearchInputWithVoice'
 import { financeApi } from '@/lib/api'
 
 const fmt = (v: number | null | undefined) =>
@@ -70,15 +71,13 @@ export default function RepassesPage() {
       )}
 
       {/* Search */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-        <input
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          placeholder="Buscar proprietário, inquilino, endereço..."
-          className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-400"
-        />
-      </div>
+      <SearchInputWithVoice
+        value={search}
+        onChange={e => setSearch(e.target.value)}
+        onVoiceResult={(t) => setSearch(t)}
+        placeholder="Buscar proprietário, inquilino, endereço..."
+        className="w-full py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-400"
+      />
 
       {/* List */}
       {isLoading ? (
