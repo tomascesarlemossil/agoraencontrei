@@ -61,7 +61,7 @@ function fmtMonth(month?: string) {
 }
 
 export default function HistoricoPage() {
-  const { token } = useAuthStore()
+  const { accessToken: token } = useAuthStore()
   const [docs, setDocs] = useState<Document[]>([])
   const [stats, setStats] = useState<Stats[]>([])
   const [loading, setLoading] = useState(true)
