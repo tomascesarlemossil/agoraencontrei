@@ -27,10 +27,10 @@ const STATUSES   = [['ACTIVE','Ativo'],['INACTIVE','Inativo'],['SOLD','Vendido']
 const TYPES      = [['HOUSE','Casa'],['APARTMENT','Apartamento'],['LAND','Terreno'],['FARM','Chácara/Sítio'],['RANCH','Rancho'],['WAREHOUSE','Galpão'],['OFFICE','Escritório'],['STORE','Loja/Comercial'],['STUDIO','Studio'],['PENTHOUSE','Cobertura'],['CONDO','Condomínio'],['KITNET','Kitnet']]
 const PURPOSES   = [['SALE','Venda'],['RENT','Aluguel'],['BOTH','Venda e Aluguel'],['SEASON','Temporada']]
 const CATEGORIES = [['RESIDENTIAL','Residencial'],['COMMERCIAL','Comercial'],['RURAL','Rural'],['INDUSTRIAL','Industrial']]
-const STANDARDS  = [['','Padrão'],['SIMPLE','Simples'],['NORMAL','Normal'],['HIGH','Alto'],['LUXURY','Luxo']]
-const CURRENT_STATES = [['','Estado Atual'],['VACANT','Desocupado'],['OCCUPIED_OWNER','Ocupado Proprietário'],['OCCUPIED_TENANT','Ocupado Inquilino'],['UNDER_CONSTRUCTION','Em Construção']]
-const KEY_LOCATIONS  = [['','Local das Chaves'],['NOT_INFORMED','Não informado'],['OFFICE','Escritório'],['OWNER','Com o Proprietário'],['ONSITE','No Local']]
-const FACES = [['','Face'],['NORTH','Norte'],['SOUTH','Sul'],['EAST','Leste'],['WEST','Oeste'],['NORTHEAST','Nordeste'],['NORTHWEST','Noroeste'],['SOUTHEAST','Sudeste'],['SOUTHWEST','Sudoeste']]
+const STANDARDS  = [['SIMPLE','Simples'],['NORMAL','Normal'],['HIGH','Alto'],['LUXURY','Luxo']]
+const CURRENT_STATES = [['VACANT','Desocupado'],['OCCUPIED_OWNER','Ocupado Proprietário'],['OCCUPIED_TENANT','Ocupado Inquilino'],['UNDER_CONSTRUCTION','Em Construção']]
+const KEY_LOCATIONS  = [['NOT_INFORMED','Não informado'],['OFFICE','Escritório'],['OWNER','Com o Proprietário'],['ONSITE','No Local']]
+const FACES = [['NORTH','Norte'],['SOUTH','Sul'],['EAST','Leste'],['WEST','Oeste'],['NORTHEAST','Nordeste'],['NORTHWEST','Noroeste'],['SOUTHEAST','Sudeste'],['SOUTHWEST','Sudoeste']]
 
 const TABS = [
   { id: 'cadastro',    label: 'Cadastro',    icon: Home },
