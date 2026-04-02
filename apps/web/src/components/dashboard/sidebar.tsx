@@ -36,6 +36,7 @@ import {
   Landmark,
   Wand2,
   BookOpen,
+  Archive,
 } from 'lucide-react'
 import { useNotifications } from '@/stores/notifications.store'
 
@@ -70,6 +71,7 @@ const lemosbankSubItems = [
   { href: '/dashboard/lemosbank/repasses',     icon: RefreshCw,  label: 'Repasses' },
   { href: '/dashboard/lemosbank/rescisoes',    icon: Scissors,   label: 'Rescisões' },
   { href: '/dashboard/lemosbank/relatorios',   icon: BarChart3,  label: 'Relatórios' },
+  { href: '/dashboard/lemosbank/historico',    icon: Archive,    label: 'Histórico' },
 ]
 
 const bottomItems = [
