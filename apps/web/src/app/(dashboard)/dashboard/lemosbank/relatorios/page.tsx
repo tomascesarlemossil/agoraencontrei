@@ -507,7 +507,7 @@ function ProprietariosReport({ token }: { token: string }) {
                         </button>
                       )}
                     </div>
-                    {actionMsg?.id === (item.id ?? item.rentalId) && (
+                    {actionMsg?.id === (item.id ?? item.rentalId) && actionMsg && (
                       <p className={`text-xs mt-1 text-center ${actionMsg.type === 'success' ? 'text-green-600' : 'text-red-600'}`}>
                         {actionMsg.text}
                       </p>

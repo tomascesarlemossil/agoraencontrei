@@ -22,7 +22,7 @@ export default async function visitRoutes(app: FastifyInstance) {
     // Get the property to find the company
     const property = await app.prisma.property.findFirst({
       where: { id: body.propertyId },
-      select: { companyId: true, title: true, address: true, city: true },
+      select: { companyId: true, title: true, street: true, city: true },
     })
     if (!property) return reply.status(404).send({ error: 'PROPERTY_NOT_FOUND' })
 
@@ -41,7 +41,7 @@ export default async function visitRoutes(app: FastifyInstance) {
           phone: body.phone,
           email: body.email ?? null,
           companyId,
-          type: 'LEAD',
+          type: 'INDIVIDUAL',
         },
       })
     }
@@ -51,29 +51,43 @@ export default async function visitRoutes(app: FastifyInstance) {
       data: {
         companyId,
         contactId: contact.id,
-        type: 'VISIT',
+        type: 'visit',
         title: `Visita: ${title}`,
         description: `Cliente: ${body.name} (${body.phone})\nImóvel: ${title}\nData: ${visitDateTime.toLocaleDateString('pt-BR')} às ${body.preferredTime}\n${body.notes ? `Obs: ${body.notes}` : ''}`,
-        dueDate: visitDateTime,
-        status: 'PENDING',
+        scheduledAt: visitDateTime,
       },
     })
 
     // 3. Create a Deal (lead pipeline) if not exists
     const existingDeal = await app.prisma.deal.findFirst({
-      where: { contactId: contact.id, propertyId: body.propertyId, companyId, stage: { in: ['LEAD', 'CONTACT', 'VISIT'] } },
+      where: {
+        contactId: contact.id,
+        companyId,
+        status: { in: ['OPEN', 'IN_PROGRESS'] },
+        properties: { some: { propertyId: body.propertyId } },
+      },
     })
     if (!existingDeal) {
-      await app.prisma.deal.create({
-        data: {
-          companyId,
-          contactId: contact.id,
-          propertyId: body.propertyId,
-          title: `Visita agendada — ${title}`,
-          stage: 'VISIT',
-          value: null,
-        },
-      }).catch(() => {/* deal creation is optional */})
+      // Find the first active broker/user in this company to assign the deal
+      const broker = await app.prisma.user.findFirst({
+        where: { companyId, status: 'ACTIVE' },
+        select: { id: true },
+      })
+      if (broker) {
+        await app.prisma.deal.create({
+          data: {
+            companyId,
+            contactId: contact.id,
+            brokerId: broker.id,
+            title: `Visita agendada — ${title}`,
+            status: 'OPEN',
+            value: null,
+            properties: {
+              create: { propertyId: body.propertyId },
+            },
+          },
+        }).catch(() => {/* deal creation is optional */})
+      }
     }
 
     // 4. Send WhatsApp to company agent (if configured)

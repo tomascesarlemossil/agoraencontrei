@@ -31,6 +31,7 @@ type Post = {
   coverImage?: string; seoTitle?: string; seoDescription?: string; seoKeywords?: string
   category?: string; tags?: string; published: boolean; featured: boolean
   authorName: string; views: number; publishedAt?: string; createdAt: string
+  source?: string; sourceUrl?: string
 }
 
 const EMPTY_POST: Partial<Post> = {
