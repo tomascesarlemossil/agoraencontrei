@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import {
   ArrowLeft, Users, Phone, Mail, MapPin, BadgeCheck, FileText,
-  Building2, User, Home, Calendar, Briefcase, CreditCard, Hash,
+  Building2, User, Home, Calendar, Briefcase, CreditCard, Hash, Download,
 } from 'lucide-react'
 import { financeApi, type LegacyClient, type LegacyContract } from '@/lib/api'
 
@@ -59,11 +59,21 @@ function ContractRow({ c, role }: { c: any; role: 'tenant' | 'landlord' | 'guara
       className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-xl transition-colors border border-gray-50 mb-2"
     >
       <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2 mb-1">
+        <div className="flex items-center gap-2 mb-1 flex-wrap">
           <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_COLOR[c.status] ?? 'bg-gray-100 text-gray-600'}`}>
             {STATUS_LABEL[c.status] ?? c.status}
           </span>
           {c.legacyId && <span className="text-xs text-gray-400 font-mono">#{c.legacyId}</span>}
+          {c.property?.reference && (
+            <span className="text-xs text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full font-mono">
+              Ref: {c.property.reference}
+            </span>
+          )}
+          {(c._count?.documents > 0) && (
+            <span className="text-xs text-purple-700 bg-purple-50 px-2 py-0.5 rounded-full">
+              {c._count.documents} docs
+            </span>
+          )}
         </div>
         <p className="text-sm font-medium text-gray-800 truncate">{c.propertyAddress ?? '—'}</p>
         {otherName && (
@@ -269,6 +279,55 @@ export default function ClienteDetailPage() {
               {c.contractsAsGuarantor?.map(x => (
                 <ContractRow key={x.id} c={x} role="guarantor" />
               ))}
+            </div>
+          )}
+
+          {/* Documentos vinculados */}
+          {(c as any).documents?.length > 0 && (
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+              <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+                <h2 className="font-semibold text-gray-900 flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-gray-400" />
+                  Documentos Vinculados
+                </h2>
+                <span className="text-xs text-gray-400">{(c as any).documents.length} arquivo(s)</span>
+              </div>
+              <div className="divide-y divide-gray-50 max-h-72 overflow-y-auto">
+                {(c as any).documents.map((doc: any) => {
+                  const typeColors: Record<string, string> = {
+                    BOLETO: 'text-orange-600 bg-orange-50',
+                    EXTRATO: 'text-blue-600 bg-blue-50',
+                    REAJUSTE: 'text-yellow-600 bg-yellow-50',
+                    FINANCEIRO: 'text-green-600 bg-green-50',
+                  }
+                  const color = typeColors[doc.type] ?? 'text-gray-500 bg-gray-50'
+                  return (
+                    <div key={doc.id} className="flex items-center justify-between px-5 py-3 hover:bg-gray-50 group">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <span className={`inline-flex px-2 py-0.5 rounded text-xs font-medium shrink-0 ${color}`}>
+                          {doc.type}
+                        </span>
+                        <div className="min-w-0">
+                          <p className="text-sm text-gray-800 truncate">{doc.name}</p>
+                          {(doc.month || doc.year) && (
+                            <p className="text-xs text-gray-400">
+                              {doc.month ? `${String(doc.month).padStart(2, '0')}/` : ''}{doc.year ?? ''}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      <a
+                        href={`/api/v1/documents/${doc.id}/download`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="shrink-0 p-1.5 text-gray-300 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                      >
+                        <Download className="h-3.5 w-3.5" />
+                      </a>
+                    </div>
+                  )
+                })}
+              </div>
             </div>
           )}
         </>

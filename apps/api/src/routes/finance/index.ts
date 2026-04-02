@@ -330,16 +330,32 @@ export default async function financeRoutes(app: FastifyInstance) {
         contractsAsTenant: {
           orderBy: { startDate: 'desc' },
           take: 20,
-          include: { landlord: { select: { id: true, name: true, phone: true } } },
+          include: {
+            landlord:  { select: { id: true, name: true, phone: true } },
+            property:  { select: { id: true, reference: true, type: true } },
+            _count:    { select: { documents: true } },
+          },
         },
         contractsAsLandlord: {
           orderBy: { startDate: 'desc' },
           take: 20,
-          include: { tenant: { select: { id: true, name: true, phone: true } } },
+          include: {
+            tenant:   { select: { id: true, name: true, phone: true } },
+            property: { select: { id: true, reference: true, type: true } },
+            _count:   { select: { documents: true } },
+          },
         },
         contractsAsGuarantor: {
           orderBy: { startDate: 'desc' },
           take: 10,
+          include: {
+            property: { select: { id: true, reference: true, type: true } },
+          },
+        },
+        documents: {
+          select: { id: true, name: true, type: true, month: true, year: true, mimeType: true, fileSize: true, createdAt: true },
+          orderBy: { createdAt: 'desc' },
+          take: 30,
         },
       },
     })
