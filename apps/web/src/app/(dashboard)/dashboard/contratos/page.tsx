@@ -7,6 +7,7 @@ import { FileText, CheckCircle, XCircle, Clock, ChevronLeft, ChevronRight, Penci
 import { SearchInputWithVoice } from '@/components/ui/SearchInputWithVoice'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { financeApi, type LegacyContract } from '@/lib/api'
+import { Building2, FileText as FileIcon, Home } from 'lucide-react'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 
@@ -345,6 +346,31 @@ export default function ContratosPage() {
                         <span className="text-gray-400 text-xs">Endereço</span>
                         <p className="font-medium text-gray-700 truncate">{c.propertyAddress ?? '—'}</p>
                       </div>
+                    </div>
+                    {/* Property ref + docs row */}
+                    <div className="mt-2 flex items-center gap-4 flex-wrap">
+                      {(c as any).property?.reference && (
+                        <span className="inline-flex items-center gap-1 text-xs text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full font-mono">
+                          <Home className="w-3 h-3" />
+                          Ref: {(c as any).property.reference}
+                        </span>
+                      )}
+                      {(c as any)._count?.documents > 0 && (
+                        <span className="inline-flex items-center gap-1 text-xs text-purple-700 bg-purple-50 px-2 py-0.5 rounded-full">
+                          <FileIcon className="w-3 h-3" />
+                          {(c as any)._count.documents} doc{(c as any)._count.documents !== 1 ? 's' : ''}
+                        </span>
+                      )}
+                      {(c as any).property?.type && (
+                        <span className="inline-flex items-center gap-1 text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+                          <Building2 className="w-3 h-3" />
+                          {(c as any).property.type === 'HOUSE' ? 'Casa' :
+                           (c as any).property.type === 'APARTMENT' ? 'Apartamento' :
+                           (c as any).property.type === 'LAND' ? 'Terreno' :
+                           (c as any).property.type === 'STORE' ? 'Comercial' :
+                           (c as any).property.type}
+                        </span>
+                      )}
                     </div>
                   </div>
 

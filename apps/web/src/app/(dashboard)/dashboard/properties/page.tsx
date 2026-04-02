@@ -725,6 +725,46 @@ function PropertyCard({
               <p className="text-sm text-muted-foreground italic">Consulte o valor</p>
             )}
           </div>
+
+          {/* Lemosbank cross-reference: active contract + docs */}
+          {(() => {
+            const contracts = (p as any).contracts ?? []
+            const docsCount = (p as any)._count?.documents ?? 0
+            const contractsCount = (p as any)._count?.contracts ?? 0
+            const activeContract = contracts[0]
+            if (!activeContract && !docsCount && !contractsCount) return null
+            return (
+              <div className="border-t pt-2 mt-2 space-y-1">
+                {activeContract && (
+                  <div className="flex items-center gap-1.5 text-xs">
+                    <span className="w-1.5 h-1.5 rounded-full bg-green-500 flex-shrink-0" />
+                    <span className="text-green-700 font-medium truncate">
+                      Inquilino: {activeContract.tenant?.name ?? '—'}
+                    </span>
+                  </div>
+                )}
+                {activeContract?.rentValue && (
+                  <div className="text-xs text-muted-foreground">
+                    Aluguel ativo: {formatCurrency(Number(activeContract.rentValue))}/mês
+                  </div>
+                )}
+                <div className="flex items-center gap-2 flex-wrap">
+                  {contractsCount > 0 && (
+                    <span className="inline-flex items-center gap-1 text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full">
+                      <Building2 className="h-3 w-3" />
+                      {contractsCount} contrato{contractsCount !== 1 ? 's' : ''}
+                    </span>
+                  )}
+                  {docsCount > 0 && (
+                    <span className="inline-flex items-center gap-1 text-xs bg-purple-50 text-purple-700 px-2 py-0.5 rounded-full">
+                      <Eye className="h-3 w-3" />
+                      {docsCount} doc{docsCount !== 1 ? 's' : ''}
+                    </span>
+                  )}
+                </div>
+              </div>
+            )
+          })()}
         </CardContent>
       </Card>
     </Link>

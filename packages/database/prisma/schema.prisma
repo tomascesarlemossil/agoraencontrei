@@ -155,6 +155,7 @@ model Company {
   visualAIJobs      VisualAIJob[]
   marketingCampaigns MarketingCampaign[]
   blogPosts         BlogPost[]
+  documents         Document[]
 
   @@map("companies")
 }
@@ -194,6 +195,7 @@ model User {
   refreshTokens         RefreshToken[]
   assignedConversations Conversation[]
   visualAIJobs          VisualAIJob[]
+  documents             Document[]
 
   @@index([companyId])
   @@index([email])
@@ -477,6 +479,8 @@ model Property {
   financings      Financing[]
   activities      Activity[]
   visualAIJobs    VisualAIJob[]
+  contracts       Contract[]
+  documents       Document[]
 
   @@unique([companyId, slug])
   @@unique([companyId, reference])
@@ -982,6 +986,7 @@ model Client {
   contractsAsTenant    Contract[]        @relation("TenantContracts")
   contractsAsGuarantor Contract[]        @relation("GuarantorContracts")
   forecasts            FinancialForecast[]
+  documents            Document[]
 
   @@unique([companyId, document])
   @@index([companyId])
@@ -998,6 +1003,8 @@ model Contract {
   legacyPropertyCode String?       // c_codimo
   propertyAddress   String?        // i_endereco
   iptuCode          String?        // i_num_iptu
+  propertyId        String?        // FK → properties.id (linked after import)
+  property          Property?      @relation(fields: [propertyId], references: [id])
   landlordId        String?
   landlord          Client?        @relation("LandlordContracts", fields: [landlordId], references: [id])
   tenantId          String?
@@ -1028,11 +1035,13 @@ model Contract {
 
   rentals           Rental[]
   invoices          Invoice[]
+  documents         Document[]
 
   @@unique([companyId, legacyId])
   @@index([companyId])
   @@index([tenantId])
   @@index([landlordId])
+  @@index([propertyId])
   @@index([status])
   @@map("contracts")
 }
@@ -1314,4 +1323,42 @@ model BlogPost {
   @@unique([companyId, slug])
   @@index([companyId, published, publishedAt])
   @@map("blog_posts")
+}
+
+// =============================================================================
+// DOCUMENTS (Locação: boletos, extratos, reajustes, contratos físicos)
+// =============================================================================
+
+model Document {
+  id           String    @id @default(cuid())
+  companyId    String
+  company      Company   @relation(fields: [companyId], references: [id])
+  contractId   String?
+  contract     Contract? @relation(fields: [contractId], references: [id])
+  propertyId   String?
+  property     Property? @relation(fields: [propertyId], references: [id])
+  clientId     String?   // owner or tenant
+  client       Client?   @relation(fields: [clientId], references: [id])
+  uploadedBy   String?   // user id
+  user         User?     @relation(fields: [uploadedBy], references: [id])
+
+  type         String    // BOLETO | EXTRATO | REAJUSTE | FINANCEIRO | CONTRATO | OUTROS
+  category     String?
+  name         String
+  month        Int?
+  year         Int?
+  fileData     Bytes?
+  mimeType     String?
+  fileSize     Int?
+  legacyRef    String?   // original folder/filename ref for matching
+  metadata     Json      @default("{}")
+
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([companyId])
+  @@index([contractId])
+  @@index([propertyId])
+  @@index([clientId])
+  @@map("documents")
 }

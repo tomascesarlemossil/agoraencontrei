@@ -186,13 +186,25 @@ export default async function propertiesRoutes(app: FastifyInstance) {
           id: true, reference: true, title: true, slug: true,
           type: true, purpose: true, status: true,
           price: true, priceRent: true, condoFee: true,
-          neighborhood: true, city: true, state: true,
+          neighborhood: true, city: true, state: true, street: true,
           totalArea: true, builtArea: true,
           bedrooms: true, suites: true, bathrooms: true, parkingSpaces: true,
           coverImage: true, images: true,
           isFeatured: true, isPremium: true,
           views: true, favorites: true,
           createdAt: true,
+          // Cross-reference data
+          contracts: {
+            where: { status: 'ACTIVE' },
+            select: {
+              id: true,
+              rentValue: true,
+              tenantDueDay: true,
+              tenant: { select: { id: true, name: true, phone: true } },
+            },
+            take: 1,
+          },
+          _count: { select: { contracts: true, documents: true } },
         },
         skip: (q.page - 1) * q.limit,
         take: q.limit,
@@ -266,6 +278,23 @@ export default async function propertiesRoutes(app: FastifyInstance) {
           },
         },
         user: { select: { id: true, name: true, avatarUrl: true, phone: true, creciNumber: true } },
+        contracts: {
+          select: {
+            id: true, status: true, rentValue: true, startDate: true, rescissionDate: true,
+            tenantDueDay: true, landlordDueDay: true, legacyId: true,
+            tenant: { select: { id: true, name: true, phone: true, email: true } },
+            landlord: { select: { id: true, name: true, phone: true } },
+            _count: { select: { documents: true, rentals: true } },
+          },
+          orderBy: [{ isActive: 'desc' }, { startDate: 'desc' }],
+          take: 5,
+        },
+        documents: {
+          select: { id: true, name: true, type: true, month: true, year: true, mimeType: true, createdAt: true },
+          orderBy: { createdAt: 'desc' },
+          take: 20,
+        },
+        _count: { select: { contracts: true, documents: true } },
       },
     })
 

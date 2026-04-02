@@ -11,6 +11,9 @@
         "3000"
       ],
       "cwd": "/Users/tomaslemos/Downloads/squads/agoraencontrei/apps/web",
+      "env": {
+        "NEXT_TELEMETRY_DISABLED": "1"
+      },
       "port": 3000
     }
   ]

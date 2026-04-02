@@ -10,7 +10,7 @@ import Link from 'next/link'
 import {
   ArrowLeft, FileText, User, Home, Calendar, DollarSign,
   Phone, Mail, CheckCircle, Clock, AlertCircle,
-  Scissors, Building2, Percent, RefreshCw, Link2,
+  Scissors, Building2, Percent, RefreshCw, Link2, Download,
 } from 'lucide-react'
 
 const fmt = (v: number | null | undefined) =>
@@ -161,12 +161,38 @@ export default function ContratoDetailPage() {
           <div className="flex items-center gap-2 mb-4">
             <Home className="h-4 w-4 text-blue-400" />
             <h2 className="text-sm font-semibold text-white">Imóvel</h2>
+            {(contract as any).property && (
+              <Link
+                href={`/dashboard/properties/${(contract as any).property.id}`}
+                className="ml-auto text-xs text-blue-400 hover:underline"
+              >
+                Ver imóvel →
+              </Link>
+            )}
           </div>
           <div className="space-y-2 text-sm">
             <div>
               <p className="text-white/40 text-xs">Endereço</p>
               <p className="text-white">{contract.propertyAddress ?? '—'}</p>
             </div>
+            {(contract as any).property?.reference && (
+              <div>
+                <p className="text-white/40 text-xs">Referência no Sistema</p>
+                <p className="text-blue-400 font-mono font-medium">{(contract as any).property.reference}</p>
+              </div>
+            )}
+            {(contract as any).property?.type && (
+              <div>
+                <p className="text-white/40 text-xs">Tipo de Imóvel</p>
+                <p className="text-white">
+                  {(contract as any).property.type === 'HOUSE' ? 'Casa' :
+                   (contract as any).property.type === 'APARTMENT' ? 'Apartamento' :
+                   (contract as any).property.type === 'LAND' ? 'Terreno' :
+                   (contract as any).property.type === 'STORE' ? 'Comercial' :
+                   (contract as any).property.type}
+                </p>
+              </div>
+            )}
             {contract.iptuCode && (
               <div>
                 <p className="text-white/40 text-xs">IPTU</p>
@@ -325,6 +351,57 @@ export default function ContratoDetailPage() {
           <p className="text-sm font-bold text-red-400">{lateRentals.length} parcela(s)</p>
         </div>
       </div>
+
+      {/* Documentos vinculados */}
+      {(contract as any).documents?.length > 0 && (
+        <div className="bg-white/5 rounded-2xl border border-white/10 overflow-hidden">
+          <div className="px-5 py-4 border-b border-white/10 flex items-center justify-between">
+            <div>
+              <h2 className="text-sm font-semibold text-white">Documentos Vinculados</h2>
+              <p className="text-xs text-white/40">{(contract as any).documents.length} arquivo(s)</p>
+            </div>
+            <Link2 className="h-4 w-4 text-white/30" />
+          </div>
+          <div className="divide-y divide-white/5 max-h-72 overflow-y-auto">
+            {(contract as any).documents.map((doc: any) => {
+              const typeColors: Record<string, string> = {
+                BOLETO: 'text-orange-400 bg-orange-500/10',
+                EXTRATO: 'text-blue-400 bg-blue-500/10',
+                REAJUSTE: 'text-yellow-400 bg-yellow-500/10',
+                FINANCEIRO: 'text-green-400 bg-green-500/10',
+                CONTRATO: 'text-purple-400 bg-purple-500/10',
+              }
+              const color = typeColors[doc.type] ?? 'text-white/60 bg-white/10'
+              return (
+                <div key={doc.id} className="flex items-center justify-between px-5 py-3 group hover:bg-white/5 transition-colors">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <span className={`inline-flex px-2 py-0.5 rounded text-xs font-medium shrink-0 ${color}`}>
+                      {doc.type}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="text-sm text-white truncate">{doc.name}</p>
+                      {(doc.month || doc.year) && (
+                        <p className="text-xs text-white/40">
+                          {doc.month ? `${String(doc.month).padStart(2, '0')}/` : ''}{doc.year ?? ''}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <a
+                    href={`/api/v1/documents/${doc.id}/download`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="shrink-0 p-1.5 text-white/30 hover:text-white hover:bg-white/10 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                    onClick={e => e.stopPropagation()}
+                  >
+                    <Download className="h-3.5 w-3.5" />
+                  </a>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Histórico de aluguéis */}
       {rentals.length > 0 && (

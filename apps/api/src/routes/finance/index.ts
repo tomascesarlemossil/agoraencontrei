@@ -250,6 +250,8 @@ export default async function financeRoutes(app: FastifyInstance) {
         include: {
           tenant:   { select: { id: true, name: true, phone: true, email: true } },
           landlord: { select: { id: true, name: true, phone: true } },
+          property: { select: { id: true, reference: true, type: true, street: true, neighborhood: true, city: true, status: true } },
+          _count:   { select: { documents: true } },
         },
         orderBy: [{ isActive: 'desc' }, { startDate: 'desc' }],
         skip: (page - 1) * limit,
@@ -268,6 +270,12 @@ export default async function financeRoutes(app: FastifyInstance) {
       include: {
         tenant:   { select: { id: true, name: true, phone: true, email: true, document: true, roles: true } },
         landlord: { select: { id: true, name: true, phone: true, email: true, document: true, roles: true } },
+        property: { select: { id: true, reference: true, type: true, street: true, neighborhood: true, city: true, status: true, slug: true } },
+        documents: {
+          select: { id: true, name: true, type: true, category: true, month: true, year: true, mimeType: true, fileSize: true, createdAt: true },
+          orderBy: { createdAt: 'desc' },
+          take: 50,
+        },
         rentals: {
           orderBy: { dueDate: 'desc' },
           take: 36,
