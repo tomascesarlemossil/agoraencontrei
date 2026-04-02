@@ -220,7 +220,7 @@ export default async function authRoutes(app: FastifyInstance) {
 
     // Return portal token (simple JWT)
     const token = app.jwt.sign(
-      { sub: cl.id, name: cl.name, type: 'portal', roles: cl.roles || [] },
+      { sub: cl.id, name: cl.name, type: 'portal', roles: cl.roles || [] } as any,
       { expiresIn: '24h' }
     )
 
