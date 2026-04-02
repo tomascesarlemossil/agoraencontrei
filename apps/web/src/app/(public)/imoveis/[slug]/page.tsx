@@ -4,11 +4,12 @@ import Link from 'next/link'
 import {
   BedDouble, Bath, Car, Maximize, MapPin,
   CheckCircle2, Star, Eye, Calendar, Building2, Layers,
-  Ruler, ChevronRight, Share2, Printer, Heart, Video,
+  Ruler, ChevronRight, Share2, Heart, Video,
   Phone, Mail,
 } from 'lucide-react'
 import { LeadCaptureForm } from './LeadCaptureForm'
 import { JsonLdScript } from './JsonLdScript'
+import { PrintButton } from './PrintButton'
 import { PropostaOnline } from './PropostaOnline'
 import { ScheduleVisitModal } from '../ScheduleVisitModal'
 import { PropertyGallery } from '@/components/public/PropertyGallery'
@@ -488,12 +489,7 @@ export default async function PropertyDetailPage({ params }: { params: { slug: s
                   <Phone className="w-5 h-5" style={{ color: '#C9A84C' }} />
                   Falar Corretor
                 </a>
-                <button onClick={() => typeof window !== 'undefined' && window.print()}
-                  className="flex flex-col items-center justify-center gap-1.5 py-3.5 px-2 rounded-xl border-2 text-xs font-semibold transition-all hover:shadow-md hover:bg-gray-50"
-                  style={{ borderColor: '#ddd9d0', color: '#1B2B5B' }}>
-                  <Printer className="w-5 h-5" style={{ color: '#C9A84C' }} />
-                  Imprimir Ficha
-                </button>
+                <PrintButton />
               </div>
             </div>
 
