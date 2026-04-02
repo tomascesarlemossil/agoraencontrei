@@ -132,8 +132,14 @@ export async function fetchYouTubeVideos(apiKeyOrNull: string | null, channelId:
   // Fallback: YouTube RSS feed (free, no key required, limited to ~15 videos)
   try {
     const rssUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`
-    const rssRes = await fetch(rssUrl, { headers: { 'Accept': 'application/atom+xml,application/xml,text/xml' } })
-    if (!rssRes.ok) throw new Error(`RSS fetch error: ${rssRes.status}`)
+    const rssRes = await fetch(rssUrl, {
+      redirect: 'follow',
+      headers: {
+        'Accept': 'application/atom+xml,application/xml,text/xml,*/*',
+        'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
+      },
+    })
+    if (!rssRes.ok) throw new Error(`RSS fetch error: ${rssRes.status} ${rssRes.statusText}`)
     const xml = await rssRes.text()
 
     // Parse XML entries manually (lightweight, no dependency)
