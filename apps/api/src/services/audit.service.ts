@@ -60,7 +60,7 @@ export async function createAuditLog(opts: AuditOptions): Promise<void> {
         resourceId,
         ipAddress:  (req.headers['x-forwarded-for'] as string | undefined) ?? req.ip ?? null,
         userAgent:  (req.headers['user-agent'] as string | undefined) ?? null,
-        payload,
+        payload: payload as any,
       },
     })
   } catch (err) {
