@@ -61,9 +61,14 @@ const envSchema = z.object({
   SMTP_FROM: z.string().email().optional(),
 
   // Social Media Integration
-  INSTAGRAM_TOKEN_LEMOS: z.string().optional(),    // @imobiliarialemos access token
-  INSTAGRAM_TOKEN_TOMAS: z.string().optional(),    // @tomaslemosbr access token
-  YOUTUBE_API_KEY: z.string().optional(),          // YouTube Data API v3 key
+  INSTAGRAM_TOKEN_LEMOS: z.string().optional(),         // @imobiliarialemos access token
+  INSTAGRAM_TOKEN_TOMAS: z.string().optional(),         // @tomaslemosbr access token
+  YOUTUBE_API_KEY: z.string().optional(),               // YouTube Data API v3 key
+  YOUTUBE_CHANNEL_ID: z.string().optional(),            // UCKpTcdWhQZIPMX8EF_nNckw
+  INSTAGRAM_BUSINESS_ACCOUNT_ID: z.string().optional(), // Instagram Business Account ID
+  INSTAGRAM_PAGE_ACCESS_TOKEN: z.string().optional(),   // Page access token (publish)
+  FACEBOOK_PAGE_ID: z.string().optional(),              // 932688306232065
+  META_PIXEL_ID: z.string().optional(),                 // 932688306232065
 })
 
 function parseEnv() {

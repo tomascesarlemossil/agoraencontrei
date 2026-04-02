@@ -72,35 +72,60 @@ export async function fetchInstagramPosts(accessToken: string, limit = 20): Prom
 
 /**
  * Fetch YouTube videos via Data API v3
- * Requires YOUTUBE_API_KEY env var and channel ID/handle
+ * Uses channelId directly (UCKpTcdWhQZIPMX8EF_nNckw) — no search step needed
+ *
+ * Fallback: RSS feed (no API key required) via youtube.com/feeds/videos.xml
  */
-export async function fetchYouTubeVideos(apiKey: string, channelHandle: string, limit = 20): Promise<YouTubeVideo[]> {
+export async function fetchYouTubeVideos(apiKeyOrNull: string | null, channelId: string, limit = 20): Promise<YouTubeVideo[]> {
+  // Primary: YouTube Data API v3 (requires API key)
+  if (apiKeyOrNull) {
+    try {
+      const videosUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&type=video&order=date&maxResults=${limit}&key=${apiKeyOrNull}`
+      const videosRes = await fetch(videosUrl)
+      if (!videosRes.ok) throw new Error(`YouTube API error: ${videosRes.status}`)
+      const videosData = await videosRes.json()
+      if (videosData.error) throw new Error(videosData.error.message)
+
+      return (videosData.items ?? []).map((item: any) => ({
+        id: item.id.videoId,
+        title: item.snippet.title,
+        description: item.snippet.description,
+        thumbnailUrl: item.snippet.thumbnails?.medium?.url ?? item.snippet.thumbnails?.default?.url ?? '',
+        publishedAt: item.snippet.publishedAt,
+        videoId: item.id.videoId,
+        channelTitle: item.snippet.channelTitle,
+      }))
+    } catch (err) {
+      console.error('[social-sync] YouTube API failed, falling back to RSS:', err)
+    }
+  }
+
+  // Fallback: YouTube RSS feed (free, no key required, limited to ~15 videos)
   try {
-    // First get channel ID from handle
-    const searchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(channelHandle)}&type=channel&key=${apiKey}`
-    const searchRes = await fetch(searchUrl)
-    if (!searchRes.ok) throw new Error('YouTube channel search failed')
-    const searchData = await searchRes.json()
-    const channelId = searchData.items?.[0]?.id?.channelId
-    if (!channelId) return []
+    const rssUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`
+    const rssRes = await fetch(rssUrl, { headers: { 'Accept': 'application/atom+xml,application/xml,text/xml' } })
+    if (!rssRes.ok) throw new Error(`RSS fetch error: ${rssRes.status}`)
+    const xml = await rssRes.text()
 
-    // Get recent videos
-    const videosUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&type=video&order=date&maxResults=${limit}&key=${apiKey}`
-    const videosRes = await fetch(videosUrl)
-    if (!videosRes.ok) throw new Error('YouTube videos fetch failed')
-    const videosData = await videosRes.json()
-
-    return (videosData.items ?? []).map((item: any) => ({
-      id: item.id.videoId,
-      title: item.snippet.title,
-      description: item.snippet.description,
-      thumbnailUrl: item.snippet.thumbnails?.medium?.url ?? item.snippet.thumbnails?.default?.url ?? '',
-      publishedAt: item.snippet.publishedAt,
-      videoId: item.id.videoId,
-      channelTitle: item.snippet.channelTitle,
-    }))
+    // Parse XML entries manually (lightweight, no dependency)
+    const entries: YouTubeVideo[] = []
+    const entryRegex = /<entry>([\s\S]*?)<\/entry>/g
+    let match
+    while ((match = entryRegex.exec(xml)) !== null && entries.length < limit) {
+      const entry = match[1]
+      const videoId = entry.match(/<yt:videoId>(.*?)<\/yt:videoId>/)?.[1] ?? ''
+      const title = entry.match(/<title>(.*?)<\/title>/)?.[1] ?? ''
+      const published = entry.match(/<published>(.*?)<\/published>/)?.[1] ?? new Date().toISOString()
+      const description = entry.match(/<media:description>([\s\S]*?)<\/media:description>/)?.[1]?.slice(0, 500) ?? ''
+      const thumbnail = entry.match(/url="(https:\/\/i\.ytimg\.com[^"]+)"/)?.[1] ?? `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`
+      const channelTitle = xml.match(/<author>\s*<name>(.*?)<\/name>/)?.[1] ?? 'Imobiliária Lemos'
+      if (videoId) {
+        entries.push({ id: videoId, title, description, thumbnailUrl: thumbnail, publishedAt: published, videoId, channelTitle })
+      }
+    }
+    return entries
   } catch (err) {
-    console.error('[social-sync] YouTube fetch failed:', err)
+    console.error('[social-sync] YouTube RSS fallback failed:', err)
     return []
   }
 }
@@ -169,14 +194,15 @@ export async function syncInstagramToBlog(
 
 /**
  * Sync YouTube videos to blog
+ * apiKey is optional — falls back to RSS feed (channel_id=UCKpTcdWhQZIPMX8EF_nNckw)
  */
 export async function syncYouTubeToBlog(
   prisma: PrismaClient,
   companyId: string,
-  apiKey: string,
-  channelHandle: string,
+  apiKey: string | null,
+  channelId: string,
 ): Promise<number> {
-  const videos = await fetchYouTubeVideos(apiKey, channelHandle)
+  const videos = await fetchYouTubeVideos(apiKey, channelId)
   let synced = 0
 
   for (const video of videos) {
