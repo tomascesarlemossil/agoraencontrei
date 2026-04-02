@@ -81,6 +81,7 @@ function NavContent({ onClose }: { onClose?: () => void }) {
   const pathname = usePathname()
   const { user, logout } = useAuth()
   const unreadCount = useNotifications(s => s.unreadCount)
+  const isBroker = user?.role === 'BROKER'
   const lemosbankActive = pathname.startsWith('/dashboard/lemosbank') ||
     pathname.startsWith('/dashboard/contratos') ||
     pathname.startsWith('/dashboard/clientes')
@@ -138,7 +139,7 @@ function NavContent({ onClose }: { onClose?: () => void }) {
         })}
 
         {/* ── Lemosbank Section ─────────────────────────────── */}
-        <div>
+        {!isBroker && <div>
           <button
             onClick={() => setLemosbankOpen(o => !o)}
             className={cn(
@@ -173,7 +174,7 @@ function NavContent({ onClose }: { onClose?: () => void }) {
               })}
             </div>
           )}
-        </div>
+        </div>}
 
         {/* ── Mid items: Imóveis → Blog ──────────────────────── */}
         {midNavItems.map(({ href, icon: Icon, label, highlight }) => {

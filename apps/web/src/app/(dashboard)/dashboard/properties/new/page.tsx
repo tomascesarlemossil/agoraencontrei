@@ -18,6 +18,8 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import { useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { usersApi, type User } from '@/lib/api'
 import { cn } from '@/lib/utils'
 import { PropertyFeaturesEditor } from '@/components/dashboard/PropertyFeaturesEditor'
 
@@ -195,6 +197,14 @@ export default function NewPropertyPage() {
   const router = useRouter()
   const { getValidToken } = useAuth()
   const [activeTab, setActiveTab] = useState('cadastro')
+
+  const { data: usersData } = useQuery<User[]>({
+    queryKey: ['users-list-new'],
+    queryFn: async () => {
+      const token = await getValidToken()
+      return usersApi.list(token!)
+    },
+  })
 
   const { register, handleSubmit, control, watch, setValue, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -665,11 +675,25 @@ export default function NewPropertyPage() {
           <div className="space-y-4">
             <Section title="Captador Principal">
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                <Field label="Nome do Captador" span="sm:col-span-2">
-                  <Input {...register('captorName')} className={inputCls} />
+                <Field label="Captador (Corretor)" span="sm:col-span-2">
+                  <Controller name="captorName" control={control} render={({ field }) => (
+                    <select
+                      value={field.value ?? ''}
+                      onChange={e => field.onChange(e.target.value)}
+                      className="flex h-9 w-full rounded-md border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-white ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      <option value="">— Selecione o captador —</option>
+                      {(usersData ?? []).filter(u => ['BROKER', 'ADMIN', 'MANAGER', 'SUPER_ADMIN'].includes(u.role)).map(u => (
+                        <option key={u.id} value={u.name}>{u.name} ({u.role})</option>
+                      ))}
+                    </select>
+                  )} />
                 </Field>
                 <Field label="Comissão (%)">
                   <Input {...register('captorCommissionPct')} type="number" step="0.01" min={0} max={100} className={inputCls} />
+                </Field>
+                <Field label="Data de Captação">
+                  <Input {...register('captureDate' as any)} type="date" className={`${inputCls} [color-scheme:dark]`} />
                 </Field>
               </div>
             </Section>

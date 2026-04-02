@@ -39,9 +39,9 @@ const ACCESS_AREAS = [
     color: '#4a90d9',
   },
   {
-    href: '/login',
+    href: '/portal/login',
     icon: <Users className="w-4 h-4" />,
-    label: 'Área do Cliente',
+    label: 'Portal do Cliente',
     desc: 'Proprietários, inquilinos e parceiros',
     color: '#5cb85c',
   },

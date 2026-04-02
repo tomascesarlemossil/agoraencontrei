@@ -15,6 +15,7 @@ import { ScheduleVisitModal } from '../ScheduleVisitModal'
 import { PropertyGallery } from '@/components/public/PropertyGallery'
 import { PropertyMap } from '@/components/public/PropertyMap'
 import { SimilarProperties } from '@/components/public/SimilarProperties'
+import { AIVisualPublicButton } from './AIVisualPublicButton'
 
 export const revalidate = 300
 
@@ -731,6 +732,13 @@ export default async function PropertyDetailPage({ params }: { params: { slug: s
           </div>
         </div>
       </div>
+
+      {/* ── IA Visual Floating Button ──────────────────────────────────── */}
+      <AIVisualPublicButton
+        propertySlug={p.slug}
+        images={[p.coverImage, ...(p.images ?? [])].filter(Boolean)}
+        title={p.title}
+      />
     </div>
   )
 }

@@ -20,7 +20,7 @@ import {
 import Link from 'next/link'
 import { useState, useRef } from 'react'
 import { cn } from '@/lib/utils'
-import { uploadApi } from '@/lib/api'
+import { uploadApi, usersApi, type User } from '@/lib/api'
 import { PropertyImageLightbox } from '@/components/dashboard/PropertyImageLightbox'
 import { PropertyFeaturesEditor } from '@/components/dashboard/PropertyFeaturesEditor'
 import { SocialPostPanel } from './SocialPostPanel'
@@ -129,6 +129,14 @@ export default function PropertyDetailPage() {
     queryFn: async () => {
       const token = await getValidToken()
       return propertiesApi.getById(token!, id)
+    },
+  })
+
+  const { data: usersData } = useQuery<User[]>({
+    queryKey: ['users-list'],
+    queryFn: async () => {
+      const token = await getValidToken()
+      return usersApi.list(token!)
     },
   })
 
@@ -860,12 +868,28 @@ export default function PropertyDetailPage() {
             <div className="space-y-4">
               <Section title="Captador Principal">
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                  <Field label="Nome do Captador" span="sm:col-span-2">
-                    <Input {...register('captorName')} className="bg-white/5 border-white/10 text-white h-9" />
+                  <Field label="Captador (Corretor)" span="sm:col-span-2">
+                    <Controller name="captorName" control={control} render={({ field }) => (
+                      <select
+                        value={field.value ?? ''}
+                        onChange={e => field.onChange(e.target.value)}
+                        className="flex h-9 w-full rounded-md border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-white ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      >
+                        <option value="">— Selecione o captador —</option>
+                        {(usersData ?? []).filter(u => ['BROKER', 'ADMIN', 'MANAGER', 'SUPER_ADMIN'].includes(u.role)).map(u => (
+                          <option key={u.id} value={u.name}>{u.name} ({u.role})</option>
+                        ))}
+                      </select>
+                    )} />
                   </Field>
                   <Field label="Comissão (%)">
                     <Input {...register('captorCommissionPct')} type="number" step="0.01" min={0} max={100}
                       className="bg-white/5 border-white/10 text-white h-9" />
+                  </Field>
+                  <Field label="Data de Captação">
+                    <Input {...register('captureDate' as any)} type="date"
+                      className="bg-white/5 border-white/10 text-white h-9 [color-scheme:dark]"
+                      defaultValue={(p as any)?.captureDate ? new Date((p as any).captureDate).toISOString().split('T')[0] : ''} />
                   </Field>
                 </div>
               </Section>

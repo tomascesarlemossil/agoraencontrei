@@ -324,6 +324,7 @@ export interface PropertySummary {
   isFeatured: boolean
   views: number
   createdAt: string
+  captorName?: string
 }
 
 export interface PropertyDetail extends PropertySummary {

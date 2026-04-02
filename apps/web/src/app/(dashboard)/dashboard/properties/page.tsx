@@ -4,14 +4,14 @@ import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import Link from 'next/link'
 import { useAuthStore } from '@/stores/auth.store'
-import { propertiesApi, type PropertySummary } from '@/lib/api'
+import { propertiesApi, usersApi, type PropertySummary, type User as UserType } from '@/lib/api'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { formatCurrency } from '@/lib/utils'
 import {
   Plus, Search, Building2, MapPin, BedDouble, Bath, Car, Eye,
-  ChevronLeft, ChevronRight, SlidersHorizontal, X, Filter, Instagram, Loader2, CheckSquare, Square,
+  ChevronLeft, ChevronRight, SlidersHorizontal, X, Filter, Instagram, Loader2, CheckSquare, Square, User,
 } from 'lucide-react'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
@@ -80,6 +80,7 @@ interface Filters {
   maxArea: string
   sortBy: string
   sortOrder: string
+  captorName: string
 }
 
 const DEFAULT_FILTERS: Filters = {
@@ -87,6 +88,7 @@ const DEFAULT_FILTERS: Filters = {
   city: '', neighborhood: '', minPrice: '', maxPrice: '',
   bedrooms: '', minArea: '', maxArea: '',
   sortBy: 'createdAt', sortOrder: 'desc',
+  captorName: '',
 }
 
 function filtersToApi(f: Filters) {
@@ -104,13 +106,14 @@ function filtersToApi(f: Filters) {
     maxArea: f.maxArea ? Number(f.maxArea) : undefined,
     sortBy: f.sortBy || 'createdAt',
     sortOrder: (f.sortOrder || 'desc') as 'asc' | 'desc',
+    captorName: f.captorName || undefined,
   }
 }
 
 function activeFilterCount(f: Filters) {
   const check = [
     f.search, f.status, f.purpose, f.type, f.city, f.neighborhood,
-    f.minPrice, f.maxPrice, f.bedrooms, f.minArea, f.maxArea,
+    f.minPrice, f.maxPrice, f.bedrooms, f.minArea, f.maxArea, f.captorName,
   ]
   return check.filter(Boolean).length
 }
@@ -119,6 +122,13 @@ export default function PropertiesPage() {
   const { accessToken } = useAuthStore()
   const [page, setPage] = useState(1)
   const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS)
+
+  // Load company users for captador filter
+  const { data: usersData } = useQuery({
+    queryKey: ['users-list-props'],
+    queryFn: () => usersApi.list(accessToken!),
+    enabled: !!accessToken,
+  })
   const [showAdvanced, setShowAdvanced] = useState(false)
   // Debounced filters applied to query
   const [appliedFilters, setAppliedFilters] = useState<Filters>(DEFAULT_FILTERS)
@@ -255,9 +265,9 @@ export default function PropertiesPage() {
       {/* Filter Panel */}
       <form onSubmit={handleSubmit} className="rounded-2xl border bg-card p-4 space-y-3">
         {/* Row 1: Search + quick filters */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2">
           {/* Search */}
-          <div className="relative lg:col-span-2">
+          <div className="relative lg:col-span-2 sm:col-span-2">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
             <Input
               className="pl-9"
@@ -310,6 +320,18 @@ export default function PropertiesPage() {
             <option value="STUDIO">Studio</option>
             <option value="PENTHOUSE">Cobertura</option>
             <option value="KITNET">Kitnet</option>
+          </select>
+
+          {/* Corretor / Captador */}
+          <select
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            value={filters.captorName}
+            onChange={e => { const f = { ...filters, captorName: e.target.value }; setFilters(f); applyFilters(f) }}
+          >
+            <option value="">Todos os corretores</option>
+            {(usersData ?? []).filter((u: UserType) => ['BROKER', 'ADMIN', 'MANAGER', 'SUPER_ADMIN'].includes(u.role)).map((u: UserType) => (
+              <option key={u.id} value={u.name}>{u.name}</option>
+            ))}
           </select>
         </div>
 
@@ -467,6 +489,9 @@ export default function PropertiesPage() {
             )}
             {appliedFilters.bedrooms && (
               <FilterChip label={`${appliedFilters.bedrooms}+ quartos`} onRemove={() => { const f = { ...filters, bedrooms: '' }; setFilters(f); applyFilters(f) }} />
+            )}
+            {appliedFilters.captorName && (
+              <FilterChip label={`Corretor: ${appliedFilters.captorName}`} onRemove={() => { const f = { ...filters, captorName: '' }; setFilters(f); applyFilters(f) }} />
             )}
           </div>
         )}
@@ -646,11 +671,19 @@ function PropertyCard({
 
           {/* Location */}
           {(p.neighborhood || p.city) && (
-            <div className="flex items-center gap-1 text-xs text-muted-foreground mb-3">
+            <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
               <MapPin className="h-3 w-3 flex-shrink-0" />
               <span className="truncate">
                 {[p.neighborhood, p.city, p.state].filter(Boolean).join(', ')}
               </span>
+            </div>
+          )}
+
+          {/* Captador */}
+          {p.captorName && (
+            <div className="flex items-center gap-1 text-xs text-muted-foreground mb-2">
+              <User className="h-3 w-3 flex-shrink-0" />
+              <span className="truncate">{p.captorName}</span>
             </div>
           )}
 

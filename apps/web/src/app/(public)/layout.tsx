@@ -190,9 +190,9 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
                   </Link>
                 </li>
                 <li>
-                  <Link href="/login" className="flex items-center gap-2 text-white/50 text-sm hover:text-white transition-colors">
+                  <Link href="/portal/login" className="flex items-center gap-2 text-white/50 text-sm hover:text-white transition-colors">
                     <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ backgroundColor: '#5cb85c' }} />
-                    Área do Cliente
+                    Portal do Cliente
                   </Link>
                 </li>
               </ul>
