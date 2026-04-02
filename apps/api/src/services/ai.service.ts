@@ -501,12 +501,35 @@ Retorne APENAS um JSON válido com esta estrutura:
   "reasoning": "Breve explicação de por que escolheu este template"
 }
 
-Para os campos extraídos, use os nomes de campos padrão dos templates:
-- locador_nome, locador_cpf, locatario_nome, locatario_cpf
-- vendedor_nome, vendedor_cpf, comprador_nome, comprador_cpf
-- imovel_endereco, imovel_bairro, valor_aluguel, valor_venda
-- data_inicio, data_fim, data_assinatura
-- etc.`
+Para os campos extraídos, use EXATAMENTE os nomes de campos dos templates:
+
+LOCAÇÃO (contrato-locacao-*):
+- locador_nome, locador_cpf, locador_rg, locador_estado_civil, locador_endereco
+- locatario_nome, locatario_cpf, locatario_rg, locatario_nascimento, locatario_profissao, locatario_estado_civil, locatario_endereco_atual
+- imovel_endereco, imovel_bairro, imovel_descricao, valor_aluguel, dia_vencimento
+- data_inicio, data_fim, garantia_tipo, fiador_nome, fiador_cpf, fiador_rg, fiador_estado_civil, fiador_endereco
+- data_assinatura, observacoes
+
+VENDA (compromisso-compra-venda, carta-desistencia):
+- vendedor_nome, vendedor_cpf, vendedor_rg, vendedor_estado_civil, vendedor_endereco
+- comprador_nome, comprador_cpf, comprador_rg, comprador_estado_civil, comprador_endereco
+- imovel_endereco, imovel_matricula, imovel_descricao, valor_venda, data_assinatura
+
+FICHA CADASTRAL PESSOA FÍSICA (ficha-cadastral-pf):
+- finalidade, nome_completo, data_nascimento, naturalidade, nacionalidade, estado_civil
+- conjuge_nome, conjuge_cpf, conjuge_rg
+- cpf, rg, rg_orgao, rg_data, profissao, empresa_nome, empresa_cnpj, renda_mensal
+- endereco_atual, tel_residencial, tel_celular, email
+
+NOTIFICAÇÃO/AVISO (aviso-nao-renovacao, comunicado-desocupacao, notificacao-*):
+- destinatario_nome, destinatario_cpf, destinatario_endereco
+- imovel_endereco, assunto, mensagem, prazo, data_documento
+
+VISTORIA/ENTREGA (termo-entrega-chaves, laudo-vistoria):
+- locador_nome, locatario_nome, imovel_endereco, data_vistoria, condicoes_gerais, observacoes
+
+ADMINISTRATIVO (protocolo-documentos, regulamento-condominio, folha-rosto):
+- nome, cpf, endereco, data, descricao, observacoes`
 
   const userContent: any[] = []
 

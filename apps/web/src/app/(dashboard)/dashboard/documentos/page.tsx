@@ -52,15 +52,20 @@ function toPreviewUrl(file: File): Promise<string> {
   })
 }
 
+// Normalize confidence: API may return 0-1 or 0-100 scale
+function normalizeConf(c: number) { return c > 1 ? c / 100 : c }
+
 function confidenceColor(c: number) {
-  if (c >= 0.85) return 'text-green-400'
-  if (c >= 0.6) return 'text-yellow-400'
+  const n = normalizeConf(c)
+  if (n >= 0.85) return 'text-green-400'
+  if (n >= 0.6)  return 'text-yellow-400'
   return 'text-red-400'
 }
 
 function confidenceLabel(c: number) {
-  if (c >= 0.85) return 'Alta confiança'
-  if (c >= 0.6) return 'Confiança média'
+  const n = normalizeConf(c)
+  if (n >= 0.85) return 'Alta confiança'
+  if (n >= 0.6)  return 'Confiança média'
   return 'Baixa confiança'
 }
 
@@ -499,7 +504,7 @@ export default function DocumentosPage() {
                       {selectedTemplate.category}
                     </span>
                     <span className={`text-[11px] font-semibold ${confidenceColor(identifyResult.confidence)}`}>
-                      {confidenceLabel(identifyResult.confidence)} — {Math.round(identifyResult.confidence * 100)}%
+                      {confidenceLabel(identifyResult.confidence)} — {Math.round(normalizeConf(identifyResult.confidence) * 100)}%
                     </span>
                   </div>
                   {identifyResult.reasoning && (
