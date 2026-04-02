@@ -149,7 +149,7 @@ export default function FinanciamentosPage() {
   const { accessToken: token } = useAuth()
   const qc = useQueryClient()
   const [search, setSearch] = useState('')
-  const [filterStage, setFilterStage] = useState<string>('')
+  const [filterStage, setFilterStage] = useState<string>('all')
   const [openDialog, setOpenDialog] = useState(false)
   const [editing, setEditing] = useState<Financing | null>(null)
 
@@ -163,7 +163,7 @@ export default function FinanciamentosPage() {
     queryKey: ['financings', search, filterStage],
     queryFn: () => financingsApi.list(token!, {
       ...(search && { search }),
-      ...(filterStage && { stage: filterStage }),
+      ...(filterStage && filterStage !== 'all' && { stage: filterStage }),
       limit: '200',
     }),
     enabled: !!token,
@@ -237,7 +237,7 @@ export default function FinanciamentosPage() {
   STAGES.forEach(s => { byStage[s.key] = [] })
   items.forEach(item => { byStage[item.stage]?.push(item) })
 
-  const showKanban = !filterStage && !search
+  const showKanban = filterStage === 'all' && !search
 
   return (
     <div className="p-6 space-y-6">
@@ -303,7 +303,7 @@ export default function FinanciamentosPage() {
             <SelectValue placeholder="Todas etapas" />
           </SelectTrigger>
           <SelectContent className="bg-[#1a1a2e] border-white/10 text-white">
-            <SelectItem value="">Todas etapas</SelectItem>
+            <SelectItem value="all">Todas etapas</SelectItem>
             {STAGES.map(s => (
               <SelectItem key={s.key} value={s.key}>{s.label}</SelectItem>
             ))}
