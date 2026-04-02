@@ -38,8 +38,8 @@ export default async function documentsRoutes(app: FastifyInstance) {
 
     const [rows, countRows] = await Promise.all([
       app.prisma.$queryRawUnsafe<any[]>(
-        `SELECT id, "contractId", "clientId", type, category, name, month, year,
-                "fileUrl", "mimeType", "fileSize", metadata, "createdAt"
+        `SELECT id, "contractId", "clientId", "propertyId", type, category, name, month, year,
+                "mimeType", "fileSize", "legacyRef", metadata, "createdAt"
          FROM documents
          WHERE ${where}
          ORDER BY year DESC, month DESC, name ASC
@@ -82,8 +82,8 @@ export default async function documentsRoutes(app: FastifyInstance) {
     const { id } = req.params as { id: string }
 
     const rows = await app.prisma.$queryRawUnsafe<any[]>(
-      `SELECT id, "contractId", "clientId", type, category, name, month, year,
-              "fileUrl", "mimeType", "fileSize", metadata, "createdAt", "uploadedBy"
+      `SELECT id, "contractId", "clientId", "propertyId", type, category, name, month, year,
+              "mimeType", "fileSize", "legacyRef", metadata, "createdAt", "uploadedBy"
        FROM documents WHERE id = $1 AND "companyId" = $2`,
       id, cid
     )
@@ -98,17 +98,12 @@ export default async function documentsRoutes(app: FastifyInstance) {
     const { id } = req.params as { id: string }
 
     const rows = await app.prisma.$queryRawUnsafe<any[]>(
-      `SELECT name, "mimeType", "fileData", "fileUrl" FROM documents WHERE id = $1 AND "companyId" = $2`,
+      `SELECT name, "mimeType", "fileData" FROM documents WHERE id = $1 AND "companyId" = $2`,
       id, cid
     )
 
     if (!rows.length) return reply.status(404).send({ error: 'NOT_FOUND' })
     const doc = rows[0]
-
-    // If stored in S3, redirect
-    if (doc.fileUrl) {
-      return reply.redirect(doc.fileUrl)
-    }
 
     // Serve from DB
     if (!doc.fileData) return reply.status(404).send({ error: 'NO_FILE_DATA' })
