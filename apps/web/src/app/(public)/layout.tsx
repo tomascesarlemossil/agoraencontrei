@@ -28,9 +28,13 @@ const FOOTER_IMOVEIS = [
 ]
 
 const FOOTER_SERVICOS = [
+  { href: '/servicos', label: 'Nossos Serviços' },
   { href: '/avaliacao', label: 'Avaliação Gratuita' },
-  { href: '/imoveis', label: 'Portal de Imóveis' },
-  { href: 'https://agilizaunion.com.br/app/?empresa=145&token=a2e5b1e525c432edb01ba207ff4b02d7', label: 'Anunciar Imóvel' },
+  { href: '/servicos/2via-boleto', label: '2ª Via de Boleto' },
+  { href: '/servicos/extrato-proprietario', label: 'Extrato do Proprietário' },
+  { href: '/servicos/fichas-cadastrais', label: 'Fichas Cadastrais' },
+  { href: '/financiamentos', label: 'Financiamentos' },
+  { href: '/anunciar', label: 'Cadastre seu Imóvel' },
 ]
 
 export default function PublicLayout({ children }: { children: React.ReactNode }) {
@@ -52,11 +56,17 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
           </div>
           <div className="flex items-center gap-4">
             <span className="text-white/50">CRECI 279051</span>
-            <a href="https://instagram.com/imobiliarialemos" target="_blank" rel="noreferrer" className="hover:text-white transition-colors">
+            <a href="https://www.instagram.com/imobiliarialemos" target="_blank" rel="noreferrer" className="flex items-center gap-1 hover:text-white transition-colors" title="@imobiliarialemos">
+              <Instagram className="w-3.5 h-3.5" />
+            </a>
+            <a href="https://www.instagram.com/tomaslemosbr" target="_blank" rel="noreferrer" className="flex items-center gap-1 hover:text-white transition-colors" title="@tomaslemosbr">
               <Instagram className="w-3.5 h-3.5" />
             </a>
             <a href="https://facebook.com/imobiliarialemos" target="_blank" rel="noreferrer" className="hover:text-white transition-colors">
               <Facebook className="w-3.5 h-3.5" />
+            </a>
+            <a href="https://www.youtube.com/@imobiliarialemos" target="_blank" rel="noreferrer" className="hover:text-white transition-colors" title="YouTube Imobiliária Lemos">
+              <Youtube className="w-3.5 h-3.5" />
             </a>
           </div>
         </div>
@@ -89,18 +99,56 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
                 Desde 2002 conectando pessoas aos melhores imóveis de Franca e região.
               </p>
               <p className="text-white/40 text-xs mt-2">CRECI PF: 279051</p>
-              <div className="flex items-center gap-3 mt-4">
-                {[
-                  { href: 'https://instagram.com/imobiliarialemos', icon: <Instagram className="w-4 h-4" /> },
-                  { href: 'https://facebook.com/imobiliarialemos', icon: <Facebook className="w-4 h-4" /> },
-                  { href: 'https://youtube.com/@imobiliarialemos', icon: <Youtube className="w-4 h-4" /> },
-                ].map((s, i) => (
-                  <a key={i} href={s.href} target="_blank" rel="noreferrer"
-                    className="w-8 h-8 rounded-lg flex items-center justify-center text-white/60 hover:text-white transition-colors"
-                    style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
-                    {s.icon}
+
+              {/* Social media */}
+              <div className="mt-5">
+                <p className="text-white/30 text-xs uppercase tracking-wider mb-3">Redes Sociais</p>
+                <div className="flex flex-col gap-2">
+                  <a
+                    href="https://www.instagram.com/imobiliarialemos"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center gap-2.5 group"
+                  >
+                    <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 text-white/60 group-hover:text-white transition-colors" style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
+                      <Instagram className="w-3.5 h-3.5" />
+                    </div>
+                    <span className="text-white/50 text-xs group-hover:text-white transition-colors">@imobiliarialemos</span>
                   </a>
-                ))}
+                  <a
+                    href="https://www.instagram.com/tomaslemosbr"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center gap-2.5 group"
+                  >
+                    <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 text-white/60 group-hover:text-white transition-colors" style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
+                      <Instagram className="w-3.5 h-3.5" />
+                    </div>
+                    <span className="text-white/50 text-xs group-hover:text-white transition-colors">@tomaslemosbr</span>
+                  </a>
+                  <a
+                    href="https://www.youtube.com/@imobiliarialemos"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center gap-2.5 group"
+                  >
+                    <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 text-white/60 group-hover:text-white transition-colors" style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
+                      <Youtube className="w-3.5 h-3.5" />
+                    </div>
+                    <span className="text-white/50 text-xs group-hover:text-white transition-colors">Imobiliária Lemos</span>
+                  </a>
+                  <a
+                    href="https://facebook.com/imobiliarialemos"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center gap-2.5 group"
+                  >
+                    <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 text-white/60 group-hover:text-white transition-colors" style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
+                      <Facebook className="w-3.5 h-3.5" />
+                    </div>
+                    <span className="text-white/50 text-xs group-hover:text-white transition-colors">imobiliarialemos</span>
+                  </a>
+                </div>
               </div>
             </div>
 
