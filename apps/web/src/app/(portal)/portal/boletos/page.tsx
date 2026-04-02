@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Loader2, ArrowLeft, FolderOpen, Receipt, CheckCircle, Clock, AlertTriangle } from 'lucide-react'
+import { Loader2, ArrowLeft, FolderOpen, CheckCircle, Clock, AlertTriangle } from 'lucide-react'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 
@@ -100,18 +100,6 @@ export default function BoletosPage() {
                       : `Vencimento: ${fmtDate(r.dueDate)}`}
                   </p>
                 </div>
-                {false && r.status !== 'PAID' && (
-                  <a
-                    href={r.asaasBoletoUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all hover:brightness-110"
-                    style={{ background: 'linear-gradient(135deg, #C9A84C, #e8c66a)', color: '#1B2B5B' }}
-                  >
-                    <Receipt className="w-4 h-4" />
-                    Pagar
-                  </a>
-                )}
               </div>
             )
           })}
