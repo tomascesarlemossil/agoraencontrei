@@ -919,6 +919,20 @@ export const financeApi = {
       token,
       body: JSON.stringify(body),
     }),
+
+  marcarRepassePago: (token: string, rentalId: string, repassePaidAt?: string) =>
+    request<any>(`/api/v1/finance/rentals/${rentalId}/repasse-paid`, {
+      method: 'PATCH',
+      token,
+      body: JSON.stringify({ repassePaidAt }),
+    }),
+
+  estornarRepasse: (token: string, rentalId: string) =>
+    request<any>(`/api/v1/finance/rentals/${rentalId}/repasse-estorno`, {
+      method: 'PATCH',
+      token,
+      body: JSON.stringify({}),
+    }),
 }
 
 // ── Upload ─────────────────────────────────────────────────────────────────────

@@ -571,14 +571,16 @@ export default async function financeRoutes(app: FastifyInstance) {
         tenantDueDay:    c.tenantDueDay,
         adjustmentIndex: c.adjustmentIndex,
         thisMonthRental: thisMonthRental ? {
-          id:          thisMonthRental.id,
-          status:      thisMonthRental.status,
-          totalAmount: Number(thisMonthRental.totalAmount ?? 0),
-          paidAmount:  Number(thisMonthRental.paidAmount  ?? 0),
-          paymentDate: thisMonthRental.paymentDate,
-          dueDate:     thisMonthRental.dueDate,
+          id:            thisMonthRental.id,
+          status:        thisMonthRental.status,
+          totalAmount:   Number(thisMonthRental.totalAmount ?? 0),
+          paidAmount:    Number(thisMonthRental.paidAmount  ?? 0),
+          paymentDate:   thisMonthRental.paymentDate,
+          dueDate:       thisMonthRental.dueDate,
+          repassePaidAt: thisMonthRental.repassePaidAt,
         } : null,
-        repassePaid: thisMonthRental?.status === 'PAID',
+        // repassePaid = repasse efetivamente marcado como pago ao proprietário
+        repassePaid: !!(thisMonthRental?.repassePaidAt),
       }
     })
 
@@ -1281,5 +1283,59 @@ export default async function financeRoutes(app: FastifyInstance) {
       data: rentals,
       meta: { total, page, limit, totalPages: Math.ceil(total / limit) },
     })
+  })
+  // PATCH /api/v1/finance/rentals/:id/repasse-paid — Marcar repasse como pago ao proprietário
+  app.patch('/rentals/:id/repasse-paid', async (req, reply) => {
+    const { id } = req.params as { id: string }
+    const body = req.body as { repassePaidAt?: string }
+    const rental = await app.prisma.rental.findFirst({
+      where: { id, companyId: req.user.cid },
+    })
+    if (!rental) return reply.status(404).send({ error: 'NOT_FOUND' })
+    if (rental.status !== 'PAID') {
+      return reply.status(400).send({
+        error: 'RENTAL_NOT_PAID',
+        message: 'O aluguel precisa estar pago antes de marcar o repasse.',
+      })
+    }
+    const repassePaidAt = body.repassePaidAt ? new Date(body.repassePaidAt) : new Date()
+    const updated = await app.prisma.rental.update({
+      where: { id },
+      data: { repassePaidAt },
+    })
+    await createAuditLog({
+      prisma: app.prisma as any, req,
+      action: 'rental.repasse_paid',
+      resource: 'rental',
+      resourceId: id,
+      before: { repassePaidAt: rental.repassePaidAt },
+      after:  { repassePaidAt },
+    })
+    return reply.send(updated)
+  })
+
+  // PATCH /api/v1/finance/rentals/:id/repasse-estorno — Estornar repasse pago
+  app.patch('/rentals/:id/repasse-estorno', async (req, reply) => {
+    const { id } = req.params as { id: string }
+    const rental = await app.prisma.rental.findFirst({
+      where: { id, companyId: req.user.cid },
+    })
+    if (!rental) return reply.status(404).send({ error: 'NOT_FOUND' })
+    if (!rental.repassePaidAt) {
+      return reply.status(400).send({ error: 'REPASSE_NOT_PAID', message: 'Repasse ainda não foi marcado como pago.' })
+    }
+    const updated = await app.prisma.rental.update({
+      where: { id },
+      data: { repassePaidAt: null },
+    })
+    await createAuditLog({
+      prisma: app.prisma as any, req,
+      action: 'rental.repasse_estorno',
+      resource: 'rental',
+      resourceId: id,
+      before: { repassePaidAt: rental.repassePaidAt },
+      after:  { repassePaidAt: null },
+    })
+    return reply.send(updated)
   })
 }

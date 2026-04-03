@@ -38,16 +38,17 @@ export default function RepassesPage() {
 
   const handleMarcarPago = async (r: any) => {
     if (!token || !r.thisMonthRental?.id) {
-      alert('Este contrato não possui aluguel registrado neste mês para marcar como pago.')
+      alert('Este contrato não possui aluguel registrado neste mês para marcar o repasse.')
+      return
+    }
+    if (r.thisMonthRental.status !== 'PAID') {
+      alert('O aluguel deste mês ainda não foi pago pelo inquilino. Registre o pagamento antes de marcar o repasse.')
       return
     }
     if (!confirm(`Confirmar repasse de ${fmt(r.repasseValue)} para ${r.landlordName}?`)) return
     setMarcando(r.id)
     try {
-      await financeApi.pagarAluguel(token, r.thisMonthRental.id, {
-        paymentDate: new Date().toISOString().split('T')[0],
-        paidAmount: r.thisMonthRental.totalAmount,
-      })
+      await financeApi.marcarRepassePago(token, r.thisMonthRental.id)
       qc.invalidateQueries({ queryKey: ['finance-repasses'] })
       qc.invalidateQueries({ queryKey: ['finance-summary'] })
     } catch (e: any) {

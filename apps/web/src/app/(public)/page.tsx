@@ -423,10 +423,10 @@ export default async function HomePage() {
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {[
-            { name: 'Noêmia Pires Lemos', role: 'Diretora · Corretora', creci: '279051-F', phone: '5516981010004', color: '#1B2B5B', initial: 'N' },
-            { name: 'Naira Cristina Lemos', role: 'Corretora de Imóveis', creci: '279051-F', phone: '5516981010004', color: '#2d4a8a', initial: 'N' },
-            { name: 'Nádia Lemos da Silva', role: 'Corretora de Imóveis', creci: '61053-F', phone: '5516981010004', color: '#1B2B5B', initial: 'N' },
-            { name: 'Gabriel Lemos', role: 'Corretor de Imóveis', creci: '279051-F', phone: '5516981010004', color: '#2d4a8a', initial: 'G' },
+            { name: 'Noêmia Pires Lemos', role: 'Diretora · Corretora', creci: '279051-F', phone: '5516981010005', color: '#1B2B5B', initial: 'N' },
+            { name: 'Naira Cristina Lemos', role: 'Corretora de Imóveis', creci: '279051-F', phone: '5516981010003', color: '#2d4a8a', initial: 'N' },
+            { name: 'Nádia Lemos da Silva', role: 'Corretora de Imóveis', creci: '61053-F', phone: '5516992533583', color: '#1B2B5B', initial: 'N' },
+            { name: 'Gabriel Lemos', role: 'Corretor de Imóveis', creci: '279051-F', phone: '5516992411378', color: '#2d4a8a', initial: 'G' },
           ].map(broker => (
             <div key={broker.name} className="bg-white rounded-2xl p-5 border text-center hover:shadow-lg transition-all" style={{ borderColor: '#e8e4dc' }}>
               {/* Avatar */}
