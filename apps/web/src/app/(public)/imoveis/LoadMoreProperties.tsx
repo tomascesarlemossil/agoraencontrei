@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import Link from 'next/link'
-import { BedDouble, Bath, Car, Maximize, Loader2, Building2 } from 'lucide-react'
+import { BedDouble, Bath, Car, Maximize, Loader2, Building2, ChevronLeft, ChevronRight } from 'lucide-react'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 
@@ -47,49 +47,129 @@ function PriceDisplay({ price, priceRent, purpose }: { price: number | null; pri
   return <p className="text-sm font-medium mt-3 text-gray-400">Consulte</p>
 }
 
-function PropertyCard({ p }: { p: any }) {
-  const [imgError, setImgError] = useState(false)
-  const realImage = isRealImage(p.coverImage) && !imgError ? p.coverImage : null
+function PropertyCardCarousel({ images, coverImage, title, isFeatured, purpose }: {
+  images?: string[] | null
+  coverImage?: string | null
+  title: string
+  isFeatured?: boolean
+  purpose: string
+}) {
+  const [currentIdx, setCurrentIdx] = useState(0)
+  const [isHovered, setIsHovered] = useState(false)
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
+  // Build real images list
+  const allImages = [
+    coverImage,
+    ...((images ?? []).filter(url => url !== coverImage)),
+  ].filter(url => isRealImage(url)) as string[]
+
+  const hasMultiple = allImages.length > 1
+
+  useEffect(() => {
+    if (isHovered && hasMultiple) {
+      timerRef.current = setInterval(() => {
+        setCurrentIdx(i => (i + 1) % allImages.length)
+      }, 1200)
+    } else {
+      if (timerRef.current) clearInterval(timerRef.current)
+      if (!isHovered) setCurrentIdx(0)
+    }
+    return () => { if (timerRef.current) clearInterval(timerRef.current) }
+  }, [isHovered, hasMultiple, allImages.length])
+
+  const currentImage = allImages[currentIdx] ?? null
+
+  function goTo(idx: number, e: React.MouseEvent) {
+    e.preventDefault()
+    e.stopPropagation()
+    setCurrentIdx(idx)
+    if (timerRef.current) clearInterval(timerRef.current)
+  }
+
+  return (
+    <div
+      className="relative h-52 overflow-hidden"
+      style={{ backgroundColor: '#f0ece4' }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      {currentImage ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={currentImage}
+          alt={title}
+          loading="lazy"
+          className="w-full h-full object-cover transition-all duration-500"
+          style={{ transform: isHovered && !hasMultiple ? 'scale(1.05)' : 'scale(1)' }}
+        />
+      ) : (
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 opacity-20">
+          <Building2 className="w-10 h-10" style={{ color: '#1B2B5B' }} />
+          <span className="text-xs font-medium text-gray-500">Foto em breve</span>
+        </div>
+      )}
+
+      {/* Dot indicators */}
+      {hasMultiple && isHovered && (
+        <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1 z-10">
+          {allImages.slice(0, 8).map((_, i) => (
+            <button
+              key={i}
+              onClick={(e) => goTo(i, e)}
+              className="rounded-full transition-all"
+              style={{
+                width: i === currentIdx ? 16 : 6,
+                height: 6,
+                backgroundColor: i === currentIdx ? 'white' : 'rgba(255,255,255,0.5)',
+              }}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Photo count badge */}
+      {allImages.length > 1 && !isHovered && (
+        <div className="absolute bottom-2 right-2 flex items-center gap-1 px-2 py-0.5 rounded-full text-white text-xs font-semibold" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+          📷 {allImages.length}
+        </div>
+      )}
+
+      {/* Badges */}
+      <div className="absolute top-3 left-3 flex gap-1.5">
+        <span
+          className="text-xs font-bold px-2.5 py-1 rounded-full"
+          style={{
+            backgroundColor: purpose === 'RENT' ? '#1B2B5B' : '#C9A84C',
+            color: purpose === 'RENT' ? 'white' : '#1B2B5B',
+          }}
+        >
+          {PURPOSE_LABEL[purpose] ?? purpose}
+        </span>
+        {isFeatured && (
+          <span className="text-xs font-bold px-2.5 py-1 rounded-full" style={{ backgroundColor: 'rgba(255,255,255,0.95)', color: '#1B2B5B' }}>
+            ★ Destaque
+          </span>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function PropertyCard({ p }: { p: any }) {
   return (
     <Link
       href={`/imoveis/${p.slug}`}
       className="group bg-white rounded-2xl overflow-hidden border hover:shadow-xl hover:border-transparent transition-all duration-300"
       style={{ borderColor: '#e8e4dc' }}
     >
-      <div className="relative h-52 overflow-hidden" style={{ backgroundColor: '#f0ece4' }}>
-        {realImage ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={realImage}
-            alt={p.title}
-            loading="lazy"
-            onError={() => setImgError(true)}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-          />
-        ) : (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 opacity-20">
-            <Building2 className="w-10 h-10" style={{ color: '#1B2B5B' }} />
-            <span className="text-xs font-medium text-gray-500">Foto em breve</span>
-          </div>
-        )}
-        <div className="absolute top-3 left-3 flex gap-1.5">
-          <span
-            className="text-xs font-bold px-2.5 py-1 rounded-full"
-            style={{
-              backgroundColor: p.purpose === 'RENT' ? '#1B2B5B' : '#C9A84C',
-              color: p.purpose === 'RENT' ? 'white' : '#1B2B5B',
-            }}
-          >
-            {PURPOSE_LABEL[p.purpose] ?? p.purpose}
-          </span>
-          {p.isFeatured && (
-            <span className="text-xs font-bold px-2.5 py-1 rounded-full" style={{ backgroundColor: 'rgba(255,255,255,0.95)', color: '#1B2B5B' }}>
-              ★ Destaque
-            </span>
-          )}
-        </div>
-      </div>
+      <PropertyCardCarousel
+        images={p.images}
+        coverImage={p.coverImage}
+        title={p.title}
+        isFeatured={p.isFeatured}
+        purpose={p.purpose}
+      />
       <div className="p-4">
         <p className="font-semibold text-gray-900 line-clamp-2 text-sm leading-snug group-hover:text-[#1B2B5B] transition-colors">
           {p.title}
