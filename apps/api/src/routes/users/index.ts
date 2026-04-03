@@ -87,7 +87,6 @@ export default async function usersRoutes(app: FastifyInstance) {
     preHandler: [app.authenticate],
     schema: { tags: ['users'], summary: 'Get company info' },
   }, async (req, reply) => {
-    // Use user→company relation (same as auth/me) to avoid direct company lookup issues
     const user = await app.prisma.user.findUnique({
       where: { id: req.user.sub },
       include: { company: true },
@@ -127,7 +126,7 @@ export default async function usersRoutes(app: FastifyInstance) {
     return reply.send(updated)
   })
 
-  // PATCH /api/v1/users/site-settings — update public site configuration (hero video etc.)
+  // PATCH /api/v1/users/site-settings — update public site + integration configuration
   app.patch('/site-settings', {
     preHandler: [app.authenticate],
     schema: { tags: ['users'] },
@@ -136,16 +135,41 @@ export default async function usersRoutes(app: FastifyInstance) {
       return reply.status(403).send({ error: 'FORBIDDEN' })
     }
 
-    const body = req.body as { heroVideoUrl?: string; heroVideoType?: string }
+    const body = req.body as {
+      heroVideoUrl?: string
+      heroVideoType?: string
+      logoUrl?: string
+      heroImageUrl?: string
+      instagramTokenTomas?: string
+      instagramTokenLemos?: string
+      instagramBusinessAccountId?: string
+      instagramPageAccessToken?: string
+      youtubeApiKey?: string
+      asaasApiKey?: string
+    }
+
     const company = await app.prisma.company.findUnique({ where: { id: req.user.cid } })
     if (!company) return reply.status(404).send({ error: 'NOT_FOUND' })
 
     const currentSettings = (company.settings as any) ?? {}
-    const newSettings = {
-      ...currentSettings,
-      ...(body.heroVideoUrl !== undefined && { heroVideoUrl: body.heroVideoUrl }),
-      ...(body.heroVideoType !== undefined && { heroVideoType: body.heroVideoType }),
+
+    // Merge all provided fields (undefined = skip, empty string = clear the value)
+    const ALLOWED_FIELDS = [
+      'heroVideoUrl', 'heroVideoType',
+      'logoUrl', 'heroImageUrl',
+      'instagramTokenTomas', 'instagramTokenLemos',
+      'instagramBusinessAccountId', 'instagramPageAccessToken',
+      'youtubeApiKey', 'asaasApiKey',
+    ] as const
+
+    const updates: Record<string, string> = {}
+    for (const field of ALLOWED_FIELDS) {
+      if ((body as any)[field] !== undefined) {
+        updates[field] = (body as any)[field]
+      }
     }
+
+    const newSettings = { ...currentSettings, ...updates }
 
     await app.prisma.company.update({ where: { id: req.user.cid }, data: { settings: newSettings } })
     return reply.send({ success: true, settings: newSettings })

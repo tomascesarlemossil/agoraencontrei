@@ -302,6 +302,16 @@ export default async function agentsRoutes(app: FastifyInstance) {
     return reply.send(jobs)
   })
 
+  // GET /api/v1/agents/status — verifica se a IA está configurada
+  app.get('/status', { schema: { tags: ['agents'] } }, async (_req, reply) => {
+    return reply.send({
+      configured: !!env.ANTHROPIC_API_KEY,
+      message: env.ANTHROPIC_API_KEY
+        ? 'Agentes de IA ativos e prontos.'
+        : 'ANTHROPIC_API_KEY não configurada. Acesse Railway → Settings → Variables para ativar.',
+    })
+  })
+
   // POST /api/v1/agents/documents/identify — identify document type from NL + OCR images
   // Also cross-references existing clients, contacts and properties in the DB
   app.post('/documents/identify', {

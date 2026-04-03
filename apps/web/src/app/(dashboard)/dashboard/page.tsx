@@ -19,7 +19,12 @@ import {
   Banknote,
   FileText,
   Wand2,
+  Zap,
+  ZapOff,
+  Settings2,
 } from 'lucide-react'
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 
 export default function DashboardPage() {
   const { user, accessToken } = useAuthStore()
@@ -34,6 +39,18 @@ export default function DashboardPage() {
     queryKey: ['leads-summary'],
     queryFn: () => leadsApi.list(accessToken!, { limit: 5 }),
     enabled: !!accessToken,
+  })
+
+  const { data: aiStatus } = useQuery({
+    queryKey: ['ai-status'],
+    queryFn: async () => {
+      const res = await fetch(`${API_URL}/api/v1/agents/status`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      })
+      return res.json()
+    },
+    enabled: !!accessToken,
+    staleTime: 60_000,
   })
 
   const kpis = [
@@ -86,6 +103,29 @@ export default function DashboardPage() {
           Aqui está um resumo do seu negócio hoje
         </p>
       </div>
+
+      {/* Banner de status da IA */}
+      {aiStatus && (
+        <div className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-sm ${
+          aiStatus.configured
+            ? 'bg-emerald-50 border-emerald-200 text-emerald-800 dark:bg-emerald-950 dark:border-emerald-800 dark:text-emerald-300'
+            : 'bg-amber-50 border-amber-200 text-amber-800 dark:bg-amber-950 dark:border-amber-800 dark:text-amber-300'
+        }`}>
+          {aiStatus.configured
+            ? <Zap className="w-4 h-4 flex-shrink-0" />
+            : <ZapOff className="w-4 h-4 flex-shrink-0" />}
+          <span className="flex-1">
+            {aiStatus.configured
+              ? `Agentes de IA ativos — modelo ${aiStatus.model ?? 'Claude'}`
+              : 'Agentes de IA desativados — configure a ANTHROPIC_API_KEY no Railway para ativar'}
+          </span>
+          {!aiStatus.configured && (
+            <Link href="/dashboard/settings?tab=integracoes" className="flex items-center gap-1 font-medium underline underline-offset-2 hover:opacity-80">
+              <Settings2 className="w-3.5 h-3.5" /> Configurar
+            </Link>
+          )}
+        </div>
+      )}
 
       {/* Quick Actions */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">

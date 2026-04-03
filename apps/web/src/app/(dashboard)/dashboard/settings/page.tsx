@@ -8,7 +8,7 @@ import { usersApi, authApi, type User } from '@/lib/api'
 import { cn } from '@/lib/utils'
 import {
   Building2, Users, User as UserIcon, Shield, Globe, Youtube, Upload, CheckCircle2,
-  Plus, Trash2, Loader2, Eye, EyeOff, Save, Settings, Plug, Camera, X,
+  Plus, Trash2, Loader2, Eye, EyeOff, Save, Settings, Plug, Camera, X, Link,
 } from 'lucide-react'
 import { UserAvatar } from '@/components/ui/UserAvatar'
 
@@ -146,6 +146,40 @@ export default function SettingsPage() {
     website: '', logoUrl: '', address: '', city: '', state: '', zipCode: '',
   })
   const [empresaSaved, setEmpresaSaved] = useState(false)
+  const [logoFile, setLogoFile] = useState<File | null>(null)
+  const [logoPreview, setLogoPreview] = useState<string | null>(null)
+  const [logoUploading, setLogoUploading] = useState(false)
+
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setLogoFile(file)
+    const reader = new FileReader()
+    reader.onload = ev => setLogoPreview(ev.target?.result as string)
+    reader.readAsDataURL(file)
+  }
+
+  const uploadLogo = async (): Promise<string | undefined> => {
+    if (!logoFile) return undefined
+    setLogoUploading(true)
+    try {
+      const token = await getValidToken()
+      const fd = new FormData()
+      fd.append('file', logoFile)
+      fd.append('folder', 'logos')
+      const res = await fetch(`${API_URL}/api/v1/upload`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: fd,
+      })
+      if (res.ok) {
+        const data = await res.json()
+        return data.url as string
+      }
+    } finally {
+      setLogoUploading(false)
+    }
+  }
 
   const { data: companyData } = useQuery({
     queryKey: ['company-info'],
@@ -181,10 +215,20 @@ export default function SettingsPage() {
   const updateEmpresaMutation = useMutation({
     mutationFn: async () => {
       const token = await getValidToken()
+      let logoUrl = empresa.logoUrl
+      if (logoFile) {
+        const uploaded = await uploadLogo()
+        if (uploaded) {
+          logoUrl = uploaded
+          setEmpresa(p => ({ ...p, logoUrl: uploaded }))
+          setLogoPreview(null)
+          setLogoFile(null)
+        }
+      }
       const res = await fetch(`${API_URL}/api/v1/users/company`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify(empresa),
+        body: JSON.stringify({ ...empresa, logoUrl }),
       })
       return res.json()
     },
@@ -418,7 +462,33 @@ export default function SettingsPage() {
                 <DarkInput label="Telefone Principal" value={empresa.phone} onChange={e => setEmpresa(p => ({ ...p, phone: e.target.value }))} placeholder="(16) 3723-0045" />
                 <DarkInput label="E-mail Comercial" type="email" value={empresa.email} onChange={e => setEmpresa(p => ({ ...p, email: e.target.value }))} placeholder="contato@imobiliaria.com" />
                 <DarkInput label="Website" value={empresa.website} onChange={e => setEmpresa(p => ({ ...p, website: e.target.value }))} placeholder="https://www.imobiliarialemos.com.br" />
-                <DarkInput label="URL do Logotipo" value={empresa.logoUrl} onChange={e => setEmpresa(p => ({ ...p, logoUrl: e.target.value }))} placeholder="https://cdn.../logo.png" />
+                {/* Upload de Logotipo */}
+                <div className="sm:col-span-2">
+                  <label className="text-xs font-semibold text-white/70 mb-1.5 block">Logotipo da Empresa</label>
+                  <div className="flex items-center gap-4">
+                    {/* Preview */}
+                    <div className="w-20 h-20 rounded-xl border border-white/10 bg-white/5 flex items-center justify-center overflow-hidden flex-shrink-0">
+                      {(logoPreview || empresa.logoUrl) ? (
+                        <img src={logoPreview ?? empresa.logoUrl} alt="Logo" className="w-full h-full object-contain p-1" />
+                      ) : (
+                        <Building2 className="w-8 h-8 text-white/20" />
+                      )}
+                    </div>
+                    <div className="flex-1 space-y-2">
+                      <label
+                        htmlFor="logo-upload"
+                        className="flex items-center gap-2 px-4 py-2 rounded-xl border border-white/20 text-sm text-white/70 hover:text-white hover:border-white/40 cursor-pointer transition-colors w-fit"
+                      >
+                        {logoUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                        {logoFile ? logoFile.name : 'Carregar logo'}
+                      </label>
+                      <input id="logo-upload" type="file" accept="image/*" className="hidden" onChange={handleLogoChange} />
+                      {empresa.logoUrl && !logoFile && (
+                        <p className="text-xs text-white/40 truncate max-w-xs">{empresa.logoUrl}</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
               </div>
             </Section>
 
@@ -458,12 +528,48 @@ export default function SettingsPage() {
                 </div>
               ) : teamUsers?.map((u: User) => (
                 <div key={u.id} className="flex items-center gap-4 bg-white/5 rounded-xl border border-white/10 px-4 py-3 hover:border-white/20 transition-colors">
-                  <UserAvatar
-                    name={u.name}
-                    avatarUrl={(u as any).avatarUrl}
-                    size="md"
-                    showRing
-                  />
+                  {/* Avatar com botão de upload de ícone */}
+                  <div className="relative group flex-shrink-0">
+                    <UserAvatar
+                      name={u.name}
+                      avatarUrl={(u as any).avatarUrl}
+                      size="md"
+                      showRing
+                    />
+                    <label
+                      htmlFor={`icon-upload-${u.id}`}
+                      className="absolute inset-0 rounded-full bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                      title="Trocar foto"
+                    >
+                      <Camera className="w-4 h-4 text-white" />
+                    </label>
+                    <input
+                      id={`icon-upload-${u.id}`}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0]
+                        if (!file) return
+                        try {
+                          const token = await getValidToken()
+                          const fd = new FormData()
+                          fd.append('file', file)
+                          fd.append('folder', 'avatars')
+                          const res = await fetch(`${API_URL}/api/v1/upload`, {
+                            method: 'POST',
+                            headers: { Authorization: `Bearer ${token}` },
+                            body: fd,
+                          })
+                          if (res.ok) {
+                            const data = await res.json()
+                            await usersApi.update(token!, u.id, { avatarUrl: data.url })
+                            qc.invalidateQueries({ queryKey: ['team-users'] })
+                          }
+                        } catch {}
+                      }}
+                    />
+                  </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <p className="text-sm font-medium text-white">{u.name}</p>
@@ -632,25 +738,77 @@ export default function SettingsPage() {
           <div className="space-y-4">
             <Section title="Vídeo de Fundo — Página Inicial">
               <div className="flex gap-3">
-                {(['youtube', 'upload'] as const).map(type => (
-                  <button key={type} type="button" onClick={() => setVideoType(type)}
+                {(['youtube', 'upload', 'file'] as const).map(type => (
+                  <button key={type} type="button" onClick={() => setVideoType(type === 'file' ? 'upload' : type)}
                     className={cn(
                       'flex-1 flex items-center gap-2 p-3 rounded-xl border text-sm font-medium transition-all',
-                      videoType === type
+                      (videoType === type || (type === 'file' && videoType === 'upload'))
                         ? 'border-yellow-400/50 bg-yellow-500/10 text-yellow-400'
                         : 'border-white/10 text-white/50 hover:border-white/30 hover:text-white',
                     )}>
-                    {type === 'youtube' ? <Youtube className="w-4 h-4" /> : <Upload className="w-4 h-4" />}
-                    {type === 'youtube' ? 'YouTube URL' : 'URL do arquivo'}
+                    {type === 'youtube' ? <Youtube className="w-4 h-4" /> : type === 'upload' ? <Link className="w-4 h-4" /> : <Upload className="w-4 h-4" />}
+                    {type === 'youtube' ? 'YouTube' : type === 'upload' ? 'URL externa' : 'Upload direto'}
                   </button>
                 ))}
               </div>
-              <DarkInput
-                label={videoType === 'youtube' ? 'URL do YouTube' : 'URL do arquivo (.mp4, .webm)'}
-                value={videoUrl}
-                onChange={e => setVideoUrl(e.target.value)}
-                placeholder={videoType === 'youtube' ? 'https://youtu.be/VIDEOID' : 'https://cdn.../video.mp4'}
-              />
+              {videoType === 'youtube' && (
+                <DarkInput
+                  label="URL do YouTube"
+                  value={videoUrl}
+                  onChange={e => setVideoUrl(e.target.value)}
+                  placeholder="https://youtu.be/VIDEOID"
+                />
+              )}
+              {videoType === 'upload' && (
+                <DarkInput
+                  label="URL do arquivo (.mp4, .webm)"
+                  value={videoUrl}
+                  onChange={e => setVideoUrl(e.target.value)}
+                  placeholder="https://cdn.../video.mp4"
+                />
+              )}
+              {/* Upload direto de vídeo */}
+              <div className="mt-2">
+                <label className="text-xs font-semibold text-white/70 mb-1.5 block">Ou envie o arquivo de vídeo diretamente</label>
+                <label
+                  htmlFor="hero-video-upload"
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-white/20 text-sm text-white/70 hover:text-white hover:border-white/40 cursor-pointer transition-colors w-fit"
+                >
+                  <Upload className="w-4 h-4" />
+                  Selecionar arquivo de vídeo
+                </label>
+                <input
+                  id="hero-video-upload"
+                  type="file"
+                  accept="video/mp4,video/webm,video/*"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0]
+                    if (!file) return
+                    try {
+                      const token = await getValidToken()
+                      const fd = new FormData()
+                      fd.append('file', file)
+                      fd.append('folder', 'videos')
+                      const res = await fetch(`${API_URL}/api/v1/upload`, {
+                        method: 'POST',
+                        headers: { Authorization: `Bearer ${token}` },
+                        body: fd,
+                      })
+                      if (res.ok) {
+                        const data = await res.json()
+                        setVideoUrl(data.url)
+                        setVideoType('upload')
+                      }
+                    } catch {}
+                  }}
+                />
+                {videoUrl && videoType === 'upload' && (
+                  <p className="text-xs text-emerald-400 mt-1 flex items-center gap-1">
+                    <CheckCircle2 className="w-3.5 h-3.5" /> Vídeo configurado
+                  </p>
+                )}
+              </div>
             </Section>
 
             <Section title="Contato & Redes Sociais">
