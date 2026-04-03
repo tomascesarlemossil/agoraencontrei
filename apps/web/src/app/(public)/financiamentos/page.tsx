@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { Calculator, TrendingDown, Shield, Phone, CheckCircle } from 'lucide-react'
+import { BankLogo } from './BankLogo'
 
 export const metadata: Metadata = {
   title: 'Financiamento Imobiliário em Franca/SP | Imobiliária Lemos',
@@ -183,29 +184,7 @@ export default function FinanciamentosPage() {
                 style={{ borderColor: bank.color + '25' }}
               >
                 {/* Logo */}
-                <div
-                  className="w-16 h-16 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden"
-                  style={{ backgroundColor: bank.bg }}
-                >
-                  {bank.logo ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={bank.logo} alt={bank.shortName}
-                      className="w-12 h-12 object-contain"
-                      onError={(e) => {
-                        const el = e.target as HTMLImageElement
-                        el.style.display = 'none'
-                        const fb = el.nextElementSibling as HTMLElement | null
-                        if (fb) fb.style.display = 'flex'
-                      }}
-                    />
-                  ) : null}
-                  <span
-                    className="text-lg font-extrabold"
-                    style={{ color: bank.color, display: bank.logo ? 'none' : 'flex' }}
-                  >
-                    {bank.shortName.slice(0, 3)}
-                  </span>
-                </div>
+                <BankLogo src={bank.logo ?? null} shortName={bank.shortName} color={bank.color} bg={bank.bg} />
 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">

@@ -8,6 +8,7 @@ import {
   Phone, Mail,
 } from 'lucide-react'
 import { LeadCaptureForm } from './LeadCaptureForm'
+import { BankButton } from './BankButton'
 import { JsonLdScript } from './JsonLdScript'
 import { PrintButton } from './PrintButton'
 import { PropostaOnline } from './PropostaOnline'
@@ -661,24 +662,15 @@ export default async function PropertyDetailPage({ params }: { params: { slug: s
                   <p className="text-sm text-gray-500 mb-4">Clique em um banco para simular o financiamento diretamente no site da instituição financeira:</p>
                   <div className="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-9 gap-2">
                     {BANKS.map(bank => (
-                      <a key={bank.name} href={bank.href} target="_blank" rel="noreferrer noopener"
-                        title={`Simular financiamento no ${bank.name}`}
-                        className="flex flex-col items-center justify-center gap-1.5 rounded-xl border-2 py-3 px-2 hover:shadow-md transition-all hover:scale-105 cursor-pointer group"
-                        style={{ borderColor: bank.color + '30', backgroundColor: bank.bg }}>
-                        {bank.logo ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={bank.logo} alt={bank.name}
-                            className="h-6 w-auto object-contain"
-                            style={{ maxWidth: 56 }}
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).style.display = 'none';
-                              (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
-                            }}
-                          />
-                        ) : null}
-                        <span className={`text-xs font-extrabold tracking-wide ${bank.logo ? 'hidden' : ''}`} style={{ color: bank.color }}>{bank.abbr}</span>
-                        <span className="text-[9px] text-center leading-tight font-semibold" style={{ color: bank.color }}>{bank.name}</span>
-                      </a>
+                      <BankButton
+                        key={bank.name}
+                        name={bank.name}
+                        abbr={bank.abbr}
+                        color={bank.color}
+                        bg={bank.bg}
+                        logo={bank.logo ?? null}
+                        href={bank.href}
+                      />
                     ))}
                   </div>
                 </div>
