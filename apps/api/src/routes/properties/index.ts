@@ -147,7 +147,7 @@ export default async function propertiesRoutes(app: FastifyInstance) {
     const q = PropertyFilters.parse(req.query)
 
     const where: any = {
-      status: q.status ?? 'ACTIVE',
+      ...(q.status      && { status: q.status }),
       ...(q.type        && { type: q.type }),
       ...(q.purpose     && { purpose: q.purpose }),
       ...(q.city        && { city: { contains: q.city, mode: 'insensitive' } }),
