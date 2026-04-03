@@ -163,4 +163,87 @@ export default async function documentsRoutes(app: FastifyInstance) {
 
     return reply.status(201).send({ id, name, type, category })
   })
+
+  // POST /api/v1/documents/batch-metadata — registra metadados de documentos em lote (sem arquivo)
+  // Usado para importar lista de documentos do Uniloc antes do upload dos arquivos
+  app.post('/batch-metadata', async (req, reply) => {
+    const cid = req.user.cid
+    const userId = req.user.sub
+    const body = req.body as {
+      documents: Array<{
+        type: string
+        category?: string
+        name: string
+        contractId?: string
+        clientId?: string
+        month?: string
+        year?: number
+        legacyRef?: string
+        metadata?: Record<string, unknown>
+      }>
+    }
+
+    if (!Array.isArray(body.documents) || body.documents.length === 0) {
+      return reply.status(400).send({ error: 'EMPTY_DOCUMENTS_ARRAY' })
+    }
+    if (body.documents.length > 500) {
+      return reply.status(400).send({ error: 'TOO_MANY_DOCUMENTS', max: 500 })
+    }
+
+    const { nanoid } = await import('nanoid')
+    const results: Array<{ id: string; name: string; legacyRef?: string }> = []
+
+    for (const doc of body.documents) {
+      const id = 'c' + nanoid(24).toLowerCase().replace(/[^a-z0-9]/g, 'x')
+      try {
+        await app.prisma.$executeRawUnsafe(
+          `INSERT INTO documents (id, "companyId", "contractId", "clientId", type, category, name, month, year, "legacyRef", "uploadedBy", metadata, "createdAt", "updatedAt")
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12::jsonb, NOW(), NOW())
+           ON CONFLICT DO NOTHING`,
+          id, cid,
+          doc.contractId ?? null,
+          doc.clientId ?? null,
+          (doc.type || 'DOCUMENTO').toUpperCase(),
+          doc.category ?? 'geral',
+          doc.name,
+          doc.month ?? null,
+          doc.year ?? null,
+          doc.legacyRef ?? null,
+          userId,
+          JSON.stringify(doc.metadata ?? {})
+        )
+        results.push({ id, name: doc.name, legacyRef: doc.legacyRef })
+      } catch {
+        // Skip duplicates silently
+      }
+    }
+
+    return reply.status(201).send({ created: results.length, documents: results })
+  })
+
+  // POST /api/v1/documents/:id/file — faz upload do arquivo para um documento já registrado
+  // Permite upload progressivo: primeiro registra metadados, depois faz upload do arquivo
+  app.post('/:id/file', async (req, reply) => {
+    const cid = req.user.cid
+    const { id } = req.params as { id: string }
+
+    // Verificar se documento pertence à empresa
+    const existing = await app.prisma.$queryRawUnsafe<any[]>(
+      `SELECT id FROM documents WHERE id = $1 AND "companyId" = $2`,
+      id, cid
+    )
+    if (!existing.length) return reply.status(404).send({ error: 'NOT_FOUND' })
+
+    const data = await req.file()
+    if (!data) return reply.status(400).send({ error: 'NO_FILE' })
+
+    const buffer = await data.toBuffer()
+    await app.prisma.$executeRawUnsafe(
+      `UPDATE documents SET "fileData" = $1, "fileSize" = $2, "mimeType" = $3, "updatedAt" = NOW()
+       WHERE id = $4 AND "companyId" = $5`,
+      buffer, buffer.length, data.mimetype, id, cid
+    )
+
+    return reply.send({ id, fileSize: buffer.length, mimeType: data.mimetype })
+  })
 }

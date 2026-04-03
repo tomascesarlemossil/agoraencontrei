@@ -52,6 +52,11 @@ export default async function portalRoutes(app: FastifyInstance) {
       where: { contractId, status: { in: ['PENDING', 'LATE'] } },
     }) : 0
 
+    // Count historical forecasts (from Uniloc migration)
+    const forecastCount = await app.prisma.financialForecast.count({
+      where: { tenantId: clientId },
+    })
+
     // Get recent rentals
     const recentRentals = contractId ? await app.prisma.rental.findMany({
       where: { contractId },
@@ -78,7 +83,7 @@ export default async function portalRoutes(app: FastifyInstance) {
       counts: {
         contratos: contracts.length,
         boletos: pendingRentals,
-        extratos: docMap['EXTRATO'] ?? 0,
+        extratos: (docMap['EXTRATO'] ?? 0) + forecastCount,
         documentos: (docMap['REAJUSTE'] ?? 0) + (docMap['DOCUMENTO'] ?? 0),
         vistorias: 0,
       },
@@ -102,17 +107,23 @@ export default async function portalRoutes(app: FastifyInstance) {
   })
 
   // GET /api/v1/portal/boletos — rentals + boletos bancários (Invoices) para o cliente
+  // Inclui histórico de FinancialForecast (dados migrados do Uniloc)
   app.get('/boletos', { preHandler: [portalAuth] }, async (req: any, reply) => {
     const clientId = req.user.sub
-    const contracts = await app.prisma.$queryRawUnsafe<any[]>(
-      `SELECT id FROM contracts WHERE "tenantId" = $1 AND "isActive" = true LIMIT 1`,
+
+    // Get all contracts (active and inactive) for this client
+    const allContracts = await app.prisma.$queryRawUnsafe<any[]>(
+      `SELECT id, "isActive" FROM contracts WHERE "tenantId" = $1 ORDER BY "isActive" DESC`,
       clientId
     )
-    if (!contracts.length) return reply.send({ rentals: [], invoices: [] })
-    const contractId = contracts[0].id
 
-    const [rentals, invoices] = await Promise.all([
-      app.prisma.rental.findMany({
+    const activeContract = allContracts.find((c: any) => c.isActive)
+    const contractId = activeContract?.id
+    const allContractIds = allContracts.map((c: any) => c.id)
+
+    const [rentals, invoices, forecasts] = await Promise.all([
+      // Current system rentals
+      contractId ? app.prisma.rental.findMany({
         where: { contractId, status: { in: ['PENDING', 'LATE', 'PAID'] } },
         orderBy: { dueDate: 'desc' },
         take: 36,
@@ -120,9 +131,11 @@ export default async function portalRoutes(app: FastifyInstance) {
           id: true, dueDate: true, status: true, totalAmount: true,
           paidAmount: true, paymentDate: true,
         },
-      }),
-      app.prisma.invoice.findMany({
-        where: { contractId },
+      }) : Promise.resolve([]),
+
+      // Bank invoices (Asaas)
+      allContractIds.length > 0 ? app.prisma.invoice.findMany({
+        where: { contractId: { in: allContractIds } },
         orderBy: { dueDate: 'desc' },
         take: 36,
         select: {
@@ -131,15 +144,30 @@ export default async function portalRoutes(app: FastifyInstance) {
           asaasStatus: true, asaasBankSlipUrl: true, asaasPixCode: true,
           mensagem: true,
         },
+      }) : Promise.resolve([]),
+
+      // Historical data from Uniloc migration (FinancialForecast)
+      app.prisma.financialForecast.findMany({
+        where: { tenantId: clientId },
+        orderBy: [{ year: 'desc' }, { month: 'desc' }],
+        take: 60,
+        select: {
+          id: true, dueDate: true, amount: true, month: true, year: true,
+          forecastStatus: true, valorAluguel: true, taxaAdm: true,
+          valorRepasse: true, numeroBoleto: true, endereco: true,
+          proprietarioNome: true, clienteNome: true,
+        },
       }),
     ])
 
-    return reply.send({ rentals, invoices })
+    return reply.send({ rentals, invoices, forecasts })
   })
 
-  // GET /api/v1/portal/extratos — extratos for this client
+  // GET /api/v1/portal/extratos — extratos + histórico financeiro para o cliente
   app.get('/extratos', { preHandler: [portalAuth] }, async (req: any, reply) => {
     const clientId = req.user.sub
+
+    // Documents stored in DB
     const docs = await app.prisma.$queryRawUnsafe<any[]>(
       `SELECT id, name, month, year, "fileSize", "mimeType", "createdAt"
        FROM documents
@@ -147,7 +175,21 @@ export default async function portalRoutes(app: FastifyInstance) {
        ORDER BY year DESC, month DESC`,
       clientId
     )
-    return reply.send({ documents: docs })
+
+    // Historical financial forecasts from Uniloc migration
+    const forecasts = await app.prisma.financialForecast.findMany({
+      where: { tenantId: clientId },
+      orderBy: [{ year: 'desc' }, { month: 'desc' }],
+      take: 120,
+      select: {
+        id: true, dueDate: true, amount: true, month: true, year: true,
+        forecastStatus: true, valorAluguel: true, taxaAdm: true,
+        valorRepasse: true, numeroBoleto: true, endereco: true,
+        proprietarioNome: true,
+      },
+    })
+
+    return reply.send({ documents: docs, forecasts })
   })
 
   // GET /api/v1/portal/documentos — all documents for this client

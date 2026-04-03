@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   Loader2, ArrowLeft, FolderOpen, CheckCircle, Clock, AlertTriangle,
-  Copy, ExternalLink, QrCode, ReceiptText, ChevronDown, ChevronUp,
+  Copy, ExternalLink, QrCode, ReceiptText, ChevronDown, ChevronUp, History,
 } from 'lucide-react'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
@@ -18,6 +18,22 @@ interface Rental {
   totalAmount: number
   paidAmount?: number
   paymentDate?: string
+}
+
+interface Forecast {
+  id: string
+  dueDate?: string
+  amount?: number
+  month?: number
+  year?: number
+  forecastStatus?: string
+  valorAluguel?: number
+  taxaAdm?: number
+  valorRepasse?: number
+  numeroBoleto?: string
+  endereco?: string
+  proprietarioNome?: string
+  clienteNome?: string
 }
 
 interface PortalInvoice {
@@ -50,19 +66,35 @@ const ASAAS_STATUS: Record<string, { label: string; color: string; bg: string }>
   CANCELLED: { label: 'Cancelado',             color: '#6B7280', bg: '#F3F4F6' },
 }
 
+const FORECAST_STATUS: Record<string, { label: string; color: string; bg: string }> = {
+  PREVISTO:  { label: 'Previsto',  color: '#D97706', bg: '#FEF3C7' },
+  RECEBIDO:  { label: 'Recebido',  color: '#059669', bg: '#D1FAE5' },
+  ATRASADO:  { label: 'Atrasado',  color: '#DC2626', bg: '#FEE2E2' },
+}
+
+const MONTH_NAMES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']
+
 const fmt = (v?: number | null) =>
-  v != null ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v) : '—'
+  v != null ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(v)) : '—'
+
+const fmtMonthYear = (m?: number | null, y?: number | null) => {
+  if (!m && !y) return '—'
+  if (m && y) return `${MONTH_NAMES[(m - 1) % 12]} ${y}`
+  if (y) return String(y)
+  return `Mês ${m}`
+}
 
 const fmtDate = (d?: string | null) =>
   d ? new Date(d).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' }) : '—'
 
 export default function BoletosPage() {
   const router = useRouter()
-  const [rentals,  setRentals]  = useState<Rental[]>([])
-  const [invoices, setInvoices] = useState<PortalInvoice[]>([])
-  const [loading,  setLoading]  = useState(true)
-  const [tab,      setTab]      = useState<'boletos' | 'historico'>('boletos')
-  const [copied,   setCopied]   = useState<string | null>(null)
+  const [rentals,   setRentals]   = useState<Rental[]>([])
+  const [invoices,  setInvoices]  = useState<PortalInvoice[]>([])
+  const [forecasts, setForecasts] = useState<Forecast[]>([])
+  const [loading,   setLoading]   = useState(true)
+  const [tab,       setTab]       = useState<'boletos' | 'historico'>('boletos')
+  const [copied,    setCopied]    = useState<string | null>(null)
 
   useEffect(() => {
     const stored = localStorage.getItem('portal_auth')
@@ -74,8 +106,8 @@ export default function BoletosPage() {
     fetch(`${API_URL}/api/v1/portal/boletos`, {
       headers: { Authorization: `Bearer ${auth.token}` },
     })
-      .then(r => r.ok ? r.json() : { rentals: [], invoices: [] })
-      .then(d => { setRentals(d.rentals ?? []); setInvoices(d.invoices ?? []) })
+      .then(r => r.ok ? r.json() : { rentals: [], invoices: [], forecasts: [] })
+      .then(d => { setRentals(d.rentals ?? []); setInvoices(d.invoices ?? []); setForecasts(d.forecasts ?? []) })
       .catch(() => {})
       .finally(() => setLoading(false))
   }, [router])
@@ -87,10 +119,13 @@ export default function BoletosPage() {
     })
   }
 
-  const pending = rentals.filter(r => r.status === 'PENDING' || r.status === 'LATE')
-  const paid    = rentals.filter(r => r.status === 'PAID')
-  const pendingInvoices = invoices.filter(i => !['RECEIVED', 'CONFIRMED', 'CANCELLED', 'REFUNDED'].includes(i.asaasStatus ?? ''))
-  const paidInvoices    = invoices.filter(i => ['RECEIVED', 'CONFIRMED'].includes(i.asaasStatus ?? ''))
+  const pending          = rentals.filter(r => r.status === 'PENDING' || r.status === 'LATE')
+  const paid             = rentals.filter(r => r.status === 'PAID')
+  const pendingInvoices  = invoices.filter(i => !['RECEIVED', 'CONFIRMED', 'CANCELLED', 'REFUNDED'].includes(i.asaasStatus ?? ''))
+  const paidInvoices     = invoices.filter(i => ['RECEIVED', 'CONFIRMED'].includes(i.asaasStatus ?? ''))
+  const paidForecasts    = forecasts.filter(f => f.forecastStatus === 'RECEBIDO')
+  const pendingForecasts = forecasts.filter(f => f.forecastStatus !== 'RECEBIDO')
+  const totalPending     = pending.length + pendingInvoices.length + pendingForecasts.length
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
@@ -100,9 +135,9 @@ export default function BoletosPage() {
           <ArrowLeft className="w-5 h-5" />
         </button>
         <div>
-          <h1 className="text-xl font-bold" style={{ color: NAVY, fontFamily: 'Georgia, serif' }}>Boletos & Aluguéis</h1>
+          <h1 className="text-xl font-bold" style={{ color: NAVY, fontFamily: 'Georgia, serif' }}>Boletos & Cobranças</h1>
           <p className="text-sm text-gray-500">
-            {pending.length + pendingInvoices.length} pendente(s) · {paid.length + paidInvoices.length} pago(s)
+            {loading ? 'Carregando...' : `${totalPending} pendente(s) · ${paid.length + paidInvoices.length + paidForecasts.length} pago(s)`}
           </p>
         </div>
       </div>
@@ -144,7 +179,15 @@ export default function BoletosPage() {
             </div>
           )}
 
-          {pendingInvoices.length === 0 && pending.length === 0 && (
+          {/* Previsões pendentes (dados históricos Uniloc) */}
+          {pendingForecasts.length > 0 && (
+            <div className="space-y-3">
+              <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider px-1">Histórico Importado</h2>
+              {pendingForecasts.slice(0, 6).map(f => <ForecastCard key={f.id} forecast={f} />)}
+            </div>
+          )}
+
+          {totalPending === 0 && (
             <div className="flex flex-col items-center justify-center py-20 text-gray-400">
               <CheckCircle className="w-12 h-12 mb-3 opacity-30" style={{ color: '#059669' }} />
               <p className="font-medium text-green-600">Tudo em dia!</p>
@@ -172,7 +215,17 @@ export default function BoletosPage() {
             </div>
           )}
 
-          {paidInvoices.length === 0 && paid.length === 0 && (
+          {/* Histórico completo Uniloc */}
+          {paidForecasts.length > 0 && (
+            <div className="space-y-3">
+              <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider px-1 flex items-center gap-1.5">
+                <History className="w-3.5 h-3.5" /> Histórico Importado ({paidForecasts.length} registros)
+              </h2>
+              {paidForecasts.map(f => <ForecastCard key={f.id} forecast={f} />)}
+            </div>
+          )}
+
+          {paidInvoices.length === 0 && paid.length === 0 && paidForecasts.length === 0 && (
             <div className="flex flex-col items-center justify-center py-20 text-gray-400">
               <FolderOpen className="w-12 h-12 mb-3 opacity-30" />
               <p className="font-medium">Nenhum histórico disponível</p>
@@ -324,6 +377,35 @@ function RentalCard({ rental }: { rental: Rental }) {
             ? `Pago em ${fmtDate(rental.paymentDate)}`
             : `Vencimento: ${fmtDate(rental.dueDate)}`}
 
+        </p>
+      </div>
+    </div>
+  )
+}
+
+// ── ForecastCard ───────────────────────────────────────────────────────────────
+function ForecastCard({ forecast }: { forecast: Forecast }) {
+  const cfg = FORECAST_STATUS[forecast.forecastStatus ?? 'PREVISTO'] ?? FORECAST_STATUS.PREVISTO
+  return (
+    <div className="bg-white rounded-2xl p-4 flex items-center gap-4 shadow-sm" style={{ border: '1px solid #ddd9d0' }}>
+      <div className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: cfg.bg }}>
+        <span className="text-xs font-bold" style={{ color: cfg.color }}>
+          {fmtMonthYear(forecast.month, forecast.year).split(' ')[0]}
+        </span>
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-base font-bold text-gray-800">{fmt(forecast.valorAluguel ?? forecast.amount)}</span>
+          <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ backgroundColor: cfg.bg, color: cfg.color }}>
+            {cfg.label}
+          </span>
+          {forecast.numeroBoleto && (
+            <span className="text-xs text-gray-400 font-mono">#{forecast.numeroBoleto}</span>
+          )}
+        </div>
+        <p className="text-xs text-gray-500 mt-0.5">
+          {fmtMonthYear(forecast.month, forecast.year)}
+          {forecast.endereco ? ` · ${forecast.endereco}` : ''}
         </p>
       </div>
     </div>

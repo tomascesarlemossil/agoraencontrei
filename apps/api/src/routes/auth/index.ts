@@ -225,7 +225,9 @@ export default async function authRoutes(app: FastifyInstance) {
     )
 
     return reply.send({
-      token,
+      accessToken: token,
+      expiresIn: 86400,
+      user: { id: cl.id, name: cl.name, cpf: cpfNorm, email: cl.email, phone: cl.phone },
       client: {
         id: cl.id,
         name: cl.name,
