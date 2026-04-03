@@ -182,7 +182,10 @@ async function bootstrap() {
   // ── Error Handler ────────────────────────────────────────────────────────
   app.setErrorHandler((error, _req, reply) => {
     // Zod validation errors → 400
-    if (error.name === 'ZodError' || (error as any).issues) {
+    const isZodError = error.name === 'ZodError'
+      || (error as any).issues != null
+      || (error as any).constructor?.name === 'ZodError'
+    if (isZodError) {
       return reply.status(400).send({
         error: 'VALIDATION_ERROR',
         message: error.message,
