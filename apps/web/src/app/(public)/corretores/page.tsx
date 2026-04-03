@@ -20,9 +20,9 @@ const EQUIPE = {
       name: 'Noêmia Pires Lemos',
       role: 'Diretora Fundadora',
       creci: '279051-F',
-      phone: '5516981010004',
+      phone: '5516981010005',
       email: 'noemia@imobiliarialemos.com.br',
-      photo: '/corretores/noemia-pires.jpg',  // ← trocar foto aqui
+      photo: '/corretores/noemia-icon-v2.jpg',  // ← trocar foto aqui
       specialties: ['Compra e Venda', 'Locação', 'Avaliação de Imóveis'],
       bio: 'Fundadora da Imobiliária Lemos, com mais de 20 anos de experiência no mercado imobiliário de Franca/SP.',
     },
@@ -33,7 +33,7 @@ const EQUIPE = {
       creci: '',
       phone: '5516981010003',
       email: 'blognairalemos@gmail.com',
-      photo: '/corretores/naira-lemos.jpg',  // ← trocar foto aqui
+      photo: '/corretores/naira-icon-v2.jpg',  // ← trocar foto aqui
       specialties: ['Residencial', 'Locação', 'Financiamento'],
       bio: 'Especialista em imóveis residenciais e locação. Atendimento humanizado e dedicado a cada cliente.',
     },
@@ -42,9 +42,9 @@ const EQUIPE = {
       name: 'Nádia Maria Cristina Lemos',
       role: 'Diretoria',
       creci: '61053-F',
-      phone: '5516981010004',
+      phone: '5516992533583',
       email: 'nadia@imobiliarialemos.com.br',
-      photo: '/corretores/nadia-lemos.jpg',  // ← trocar foto aqui
+      photo: '/corretores/nadia-icon-v2.jpg',  // ← trocar foto aqui
       specialties: ['Imóveis Comerciais', 'Compra e Venda', 'Avaliação'],
       bio: 'Especialista em imóveis comerciais e negociações diferenciadas. Comprometida com os melhores resultados.',
     },
@@ -53,9 +53,9 @@ const EQUIPE = {
       name: 'Nilton Lemos',
       role: 'Diretoria',
       creci: '',
-      phone: '5516981010004',
+      phone: '5516999654949',
       email: 'nilton@imobiliarialemos.com.br',
-      photo: '/corretores/nilton-lemos.jpg',  // ← trocar foto aqui
+      photo: '/corretores/nilton-icon-v2.jpg',  // ← trocar foto aqui
       specialties: ['Gestão', 'Administração de Imóveis'],
       bio: 'Membro da diretoria responsável pela gestão e administração de imóveis da Imobiliária Lemos.',
     },
@@ -64,7 +64,7 @@ const EQUIPE = {
       name: 'Tomás César Lemos Silva',
       role: 'Diretoria | Tecnologia',
       creci: '279051-F',
-      phone: '5516981010004',
+      phone: '5516993116199',
       email: 'tomas@imobiliarialemos.com.br',
       photo: '/corretores/tomas-lemos.jpg',  // ← trocar foto aqui
       specialties: ['Tecnologia Imobiliária', 'Marketing Digital', 'Inovação'],
@@ -79,7 +79,7 @@ const EQUIPE = {
       creci: '305711-F',
       phone: '5516992411378',
       email: 'gabriel@imobiliarialemos.com.br',
-      photo: '/corretores/gabriel-leal.jpg',  // ← trocar foto aqui
+      photo: '/corretores/gabriel-icon-v2.jpg',  // ← trocar foto aqui
       specialties: ['Lançamentos', 'Residencial', 'Atendimento Digital'],
       bio: 'Atendimento moderno e presença digital para encontrar o imóvel ideal. Especialista em lançamentos.',
     },
@@ -99,7 +99,7 @@ const EQUIPE = {
       name: 'Lorena Assis Sesso',
       role: 'Corretora de Imóveis',
       creci: '',
-      phone: '5516981010004',
+      phone: '5516991083946',
       email: 'lorenaassis@imobiliarialemos.com.br',
       photo: '/corretores/lorena-sesso.jpg',  // ← trocar foto aqui
       specialties: ['Residencial', 'Locação', 'Primeiro Imóvel'],
@@ -110,7 +110,7 @@ const EQUIPE = {
       name: 'Laura Sesso',
       role: 'Corretora de Imóveis',
       creci: '',
-      phone: '5516981010004',
+      phone: '5516993404117',
       email: 'laura@imobiliarialemos.com.br',
       photo: '/corretores/laura-sesso.jpg',  // ← trocar foto aqui
       specialties: ['Residencial', 'Compra e Venda', 'Avaliação'],
@@ -121,7 +121,7 @@ const EQUIPE = {
       name: 'Lucas Rodrigues',
       role: 'Corretor de Imóveis',
       creci: '',
-      phone: '5516981010004',
+      phone: '5516991957528',
       email: 'lucas@imobiliarialemos.com.br',
       photo: '/corretores/lucas-rodrigues.jpg',  // ← trocar foto aqui
       specialties: ['Residencial', 'Locação', 'Novos Empreendimentos'],
@@ -134,7 +134,7 @@ const EQUIPE = {
       name: 'Geraldo',
       role: 'Administrativo',
       creci: '',
-      phone: '551637230045',
+      phone: '5516981010004',
       email: 'geraldo@imobiliarialemos.com.br',
       photo: '/corretores/geraldo.jpg',  // ← trocar foto aqui
       specialties: ['Administração', 'Suporte Operacional'],

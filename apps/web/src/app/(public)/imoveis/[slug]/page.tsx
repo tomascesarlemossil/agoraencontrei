@@ -38,17 +38,17 @@ const LAND_FACE: Record<string, string> = {
 
 // ── Equipe Imobiliária Lemos — mapeamento de corretores por nome ─────────────
 const EQUIPE_LEMOS: Record<string, { name: string; phone: string; whatsapp: string; creci: string; cargo: string; avatar: string }> = {
-  'noemia':  { name: 'Noêmia Pires Lemos',        phone: '(16) 98101-0004', whatsapp: '5516981010004', creci: '279051-f', cargo: 'Diretora Fundadora',  avatar: '/corretores/noemia-icon-v2.jpg' },
-  'naira':   { name: 'Naira Cristina Lemos',       phone: '(16) 98101-0004', whatsapp: '5516981010004', creci: '279051-f', cargo: 'Diretoria',           avatar: '/corretores/naira-icon-v2.jpg' },
-  'nadia':   { name: 'Nádia Maria Cristina Lemos', phone: '(16) 98101-0004', whatsapp: '5516981010004', creci: '279051-f', cargo: 'Diretoria',           avatar: '/corretores/nadia-icon-v2.jpg' },
-  'nilton':  { name: 'Nilton Lemos',               phone: '(16) 98101-0004', whatsapp: '5516981010004', creci: '279051-f', cargo: 'Diretoria',           avatar: '/corretores/nilton-icon-v2.jpg' },
-  'tomas':   { name: 'Tomás César Lemos Silva',    phone: '(16) 98101-0004', whatsapp: '5516981010004', creci: '279051-f', cargo: 'Diretoria',           avatar: '/corretores/tomas-icon.jpg' },
-  'gabriel': { name: 'Gabriel Leal',               phone: '(16) 98101-0004', whatsapp: '5516981010004', creci: '279051-f', cargo: 'Corretor',            avatar: '/corretores/gabriel-icon-v2.jpg' },
-  'lorena':  { name: 'Lorena',                     phone: '(16) 98101-0004', whatsapp: '5516981010004', creci: '279051-f', cargo: 'Corretora',           avatar: '/corretores/lorena-icon.jpg' },
-  'laura':   { name: 'Laura',                      phone: '(16) 98101-0004', whatsapp: '5516981010004', creci: '279051-f', cargo: 'Corretora',           avatar: '/corretores/laura-icon.jpg' },
-  'lucas':   { name: 'Lucas',                      phone: '(16) 98101-0004', whatsapp: '5516981010004', creci: '279051-f', cargo: 'Corretor',            avatar: '/corretores/lucas-icon.jpg' },
-  'miriam':  { name: 'Miriam',                     phone: '(16) 98101-0004', whatsapp: '5516981010004', creci: '279051-f', cargo: 'Corretora',           avatar: '/corretores/miriam-icon.jpg' },
-  'geraldo': { name: 'Geraldo',                    phone: '(16) 98101-0004', whatsapp: '5516981010004', creci: '279051-f', cargo: 'Administrativo',      avatar: '/corretores/geraldo-icon.jpg' },
+  'noemia':  { name: 'Noêmia Pires Lemos',        phone: '(16) 98101-0005', whatsapp: '5516981010005', creci: '279051-F', cargo: 'Diretora Fundadora',      avatar: '/corretores/noemia-icon-v2.jpg'   },
+  'naira':   { name: 'Naira Cristina Lemos',       phone: '(16) 98101-0003', whatsapp: '5516981010003', creci: '',          cargo: 'Diretoria',                  avatar: '/corretores/naira-icon-v2.jpg'    },
+  'nadia':   { name: 'Nádia Maria Cristina Lemos', phone: '(16) 99253-3583', whatsapp: '5516992533583', creci: '61053-F',   cargo: 'Diretoria',                  avatar: '/corretores/nadia-icon-v2.jpg'    },
+  'nilton':  { name: 'Nilton Lemos',               phone: '(16) 99965-4949', whatsapp: '5516999654949', creci: '',          cargo: 'Diretoria',                  avatar: '/corretores/nilton-icon-v2.jpg'   },
+  'tomas':   { name: 'Tomás César Lemos Silva',    phone: '(16) 99311-6199', whatsapp: '5516993116199', creci: '279051-F',  cargo: 'Diretoria | Tecnologia',     avatar: '/corretores/tomas-lemos.jpg'      },
+  'gabriel': { name: 'Gabriel Leal',               phone: '(16) 99241-1378', whatsapp: '5516992411378', creci: '305711-F',  cargo: 'Corretor de Imóveis',       avatar: '/corretores/gabriel-icon-v2.jpg'  },
+  'lorena':  { name: 'Lorena Assis Sesso',         phone: '(16) 99108-3946', whatsapp: '5516991083946', creci: '',          cargo: 'Corretora de Imóveis',      avatar: '/corretores/lorena-sesso.jpg'     },
+  'laura':   { name: 'Laura Sesso',                phone: '(16) 99340-4117', whatsapp: '5516993404117', creci: '',          cargo: 'Corretora de Imóveis',      avatar: '/corretores/laura-sesso.jpg'      },
+  'lucas':   { name: 'Lucas Rodrigues',            phone: '(16) 99195-7528', whatsapp: '5516991957528', creci: '',          cargo: 'Corretor de Imóveis',       avatar: '/corretores/lucas-rodrigues.jpg'  },
+  'miriam':  { name: 'Miriam Soares Chagas',       phone: '(16) 99127-5404', whatsapp: '5516991275404', creci: '',          cargo: 'Corretora de Imóveis',      avatar: '/corretores/miriam-chagas.jpg'    },
+  'geraldo': { name: 'Geraldo',                    phone: '(16) 98101-0004', whatsapp: '5516981010004', creci: '',          cargo: 'Administrativo',             avatar: '/corretores/geraldo.jpg'          },
 }
 
 function findBrokerByName(captorName?: string | null) {

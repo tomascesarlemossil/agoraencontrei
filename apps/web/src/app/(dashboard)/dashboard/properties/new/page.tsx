@@ -144,6 +144,7 @@ const schema = z.object({
   documentationNotes:     z.string().optional(),
   isReserved:             z.boolean().default(false),
   authorizedPublish:      z.boolean().default(false),
+  showExactLocation:      z.boolean().default(false),
 })
 
 type FormData = z.infer<typeof schema>
@@ -216,7 +217,7 @@ export default function NewPropertyPage() {
       priceNegotiable: false, valueUnderConsultation: false, allowExchange: false,
       isFeatured: false, isPremium: false, closedCondo: false, signOnSite: false,
       exclusivityContract: false, documentationPending: false,
-      isReserved: false, authorizedPublish: false,
+      isReserved: false, authorizedPublish: false, showExactLocation: false,
       publishOlx: false, publishZap: false, publishVivaReal: false, publishFacebook: false,
       features: [],
     },
@@ -457,6 +458,25 @@ export default function NewPropertyPage() {
                 <Field label="Longitude">
                   <Input {...register('longitude')} type="number" step="any" placeholder="-47.654321" className={inputCls} />
                 </Field>
+              </div>
+              <div className="mt-3 p-3 rounded-lg border border-yellow-500/20 bg-yellow-500/5">
+                <Controller name="showExactLocation" control={control} render={({ field }) => (
+                  <label className="flex items-start gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={field.value}
+                      onChange={e => field.onChange(e.target.checked)}
+                      className="w-4 h-4 mt-0.5 rounded border-white/20 bg-white/5 text-yellow-500 cursor-pointer flex-shrink-0"
+                    />
+                    <div>
+                      <span className="text-sm font-semibold text-yellow-400">Exibir localização exata no mapa público</span>
+                      <p className="text-xs text-white/40 mt-0.5">
+                        Quando ativado, o pin do imóvel aparece no endereço exato no portal público.
+                        Por padrão, apenas o centróide do bairro é exibido para proteger a privacidade.
+                      </p>
+                    </div>
+                  </label>
+                )} />
               </div>
             </Section>
 

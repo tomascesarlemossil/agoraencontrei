@@ -326,6 +326,7 @@ export default function PropertyDetailPage() {
       documentationNotes: p.documentationNotes ?? '',
       isReserved: p.isReserved ?? false,
       authorizedPublish: p.authorizedPublish ?? false,
+      showExactLocation: p.showExactLocation ?? false,
     } : undefined,
   })
 
@@ -734,6 +735,25 @@ export default function PropertyDetailPage() {
                   <Field label="Longitude">
                     <Input {...register('longitude')} type="number" step="any" placeholder="-47.654321" className="bg-white/5 border-white/10 text-white h-9" />
                   </Field>
+                </div>
+                <div className="mt-3 p-3 rounded-lg border border-yellow-500/20 bg-yellow-500/5">
+                  <Controller name="showExactLocation" control={control} render={({ field }) => (
+                    <label className="flex items-start gap-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={field.value}
+                        onChange={e => field.onChange(e.target.checked)}
+                        className="w-4 h-4 mt-0.5 rounded border-white/20 bg-white/5 text-yellow-500 cursor-pointer flex-shrink-0"
+                      />
+                      <div>
+                        <span className="text-sm font-semibold text-yellow-400">Exibir localização exata no mapa público</span>
+                        <p className="text-xs text-white/40 mt-0.5">
+                          Quando ativado, o pin do imóvel aparece no endereço exato no portal público.
+                          Por padrão, apenas o centróide do bairro é exibido para proteger a privacidade.
+                        </p>
+                      </div>
+                    </label>
+                  )} />
                 </div>
               </Section>
 
