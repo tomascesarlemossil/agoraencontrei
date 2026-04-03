@@ -101,8 +101,8 @@ export function ScheduleVisitModal({ propertyId, propertyTitle, propertySlug }: 
     <>
       <button
         onClick={resetAndOpen}
-        className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-sm transition-all hover:brightness-110"
-        style={{ backgroundColor: '#1B2B5B', color: 'white' }}
+        className="flex items-center justify-center gap-2 w-full py-3.5 rounded-xl font-bold text-sm transition-all hover:scale-[1.02] hover:shadow-lg shadow-sm"
+        style={{ background: 'linear-gradient(135deg, #1B2B5B 0%, #2d4a8a 100%)', color: 'white' }}
       >
         <Calendar className="w-4 h-4" />
         Agendar Visita

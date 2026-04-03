@@ -10,6 +10,21 @@ const getClient = () => {
   return new Anthropic({ apiKey: env.ANTHROPIC_API_KEY })
 }
 
+/** Normalize image mediaType to values accepted by the Claude API */
+const ALLOWED_MEDIA_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'] as const
+type AllowedMediaType = typeof ALLOWED_MEDIA_TYPES[number]
+function normalizeMediaType(mt: string): AllowedMediaType | null {
+  const lower = (mt ?? '').toLowerCase().trim()
+  if (lower === 'image/jpg') return 'image/jpeg'
+  if (ALLOWED_MEDIA_TYPES.includes(lower as AllowedMediaType)) return lower as AllowedMediaType
+  // Try to infer from common aliases
+  if (lower.includes('jpeg') || lower.includes('jpg')) return 'image/jpeg'
+  if (lower.includes('png')) return 'image/png'
+  if (lower.includes('gif')) return 'image/gif'
+  if (lower.includes('webp')) return 'image/webp'
+  return null // unsupported type — skip this image
+}
+
 // ── PDF Extractor ────────────────────────────────────────────────────────────
 
 export interface PropertyExtract {
@@ -424,9 +439,11 @@ Retorne o HTML completo começando com <!DOCTYPE html>`
   // Add images if provided
   if (input.images?.length) {
     for (const img of input.images) {
+      const mediaType = normalizeMediaType(img.mediaType)
+      if (!mediaType) continue // skip unsupported types
       userContent.push({
         type: 'image',
-        source: { type: 'base64', media_type: img.mediaType, data: img.base64 },
+        source: { type: 'base64', media_type: mediaType, data: img.base64 },
       })
       userContent.push({ type: 'text', text: `Imagem acima: ${img.description}` })
     }
@@ -556,13 +573,19 @@ ADMINISTRATIVO (protocolo-documentos, regulamento-condominio, folha-rosto):
   const userContent: any[] = []
 
   if (input.images?.length) {
+    let addedImages = 0
     for (const img of input.images) {
+      const mediaType = normalizeMediaType(img.mediaType)
+      if (!mediaType) continue // skip unsupported types
       userContent.push({
         type: 'image',
-        source: { type: 'base64', media_type: img.mediaType, data: img.base64 },
+        source: { type: 'base64', media_type: mediaType, data: img.base64 },
       })
+      addedImages++
     }
-    userContent.push({ type: 'text', text: 'Extraia os dados das imagens acima (documentos pessoais, comprovantes, etc.)' })
+    if (addedImages > 0) {
+      userContent.push({ type: 'text', text: 'Extraia os dados das imagens acima (documentos pessoais, comprovantes, etc.)' })
+    }
   }
 
   userContent.push({

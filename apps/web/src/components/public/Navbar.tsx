@@ -10,6 +10,7 @@ const NAV_LINKS = [
   { href: '/imoveis?purpose=RENT', label: 'Alugar' },
   { href: '/imoveis', label: 'Todos os Imóveis' },
   { href: '/avaliacao', label: 'Avaliação Gratuita' },
+  { href: '/corretores', label: 'Corretores' },
   { href: '/blog', label: 'Blog' },
 ]
 

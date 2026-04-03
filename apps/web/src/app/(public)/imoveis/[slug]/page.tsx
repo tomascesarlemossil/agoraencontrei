@@ -469,26 +469,28 @@ export default async function PropertyDetailPage({ params }: { params: { slug: s
             )}
 
             {/* ── Action Buttons ────────────────────────────── */}
-            <div className="bg-white rounded-2xl border shadow-sm p-4" style={{ borderColor: '#ddd9d0' }}>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                <ScheduleVisitModal
-                  propertyId={p.id}
-                  propertyTitle={p.title ?? 'Imóvel'}
-                  propertySlug={p.slug ?? ''}
-                />
+            <div className="bg-white rounded-2xl border shadow-sm p-4 space-y-2.5" style={{ borderColor: '#ddd9d0' }}>
+              {/* Primary CTA: full width */}
+              <ScheduleVisitModal
+                propertyId={p.id}
+                propertyTitle={p.title ?? 'Imóvel'}
+                propertySlug={p.slug ?? ''}
+              />
+              {/* Secondary CTAs: row of smaller buttons */}
+              <div className="grid grid-cols-3 gap-2">
                 {youtubeId && (
                   <a href={p.videoUrl} target="_blank" rel="noreferrer"
-                    className="flex flex-col items-center justify-center gap-1.5 py-3.5 px-2 rounded-xl border-2 text-xs font-semibold transition-all hover:shadow-md hover:bg-gray-50"
+                    className="flex flex-col items-center justify-center gap-1.5 py-3 px-2 rounded-xl border-2 text-xs font-semibold transition-all hover:shadow-md hover:bg-gray-50"
                     style={{ borderColor: '#ddd9d0', color: '#1B2B5B' }}>
-                    <Video className="w-5 h-5" style={{ color: '#C9A84C' }} />
-                    Ver Vídeo
+                    <Video className="w-4 h-4" style={{ color: '#C9A84C' }} />
+                    Vídeo
                   </a>
                 )}
                 <a href={`https://wa.me/${whatsappNum}?text=${whatsappMsg}`} target="_blank" rel="noreferrer"
-                  className="flex flex-col items-center justify-center gap-1.5 py-3.5 px-2 rounded-xl border-2 text-xs font-semibold transition-all hover:shadow-md hover:bg-gray-50"
+                  className="flex flex-col items-center justify-center gap-1.5 py-3 px-2 rounded-xl border-2 text-xs font-semibold transition-all hover:shadow-md hover:bg-gray-50"
                   style={{ borderColor: '#ddd9d0', color: '#1B2B5B' }}>
-                  <Phone className="w-5 h-5" style={{ color: '#C9A84C' }} />
-                  Falar Corretor
+                  <Phone className="w-4 h-4" style={{ color: '#C9A84C' }} />
+                  Corretor
                 </a>
                 <PrintButton />
               </div>
