@@ -17,7 +17,7 @@ COPY apps/api/package.json ./apps/api/
 RUN pnpm install --frozen-lockfile
 
 # Cache bust — increment to force rebuild: v3
-ARG CACHE_BUST=3
+ARG CACHE_BUST=4
 
 # Copy source
 COPY packages/database ./packages/database
