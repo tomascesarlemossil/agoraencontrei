@@ -146,8 +146,12 @@ export default async function propertiesRoutes(app: FastifyInstance) {
   }, async (req, reply) => {
     const q = PropertyFilters.parse(req.query)
 
+    // Scope by company when authenticated; restrict to public-safe defaults when not
+    const isAuth = !!(req as any).user
     const where: any = {
-      ...(q.status      && { status: q.status }),
+      ...(isAuth  && { companyId: (req as any).user.cid }),
+      ...(!isAuth && { status: 'ACTIVE', authorizedPublish: true }),
+      ...(isAuth && q.status && { status: q.status }),
       ...(q.type        && { type: q.type }),
       ...(q.purpose     && { purpose: q.purpose }),
       ...(q.city        && { city: { contains: q.city, mode: 'insensitive' } }),

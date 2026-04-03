@@ -59,10 +59,10 @@ export default async function financeRoutes(app: FastifyInstance) {
       app.prisma.contract.count({ where: { companyId: cid, status: 'ACTIVE' } }),
       // Total de clientes
       app.prisma.client.count({ where: { companyId: cid } }),
-      // Aluguéis em atraso (total, sem filtro de mês — representa inadimplência real)
+      // Aluguéis em atraso (todos os LATE — representa inadimplência acumulada real)
       app.prisma.rental.count({ where: { companyId: cid, status: 'LATE' } }),
-      // Total de aluguéis do período de referência
-      app.prisma.rental.count({ where: { companyId: cid, dueDate: { gte: monthStart, lte: monthEnd } } }),
+      // Total geral de aluguéis (base para calcular % inadimplência)
+      app.prisma.rental.count({ where: { companyId: cid } }),
       // Próximos vencimentos (próximos 30 dias)
       app.prisma.rental.findMany({
         where: {
