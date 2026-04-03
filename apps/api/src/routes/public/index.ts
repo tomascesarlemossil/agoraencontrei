@@ -274,7 +274,7 @@ export default async function publicRoutes(app: FastifyInstance) {
 
     const baseWhere = {
       companyId: company.id,
-      status: 'ACTIVE',
+      status: 'ACTIVE' as const,
       authorizedPublish: true,
       id: { not: base.id },
     }
