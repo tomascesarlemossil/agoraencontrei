@@ -172,8 +172,11 @@ export default async function portalRoutes(app: FastifyInstance) {
 
     if (!doc.fileData) return reply.status(404).send({ error: 'NO_FILE' })
 
+    const ext = doc.mimeType === 'application/pdf' ? '.pdf' : doc.mimeType?.includes('sheet') ? '.xlsx' : '.doc'
+    const baseName = doc.name.replace(/[^a-zA-Z0-9._\- ]/g, '_')
+    const filename = baseName.toLowerCase().endsWith(ext) ? baseName : baseName + ext
     reply.header('Content-Type', doc.mimeType || 'application/pdf')
-    reply.header('Content-Disposition', `inline; filename="${doc.name.replace(/[^a-zA-Z0-9._\- ]/g, '_')}.pdf"`)
+    reply.header('Content-Disposition', `inline; filename="${filename}"`)
     return reply.send(doc.fileData)
   })
 }
