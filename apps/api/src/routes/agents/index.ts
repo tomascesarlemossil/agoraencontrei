@@ -13,6 +13,20 @@ import { env } from '../../utils/env.js'
 import { emitAutomation } from '../../services/automation.emitter.js'
 
 export default async function agentsRoutes(app: FastifyInstance) {
+  // GET /api/v1/agents/status — público, sem autenticação (deve vir ANTES do addHook)
+  app.get('/status', {
+    schema: { tags: ['agents'] },
+  }, async (_req, reply) => {
+    return reply.send({
+      configured: !!env.ANTHROPIC_API_KEY,
+      model: env.ANTHROPIC_API_KEY ? 'claude-3-5-sonnet-20241022' : null,
+      message: env.ANTHROPIC_API_KEY
+        ? 'Agentes de IA ativos e prontos.'
+        : 'ANTHROPIC_API_KEY não configurada. Acesse Railway → Settings → Variables para ativar.',
+    })
+  })
+
+  // Todas as rotas abaixo requerem autenticação
   app.addHook('preHandler', app.authenticate)
 
   const AI_NOT_CONFIGURED_RESPONSE = {
@@ -302,21 +316,7 @@ export default async function agentsRoutes(app: FastifyInstance) {
     return reply.send(jobs)
   })
 
-  // GET /api/v1/agents/status — verifica se a IA está configurada (sem autenticação)
-  app.get('/status', {
-    schema: { tags: ['agents'] },
-    onRequest: [],   // sobrescreve o preHandler global de auth para esta rota
-  }, async (_req, reply) => {
-    return reply.send({
-      configured: !!env.ANTHROPIC_API_KEY,
-      model: env.ANTHROPIC_API_KEY ? 'claude-3-5-sonnet-20241022' : null,
-      message: env.ANTHROPIC_API_KEY
-        ? 'Agentes de IA ativos e prontos.'
-        : 'ANTHROPIC_API_KEY não configurada. Acesse Railway → Settings → Variables para ativar.',
-    })
-  })
-
-  // POST /api/v1/agents/documents/identify — identify document type from NL + OCR images
+   // POST /api/v1/agents/documents/identify — identify document type from NL + OCR images
   // Also cross-references existing clients, contacts and properties in the DB
   app.post('/documents/identify', {
     schema: { tags: ['agents'], summary: 'Identify document type from natural language + images' },
