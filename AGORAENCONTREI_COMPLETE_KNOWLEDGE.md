@@ -461,6 +461,29 @@ Agente IA com history+edit, Lemosbank wizard 6 steps, SEO JSON-LD, KPI cards cli
 
 ---
 
+## 15.2. HISTÓRICO DE ALTERAÇÕES (2026-04-03) — Commit 4b8d316 (FINAL)
+
+### Repasses — Implementação Completa
+- Campo `repassePaidAt DateTime?` adicionado ao modelo `Rental` no schema Prisma
+- Migration `20260403000001_add_repasse_paid_at` criada e commitada
+- Prisma Client regenerado com novos tipos TypeScript
+- Endpoint `PATCH /api/v1/finance/rentals/:id/repasse-paid` implementado corretamente
+- Endpoint `PATCH /api/v1/finance/rentals/:id/repasse-estorno` implementado
+- `/repasses` usa `repassePaidAt` real (não mais status PAID do aluguel)
+- Frontend: `handleMarcarPago` usa `financeApi.marcarRepassePago` com validação de status
+- `lib/api.ts`: métodos `marcarRepassePago` e `estornarRepasse` adicionados
+- `audit.service`: `rental.repasse_paid` e `rental.repasse_estorno` adicionados
+
+### Homepage
+- WhatsApp individuais dos 4 corretores da homepage corrigidos (Noêmia, Naira, Nádia, Gabriel)
+
+### Build de Produção
+- Zero erros TypeScript (backend + frontend)
+- 54 páginas geradas com sucesso
+- Bug corrigido: `MembroCard` extraído para Client Component (resolvia erro de build do Next.js 14)
+
+---
+
 ## 15.1. HISTÓRICO DE ALTERAÇÕES (2026-04-03) — Commit 92f0a2a
 
 ### Corretores
