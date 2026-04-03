@@ -114,6 +114,7 @@ const PUBLIC_PROPERTY_SELECT = {
   region: true,
   referencePoint: true,
   yearLastReformed: true,
+  captorName: true,
   company: {
     select: {
       id: true,

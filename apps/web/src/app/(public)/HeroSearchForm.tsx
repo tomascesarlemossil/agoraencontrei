@@ -41,13 +41,7 @@ const BEDROOM_OPTIONS = [
   { label: '5+ quartos', value: '5' },
 ]
 
-// AI quick suggestions
-const AI_EXAMPLES = [
-  'casa 3 quartos no Centro até R$ 500 mil',
-  'apartamento 2 quartos para alugar até R$ 1.500/mês',
-  'terreno 500m² em Franca',
-  'chácara para comprar até 1 milhão',
-]
+// AI_EXAMPLES removed — clean UI without example pills
 
 async function interpretSearch(q: string): Promise<Record<string, string>> {
   try {
@@ -394,17 +388,36 @@ export function HeroSearchForm() {
         </form>
       </div>
 
-      {/* Map search option */}
+      {/* Map search option — sophisticated CTA button */}
       <button
         type="button"
         onClick={handleMapSearch}
-        className="mt-4 flex items-center gap-2 mx-auto text-sm font-medium transition-all hover:opacity-80"
-        style={{ color: 'rgba(255,255,255,0.6)' }}
+        className="group mt-5 w-full relative flex items-center justify-between gap-4 px-6 py-4 rounded-2xl overflow-hidden transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl shadow-lg"
+        style={{ background: 'linear-gradient(135deg, rgba(27,43,91,0.92) 0%, rgba(45,74,138,0.95) 60%, rgba(27,43,91,0.92) 100%)', backdropFilter: 'blur(8px)', border: '1px solid rgba(201,168,76,0.3)' }}
       >
-        <Map className="w-4 h-4" />
-        <span style={{ textDecoration: 'underline', textUnderlineOffset: 3 }}>
-          Desenhar área no mapa
-        </span>
+        {/* Animated dot pattern background */}
+        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle, rgba(201,168,76,0.8) 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
+        {/* Shimmer on hover */}
+        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700" style={{ background: 'linear-gradient(105deg, transparent 35%, rgba(255,255,255,0.06) 50%, transparent 65%)' }} />
+        {/* Left: icon + text */}
+        <div className="relative z-10 flex items-center gap-3">
+          <div className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: 'rgba(201,168,76,0.2)', border: '1px solid rgba(201,168,76,0.5)' }}>
+            <Map className="w-5 h-5" style={{ color: '#C9A84C' }} />
+          </div>
+          <div className="text-left">
+            <p className="text-white font-bold text-sm leading-tight">Buscar imóveis no Mapa</p>
+            <p className="text-xs mt-0.5" style={{ color: 'rgba(201,168,76,0.85)' }}>Desenhe sua área ideal e explore por bairro</p>
+          </div>
+        </div>
+        {/* Right: animated pill button */}
+        <div className="relative z-10 flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-xs transition-all group-hover:scale-105" style={{ background: 'linear-gradient(135deg, #C9A84C, #e6c96a)', color: '#1B2B5B' }}>
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-current opacity-75" />
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-current" />
+          </span>
+          Abrir Mapa
+          <ArrowRight className="w-3.5 h-3.5" />
+        </div>
       </button>
     </div>
   )

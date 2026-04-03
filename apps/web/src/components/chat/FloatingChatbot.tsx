@@ -101,10 +101,18 @@ export function FloatingChatbot() {
   const [input, setInput] = useState('')
   const [isTyping, setIsTyping] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, isTyping])
+
+  // Auto-focus input when chat opens
+  useEffect(() => {
+    if (open) {
+      setTimeout(() => inputRef.current?.focus(), 100)
+    }
+  }, [open])
 
   function sendMessage(text: string) {
     if (!text.trim() || isTyping) return
@@ -112,6 +120,8 @@ export function FloatingChatbot() {
     setMessages(prev => [...prev, { role: 'user', text }])
     setInput('')
     setIsTyping(true)
+    // Re-focus input after clearing
+    setTimeout(() => inputRef.current?.focus(), 50)
 
     const { message, redirect, delay } = getBotResponse(cleanText)
 
@@ -249,13 +259,16 @@ export function FloatingChatbot() {
           {/* Input */}
           <div className="bg-white border-t flex items-center gap-2 p-3" style={{ borderColor: '#f0ece4' }}>
             <input
+              ref={inputRef}
               value={input}
               onChange={e => setInput(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && sendMessage(input)}
-              placeholder="Digite sua mensagem..."
-              className="flex-1 text-xs px-3 py-2 rounded-xl border focus:outline-none focus:ring-1 focus:ring-[#1B2B5B] bg-white text-gray-800 placeholder-gray-400"
-              style={{ borderColor: '#e0dbd0' }}
-              disabled={isTyping}
+              onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(input) } }}
+              placeholder={isTyping ? 'Aguarde...' : 'Digite sua mensagem...'}
+              className="flex-1 text-xs px-3 py-2 rounded-xl border focus:outline-none focus:ring-1 focus:ring-[#1B2B5B] placeholder-gray-400"
+              style={{ borderColor: '#e0dbd0', backgroundColor: '#ffffff', color: '#111827', caretColor: '#1B2B5B', opacity: 1 }}
+              autoComplete="off"
+              autoCorrect="off"
+              spellCheck={false}
             />
             <button
               onClick={() => sendMessage(input)}

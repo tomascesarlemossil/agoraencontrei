@@ -36,6 +36,30 @@ const LAND_FACE: Record<string, string> = {
   NORTHEAST:'Nordeste', NORTHWEST:'Noroeste', SOUTHEAST:'Sudeste', SOUTHWEST:'Sudoeste',
 }
 
+// ── Equipe Imobiliária Lemos — mapeamento de corretores por nome ─────────────
+const EQUIPE_LEMOS: Record<string, { name: string; phone: string; whatsapp: string; creci: string; cargo: string; avatar: string }> = {
+  'noemia':  { name: 'Noêmia Pires Lemos',        phone: '(16) 98101-0004', whatsapp: '5516981010004', creci: '279051-f', cargo: 'Diretora Fundadora',  avatar: '/corretores/noemia-icon-v2.jpg' },
+  'naira':   { name: 'Naira Cristina Lemos',       phone: '(16) 98101-0004', whatsapp: '5516981010004', creci: '279051-f', cargo: 'Diretoria',           avatar: '/corretores/naira-icon-v2.jpg' },
+  'nadia':   { name: 'Nádia Maria Cristina Lemos', phone: '(16) 98101-0004', whatsapp: '5516981010004', creci: '279051-f', cargo: 'Diretoria',           avatar: '/corretores/nadia-icon-v2.jpg' },
+  'nilton':  { name: 'Nilton Lemos',               phone: '(16) 98101-0004', whatsapp: '5516981010004', creci: '279051-f', cargo: 'Diretoria',           avatar: '/corretores/nilton-icon-v2.jpg' },
+  'tomas':   { name: 'Tomás César Lemos Silva',    phone: '(16) 98101-0004', whatsapp: '5516981010004', creci: '279051-f', cargo: 'Diretoria',           avatar: '/corretores/tomas-icon.jpg' },
+  'gabriel': { name: 'Gabriel Leal',               phone: '(16) 98101-0004', whatsapp: '5516981010004', creci: '279051-f', cargo: 'Corretor',            avatar: '/corretores/gabriel-icon-v2.jpg' },
+  'lorena':  { name: 'Lorena',                     phone: '(16) 98101-0004', whatsapp: '5516981010004', creci: '279051-f', cargo: 'Corretora',           avatar: '/corretores/lorena-icon.jpg' },
+  'laura':   { name: 'Laura',                      phone: '(16) 98101-0004', whatsapp: '5516981010004', creci: '279051-f', cargo: 'Corretora',           avatar: '/corretores/laura-icon.jpg' },
+  'lucas':   { name: 'Lucas',                      phone: '(16) 98101-0004', whatsapp: '5516981010004', creci: '279051-f', cargo: 'Corretor',            avatar: '/corretores/lucas-icon.jpg' },
+  'miriam':  { name: 'Miriam',                     phone: '(16) 98101-0004', whatsapp: '5516981010004', creci: '279051-f', cargo: 'Corretora',           avatar: '/corretores/miriam-icon.jpg' },
+  'geraldo': { name: 'Geraldo',                    phone: '(16) 98101-0004', whatsapp: '5516981010004', creci: '279051-f', cargo: 'Administrativo',      avatar: '/corretores/geraldo-icon.jpg' },
+}
+
+function findBrokerByName(captorName?: string | null) {
+  if (!captorName) return null
+  const lower = captorName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  for (const [key, broker] of Object.entries(EQUIPE_LEMOS)) {
+    if (lower.includes(key)) return broker
+  }
+  return null
+}
+
 // Feature categories matching Univen layout
 const FEATURE_CATEGORIES: { label: string; keys: string[] }[] = [
   { label: 'Básico',     keys: ['Água','Energia','Gás','Internet','Acessível'] },
@@ -293,10 +317,19 @@ export default async function PropertyDetailPage({ params }: { params: { slug: s
 
   const p = property
   const allImages = [p.coverImage, ...(p.images ?? [])].filter(Boolean)
-  const broker = p.user
-  const whatsappNum = broker?.phone
-    ? `55${broker.phone.replace(/\D/g, '').replace(/^0/, '')}`
-    : '5516981010004'
+  // Corretor: usa user vinculado, depois tenta captor por nome, depois default
+  const brokerFromCaptor = !p.user ? findBrokerByName((p as any).captorName) : null
+  const broker = p.user ?? (brokerFromCaptor ? {
+    id: '',
+    name: brokerFromCaptor.name,
+    phone: brokerFromCaptor.phone,
+    email: '',
+    avatarUrl: brokerFromCaptor.avatar,
+    creciNumber: brokerFromCaptor.creci,
+    cargo: brokerFromCaptor.cargo,
+  } : null)
+  const whatsappNum = brokerFromCaptor?.whatsapp
+    ?? (broker?.phone ? `55${broker.phone.replace(/\D/g, '').replace(/^0/, '')}` : '5516981010004')
 
   const propertyUrl = `${SITE_URL}/imoveis/${p.slug}`
   const whatsappMsg = encodeURIComponent(`Olá! Tenho interesse no imóvel:\n${p.title}\nRef: ${p.reference ?? p.slug}\n${propertyUrl}`)
@@ -898,7 +931,7 @@ function BrokerCard({ broker, whatsappNum, whatsappMsg, visitMsg, p }: {
           )}
           <div className="min-w-0">
             <p className="font-bold text-sm truncate" style={{ color: '#1B2B5B' }}>{broker?.name ?? 'Imobiliária Lemos'}</p>
-            <p className="text-xs text-gray-400">Corretor de Imóveis</p>
+            <p className="text-xs text-gray-400">{(broker as any)?.cargo ?? 'Corretor de Imóveis'}</p>
             {broker?.creciNumber && <p className="text-xs font-medium" style={{ color: '#C9A84C' }}>CRECI {broker.creciNumber}</p>}
             {!broker?.creciNumber && <p className="text-xs font-medium" style={{ color: '#C9A84C' }}>CRECI 279051-f</p>}
           </div>
