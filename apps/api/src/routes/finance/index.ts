@@ -347,38 +347,57 @@ export default async function financeRoutes(app: FastifyInstance) {
       include: {
         contractsAsTenant: {
           orderBy: { startDate: 'desc' },
-          take: 20,
+          take: 50,
           include: {
             landlord:  { select: { id: true, name: true, phone: true } },
-            property:  { select: { id: true, reference: true, type: true } },
+            property:  { select: { id: true, reference: true, type: true, title: true, neighborhood: true, city: true } },
             _count:    { select: { documents: true } },
           },
         },
         contractsAsLandlord: {
           orderBy: { startDate: 'desc' },
-          take: 20,
+          take: 50,
           include: {
             tenant:   { select: { id: true, name: true, phone: true } },
-            property: { select: { id: true, reference: true, type: true } },
+            property: { select: { id: true, reference: true, type: true, title: true, neighborhood: true, city: true } },
             _count:   { select: { documents: true } },
           },
         },
         contractsAsGuarantor: {
           orderBy: { startDate: 'desc' },
-          take: 10,
+          take: 20,
           include: {
-            property: { select: { id: true, reference: true, type: true } },
+            property: { select: { id: true, reference: true, type: true, title: true } },
           },
         },
         documents: {
           select: { id: true, name: true, type: true, month: true, year: true, mimeType: true, fileSize: true, createdAt: true },
           orderBy: { createdAt: 'desc' },
-          take: 30,
+          take: 50,
         },
       },
     })
     if (!client) return reply.status(404).send({ error: 'NOT_FOUND' })
-    return reply.send(client)
+
+    // Also fetch leads by email/phone match (cross-reference)
+    const leadsWhere: any = { companyId: req.user.cid }
+    if ((client as any).email || (client as any).phoneMobile || (client as any).phone) {
+      leadsWhere.OR = [
+        ...((client as any).email ? [{ email: { contains: (client as any).email, mode: 'insensitive' } }] : []),
+        ...((client as any).phoneMobile ? [{ phone: { contains: (client as any).phoneMobile } }] : []),
+        ...((client as any).phone ? [{ phone: { contains: (client as any).phone } }] : []),
+      ]
+    }
+    const leads = leadsWhere.OR?.length > 0
+      ? await app.prisma.lead.findMany({
+          where: leadsWhere,
+          select: { id: true, name: true, email: true, phone: true, status: true, notes: true, metadata: true, createdAt: true },
+          orderBy: { createdAt: 'desc' },
+          take: 20,
+        })
+      : []
+
+    return reply.send({ ...client, leads })
   })
 
   // GET /api/v1/finance/rentals — aluguéis paginados com info de contrato

@@ -7,6 +7,7 @@ import { useParams, useRouter } from 'next/navigation'
 import {
   ArrowLeft, Users, Phone, Mail, MapPin, BadgeCheck, FileText,
   Building2, User, Home, Calendar, Briefcase, CreditCard, Hash, Download,
+  MessageSquare, Clock, TrendingUp,
 } from 'lucide-react'
 import { financeApi, type LegacyClient, type LegacyContract } from '@/lib/api'
 
@@ -279,6 +280,50 @@ export default function ClienteDetailPage() {
               {c.contractsAsGuarantor?.map(x => (
                 <ContractRow key={x.id} c={x} role="guarantor" />
               ))}
+            </div>
+          )}
+
+          {/* Leads / Histórico de interesse */}
+          {(c as any).leads?.length > 0 && (
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+              <h2 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <TrendingUp className="w-4 h-4 text-orange-400" />
+                Histórico de Leads / Interesse em Imóveis
+                <span className="ml-auto text-xs text-gray-400 font-normal">{(c as any).leads.length} registros</span>
+              </h2>
+              <div className="space-y-2 max-h-64 overflow-y-auto">
+                {(c as any).leads.map((lead: any) => (
+                  <Link
+                    key={lead.id}
+                    href={`/dashboard/leads/${lead.id}`}
+                    className="flex items-start gap-3 p-3 hover:bg-gray-50 rounded-xl transition-colors border border-gray-50"
+                  >
+                    <MessageSquare className="w-4 h-4 text-orange-400 mt-0.5 shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-xs font-semibold text-gray-700">{lead.name || 'Anônimo'}</span>
+                        {lead.status && (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700 font-medium">
+                            {lead.status}
+                          </span>
+                        )}
+                        {(lead.metadata as any)?.propertyRef && (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-600 font-mono">
+                            Ref: {(lead.metadata as any).propertyRef}
+                          </span>
+                        )}
+                      </div>
+                      {lead.notes && (
+                        <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">{lead.notes}</p>
+                      )}
+                      <p className="text-[10px] text-gray-400 mt-0.5 flex items-center gap-1">
+                        <Clock className="w-2.5 h-2.5" />
+                        {new Date(lead.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' })}
+                      </p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
             </div>
           )}
 
