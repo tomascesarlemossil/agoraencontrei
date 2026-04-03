@@ -84,7 +84,7 @@ interface Filters {
 }
 
 const DEFAULT_FILTERS: Filters = {
-  search: '', status: '', purpose: '', type: '',
+  search: '', status: 'ACTIVE', purpose: '', type: '',
   city: '', neighborhood: '', minPrice: '', maxPrice: '',
   bedrooms: '', minArea: '', maxArea: '',
   sortBy: 'createdAt', sortOrder: 'desc',

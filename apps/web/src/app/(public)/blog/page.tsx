@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { Calendar, Tag, Eye, ArrowRight, TrendingUp, Home, DollarSign, Gavel, BookOpen, Building } from 'lucide-react'
+import { TrendingUp, Home, DollarSign, Gavel, BookOpen, Building } from 'lucide-react'
+import { BlogFeed } from './BlogFeed'
 
 export const metadata: Metadata = {
   title: 'Blog Imobiliário | Imobiliária Lemos — Dicas, Notícias e Mercado',
@@ -40,62 +41,6 @@ async function fetchPosts(category?: string) {
   }
 }
 
-function CategoryBadge({ category }: { category: string | null }) {
-  const cat = CATEGORIES.find(c => c.key === category)
-  if (!cat || !cat.key) return null
-  return (
-    <span className="inline-block px-2 py-0.5 rounded-full text-xs font-semibold text-white" style={{ backgroundColor: cat.color }}>
-      {cat.label}
-    </span>
-  )
-}
-
-function extractYouTubeId(url: string): string | null {
-  const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([^&\s?#]+)/)
-  return match ? match[1] : null
-}
-
-function PostCard({ post }: { post: any }) {
-  const date = post.publishedAt ? new Date(post.publishedAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' }) : ''
-  const videoId = post.videoUrl ? extractYouTubeId(post.videoUrl) : null
-  return (
-    <Link href={`/blog/${post.slug}`} className="group bg-white rounded-2xl overflow-hidden border hover:shadow-xl hover:border-transparent transition-all duration-300" style={{ borderColor: '#e8e4dc' }}>
-      {videoId ? (
-        <div className="w-full h-48 relative overflow-hidden">
-          <iframe
-            src={`https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&loop=1&playlist=${videoId}&controls=0&modestbranding=1&rel=0`}
-            className="absolute inset-0 w-full h-full border-0"
-            allow="autoplay; encrypted-media"
-            allowFullScreen
-            title={post.title}
-          />
-        </div>
-      ) : post.coverImage ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={post.coverImage} alt={post.title} className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-500" />
-      ) : (
-        <div className="w-full h-48 flex items-center justify-center" style={{ backgroundColor: '#f0ece4' }}>
-          <Building className="w-12 h-12 opacity-20" style={{ color: '#1B2B5B' }} />
-        </div>
-      )}
-      <div className="p-4">
-        <div className="flex items-center gap-2 mb-2">
-          <CategoryBadge category={post.category} />
-          {post.source && <span className="text-xs text-gray-400">{post.source}</span>}
-        </div>
-        <h2 className="font-bold text-gray-900 line-clamp-2 group-hover:text-[#1B2B5B] transition-colors leading-snug mb-2">
-          {post.title}
-        </h2>
-        {post.excerpt && <p className="text-sm text-gray-500 line-clamp-2 mb-3">{post.excerpt}</p>}
-        <div className="flex items-center gap-3 text-xs text-gray-400">
-          {date && <span className="flex items-center gap-1"><Calendar className="w-3 h-3" /> {date}</span>}
-          {post.views > 0 && <span className="flex items-center gap-1"><Eye className="w-3 h-3" /> {post.views}</span>}
-        </div>
-      </div>
-    </Link>
-  )
-}
-
 export default async function BlogPage({ searchParams }: { searchParams: { category?: string } }) {
   const { data: posts } = await fetchPosts(searchParams.category)
 
@@ -107,8 +52,7 @@ export default async function BlogPage({ searchParams }: { searchParams: { categ
           Blog Imobiliário
         </h1>
         <p className="text-gray-500 max-w-2xl mx-auto">
-          Notícias, dicas e tudo sobre o mercado imobiliário de Franca e região.
-          Compra, venda, aluguel, financiamento, leilões e legislação.
+          Notícias, dicas e vídeos sobre o mercado imobiliário de Franca e região.
         </p>
       </div>
 
@@ -132,28 +76,15 @@ export default async function BlogPage({ searchParams }: { searchParams: { categ
         })}
       </div>
 
-      {/* SEO Keywords section */}
-      <div className="hidden">
-        {/* Hidden keyword cloud for SEO */}
+      {/* SEO hidden keywords */}
+      <div className="hidden" aria-hidden="true">
         imóveis franca sp, casas para vender franca, apartamentos aluguel franca,
-        imobiliária franca creci, financiamento caixa econômica, financiamento imobiliário,
-        simulação financiamento, fgts imóvel, minha casa minha vida, leilão judicial imóvel,
-        leilão extrajudicial, ITBI franca, IPTU franca, prefeitura franca imóveis,
-        administração de imóveis franca, vistoria imóvel, contrato locação, lei do inquilinato,
-        investimento imóvel, renda passiva imóvel, imóvel comercial franca
+        imobiliária franca creci, financiamento caixa econômica, ITBI franca, IPTU franca,
+        administração de imóveis franca, vistoria imóvel, contrato locação, lei do inquilinato
       </div>
 
-      {posts.length === 0 ? (
-        <div className="text-center py-20">
-          <p className="text-4xl mb-4">📰</p>
-          <p className="text-gray-500 text-lg">Nenhum artigo publicado ainda.</p>
-          <p className="text-gray-400 text-sm mt-1">Volte em breve!</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {posts.map((post: any) => <PostCard key={post.id} post={post} />)}
-        </div>
-      )}
+      {/* Feed with autoplay */}
+      <BlogFeed posts={posts ?? []} />
     </div>
   )
 }
