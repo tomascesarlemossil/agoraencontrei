@@ -13,8 +13,6 @@
  */
 
 const { PrismaClient } = require('/Users/tomaslemos/Downloads/squads/agoraencontrei/packages/database/node_modules/@prisma/client');
-const https = require('https');
-const http = require('http');
 const fs = require('fs');
 const path = require('path');
 
@@ -23,8 +21,8 @@ const prisma = new PrismaClient({
 });
 const COMPANY_ID = 'cmnhzieqf0000mx1cqcqgfv4n';
 const CACHE_FILE = path.join(__dirname, '.gallery-cache.json');
-const CONCURRENCY = 4;
-const DELAY_MS = 350;
+const CONCURRENCY = 10;
+const DELAY_MS = 150;
 
 const FAKE_PATTERNS = [
   'send.png', 'telefone.png', 'logotopo.png', 'foto_vazio.png',
@@ -46,28 +44,21 @@ function saveCache() {
   fs.writeFileSync(CACHE_FILE, JSON.stringify(cache, null, 2));
 }
 
-function fetchPage(url) {
-  return new Promise((resolve) => {
-    const mod = url.startsWith('https') ? https : http;
-    const req = mod.get(url, {
+async function fetchPage(url) {
+  try {
+    const res = await fetch(url, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/120 Safari/537.36',
         'Accept': 'text/html,*/*',
       },
-      timeout: 12000,
-    }, (res) => {
-      // Follow redirects up to 3 times
-      if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
-        return fetchPage(res.headers.location).then(resolve).catch(() => resolve(null));
-      }
-      if (res.statusCode !== 200) { res.resume(); return resolve(null); }
-      const chunks = [];
-      res.on('data', c => chunks.push(c));
-      res.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')));
+      redirect: 'follow',
+      signal: AbortSignal.timeout(12000),
     });
-    req.on('error', () => resolve(null));
-    req.on('timeout', () => { req.destroy(); resolve(null); });
-  });
+    if (!res.ok) return null;
+    return await res.text();
+  } catch {
+    return null;
+  }
 }
 
 function extractPhotos(html) {
