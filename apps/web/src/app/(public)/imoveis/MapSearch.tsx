@@ -423,11 +423,13 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
           {!drawing && polygon.length === 0 && (
             <button
               onClick={startDrawing}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold shadow-lg transition-all hover:brightness-110"
-              style={{ backgroundColor: '#1B2B5B', color: 'white' }}
+              className="group relative flex items-center gap-2.5 px-5 py-3 rounded-2xl text-sm font-bold shadow-2xl transition-all hover:scale-105 overflow-hidden"
+              style={{ background: 'linear-gradient(135deg, #1B2B5B 0%, #2d4a8a 100%)', color: 'white' }}
             >
-              <PenLine className="w-4 h-4" />
-              Desenhar área
+              <span className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                style={{ background: 'linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.15) 50%, transparent 60%)' }} />
+              <PenLine className="w-4 h-4 relative z-10" />
+              <span className="relative z-10">Desenhar minha área</span>
             </button>
           )}
           {drawing && (
@@ -490,11 +492,11 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
               {properties.length > 0 && (
                 <button
                   onClick={goToListings}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold hover:brightness-110"
-                  style={{ backgroundColor: '#C9A84C', color: '#1B2B5B' }}
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold shadow-md hover:scale-105 transition-all"
+                  style={{ background: 'linear-gradient(135deg, #C9A84C, #e6c96a)', color: '#1B2B5B' }}
                 >
                   <Search className="w-3.5 h-3.5" />
-                  Ver todos
+                  Ver todos os imóveis →
                 </button>
               )}
               <button onClick={() => setSelectedNeighborhoods([])} className="p-1.5 rounded-lg hover:bg-gray-100">
