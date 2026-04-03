@@ -12,7 +12,9 @@ const DRY_RUN = process.argv.includes('--dry-run')
 const FORCE = process.argv.includes('--force')
 const STEPS_ARG = process.argv.find(a => a.startsWith('--step='))
 const STEPS = STEPS_ARG ? STEPS_ARG.replace('--step=', '').split(',') : null
-const JSON_DIR = path.resolve(__dirname, '../../../data/uniloc/json')
+const JSON_DIR = path.resolve(process.cwd(), '../../data/uniloc/json')
+
+
 const prisma = new PrismaClient()
 
 function loadJSON<T = any>(name: string): T[] {
