@@ -1345,7 +1345,7 @@ model Document {
   type         String    // BOLETO | EXTRATO | REAJUSTE | FINANCEIRO | CONTRATO | OUTROS
   category     String?
   name         String
-  month        Int?
+  month        String?   // stored as text (e.g. "04.2026", "MARÇO", or numeric month)
   year         Int?
   fileData     Bytes?
   mimeType     String?
