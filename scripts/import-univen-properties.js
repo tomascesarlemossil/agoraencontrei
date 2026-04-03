@@ -64,7 +64,8 @@ function mapStatus(s) {
 function parseBRL(v) {
   if (!v || !v.trim()) return null;
   const n = parseFloat(v.replace(/\./g, '').replace(',', '.'));
-  return isNaN(n) || n === 0 ? null : n;
+  if (isNaN(n) || n === 0) return null;
+  return Math.min(n, 9999999999.99); // cap at DECIMAL(12,2) max
 }
 
 function parseNum(v) {
@@ -354,8 +355,8 @@ async function main() {
           $21, $22, $23, $24,
           $25, $26, $27, $28, $29,
           $30, $31,
-          $32,
-          CASE WHEN $32 IS NOT NULL THEN ARRAY[$32]::text[] ELSE ARRAY[]::text[] END,
+          $32::text,
+          CASE WHEN $32::text IS NOT NULL THEN ARRAY[$32::text] ELSE ARRAY[]::text[] END,
           string_to_array($33, '|||'),
           string_to_array($34, '|||'),
           '{}'::jsonb,
