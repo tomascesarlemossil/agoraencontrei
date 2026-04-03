@@ -194,6 +194,97 @@ export default async function reportsRoutes(app: FastifyInstance) {
     })
   })
 
+  // GET /api/v1/reports/leads — lead funnel report by period
+  app.get('/leads', {
+    schema: { tags: ['reports'], summary: 'Lead funnel report' },
+  }, async (req, reply) => {
+    const q = PeriodQuery.parse(req.query)
+    const cid = req.user.cid
+
+    const startDate = q.month
+      ? new Date(q.year, q.month - 1, 1)
+      : new Date(q.year, 0, 1)
+    const endDate = q.month
+      ? new Date(q.year, q.month, 0, 23, 59, 59)
+      : new Date(q.year, 11, 31, 23, 59, 59)
+
+    const periodWhere = { companyId: cid, createdAt: { gte: startDate, lte: endDate } }
+
+    const [
+      total,
+      byStatus,
+      bySource,
+      byBroker,
+      byMonth,
+      recentLeads,
+    ] = await Promise.all([
+      app.prisma.lead.count({ where: periodWhere }),
+
+      // Count by status
+      app.prisma.lead.groupBy({
+        by: ['status'],
+        where: periodWhere,
+        _count: { id: true },
+      }),
+
+      // Count by source
+      app.prisma.lead.groupBy({
+        by: ['source'],
+        where: periodWhere,
+        _count: { id: true },
+        orderBy: { _count: { id: 'desc' } },
+      }),
+
+      // Count by broker
+      app.prisma.lead.groupBy({
+        by: ['brokerId'],
+        where: { ...periodWhere, brokerId: { not: null } },
+        _count: { id: true },
+        orderBy: { _count: { id: 'desc' } },
+        take: 10,
+      }),
+
+      // Leads per month for chart
+      app.prisma.$queryRaw<Array<{ month: string; count: bigint }>>`
+        SELECT TO_CHAR("createdAt", 'YYYY-MM') AS month, COUNT(*)::bigint AS count
+        FROM leads
+        WHERE "companyId" = ${cid}
+          AND "createdAt" >= ${startDate}
+          AND "createdAt" <= ${endDate}
+        GROUP BY month ORDER BY month
+      `,
+
+      // 5 most recent
+      app.prisma.lead.findMany({
+        where: periodWhere,
+        select: { id: true, name: true, phone: true, source: true, status: true, createdAt: true },
+        orderBy: { createdAt: 'desc' },
+        take: 5,
+      }),
+    ])
+
+    // Resolve broker names
+    const brokerIds = byBroker.map(b => b.brokerId).filter(Boolean) as string[]
+    const brokers = await app.prisma.user.findMany({
+      where: { id: { in: brokerIds } },
+      select: { id: true, name: true, avatarUrl: true },
+    })
+    const brokerMap = Object.fromEntries(brokers.map(b => [b.id, b]))
+
+    return reply.send({
+      period: { year: q.year, month: q.month, startDate, endDate },
+      total,
+      byStatus:  byStatus.map(r => ({ status: r.status, count: r._count.id })),
+      bySource:  bySource.map(r => ({ source: r.source, count: r._count.id })),
+      byBroker:  byBroker.map(r => ({
+        broker: brokerMap[r.brokerId!] ?? { id: r.brokerId, name: 'Sem corretor' },
+        count: r._count.id,
+      })),
+      byMonth:   byMonth.map(r => ({ month: r.month, count: Number(r.count) })),
+      recentLeads,
+    })
+  })
+
   // GET /api/v1/reports/broker/:id — individual broker report
   app.get('/broker/:id', {
     schema: { tags: ['reports'], summary: 'Broker performance report' },

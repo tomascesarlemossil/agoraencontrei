@@ -85,6 +85,66 @@ export default async function socialRoutes(app: FastifyInstance) {
     })
   })
 
+  // GET /api/v1/social/instagram — synced Instagram posts (from blog table)
+  app.get('/instagram', { preHandler: [app.authenticate] }, async (req, reply) => {
+    const companyId = await resolveCompanyId(app)
+    if (!companyId) return reply.status(503).send({ error: 'NO_COMPANY' })
+
+    const q = req.query as { limit?: string; page?: string; account?: string }
+    const limit = Math.min(parseInt(q.limit ?? '20', 10), 100)
+    const page  = Math.max(parseInt(q.page  ?? '1',  10), 1)
+
+    const where: any = {
+      companyId,
+      source: { in: ['instagram', 'imobiliarialemos', 'tomaslemosbr'] },
+      ...(q.account && { source: q.account }),
+    }
+
+    const [total, items] = await Promise.all([
+      app.prisma.blogPost.count({ where }),
+      app.prisma.blogPost.findMany({
+        where,
+        orderBy: { publishedAt: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+        select: {
+          id: true, title: true, slug: true, coverImage: true,
+          source: true, sourceUrl: true, publishedAt: true, createdAt: true,
+        },
+      }),
+    ])
+
+    return reply.send({ data: items, meta: { total, page, limit, totalPages: Math.ceil(total / limit) } })
+  })
+
+  // GET /api/v1/social/youtube — synced YouTube videos (from blog table)
+  app.get('/youtube', { preHandler: [app.authenticate] }, async (req, reply) => {
+    const companyId = await resolveCompanyId(app)
+    if (!companyId) return reply.status(503).send({ error: 'NO_COMPANY' })
+
+    const q = req.query as { limit?: string; page?: string }
+    const limit = Math.min(parseInt(q.limit ?? '20', 10), 100)
+    const page  = Math.max(parseInt(q.page  ?? '1',  10), 1)
+
+    const where = { companyId, source: 'youtube' }
+
+    const [total, items] = await Promise.all([
+      app.prisma.blogPost.count({ where }),
+      app.prisma.blogPost.findMany({
+        where,
+        orderBy: { publishedAt: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+        select: {
+          id: true, title: true, slug: true, coverImage: true,
+          source: true, sourceUrl: true, publishedAt: true, createdAt: true,
+        },
+      }),
+    ])
+
+    return reply.send({ data: items, meta: { total, page, limit, totalPages: Math.ceil(total / limit) } })
+  })
+
   // POST /api/v1/social/daily-post — manual trigger for daily post job
   app.post('/daily-post', { preHandler: [app.authenticate] }, async (_req, reply) => {
     try {

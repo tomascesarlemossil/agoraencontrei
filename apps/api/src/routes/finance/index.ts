@@ -12,13 +12,16 @@ export default async function financeRoutes(app: FastifyInstance) {
     const cid = req.user.cid
     const now = new Date()
 
-    // Find most recent month with actual transaction data (legacy data may not be current month)
+    // Find most recent month with actual transaction data
     const latestTx = await app.prisma.transaction.findFirst({
       where: { companyId: cid },
       orderBy: { transactionDate: 'desc' },
       select: { transactionDate: true },
     })
-    const refDate = latestTx?.transactionDate ?? now
+    // If latestTx is older than 45 days (legacy import), use current month instead
+    const STALE_THRESHOLD_MS = 45 * 24 * 60 * 60 * 1000
+    const isStaleData = !latestTx || (now.getTime() - latestTx.transactionDate.getTime()) > STALE_THRESHOLD_MS
+    const refDate  = isStaleData ? now : latestTx!.transactionDate
     const monthStart = new Date(refDate.getFullYear(), refDate.getMonth(), 1)
     const monthEnd   = new Date(refDate.getFullYear(), refDate.getMonth() + 1, 0, 23, 59, 59)
 
@@ -148,7 +151,7 @@ export default async function financeRoutes(app: FastifyInstance) {
     const inadimplencia = totalRentals > 0 ? (lateRentals / totalRentals) * 100 : 0
 
     return reply.send({
-      period: { start: monthStart, end: monthEnd, isLegacy: !!(latestTx && latestTx.transactionDate < now) },
+      period: { start: monthStart, end: monthEnd, isLegacy: isStaleData && !!latestTx },
       income:           totalIncome,
       expenses:         totalExpenses,
       balance,
@@ -174,18 +177,54 @@ export default async function financeRoutes(app: FastifyInstance) {
     })
   })
 
+  // GET /api/v1/finance/commissions — alias for reports/commissions (comissões de corretores)
+  app.get('/commissions', async (req, reply) => {
+    const { z } = await import('zod')
+    const q = z.object({
+      page:     z.coerce.number().int().min(1).default(1),
+      limit:    z.coerce.number().int().min(1).max(100).default(20),
+      status:   z.string().optional(),
+      brokerId: z.string().optional(),
+    }).parse(req.query)
+
+    const where: any = { companyId: req.user.cid }
+    if (q.status)   where.status   = q.status.toUpperCase()
+    if (q.brokerId) where.brokerId = q.brokerId
+
+    const [total, items] = await Promise.all([
+      app.prisma.commission.count({ where }),
+      app.prisma.commission.findMany({
+        where,
+        include: {
+          broker: { select: { id: true, name: true, avatarUrl: true } },
+          deal:   { select: { id: true, title: true, type: true, value: true } },
+        },
+        skip: (q.page - 1) * q.limit,
+        take: q.limit,
+        orderBy: { createdAt: 'desc' },
+      }),
+    ])
+
+    return reply.send({
+      data: items,
+      meta: { total, page: q.page, limit: q.limit, totalPages: Math.ceil(total / q.limit) },
+    })
+  })
+
   // GET /api/v1/finance/cashflow — fluxo dos últimos 12 meses (Transaction + forecast de contratos)
   app.get('/cashflow', async (req, reply) => {
     const cid = req.user.cid
     const now = new Date()
 
-    // Use most recent month with actual data as reference to build chart
+    // Use most recent month with actual data; fall back to current month if legacy (>45 days old)
     const latestTx = await app.prisma.transaction.findFirst({
       where: { companyId: cid },
       orderBy: { transactionDate: 'desc' },
       select: { transactionDate: true },
     })
-    const refDate = latestTx?.transactionDate ?? now
+    const STALE_THRESHOLD_MS = 45 * 24 * 60 * 60 * 1000
+    const isStaleData = !latestTx || (now.getTime() - latestTx.transactionDate.getTime()) > STALE_THRESHOLD_MS
+    const refDate = isStaleData ? now : latestTx!.transactionDate
 
     // Gera os últimos 12 meses a partir da data mais recente com dados
     const months = Array.from({ length: 12 }, (_, i) => {

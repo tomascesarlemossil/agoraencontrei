@@ -229,7 +229,7 @@ export default async function publicRoutes(app: FastifyInstance) {
     const skip  = (page - 1) * limit
 
     // Redis cache: skip cache for searches (dynamic), cache simple filters 5 min
-    const cacheKey = `pub:props:${company.id}:${JSON.stringify(req.query)}`
+    const cacheKey = `pub:props:v2:${company.id}:${JSON.stringify(req.query)}`
     if (!filters.search) {
       const cached = await cacheGet(app.redis, cacheKey)
       if (cached) return reply.send(cached)
