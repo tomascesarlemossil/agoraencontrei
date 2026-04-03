@@ -49,14 +49,51 @@ const FEATURE_CATEGORIES: { label: string; keys: string[] }[] = [
 ]
 
 const BANKS = [
-  { name: 'Caixa',    color: '#1565C0', bg: '#E3F2FD', abbr: 'CEF', href: 'https://www.caixa.gov.br/voce/habitacao/simulador-habitacional/Paginas/default.aspx' },
-  { name: 'Bradesco', color: '#CC0000', bg: '#FFEBEE', abbr: 'BDB', href: 'https://banco.bradesco/html/classic/produtos-servicos/financiamento-de-imovel/index.shtm' },
-  { name: 'Itaú',     color: '#003C71', bg: '#E8F0FE', abbr: 'ITÁ', href: 'https://www.itau.com.br/credito-imobiliario/simulador' },
-  { name: 'Santander',color: '#EC0000', bg: '#FFEBEE', abbr: 'SAN', href: 'https://www.santander.com.br/credito-imobiliario' },
-  { name: 'BB',       color: '#003F87', bg: '#E3F2FD', abbr: 'BB',  href: 'https://www.bb.com.br/pbb/pagina-inicial/emprestimos-e-financiamentos/credito-imobiliario#/' },
-  { name: 'SICOOB',   color: '#007A37', bg: '#E8F5E9', abbr: 'SCB', href: 'https://www.sicoob.com.br/web/sicoob/financiamento-imobiliario' },
-  { name: 'Sicredi',  color: '#1B7A3E', bg: '#E8F5E9', abbr: 'SCR', href: 'https://www.sicredi.com.br/home/credito/credito-imobiliario/' },
-  { name: 'Loft',     color: '#6D28D9', bg: '#EDE9FE', abbr: 'LFT', href: 'https://loft.com.br/financiamento' },
+  {
+    name: 'Caixa', abbr: 'CEF', color: '#1565C0', bg: '#E3F2FD',
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/Caixa_Econ%C3%B4mica_Federal_logo.svg/200px-Caixa_Econ%C3%B4mica_Federal_logo.svg.png',
+    href: 'https://simuladorhabitacao.caixa.gov.br/home',
+  },
+  {
+    name: 'Bradesco', abbr: 'BDB', color: '#CC0000', bg: '#FFEBEE',
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8e/Banco_Bradesco_logo_%28horizontal%29.svg/200px-Banco_Bradesco_logo_%28horizontal%29.svg.png',
+    href: 'https://banco.bradesco/html/classic/produtos-servicos/emprestimo-e-financiamento/encontre-seu-credito/simuladores-imoveis.shtm#box1-comprar',
+  },
+  {
+    name: 'Itaú', abbr: 'ITÁ', color: '#F06400', bg: '#FFF3E0',
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8e/Banco_Ita%C3%BA_logo.svg/200px-Banco_Ita%C3%BA_logo.svg.png',
+    href: 'https://www.itau.com.br/emprestimos-financiamentos/credito-imobiliario#section-5',
+  },
+  {
+    name: 'Santander', abbr: 'SAN', color: '#EC0000', bg: '#FFEBEE',
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b8/Santander_bank_logo.svg/200px-Santander_bank_logo.svg.png',
+    href: 'https://www.negociosimobiliarios.santander.com.br/negociosimobiliarios/#/dados-pessoais?goal=3',
+  },
+  {
+    name: 'BB', abbr: 'BB', color: '#003F87', bg: '#E3F2FD',
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/Banco_do_Brasil_logo.svg/200px-Banco_do_Brasil_logo.svg.png',
+    href: 'https://cim-simulador-imovelproprio.apps.bb.com.br/simulacao-imobiliario/sobre-imovel',
+  },
+  {
+    name: 'Inter', abbr: 'INT', color: '#FF8A00', bg: '#FFF3E0',
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/38/Banco_Inter_logo.svg/200px-Banco_Inter_logo.svg.png',
+    href: 'https://inter.co/pra-voce/financiamento-imobiliario/residencial/',
+  },
+  {
+    name: 'SICOOB', abbr: 'SCB', color: '#007A37', bg: '#E8F5E9',
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9e/Sicoob_logo.svg/200px-Sicoob_logo.svg.png',
+    href: 'https://www.sicoob.com.br/web/creditoimobiliario/simulador',
+  },
+  {
+    name: 'Sicredi', abbr: 'SCR', color: '#1B7A3E', bg: '#E8F5E9',
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/09/Sicredi_logo.svg/200px-Sicredi_logo.svg.png',
+    href: 'https://www.sicredi.com.br/site/credito/para-voce/credito-imobiliario/',
+  },
+  {
+    name: 'BEXT', abbr: 'BXT', color: '#7C3AED', bg: '#EDE9FE',
+    logo: null,
+    href: 'https://bext.vc/financiamento-imobiliario',
+  },
 ]
 
 async function fetchProperty(slug: string) {
@@ -615,14 +652,25 @@ export default async function PropertyDetailPage({ params }: { params: { slug: s
                 </div>
                 <div className="p-6">
                   <p className="text-sm text-gray-500 mb-4">Clique em um banco para simular o financiamento diretamente no site da instituição financeira:</p>
-                  <div className="grid grid-cols-4 sm:grid-cols-8 gap-3">
+                  <div className="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-9 gap-2">
                     {BANKS.map(bank => (
                       <a key={bank.name} href={bank.href} target="_blank" rel="noreferrer noopener"
                         title={`Simular financiamento no ${bank.name}`}
-                        className="flex flex-col items-center justify-center gap-1.5 rounded-xl border-2 py-4 px-2 hover:shadow-md transition-all hover:scale-105 cursor-pointer"
-                        style={{ borderColor: bank.color + '40', backgroundColor: bank.bg }}>
-                        <span className="text-sm font-extrabold tracking-wide" style={{ color: bank.color }}>{bank.abbr}</span>
-                        <span className="text-[9px] text-center leading-tight font-medium text-gray-600">{bank.name}</span>
+                        className="flex flex-col items-center justify-center gap-1.5 rounded-xl border-2 py-3 px-2 hover:shadow-md transition-all hover:scale-105 cursor-pointer group"
+                        style={{ borderColor: bank.color + '30', backgroundColor: bank.bg }}>
+                        {bank.logo ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={bank.logo} alt={bank.name}
+                            className="h-6 w-auto object-contain"
+                            style={{ maxWidth: 56 }}
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).style.display = 'none';
+                              (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
+                            }}
+                          />
+                        ) : null}
+                        <span className={`text-xs font-extrabold tracking-wide ${bank.logo ? 'hidden' : ''}`} style={{ color: bank.color }}>{bank.abbr}</span>
+                        <span className="text-[9px] text-center leading-tight font-semibold" style={{ color: bank.color }}>{bank.name}</span>
                       </a>
                     ))}
                   </div>

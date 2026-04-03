@@ -18,6 +18,7 @@ const PublicFilters = z.object({
   maxArea:      z.coerce.number().optional(),
   bathrooms:    z.coerce.number().int().optional(),
   isFeatured:   z.coerce.boolean().optional(),
+  closedCondo:  z.coerce.boolean().optional(),
   sortBy:       z.enum(['createdAt', 'price', 'priceRent', 'views']).default('createdAt'),
   sortOrder:    z.enum(['asc', 'desc']).default('desc'),
 })
@@ -163,7 +164,8 @@ export default async function publicRoutes(app: FastifyInstance) {
       ...(filters.bathrooms && { bathrooms: { gte: filters.bathrooms } }),
       ...(filters.minArea   && { totalArea: { gte: filters.minArea } }),
       ...(filters.maxArea   && { totalArea: { lte: filters.maxArea } }),
-      ...(filters.isFeatured && { isFeatured: true }),
+      ...(filters.isFeatured  && { isFeatured: true }),
+      ...(filters.closedCondo && { closedCondo: true }),
     }
 
     // Price filter: use priceRent for RENT, price for SALE, or both fields for unspecified
@@ -243,19 +245,44 @@ export default async function publicRoutes(app: FastifyInstance) {
 
     if (!base) return reply.status(404).send({ error: 'NOT_FOUND' })
 
-    const similar = await app.prisma.property.findMany({
-      where: {
-        companyId: company.id,
-        status: 'ACTIVE',
-        authorizedPublish: true,
-        id:   { not: base.id },
-        type: base.type,
-        city: base.city ?? undefined,
-      },
-      select:  PUBLIC_PROPERTY_SELECT,
-      orderBy: [{ isFeatured: 'desc' }, { createdAt: 'desc' }],
-      take:    6,
-    })
+    const baseWhere = {
+      companyId: company.id,
+      status: 'ACTIVE',
+      authorizedPublish: true,
+      id: { not: base.id },
+    }
+
+    // Try same type + same city first
+    let similar = base.city
+      ? await app.prisma.property.findMany({
+          where: { ...baseWhere, type: base.type, city: { contains: base.city, mode: 'insensitive' as const } },
+          select: PUBLIC_PROPERTY_SELECT,
+          orderBy: [{ isFeatured: 'desc' }, { createdAt: 'desc' }],
+          take: 6,
+        })
+      : []
+
+    // Fallback: same type in any city
+    if (similar.length < 3) {
+      const moreIds = new Set(similar.map((p: any) => p.id))
+      const more = await app.prisma.property.findMany({
+        where: { ...baseWhere, type: base.type, id: { notIn: [base.id, ...Array.from(moreIds) as string[]] } },
+        select: PUBLIC_PROPERTY_SELECT,
+        orderBy: [{ isFeatured: 'desc' }, { createdAt: 'desc' }],
+        take: 6 - similar.length,
+      })
+      similar = [...similar, ...more]
+    }
+
+    // Last resort: same purpose
+    if (similar.length === 0) {
+      similar = await app.prisma.property.findMany({
+        where: { ...baseWhere, purpose: base.purpose },
+        select: PUBLIC_PROPERTY_SELECT,
+        orderBy: [{ isFeatured: 'desc' }, { createdAt: 'desc' }],
+        take: 6,
+      })
+    }
 
     return reply.send(similar)
   })
@@ -349,6 +376,67 @@ export default async function publicRoutes(app: FastifyInstance) {
     emitAutomation({ companyId: company.id, event: 'lead_created', data: { ...lead } })
     emitSSE({ type: 'lead_created', companyId: company.id, payload: { id: lead.id, name: lead.name, source: lead.source } })
 
+    // Email notification — non-blocking
+    try {
+      const { sendEmail, isEmailConfigured } = await import('../../services/email.service.js')
+      if (isEmailConfigured()) {
+        const notes = body.message ?? ''
+        const html = `
+          <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
+            <div style="background:#1B2B5B;padding:20px 28px;border-radius:8px 8px 0 0">
+              <h2 style="color:#C9A84C;margin:0;font-size:18px">🏠 Novo Lead — Imobiliária Lemos</h2>
+            </div>
+            <div style="background:#fff;padding:24px 28px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px">
+              <p style="margin:0 0 12px;color:#111;font-size:15px"><strong>Nome:</strong> ${body.name}</p>
+              ${body.phone ? `<p style="margin:0 0 12px;color:#111"><strong>Telefone:</strong> ${body.phone}</p>` : ''}
+              ${body.email ? `<p style="margin:0 0 12px;color:#111"><strong>E-mail:</strong> ${body.email}</p>` : ''}
+              ${body.interest ? `<p style="margin:0 0 12px;color:#111"><strong>Interesse:</strong> ${body.interest === 'buy' ? 'Comprar' : 'Alugar'}</p>` : ''}
+              ${notes ? `<p style="margin:0 0 12px;color:#111"><strong>Mensagem:</strong><br/><span style="white-space:pre-wrap">${notes.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</span></p>` : ''}
+              <hr style="border:none;border-top:1px solid #e5e7eb;margin:16px 0"/>
+              <p style="font-size:12px;color:#888;margin:0">Enviado em ${new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}</p>
+            </div>
+          </div>`
+        await sendEmail({
+          to: ['imobiliarialemosfranca@gmail.com', 'tomascesarlemossilva@gmail.com', 'blognairalemos@gmail.com'],
+          subject: `🏠 Novo lead: ${body.name} — Imobiliária Lemos`,
+          html,
+          replyTo: body.email,
+        })
+      }
+    } catch { /* non-fatal */ }
+
+    // WhatsApp notification via WhatsApp Cloud API — non-blocking
+    try {
+      const { env: envVars } = await import('../../utils/env.js')
+      if (envVars.WHATSAPP_TOKEN && envVars.WHATSAPP_PHONE_ID) {
+        const waMsgLines = [
+          `🏠 *Novo Lead — Site*`,
+          `👤 *Nome:* ${body.name}`,
+          body.phone ? `📱 *Tel:* ${body.phone}` : '',
+          body.email ? `📧 *Email:* ${body.email}` : '',
+          body.interest ? `🎯 *Interesse:* ${body.interest === 'buy' ? 'Comprar' : 'Alugar'}` : '',
+          body.message ? `💬 *Mensagem:* ${body.message.slice(0, 200)}` : '',
+        ].filter(Boolean).join('\n')
+
+        await fetch(
+          `https://graph.facebook.com/v19.0/${envVars.WHATSAPP_PHONE_ID}/messages`,
+          {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${envVars.WHATSAPP_TOKEN}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              messaging_product: 'whatsapp',
+              to: '5516981010004',
+              type: 'text',
+              text: { body: waMsgLines },
+            }),
+          }
+        )
+      }
+    } catch { /* non-fatal */ }
+
     return reply.status(201).send({ id: lead.id, message: 'Obrigado! Em breve entraremos em contato.' })
   })
 
@@ -422,6 +510,34 @@ export default async function publicRoutes(app: FastifyInstance) {
       const { emitSSE }        = await import('../../services/sse.emitter.js')
       emitAutomation({ companyId: company.id, event: 'lead_created', data: { ...lead } })
       emitSSE({ type: 'lead_created', companyId: company.id, payload: { id: lead.id, name: lead.name, source: 'proposta_online' } })
+    } catch { /* non-fatal */ }
+
+    // Email notification for proposta
+    try {
+      const { sendEmail, isEmailConfigured } = await import('../../services/email.service.js')
+      if (isEmailConfigured()) {
+        const html = `
+          <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
+            <div style="background:#1B2B5B;padding:20px 28px;border-radius:8px 8px 0 0">
+              <h2 style="color:#C9A84C;margin:0;font-size:18px">📋 Nova Proposta Online — Imobiliária Lemos</h2>
+            </div>
+            <div style="background:#fff;padding:24px 28px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px">
+              <p style="margin:0 0 12px;color:#111"><strong>Nome:</strong> ${name}</p>
+              ${phone ? `<p style="margin:0 0 12px;color:#111"><strong>Telefone:</strong> ${phone}</p>` : ''}
+              ${email ? `<p style="margin:0 0 12px;color:#111"><strong>E-mail:</strong> ${email}</p>` : ''}
+              ${cpf ? `<p style="margin:0 0 12px;color:#111"><strong>CPF:</strong> ${cpf}</p>` : ''}
+              <p style="margin:0 0 12px;color:#111"><strong>Detalhes:</strong><br/><span style="white-space:pre-wrap;font-size:13px">${notes.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</span></p>
+              <hr style="border:none;border-top:1px solid #e5e7eb;margin:16px 0"/>
+              <p style="font-size:12px;color:#888;margin:0">Enviado em ${new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}</p>
+            </div>
+          </div>`
+        await sendEmail({
+          to: ['imobiliarialemosfranca@gmail.com', 'tomascesarlemossilva@gmail.com'],
+          subject: `📋 Nova proposta online: ${name} — Imobiliária Lemos`,
+          html,
+          replyTo: email,
+        })
+      }
     } catch { /* non-fatal */ }
 
     return reply.status(201).send({

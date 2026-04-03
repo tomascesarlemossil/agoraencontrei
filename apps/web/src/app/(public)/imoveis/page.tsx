@@ -44,6 +44,7 @@ interface SearchParams {
   bathrooms?: string
   sortBy?: string
   view?: string
+  closedCondo?: string
 }
 
 function buildQs(params: SearchParams, overrides?: Record<string, string>) {
@@ -59,8 +60,9 @@ function buildQs(params: SearchParams, overrides?: Record<string, string>) {
   if (params.bedrooms)  qs.set('bedrooms', params.bedrooms)
   if (params.minArea)   qs.set('minArea', params.minArea)
   if (params.maxArea)   qs.set('maxArea', params.maxArea)
-  if (params.bathrooms) qs.set('bathrooms', params.bathrooms)
-  if (params.sortBy)    qs.set('sortBy', params.sortBy)
+  if (params.bathrooms)   qs.set('bathrooms', params.bathrooms)
+  if (params.sortBy)      qs.set('sortBy', params.sortBy)
+  if (params.closedCondo) qs.set('closedCondo', params.closedCondo)
   qs.set('limit', '48')
   if (overrides) Object.entries(overrides).forEach(([k, v]) => v ? qs.set(k, v) : qs.delete(k))
   return qs

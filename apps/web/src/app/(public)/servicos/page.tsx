@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { FileText, Building, CreditCard, BarChart3, Calculator, ClipboardList, Home, Phone, Mail } from 'lucide-react'
+import { FileText, Building, CreditCard, BarChart3, Calculator, ClipboardList, Home, Phone, Mail, MapPin, ExternalLink } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'Nossos Serviços | Imobiliária Lemos — Franca/SP',
@@ -109,6 +109,92 @@ export default function ServicosPage() {
               </div>
             </Link>
           ))}
+        </div>
+      </section>
+
+      {/* Prefeitura de Franca */}
+      <section className="max-w-6xl mx-auto px-4 pb-8">
+        <div className="rounded-2xl border overflow-hidden" style={{ borderColor: '#e8e4dc', backgroundColor: '#fff' }}>
+          <div className="px-6 py-4 border-b flex items-center gap-2" style={{ borderColor: '#ede9df', backgroundColor: '#fafaf8' }}>
+            <MapPin className="w-5 h-5" style={{ color: '#1B2B5B' }} />
+            <h2 className="font-bold text-base" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>
+              Prefeitura de Franca — Serviços Online
+            </h2>
+          </div>
+          <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <a
+              href="https://franca.sp.gov.br/pmf-bairrologradouro/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-start gap-3 p-4 rounded-xl border hover:shadow-md transition-all group"
+              style={{ borderColor: '#e8e4dc' }}
+            >
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: 'rgba(27,43,91,0.08)', color: '#1B2B5B' }}>
+                <MapPin className="w-5 h-5" />
+              </div>
+              <div className="flex-1">
+                <p className="font-bold text-sm text-gray-800 flex items-center gap-1">
+                  Mapa de Zoneamento Urbano
+                  <ExternalLink className="w-3 h-3 text-gray-400" />
+                </p>
+                <p className="text-xs text-gray-500 mt-0.5">Consulte o uso do solo, bairros e logradouros de Franca/SP no mapa oficial da Prefeitura.</p>
+              </div>
+            </a>
+            <a
+              href="https://franca.siltecnologia.com.br"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-start gap-3 p-4 rounded-xl border hover:shadow-md transition-all group"
+              style={{ borderColor: '#e8e4dc' }}
+            >
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: 'rgba(201,168,76,0.1)', color: '#C9A84C' }}>
+                <FileText className="w-5 h-5" />
+              </div>
+              <div className="flex-1">
+                <p className="font-bold text-sm text-gray-800 flex items-center gap-1">
+                  IPTU e Tributos Municipais
+                  <ExternalLink className="w-3 h-3 text-gray-400" />
+                </p>
+                <p className="text-xs text-gray-500 mt-0.5">Consulte e emita boletos de IPTU, taxas e outros tributos municipais de Franca/SP.</p>
+              </div>
+            </a>
+            <a
+              href="https://franca.sp.gov.br"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-start gap-3 p-4 rounded-xl border hover:shadow-md transition-all group"
+              style={{ borderColor: '#e8e4dc' }}
+            >
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: 'rgba(22,163,74,0.08)', color: '#16a34a' }}>
+                <Building className="w-5 h-5" />
+              </div>
+              <div className="flex-1">
+                <p className="font-bold text-sm text-gray-800 flex items-center gap-1">
+                  Portal da Prefeitura de Franca
+                  <ExternalLink className="w-3 h-3 text-gray-400" />
+                </p>
+                <p className="text-xs text-gray-500 mt-0.5">Acesse certidões, serviços municipais, legislação e informações da cidade.</p>
+              </div>
+            </a>
+            <a
+              href="https://franca.sp.gov.br/pmf-bairrologradouro/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-start gap-3 p-4 rounded-xl border hover:shadow-md transition-all group"
+              style={{ borderColor: '#e8e4dc' }}
+            >
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: 'rgba(37,99,235,0.08)', color: '#2563eb' }}>
+                <MapPin className="w-5 h-5" />
+              </div>
+              <div className="flex-1">
+                <p className="font-bold text-sm text-gray-800 flex items-center gap-1">
+                  Consulta de Logradouros
+                  <ExternalLink className="w-3 h-3 text-gray-400" />
+                </p>
+                <p className="text-xs text-gray-500 mt-0.5">Pesquise endereços, lotes e informações cadastrais de imóveis em Franca/SP.</p>
+              </div>
+            </a>
+          </div>
         </div>
       </section>
 

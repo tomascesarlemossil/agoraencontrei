@@ -42,7 +42,7 @@ export function PropertyFiltersForm({ initialValues }: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [showAdvanced, setShowAdvanced] = useState(
-    !!(initialValues.minPrice || initialValues.maxPrice || initialValues.bedrooms)
+    !!(initialValues.minPrice || initialValues.maxPrice || initialValues.bedrooms || initialValues.closedCondo)
   )
   const [searchValue, setSearchValue] = useState(initialValues.search ?? '')
   const formRef = useRef<HTMLFormElement>(null)
@@ -239,6 +239,18 @@ export function PropertyFiltersForm({ initialValues }: Props) {
               className="w-full px-3 py-2 text-sm rounded-xl border focus:outline-none text-gray-800 placeholder:text-gray-400"
               style={{ borderColor: '#e0dbd0' }}
             />
+          </div>
+          <div className="flex items-center col-span-2 sm:col-span-1">
+            <label className="flex items-center gap-2 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                name="closedCondo"
+                value="true"
+                defaultChecked={initialValues.closedCondo === 'true'}
+                className="w-4 h-4 rounded accent-[#1B2B5B] cursor-pointer"
+              />
+              <span className="text-sm font-medium text-gray-700">Condomínio Fechado</span>
+            </label>
           </div>
         </div>
       )}

@@ -49,15 +49,14 @@ export function AvaliacaoForm() {
   async function handleSubmit() {
     setLoading(true)
     try {
-      await fetch(`${API_URL}/api/v1/leads`, {
+      await fetch(`${API_URL}/api/v1/public/leads`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: form.name,
           email: form.email || undefined,
           phone: form.phone,
-          source: 'WEBSITE',
-          notes: `AVALIAÇÃO SOLICITADA\nTipo: ${form.type} | Objetivo: ${form.purpose}\nEndereço: ${form.address}, ${form.neighborhood} — ${form.city}/${form.state}\nÁrea: ${form.area}m² | ${form.bedrooms} dorms | ${form.bathrooms} banh | ${form.parking} vagas\nObs: ${form.notes}`,
+          message: `AVALIAÇÃO SOLICITADA\nTipo: ${form.type} | Objetivo: ${form.purpose}\nEndereço: ${form.address}, ${form.neighborhood} — ${form.city}/${form.state}\nÁrea: ${form.area}m² | ${form.bedrooms} dorms | ${form.bathrooms} banh | ${form.parking} vagas\nObs: ${form.notes}`,
         }),
       })
       setSubmitted(true)

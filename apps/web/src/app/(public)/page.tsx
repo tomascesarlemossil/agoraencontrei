@@ -17,7 +17,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 
 async function fetchFeaturedProperties() {
   try {
-    const res = await fetch(`${API_URL}/api/v1/public/properties?limit=8&sortBy=views`, {
+    const res = await fetch(`${API_URL}/api/v1/public/properties?limit=8&sortBy=createdAt`, {
       next: { revalidate: 300 },
     })
     if (!res.ok) return []
@@ -176,7 +176,7 @@ export default async function HomePage() {
               <h2 className="text-2xl font-bold" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>
                 Imóveis em Destaque
               </h2>
-              <p className="text-gray-500 text-sm mt-0.5">Selecionados pela nossa equipe</p>
+              <p className="text-gray-500 text-sm mt-0.5">Recém cadastrados — os mais novos do portfólio</p>
             </div>
             <Link
               href="/imoveis"

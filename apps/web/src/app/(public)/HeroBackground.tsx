@@ -1,10 +1,11 @@
 'use client'
 
+import { useEffect, useState } from 'react'
+
 const DEFAULT_VIDEO_ID = 'tET8AYkIxgw'
 
 function extractYouTubeId(url: string): string {
   if (!url) return DEFAULT_VIDEO_ID
-  // Handle full URLs: youtube.com/watch?v=ID or youtu.be/ID
   const m = url.match(/(?:v=|youtu\.be\/|embed\/)([A-Za-z0-9_-]{11})/)
   return m ? m[1] : (url.length === 11 ? url : DEFAULT_VIDEO_ID)
 }
@@ -16,14 +17,17 @@ interface Props {
 
 export function HeroBackground({ videoUrl, videoType }: Props) {
   const isUpload = videoType === 'upload'
+  const [isMobile, setIsMobile] = useState(false)
 
-  let embedSrc = ''
-  if (isUpload && videoUrl) {
-    // Direct video file
-  } else {
-    const videoId = extractYouTubeId(videoUrl ?? '')
-    embedSrc = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&loop=1&playlist=${videoId}&controls=0&showinfo=0&rel=0&iv_load_policy=3&modestbranding=1&disablekb=1&fs=0&playsinline=1`
-  }
+  useEffect(() => {
+    // Detect mobile/tablet — YouTube iframe autoplay blocked on iOS
+    const mobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.innerWidth < 768
+    setIsMobile(mobile)
+  }, [])
+
+  const videoId = extractYouTubeId(videoUrl ?? '')
+  const embedSrc = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&loop=1&playlist=${videoId}&controls=0&showinfo=0&rel=0&iv_load_policy=3&modestbranding=1&disablekb=1&fs=0&playsinline=1&enablejsapi=0`
+  const thumbUrl = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`
 
   return (
     <div className="absolute inset-0 overflow-hidden">
@@ -38,6 +42,7 @@ export function HeroBackground({ videoUrl, videoType }: Props) {
         }}
       >
         {isUpload && videoUrl ? (
+          // Direct video upload — always works on mobile with autoPlay muted
           <video
             src={videoUrl}
             autoPlay
@@ -46,12 +51,23 @@ export function HeroBackground({ videoUrl, videoType }: Props) {
             playsInline
             className="w-full h-full object-cover"
           />
+        ) : isMobile ? (
+          // Mobile: use static thumbnail image (YouTube iframe autoplay blocked on iOS)
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={thumbUrl}
+            alt="Imobiliária Lemos"
+            className="w-full h-full object-cover"
+            onError={(e) => { (e.target as HTMLImageElement).src = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg` }}
+          />
         ) : (
+          // Desktop: YouTube iframe with autoplay+mute
           <iframe
             src={embedSrc}
             allow="autoplay; fullscreen"
             className="w-full h-full"
             style={{ border: 'none', pointerEvents: 'none' }}
+            title="Imobiliária Lemos"
           />
         )}
       </div>

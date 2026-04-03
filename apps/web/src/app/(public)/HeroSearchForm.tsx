@@ -248,7 +248,7 @@ export function HeroSearchForm() {
                 value={aiQuery}
                 onChange={e => setAiQuery(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && handleAiSearch()}
-                placeholder="Ex: casa 3 quartos no São José até 600 mil"
+                placeholder="Descreva o imóvel ideal..."
                 className="flex-1 text-sm text-gray-800 placeholder-gray-400 focus:outline-none bg-transparent font-medium border-b-2 pb-1.5 transition-colors"
                 style={{ borderColor: aiQuery ? '#1B2B5B' : '#e5e7eb' }}
                 autoFocus
@@ -269,23 +269,6 @@ export function HeroSearchForm() {
               </button>
             </div>
 
-            {/* Quick suggestion chips */}
-            <div className="flex flex-wrap gap-1.5 mt-3">
-              {AI_EXAMPLES.filter(ex =>
-                (purpose === 'RENT' && ex.includes('alug')) ||
-                (purpose === 'SALE' && !ex.includes('alug'))
-              ).slice(0, 3).concat(AI_EXAMPLES.filter(ex => !ex.includes('alug') && !ex.includes('alugar')).slice(0, 1)).slice(0, 3).map(ex => (
-                <button
-                  key={ex}
-                  type="button"
-                  onClick={() => { setAiQuery(ex); setTimeout(handleAiSearch, 50) }}
-                  className="text-xs px-3 py-1 rounded-full border transition-all hover:border-[#1B2B5B] hover:text-[#1B2B5B]"
-                  style={{ borderColor: '#e5e7eb', color: '#6b7280' }}
-                >
-                  {ex}
-                </button>
-              ))}
-            </div>
           </div>
         )}
 
