@@ -65,15 +65,17 @@ export default async function documentsRoutes(app: FastifyInstance) {
     const cid = req.user.cid
 
     const stats = await app.prisma.$queryRawUnsafe<any[]>(
-      `SELECT type, category, month, year, COUNT(*) as count, SUM("fileSize") as total_size
+      `SELECT type, category, month, year,
+              COUNT(*)::int as count,
+              COALESCE(SUM("fileSize"),0)::bigint as total_size
        FROM documents
        WHERE "companyId" = $1
        GROUP BY type, category, month, year
-       ORDER BY year DESC, month DESC`,
+       ORDER BY year DESC NULLS LAST, name ASC`,
       cid
     )
 
-    return reply.send({ stats })
+    return reply.send({ stats: stats.map(s => ({ ...s, count: Number(s.count), total_size: Number(s.total_size) })) })
   })
 
   // GET /api/v1/documents/:id — get metadata (no file data)
