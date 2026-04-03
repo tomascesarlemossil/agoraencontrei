@@ -180,8 +180,8 @@ export default async function publicRoutes(app: FastifyInstance) {
       ...(filters.bathrooms && { bathrooms: { gte: filters.bathrooms } }),
       ...(filters.minArea   && { totalArea: { gte: filters.minArea } }),
       ...(filters.maxArea   && { totalArea: { lte: filters.maxArea } }),
-      ...(filters.isFeatured  && { isFeatured: true }),
-      ...(filters.closedCondo && { closedCondo: true }),
+      ...(filters.isFeatured  && { isFeatured:  { equals: true } }),
+      ...(filters.closedCondo && { closedCondo: { equals: true } }),
     }
 
     // Price filter: use priceRent for RENT, price for SALE, or both fields for unspecified
