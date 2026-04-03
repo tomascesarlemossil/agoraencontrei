@@ -71,7 +71,7 @@ export default async function documentsRoutes(app: FastifyInstance) {
        FROM documents
        WHERE "companyId" = $1
        GROUP BY type, category, month, year
-       ORDER BY year DESC NULLS LAST, name ASC`,
+       ORDER BY year DESC NULLS LAST, month DESC NULLS LAST, type ASC`,
       cid
     )
 
