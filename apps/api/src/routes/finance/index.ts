@@ -7,7 +7,7 @@ import { createAuditLog } from '../../services/audit.service.js'
 export default async function financeRoutes(app: FastifyInstance) {
   app.addHook('preHandler', app.authenticate)
 
-  // GET /api/v1/finance/summary — receita, despesas, saldo, inadimplência do mês atual
+  // GET /api/v1/finance/summary — receita, despesas, saldo, inadimplência do mês de referência (latestTx)
   app.get('/summary', async (req, reply) => {
     const cid = req.user.cid
     const now = new Date()
