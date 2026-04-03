@@ -461,6 +461,31 @@ Agente IA com history+edit, Lemosbank wizard 6 steps, SEO JSON-LD, KPI cards cli
 
 ---
 
+## 15.3. HISTÓRICO DE ALTERAÇÕES (2026-04-03) — Commit f4c13ee (MIGRAÇÃO UNILOC)
+
+### Portal do Cliente — Integração Dados Históricos Uniloc
+- Portal de boletos: exibe `FinancialForecast` (dados migrados do Uniloc) com histórico completo
+- Portal de extratos: aba 'Histórico Financeiro' com dados do Uniloc + aba 'Extratos PDF'
+- Backend portal `/boletos` e `/extratos`: retornam `forecasts` junto com rentals/invoices
+- Auth portal: retorna `accessToken + expiresIn + user` no login (consistente com frontend)
+- Dashboard portal: contagem de extratos inclui forecasts históricos do Uniloc
+
+### Documentos — Upload Progressivo
+- Novo endpoint `POST /api/v1/documents/batch-metadata` — registra metadados em lote (até 500)
+- Novo endpoint `POST /api/v1/documents/:id/file` — faz upload do arquivo para documento já registrado
+- Permite importar lista de 2.217 documentos históricos antes do upload dos arquivos
+
+### Status da Migração Uniloc (Claude Code — branch: claude/add-imobiliaria-lemos-project-DYUo1)
+- 618 arquivos DBF convertidos para JSON (180.240 registros)
+- PostgreSQL/Neon: 2.177 clientes | 982 contratos | 27.898 aluguéis | 23.598 transações
+- 19.335 boletos | 22.104 previsões (FinancialForecast) importados
+- Schema `Document` criado + bucket `documents` no Supabase Storage
+- Listas de 1.114 boletos + 1.101 extratos geradas para upload progressivo
+- Upload dos 2.217 documentos físicos: **pendente** (próxima sessão Claude Code)
+- Import planilhas FINANCEIRO PREVISAO.xlsx: **pendente**
+
+---
+
 ## 15.2. HISTÓRICO DE ALTERAÇÕES (2026-04-03) — Commit 4b8d316 (FINAL)
 
 ### Repasses — Implementação Completa
