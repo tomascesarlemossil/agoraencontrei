@@ -164,7 +164,7 @@ export default function ContratosPage() {
     if (s) setStatus(s)
   }, [searchParams])
 
-  const params: Record<string, string> = { page: String(page), limit: '20' }
+  const params: Record<string, string> = { page: String(page), limit: '50' }
   if (search) params.search = search
   if (status) params.status = status
 
@@ -226,7 +226,17 @@ export default function ContratosPage() {
       </div>
 
       {/* Active / Inactive top tabs */}
-      <div className="flex gap-2">
+      <div className="flex gap-2 flex-wrap">
+        <button
+          onClick={() => { setStatus(''); setPage(1) }}
+          className={`px-4 py-2 rounded-xl text-sm font-semibold border transition-all ${
+            status === ''
+              ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+              : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+          }`}
+        >
+          Todos
+        </button>
         <button
           onClick={() => { setStatus('ACTIVE'); setPage(1) }}
           className={`px-4 py-2 rounded-xl text-sm font-semibold border transition-all ${

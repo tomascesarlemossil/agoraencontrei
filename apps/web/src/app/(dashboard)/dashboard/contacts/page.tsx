@@ -60,13 +60,14 @@ export default function ContactsPage() {
   const qc = useQueryClient()
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
+  const [roleFilter, setRoleFilter] = useState<string>('')
   const [showCreate, setShowCreate] = useState(false)
 
   const { data, isLoading } = useQuery({
-    queryKey: ['contacts', page, search],
+    queryKey: ['contacts', page, search, roleFilter],
     queryFn: async () => {
       const token = await getValidToken()
-      return contactsApi.list(token!, { page, limit: 20, search: search || undefined })
+      return contactsApi.list(token!, { page, limit: 50, search: search || undefined, ...(roleFilter && { role: roleFilter }) })
     },
   })
 
@@ -104,16 +105,38 @@ export default function ContactsPage() {
         </Button>
       </div>
 
-      {/* Search */}
-      <SearchInputWithVoice
-        containerClassName="max-w-md"
-        placeholder="Buscar por nome, e-mail, CPF..."
-        className="w-full bg-white/5 border-white/10 text-white placeholder:text-white/40 rounded-md border px-3 py-2 text-sm"
-        value={search}
-        dark
-        onChange={(e) => { setSearch(e.target.value); setPage(1) }}
-        onVoiceResult={(t) => { setSearch(t); setPage(1) }}
-      />
+      {/* Search + Filters */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        <SearchInputWithVoice
+          containerClassName="flex-1"
+          placeholder="Buscar por nome, e-mail, CPF, telefone..."
+          className="w-full bg-white/5 border-white/10 text-white placeholder:text-white/40 rounded-md border px-3 py-2 text-sm"
+          value={search}
+          dark
+          onChange={(e) => { setSearch(e.target.value); setPage(1) }}
+          onVoiceResult={(t) => { setSearch(t); setPage(1) }}
+        />
+        <div className="flex gap-1.5 flex-wrap">
+          {[
+            { key: '', label: 'Todos' },
+            { key: 'owner', label: 'Proprietários' },
+            { key: 'tenant', label: 'Inquilinos' },
+            { key: 'guarantor', label: 'Fiadores' },
+          ].map(f => (
+            <button
+              key={f.key}
+              onClick={() => { setRoleFilter(f.key); setPage(1) }}
+              className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
+                roleFilter === f.key
+                  ? 'bg-blue-500 text-white'
+                  : 'bg-white/10 text-white/60 hover:bg-white/20'
+              }`}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
+      </div>
 
       {/* Table */}
       <div className="bg-white/5 rounded-xl border border-white/10 overflow-hidden">
@@ -186,7 +209,8 @@ export default function ContactsPage() {
                       <div className="flex gap-1 flex-wrap">
                         {c.isOwner && <Badge className="bg-emerald-500/20 text-emerald-400 border-0 text-xs">Proprietário</Badge>}
                         {c.isTenant && <Badge className="bg-blue-500/20 text-blue-400 border-0 text-xs">Inquilino</Badge>}
-                        {c.tags.slice(0, 2).map((t) => (
+                        {(c as any).isGuarantor && <Badge className="bg-orange-500/20 text-orange-400 border-0 text-xs">Fiador</Badge>}
+                        {c.tags.slice(0, 1).map((t) => (
                           <Badge key={t} variant="outline" className="border-white/20 text-white/40 text-xs">{t}</Badge>
                         ))}
                       </div>

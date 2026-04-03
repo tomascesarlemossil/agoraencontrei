@@ -51,7 +51,7 @@ export default async function leadsRoutes(app: FastifyInstance) {
     }
 
     const page  = parseInt(q.page  ?? '1',  10)
-    const limit = parseInt(q.limit ?? '20', 10)
+    const limit = parseInt(q.limit ?? '50', 10)
 
     const [total, items] = await Promise.all([
       app.prisma.lead.count({ where }),

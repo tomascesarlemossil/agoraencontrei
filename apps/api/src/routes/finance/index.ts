@@ -242,8 +242,8 @@ export default async function financeRoutes(app: FastifyInstance) {
     const cid = req.user.cid
     const q = req.query as Record<string, string>
     const page  = parseInt(q.page  ?? '1',  10)
-    const limit = parseInt(q.limit ?? '20', 10)
-    const status = q.status  // ACTIVE | FINISHED | CANCELED
+    const limit = parseInt(q.limit ?? '50', 10)
+    const status = q.status  // ACTIVE | FINISHED | CANCELED | '' (all)
     const search = q.search
 
     const where: any = {
@@ -307,8 +307,8 @@ export default async function financeRoutes(app: FastifyInstance) {
     const cid = req.user.cid
     const q = req.query as Record<string, string>
     const page  = parseInt(q.page  ?? '1',  10)
-    const limit = parseInt(q.limit ?? '20', 10)
-    const role   = q.role   // TENANT | LANDLORD | GUARANTOR | BENEFICIARY
+    const limit = parseInt(q.limit ?? '50', 10)
+    const role   = q.role   // TENANT | LANDLORD | GUARANTOR | BENEFICIARY | LEAD
     const search = q.search
 
     const where: any = {
@@ -316,10 +316,12 @@ export default async function financeRoutes(app: FastifyInstance) {
       ...(role && { roles: { has: role } }),
       ...(search && {
         OR: [
-          { name:     { contains: search, mode: 'insensitive' } },
-          { document: { contains: search } },
-          { email:    { contains: search, mode: 'insensitive' } },
-          { phone:    { contains: search } },
+          { name:       { contains: search, mode: 'insensitive' } },
+          { document:   { contains: search } },
+          { email:      { contains: search, mode: 'insensitive' } },
+          { phone:      { contains: search } },
+          { phoneMobile: { contains: search } },
+          { legacyId:   { contains: search } },
         ],
       }),
     }
@@ -328,7 +330,7 @@ export default async function financeRoutes(app: FastifyInstance) {
       app.prisma.client.count({ where }),
       app.prisma.client.findMany({
         where,
-        orderBy: { name: 'asc' },
+        orderBy: { updatedAt: 'desc' },
         skip: (page - 1) * limit,
         take: limit,
       }),

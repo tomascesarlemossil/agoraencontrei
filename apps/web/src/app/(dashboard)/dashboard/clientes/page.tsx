@@ -9,18 +9,20 @@ import { SearchInputWithVoice } from '@/components/ui/SearchInputWithVoice'
 import { financeApi, type LegacyClient } from '@/lib/api'
 
 const ROLE_LABELS: Record<string, { label: string; color: string }> = {
-  TENANT:      { label: 'Inquilino',   color: 'bg-blue-100 text-blue-700' },
+  TENANT:      { label: 'Inquilino',    color: 'bg-blue-100 text-blue-700' },
   LANDLORD:    { label: 'Proprietário', color: 'bg-green-100 text-green-700' },
-  GUARANTOR:   { label: 'Fiador',      color: 'bg-purple-100 text-purple-700' },
-  BENEFICIARY: { label: 'Favorecido',  color: 'bg-yellow-100 text-yellow-700' },
-  SECONDARY:   { label: 'Secundário',  color: 'bg-gray-100 text-gray-600' },
+  GUARANTOR:   { label: 'Fiador',       color: 'bg-purple-100 text-purple-700' },
+  BENEFICIARY: { label: 'Favorecido',   color: 'bg-yellow-100 text-yellow-700' },
+  SECONDARY:   { label: 'Secundário',   color: 'bg-gray-100 text-gray-600' },
+  LEAD:        { label: 'Lead/Interesse', color: 'bg-orange-100 text-orange-700' },
 }
 
 const ROLE_OPTIONS = [
   { value: '', label: 'Todos' },
-  { value: 'TENANT',      label: 'Inquilinos' },
   { value: 'LANDLORD',    label: 'Proprietários' },
+  { value: 'TENANT',      label: 'Inquilinos' },
   { value: 'GUARANTOR',   label: 'Fiadores' },
+  { value: 'LEAD',        label: 'Leads/Interessados' },
   { value: 'BENEFICIARY', label: 'Favorecidos' },
 ]
 
@@ -33,7 +35,7 @@ export default function ClientesPage() {
   const [searchInput, setSearchInput] = useState('')
   const [role, setRole]           = useState('')
 
-  const params: Record<string, string> = { page: String(page), limit: '20' }
+  const params: Record<string, string> = { page: String(page), limit: '50' }
   if (search) params.search = search
   if (role)   params.role   = role
 
@@ -59,8 +61,8 @@ export default function ClientesPage() {
           <Users className="w-6 h-6 text-indigo-600" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Clientes Legados</h1>
-          <p className="text-sm text-gray-500">Inquilinos, proprietários e fiadores do sistema anterior</p>
+          <h1 className="text-2xl font-bold text-gray-900">Clientes & Contatos</h1>
+          <p className="text-sm text-gray-500">Proprietários, inquilinos, fiadores, leads e interessados</p>
         </div>
         {meta && (
           <span className="ml-auto text-sm text-gray-400">{meta.total.toLocaleString('pt-BR')} registros</span>

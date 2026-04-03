@@ -6,7 +6,7 @@ const toUpper = (v: unknown) => typeof v === 'string' ? v.toUpperCase() : v
 
 const PropertyFilters = z.object({
   page:         z.coerce.number().int().min(1).default(1),
-  limit:        z.coerce.number().int().min(1).max(100).default(20),
+  limit:        z.coerce.number().int().min(1).max(200).default(50),
   search:       z.string().optional(),
   type:         z.string().transform(v => v.toUpperCase()).optional(),
   purpose:      z.preprocess(toUpper, z.enum(['SALE', 'RENT', 'BOTH', 'SEASON'])).optional(),
@@ -437,6 +437,50 @@ export default async function propertiesRoutes(app: FastifyInstance) {
     })
 
     return reply.send({ success: true })
+  })
+
+  // GET /api/v1/properties/by-id/:id/leads — lead history for a property
+  app.get('/by-id/:id/leads', {
+    preHandler: [app.authenticate],
+    schema: { tags: ['properties'], summary: 'Lead history for a property' },
+  }, async (req, reply) => {
+    const { id } = req.params as { id: string }
+    const q = req.query as any
+    const page  = parseInt(q.page  ?? '1',  10)
+    const limit = parseInt(q.limit ?? '50', 10)
+
+    // Find by propertyId directly, or by propertyRef in metadata
+    const prop = await app.prisma.property.findFirst({
+      where: { id, companyId: req.user.cid },
+      select: { reference: true },
+    })
+    if (!prop) return reply.status(404).send({ error: 'NOT_FOUND' })
+
+    const where: any = {
+      companyId: req.user.cid,
+      OR: [
+        { metadata: { path: ['propertyId'], equals: id } },
+        ...(prop.reference ? [{ metadata: { path: ['propertyRef'], equals: prop.reference } }] : []),
+      ],
+    }
+
+    const [total, leads] = await Promise.all([
+      app.prisma.lead.count({ where }),
+      app.prisma.lead.findMany({
+        where,
+        select: {
+          id: true, name: true, email: true, phone: true,
+          status: true, source: true, notes: true, metadata: true,
+          createdAt: true,
+          contact: { select: { id: true, name: true, cpf: true, mobilePhone: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+    ])
+
+    return reply.send({ data: leads, meta: { total, page, limit, totalPages: Math.ceil(total / limit) } })
   })
 
   // GET /api/v1/properties/stats — dashboard KPIs

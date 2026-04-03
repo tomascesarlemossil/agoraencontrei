@@ -15,10 +15,10 @@ import { Controller, useForm } from 'react-hook-form'
 import {
   ArrowLeft, Edit, Save, X, MapPin, BedDouble, Bath, Car, Ruler, Eye,
   Calendar, ImagePlus, Trash2, Star, Upload, Phone, Mail, User as UserIcon, ZoomIn,
-  Home, Globe, Settings, Shield, Briefcase, Building2, Search,
+  Home, Globe, Settings, Shield, Briefcase, Building2, Search, MessageSquare, Clock,
 } from 'lucide-react'
 import Link from 'next/link'
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { cn } from '@/lib/utils'
 import { uploadApi, usersApi, type User } from '@/lib/api'
 import { PropertyImageLightbox } from '@/components/dashboard/PropertyImageLightbox'
@@ -112,6 +112,89 @@ function NumInput({ reg, label, span }: { reg: any; label: string; span?: string
     <Field label={label} span={span}>
       <Input {...reg} type="number" min={0} className="bg-white/5 border-white/10 text-white h-9" />
     </Field>
+  )
+}
+
+const STATUS_LEAD_COLORS: Record<string, string> = {
+  NEW: 'bg-blue-500/20 text-blue-400',
+  CONTACTED: 'bg-yellow-500/20 text-yellow-400',
+  QUALIFIED: 'bg-purple-500/20 text-purple-400',
+  VISITING: 'bg-cyan-500/20 text-cyan-400',
+  PROPOSAL: 'bg-orange-500/20 text-orange-400',
+  NEGOTIATING: 'bg-indigo-500/20 text-indigo-400',
+  WON: 'bg-green-500/20 text-green-400',
+  LOST: 'bg-red-500/20 text-red-400',
+  ARCHIVED: 'bg-gray-500/20 text-gray-400',
+}
+const STATUS_LEAD_LABELS: Record<string, string> = {
+  NEW: 'Novo', CONTACTED: 'Contatado', QUALIFIED: 'Qualificado', VISITING: 'Visita',
+  PROPOSAL: 'Proposta', NEGOTIATING: 'Negociando', WON: 'Ganho', LOST: 'Perdido', ARCHIVED: 'Arquivado',
+}
+
+function LeadsHistoryPanel({ propertyId }: { propertyId: string }) {
+  const { getValidToken } = useAuth()
+  const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
+  const { data, isLoading } = useQuery({
+    queryKey: ['property-leads', propertyId],
+    queryFn: async () => {
+      const token = await getValidToken()
+      const res = await fetch(`${API_URL}/api/v1/properties/by-id/${propertyId}/leads?limit=100`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (!res.ok) return { data: [], meta: { total: 0 } }
+      return res.json()
+    },
+    enabled: !!propertyId,
+  })
+
+  const leads = data?.data ?? []
+  const total = data?.meta?.total ?? 0
+
+  return (
+    <div className="bg-white/5 rounded-xl border border-white/10 p-5">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider flex items-center gap-2">
+          <MessageSquare className="w-3.5 h-3.5" />
+          Histórico de Leads / Interessados
+        </h3>
+        <span className="text-xs bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded-full">{total} lead{total !== 1 ? 's' : ''}</span>
+      </div>
+      {isLoading ? (
+        <p className="text-white/30 text-sm text-center py-4">Carregando leads...</p>
+      ) : leads.length === 0 ? (
+        <p className="text-white/30 text-sm text-center py-4">Nenhum lead registrado ainda.</p>
+      ) : (
+        <div className="space-y-2.5 max-h-80 overflow-y-auto pr-1">
+          {leads.map((lead: any) => (
+            <div key={lead.id} className="flex items-start gap-3 bg-white/5 rounded-lg p-3 hover:bg-white/10 transition-colors">
+              <div className="h-8 w-8 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0 text-sm font-bold text-blue-400">
+                {(lead.name || '?').charAt(0).toUpperCase()}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <p className="text-sm font-medium text-white truncate">{lead.name || 'Anônimo'}</p>
+                  <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${STATUS_LEAD_COLORS[lead.status] ?? 'bg-gray-500/20 text-gray-400'}`}>
+                    {STATUS_LEAD_LABELS[lead.status] ?? lead.status}
+                  </span>
+                </div>
+                <div className="flex items-center gap-3 mt-0.5 flex-wrap">
+                  {lead.email && <span className="text-xs text-white/40 flex items-center gap-1"><Mail className="w-3 h-3" />{lead.email}</span>}
+                  {lead.phone && <span className="text-xs text-white/40 flex items-center gap-1"><Phone className="w-3 h-3" />{lead.phone}</span>}
+                  <span className="text-xs text-white/30 flex items-center gap-1">
+                    <Clock className="w-3 h-3" />
+                    {new Date(lead.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                </div>
+                {lead.notes && (
+                  <p className="text-xs text-white/40 mt-1 line-clamp-2">{lead.notes}</p>
+                )}
+              </div>
+              <Link href={`/dashboard/leads/${lead.id}`} className="text-xs text-blue-400 hover:text-blue-300 flex-shrink-0">ver →</Link>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -1119,6 +1202,9 @@ export default function PropertyDetailPage() {
               </div>
             </div>
           )}
+
+          {/* Leads History */}
+          <LeadsHistoryPanel propertyId={p.id} />
 
           {/* Social Media Publishing Panel */}
           <SocialPostPanel propertyId={p.id} />

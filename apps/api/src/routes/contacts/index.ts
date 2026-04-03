@@ -31,10 +31,11 @@ const UpdateContactBody = CreateContactBody.partial()
 
 const ContactFilters = z.object({
   page:   z.coerce.number().int().min(1).default(1),
-  limit:  z.coerce.number().int().min(1).max(100).default(20),
+  limit:  z.coerce.number().int().min(1).max(200).default(50),
   search: z.string().optional(),
   type:   z.string().optional(),
   city:   z.string().optional(),
+  role:   z.string().optional(), // owner | tenant | guarantor
 })
 
 export default async function contactsRoutes(app: FastifyInstance) {
@@ -52,11 +53,18 @@ export default async function contactsRoutes(app: FastifyInstance) {
         { name:  { contains: q.search, mode: 'insensitive' } },
         { email: { contains: q.search, mode: 'insensitive' } },
         { phone: { contains: q.search } },
-        { cpfCnpj: { contains: q.search } },
+        { mobilePhone: { contains: q.search } },
+        { cpf:  { contains: q.search } },
+        { cnpj: { contains: q.search } },
+        { externalId: { contains: q.search } },
       ]
     }
     if (q.type) where.type = q.type.toUpperCase()
     if (q.city) where.city = { contains: q.city, mode: 'insensitive' }
+    // Role filter
+    if (q.role === 'owner')     where.isOwner     = true
+    if (q.role === 'tenant')    where.isTenant    = true
+    if (q.role === 'guarantor') where.isGuarantor = true
 
     const [total, items] = await Promise.all([
       app.prisma.contact.count({ where }),
@@ -64,13 +72,14 @@ export default async function contactsRoutes(app: FastifyInstance) {
         where,
         select: {
           id: true, name: true, type: true, email: true,
-          phone: true, cpf: true, cnpj: true, city: true, state: true,
-          isOwner: true, isTenant: true,
-          tags: true, createdAt: true,
+          phone: true, mobilePhone: true, cpf: true, cnpj: true,
+          city: true, state: true,
+          isOwner: true, isTenant: true, isGuarantor: true,
+          tags: true, createdAt: true, externalId: true,
         },
         skip: (q.page - 1) * q.limit,
         take: q.limit,
-        orderBy: { name: 'asc' },
+        orderBy: { createdAt: 'desc' },
       }),
     ])
 

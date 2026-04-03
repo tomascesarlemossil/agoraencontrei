@@ -39,7 +39,7 @@ export default function LeadsPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['leads', page, search],
-    queryFn: () => leadsApi.list(accessToken!, { page, limit: 15, search: search || undefined }),
+    queryFn: () => leadsApi.list(accessToken!, { page, limit: 50, search: search || undefined }),
     enabled: !!accessToken,
   })
 

@@ -201,7 +201,7 @@ export default function PropertiesPage() {
     queryFn: () =>
       propertiesApi.listProtected(accessToken!, {
         page,
-        limit: 12,
+        limit: 48,
         ...filtersToApi(appliedFilters),
       }),
     enabled: !!accessToken,
