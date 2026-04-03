@@ -11,8 +11,16 @@ export default async function financeRoutes(app: FastifyInstance) {
   app.get('/summary', async (req, reply) => {
     const cid = req.user.cid
     const now = new Date()
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
-    const monthEnd   = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59)
+
+    // Find most recent month with actual transaction data (legacy data may not be current month)
+    const latestTx = await app.prisma.transaction.findFirst({
+      where: { companyId: cid },
+      orderBy: { transactionDate: 'desc' },
+      select: { transactionDate: true },
+    })
+    const refDate = latestTx?.transactionDate ?? now
+    const monthStart = new Date(refDate.getFullYear(), refDate.getMonth(), 1)
+    const monthEnd   = new Date(refDate.getFullYear(), refDate.getMonth() + 1, 0, 23, 59, 59)
 
     const next30 = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000)
 
@@ -51,9 +59,9 @@ export default async function financeRoutes(app: FastifyInstance) {
       app.prisma.contract.count({ where: { companyId: cid, status: 'ACTIVE' } }),
       // Total de clientes
       app.prisma.client.count({ where: { companyId: cid } }),
-      // Aluguéis em atraso do mês (dueDate no mês atual e status LATE)
-      app.prisma.rental.count({ where: { companyId: cid, status: 'LATE', dueDate: { gte: monthStart, lte: monthEnd } } }),
-      // Total de aluguéis do mês
+      // Aluguéis em atraso (total, sem filtro de mês — representa inadimplência real)
+      app.prisma.rental.count({ where: { companyId: cid, status: 'LATE' } }),
+      // Total de aluguéis do período de referência
       app.prisma.rental.count({ where: { companyId: cid, dueDate: { gte: monthStart, lte: monthEnd } } }),
       // Próximos vencimentos (próximos 30 dias)
       app.prisma.rental.findMany({
@@ -121,7 +129,7 @@ export default async function financeRoutes(app: FastifyInstance) {
         where: { companyId: cid, status: 'PENDING' },
         _sum: { totalAmount: true },
       }),
-      // Cobranças recebidas este mês (aluguéis PAID no mês)
+      // Cobranças recebidas no período de referência (aluguéis PAID no período)
       app.prisma.rental.aggregate({
         where: { companyId: cid, status: 'PAID', paymentDate: { gte: monthStart, lte: monthEnd } },
         _sum: { totalAmount: true },
@@ -140,7 +148,7 @@ export default async function financeRoutes(app: FastifyInstance) {
     const inadimplencia = totalRentals > 0 ? (lateRentals / totalRentals) * 100 : 0
 
     return reply.send({
-      period: { start: monthStart, end: monthEnd },
+      period: { start: monthStart, end: monthEnd, isLegacy: !!(latestTx && latestTx.transactionDate < now) },
       income:           totalIncome,
       expenses:         totalExpenses,
       balance,
@@ -171,9 +179,17 @@ export default async function financeRoutes(app: FastifyInstance) {
     const cid = req.user.cid
     const now = new Date()
 
-    // Gera os últimos 12 meses
+    // Use most recent month with actual data as reference to build chart
+    const latestTx = await app.prisma.transaction.findFirst({
+      where: { companyId: cid },
+      orderBy: { transactionDate: 'desc' },
+      select: { transactionDate: true },
+    })
+    const refDate = latestTx?.transactionDate ?? now
+
+    // Gera os últimos 12 meses a partir da data mais recente com dados
     const months = Array.from({ length: 12 }, (_, i) => {
-      const d = new Date(now.getFullYear(), now.getMonth() - (11 - i), 1)
+      const d = new Date(refDate.getFullYear(), refDate.getMonth() - (11 - i), 1)
       return { year: d.getFullYear(), month: d.getMonth() + 1, label: d.toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' }) }
     })
 

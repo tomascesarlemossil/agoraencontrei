@@ -118,8 +118,8 @@ export function FloatingChatbot() {
               onChange={e => setInput(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && sendMessage(input)}
               placeholder="Digite sua mensagem..."
-              className="flex-1 text-xs px-3 py-2 rounded-xl border focus:outline-none focus:ring-1"
-              style={{ borderColor: '#e0dbd0', '--ring-color': '#1B2B5B' } as any}
+              className="flex-1 text-xs px-3 py-2 rounded-xl border focus:outline-none focus:ring-1 bg-white text-gray-800 placeholder-gray-400"
+              style={{ borderColor: '#e0dbd0' }}
             />
             <button
               onClick={() => sendMessage(input)}

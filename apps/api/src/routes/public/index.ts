@@ -143,6 +143,7 @@ export default async function publicRoutes(app: FastifyInstance) {
     const where: any = {
       companyId: company.id,
       status: 'ACTIVE',
+      authorizedPublish: true,
       ...(filters.search && {
         OR: [
           { title:        { contains: filters.search, mode: 'insensitive' } },
@@ -150,12 +151,13 @@ export default async function publicRoutes(app: FastifyInstance) {
           { neighborhood: { contains: filters.search, mode: 'insensitive' } },
           { city:         { contains: filters.search, mode: 'insensitive' } },
           { reference:    { contains: filters.search, mode: 'insensitive' } },
+          { street:       { contains: filters.search, mode: 'insensitive' } },
         ],
       }),
       ...(filters.type         && { type:    filters.type.toUpperCase() }),
       ...(filters.purpose      && { purpose: filters.purpose.toUpperCase() }),
-      ...(filters.city         && { city:    { equals: filters.city,         mode: 'insensitive' } }),
-      ...(filters.neighborhood && { neighborhood: { equals: filters.neighborhood, mode: 'insensitive' } }),
+      ...(filters.city         && { city:    { contains: filters.city,         mode: 'insensitive' } }),
+      ...(filters.neighborhood && { neighborhood: { contains: filters.neighborhood, mode: 'insensitive' } }),
       ...(filters.state        && { state:   { equals: filters.state,        mode: 'insensitive' } }),
       ...(filters.bedrooms  && { bedrooms:  { gte: filters.bedrooms } }),
       ...(filters.bathrooms && { bathrooms: { gte: filters.bathrooms } }),
@@ -213,7 +215,7 @@ export default async function publicRoutes(app: FastifyInstance) {
     if (!company) return reply.status(503).send({ error: 'SERVICE_UNAVAILABLE' })
 
     const property = await app.prisma.property.findFirst({
-      where:  { slug, companyId: company.id, status: 'ACTIVE' },
+      where:  { slug, companyId: company.id, status: 'ACTIVE', authorizedPublish: true },
       select: PUBLIC_PROPERTY_SELECT,
     })
 
@@ -235,7 +237,7 @@ export default async function publicRoutes(app: FastifyInstance) {
     if (!company) return reply.status(503).send({ error: 'SERVICE_UNAVAILABLE' })
 
     const base = await app.prisma.property.findFirst({
-      where:  { slug, companyId: company.id, status: 'ACTIVE' },
+      where:  { slug, companyId: company.id, status: 'ACTIVE', authorizedPublish: true },
       select: { id: true, type: true, purpose: true, city: true, price: true, priceRent: true },
     })
 
@@ -245,6 +247,7 @@ export default async function publicRoutes(app: FastifyInstance) {
       where: {
         companyId: company.id,
         status: 'ACTIVE',
+        authorizedPublish: true,
         id:   { not: base.id },
         type: base.type,
         city: base.city ?? undefined,
@@ -263,7 +266,7 @@ export default async function publicRoutes(app: FastifyInstance) {
     if (!company) return reply.status(503).send({ error: 'SERVICE_UNAVAILABLE' })
 
     const items = await app.prisma.property.findMany({
-      where:   { companyId: company.id, status: 'ACTIVE', isFeatured: true },
+      where:   { companyId: company.id, status: 'ACTIVE', authorizedPublish: true, isFeatured: true },
       select:  PUBLIC_PROPERTY_SELECT,
       orderBy: { updatedAt: 'desc' },
       take:    8,
@@ -279,7 +282,7 @@ export default async function publicRoutes(app: FastifyInstance) {
 
     const cities = await app.prisma.property.groupBy({
       by: ['city', 'state'],
-      where: { companyId: company.id, status: 'ACTIVE', city: { not: null } },
+      where: { companyId: company.id, status: 'ACTIVE', authorizedPublish: true, city: { not: null } },
       _count: { id: true },
       orderBy: { _count: { id: 'desc' } },
       take: 20,
@@ -475,6 +478,7 @@ export default async function publicRoutes(app: FastifyInstance) {
     const where: any = {
       companyId: company.id,
       status:    'ACTIVE',
+      authorizedPublish: true,
       city:      { contains: cidade, mode: 'insensitive' },
     }
     if (tipo)      where.type    = tipo
@@ -566,6 +570,7 @@ export default async function publicRoutes(app: FastifyInstance) {
     const where: any = {
       companyId: company.id,
       status: 'ACTIVE',
+      authorizedPublish: true,
       neighborhood: { not: null },
       ...(purpose && { purpose: purpose.toUpperCase() }),
       ...(type && { type: type.toUpperCase() }),
@@ -603,6 +608,7 @@ export default async function publicRoutes(app: FastifyInstance) {
     const where: any = {
       companyId: company.id,
       status: 'ACTIVE',
+      authorizedPublish: true,
       neighborhood: { not: null },
       ...(city    && { city:    { contains: city,    mode: 'insensitive' } }),
       ...(purpose && { purpose: purpose.toUpperCase() }),
