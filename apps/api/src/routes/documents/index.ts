@@ -52,11 +52,10 @@ export default async function documentsRoutes(app: FastifyInstance) {
       ),
     ])
 
+    const total = parseInt(countRows[0]?.total || '0')
     return reply.send({
-      documents: rows,
-      total: parseInt(countRows[0]?.total || '0'),
-      page,
-      limit,
+      data: rows,
+      meta: { total, page, limit, totalPages: Math.ceil(total / limit) },
     })
   })
 

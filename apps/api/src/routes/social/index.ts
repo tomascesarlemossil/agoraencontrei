@@ -94,10 +94,11 @@ export default async function socialRoutes(app: FastifyInstance) {
     const limit = Math.min(parseInt(q.limit ?? '20', 10), 100)
     const page  = Math.max(parseInt(q.page  ?? '1',  10), 1)
 
+    // Instagram posts are stored with source = "Instagram @imobiliarialemos" or "Instagram @tomaslemosbr"
     const where: any = {
       companyId,
-      source: { in: ['instagram', 'imobiliarialemos', 'tomaslemosbr'] },
-      ...(q.account && { source: q.account }),
+      source: { startsWith: 'Instagram' },
+      ...(q.account && { source: { startsWith: `Instagram @${q.account.replace(/^@/, '')}` } }),
     }
 
     const [total, items] = await Promise.all([
@@ -126,7 +127,8 @@ export default async function socialRoutes(app: FastifyInstance) {
     const limit = Math.min(parseInt(q.limit ?? '20', 10), 100)
     const page  = Math.max(parseInt(q.page  ?? '1',  10), 1)
 
-    const where = { companyId, source: 'youtube' }
+    // YouTube videos are stored with source = "YouTube — {channelTitle}"
+    const where = { companyId, source: { startsWith: 'YouTube' } }
 
     const [total, items] = await Promise.all([
       app.prisma.blogPost.count({ where }),

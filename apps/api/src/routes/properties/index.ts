@@ -145,7 +145,11 @@ export default async function propertiesRoutes(app: FastifyInstance) {
     preHandler: [app.optionalAuth],
     schema: { tags: ['properties'], summary: 'List properties (public)' },
   }, async (req, reply) => {
-    const q = PropertyFilters.parse(req.query)
+    const _parsed = PropertyFilters.safeParse(req.query)
+    if (!_parsed.success) {
+      return reply.status(400).send({ error: 'VALIDATION_ERROR', details: _parsed.error.errors })
+    }
+    const q = _parsed.data
 
     // Scope by company when authenticated; restrict to public-safe defaults when not
     const isAuth = !!(req as any).user

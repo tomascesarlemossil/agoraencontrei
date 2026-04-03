@@ -2,12 +2,22 @@ import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 import { env } from '../../utils/env.js'
 
+const PROPERTY_TYPES  = ['HOUSE','APARTMENT','LAND','FARM','RANCH','WAREHOUSE','OFFICE','STORE','STUDIO','PENTHOUSE','CONDO','KITNET'] as const
+const PROPERTY_PURPOSES = ['SALE','RENT','BOTH','SEASON'] as const
+
 const PublicFilters = z.object({
   page:         z.coerce.number().int().min(1).default(1),
   limit:        z.coerce.number().int().min(1).max(50).default(12),
   search:       z.string().optional(),
-  type:         z.string().optional(),
-  purpose:      z.string().optional(),
+  // type and purpose: coerce to uppercase then validate against enum — invalid values return 400
+  type:         z.preprocess(
+    v => typeof v === 'string' ? v.toUpperCase() : v,
+    z.enum(PROPERTY_TYPES).optional()
+  ),
+  purpose:      z.preprocess(
+    v => typeof v === 'string' ? v.toUpperCase() : v,
+    z.enum(PROPERTY_PURPOSES).optional()
+  ),
   city:         z.string().optional(),
   neighborhood: z.string().optional(),
   state:        z.string().optional(),
@@ -192,8 +202,8 @@ export default async function publicRoutes(app: FastifyInstance) {
           { street:       { contains: filters.search, mode: 'insensitive' } },
         ],
       }),
-      ...(filters.type         && { type:    filters.type.toUpperCase() }),
-      ...(filters.purpose      && { purpose: filters.purpose.toUpperCase() }),
+      ...(filters.type         && { type:    filters.type }),
+      ...(filters.purpose      && { purpose: filters.purpose }),
       ...(filters.city         && { city:    { contains: filters.city,         mode: 'insensitive' } }),
       ...(filters.neighborhood && { neighborhood: { contains: filters.neighborhood, mode: 'insensitive' } }),
       ...(filters.state        && { state:   { equals: filters.state,        mode: 'insensitive' } }),
