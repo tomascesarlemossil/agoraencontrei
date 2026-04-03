@@ -517,6 +517,17 @@ Agente IA com history+edit, Lemosbank wizard 6 steps, SEO JSON-LD, KPI cards cli
 ### API (`lib/api.ts`)
 - Novos métodos: `financeApi.estornarAluguel()`, `financeApi.summaryMonth()`, `financeApi.rentalsByMonth()`
 
+### Commit `fbdca3c` — 2026-04-03 (portal boletos + boleto avulso + auditoria)
+- **Portal `/portal/boletos`**: reformulado com 2 tabs (Cobranças Ativas / Histórico Completo)
+- Portal exibe boletos bancários (`Invoice`) com linha digitável, PIX copia-cola e link 2ª via
+- Backend `/portal/boletos` retorna `{ rentals, invoices }` em paralelo
+- Novo endpoint `GET /finance/invoices/:id` para buscar boleto por ID
+- Endpoint `POST /finance/invoices` para criar boleto avulso (sem Asaas)
+- Dashboard LemosBank: nova página `/lemosbank/boletos` com criação e gestão de boletos
+- Sidebar: item **Boletos** adicionado na seção LemosBank
+- `lib/api.ts`: `invoiceApi` com métodos `getAll`, `getById`, `create`, `charge`, `cancelCharge`, `syncStatus`
+- Build Next.js: **55 páginas** geradas sem erros
+
 ---
 
 ## 16. PADRÕES DE CÓDIGO
