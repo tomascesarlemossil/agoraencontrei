@@ -1,5 +1,6 @@
 import 'dotenv/config'
 import Fastify from 'fastify'
+import { ZodError } from 'zod'
 import { env, logEnvWarnings } from './utils/env.js'
 
 // ── v2026.04.01 ────────────────────────────────────────────────────────────
@@ -182,10 +183,7 @@ async function bootstrap() {
   // ── Error Handler ────────────────────────────────────────────────────────
   app.setErrorHandler((error, _req, reply) => {
     // Zod validation errors → 400
-    const isZodError = error.name === 'ZodError'
-      || (error as any).issues != null
-      || (error as any).constructor?.name === 'ZodError'
-    if (isZodError) {
+    if (error instanceof ZodError || error.name === 'ZodError' || (error as any).issues != null) {
       return reply.status(400).send({
         error: 'VALIDATION_ERROR',
         message: error.message,
