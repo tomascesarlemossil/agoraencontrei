@@ -453,11 +453,46 @@ Agente IA com history+edit, Lemosbank wizard 6 steps, SEO JSON-LD, KPI cards cli
 | `ANTHROPIC_API_KEY` | 🔴 ALTA — desabilita todos os agentes IA |
 | Domínio `www.agoraencontrei.com.br` | 🔴 ALTA — CNAME no registro.br + Vercel |
 | `INSTAGRAM_TOKEN_LEMOS` | 🟡 MÉDIA — sync @imobiliarialemos |
-| `showExactLocation` checkbox no frontend | 🟡 MÉDIA — formulário de cadastro do imóvel |
+| Ícones profissionais corretores | 🟡 MÉDIA — Lorena, Laura, Lucas, Miriam, Geraldo, Tomás (fotos originais já existem) |
 | Logo + Hero Video | 🟡 MÉDIA — Settings > Empresa (logoUrl, heroVideoUrl) |
 | Portais API Keys reais | 🟡 MÉDIA — OLX/ZAP/VivaReal |
 | NF-e certificado digital A1 | 🟢 BAIXA |
 | Planilhas previsão financeira 2025/2026 | 🟢 BAIXA |
+
+---
+
+## 15.1. HISTÓRICO DE ALTERAÇÕES (2026-04-03) — Commit 92f0a2a
+
+### Corretores
+- WhatsApp atualizados: Gabriel (16)99241-1378, Nádia (16)99253-3583, Naira (16)98101-0003, Miriam (16)99127-5404, Noêmia (16)98101-0005, Nilton (16)99965-4949, Geraldo (16)98101-0004, Tomás (16)99311-6199, Lorena (16)99108-3946, Laura (16)99340-4117, Lucas (16)99195-7528
+- `EQUIPE_LEMOS` na página de detalhe do imóvel também atualizada
+
+### Formulário de Imóvel
+- Checkbox `showExactLocation` adicionado nos formulários de novo imóvel e edição
+
+### LemosBank
+- **Cobranças**: filtro por mês + botão de estorno de pagamento
+- **Repasses**: botão "Marcar Repasse como Pago" com endpoint `PATCH /api/v1/finance/rentals/:id/repasse-paid`
+- **Rescisões**: exibe data de rescisão e duração do contrato na listagem
+- **Relatórios**: exportação CSV do relatório de proprietários
+- **Backend**: novos endpoints `PATCH /rentals/:id/estorno`, `GET /summary/month`, `GET /rentals/by-month`
+- **Audit**: `rental.estorno` adicionado ao union type `AuditAction`
+
+### Agentes IA
+- **BUG CRÍTICO CORRIGIDO**: wizard de contratos (`/contratos/novo`) usava `/documents/identify` para gerar HTML do contrato — corrigido para `/documents/generate` com `formData` estruturado
+- Mensagens de erro padronizadas via constante `AI_NOT_CONFIGURED_RESPONSE` em todos os endpoints
+- Frontend: verifica `res.ok` antes de parsear JSON (evita falhas silenciosas)
+- Mensagens amigáveis quando `ANTHROPIC_API_KEY` não está configurada
+
+### UX/Navegação
+- Dashboard principal: atalhos rápidos (Novo Imóvel, Novo Contrato, Leads, LemosBank)
+- Sidebar: item "Novo Contrato" adicionado na seção LemosBank
+
+### SEO
+- Homepage pública: OpenGraph completo, Twitter Cards, keywords, canonical URL
+
+### API (`lib/api.ts`)
+- Novos métodos: `financeApi.estornarAluguel()`, `financeApi.summaryMonth()`, `financeApi.rentalsByMonth()`
 
 ---
 
