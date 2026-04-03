@@ -1,11 +1,12 @@
 'use client'
 
 import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAuthStore } from '@/stores/auth.store'
 import Link from 'next/link'
 import {
   ArrowLeft, RefreshCw, CheckCircle, Clock, Phone, Mail, ChevronRight,
+  DollarSign,
 } from 'lucide-react'
 import { SearchInputWithVoice } from '@/components/ui/SearchInputWithVoice'
 import { financeApi } from '@/lib/api'
@@ -16,7 +17,9 @@ const fmt = (v: number | null | undefined) =>
 
 export default function RepassesPage() {
   const token = useAuthStore(s => s.accessToken)
+  const qc = useQueryClient()
   const [search, setSearch] = useState('')
+  const [marcando, setMarcando] = useState<string | null>(null)
 
   const params: Record<string, string> = {}
   if (search) params.search = search
@@ -32,6 +35,27 @@ export default function RepassesPage() {
   const meta        = data?.meta
   const pendentes   = repasses.filter((r: any) => !r.repassePaid)
   const pagos       = repasses.filter((r: any) =>  r.repassePaid)
+
+  const handleMarcarPago = async (r: any) => {
+    if (!token || !r.thisMonthRental?.id) {
+      alert('Este contrato não possui aluguel registrado neste mês para marcar como pago.')
+      return
+    }
+    if (!confirm(`Confirmar repasse de ${fmt(r.repasseValue)} para ${r.landlordName}?`)) return
+    setMarcando(r.id)
+    try {
+      await financeApi.pagarAluguel(token, r.thisMonthRental.id, {
+        paymentDate: new Date().toISOString().split('T')[0],
+        paidAmount: r.thisMonthRental.totalAmount,
+      })
+      qc.invalidateQueries({ queryKey: ['finance-repasses'] })
+      qc.invalidateQueries({ queryKey: ['finance-summary'] })
+    } catch (e: any) {
+      alert('Erro: ' + e.message)
+    } finally {
+      setMarcando(null)
+    }
+  }
 
   return (
     <div className="p-6 space-y-6 max-w-5xl mx-auto">
@@ -144,6 +168,16 @@ export default function RepassesPage() {
                   <Link href={`/dashboard/contratos/${r.id}`} className="text-xs text-blue-500 hover:underline block">
                     Ver contrato <ChevronRight className="inline w-3 h-3" />
                   </Link>
+                  {!r.repassePaid && (
+                    <button
+                      onClick={() => handleMarcarPago(r)}
+                      disabled={marcando === r.id}
+                      className="flex items-center gap-1 mt-1 text-xs bg-green-600 text-white px-3 py-1.5 rounded-lg hover:bg-green-700 font-medium transition-colors disabled:opacity-50 w-full justify-center"
+                    >
+                      <DollarSign className="w-3.5 h-3.5" />
+                      {marcando === r.id ? 'Processando...' : 'Marcar Repasse Pago'}
+                    </button>
+                  )}
                 </div>
               </div>
             </div>

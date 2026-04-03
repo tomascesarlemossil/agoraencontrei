@@ -15,12 +15,17 @@ import { emitAutomation } from '../../services/automation.emitter.js'
 export default async function agentsRoutes(app: FastifyInstance) {
   app.addHook('preHandler', app.authenticate)
 
+  const AI_NOT_CONFIGURED_RESPONSE = {
+    error: 'AI_NOT_CONFIGURED',
+    message: 'Agente de IA não configurado. Configure a variável ANTHROPIC_API_KEY no servidor.',
+  }
+
   // POST /api/v1/agents/pdf — extract property data from PDF
   app.post('/pdf', {
     schema: { tags: ['agents'] },
   }, async (req, reply) => {
     if (!env.ANTHROPIC_API_KEY) {
-      return reply.status(503).send({ error: 'AI_NOT_CONFIGURED' })
+      return reply.status(503).send(AI_NOT_CONFIGURED_RESPONSE)
     }
 
     const body = z.object({
@@ -82,7 +87,7 @@ export default async function agentsRoutes(app: FastifyInstance) {
     schema: { tags: ['agents'] },
   }, async (req, reply) => {
     if (!env.ANTHROPIC_API_KEY) {
-      return reply.status(503).send({ error: 'AI_NOT_CONFIGURED' })
+      return reply.status(503).send(AI_NOT_CONFIGURED_RESPONSE)
     }
 
     const body = z.object({
@@ -147,7 +152,7 @@ export default async function agentsRoutes(app: FastifyInstance) {
     schema: { tags: ['agents'] },
   }, async (req, reply) => {
     if (!env.ANTHROPIC_API_KEY) {
-      return reply.status(503).send({ error: 'AI_NOT_CONFIGURED' })
+      return reply.status(503).send(AI_NOT_CONFIGURED_RESPONSE)
     }
 
     const body = z.object({
@@ -238,7 +243,7 @@ export default async function agentsRoutes(app: FastifyInstance) {
     schema: { tags: ['agents'] },
   }, async (req, reply) => {
     if (!env.ANTHROPIC_API_KEY) {
-      return reply.status(503).send({ error: 'AI_NOT_CONFIGURED' })
+      return reply.status(503).send(AI_NOT_CONFIGURED_RESPONSE)
     }
 
     const { leadId } = z.object({ leadId: z.string().cuid() }).parse(req.body)
@@ -303,7 +308,7 @@ export default async function agentsRoutes(app: FastifyInstance) {
     schema: { tags: ['agents'], summary: 'Identify document type from natural language + images' },
   }, async (req, reply) => {
     if (!env.ANTHROPIC_API_KEY) {
-      return reply.status(503).send({ error: 'AI_NOT_CONFIGURED', message: 'Chave da IA não configurada no servidor.' })
+      return reply.status(503).send(AI_NOT_CONFIGURED_RESPONSE)
     }
 
     const cid = req.user.cid
@@ -391,7 +396,7 @@ export default async function agentsRoutes(app: FastifyInstance) {
     schema: { tags: ['agents'], summary: 'Generate document with AI' },
   }, async (req, reply) => {
     if (!env.ANTHROPIC_API_KEY) {
-      return reply.status(503).send({ error: 'AI_NOT_CONFIGURED' })
+      return reply.status(503).send(AI_NOT_CONFIGURED_RESPONSE)
     }
 
     const body = z.object({

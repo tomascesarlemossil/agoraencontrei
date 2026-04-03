@@ -7,6 +7,7 @@ import Link from 'next/link'
 import {
   ArrowLeft, Receipt, CheckCircle, Clock, AlertCircle,
   Mail, MessageCircle, Plus, X, Printer, ChevronDown,
+  RotateCcw, Calendar,
 } from 'lucide-react'
 import { SearchInputWithVoice } from '@/components/ui/SearchInputWithVoice'
 import { financeApi } from '@/lib/api'
@@ -469,22 +470,41 @@ export default function CobrancasPage() {
   const [search, setSearch]   = useState('')
   const [status, setStatus]   = useState('LATE')
   const [page, setPage]       = useState(1)
-
+  const [month, setMonth]     = useState('')  // YYYY-MM, vazio = todos
   // Modal state
   const [baixaRental, setBaixaRental]         = useState<any>(null)
   const [emailRental, setEmailRental]         = useState<any>(null)
   const [whatsappRental, setWhatsappRental]   = useState<any>(null)
   const [showNovaCobranca, setShowNovaCobranca] = useState(false)
+  const [estornando, setEstornando]           = useState<string | null>(null)
 
   const params: Record<string, string> = { page: String(page), limit: '30' }
   if (status) params.status = status
   if (search) params.search = search
 
+  // Se mês selecionado, usa endpoint by-month; caso contrário usa rentals geral
   const { data, isLoading } = useQuery({
-    queryKey: ['finance-rentals', page, status, search],
-    queryFn:  () => financeApi.rentals(token!, params),
+    queryKey: ['finance-rentals', page, status, search, month],
+    queryFn:  () => month
+      ? financeApi.rentalsByMonth(token!, { ...params, month })
+      : financeApi.rentals(token!, params),
     enabled:  !!token,
   })
+
+  const handleEstorno = async (rentalId: string) => {
+    if (!token) return
+    if (!confirm('Confirmar estorno deste pagamento? O aluguel voltará para PENDENTE.')) return
+    setEstornando(rentalId)
+    try {
+      await financeApi.estornarAluguel(token, rentalId)
+      qc.invalidateQueries({ queryKey: ['finance-rentals'] })
+      qc.invalidateQueries({ queryKey: ['finance-summary'] })
+    } catch (e: any) {
+      alert('Erro ao estornar: ' + e.message)
+    } finally {
+      setEstornando(null)
+    }
+  }
 
   const rentals = data?.data ?? []
   const meta    = data?.meta
@@ -534,14 +554,26 @@ export default function CobrancasPage() {
         ))}
       </div>
 
-      {/* Search */}
-      <SearchInputWithVoice
-        value={search}
-        onChange={e => { setSearch(e.target.value); setPage(1) }}
-        onVoiceResult={(t) => { setSearch(t); setPage(1) }}
-        placeholder="Buscar inquilino, proprietário, endereço..."
-        className="w-full py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400"
-      />
+      {/* Filtros: Mês + Busca */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="relative flex-shrink-0">
+          <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+          <input
+            type="month"
+            value={month}
+            onChange={e => { setMonth(e.target.value); setPage(1) }}
+            className="pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-yellow-400 bg-white"
+            title="Filtrar por mês"
+          />
+        </div>
+        <SearchInputWithVoice
+          value={search}
+          onChange={e => { setSearch(e.target.value); setPage(1) }}
+          onVoiceResult={(t) => { setSearch(t); setPage(1) }}
+          placeholder="Buscar inquilino, proprietário, endereço..."
+          className="flex-1 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400"
+        />
+      </div>
 
       {/* List */}
       {isLoading ? (
@@ -599,6 +631,18 @@ export default function CobrancasPage() {
                         >
                           <CheckCircle className="w-3.5 h-3.5" />
                           Dar Baixa
+                        </button>
+                      )}
+                      {/* Estorno */}
+                      {r.status === 'PAID' && (
+                        <button
+                          onClick={() => handleEstorno(r.id)}
+                          disabled={estornando === r.id}
+                          title="Estornar pagamento"
+                          className="flex items-center gap-1 text-xs bg-orange-50 text-orange-700 px-2.5 py-1.5 rounded-lg hover:bg-orange-100 font-medium transition-colors disabled:opacity-50"
+                        >
+                          <RotateCcw className="w-3.5 h-3.5" />
+                          {estornando === r.id ? '...' : 'Estornar'}
                         </button>
                       )}
                       {/* Email */}

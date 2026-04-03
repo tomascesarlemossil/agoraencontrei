@@ -228,6 +228,15 @@ export default function DocumentosPage() {
           })),
         }),
       })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        if (err.error === 'AI_NOT_CONFIGURED') {
+          setIdentifyError('⚠️ Agente de IA não configurado. Solicite ao administrador que configure a ANTHROPIC_API_KEY no servidor.')
+        } else {
+          setIdentifyError(err.message ?? 'Erro ao identificar documento.')
+        }
+        return
+      }
       const data = await res.json()
       if (data.templateId) {
         const tmpl = TEMPLATES.find(t => t.id === data.templateId)
@@ -243,7 +252,7 @@ export default function DocumentosPage() {
         setIdentifyError(data.message ?? 'Não foi possível identificar o documento. Tente ser mais específico.')
       }
     } catch {
-      setIdentifyError('Erro de conexão com o agente de IA.')
+      setIdentifyError('Erro de conexão com o agente de IA. Verifique se o servidor está online.')
     } finally {
       setIdentifying(false)
     }
@@ -272,6 +281,15 @@ export default function DocumentosPage() {
           })),
         }),
       })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        const msg = err.error === 'AI_NOT_CONFIGURED'
+          ? '⚠️ Agente de IA não configurado. Solicite ao administrador que configure a ANTHROPIC_API_KEY no servidor.'
+          : (err.message ?? 'Erro ao gerar documento.')
+        setGeneratedHtml(`<div style="color:#b91c1c;font-family:sans-serif;padding:2rem;background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;margin:1rem"><strong>Erro:</strong> ${msg}</div>`)
+        setStep('generated')
+        return
+      }
       const data = await res.json()
       if (data.html) {
         setGeneratedHtml(data.html)
@@ -291,11 +309,11 @@ export default function DocumentosPage() {
           setHistory(loadHistory())
         }
       } else {
-        setGeneratedHtml('<p style="color:red;font-family:sans-serif;padding:2rem">Erro ao gerar documento. Verifique se a chave da IA está configurada no servidor.</p>')
+        setGeneratedHtml('<div style="color:#b91c1c;font-family:sans-serif;padding:2rem;background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;margin:1rem"><strong>Erro:</strong> Documento gerado vazio. Tente novamente.</div>')
         setStep('generated')
       }
     } catch {
-      setGeneratedHtml('<p style="color:red;font-family:sans-serif;padding:2rem">Erro de conexão ao gerar documento.</p>')
+      setGeneratedHtml('<div style="color:#b91c1c;font-family:sans-serif;padding:2rem;background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;margin:1rem"><strong>Erro de conexão:</strong> Não foi possível conectar ao servidor. Verifique sua conexão.</div>')
       setStep('generated')
     } finally {
       setGenerating(false)

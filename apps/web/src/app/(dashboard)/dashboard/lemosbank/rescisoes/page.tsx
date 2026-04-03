@@ -101,11 +101,17 @@ export default function RescisoesPage() {
                     <span>Inquilino: {c.tenant?.name ?? c.tenantName ?? '—'}</span>
                     <span>Proprietário: {c.landlord?.name ?? c.landlordName ?? '—'}</span>
                   </div>
-                  {c.startDate && (
-                    <p className="text-xs text-gray-400 mt-0.5">
-                      Início: {new Date(c.startDate).toLocaleDateString('pt-BR')}
-                    </p>
-                  )}
+                  <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-gray-400 mt-0.5">
+                    {c.startDate && (
+                      <span>Início: {new Date(c.startDate).toLocaleDateString('pt-BR')}</span>
+                    )}
+                    {c.rescissionDate && (
+                      <span className="text-red-500 font-medium">
+                        Rescisão: {new Date(c.rescissionDate).toLocaleDateString('pt-BR')}
+                      </span>
+                    )}
+                    {c.duration && <span>Duração: {c.duration} meses</span>}
+                  </div>
                 </div>
                 <div className="text-right shrink-0">
                   <p className="text-base font-bold text-gray-500">{fmt(c.rentValue)}</p>

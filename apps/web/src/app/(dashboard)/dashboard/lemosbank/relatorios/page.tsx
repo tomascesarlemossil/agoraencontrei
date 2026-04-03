@@ -426,8 +426,36 @@ function ProprietariosReport({ token }: { token: string }) {
           className="flex items-center gap-1.5 px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50 mt-5"
         >
           <Printer className="w-4 h-4" />
-          Imprimir Relatório
+          Imprimir
         </button>
+        {items.length > 0 && (
+          <button
+            onClick={() => {
+              const rows = [
+                ['Proprietário', 'Imóvel', 'Aluguel', 'Valor Pago', 'Data Pgto', 'Comissão', 'Repasse Líquido'],
+                ...items.map((item: any) => [
+                  item.landlordName ?? item.landlord?.name ?? '',
+                  item.propertyAddress ?? item.address ?? '',
+                  item.rentAmount ?? item.aluguel ?? '',
+                  item.paidAmount ?? item.valorPago ?? '',
+                  item.paymentDate ? new Date(item.paymentDate).toLocaleDateString('pt-BR') : '',
+                  item.commission ?? item.comissao ?? '',
+                  item.netRepasse ?? item.repasseLiquido ?? '',
+                ]),
+              ]
+              const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n')
+              const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+              const url = URL.createObjectURL(blob)
+              const a = document.createElement('a')
+              a.href = url; a.download = `repasses_${month}.csv`; a.click()
+              URL.revokeObjectURL(url)
+            }}
+            className="flex items-center gap-1.5 px-3 py-2 border border-green-200 rounded-lg text-sm text-green-700 hover:bg-green-50 mt-5"
+          >
+            <Download className="w-4 h-4" />
+            Exportar CSV
+          </button>
+        )}
       </div>
 
       {isLoading ? (

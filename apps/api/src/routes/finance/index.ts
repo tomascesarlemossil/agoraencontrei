@@ -1165,4 +1165,121 @@ export default async function financeRoutes(app: FastifyInstance) {
 
     return reply.status(201).send({ invoice, asaasCharge })
   })
+
+  // PATCH /api/v1/finance/rentals/:id/estorno — Estornar pagamento (PAID → PENDING)
+  app.patch('/rentals/:id/estorno', async (req, reply) => {
+    const { id } = req.params as { id: string }
+    const rental = await app.prisma.rental.findFirst({
+      where: { id, companyId: req.user.cid },
+    })
+    if (!rental) return reply.status(404).send({ error: 'NOT_FOUND' })
+    if (rental.status !== 'PAID') {
+      return reply.status(400).send({ error: 'RENTAL_NOT_PAID', message: 'Somente aluguéis pagos podem ser estornados.' })
+    }
+    const updated = await app.prisma.rental.update({
+      where: { id },
+      data: { status: 'PENDING', paidAmount: null, paymentDate: null },
+    })
+    await createAuditLog({
+      prisma: app.prisma as any, req,
+      action: 'rental.estorno',
+      resource: 'rental',
+      resourceId: id,
+      before: { status: rental.status, paidAmount: rental.paidAmount, paymentDate: rental.paymentDate },
+      after:  { status: 'PENDING', paidAmount: null, paymentDate: null },
+    })
+    return reply.send(updated)
+  })
+
+  // GET /api/v1/finance/summary/month — Resumo financeiro de um mês específico (YYYY-MM)
+  app.get('/summary/month', async (req, reply) => {
+    const cid = req.user.cid
+    const q = req.query as Record<string, string>
+    const month = q.month
+    if (!month) return reply.status(400).send({ error: 'MONTH_REQUIRED', message: 'Forneça month no formato YYYY-MM' })
+    const [y, m] = month.split('-').map(Number)
+    if (!y || !m || m < 1 || m > 12) return reply.status(400).send({ error: 'INVALID_MONTH' })
+    const periodStart = new Date(y, m - 1, 1)
+    const periodEnd   = new Date(y, m, 0, 23, 59, 59)
+    const [paid, pending, late, total] = await Promise.all([
+      app.prisma.rental.aggregate({
+        where: { companyId: cid, status: 'PAID', paymentDate: { gte: periodStart, lte: periodEnd } },
+        _sum: { totalAmount: true, paidAmount: true },
+        _count: true,
+      }),
+      app.prisma.rental.aggregate({
+        where: { companyId: cid, status: 'PENDING', dueDate: { gte: periodStart, lte: periodEnd } },
+        _sum: { totalAmount: true },
+        _count: true,
+      }),
+      app.prisma.rental.aggregate({
+        where: { companyId: cid, status: 'LATE', dueDate: { gte: periodStart, lte: periodEnd } },
+        _sum: { totalAmount: true },
+        _count: true,
+      }),
+      app.prisma.rental.count({
+        where: { companyId: cid, dueDate: { gte: periodStart, lte: periodEnd } },
+      }),
+    ])
+    return reply.send({
+      period: month,
+      paid:    { count: paid._count,    total: Number(paid._sum.paidAmount ?? paid._sum.totalAmount ?? 0) },
+      pending: { count: pending._count, total: Number(pending._sum.totalAmount ?? 0) },
+      late:    { count: late._count,    total: Number(late._sum.totalAmount ?? 0) },
+      totalRentals: total,
+      inadimplencia: total > 0 ? Math.round(((late._count + pending._count) / total) * 1000) / 10 : 0,
+    })
+  })
+
+  // GET /api/v1/finance/rentals/by-month — Alugueis de um mês específico paginados
+  app.get('/rentals/by-month', async (req, reply) => {
+    const cid = req.user.cid
+    const q = req.query as Record<string, string>
+    const month = q.month
+    const status = q.status
+    const search = q.search
+    const page = Math.max(1, parseInt(q.page ?? '1'))
+    const limit = Math.min(100, Math.max(1, parseInt(q.limit ?? '30')))
+    if (!month) return reply.status(400).send({ error: 'MONTH_REQUIRED' })
+    const [y, m] = month.split('-').map(Number)
+    if (!y || !m) return reply.status(400).send({ error: 'INVALID_MONTH' })
+    const periodStart = new Date(y, m - 1, 1)
+    const periodEnd   = new Date(y, m, 0, 23, 59, 59)
+    const where: any = {
+      companyId: cid,
+      dueDate: { gte: periodStart, lte: periodEnd },
+    }
+    if (status && status !== 'ALL') where.status = status.toUpperCase()
+    if (search) {
+      where.contract = {
+        OR: [
+          { tenantName:      { contains: search, mode: 'insensitive' } },
+          { landlordName:    { contains: search, mode: 'insensitive' } },
+          { propertyAddress: { contains: search, mode: 'insensitive' } },
+        ],
+      }
+    }
+    const [total, rentals] = await Promise.all([
+      app.prisma.rental.count({ where }),
+      app.prisma.rental.findMany({
+        where,
+        include: {
+          contract: {
+            select: {
+              id: true, legacyId: true,
+              tenantName: true, landlordName: true, propertyAddress: true,
+              tenant: { select: { id: true, name: true, phone: true, email: true } },
+            },
+          },
+        },
+        orderBy: [{ status: 'asc' }, { dueDate: 'asc' }],
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+    ])
+    return reply.send({
+      data: rentals,
+      meta: { total, page, limit, totalPages: Math.ceil(total / limit) },
+    })
+  })
 }

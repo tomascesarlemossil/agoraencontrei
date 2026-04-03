@@ -8,7 +8,23 @@ import { SmartQuiz } from './SmartQuiz'
 
 export const metadata: Metadata = {
   title: 'Imobiliária Lemos — Franca/SP | Comprar, Alugar e Avaliar Imóveis',
-  description: 'Há mais de 20 anos conectando pessoas aos melhores imóveis de Franca e região. Compra, venda, locação e avaliação. CRECI 279051.',
+  description: 'Há mais de 20 anos conectando pessoas aos melhores imóveis de Franca e região. Compra, venda, locação e avaliação. CRECI 279051. Casas, apartamentos, terrenos e imóveis comerciais.',
+  keywords: ['imobiliária franca', 'imóveis franca sp', 'alugar casa franca', 'comprar apartamento franca', 'imobiliária lemos', 'locação franca', 'venda imóveis franca', 'CRECI 279051'],
+  openGraph: {
+    title: 'Imobiliária Lemos — Franca/SP',
+    description: 'Há mais de 20 anos conectando pessoas aos melhores imóveis de Franca e região.',
+    type: 'website',
+    locale: 'pt_BR',
+    siteName: 'Imobiliária Lemos',
+    images: [{ url: '/og-image.jpg', width: 1200, height: 630, alt: 'Imobiliária Lemos — Franca/SP' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Imobiliária Lemos — Franca/SP',
+    description: 'Imóveis de qualidade em Franca e região. CRECI 279051.',
+  },
+  robots: { index: true, follow: true },
+  alternates: { canonical: 'https://www.agoraencontrei.com.br' },
 }
 
 export const revalidate = 300

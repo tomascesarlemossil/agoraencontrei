@@ -15,6 +15,10 @@ import {
   CheckCircle,
   Clock,
   AlertCircle,
+  PlusCircle,
+  Banknote,
+  FileText,
+  Wand2,
 } from 'lucide-react'
 
 export default function DashboardPage() {
@@ -81,6 +85,25 @@ export default function DashboardPage() {
         <p className="text-muted-foreground mt-1">
           Aqui está um resumo do seu negócio hoje
         </p>
+      </div>
+
+      {/* Quick Actions */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {[
+          { href: '/dashboard/properties/new', icon: PlusCircle, label: 'Novo Imóvel',    color: 'text-blue-600',   bg: 'bg-blue-50'   },
+          { href: '/dashboard/contratos/novo', icon: FileText,   label: 'Novo Contrato', color: 'text-green-600',  bg: 'bg-green-50'  },
+          { href: '/dashboard/leads',          icon: UserCheck,  label: 'Ver Leads',     color: 'text-purple-600', bg: 'bg-purple-50' },
+          { href: '/dashboard/lemosbank',      icon: Banknote,   label: 'LemosBank',     color: 'text-yellow-600', bg: 'bg-yellow-50' },
+        ].map(a => (
+          <Link key={a.href} href={a.href}
+            className="flex items-center gap-3 p-4 bg-white rounded-xl border border-gray-100 hover:shadow-md hover:border-transparent transition-all"
+          >
+            <div className={`p-2 rounded-lg ${a.bg}`}>
+              <a.icon className={`h-5 w-5 ${a.color}`} />
+            </div>
+            <span className="text-sm font-medium text-gray-700">{a.label}</span>
+          </Link>
+        ))}
       </div>
 
       {/* KPIs */}

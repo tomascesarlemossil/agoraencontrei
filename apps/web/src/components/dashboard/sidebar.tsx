@@ -38,6 +38,7 @@ import {
   BookOpen,
   Archive,
   History,
+  PlusCircle,
 } from 'lucide-react'
 import { useNotifications } from '@/stores/notifications.store'
 import { UserAvatar } from '@/components/ui/UserAvatar'
@@ -68,6 +69,7 @@ const corretorNavItem = { href: '/dashboard/corretor', icon: BriefcaseBusiness, 
 const lemosbankSubItems = [
   { href: '/dashboard/lemosbank',              icon: Banknote,   label: 'Visão Geral' },
   { href: '/dashboard/contratos',              icon: FileText,   label: 'Contratos' },
+  { href: '/dashboard/contratos/novo',         icon: PlusCircle, label: 'Novo Contrato' },
   { href: '/dashboard/clientes',               icon: Users,      label: 'Clientes' },
   { href: '/dashboard/lemosbank/cobrancas',    icon: Receipt,    label: 'Cobranças' },
   { href: '/dashboard/lemosbank/repasses',     icon: RefreshCw,  label: 'Repasses' },

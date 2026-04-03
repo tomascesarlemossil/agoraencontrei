@@ -879,6 +879,46 @@ export const financeApi = {
       token,
       body: JSON.stringify(body),
     }),
+
+  estornarAluguel: (token: string, rentalId: string) =>
+    request<any>(`/api/v1/finance/rentals/${rentalId}/estorno`, {
+      method: 'PATCH',
+      token,
+      body: JSON.stringify({}),
+    }),
+
+  summaryMonth: (token: string, month: string) =>
+    request<{
+      period: string
+      paid:    { count: number; total: number }
+      pending: { count: number; total: number }
+      late:    { count: number; total: number }
+      totalRentals: number
+      inadimplencia: number
+    }>(`/api/v1/finance/summary/month?month=${month}`, { token }),
+
+  rentalsByMonth: (token: string, params: Record<string, string>) =>
+    request<{ data: any[]; meta: { total: number; page: number; limit: number; totalPages: number } }>(
+      `/api/v1/finance/rentals/by-month?${toQS(params)}`,
+      { token },
+    ),
+
+  recibo: (token: string, rentalId: string) =>
+    request<{ html: string }>(`/api/v1/finance/rentals/${rentalId}/recibo`, { token }),
+
+  sendEmail: (token: string, rentalId: string, body: { to: string; subject?: string; message?: string }) =>
+    request<{ sent: boolean }>(`/api/v1/finance/rentals/${rentalId}/send-email`, {
+      method: 'POST',
+      token,
+      body: JSON.stringify(body),
+    }),
+
+  sendWhatsapp: (token: string, rentalId: string, body: { phone: string; message?: string }) =>
+    request<{ sent: boolean }>(`/api/v1/finance/rentals/${rentalId}/send-whatsapp`, {
+      method: 'POST',
+      token,
+      body: JSON.stringify(body),
+    }),
 }
 
 // ── Upload ─────────────────────────────────────────────────────────────────────

@@ -371,41 +371,60 @@ export default function NovoContratoPage() {
     setGenLoading(true)
     setGlobalError('')
     try {
-      const prompt = `
-Gere um contrato de locação residencial completo em HTML formatado para impressão com os seguintes dados:
+      // Monta o formData com todos os dados do wizard
+      const formData: Record<string, string> = {
+        imovel_endereco: data.propertyAddress,
+        locatario_nome: data.tenantName,
+        locatario_cpf: data.tenantCpf,
+        locatario_rg: data.tenantRg,
+        locatario_telefone: data.tenantPhone,
+        locatario_email: data.tenantEmail,
+        locatario_endereco_atual: data.tenantAddress,
+        fiador_nome: data.guarantorName || '',
+        fiador_cpf: data.guarantorCpf || '',
+        fiador_rg: data.guarantorRg || '',
+        fiador_telefone: data.guarantorPhone || '',
+        valor_aluguel: `R$ ${data.rentValue}`,
+        dia_vencimento: data.dueDay,
+        data_inicio: data.startDate,
+        data_fim: data.endDate,
+        reajuste: `${data.adjustmentIndex} ${data.adjustmentPercent}% ao ano`,
+        multa_rescisoria: `${data.penaltyPercent}%`,
+        taxa_administrativa: `${data.adminFeePercent}%`,
+        caucao: data.caucaoValue ? `R$ ${data.caucaoValue}` : 'Não aplicado',
+        seguro_incendio: data.fireInsurance ? `Obrigatório - R$ ${data.fireInsuranceValue || 'a calcular'}` : 'Não incluso',
+        garantia_tipo: data.guaranteeType || '',
+      }
 
-IMÓVEL: ${data.propertyAddress}
-LOCATÁRIO: ${data.tenantName}, CPF: ${data.tenantCpf}, RG: ${data.tenantRg}, Tel: ${data.tenantPhone}
-LOCADOR/PROPRIETÁRIO: (gerenciado pela Imobiliária Lemos)
-FIADOR: ${data.guarantorName || 'Não informado'}, CPF: ${data.guarantorCpf}
-VALOR DO ALUGUEL: R$ ${data.rentValue}
-DIA DE VENCIMENTO: ${data.dueDay}
-INÍCIO: ${data.startDate}
-FIM: ${data.endDate}
-REAJUSTE: ${data.adjustmentIndex} ${data.adjustmentPercent}% ao ano
-MULTA RESCISÓRIA: ${data.penaltyPercent}%
-TAXA ADMINISTRATIVA: ${data.adminFeePercent}%
-CAUÇÃO: R$ ${data.caucaoValue || '0'}
-SEGURO INCÊNDIO: ${data.fireInsurance ? 'Obrigatório - R$ ' + (data.fireInsuranceValue || 'a calcular') : 'Não incluso'}
-GARANTIA: ${data.guaranteeType}
+      const templateContent = `Contrato de Locação Residencial conforme Lei do Inquilinato (Lei 8.245/91).
+Inclua todas as cláusulas padrão: objeto, prazo, valor, vencimento, reajuste, multa, garantia, obrigações das partes, rescisão e disposições gerais.
+Use estilos CSS inline para impressão A4. Inclua espaço para assinaturas ao final.`
 
-Gere o HTML completo do contrato com todas as cláusulas padrão de locação conforme a Lei do Inquilinato (Lei 8.245/91). Use estilos CSS inline para impressão A4. Inclua espaço para assinaturas.
-      `.trim()
-
-      const resp = await fetch(`${API_URL}/api/v1/agents/documents/identify`, {
+      const resp = await fetch(`${API_URL}/api/v1/agents/documents/generate`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
         credentials: 'include',
-        body: JSON.stringify({ text: prompt, images: [] }),
+        body: JSON.stringify({
+          templateId: 'contrato-locacao-residencial',
+          templateContent,
+          formData,
+          userInstructions: 'Gere o contrato completo com todas as cláusulas padrão da Lei do Inquilinato.',
+        }),
       })
 
-      if (!resp.ok) throw new Error('Erro ao gerar contrato')
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({}))
+        if (err.error === 'AI_NOT_CONFIGURED') {
+          throw new Error('Agente IA não configurado no servidor. Configure a ANTHROPIC_API_KEY.')
+        }
+        throw new Error(err.message ?? 'Erro ao gerar contrato')
+      }
       const result = await resp.json()
-      const html = result?.result?.html ?? result?.html ?? result?.result ?? ''
-      if (html) set('contractHtml', typeof html === 'string' ? html : JSON.stringify(html))
+      const html = result?.html ?? ''
+      if (html) set('contractHtml', html)
     } catch (e: any) {
       setGlobalError(e.message ?? 'Erro ao gerar contrato')
     } finally {
