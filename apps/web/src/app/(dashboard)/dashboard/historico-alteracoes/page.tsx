@@ -6,7 +6,7 @@ import {
   History, Filter, ChevronLeft, ChevronRight, ChevronDown, ChevronUp,
   FileText, Building2, Users, UserCheck, CreditCard, Loader2, Search, X,
 } from 'lucide-react'
-import { useAuthStore } from '@/store/auth'
+import { useAuthStore } from '@/stores/auth.store'
 import { UserAvatar } from '@/components/ui/UserAvatar'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
