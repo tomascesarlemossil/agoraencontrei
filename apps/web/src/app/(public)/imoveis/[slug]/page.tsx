@@ -360,6 +360,13 @@ export default async function PropertyDetailPage({ params }: { params: { slug: s
               typeLabel={TYPE_LABEL[p.type] ?? p.type}
             />
 
+            {/* ── IA Visual Floating Button ──────────────────────────────────── */}
+            <AIVisualPublicButton
+              propertySlug={p.slug}
+              images={[p.coverImage, ...(p.images ?? [])].filter(Boolean)}
+              title={p.title}
+            />
+
             {/* ── Title + Price Card ───────────────────────── */}
             <div className="bg-white rounded-2xl border shadow-sm overflow-hidden" style={{ borderColor: '#ddd9d0' }}>
               {/* Top accent bar */}
@@ -783,12 +790,6 @@ export default async function PropertyDetailPage({ params }: { params: { slug: s
         </div>
       </div>
 
-      {/* ── IA Visual Floating Button ──────────────────────────────────── */}
-      <AIVisualPublicButton
-        propertySlug={p.slug}
-        images={[p.coverImage, ...(p.images ?? [])].filter(Boolean)}
-        title={p.title}
-      />
     </div>
   )
 }
