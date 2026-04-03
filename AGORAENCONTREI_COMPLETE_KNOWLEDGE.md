@@ -111,11 +111,11 @@ JWT_REFRESH_EXPIRES       — 30d
 REDIS_URL                 — redis://default:{pass}@redis.railway.internal:6379
 ASAAS_API_KEY             — [chave Asaas]
 PUBLIC_COMPANY_ID         — cmnb3pnpl0000ldqxlw26surr
-ANTHROPIC_API_KEY         — ⚠️ PENDENTE (necessário para agentes IA)
+ANTHROPIC_API_KEY         — ✅ CONFIGURADA no Railway (confirmado 2026-04-03)
 GOOGLE_CLIENT_ID          — [client id Google OAuth]
 YOUTUBE_API_KEY           — [chave YouTube]
-INSTAGRAM_TOKEN_TOMAS     — ⚠️ pendente
-INSTAGRAM_TOKEN_LEMOS     — ⚠️ pendente
+INSTAGRAM_TOKEN_TOMAS     — ✅ CONFIGURADA no Railway
+INSTAGRAM_TOKEN_LEMOS     — ✅ CONFIGURADA no Railway
 ```
 
 ### Variáveis de Ambiente (Vercel)
@@ -360,7 +360,7 @@ Contacts, Deals, Activities, comissões, splits, relatórios financeiros (Asaas)
 
 ### Phase 3 — Lemos.chat + Agentes IA ✅ (2026-03-29)
 WhatsApp Cloud API + inbox + agentes: score-lead, PDF, áudio Whisper, copywriter, documentos
-⚠️ Agentes desabilitados até `ANTHROPIC_API_KEY` configurada
+✅ Agentes habilitados — `ANTHROPIC_API_KEY` configurada no Railway (confirmado 2026-04-03)
 
 ### Phase 4 — Motor de Automação ✅ (2026-03-29)
 7 triggers, 6 actions, BullMQ worker, Rule Builder UI
@@ -552,6 +552,24 @@ Agente IA com history+edit, Lemosbank wizard 6 steps, SEO JSON-LD, KPI cards cli
 - Sidebar: item **Boletos** adicionado na seção LemosBank
 - `lib/api.ts`: `invoiceApi` com métodos `getAll`, `getById`, `create`, `charge`, `cancelCharge`, `syncStatus`
 - Build Next.js: **55 páginas** geradas sem erros
+
+### Commit `da57b0e` — 2026-04-03 (integração dados históricos Uniloc + portal cliente)
+- **Portal `/portal/boletos`**: aba "Histórico Completo" exibe `FinancialForecast` (22.104 registros Uniloc)
+- **Portal `/portal/extratos`**: aba "Histórico Financeiro" com dados do Uniloc + aba "Extratos PDF"
+- **Backend `/portal/boletos`**: retorna `{ rentals, invoices, forecasts }` em paralelo
+- **Backend `/portal/extratos`**: retorna `{ rentals, invoices, forecasts }` com filtros
+- **`routes/auth/index.ts`**: portal-login retorna `{ accessToken, expiresIn, user }` (consistente com frontend)
+- **`routes/documents/index.ts`**: novos endpoints `POST /batch-metadata` e `POST /:id/file` para upload progressivo dos 2.217 documentos históricos
+- Deploy Railway: `serviceInstanceRedeploy` via GraphQL API
+
+### Commit `ac60b42` — 2026-04-03 (auditoria completa — correções críticas)
+- **`routes/agents/index.ts`**: endpoint `/agents/status` agora é **público** (sem autenticação) — dashboard pode verificar status da IA antes do login
+- **`routes/public/index.ts`**: `applyLocationPrivacy` corrigido — retorna `showExactLocation` ao frontend (antes removia o campo, impedindo o mapa de saber o modo correto)
+- **`PropertyMap.tsx`**: nova prop `showExactLocation` — `true` = pin exato (zoom 17, marcador laranja), `false` = círculo de privacidade ~300m (zoom 15) + label "Localização aproximada"
+- **Página de detalhe do imóvel**: passa `showExactLocation={p.showExactLocation ?? false}` ao PropertyMap
+- **Funcionalidades verificadas como OK**: busca IA pública (`/search-ai`), avaliação de imóvel (`/avaliacao`), upload de avatar, HeroBackground (YouTube + upload direto), wizard de contratos, motor de automação, NF-e, repasses, cobranças, CRM
+- **`ANTHROPIC_API_KEY`**: confirmada configurada no Railway (todas as 25 variáveis presentes)
+- Build Next.js: **55 páginas** sem erros
 
 ---
 
