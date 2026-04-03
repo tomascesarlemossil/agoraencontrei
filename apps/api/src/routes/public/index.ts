@@ -155,7 +155,11 @@ export default async function publicRoutes(app: FastifyInstance) {
     const company = await resolveCompany(app)
     if (!company) return reply.status(503).send({ error: 'SERVICE_UNAVAILABLE' })
 
-    const filters = PublicFilters.parse(req.query)
+    const _parsed = PublicFilters.safeParse(req.query)
+    if (!_parsed.success) {
+      return reply.status(400).send({ error: 'VALIDATION_ERROR', message: _parsed.error.message })
+    }
+    const filters = _parsed.data
 
     const where: any = {
       companyId: company.id,
@@ -354,7 +358,11 @@ export default async function publicRoutes(app: FastifyInstance) {
     const company = await resolveCompany(app)
     if (!company) return reply.status(503).send({ error: 'SERVICE_UNAVAILABLE' })
 
-    const body = LeadCaptureBody.parse(req.body)
+    const _bodyParsed = LeadCaptureBody.safeParse(req.body)
+    if (!_bodyParsed.success) {
+      return reply.status(400).send({ error: 'VALIDATION_ERROR', message: _bodyParsed.error.message })
+    }
+    const body = _bodyParsed.data
 
     // Find or create contact
     let contact = body.email
