@@ -723,10 +723,13 @@ export default async function PropertyDetailPage({ params }: { params: { slug: s
                     latitude={p.latitude} longitude={p.longitude}
                     city={p.city} neighborhood={p.neighborhood} state={p.state}
                     label={[TYPE_LABEL[p.type] ?? p.type, p.neighborhood, p.city].filter(Boolean).join(' / ')}
+                    showExactLocation={p.showExactLocation ?? false}
                   />
-                  <p className="text-xs text-gray-400 mt-3 text-center">
-                    * Localização aproximada para preservar a privacidade do imóvel.
-                  </p>
+                  {!(p.showExactLocation) && (
+                    <p className="text-xs text-gray-400 mt-3 text-center">
+                      * Localização aproximada para preservar a privacidade do imóvel.
+                    </p>
+                  )}
                 </div>
               </div>
             )}

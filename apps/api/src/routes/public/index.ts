@@ -38,13 +38,14 @@ const LeadCaptureBody = z.object({
 // ── Location privacy helper ─────────────────────────────────────────────────
 // Exact coordinates are NEVER exposed publicly unless showExactLocation=true.
 // When false, lat/lng are nulled — frontend must use city/neighborhood for map.
+// showExactLocation IS returned to frontend so the map knows which mode to use.
 type WithLocation = { latitude?: number | null; longitude?: number | null; showExactLocation?: boolean }
-function applyLocationPrivacy<T extends WithLocation>(p: T): Omit<T, 'showExactLocation'> {
-  const { showExactLocation, ...rest } = p
+function applyLocationPrivacy<T extends WithLocation>(p: T): T {
   return {
-    ...rest,
-    latitude:  showExactLocation ? p.latitude  : null,
-    longitude: showExactLocation ? p.longitude : null,
+    ...p,
+    latitude:  p.showExactLocation ? p.latitude  : null,
+    longitude: p.showExactLocation ? p.longitude : null,
+    // showExactLocation kept in response so frontend renders correct map mode
   }
 }
 

@@ -10,9 +10,10 @@ interface Props {
   neighborhood?: string | null
   state?: string | null
   label?: string
+  showExactLocation?: boolean
 }
 
-export function PropertyMap({ latitude, longitude, city, neighborhood, state, label }: Props) {
+export function PropertyMap({ latitude, longitude, city, neighborhood, state, label, showExactLocation = false }: Props) {
   const mapRef = useRef<HTMLDivElement>(null)
   const mapInstance = useRef<any>(null)
   const [loading, setLoading] = useState(true)
@@ -71,7 +72,7 @@ export function PropertyMap({ latitude, longitude, city, neighborhood, state, la
 
         const map = L.map(mapRef.current, {
           center: [lat, lng],
-          zoom: 15,
+          zoom: showExactLocation ? 17 : 15,
           scrollWheelZoom: false,
           zoomControl: true,
         })
@@ -81,23 +82,35 @@ export function PropertyMap({ latitude, longitude, city, neighborhood, state, la
           maxZoom: 19,
         }).addTo(map)
 
-        // Fuzzy circle — ~300m radius to protect exact address
-        L.circle([lat, lng], {
-          radius: 300,
-          color: '#e07742',
-          fillColor: '#e07742',
-          fillOpacity: 0.2,
-          weight: 2,
-        }).addTo(map)
-
-        // Small dot at center
-        L.circleMarker([lat, lng], {
-          radius: 6,
-          color: '#e07742',
-          fillColor: '#e07742',
-          fillOpacity: 0.9,
-          weight: 2,
-        }).addTo(map)
+        if (showExactLocation) {
+          // Pin exato — endereço preciso autorizado pelo proprietário
+          const icon = L.divIcon({
+            html: `<div style="background:#e07742;width:28px;height:28px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.3)"></div>`,
+            iconSize: [28, 28],
+            iconAnchor: [14, 28],
+            className: '',
+          })
+          L.marker([lat, lng], { icon })
+            .addTo(map)
+            .bindPopup(label ?? 'Localização do imóvel')
+        } else {
+          // Círculo de privacidade — ~300m radius para proteger endereço exato
+          L.circle([lat, lng], {
+            radius: 300,
+            color: '#e07742',
+            fillColor: '#e07742',
+            fillOpacity: 0.15,
+            weight: 2,
+          }).addTo(map)
+          // Ponto central
+          L.circleMarker([lat, lng], {
+            radius: 6,
+            color: '#e07742',
+            fillColor: '#e07742',
+            fillOpacity: 0.9,
+            weight: 2,
+          }).addTo(map)
+        }
 
         mapInstance.current = map
         setLoading(false)
@@ -115,7 +128,7 @@ export function PropertyMap({ latitude, longitude, city, neighborhood, state, la
         mapInstance.current = null
       }
     }
-  }, [latitude, longitude, city, neighborhood, state])
+  }, [latitude, longitude, city, neighborhood, state, showExactLocation])
 
   if (error) {
     return (
@@ -134,6 +147,11 @@ export function PropertyMap({ latitude, longitude, city, neighborhood, state, la
         </div>
       )}
       <div ref={mapRef} className="h-72 w-full" />
+      {!loading && !showExactLocation && (
+        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-white/90 backdrop-blur-sm text-xs text-gray-500 px-3 py-1 rounded-full shadow-sm border border-gray-200">
+          📍 Localização aproximada — {neighborhood ?? city}
+        </div>
+      )}
     </div>
   )
 }
