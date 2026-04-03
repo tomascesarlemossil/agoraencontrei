@@ -110,10 +110,9 @@ export default async function documentsRoutes(app: FastifyInstance) {
     // Serve from DB
     if (!doc.fileData) return reply.status(404).send({ error: 'NO_FILE_DATA' })
 
-    const filename = doc.name.replace(/[^a-zA-Z0-9._\- ]/g, '_') + (
-      doc.mimeType === 'application/pdf' ? '.pdf' :
-      doc.mimeType?.includes('sheet') ? '.xlsx' : '.doc'
-    )
+    const ext = doc.mimeType === 'application/pdf' ? '.pdf' : doc.mimeType?.includes('sheet') ? '.xlsx' : '.doc'
+    const baseName = doc.name.replace(/[^a-zA-Z0-9._\- ]/g, '_')
+    const filename = baseName.toLowerCase().endsWith(ext) ? baseName : baseName + ext
 
     reply.header('Content-Type', doc.mimeType || 'application/pdf')
     reply.header('Content-Disposition', `inline; filename="${filename}"`)
