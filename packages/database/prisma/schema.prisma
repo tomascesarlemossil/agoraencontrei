@@ -455,6 +455,7 @@ model Property {
   documentationNotes String?       // Obs. documentação
   isReserved      Boolean          @default(false)
   authorizedPublish Boolean        @default(false)       // Autorizado para publicar
+  showExactLocation Boolean        @default(false)       // Exibir localização exata no mapa (padrão: aproximada)
 
   // Captação
   captorName      String?          // Nome do captador principal

@@ -106,6 +106,7 @@ const CreatePropertyBody = z.object({
   documentationNotes: z.string().optional(),
   isReserved:   z.boolean().optional(),
   authorizedPublish: z.boolean().optional(),
+  showExactLocation: z.boolean().optional(), // Exibir localização exata no mapa (padrão: false)
   // Captação
   captorName:   z.string().optional(),
   captorCommissionPct: z.number().optional(),

@@ -35,6 +35,19 @@ const LeadCaptureBody = z.object({
   utmCampaign: z.string().optional(),
 })
 
+// ── Location privacy helper ─────────────────────────────────────────────────
+// Exact coordinates are NEVER exposed publicly unless showExactLocation=true.
+// When false, lat/lng are nulled — frontend must use city/neighborhood for map.
+type WithLocation = { latitude?: number | null; longitude?: number | null; showExactLocation?: boolean }
+function applyLocationPrivacy<T extends WithLocation>(p: T): Omit<T, 'showExactLocation'> {
+  const { showExactLocation, ...rest } = p
+  return {
+    ...rest,
+    latitude:  showExactLocation ? p.latitude  : null,
+    longitude: showExactLocation ? p.longitude : null,
+  }
+}
+
 // Public fields exposed — no sensitive data
 const PUBLIC_PROPERTY_SELECT = {
   id: true,
@@ -55,6 +68,8 @@ const PUBLIC_PROPERTY_SELECT = {
   state: true,
   neighborhood: true,
   // street, number, zipCode omitted — addresses are private (CRM only)
+  // showExactLocation controls whether lat/lng are exposed — default false (approximate only)
+  showExactLocation: true,
   latitude: true,
   longitude: true,
   condoName: true,
@@ -232,7 +247,7 @@ export default async function publicRoutes(app: FastifyInstance) {
     ])
 
     const result = {
-      data: items,
+      data: items.map(applyLocationPrivacy),
       meta: { total, page, limit, totalPages: Math.ceil(total / limit) },
     }
 
@@ -260,7 +275,7 @@ export default async function publicRoutes(app: FastifyInstance) {
       data:  { views: { increment: 1 } },
     }).catch(() => {})
 
-    return reply.send(property)
+    return reply.send(applyLocationPrivacy(property))
   })
 
   // GET /api/v1/public/properties/:slug/similar — similar properties (same type + city)
@@ -315,7 +330,7 @@ export default async function publicRoutes(app: FastifyInstance) {
       })
     }
 
-    return reply.send(similar)
+    return reply.send(similar.map(applyLocationPrivacy))
   })
 
   // GET /api/v1/public/featured — featured properties
@@ -330,7 +345,7 @@ export default async function publicRoutes(app: FastifyInstance) {
       take:    8,
     })
 
-    return reply.send(items)
+    return reply.send(items.map(applyLocationPrivacy))
   })
 
   // GET /api/v1/public/cities — list of cities with property counts
