@@ -1130,3 +1130,56 @@ export const financingsApi = {
   delete: (token: string, id: string) =>
     request<void>(`/api/v1/financings/${id}`, { token, method: 'DELETE' }),
 }
+
+// ── Invoice / Boleto API ─────────────────────────────────────────────────────
+export interface Invoice {
+  id:              string
+  companyId:       string
+  contractId?:     string | null
+  legacyContractCode?: string | null
+  legacyTenantCode?:   string | null
+  cedente?:        string | null
+  numBoleto?:      string | null
+  banco?:          string | null
+  carteira?:       string | null
+  codigoBarras?:   string | null
+  linhaDigitavel?: string | null
+  nossoNumero?:    string | null
+  issueDate?:      string | null
+  dueDate?:        string | null
+  amount?:         number | null
+  mensagem?:       string | null
+  instrucoes?:     string | null
+  asaasId?:        string | null
+  asaasStatus?:    string | null
+  asaasBankSlipUrl?: string | null
+  asaasPixCode?:   string | null
+  createdAt:       string
+  contract?: {
+    tenantName?:      string | null
+    propertyAddress?: string | null
+    landlordName?:    string | null
+  } | null
+}
+
+export const invoiceApi = {
+  list: (token: string, params?: Record<string, string>) =>
+    request<{ data: Invoice[]; meta: { total: number; page: number; limit: number; totalPages: number } }>(
+      `/api/v1/finance/invoices${params ? '?' + toQS(params) : ''}`,
+      { token },
+    ),
+  get: (token: string, id: string) =>
+    request<Invoice>(`/api/v1/finance/invoices/${id}`, { token }),
+  create: (token: string, body: Partial<Invoice> & { dueDate: string; amount: number }) =>
+    request<Invoice>('/api/v1/finance/invoices', { token, method: 'POST', body: JSON.stringify(body) }),
+  update: (token: string, id: string, body: Partial<Invoice>) =>
+    request<Invoice>(`/api/v1/finance/invoices/${id}`, { token, method: 'PATCH', body: JSON.stringify(body) }),
+  charge: (token: string, body: { invoiceId: string; billingType?: string; dueDate?: string; discount?: number }) =>
+    request<{ invoice: Invoice; charge: Record<string, unknown> }>('/api/v1/finance/invoices/charge', { token, method: 'POST', body: JSON.stringify(body) }),
+  syncStatus: (token: string, id: string) =>
+    request<{ invoice: Invoice; charge: Record<string, unknown> }>(`/api/v1/finance/invoices/${id}/status`, { token }),
+  cancel: (token: string, id: string) =>
+    request<{ invoice: Invoice }>(`/api/v1/finance/invoices/${id}/charge`, { token, method: 'DELETE' }),
+  balance: (token: string) =>
+    request<{ balance: number; availableBalance: number; transferredThisMonth: number }>('/api/v1/finance/invoices/asaas/balance', { token }),
+}

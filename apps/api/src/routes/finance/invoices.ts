@@ -138,6 +138,19 @@ export default async function invoiceRoutes(app: FastifyInstance) {
     return reply.send({ invoice: updated, charge })
   })
 
+  // GET /api/v1/finance/invoices/:id — busca boleto por ID
+  app.get('/:id', async (req, reply) => {
+    const { id } = req.params as { id: string }
+    const invoice = await app.prisma.invoice.findFirst({
+      where: { id, companyId: req.user.cid },
+      include: {
+        contract: { select: { tenantName: true, propertyAddress: true, landlordName: true } },
+      },
+    })
+    if (!invoice) return reply.status(404).send({ error: 'NOT_FOUND' })
+    return reply.send(invoice)
+  })
+
   // GET /api/v1/finance/invoices/:id/status — sincroniza status com Asaas
   app.get('/:id/status', async (req, reply) => {
     const { id } = req.params as { id: string }
@@ -200,6 +213,87 @@ export default async function invoiceRoutes(app: FastifyInstance) {
     } catch (err: any) {
       return reply.status(502).send({ error: 'ASAAS_ERROR', message: err.message })
     }
+  })
+
+  // POST /api/v1/finance/invoices — cria boleto avulso no banco (sem Asaas ainda)
+  app.post('/', async (req, reply) => {
+    const cid = req.user.cid
+    const body = req.body as {
+      contractId?:    string
+      legacyContractCode?: string
+      legacyTenantCode?:   string
+      numBoleto?:     string
+      nossoNumero?:   string
+      codigoBarras?:  string
+      linhaDigitavel?: string
+      banco?:         string
+      carteira?:      string
+      cedente?:       string
+      issueDate?:     string
+      dueDate:        string
+      amount:         number
+      mensagem?:      string
+      instrucoes?:    string
+    }
+    if (!body.dueDate || !body.amount) {
+      return reply.status(400).send({ error: 'MISSING_REQUIRED_FIELDS', required: ['dueDate', 'amount'] })
+    }
+    // Se contractId fornecido, verificar se pertence à empresa
+    if (body.contractId) {
+      const contract = await app.prisma.contract.findFirst({
+        where: { id: body.contractId, companyId: cid },
+      })
+      if (!contract) return reply.status(404).send({ error: 'CONTRACT_NOT_FOUND' })
+    }
+    const invoice = await app.prisma.invoice.create({
+      data: {
+        companyId:          cid,
+        contractId:         body.contractId ?? null,
+        legacyContractCode: body.legacyContractCode ?? null,
+        legacyTenantCode:   body.legacyTenantCode ?? null,
+        numBoleto:          body.numBoleto ?? null,
+        nossoNumero:        body.nossoNumero ?? null,
+        codigoBarras:       body.codigoBarras ?? null,
+        linhaDigitavel:     body.linhaDigitavel ?? null,
+        banco:              body.banco ?? null,
+        carteira:           body.carteira ?? null,
+        cedente:            body.cedente ?? 'IMOBILIARIA LEMOS',
+        issueDate:          body.issueDate ? new Date(body.issueDate) : new Date(),
+        dueDate:            new Date(body.dueDate),
+        amount:             body.amount,
+        mensagem:           body.mensagem ?? null,
+        instrucoes:         body.instrucoes ?? null,
+      },
+      include: {
+        contract: { select: { tenantName: true, propertyAddress: true, landlordName: true } },
+      },
+    })
+    return reply.status(201).send(invoice)
+  })
+
+  // PATCH /api/v1/finance/invoices/:id — atualiza boleto avulso
+  app.patch('/:id', async (req, reply) => {
+    const { id } = req.params as { id: string }
+    const cid = req.user.cid
+    const body = req.body as Record<string, unknown>
+    const existing = await app.prisma.invoice.findFirst({ where: { id, companyId: cid } })
+    if (!existing) return reply.status(404).send({ error: 'NOT_FOUND' })
+    const updated = await app.prisma.invoice.update({
+      where: { id },
+      data: {
+        ...(body.numBoleto     !== undefined && { numBoleto:     body.numBoleto as string }),
+        ...(body.nossoNumero   !== undefined && { nossoNumero:   body.nossoNumero as string }),
+        ...(body.codigoBarras  !== undefined && { codigoBarras:  body.codigoBarras as string }),
+        ...(body.linhaDigitavel !== undefined && { linhaDigitavel: body.linhaDigitavel as string }),
+        ...(body.banco         !== undefined && { banco:         body.banco as string }),
+        ...(body.dueDate       !== undefined && { dueDate:       new Date(body.dueDate as string) }),
+        ...(body.amount        !== undefined && { amount:        body.amount as number }),
+        ...(body.mensagem      !== undefined && { mensagem:      body.mensagem as string }),
+        ...(body.instrucoes    !== undefined && { instrucoes:    body.instrucoes as string }),
+        ...(body.asaasStatus   !== undefined && { asaasStatus:   body.asaasStatus as string }),
+      },
+    })
+    return reply.send(updated)
   })
 
   // POST /api/v1/finance/invoices/webhook — recebe eventos do Asaas

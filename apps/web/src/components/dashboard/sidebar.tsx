@@ -39,6 +39,7 @@ import {
   Archive,
   History,
   PlusCircle,
+  ReceiptText,
 } from 'lucide-react'
 import { useNotifications } from '@/stores/notifications.store'
 import { UserAvatar } from '@/components/ui/UserAvatar'
@@ -71,6 +72,7 @@ const lemosbankSubItems = [
   { href: '/dashboard/contratos',              icon: FileText,   label: 'Contratos' },
   { href: '/dashboard/contratos/novo',         icon: PlusCircle, label: 'Novo Contrato' },
   { href: '/dashboard/clientes',               icon: Users,      label: 'Clientes' },
+  { href: '/dashboard/lemosbank/boletos',      icon: ReceiptText, label: 'Boletos' },
   { href: '/dashboard/lemosbank/cobrancas',    icon: Receipt,    label: 'Cobranças' },
   { href: '/dashboard/lemosbank/repasses',     icon: RefreshCw,  label: 'Repasses' },
   { href: '/dashboard/lemosbank/rescisoes',    icon: Scissors,   label: 'Rescisões' },

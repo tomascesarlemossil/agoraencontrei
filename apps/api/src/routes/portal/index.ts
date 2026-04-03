@@ -101,26 +101,40 @@ export default async function portalRoutes(app: FastifyInstance) {
     return reply.send({ contracts })
   })
 
-  // GET /api/v1/portal/boletos — pending rentals for this client
+  // GET /api/v1/portal/boletos — rentals + boletos bancários (Invoices) para o cliente
   app.get('/boletos', { preHandler: [portalAuth] }, async (req: any, reply) => {
     const clientId = req.user.sub
     const contracts = await app.prisma.$queryRawUnsafe<any[]>(
       `SELECT id FROM contracts WHERE "tenantId" = $1 AND "isActive" = true LIMIT 1`,
       clientId
     )
-    if (!contracts.length) return reply.send({ rentals: [] })
+    if (!contracts.length) return reply.send({ rentals: [], invoices: [] })
     const contractId = contracts[0].id
 
-    const rentals = await app.prisma.rental.findMany({
-      where: { contractId, status: { in: ['PENDING', 'LATE', 'PAID'] } },
-      orderBy: { dueDate: 'desc' },
-      take: 24,
-      select: {
-        id: true, dueDate: true, status: true, totalAmount: true,
-        paidAmount: true, paymentDate: true,
-      },
-    })
-    return reply.send({ rentals })
+    const [rentals, invoices] = await Promise.all([
+      app.prisma.rental.findMany({
+        where: { contractId, status: { in: ['PENDING', 'LATE', 'PAID'] } },
+        orderBy: { dueDate: 'desc' },
+        take: 36,
+        select: {
+          id: true, dueDate: true, status: true, totalAmount: true,
+          paidAmount: true, paymentDate: true,
+        },
+      }),
+      app.prisma.invoice.findMany({
+        where: { contractId },
+        orderBy: { dueDate: 'desc' },
+        take: 36,
+        select: {
+          id: true, dueDate: true, issueDate: true, amount: true,
+          numBoleto: true, linhaDigitavel: true, codigoBarras: true,
+          asaasStatus: true, asaasBankSlipUrl: true, asaasPixCode: true,
+          mensagem: true,
+        },
+      }),
+    ])
+
+    return reply.send({ rentals, invoices })
   })
 
   // GET /api/v1/portal/extratos — extratos for this client
