@@ -131,6 +131,22 @@ async function resolveCompany(app: FastifyInstance) {
   return app.prisma.company.findFirst({ where: { isActive: true } })
 }
 
+// ── Redis cache helpers ────────────────────────────────────────────────────────
+const CACHE_TTL = 300 // 5 minutes
+
+async function cacheGet(redis: FastifyInstance['redis'], key: string): Promise<unknown | null> {
+  if (!redis) return null
+  try {
+    const raw = await redis.get(key)
+    return raw ? JSON.parse(raw) : null
+  } catch { return null }
+}
+
+async function cacheSet(redis: FastifyInstance['redis'], key: string, value: unknown): Promise<void> {
+  if (!redis) return
+  try { await redis.setex(key, CACHE_TTL, JSON.stringify(value)) } catch { /* ignore */ }
+}
+
 export default async function publicRoutes(app: FastifyInstance) {
   // No auth required — public endpoints
 
@@ -193,6 +209,13 @@ export default async function publicRoutes(app: FastifyInstance) {
     const limit = filters.limit
     const skip  = (page - 1) * limit
 
+    // Redis cache: skip cache for searches (dynamic), cache simple filters 5 min
+    const cacheKey = `pub:props:${company.id}:${JSON.stringify(req.query)}`
+    if (!filters.search) {
+      const cached = await cacheGet(app.redis, cacheKey)
+      if (cached) return reply.send(cached)
+    }
+
     const [total, items] = await Promise.all([
       app.prisma.property.count({ where }),
       app.prisma.property.findMany({
@@ -204,10 +227,14 @@ export default async function publicRoutes(app: FastifyInstance) {
       }),
     ])
 
-    return reply.send({
+    const result = {
       data: items,
       meta: { total, page, limit, totalPages: Math.ceil(total / limit) },
-    })
+    }
+
+    if (!filters.search) await cacheSet(app.redis, cacheKey, result)
+
+    return reply.send(result)
   })
 
   // GET /api/v1/public/properties/:slug — single property detail

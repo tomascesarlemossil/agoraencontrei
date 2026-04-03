@@ -490,6 +490,11 @@ model Property {
   @@index([type, purpose])
   @@index([city, neighborhood])
   @@index([externalId])
+  // Performance indexes for public listing queries (Manus recommendation)
+  @@index([companyId, status, authorizedPublish])
+  @@index([companyId, status, authorizedPublish, type])
+  @@index([companyId, status, authorizedPublish, isFeatured])
+  @@index([companyId, status, authorizedPublish, createdAt(sort: Desc)])
   @@map("properties")
 }
 

@@ -1,6 +1,6 @@
 import 'dotenv/config'
 import Fastify from 'fastify'
-import { env } from './utils/env.js'
+import { env, logEnvWarnings } from './utils/env.js'
 
 // ── v2026.04.01 ────────────────────────────────────────────────────────────
 // ── Plugins ────────────────────────────────────────────────────────────────
@@ -201,6 +201,7 @@ async function bootstrap() {
   const address = await app.listen({ port: env.PORT, host: '0.0.0.0' })
   app.log.info(`🚀 AgoraEncontrei API running at ${address}`)
   app.log.info(`📚 Swagger docs: ${address}/docs`)
+  logEnvWarnings({ warn: (msg) => app.log.warn(msg) })
 }
 
 // Graceful shutdown

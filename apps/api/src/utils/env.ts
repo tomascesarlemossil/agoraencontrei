@@ -87,3 +87,20 @@ function parseEnv() {
 
 export const env = parseEnv()
 export type Env = typeof env
+
+/** Log warnings for optional-but-important variables that are missing at startup */
+export function logEnvWarnings(logger: { warn: (msg: string) => void }) {
+  const warnings: [string, string][] = [
+    ['ANTHROPIC_API_KEY',    'AI agents (PDF, audio, copywriter, visual) will not work'],
+    ['SMTP_HOST',            'Email notifications (leads, proposals, evaluations) will not be sent'],
+    ['REDIS_URL',            'BullMQ job queue and session cache will use in-memory fallback'],
+    ['AWS_S3_BUCKET',        'Photo uploads will fail — S3 not configured'],
+    ['WHATSAPP_TOKEN',       'WhatsApp notifications and inbox will not work'],
+    ['ASAAS_API_KEY',        'Boleto/cobrança via Asaas will not work'],
+  ]
+  for (const [key, impact] of warnings) {
+    if (!process.env[key]) {
+      logger.warn(`⚠️  Missing optional env var ${key}: ${impact}`)
+    }
+  }
+}
