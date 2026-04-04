@@ -262,12 +262,102 @@ export default async function publicRoutes(app: FastifyInstance) {
       }),
     ])
 
-    const result = {
-      data: items.map(applyLocationPrivacy),
-      meta: { total, page, limit, totalPages: Math.ceil(total / limit) },
+    // Sort: when bedrooms filter is used, put residential types (HOUSE/APARTMENT) first
+    const residentialTypes = ['HOUSE', 'APARTMENT', 'STUDIO', 'PENTHOUSE', 'CONDO', 'KITNET']
+    const sortedItems = (filters.bedrooms || filters.bathrooms)
+      ? [...items].sort((a: any, b: any) => {
+          const aRes = residentialTypes.includes(a.type) ? 0 : 1
+          const bRes = residentialTypes.includes(b.type) ? 0 : 1
+          if (aRes !== bRes) return aRes - bRes
+          // secondary: featured first
+          return (b.isFeatured ? 1 : 0) - (a.isFeatured ? 1 : 0)
+        })
+      : items
+
+    // Fallback: when no results found, relax filters progressively to show similar properties
+    let fallbackItems: any[] = []
+    let isFallback = false
+    if (total === 0 && page === 1) {
+      isFallback = true
+      const baseWhere = { companyId: company.id, status: 'ACTIVE' as const, authorizedPublish: true }
+
+      // Step 1: same type + same purpose (drop neighborhood/price/bedrooms)
+      if (filters.type && filters.purpose) {
+        const purposeFilter: any = filters.purpose === 'RENT' ? { purpose: { in: ['RENT', 'BOTH'] } }
+          : filters.purpose === 'SALE' ? { purpose: { in: ['SALE', 'BOTH'] } }
+          : { purpose: filters.purpose }
+        fallbackItems = await app.prisma.property.findMany({
+          where: { ...baseWhere, type: filters.type, ...purposeFilter },
+          select: PUBLIC_PROPERTY_SELECT,
+          orderBy: [{ isFeatured: 'desc' }, { createdAt: 'desc' }],
+          take: limit,
+        })
+      }
+
+      // Step 2: same purpose only (drop type)
+      if (fallbackItems.length < 3 && filters.purpose) {
+        const purposeFilter: any = filters.purpose === 'RENT' ? { purpose: { in: ['RENT', 'BOTH'] } }
+          : filters.purpose === 'SALE' ? { purpose: { in: ['SALE', 'BOTH'] } }
+          : { purpose: filters.purpose }
+        const existing = new Set(fallbackItems.map((p: any) => p.id))
+        const more = await app.prisma.property.findMany({
+          where: { ...baseWhere, ...purposeFilter, id: { notIn: Array.from(existing) as string[] } },
+          select: PUBLIC_PROPERTY_SELECT,
+          orderBy: [{ isFeatured: 'desc' }, { createdAt: 'desc' }],
+          take: limit - fallbackItems.length,
+        })
+        fallbackItems = [...fallbackItems, ...more]
+      }
+
+      // Step 3: same type only (drop purpose)
+      if (fallbackItems.length < 3 && filters.type) {
+        const existing = new Set(fallbackItems.map((p: any) => p.id))
+        const more = await app.prisma.property.findMany({
+          where: { ...baseWhere, type: filters.type, id: { notIn: Array.from(existing) as string[] } },
+          select: PUBLIC_PROPERTY_SELECT,
+          orderBy: [{ isFeatured: 'desc' }, { createdAt: 'desc' }],
+          take: limit - fallbackItems.length,
+        })
+        fallbackItems = [...fallbackItems, ...more]
+      }
+
+      // Step 4: same neighborhood (drop type/purpose/price)
+      if (fallbackItems.length < 3 && filters.neighborhood) {
+        const existing = new Set(fallbackItems.map((p: any) => p.id))
+        const more = await app.prisma.property.findMany({
+          where: { ...baseWhere, neighborhood: { contains: filters.neighborhood, mode: 'insensitive' }, id: { notIn: Array.from(existing) as string[] } },
+          select: PUBLIC_PROPERTY_SELECT,
+          orderBy: [{ isFeatured: 'desc' }, { createdAt: 'desc' }],
+          take: limit,
+        })
+        fallbackItems = [...fallbackItems, ...more]
+      }
+
+      // Step 5: any active featured properties as last resort
+      if (fallbackItems.length === 0) {
+        fallbackItems = await app.prisma.property.findMany({
+          where: baseWhere,
+          select: PUBLIC_PROPERTY_SELECT,
+          orderBy: [{ isFeatured: 'desc' }, { createdAt: 'desc' }],
+          take: limit,
+        })
+      }
     }
 
-    if (!filters.search) await cacheSet(app.redis, cacheKey, result)
+    const finalData = isFallback ? fallbackItems.map(applyLocationPrivacy) : sortedItems.map(applyLocationPrivacy)
+
+    const result = {
+      data: finalData,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+        ...(isFallback && { isFallback: true, fallbackMessage: 'Não encontramos resultados exatos. Veja imóveis semelhantes:' }),
+      },
+    }
+
+    if (!filters.search && !isFallback) await cacheSet(app.redis, cacheKey, result)
 
     return reply.send(result)
   })
