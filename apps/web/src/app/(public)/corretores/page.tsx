@@ -91,7 +91,7 @@ const EQUIPE = {
       creci: '',
       phone: '5516991275404',
       email: 'artmiriamchagas@gmail.com',
-      photo: '/corretores/miriam-chagas.jpg',  // ← trocar foto aqui
+      photo: '/corretores/miriam-icon-final.png',  // ← trocar foto aqui
       specialties: ['Residencial', 'Locação', 'Compra e Venda'],
       bio: 'Corretora dedicada ao atendimento personalizado, especialista em imóveis residenciais e locação.',
     },
@@ -102,7 +102,7 @@ const EQUIPE = {
       creci: '',
       phone: '5516991083946',
       email: 'lorenaassis@imobiliarialemos.com.br',
-      photo: '/corretores/lorena-sesso.jpg',  // ← trocar foto aqui
+      photo: '/corretores/lorena-icon-final.png',  // ← trocar foto aqui
       specialties: ['Residencial', 'Locação', 'Primeiro Imóvel'],
       bio: 'Especialista em ajudar clientes a realizarem o sonho do primeiro imóvel. Atendimento acolhedor.',
     },
@@ -113,7 +113,7 @@ const EQUIPE = {
       creci: '',
       phone: '5516993404117',
       email: 'laura@imobiliarialemos.com.br',
-      photo: '/corretores/laura-sesso.jpg',  // ← trocar foto aqui
+      photo: '/corretores/laura-icon-final.png',  // ← trocar foto aqui
       specialties: ['Residencial', 'Compra e Venda', 'Avaliação'],
       bio: 'Corretora comprometida com o melhor atendimento na compra, venda e avaliação de imóveis.',
     },
@@ -124,7 +124,7 @@ const EQUIPE = {
       creci: '',
       phone: '5516991957528',
       email: 'lucas@imobiliarialemos.com.br',
-      photo: '/corretores/lucas-rodrigues.jpg',  // ← trocar foto aqui
+      photo: '/corretores/lucas-icon-final.png',  // ← trocar foto aqui
       specialties: ['Residencial', 'Locação', 'Novos Empreendimentos'],
       bio: 'Corretor dinâmico e atualizado com as tendências do mercado imobiliário de Franca/SP.',
     },
@@ -137,7 +137,7 @@ const EQUIPE = {
       creci: '',
       phone: '5516981010004',
       email: 'geraldo@imobiliarialemos.com.br',
-      photo: '/corretores/geraldo.jpg',  // ← trocar foto aqui
+      photo: '/corretores/geraldo-icon-final.png',  // ← trocar foto aqui
       specialties: ['Administração', 'Suporte Operacional'],
       bio: 'Responsável pelo suporte administrativo e operacional, garantindo o funcionamento eficiente de todos os processos.',
     },

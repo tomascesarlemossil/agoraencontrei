@@ -1263,6 +1263,66 @@ export default async function financeRoutes(app: FastifyInstance) {
       },
     })
 
+    // ── Enviar boleto/PIX ao inquilino automaticamente ──────────────────────
+    setImmediate(async () => {
+      try {
+        const tenant = contract.tenant!
+        const fmt = (v: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v)
+        const fmtDate = (d: string) => { const [y, m, day] = d.split('-'); return `${day}/${m}/${y}` }
+        const billingLabel = (body.billingType ?? 'PIX') === 'BOLETO' ? 'Boleto Bancário' : 'PIX'
+        const pixCode = (asaasCharge as any).pixCode ?? null
+        const boletoUrl = (asaasCharge as any).bankSlipUrl ?? null
+
+        const waMsgLines = [
+          `💳 *Cobrança Gerada — Imobiliária Lemos*`,
+          ``,
+          `Olá, *${tenant.name}*!`,
+          `Uma cobrança foi gerada para você:`,
+          `*Descrição:* ${body.description}`,
+          `*Valor:* ${fmt(body.amount)}`,
+          `*Vencimento:* ${fmtDate(body.dueDate)}`,
+          `*Forma:* ${billingLabel}`,
+        ]
+        if (pixCode) waMsgLines.push(``, `*Código PIX (Copia e Cola):*`, pixCode)
+        if (boletoUrl) waMsgLines.push(``, `*Link do Boleto:*`, boletoUrl)
+        waMsgLines.push(``, `Em caso de dúvidas, entre em contato conosco. 🙏`)
+        const waMsg = waMsgLines.join('\n')
+
+        const emailHtml = `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
+          <div style="background:#1B2B5B;padding:20px;border-radius:8px 8px 0 0"><h2 style="color:white;margin:0">💳 Cobrança Gerada</h2><p style="color:#C9A84C;margin:4px 0 0">Imobiliária Lemos</p></div>
+          <div style="background:#f9f9f9;padding:24px;border-radius:0 0 8px 8px;border:1px solid #e0e0e0">
+            <p>Olá, <strong>${tenant.name}</strong>!</p>
+            <table style="width:100%;border-collapse:collapse;margin:16px 0">
+              <tr><td style="padding:8px;font-weight:bold;background:#f0f0f0;width:140px">Descrição:</td><td style="padding:8px">${body.description}</td></tr>
+              <tr><td style="padding:8px;font-weight:bold;background:#f0f0f0">Valor:</td><td style="padding:8px;color:#1B2B5B;font-weight:bold">${fmt(body.amount)}</td></tr>
+              <tr><td style="padding:8px;font-weight:bold;background:#f0f0f0">Vencimento:</td><td style="padding:8px">${fmtDate(body.dueDate)}</td></tr>
+              <tr><td style="padding:8px;font-weight:bold;background:#f0f0f0">Forma:</td><td style="padding:8px">${billingLabel}</td></tr>
+            </table>
+            ${pixCode ? `<div style="background:#e8f5e9;border:1px solid #4caf50;border-radius:8px;padding:16px;margin:16px 0"><p style="margin:0 0 8px;font-weight:bold;color:#2e7d32">🟢 Código PIX:</p><code style="font-size:12px;word-break:break-all">${pixCode}</code></div>` : ''}
+            ${boletoUrl ? `<div style="text-align:center;margin:20px 0"><a href="${boletoUrl}" style="background:#1B2B5B;color:white;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold">Visualizar Boleto</a></div>` : ''}
+            <p style="color:#666;font-size:13px;margin-top:20px">Em caso de dúvidas, entre em contato com a Imobiliária Lemos.</p>
+          </div></div>`
+
+        const { whatsappService } = await import('../../services/whatsapp.service.js')
+        const { sendEmail, isEmailConfigured } = await import('../../services/email.service.js')
+
+        if (tenant.phone) {
+          const phone = tenant.phone.replace(/\D/g, '')
+          whatsappService.sendText(phone, waMsg).catch(() => {})
+        }
+        if (tenant.email && isEmailConfigured()) {
+          sendEmail({
+            to: tenant.email,
+            subject: `Cobrança ${billingLabel} — ${fmt(body.amount)} — Venc. ${fmtDate(body.dueDate)}`,
+            html: emailHtml,
+            text: waMsg,
+          }).catch(() => {})
+        }
+      } catch (err) {
+        console.error('[finance/charges] notify tenant error:', err)
+      }
+    })
+
     return reply.status(201).send({ invoice, asaasCharge })
   })
 

@@ -203,7 +203,11 @@ export default async function publicRoutes(app: FastifyInstance) {
         ],
       }),
       ...(filters.type         && { type:    filters.type }),
-      ...(filters.purpose      && { purpose: filters.purpose }),
+      // Purpose filter: RENT includes BOTH, SALE includes BOTH
+      ...(filters.purpose === 'RENT' && { purpose: { in: ['RENT', 'BOTH'] } }),
+      ...(filters.purpose === 'SALE' && { purpose: { in: ['SALE', 'BOTH'] } }),
+      ...(filters.purpose === 'BOTH' && { purpose: 'BOTH' }),
+      ...(filters.purpose === 'SEASON' && { purpose: 'SEASON' }),
       ...(filters.city         && { city:    { contains: filters.city,         mode: 'insensitive' } }),
       ...(filters.neighborhood && { neighborhood: { contains: filters.neighborhood, mode: 'insensitive' } }),
       ...(filters.state        && { state:   { equals: filters.state,        mode: 'insensitive' } }),
@@ -353,7 +357,7 @@ export default async function publicRoutes(app: FastifyInstance) {
     const items = await app.prisma.property.findMany({
       where:   { companyId: company.id, status: 'ACTIVE', authorizedPublish: true, isFeatured: true },
       select:  PUBLIC_PROPERTY_SELECT,
-      orderBy: { updatedAt: 'desc' },
+      orderBy: [{ createdAt: 'desc' }, { updatedAt: 'desc' }],
       take:    8,
     })
 

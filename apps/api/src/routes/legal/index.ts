@@ -18,8 +18,8 @@ async function checkLegalAccess(app: FastifyInstance, userId: string, cid: strin
   const settings = typeof rows[0].settings === 'object' ? rows[0].settings : {}
   const moduleAccess: string[] = settings?.moduleAccess ?? []
   const role = rows[0]?.role ?? ''
-  // Admin sempre tem acesso; outros precisam ter "juridico" no moduleAccess
-  if (role === 'ADMIN' || role === 'OWNER') return true
+  // Admin e LAWYER sempre têm acesso; outros precisam ter "juridico" no moduleAccess
+  if (['ADMIN', 'SUPER_ADMIN', 'OWNER', 'LAWYER'].includes(role)) return true
   return moduleAccess.includes('juridico')
 }
 
@@ -189,11 +189,96 @@ export default async function legalRoutes(app: FastifyInstance) {
       b.observations ?? null, b.internalNotes ?? null,
       b.tags ?? [],
     )
-    const rows = await app.prisma.$queryRawUnsafe<any[]>(
+     const rows = await app.prisma.$queryRawUnsafe<any[]>(
       `SELECT * FROM legal_cases WHERE id = $1`, id)
-    return reply.status(201).send(rows[0])
-  })
+    const newCase = rows[0]
 
+    // ── Notificar todos os advogados (LAWYER) da empresa ───────────────────
+    setImmediate(async () => {
+      try {
+        const lawyers = await app.prisma.$queryRawUnsafe<any[]>(`
+          SELECT id, name, email, phone, settings
+          FROM users
+          WHERE "companyId" = $1
+            AND role = 'LAWYER'
+            AND status = 'ACTIVE'
+        `, cid)
+
+        if (!lawyers.length) return
+
+        const typeLabel: Record<string, string> = {
+          DESPEJO: 'Despejo', COBRANCA: 'Cobrança', REVISIONAL: 'Revisional',
+          RESCISAO: 'Rescisão', DANO: 'Dano', TRABALHISTA: 'Trabalhista',
+          CRIMINAL: 'Criminal', OUTROS: 'Outros',
+        }
+        const priorityLabel: Record<string, string> = {
+          BAIXA: 'Baixa', NORMAL: 'Normal', ALTA: '⚠️ Alta', URGENTE: '🚨 Urgente',
+        }
+        const msgText = [
+          `📋 *Novo Processo Jurídico Cadastrado*`,
+          ``,
+          `*Título:* ${b.title}`,
+          `*Tipo:* ${typeLabel[b.type] ?? b.type}`,
+          `*Prioridade:* ${priorityLabel[b.priority ?? 'NORMAL']}`,
+          b.caseNumber ? `*Nº Processo:* ${b.caseNumber}` : null,
+          b.plaintiffName ? `*Autor:* ${b.plaintiffName}` : null,
+          b.defendantName ? `*Réu:* ${b.defendantName}` : null,
+          b.court ? `*Vara/Tribunal:* ${b.court}` : null,
+          ``,
+          `Acesse o sistema para visualizar os detalhes.`,
+        ].filter(Boolean).join('\n')
+
+        const emailHtml = `
+          <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
+            <div style="background:#1B2B5B;padding:20px;border-radius:8px 8px 0 0">
+              <h2 style="color:white;margin:0">📋 Novo Processo Jurídico</h2>
+            </div>
+            <div style="background:#f9f9f9;padding:20px;border-radius:0 0 8px 8px;border:1px solid #e0e0e0">
+              <table style="width:100%;border-collapse:collapse">
+                <tr><td style="padding:8px;font-weight:bold;width:140px">Título:</td><td style="padding:8px">${b.title}</td></tr>
+                <tr style="background:#fff"><td style="padding:8px;font-weight:bold">Tipo:</td><td style="padding:8px">${typeLabel[b.type] ?? b.type}</td></tr>
+                <tr><td style="padding:8px;font-weight:bold">Prioridade:</td><td style="padding:8px">${priorityLabel[b.priority ?? 'NORMAL']}</td></tr>
+                ${b.caseNumber ? `<tr style="background:#fff"><td style="padding:8px;font-weight:bold">Nº Processo:</td><td style="padding:8px">${b.caseNumber}</td></tr>` : ''}
+                ${b.plaintiffName ? `<tr><td style="padding:8px;font-weight:bold">Autor:</td><td style="padding:8px">${b.plaintiffName}</td></tr>` : ''}
+                ${b.defendantName ? `<tr style="background:#fff"><td style="padding:8px;font-weight:bold">Réu:</td><td style="padding:8px">${b.defendantName}</td></tr>` : ''}
+                ${b.court ? `<tr><td style="padding:8px;font-weight:bold">Vara/Tribunal:</td><td style="padding:8px">${b.court}</td></tr>` : ''}
+              </table>
+              <p style="margin-top:20px;color:#666">Acesse o sistema para visualizar os detalhes completos do processo.</p>
+            </div>
+          </div>`
+
+        const { whatsappService } = await import('../../services/whatsapp.service.js')
+        const { sendEmail, isEmailConfigured } = await import('../../services/email.service.js')
+        const emailOk = isEmailConfigured()
+
+        for (const lawyer of lawyers) {
+          const settings = typeof lawyer.settings === 'object' ? lawyer.settings : {}
+          const notifyWA    = settings.notifyWhatsapp !== false // default true
+          const notifyMail  = settings.notifyEmail    !== false // default true
+
+          // WhatsApp
+          if (notifyWA && lawyer.phone) {
+            const phone = lawyer.phone.replace(/\D/g, '')
+            whatsappService.sendText(phone, msgText).catch(() => {})
+          }
+
+          // E-mail
+          if (notifyMail && lawyer.email && emailOk) {
+            sendEmail({
+              to: lawyer.email,
+              subject: `[Jurídico] Novo Processo: ${b.title}`,
+              html: emailHtml,
+              text: msgText,
+            }).catch(() => {})
+          }
+        }
+      } catch (err) {
+        console.error('[legal] notify lawyers error:', err)
+      }
+    })
+
+    return reply.status(201).send(newCase)
+  })
   // ── GET /api/v1/legal/:id ───────────────────────────────────────────────
   app.get('/:id', async (req, reply) => {
     const cid = req.user.cid
@@ -223,12 +308,15 @@ export default async function legalRoutes(app: FastifyInstance) {
       SELECT id, name, type, category, month, year, "mimeType", "fileSize", metadata, "createdAt"
       FROM documents
       WHERE "companyId" = $1 AND (
-        type = 'JURIDICO'
+        "legalCaseId" = $3
+        OR type = 'JURIDICO'
         OR ("clientId" = $2 AND type IN ('JURIDICO','CONTRATO','RESCISAO','DOCUMENTO'))
       )
-      ORDER BY year DESC NULLS LAST, month DESC NULLS LAST, name ASC
-      LIMIT 50`,
-      cid, rows[0].clientId ?? 'none')
+      ORDER BY
+        CASE WHEN "legalCaseId" = $3 THEN 0 ELSE 1 END,
+        year DESC NULLS LAST, month DESC NULLS LAST, name ASC
+      LIMIT 100`,
+      cid, rows[0].clientId ?? 'none', id)
 
     return reply.send({ ...rows[0], updates, documents })
   })

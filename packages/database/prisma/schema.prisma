@@ -24,6 +24,7 @@ enum UserRole {
   MANAGER
   BROKER
   FINANCIAL
+  LAWYER
   CLIENT
 }
 
@@ -1011,6 +1012,7 @@ model Client {
   contractsAsGuarantor Contract[]        @relation("GuarantorContracts")
   forecasts            FinancialForecast[]
   documents            Document[]
+  ownedDocuments       Document[]        @relation("DocumentOwner")
   legalCases           LegalCase[]
   @@unique([companyId, document])
   @@index([companyId])
@@ -1364,10 +1366,14 @@ model Document {
   property     Property? @relation(fields: [propertyId], references: [id])
   clientId     String?   // owner or tenant
   client       Client?   @relation(fields: [clientId], references: [id])
+  ownerId      String?   // proprietário do imóvel (para boletos/extratos de proprietário)
+  owner        Client?   @relation("DocumentOwner", fields: [ownerId], references: [id])
+  legalCaseId  String?   // vínculo direto ao processo jurídico
+  legalCase    LegalCase? @relation(fields: [legalCaseId], references: [id])
   uploadedBy   String?   // user id
   user         User?     @relation(fields: [uploadedBy], references: [id])
 
-  type         String    // BOLETO | EXTRATO | REAJUSTE | FINANCEIRO | CONTRATO | OUTROS
+  type         String    // BOLETO | EXTRATO | REAJUSTE | FINANCEIRO | CONTRATO | JURIDICO | OUTROS
   category     String?
   name         String
   month        String?   // stored as text (e.g. "04.2026", "MARÇO", or numeric month)
@@ -1385,6 +1391,8 @@ model Document {
   @@index([contractId])
   @@index([propertyId])
   @@index([clientId])
+  @@index([ownerId])
+  @@index([legalCaseId])
   @@map("documents")
 }
 
@@ -1436,6 +1444,7 @@ model LegalCase {
   updatedAt     DateTime  @updatedAt
 
   updates       LegalCaseUpdate[]
+  documents     Document[]
 
   @@index([companyId])
   @@index([contractId])

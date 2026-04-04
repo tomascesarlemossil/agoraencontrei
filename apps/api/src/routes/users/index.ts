@@ -13,9 +13,14 @@ const CreateUserBody = z.object({
   name: z.string().min(2),
   email: z.string().email(),
   password: z.string().min(8),
-  role: z.enum(['ADMIN', 'MANAGER', 'BROKER', 'FINANCIAL', 'CLIENT']).default('BROKER'),
+  role: z.enum(['ADMIN', 'MANAGER', 'BROKER', 'FINANCIAL', 'LAWYER', 'CLIENT']).default('BROKER'),
   phone: z.string().optional(),
   creciNumber: z.string().optional(),
+  oabNumber: z.string().optional(),          // Número OAB para advogados
+  moduleAccess: z.array(z.string()).optional(), // Módulos permitidos (ex: ['juridico'])
+  notifyWhatsapp: z.boolean().optional(),    // Notificar via WhatsApp
+  notifyEmail: z.boolean().optional(),       // Notificar via e-mail
+  notifySms: z.boolean().optional(),         // Notificar via SMS
 })
 
 export default async function usersRoutes(app: FastifyInstance) {
@@ -62,6 +67,15 @@ export default async function usersRoutes(app: FastifyInstance) {
     const argon2 = await import('argon2')
     const passwordHash = await argon2.hash(body.password, { type: argon2.argon2id })
 
+    // Build settings object with lawyer-specific fields
+    const settings: Record<string, any> = {}
+    if (body.moduleAccess) settings.moduleAccess = body.moduleAccess
+    else if (body.role === 'LAWYER') settings.moduleAccess = ['juridico']
+    if (body.oabNumber) settings.oabNumber = body.oabNumber
+    if (body.notifyWhatsapp !== undefined) settings.notifyWhatsapp = body.notifyWhatsapp
+    if (body.notifyEmail !== undefined) settings.notifyEmail = body.notifyEmail
+    if (body.notifySms !== undefined) settings.notifySms = body.notifySms
+
     const user = await app.prisma.user.create({
       data: {
         companyId: req.user.cid,
@@ -72,10 +86,11 @@ export default async function usersRoutes(app: FastifyInstance) {
         role: body.role as any,
         creciNumber: body.creciNumber,
         status: 'ACTIVE',
+        settings: Object.keys(settings).length > 0 ? settings : undefined,
       },
       select: {
         id: true, name: true, email: true, role: true,
-        status: true, creciNumber: true, createdAt: true,
+        status: true, creciNumber: true, settings: true, createdAt: true,
       },
     })
 

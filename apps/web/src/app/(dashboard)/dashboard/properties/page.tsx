@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import Link from 'next/link'
+import dynamic from 'next/dynamic'
 import { useAuthStore } from '@/stores/auth.store'
 import { propertiesApi, usersApi, type PropertySummary, type User as UserType } from '@/lib/api'
 import { Card, CardContent } from '@/components/ui/card'
@@ -12,7 +13,15 @@ import { formatCurrency } from '@/lib/utils'
 import {
   Plus, Search, Building2, MapPin, BedDouble, Bath, Car, Eye,
   ChevronLeft, ChevronRight, SlidersHorizontal, X, Filter, Instagram, Loader2, CheckSquare, Square, User,
+  LayoutList, Map,
 } from 'lucide-react'
+
+const AdminPropertyMap = dynamic(() => import('./AdminPropertyMap'), {
+  ssr: false,
+  loading: () => (
+    <div className="rounded-2xl bg-muted animate-pulse" style={{ height: 580 }} />
+  ),
+})
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 
@@ -122,6 +131,7 @@ export default function PropertiesPage() {
   const { accessToken } = useAuthStore()
   const [page, setPage] = useState(1)
   const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS)
+  const [viewMode, setViewMode] = useState<'list' | 'map'>('list')
 
   // Load company users for captador filter
   const { data: usersData } = useQuery({
@@ -222,6 +232,27 @@ export default function PropertiesPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          {/* View mode toggle */}
+          <div className="flex items-center rounded-lg border bg-muted p-0.5 gap-0.5">
+            <Button
+              variant={viewMode === 'list' ? 'default' : 'ghost'}
+              size="sm"
+              className="h-7 px-2.5"
+              onClick={() => setViewMode('list')}
+            >
+              <LayoutList className="h-4 w-4" />
+              <span className="ml-1.5 hidden sm:inline">Lista</span>
+            </Button>
+            <Button
+              variant={viewMode === 'map' ? 'default' : 'ghost'}
+              size="sm"
+              className="h-7 px-2.5"
+              onClick={() => setViewMode('map')}
+            >
+              <Map className="h-4 w-4" />
+              <span className="ml-1.5 hidden sm:inline">Mapa</span>
+            </Button>
+          </div>
           {/* Bulk Instagram post toggle */}
           <Button
             variant="outline"
@@ -497,58 +528,71 @@ export default function PropertiesPage() {
         )}
       </form>
 
-      {/* Grid */}
-      {isLoading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="h-64 rounded-xl bg-muted animate-pulse" />
-          ))}
-        </div>
-      ) : properties.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-center">
-          <Building2 className="h-16 w-16 text-muted-foreground/30 mb-4" />
-          <h3 className="font-semibold text-lg">Nenhum imóvel encontrado</h3>
-          <p className="text-muted-foreground text-sm mt-1">
-            {activeCount > 0 ? 'Tente ajustar os filtros' : 'Cadastre seu primeiro imóvel'}
-          </p>
-          {activeCount === 0 && (
-            <Link href="/dashboard/properties/new" className="mt-4">
-              <Button>
-                <Plus className="h-4 w-4" />
-                Cadastrar Imóvel
-              </Button>
-            </Link>
-          )}
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-          {properties.map((p) => (
-            <PropertyCard
-              key={p.id}
-              property={p}
-              selectMode={selectMode}
-              selected={selectedIds.has(p.id)}
-              onSelect={() => toggleSelect(p.id)}
-            />
-          ))}
-        </div>
+      {/* Map View */}
+      {viewMode === 'map' && (
+        <AdminPropertyMap
+          statusFilter={appliedFilters.status}
+          purposeFilter={appliedFilters.purpose}
+          searchFilter={appliedFilters.search}
+        />
       )}
 
-      {/* Pagination */}
-      {meta && meta.totalPages > 1 && (
-        <div className="flex items-center justify-between pt-2">
-          <p className="text-sm text-muted-foreground">
-            Página {meta.page} de {meta.totalPages} · {meta.total} imóvel(is)
-          </p>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => setPage(p => p - 1)} disabled={page === 1}>
-              <ChevronLeft className="h-4 w-4" /> Anterior
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => setPage(p => p + 1)} disabled={page === meta.totalPages}>
-              Próxima <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
+      {/* List View */}
+      {viewMode === 'list' && (
+        <>
+          {isLoading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="h-64 rounded-xl bg-muted animate-pulse" />
+              ))}
+            </div>
+          ) : properties.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 text-center">
+              <Building2 className="h-16 w-16 text-muted-foreground/30 mb-4" />
+              <h3 className="font-semibold text-lg">Nenhum imóvel encontrado</h3>
+              <p className="text-muted-foreground text-sm mt-1">
+                {activeCount > 0 ? 'Tente ajustar os filtros' : 'Cadastre seu primeiro imóvel'}
+              </p>
+              {activeCount === 0 && (
+                <Link href="/dashboard/properties/new" className="mt-4">
+                  <Button>
+                    <Plus className="h-4 w-4" />
+                    Cadastrar Imóvel
+                  </Button>
+                </Link>
+              )}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+              {properties.map((p) => (
+                <PropertyCard
+                  key={p.id}
+                  property={p}
+                  selectMode={selectMode}
+                  selected={selectedIds.has(p.id)}
+                  onSelect={() => toggleSelect(p.id)}
+                />
+              ))}
+            </div>
+          )}
+
+          {/* Pagination */}
+          {meta && meta.totalPages > 1 && (
+            <div className="flex items-center justify-between pt-2">
+              <p className="text-sm text-muted-foreground">
+                Página {meta.page} de {meta.totalPages} · {meta.total} imóvel(is)
+              </p>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={() => setPage(p => p - 1)} disabled={page === 1}>
+                  <ChevronLeft className="h-4 w-4" /> Anterior
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => setPage(p => p + 1)} disabled={page === meta.totalPages}>
+                  Próxima <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
+        </>
       )}
     </div>
   )

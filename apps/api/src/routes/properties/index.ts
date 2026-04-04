@@ -233,6 +233,46 @@ export default async function propertiesRoutes(app: FastifyInstance) {
     })
   })
 
+  // GET /api/v1/properties/map-pins — all properties with coordinates for admin map
+  app.get('/map-pins', {
+    preHandler: [app.authenticate],
+    schema: { tags: ['properties'] },
+  }, async (req, reply) => {
+    const user = (req as any).user
+    const items = await app.prisma.property.findMany({
+      where: {
+        companyId: user.companyId,
+        latitude:  { not: null },
+        longitude: { not: null },
+      },
+      select: {
+        id: true,
+        reference: true,
+        title: true,
+        slug: true,
+        type: true,
+        purpose: true,
+        status: true,
+        price: true,
+        priceRent: true,
+        neighborhood: true,
+        city: true,
+        state: true,
+        street: true,
+        number: true,
+        latitude: true,
+        longitude: true,
+        coverImage: true,
+        bedrooms: true,
+        bathrooms: true,
+        totalArea: true,
+        isFeatured: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    })
+    return reply.send(items)
+  })
+
   // GET /api/v1/properties/:slug — public detail
   app.get('/:slug', {
     preHandler: [app.optionalAuth],
