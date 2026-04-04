@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '@/stores/auth.store'
 import Link from 'next/link'
@@ -72,6 +72,35 @@ const MONTHS = [
 
 export default function ArquivoMortoPage() {
   const token = useAuthStore(s => s.accessToken)
+  const [downloading, setDownloading] = useState<string | null>(null)
+
+  async function downloadDoc(doc: any) {
+    // Se o documento tem publicUrl no metadata, abre direto (Supabase Storage)
+    const meta = typeof doc.metadata === 'string' ? JSON.parse(doc.metadata || '{}') : (doc.metadata ?? {})
+    if (meta?.publicUrl) {
+      window.open(meta.publicUrl, '_blank')
+      return
+    }
+    // Caso contrário, faz fetch autenticado e cria blob URL
+    setDownloading(doc.id)
+    try {
+      const res = await fetch(`${API_URL}/api/v1/documents/${doc.id}/download`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (!res.ok) throw new Error('Erro ao baixar')
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = doc.name
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch {
+      alert('Não foi possível baixar o arquivo.')
+    } finally {
+      setDownloading(null)
+    }
+  }
 
   const [search, setSearch]     = useState('')
   const [searchInput, setSearchInput] = useState('')
@@ -330,15 +359,16 @@ export default function ArquivoMortoPage() {
                           <Eye className="w-4 h-4" />
                         </button>
                         {/* Download */}
-                        <a
-                          href={`${API_URL}/api/v1/documents/${doc.id}/download`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="p-1.5 rounded-lg text-gray-400 hover:text-green-600 hover:bg-green-50 transition-colors"
+                        <button
+                          onClick={() => downloadDoc(doc)}
+                          disabled={downloading === doc.id}
+                          className="p-1.5 rounded-lg text-gray-400 hover:text-green-600 hover:bg-green-50 transition-colors disabled:opacity-50"
                           title="Baixar arquivo"
                         >
-                          <Download className="w-4 h-4" />
-                        </a>
+                          {downloading === doc.id
+                            ? <Loader2 className="w-4 h-4 animate-spin" />
+                            : <Download className="w-4 h-4" />}
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -469,15 +499,15 @@ export default function ArquivoMortoPage() {
             </div>
 
             <div className="flex gap-2 pt-2">
-              <a
-                href={`${API_URL}/api/v1/documents/${previewDoc.id}/download`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors"
+              <button
+                onClick={() => downloadDoc(previewDoc)}
+                disabled={downloading === previewDoc.id}
+                className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors disabled:opacity-70"
               >
-                <Download className="w-4 h-4" />
-                Baixar arquivo
-              </a>
+                {downloading === previewDoc.id
+                  ? <><Loader2 className="w-4 h-4 animate-spin" /> Baixando...</>
+                  : <><Download className="w-4 h-4" /> Baixar arquivo</>}
+              </button>
               <button
                 onClick={() => setPreviewDoc(null)}
                 className="px-4 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-600 hover:bg-gray-50 transition-colors"
