@@ -105,7 +105,8 @@ export const metadata: Metadata = {
   },
   verification: {
     // Google Search Console — adicione o código de verificação aqui quando disponível
-    // google: 'SEU_CODIGO_GOOGLE_SEARCH_CONSOLE',
+    // google: 'google: 'Jt8clgdW34zz2sb7qj3fCYHPFRd2Y1D5394Rah3L9Yk',
+',
     other: { 'facebook-domain-verification': META_PIXEL_ID },
   },
 }
