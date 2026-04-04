@@ -1,26 +1,27 @@
-FROM node:22-alpine AS base
+FROM node:22-slim AS base
 
-# Install pnpm
-RUN npm install -g pnpm@10
+# Install OpenSSL (required by Prisma) and other deps
+RUN apt-get update -y && apt-get install -y openssl ca-certificates && rm -rf /var/lib/apt/lists/*
 
-# ── deps stage ────────────────────────────────────────────────────────────────
-FROM base AS deps
+# Install pnpm (pinned version to avoid breaking changes)
+RUN corepack enable && corepack prepare pnpm@10.0.0 --activate
+
 WORKDIR /app
 
-# Copy workspace manifests
+# Copy workspace files
 COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
-COPY apps/api/package.json ./apps/api/
 COPY packages/database/package.json ./packages/database/
+COPY apps/api/package.json ./apps/api/
 
-RUN pnpm install --frozen-lockfile --prod=false
+# Install dependencies (pnpm.onlyBuiltDependencies in package.json allows build scripts)
+RUN pnpm install --frozen-lockfile
 
-# ── build stage ───────────────────────────────────────────────────────────────
-FROM base AS builder
-WORKDIR /app
+# Cache bust — increment to force rebuild: v1
+ARG CACHE_BUST=1
 
-COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/apps/api/node_modules ./apps/api/node_modules || true
-COPY . .
+# Copy source
+COPY packages/database ./packages/database
+COPY apps/api ./apps/api
 
 # Generate Prisma client
 RUN pnpm --filter @agoraencontrei/database generate
@@ -28,23 +29,6 @@ RUN pnpm --filter @agoraencontrei/database generate
 # Build API
 RUN pnpm --filter @agoraencontrei/api build
 
-# ── production stage ──────────────────────────────────────────────────────────
-FROM node:22-alpine AS runner
-WORKDIR /app
-
-ENV NODE_ENV=production
-
-RUN addgroup --system --gid 1001 nodejs && \
-    adduser --system --uid 1001 apiuser
-
-# Copy compiled output + node_modules
-COPY --from=builder /app/apps/api/dist ./dist
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/packages/database/prisma ./prisma
-COPY --from=builder /app/node_modules/.prisma ./.prisma
-
-USER apiuser
-
 EXPOSE 3100
 
-CMD ["node", "dist/server.js"]
+CMD ["node", "apps/api/dist/server.js"]
