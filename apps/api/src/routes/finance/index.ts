@@ -335,6 +335,10 @@ export default async function financeRoutes(app: FastifyInstance) {
           orderBy: { dueDate: 'desc' },
           take: 36,
         },
+        history: {
+          orderBy: { createdAt: 'desc' },
+          take: 20,
+        },
       },
     })
     if (!contract) return reply.status(404).send({ error: 'NOT_FOUND' })
