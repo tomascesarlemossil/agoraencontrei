@@ -10,14 +10,41 @@ echo   UPLOAD BACKUP → SUPABASE STORAGE
 echo ============================================================
 echo.
 
-REM Verificar se o .env existe
-if not exist ".env" (
-    echo ERRO: Arquivo .env nao encontrado!
-    echo Copie o arquivo .env.backup-upload.example para .env
-    echo e preencha a SUPABASE_SERVICE_ROLE_KEY
+REM Verificar se o .env.backup-upload existe
+if not exist ".env.backup-upload" (
+    echo ERRO: Arquivo .env.backup-upload nao encontrado!
+    echo Verifique se o arquivo existe na pasta apps\api
     pause
     exit /b 1
 )
+
+REM Carregar variaveis do .env.backup-upload
+for /f "usebackq tokens=1,* delims==" %%A in (".env.backup-upload") do (
+    if not "%%A"=="" (
+        echo %%A | findstr /r "^#" > nul 2>&1
+        if errorlevel 1 set "%%A=%%B"
+    )
+)
+
+REM Verificar se a chave foi configurada
+if "%SUPABASE_SERVICE_ROLE_KEY%"=="COLE_AQUI_A_CHAVE_SERVICE_ROLE" (
+    echo.
+    echo [ERRO] A SUPABASE_SERVICE_ROLE_KEY ainda nao foi configurada!
+    echo.
+    echo Abra o arquivo: apps\api\.env.backup-upload
+    echo Substitua COLE_AQUI_A_CHAVE_SERVICE_ROLE pela chave copiada do Supabase
+    echo.
+    echo Como obter a chave:
+    echo   1. Acesse: https://supabase.com/dashboard/project/oenbzvxcsgyzqjtlovdq/settings/api-keys/legacy
+    echo   2. Clique em Copy ao lado de service_role
+    echo   3. Cole no arquivo .env.backup-upload
+    pause
+    exit /b 1
+)
+
+echo [OK] SUPABASE_URL: %SUPABASE_URL%
+echo [OK] BACKUP_PATH: %BACKUP_PATH%
+echo.
 
 echo Opcoes de upload:
 echo.
