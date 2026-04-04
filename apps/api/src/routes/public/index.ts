@@ -1076,4 +1076,32 @@ export default async function publicRoutes(app: FastifyInstance) {
       return reply.status(500).send({ error: 'INTERNAL_ERROR', message: 'Erro ao processar áudio' })
     }
   })
+
+  // GET /api/v1/public/team — lista pública de corretores com creciNumber
+  app.get('/team', async (_req, reply) => {
+    try {
+      const company = await resolveCompany(app)
+      if (!company) return reply.send([])
+      const users = await app.prisma.user.findMany({
+        where: {
+          companyId: company.id,
+          status: 'ACTIVE',
+        },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          phone: true,
+          avatarUrl: true,
+          role: true,
+          creciNumber: true,
+        },
+        orderBy: { createdAt: 'asc' },
+      })
+      return reply.send(users)
+    } catch (err) {
+      app.log.error({ err }, '[team] Error fetching team')
+      return reply.status(500).send({ error: 'INTERNAL_ERROR' })
+    }
+  })
 }

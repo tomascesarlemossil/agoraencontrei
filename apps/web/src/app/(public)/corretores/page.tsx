@@ -2,6 +2,24 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { MembroCard, type Membro } from './MembroCard'
 
+// Busca corretores do banco para obter creciNumber atualizado
+async function fetchTeamFromDB(): Promise<Record<string, string>> {
+  try {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'https://www.agoraencontrei.com.br/api/v1'
+    const res = await fetch(`${apiUrl}/public/team`, { next: { revalidate: 300 } })
+    if (!res.ok) return {}
+    const users: Array<{ name: string; email: string; creciNumber?: string }> = await res.json()
+    // Mapeia email -> creciNumber
+    return Object.fromEntries(
+      users
+        .filter(u => u.email && u.creciNumber)
+        .map(u => [u.email.toLowerCase(), u.creciNumber!])
+    )
+  } catch {
+    return {}
+  }
+}
+
 export const metadata: Metadata = {
   title: 'Nossa Equipe | Imobiliária Lemos — Franca/SP',
   description: 'Conheça a equipe da Imobiliária Lemos em Franca/SP. Diretoria, corretores e administrativo especializados em compra, venda e locação de imóveis. CRECI 279051.',
@@ -42,7 +60,7 @@ const EQUIPE = {
       id: 'nadia',
       name: 'Nádia Maria Cristina Lemos',
       role: 'Diretoria',
-      creci: '61053-F',
+      creci: '',
       phone: '5516992533583',
       email: 'nadia@imobiliarialemos.com.br',
       photo: '/corretores/nadia-lemos.jpg',  // foto real
@@ -178,7 +196,21 @@ function SecaoEquipe({ titulo, badge, cor, membros }: {
   )
 }
 
+// Mescla dados estáticos com creciNumber do banco (por email)
+function mergeCreci(membros: Membro[], creciMap: Record<string, string>): Membro[] {
+  return membros.map(m => ({
+    ...m,
+    creci: creciMap[m.email?.toLowerCase() ?? ''] ?? m.creci,
+  }))
+}
+
 export default async function CorretoresPage() {
+  const creciMap = await fetchTeamFromDB()
+
+  const diretoria = mergeCreci(EQUIPE.diretoria, creciMap)
+  const corretores = mergeCreci(EQUIPE.corretores, creciMap)
+  const administrativo = mergeCreci(EQUIPE.administrativo, creciMap)
+
   return (
     <main className="min-h-screen" style={{ backgroundColor: '#f9f7f4' }}>
       {/* Hero */}
@@ -214,19 +246,19 @@ export default async function CorretoresPage() {
           badge="Diretoria"
           titulo="Liderança & Gestão"
           cor="#C9A84C"
-          membros={EQUIPE.diretoria}
+          membros={diretoria}
         />
         <SecaoEquipe
           badge="Corretores"
           titulo="Especialistas em Imóveis"
           cor="#2e7d32"
-          membros={EQUIPE.corretores}
+          membros={corretores}
         />
         <SecaoEquipe
           badge="Administrativo"
           titulo="Suporte & Operações"
           cor="#1565c0"
-          membros={EQUIPE.administrativo}
+          membros={administrativo}
         />
 
         {/* CTA final */}
