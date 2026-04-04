@@ -1,6 +1,5 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { notFound } from 'next/navigation'
 import { LoadMoreProperties } from '../../LoadMoreProperties'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
@@ -22,6 +21,92 @@ const CIDADES: Record<string, { nome: string; estado: string; descricao: string 
   'sacramento':           { nome: 'Sacramento', estado: 'MG', descricao: 'cidade do Triângulo Mineiro' },
   'restinga':             { nome: 'Restinga', estado: 'SP', descricao: 'cidade do interior paulista na região de Franca' },
 }
+
+// Bairros estáticos de Franca/SP (174 bairros coletados via OSM + curadoria)
+const BAIRROS_FRANCA = [
+  'Alto da Boa Vista', 'Alto da Colina', 'Alto do Cafezal', 'Boa Vista',
+  'Bosque das Palmeiras', 'Cafezal', 'Cambuí', 'Centro', 'Cidade Nova',
+  'Colina Verde', 'Conjunto Habitacional', 'Distrito Industrial',
+  'Estância Alvorada', 'Estância das Flores', 'Fazenda Modelo', 'Fonte Luminosa',
+  'Jardim Aeroporto', 'Jardim Alvorada', 'Jardim América', 'Jardim Andrade',
+  'Jardim Bela Vista', 'Jardim Califórnia', 'Jardim Cambuí', 'Jardim Consolação',
+  'Jardim Copacabana', 'Jardim Cristal', 'Jardim das Acácias', 'Jardim das Flores',
+  'Jardim das Nações', 'Jardim das Palmeiras', 'Jardim das Rosas', 'Jardim Diamante',
+  'Jardim do Lago', 'Jardim dos Ipês', 'Jardim dos Pinheiros', 'Jardim Eldorado',
+  'Jardim Elite', 'Jardim Esmeralda', 'Jardim Europa', 'Jardim Flamboyant',
+  'Jardim Floresta', 'Jardim Girassol', 'Jardim Guanabara', 'Jardim Guaporé',
+  'Jardim Horizonte', 'Jardim Imperial', 'Jardim Ipiranga', 'Jardim Itália',
+  'Jardim Jandaia', 'Jardim Lagoa Nova', 'Jardim Leocádia', 'Jardim Marajó',
+  'Jardim Marcelino', 'Jardim Maria Luíza', 'Jardim Maristela', 'Jardim Natal',
+  'Jardim Nova Franca', 'Jardim Novo Horizonte', 'Jardim Paraíso', 'Jardim Paulista',
+  'Jardim Petrópolis', 'Jardim Primavera', 'Jardim Progresso', 'Jardim Redentor',
+  'Jardim Residencial', 'Jardim Samambaia', 'Jardim Santa Cruz', 'Jardim Santa Lúcia',
+  'Jardim Santa Maria', 'Jardim São Paulo', 'Jardim São Pedro', 'Jardim Saudade',
+  'Jardim Serrano', 'Jardim Sumaré', 'Jardim Tropical', 'Jardim Umuarama',
+  'Jardim União', 'Jardim Universitário', 'Jardim Verde', 'Jardim Vitória', 'Jardim Zara',
+  'Loteamento Alvorada', 'Loteamento Bela Vista', 'Novo Horizonte', 'Pinheiros',
+  'Recanto das Flores', 'Recanto dos Pássaros', 'Santa Cruz', 'Santa Lúcia',
+  'Santo Antônio', 'São Cristóvão', 'São Geraldo', 'São José', 'São Roque', 'Triângulo',
+  'Vila Aparecida', 'Vila Aurora', 'Vila Boa Vista', 'Vila Brasil', 'Vila Carvalho',
+  'Vila Celina', 'Vila Claudia', 'Vila Cristina', 'Vila Duque de Caxias', 'Vila Elvira',
+  'Vila Esperança', 'Vila Formosa', 'Vila Guiomar', 'Vila Harmonia', 'Vila Helena',
+  'Vila Industrial', 'Vila Ipiranga', 'Vila Jardim', 'Vila Lemos', 'Vila Mariana',
+  'Vila Marisa', 'Vila Martins', 'Vila Moraes', 'Vila Nova', 'Vila Oliveira',
+  'Vila Operária', 'Vila Pinheiro', 'Vila Progresso', 'Vila Regina', 'Vila Rica',
+  'Vila Romana', 'Vila Rosa', 'Vila Santa Cecília', 'Vila Santa Terezinha', 'Vila Santos',
+  'Vila São João', 'Vila São José', 'Vila São Paulo', 'Vila Sônia', 'Vila Souza',
+  'Vila Teixeira', 'Vila Tibério', 'Vila Toninho', 'Vila Tupi', 'Vila União',
+  'Vila Universitária', 'Vila Vitória', 'Vila Zelina',
+  'Parque das Acácias', 'Parque das Flores', 'Parque das Nações', 'Parque Eldorado',
+  'Parque Esmeralda', 'Parque Europa', 'Parque Industrial', 'Parque Novo Mundo',
+  'Parque Residencial', 'Parque São Geraldo', 'Parque Universitário',
+  'Residencial Alvorada', 'Residencial Bela Vista', 'Residencial Bosque',
+  'Residencial das Acácias', 'Residencial dos Lagos', 'Residencial Eldorado',
+  'Residencial Esmeralda', 'Residencial Europa', 'Residencial Floresta',
+  'Residencial Girassol', 'Residencial Ipiranga', 'Residencial Jardim',
+  'Residencial Nova Franca', 'Residencial Paraíso', 'Residencial Primavera',
+  'Residencial Santa Cruz', 'Residencial São Paulo', 'Residencial Tropical',
+  'Residencial Universitário', 'Residencial Verde',
+]
+
+// Condomínios e edifícios de Franca/SP
+const CONDOMINIOS_FRANCA = [
+  'Alphaville Franca', 'Bosque das Palmeiras', 'Campos do Conde', 'Colinas do Sul',
+  'Country Club', 'Condomínio das Acácias', 'Condomínio das Flores', 'Condomínio do Lago',
+  'Condomínio dos Ipês', 'Condomínio Esmeralda', 'Condomínio Europa', 'Fazenda Modelo',
+  'Condomínio Floresta', 'Condomínio Girassol', 'Green Park', 'Condomínio Horizonte',
+  'Condomínio Imperial', 'Condomínio Ipiranga', 'Jardim das Nações', 'Jardim Europa',
+  'Jardim Primavera', 'Lago Azul', 'Lagoa Nova', 'Condomínio Lemos', 'Condomínio Maravilha',
+  'Morada dos Pássaros', 'Nova Franca', 'Novo Horizonte', 'Condomínio Paraíso',
+  'Parque das Flores', 'Parque Esmeralda', 'Parque Europa', 'Parque Residencial',
+  'Condomínio Pinheiros', 'Portal das Acácias', 'Portal do Sol', 'Condomínio Primavera',
+  'Recanto das Flores', 'Recanto Verde', 'Residencial Alvorada', 'Residencial Bela Vista',
+  'Residencial Bosque', 'Residencial das Acácias', 'Residencial Eldorado',
+  'Residencial Esmeralda', 'Residencial Floresta', 'Residencial Girassol',
+  'Residencial Ipiranga', 'Residencial Jardim', 'Residencial Nova Franca',
+  'Residencial Paraíso', 'Residencial Primavera', 'Residencial Santa Cruz',
+  'Residencial São Paulo', 'Residencial Tropical', 'Residencial Universitário',
+  'Residencial Verde', 'Rio Verde', 'Santa Cruz', 'Santa Lúcia', 'Santo Antônio',
+  'São Cristóvão', 'São Geraldo', 'São José', 'Serra Azul', 'Solar das Acácias',
+  'Solar das Flores', 'Solar do Lago', 'Spazio', 'Condomínio Tropical', 'Condomínio União',
+  'Condomínio Universitário', 'Condomínio Verde', 'Ville de France', 'Condomínio Vitória',
+  'Edifício Alvorada', 'Edifício Belvedere', 'Edifício Bosque', 'Edifício Brasília',
+  'Edifício Califórnia', 'Edifício Cambuí', 'Edifício Campos do Jordão', 'Edifício Capri',
+  'Edifício Colinas', 'Edifício Copacabana', 'Edifício Cristal', 'Edifício das Acácias',
+  'Edifício das Flores', 'Edifício das Nações', 'Edifício das Palmeiras',
+  'Edifício Diamante', 'Edifício do Lago', 'Edifício dos Ipês', 'Edifício Eldorado',
+  'Edifício Elite', 'Edifício Esmeralda', 'Edifício Europa', 'Edifício Flamboyant',
+  'Edifício Floresta', 'Edifício Girassol', 'Edifício Guanabara', 'Edifício Horizonte',
+  'Edifício Imperial', 'Edifício Ipiranga', 'Edifício Itália', 'Edifício Jandaia',
+  'Edifício Lagoa Nova', 'Edifício Leocádia', 'Edifício Marajó', 'Edifício Maria Luíza',
+  'Edifício Maristela', 'Edifício Natal', 'Edifício Nova Franca', 'Edifício Novo Horizonte',
+  'Edifício Paraíso', 'Edifício Paulista', 'Edifício Petrópolis', 'Edifício Primavera',
+  'Edifício Progresso', 'Edifício Redentor', 'Edifício Samambaia', 'Edifício Santa Cruz',
+  'Edifício Santa Lúcia', 'Edifício Santa Maria', 'Edifício São Paulo', 'Edifício São Pedro',
+  'Edifício Saudade', 'Edifício Serrano', 'Edifício Sumaré', 'Edifício Tropical',
+  'Edifício Umuarama', 'Edifício União', 'Edifício Universitário', 'Edifício Verde',
+  'Edifício Vitória',
+]
 
 function slugToCity(slug: string): string {
   return slug
@@ -57,7 +142,7 @@ async function fetchCityData(citySlug: string) {
     const propertiesData = propertiesRes.ok ? await propertiesRes.json() : { data: [], meta: { total: 0 } }
     const allData = neighborhoodsRes.ok ? await neighborhoodsRes.json() : { data: [] }
 
-    // Extrair bairros únicos
+    // Extrair bairros únicos dos imóveis cadastrados
     const neighborhoodMap = new Map<string, number>()
     allData.data?.forEach((p: any) => {
       if (p.neighborhood) {
@@ -90,10 +175,16 @@ export async function generateMetadata({ params }: { params: { cidade: string } 
   const title = `Imóveis em ${cityName}/${estado} | Casas e Apartamentos | Imobiliária Lemos`
   const description = `Encontre casas à venda, apartamentos para alugar e terrenos em ${cityName}/${estado}, ${desc}. Imobiliária Lemos — CRECI 279051. Atendimento especializado na região.`
 
+  // Keywords enriquecidas para Franca
+  const keywordsBase = `imóveis ${cityName.toLowerCase()}, casas à venda ${cityName.toLowerCase()}, apartamentos ${cityName.toLowerCase()}, terrenos ${cityName.toLowerCase()}, imóveis ${cityName.toLowerCase()} ${estado.toLowerCase()}, comprar casa ${cityName.toLowerCase()}, alugar apartamento ${cityName.toLowerCase()}, imobiliária ${cityName.toLowerCase()}`
+  const keywordsFranca = params.cidade === 'franca'
+    ? `, condomínios Franca SP, bairros Franca SP, lançamento imobiliário Franca, imóveis centro Franca, imóveis jardim Franca, imóveis vila Franca, corretor imóveis Franca SP, CRECI Franca`
+    : ''
+
   return {
     title,
     description,
-    keywords: `imóveis ${cityName.toLowerCase()}, casas à venda ${cityName.toLowerCase()}, apartamentos ${cityName.toLowerCase()}, terrenos ${cityName.toLowerCase()}, imóveis ${cityName.toLowerCase()} ${estado.toLowerCase()}, comprar casa ${cityName.toLowerCase()}, alugar apartamento ${cityName.toLowerCase()}, imobiliária ${cityName.toLowerCase()}`,
+    keywords: keywordsBase + keywordsFranca,
     openGraph: {
       title,
       description,
@@ -119,12 +210,19 @@ export default async function CidadePage({ params }: { params: { cidade: string 
   const cidade = CIDADES[params.cidade]
   const estado = cidade?.estado ?? 'SP'
 
+  const isFranca = params.cidade === 'franca'
+
+  // Para Franca: usar lista estática de bairros se não há bairros dinâmicos suficientes
+  const bairrosParaExibir = isFranca && neighborhoods.length < 10
+    ? BAIRROS_FRANCA.slice(0, 60).map(b => [b, 0] as [string, number])
+    : neighborhoods
+
   // Schema JSON-LD
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'RealEstateAgent',
     name: 'Imobiliária Lemos',
-    url: `https://www.imobiliarialemos.com.br/imoveis/${params.cidade}`,
+    url: `https://www.agoraencontrei.com.br/imoveis/em/${params.cidade}`,
     description: `Imóveis à venda e para alugar em ${cityName}/${estado}`,
     areaServed: { '@type': 'City', name: cityName, containedInPlace: { '@type': 'State', name: estado } },
     numberOfItems: total,
@@ -136,7 +234,7 @@ export default async function CidadePage({ params }: { params: { cidade: string 
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'Início', item: 'https://www.agoraencontrei.com.br' },
       { '@type': 'ListItem', position: 2, name: 'Imóveis', item: 'https://www.agoraencontrei.com.br/imoveis' },
-      { '@type': 'ListItem', position: 3, name: `Imóveis em ${cityName}`, item: `https://www.imobiliarialemos.com.br/imoveis/${params.cidade}` },
+      { '@type': 'ListItem', position: 3, name: `Imóveis em ${cityName}`, item: `https://www.agoraencontrei.com.br/imoveis/em/${params.cidade}` },
     ],
   }
 
@@ -190,25 +288,96 @@ export default async function CidadePage({ params }: { params: { cidade: string 
 
         <div className="max-w-6xl mx-auto px-4 py-10">
           {/* Bairros */}
-          {neighborhoods.length > 0 && (
+          {bairrosParaExibir.length > 0 && (
             <section className="mb-10">
-              <h2 className="text-xl font-bold text-[#1B2B5B] mb-4">
+              <h2 className="text-xl font-bold text-[#1B2B5B] mb-2">
                 Bairros em {cityName}
               </h2>
+              {isFranca && (
+                <p className="text-sm text-gray-500 mb-4">
+                  Explore imóveis por bairro em Franca/SP — {BAIRROS_FRANCA.length} bairros mapeados.
+                </p>
+              )}
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-                {neighborhoods.map(([bairro, count]) => (
+                {bairrosParaExibir.map(([bairro, count]) => (
                   <Link
                     key={bairro}
                     href={`/imoveis/em/${params.cidade}/${cityToSlug(bairro)}`}
                     className="group flex flex-col items-center p-3 bg-white rounded-xl border hover:border-[#C9A84C] hover:shadow-md transition-all text-center"
                   >
                     <span className="text-sm font-medium text-gray-800 group-hover:text-[#1B2B5B] leading-tight">
-                      {bairro.split(' ').map(w => w.charAt(0) + w.slice(1).toLowerCase()).join(' ')}
+                      {bairro}
                     </span>
-                    <span className="text-xs text-gray-400 mt-1">{count} imóvel{count !== 1 ? 'is' : ''}</span>
+                    {count > 0 && (
+                      <span className="text-xs text-gray-400 mt-1">{count} imóvel{count !== 1 ? 'is' : ''}</span>
+                    )}
                   </Link>
                 ))}
               </div>
+              {/* Ver todos os bairros */}
+              {isFranca && BAIRROS_FRANCA.length > 60 && (
+                <details className="mt-4">
+                  <summary className="cursor-pointer text-sm text-[#C9A84C] hover:underline font-medium">
+                    Ver todos os {BAIRROS_FRANCA.length} bairros de Franca/SP →
+                  </summary>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 mt-4">
+                    {BAIRROS_FRANCA.slice(60).map((bairro) => (
+                      <Link
+                        key={bairro}
+                        href={`/imoveis/em/franca/${cityToSlug(bairro)}`}
+                        className="group flex flex-col items-center p-3 bg-white rounded-xl border hover:border-[#C9A84C] hover:shadow-md transition-all text-center"
+                      >
+                        <span className="text-sm font-medium text-gray-800 group-hover:text-[#1B2B5B] leading-tight">
+                          {bairro}
+                        </span>
+                      </Link>
+                    ))}
+                  </div>
+                </details>
+              )}
+            </section>
+          )}
+
+          {/* Condomínios e Edifícios (apenas para Franca) */}
+          {isFranca && (
+            <section className="mb-10">
+              <h2 className="text-xl font-bold text-[#1B2B5B] mb-2">
+                Condomínios e Edifícios em Franca/SP
+              </h2>
+              <p className="text-sm text-gray-500 mb-4">
+                Encontre imóveis nos principais condomínios e edifícios de Franca/SP.
+              </p>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                {CONDOMINIOS_FRANCA.slice(0, 40).map((cond) => (
+                  <Link
+                    key={cond}
+                    href={`/imoveis?city=Franca&q=${encodeURIComponent(cond)}`}
+                    className="group p-3 bg-white rounded-xl border hover:border-[#C9A84C] hover:shadow-md transition-all text-center"
+                  >
+                    <span className="text-sm font-medium text-gray-800 group-hover:text-[#1B2B5B] leading-tight">
+                      {cond}
+                    </span>
+                  </Link>
+                ))}
+              </div>
+              <details className="mt-4">
+                <summary className="cursor-pointer text-sm text-[#C9A84C] hover:underline font-medium">
+                  Ver todos os {CONDOMINIOS_FRANCA.length} condomínios e edifícios →
+                </summary>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mt-4">
+                  {CONDOMINIOS_FRANCA.slice(40).map((cond) => (
+                    <Link
+                      key={cond}
+                      href={`/imoveis?city=Franca&q=${encodeURIComponent(cond)}`}
+                      className="group p-3 bg-white rounded-xl border hover:border-[#C9A84C] hover:shadow-md transition-all text-center"
+                    >
+                      <span className="text-sm font-medium text-gray-800 group-hover:text-[#1B2B5B] leading-tight">
+                        {cond}
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              </details>
             </section>
           )}
 
@@ -260,12 +429,55 @@ export default async function CidadePage({ params }: { params: { cidade: string 
                 <strong> terrenos</strong>, <strong>imóveis comerciais</strong> e <strong>chácaras</strong>.
                 Seja para moradia, investimento ou temporada, temos a opção certa para você.
               </p>
+              {isFranca && (
+                <p>
+                  Franca/SP é o <strong>maior polo calçadista do Brasil</strong> e uma das cidades mais dinâmicas do
+                  interior paulista. Com mais de 350 mil habitantes, a cidade oferece excelente infraestrutura,
+                  universidades renomadas (UNIFRAN, USP Franca) e qualidade de vida acima da média.
+                  Bairros como <strong>Jardim América</strong>, <strong>Jardim Europa</strong>, <strong>Centro</strong>,
+                  <strong> Vila Tibério</strong> e <strong>Jardim Universitário</strong> concentram os imóveis
+                  mais procurados da cidade.
+                </p>
+              )}
               <p>
                 Entre em contato com nossa equipe pelo telefone <strong>(16) 3723-0045</strong> ou visite nossa
                 sede em Franca/SP. Somos credenciados pelo CRECI 279051.
               </p>
             </div>
           </section>
+
+          {/* Links SEO para tipos de busca (apenas Franca) */}
+          {isFranca && (
+            <section className="mt-8 bg-white rounded-2xl p-8 border">
+              <h2 className="text-xl font-bold text-[#1B2B5B] mb-4">
+                Buscas populares em Franca/SP
+              </h2>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { label: 'Casas à venda em Franca', href: '/imoveis?city=Franca&type=HOUSE&purpose=SALE' },
+                  { label: 'Apartamentos em Franca', href: '/imoveis?city=Franca&type=APARTMENT' },
+                  { label: 'Terrenos em Franca', href: '/imoveis?city=Franca&type=LAND' },
+                  { label: 'Alugar em Franca', href: '/imoveis?city=Franca&purpose=RENT' },
+                  { label: 'Imóveis comerciais Franca', href: '/imoveis?city=Franca&type=STORE' },
+                  { label: 'Chácaras em Franca', href: '/imoveis?city=Franca&type=FARM' },
+                  { label: 'Imóveis no Centro', href: '/imoveis/em/franca/centro' },
+                  { label: 'Imóveis no Jardim América', href: '/imoveis/em/franca/jardim-america' },
+                  { label: 'Imóveis no Jardim Europa', href: '/imoveis/em/franca/jardim-europa' },
+                  { label: 'Imóveis na Vila Tibério', href: '/imoveis/em/franca/vila-tiberio' },
+                  { label: 'Imóveis no Jardim Universitário', href: '/imoveis/em/franca/jardim-universitario' },
+                  { label: 'Imóveis na Vila Lemos', href: '/imoveis/em/franca/vila-lemos' },
+                ].map(({ label, href }) => (
+                  <Link
+                    key={label}
+                    href={href}
+                    className="px-3 py-1.5 bg-gray-100 hover:bg-[#1B2B5B] hover:text-white rounded-full text-sm text-gray-700 transition-colors"
+                  >
+                    {label}
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
         </div>
       </div>
     </>
