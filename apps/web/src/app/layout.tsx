@@ -104,9 +104,7 @@ export const metadata: Metadata = {
     images: [`${WEB_URL}/og-image.jpg`],
   },
   verification: {
-    // Google Search Console — adicione o código de verificação aqui quando disponível
-    // google: 'google: 'Jt8clgdW34zz2sb7qj3fCYHPFRd2Y1D5394Rah3L9Yk',
-',
+    google: 'Jt8clgdW34zz2sb7qj3fCYHPFRd2Y1D5394Rah3L9Yk',
     other: { 'facebook-domain-verification': META_PIXEL_ID },
   },
 }
