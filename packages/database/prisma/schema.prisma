@@ -962,6 +962,8 @@ enum RentalStatus {
   PENDING
   PAID
   LATE
+  PARTIAL
+  CANCELLED
 }
 
 enum TransactionType {
@@ -1106,6 +1108,10 @@ model Rental {
   totalAmount     Decimal?     @db.Decimal(12, 2)
   paidAmount      Decimal?     @db.Decimal(12, 2)  // VLPAGO
   paymentDate     DateTime?                         // DTPAGTO
+  paymentMethod   String?                           // PIX | BOLETO | DINHEIRO | TRANSFERENCIA | CHEQUE | CARTAO
+  proofReference  String?                           // nº comprovante ou referência
+  bankName        String?                           // banco utilizado no pagamento
+  observations    String?        @db.Text           // observações da baixa
   repassePaidAt   DateTime?                         // data em que o repasse foi pago ao proprietário
   status          RentalStatus @default(PENDING)
   createdAt       DateTime     @default(now())

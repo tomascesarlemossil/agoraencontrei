@@ -137,6 +137,14 @@ export const DEFAULT_SYSTEM_CONFIG = {
     mapDefaultLat:       -20.5386,
     mapDefaultLng:       -47.4009,
     mapDefaultZoom:      13,
+    // Cores do site público
+    primaryColor:        '#1B2B5B',
+    accentColor:         '#C9A84C',
+    backgroundColor:     '#f9f7f4',
+    textColor:           '#1a1a1a',
+    buttonPrimaryColor:  '#1B2B5B',
+    buttonTextColor:     '#ffffff',
+    buttonBorderRadius:  12,
   },
 
   // ── Design / Tema do Dashboard ───────────────────────────────────────────────

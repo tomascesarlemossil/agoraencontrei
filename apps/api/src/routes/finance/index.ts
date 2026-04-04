@@ -394,7 +394,9 @@ export default async function financeRoutes(app: FastifyInstance) {
           include: {
             landlord:  { select: { id: true, name: true, phone: true } },
             property:  { select: { id: true, reference: true, type: true, title: true, neighborhood: true, city: true } },
-            _count:    { select: { documents: true } },
+            _count:    { select: { documents: true, rentals: true } },
+            rentals:   { orderBy: { dueDate: 'desc' }, take: 12, select: { id: true, dueDate: true, status: true, totalAmount: true, paidAmount: true, paymentDate: true, paymentMethod: true } },
+            invoices:  { orderBy: { dueDate: 'desc' }, take: 12, select: { id: true, dueDate: true, amount: true, asaasStatus: true, numBoleto: true } },
           },
         },
         contractsAsLandlord: {
@@ -403,7 +405,8 @@ export default async function financeRoutes(app: FastifyInstance) {
           include: {
             tenant:   { select: { id: true, name: true, phone: true } },
             property: { select: { id: true, reference: true, type: true, title: true, neighborhood: true, city: true } },
-            _count:   { select: { documents: true } },
+            _count:   { select: { documents: true, rentals: true } },
+            rentals:  { orderBy: { dueDate: 'desc' }, take: 12, select: { id: true, dueDate: true, status: true, totalAmount: true, paidAmount: true, paymentDate: true, repassePaidAt: true } },
           },
         },
         contractsAsGuarantor: {
@@ -746,16 +749,25 @@ export default async function financeRoutes(app: FastifyInstance) {
       },
     })
 
+    // Cancelar aluguéis pendentes do contrato rescindido
+    const cancelledRentals = await app.prisma.rental.updateMany({
+      where: {
+        contractId: id,
+        status: { in: ['PENDING', 'LATE'] },
+      },
+      data: { status: 'CANCELLED' },
+    })
+
     await createAuditLog({
       prisma: app.prisma as any, req,
       action: 'contract.rescission',
       resource: 'contract',
       resourceId: id,
       before: { status: contract.status, isActive: contract.isActive },
-      after:  { status: updated.status, isActive: false, rescissionDate: updated.rescissionDate },
+      after:  { status: updated.status, isActive: false, rescissionDate: updated.rescissionDate, cancelledRentals: cancelledRentals.count },
     })
 
-    return reply.send(updated)
+    return reply.send({ ...updated, cancelledRentals: cancelledRentals.count })
   })
 
   // POST /api/v1/finance/contracts/:id/renovar — renovar contrato (gera novo contrato vinculado)
@@ -990,6 +1002,10 @@ export default async function financeRoutes(app: FastifyInstance) {
     const body = req.body as {
       paidAmount?: number
       paymentDate?: string
+      paymentMethod?: string    // PIX | BOLETO | DINHEIRO | TRANSFERENCIA | CHEQUE | CARTAO
+      proofReference?: string   // nº comprovante
+      bankName?: string         // banco
+      observations?: string     // observações
     }
 
     const rental = await app.prisma.rental.findFirst({
@@ -1000,9 +1016,13 @@ export default async function financeRoutes(app: FastifyInstance) {
     const updated = await app.prisma.rental.update({
       where: { id },
       data: {
-        status:      'PAID',
-        paidAmount:  body.paidAmount   ?? Number(rental.totalAmount ?? rental.rentAmount ?? 0),
-        paymentDate: body.paymentDate  ? new Date(body.paymentDate) : new Date(),
+        status:         'PAID',
+        paidAmount:     body.paidAmount      ?? Number(rental.totalAmount ?? rental.rentAmount ?? 0),
+        paymentDate:    body.paymentDate     ? new Date(body.paymentDate) : new Date(),
+        paymentMethod:  body.paymentMethod   ?? null,
+        proofReference: body.proofReference  ?? null,
+        bankName:       body.bankName        ?? null,
+        observations:   body.observations    ?? null,
       },
     })
 
