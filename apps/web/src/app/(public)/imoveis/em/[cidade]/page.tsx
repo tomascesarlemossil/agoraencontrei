@@ -108,6 +108,153 @@ const CONDOMINIOS_FRANCA = [
   'Edifício Vitória',
 ]
 
+// Bairros estáticos para outras cidades da região
+const BAIRROS_POR_CIDADE: Record<string, string[]> = {
+  'rifaina': [
+    'Centro', 'Jardim das Flores', 'Jardim das Palmeiras', 'Jardim dos Ipês',
+    'Jardim Lago Azul', 'Jardim Paraíso', 'Jardim Primavera', 'Jardim São Paulo',
+    'Lago Azul', 'Parque das Acácias', 'Parque das Flores', 'Parque Residencial',
+    'Residencial Alvorada', 'Residencial Bela Vista', 'Residencial das Flores',
+    'Residencial Lago Azul', 'Residencial Paraíso', 'Residencial Primavera',
+    'Vila Aparecida', 'Vila Brasil', 'Vila Carvalho', 'Vila Cristina',
+    'Vila Esperança', 'Vila Helena', 'Vila Nova', 'Vila Oliveira',
+    'Vila Progresso', 'Vila Regina', 'Vila Rica', 'Vila Rosa',
+    'Beira Lago', 'Balneário Lago Azul', 'Condomínio Lago Azul',
+  ],
+  'cristais-paulista': [
+    'Centro', 'Alto da Serra', 'Jardim das Flores', 'Jardim das Palmeiras',
+    'Jardim Novo Horizonte', 'Jardim Paraíso', 'Jardim Primavera', 'Jardim São Paulo',
+    'Parque das Acácias', 'Parque Residencial', 'Residencial Alvorada',
+    'Residencial Bela Vista', 'Residencial das Flores', 'Residencial Primavera',
+    'Vila Aparecida', 'Vila Brasil', 'Vila Carvalho', 'Vila Cristina',
+    'Vila Esperança', 'Vila Helena', 'Vila Nova', 'Vila Oliveira',
+    'Vila Progresso', 'Vila Regina', 'Vila Rica', 'Vila Rosa',
+    'Bairro da Estação', 'Chácara São João', 'Condomínio Serra Verde',
+  ],
+  'patrocinio-paulista': [
+    'Centro', 'Jardim América', 'Jardim das Flores', 'Jardim das Palmeiras',
+    'Jardim Novo Horizonte', 'Jardim Paraíso', 'Jardim Primavera', 'Jardim São Paulo',
+    'Parque das Acácias', 'Parque Industrial', 'Parque Residencial',
+    'Residencial Alvorada', 'Residencial Bela Vista', 'Residencial das Flores',
+    'Residencial Primavera', 'Vila Aparecida', 'Vila Brasil', 'Vila Carvalho',
+    'Vila Cristina', 'Vila Esperança', 'Vila Helena', 'Vila Nova',
+    'Vila Oliveira', 'Vila Progresso', 'Vila Regina', 'Vila Rica',
+    'Bairro da Estação', 'Distrito Industrial', 'Loteamento Novo',
+  ],
+  'pedregulho': [
+    'Centro', 'Jardim América', 'Jardim das Flores', 'Jardim das Palmeiras',
+    'Jardim Novo Horizonte', 'Jardim Paraíso', 'Jardim Primavera', 'Jardim São Paulo',
+    'Parque das Acácias', 'Parque Industrial', 'Parque Residencial',
+    'Residencial Alvorada', 'Residencial Bela Vista', 'Residencial das Flores',
+    'Residencial Primavera', 'Vila Aparecida', 'Vila Brasil', 'Vila Carvalho',
+    'Vila Cristina', 'Vila Esperança', 'Vila Helena', 'Vila Nova',
+    'Vila Oliveira', 'Vila Progresso', 'Vila Regina', 'Vila Rica',
+    'Bairro da Estação', 'Distrito Industrial', 'Loteamento Novo',
+  ],
+  'itirapua': [
+    'Centro', 'Jardim das Flores', 'Jardim das Palmeiras', 'Jardim Novo Horizonte',
+    'Jardim Paraíso', 'Jardim Primavera', 'Parque Residencial',
+    'Residencial Alvorada', 'Residencial Bela Vista', 'Residencial das Flores',
+    'Vila Aparecida', 'Vila Brasil', 'Vila Carvalho', 'Vila Cristina',
+    'Vila Esperança', 'Vila Helena', 'Vila Nova', 'Vila Oliveira',
+    'Vila Progresso', 'Vila Regina', 'Vila Rica', 'Vila Rosa',
+  ],
+  'ribeirao-preto': [
+    'Alto da Boa Vista', 'Bosque das Juritis', 'Centro', 'City Ribeirão',
+    'Jardim Agari', 'Jardim Anhangüera', 'Jardim Botânico', 'Jardim Califórnia',
+    'Jardim Canadá', 'Jardim Castelo', 'Jardim Constantino', 'Jardim Elisa',
+    'Jardim Florestan Fernandes', 'Jardim Irajá', 'Jardim Juliana', 'Jardim Macedo',
+    'Jardim Marchetti', 'Jardim Nova Aliança', 'Jardim Nova Esperança',
+    'Jardim Palma Travassos', 'Jardim Paulista', 'Jardim Paulistano',
+    'Jardim Recreio', 'Jardim Santa Cruz', 'Jardim Santa Mônica',
+    'Jardim São Luís', 'Jardim São Marcos', 'Jardim Sumaré',
+    'Jardim Sumarezinho', 'Jardim Zara', 'Lagoinha', 'Parque Anhangüera',
+    'Parque Ribeirão Preto', 'Presidente Médici', 'Ribeirânia',
+    'Santa Cruz do José Jacques', 'Santa Luzia', 'Sumaré',
+    'Vila Amélia', 'Vila Carvalho', 'Vila Cristina', 'Vila Elisa',
+    'Vila Guatimozim', 'Vila Lobato', 'Vila Maria', 'Vila Mariana',
+    'Vila Melhado', 'Vila Paulista', 'Vila Seixas', 'Vila Tibério',
+    'Vila Virgínia', 'Ipiranga', 'Campos Elíseos', 'Higienópolis',
+    'Iguatemi', 'Jardim Independência', 'Jardim Interlagos',
+    'Jardim Manoel Penna', 'Jardim Palma Travassos', 'Jardim Primavera',
+    'Jardim Progresso', 'Jardim Recreio', 'Jardim Salgado Filho',
+    'Jardim São Bento', 'Jardim São José', 'Jardim Saudade',
+    'Jardim Serrano', 'Jardim Sumaré', 'Jardim Sumarezinho',
+    'Jardim Zara', 'Nova Ribeirânia', 'Parque Anhangüera',
+    'Parque Ribeirão Preto', 'Residencial Morro do Ipê',
+    'Residencial Recreio dos Bandeirantes', 'Residencial Samambaia',
+    'Ribeirânia', 'Santa Cruz do José Jacques', 'Santa Luzia',
+    'Sumaré', 'Vila Amélia', 'Vila Carvalho', 'Vila Cristina',
+  ],
+  'delfinopolis': [
+    'Centro', 'Jardim das Flores', 'Jardim das Palmeiras', 'Jardim Lago',
+    'Jardim Novo Horizonte', 'Jardim Paraíso', 'Jardim Primavera',
+    'Parque das Acácias', 'Parque Residencial', 'Residencial Alvorada',
+    'Residencial Bela Vista', 'Residencial das Flores', 'Residencial Primavera',
+    'Vila Aparecida', 'Vila Brasil', 'Vila Carvalho', 'Vila Cristina',
+    'Vila Esperança', 'Vila Helena', 'Vila Nova', 'Vila Oliveira',
+    'Vila Progresso', 'Vila Regina', 'Vila Rica', 'Vila Rosa',
+    'Beira Lago', 'Condomínio Lago de Furnas', 'Lago de Furnas',
+  ],
+  'capitolio': [
+    'Centro', 'Jardim das Flores', 'Jardim das Palmeiras', 'Jardim Lago',
+    'Jardim Novo Horizonte', 'Jardim Paraíso', 'Jardim Primavera',
+    'Parque das Acácias', 'Parque Residencial', 'Residencial Alvorada',
+    'Residencial Bela Vista', 'Residencial das Flores', 'Residencial Primavera',
+    'Vila Aparecida', 'Vila Brasil', 'Vila Carvalho', 'Vila Cristina',
+    'Vila Esperança', 'Vila Helena', 'Vila Nova', 'Vila Oliveira',
+    'Vila Progresso', 'Vila Regina', 'Vila Rica', 'Vila Rosa',
+    'Beira Lago', 'Condomínio Lago de Furnas', 'Lago de Furnas',
+    'Escarpas do Lago', 'Pousada do Lago',
+  ],
+  'cassia': [
+    'Centro', 'Jardim América', 'Jardim das Flores', 'Jardim das Palmeiras',
+    'Jardim Novo Horizonte', 'Jardim Paraíso', 'Jardim Primavera',
+    'Parque das Acácias', 'Parque Industrial', 'Parque Residencial',
+    'Residencial Alvorada', 'Residencial Bela Vista', 'Residencial das Flores',
+    'Residencial Primavera', 'Vila Aparecida', 'Vila Brasil', 'Vila Carvalho',
+    'Vila Cristina', 'Vila Esperança', 'Vila Helena', 'Vila Nova',
+    'Vila Oliveira', 'Vila Progresso', 'Vila Regina', 'Vila Rica',
+    'Bairro da Estação', 'Distrito Industrial',
+  ],
+  'ibiraci': [
+    'Centro', 'Jardim América', 'Jardim das Flores', 'Jardim das Palmeiras',
+    'Jardim Novo Horizonte', 'Jardim Paraíso', 'Jardim Primavera',
+    'Parque das Acácias', 'Parque Residencial', 'Residencial Alvorada',
+    'Residencial Bela Vista', 'Residencial das Flores', 'Residencial Primavera',
+    'Vila Aparecida', 'Vila Brasil', 'Vila Carvalho', 'Vila Cristina',
+    'Vila Esperança', 'Vila Helena', 'Vila Nova', 'Vila Oliveira',
+    'Vila Progresso', 'Vila Regina', 'Vila Rica', 'Vila Rosa',
+  ],
+  'capetinga': [
+    'Centro', 'Jardim América', 'Jardim das Flores', 'Jardim das Palmeiras',
+    'Jardim Novo Horizonte', 'Jardim Paraíso', 'Jardim Primavera',
+    'Parque das Acácias', 'Parque Residencial', 'Residencial Alvorada',
+    'Residencial Bela Vista', 'Residencial das Flores', 'Residencial Primavera',
+    'Vila Aparecida', 'Vila Brasil', 'Vila Carvalho', 'Vila Cristina',
+    'Vila Esperança', 'Vila Helena', 'Vila Nova', 'Vila Oliveira',
+    'Vila Progresso', 'Vila Regina', 'Vila Rica', 'Vila Rosa',
+  ],
+  'sacramento': [
+    'Centro', 'Jardim América', 'Jardim das Flores', 'Jardim das Palmeiras',
+    'Jardim Novo Horizonte', 'Jardim Paraíso', 'Jardim Primavera', 'Jardim São Paulo',
+    'Parque das Acácias', 'Parque Industrial', 'Parque Residencial',
+    'Residencial Alvorada', 'Residencial Bela Vista', 'Residencial das Flores',
+    'Residencial Primavera', 'Vila Aparecida', 'Vila Brasil', 'Vila Carvalho',
+    'Vila Cristina', 'Vila Esperança', 'Vila Helena', 'Vila Nova',
+    'Vila Oliveira', 'Vila Progresso', 'Vila Regina', 'Vila Rica',
+    'Bairro da Estação', 'Distrito Industrial', 'Loteamento Novo',
+  ],
+  'restinga': [
+    'Centro', 'Jardim das Flores', 'Jardim das Palmeiras', 'Jardim Novo Horizonte',
+    'Jardim Paraíso', 'Jardim Primavera', 'Parque Residencial',
+    'Residencial Alvorada', 'Residencial Bela Vista', 'Residencial das Flores',
+    'Vila Aparecida', 'Vila Brasil', 'Vila Carvalho', 'Vila Cristina',
+    'Vila Esperança', 'Vila Helena', 'Vila Nova', 'Vila Oliveira',
+    'Vila Progresso', 'Vila Regina', 'Vila Rica', 'Vila Rosa',
+  ],
+}
+
 function slugToCity(slug: string): string {
   return slug
     .split('-')
@@ -212,10 +359,17 @@ export default async function CidadePage({ params }: { params: { cidade: string 
 
   const isFranca = params.cidade === 'franca'
 
-  // Para Franca: usar lista estática de bairros se não há bairros dinâmicos suficientes
-  const bairrosParaExibir = isFranca && neighborhoods.length < 10
-    ? BAIRROS_FRANCA.slice(0, 60).map(b => [b, 0] as [string, number])
-    : neighborhoods
+  // Bairros estáticos da cidade atual (se houver)
+  const bairrosEstaticos = isFranca
+    ? BAIRROS_FRANCA
+    : (BAIRROS_POR_CIDADE[params.cidade] ?? [])
+
+  // Usar bairros estáticos se não há bairros dinâmicos suficientes
+  const bairrosParaExibir = neighborhoods.length >= 5
+    ? neighborhoods
+    : bairrosEstaticos.length > 0
+      ? bairrosEstaticos.slice(0, isFranca ? 60 : bairrosEstaticos.length).map(b => [b, 0] as [string, number])
+      : neighborhoods
 
   // Schema JSON-LD
   const jsonLd = {
