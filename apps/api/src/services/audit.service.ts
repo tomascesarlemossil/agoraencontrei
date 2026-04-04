@@ -4,6 +4,7 @@ import type { FastifyRequest } from 'fastify'
 export type AuditAction =
   | 'contract.create' | 'contract.update' | 'contract.delete' | 'contract.rescission'
   | 'rental.pay' | 'rental.estorno' | 'rental.repasse_paid' | 'rental.repasse_estorno'
+  | 'rental.batch_generate' | 'rental.repasse_lote'
   | 'client.create'   | 'client.update'   | 'client.delete'
   | 'property.create' | 'property.update' | 'property.delete'
   | 'contact.create'  | 'contact.update'  | 'contact.delete'

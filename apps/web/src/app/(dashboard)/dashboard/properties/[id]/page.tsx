@@ -788,7 +788,8 @@ export default function PropertyDetailPage() {
                     </div>
                   )} />
                   <Field label="Nome do Condomínio / Empreendimento" span="sm:col-span-2">
-                    <Input {...register('condoName')} className="bg-white/5 border-white/10 text-white h-9" />
+                    <Input {...register('condoName')} className="bg-white/5 border-white/10 text-white h-9" placeholder="Ex: Residencial das Flores, Ed. Parque Verde..." />
+                    <p className="text-[11px] text-white/30 mt-0.5">💡 Deixe em branco para detectar automaticamente da descrição</p>
                   </Field>
                   <Field label="Administradora">
                     <Input {...register('adminCompany')} className="bg-white/5 border-white/10 text-white h-9" />

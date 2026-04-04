@@ -488,7 +488,8 @@ export default function NewPropertyPage() {
                   </div>
                 )} />
                 <Field label="Nome do Condomínio / Empreendimento" span="sm:col-span-2">
-                  <Input {...register('condoName')} className={inputCls} />
+                  <Input {...register('condoName')} className={inputCls} placeholder="Ex: Residencial das Flores, Ed. Parque Verde..." />
+                  <p className="text-[11px] text-white/30 mt-0.5">💡 Deixe em branco para detectar automaticamente da descrição</p>
                 </Field>
                 <Field label="Administradora">
                   <Input {...register('adminCompany')} className={inputCls} />

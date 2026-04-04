@@ -1212,3 +1212,30 @@ export const invoiceApi = {
   balance: (token: string) =>
     request<{ balance: number; availableBalance: number; transferredThisMonth: number }>('/api/v1/finance/invoices/asaas/balance', { token }),
 }
+
+// ── Finance Automation API ────────────────────────────────────────────────────
+export const financeAutomationApi = {
+  dashboard: (token: string) =>
+    request<any>('/api/v1/finance/automation/dashboard', { token }),
+
+  previewMes: (token: string, month?: string) =>
+    request<any>(`/api/v1/finance/automation/preview-mes${month ? `?month=${month}` : ''}`, { token }),
+
+  gerarCobrancasMes: (token: string, body: { month?: string; preview?: boolean; contractIds?: string[] }) =>
+    request<any>('/api/v1/finance/automation/gerar-cobracas-mes', { token, method: 'POST', body: JSON.stringify(body) }),
+
+  atualizarStatusLote: (token: string) =>
+    request<any>('/api/v1/finance/automation/atualizar-status-lote', { token, method: 'POST', body: JSON.stringify({}) }),
+
+  cobrarLoteAsaas: (token: string, body: { rentalIds?: string[]; billingType?: 'PIX' | 'BOLETO'; month?: string }) =>
+    request<any>('/api/v1/finance/automation/cobrar-lote-asaas', { token, method: 'POST', body: JSON.stringify(body) }),
+
+  repassesLote: (token: string, body: { rentalIds?: string[]; repassePaidAt?: string; month?: string }) =>
+    request<any>('/api/v1/finance/automation/repasses-lote', { token, method: 'POST', body: JSON.stringify(body) }),
+
+  notificarLote: (token: string, body: { rentalIds?: string[]; canal: 'whatsapp' | 'email'; mensagem?: string }) =>
+    request<any>('/api/v1/finance/automation/notificar-lote', { token, method: 'POST', body: JSON.stringify(body) }),
+
+  relatorioMensal: (token: string, month?: string) =>
+    request<any>(`/api/v1/finance/automation/relatorio-mensal${month ? `?month=${month}` : ''}`, { token }),
+}

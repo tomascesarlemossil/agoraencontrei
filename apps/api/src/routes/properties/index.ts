@@ -73,6 +73,7 @@ const CreatePropertyBody = z.object({
   commercialNeighborhood: z.string().optional(),
   region:       z.string().optional(),
   referencePoint: z.string().optional(),
+  condoName:    z.string().optional(),
   closedCondo:  z.boolean().optional(),
   adminCompany: z.string().optional(),
   constructionCompany: z.string().optional(),

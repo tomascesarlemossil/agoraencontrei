@@ -10,7 +10,7 @@ import {
 import {
   TrendingUp, TrendingDown, DollarSign, Users, FileText, AlertTriangle,
   Calendar, ArrowUpRight, ArrowDownRight, Banknote, ChevronRight,
-  CheckCircle, XCircle, Clock, AlertCircle, BarChart3, ClipboardList,
+  CheckCircle, XCircle, Clock, AlertCircle, BarChart3, ClipboardList, Zap,
 } from 'lucide-react'
 import { financeApi, type FinanceSummary, type CashflowPoint } from '@/lib/api'
 
@@ -502,7 +502,7 @@ export default function LemosbankPage() {
       </div>
 
       {/* Quick links */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         <Link href="/dashboard/clientes" className="flex items-center gap-4 p-5 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
           <div className="p-3 rounded-xl bg-indigo-50">
             <Users className="w-6 h-6 text-indigo-600" />
@@ -540,6 +540,16 @@ export default function LemosbankPage() {
           <div>
             <p className="font-semibold text-gray-900">Relatórios</p>
             <p className="text-sm text-gray-500">Operacionais, gerenciais e proprietários</p>
+          </div>
+          <ChevronRight className="w-4 h-4 text-gray-300 ml-auto" />
+        </Link>
+        <Link href="/dashboard/lemosbank/automacao" className="flex items-center gap-4 p-5 bg-white rounded-2xl border border-orange-200 shadow-sm hover:shadow-md transition-shadow">
+          <div className="p-3 rounded-xl bg-orange-50">
+            <Zap className="w-6 h-6 text-orange-600" />
+          </div>
+          <div>
+            <p className="font-semibold text-gray-900">Automação</p>
+            <p className="text-sm text-gray-500">Gerar cobranças, repasses e notificações</p>
           </div>
           <ChevronRight className="w-4 h-4 text-gray-300 ml-auto" />
         </Link>

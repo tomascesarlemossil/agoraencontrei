@@ -60,6 +60,27 @@ function findBrokerByName(captorName?: string | null) {
   return null
 }
 
+// ── Extração automática de condomínio da descrição/título ──────────────────
+function extractCondoFromText(text?: string | null): string | null {
+  if (!text) return null
+  const patterns = [
+    /condom[ií]nio\s+([A-ZÀ-Ú][\w\s\-\.]{2,50}?)(?:\s*[,\.\n\r]|$)/gi,
+    /cond\.?\s+([A-ZÀ-Ú][\w\s\-\.]{2,50}?)(?:\s*[,\.\n\r]|$)/gi,
+    /residencial\s+([A-ZÀ-Ú][\w\s\-\.]{2,50}?)(?:\s*[,\.\n\r]|$)/gi,
+    /edif[ií]cio\s+([A-ZÀ-Ú][\w\s\-\.]{2,50}?)(?:\s*[,\.\n\r]|$)/gi,
+    /ed\.?\s+([A-ZÀ-Ú][\w\s\-\.]{2,50}?)(?:\s*[,\.\n\r]|$)/gi,
+    /empreendimento\s+([A-ZÀ-Ú][\w\s\-\.]{2,50}?)(?:\s*[,\.\n\r]|$)/gi,
+  ]
+  for (const pattern of patterns) {
+    pattern.lastIndex = 0
+    const match = pattern.exec(text)
+    if (match?.[1]) {
+      return match[1].trim().replace(/\s+/g, ' ').slice(0, 60)
+    }
+  }
+  return null
+}
+
 // Feature categories matching Univen layout
 const FEATURE_CATEGORIES: { label: string; keys: string[] }[] = [
   { label: 'Básico',     keys: ['Água','Energia','Gás','Internet','Acessível'] },
@@ -341,6 +362,12 @@ export default async function PropertyDetailPage({ params }: { params: { slug: s
   const totalRent = hasRent && iptu ? Number(p.priceRent) + iptu / 12 : null
 
   const featureCategories = organizeFeatures(p.features ?? [])
+  // Condomínio: usa campo cadastrado ou extrai da descrição/título automaticamente
+  const condoNameResolved: string | null =
+    p.condoName ||
+    extractCondoFromText(p.description) ||
+    extractCondoFromText(p.title) ||
+    null
 
   function getYouTubeId(url?: string | null): string | null {
     if (!url) return null
@@ -677,7 +704,7 @@ export default async function PropertyDetailPage({ params }: { params: { slug: s
                   {p.yearBuilt && <InfoRow label="Ano de Construção" value={p.yearBuilt} />}
                   {p.yearLastReformed && <InfoRow label="Última Reforma" value={p.yearLastReformed} />}
                   {p.closedCondo && <InfoRow label="Condomínio" value="Fechado" />}
-                  {p.condoName && <InfoRow label="Empreendimento" value={p.condoName} />}
+                  {condoNameResolved && <InfoRow label="Condomínio" value={`Condomínio ${condoNameResolved}`} />}
                   {p.referencePoint && <InfoRow label="Ponto de Referência" value={p.referencePoint} />}
                 </div>
               </div>
@@ -736,7 +763,7 @@ export default async function PropertyDetailPage({ params }: { params: { slug: s
 
             {/* ── Broker Card (bottom of left col on mobile) ─ */}
             <div className="lg:hidden bg-white rounded-2xl border shadow-sm overflow-hidden" style={{ borderColor: '#ddd9d0' }}>
-              <BrokerCard broker={broker} whatsappNum={whatsappNum} whatsappMsg={whatsappMsg} visitMsg={visitMsg} p={p} />
+              <BrokerCard broker={broker} whatsappNum={whatsappNum} whatsappMsg={whatsappMsg} visitMsg={visitMsg} p={p} condoName={condoNameResolved} />
             </div>
 
             {/* ── Similar Properties ────────────────────────── */}
@@ -759,7 +786,7 @@ export default async function PropertyDetailPage({ params }: { params: { slug: s
 
             {/* Broker + CTA Card */}
             <div className="bg-white rounded-2xl border shadow-sm overflow-hidden" style={{ borderColor: '#ddd9d0' }}>
-              <BrokerCard broker={broker} whatsappNum={whatsappNum} whatsappMsg={whatsappMsg} visitMsg={visitMsg} p={p} />
+              <BrokerCard broker={broker} whatsappNum={whatsappNum} whatsappMsg={whatsappMsg} visitMsg={visitMsg} p={p} condoName={condoNameResolved} />
             </div>
 
             {/* Lead form */}
@@ -822,14 +849,18 @@ export default async function PropertyDetailPage({ params }: { params: { slug: s
   )
 }
 
-// ── Broker Card Component ─────────────────────────────────────────────────────
-function BrokerCard({ broker, whatsappNum, whatsappMsg, visitMsg, p }: {
-  broker: any; whatsappNum: string; whatsappMsg: string; visitMsg: string; p: any
+
+// ── Broker Card Component (redesenhado) ──────────────────────────────────────
+function BrokerCard({ broker, whatsappNum, whatsappMsg, visitMsg, p, condoName }: {
+  broker: any; whatsappNum: string; whatsappMsg: string; visitMsg: string; p: any; condoName?: string | null
 }) {
   const hasSale = (p.purpose === 'SALE' || p.purpose === 'BOTH') && Number(p.price) > 0
   const hasRent = (p.purpose === 'RENT' || p.purpose === 'BOTH') && Number(p.priceRent) > 0
   const iptu = p.iptu ? Number(p.iptu) : null
-  const totalRent = hasRent && iptu ? Number(p.priceRent) + iptu / 12 : null
+  const condoFeeNum = p.condoFee && Number(p.condoFee) > 0 ? Number(p.condoFee) : null
+  const totalRent = hasRent ? (
+    Number(p.priceRent) + (iptu ? iptu / 12 : 0) + (condoFeeNum ?? 0)
+  ) : null
 
   function fmtCurr(v: number) {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2 }).format(v)
@@ -838,9 +869,22 @@ function BrokerCard({ broker, whatsappNum, whatsappMsg, visitMsg, p }: {
   return (
     <>
       {/* Gradient top bar */}
-      <div className="h-1.5 w-full" style={{ background: 'linear-gradient(90deg, #1B2B5B, #C9A84C)' }} />
+      <div className="h-1.5 w-full" style={{ background: 'linear-gradient(90deg, #1B2B5B 0%, #2d4a8a 50%, #C9A84C 100%)' }} />
 
-      {/* Price summary (sidebar) */}
+      {/* Condomínio badge (quando detectado) */}
+      {condoName && (
+        <div className="px-5 pt-4 pb-0">
+          <div className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold" style={{ backgroundColor: 'rgba(201,168,76,0.10)', color: '#92710a', border: '1px solid rgba(201,168,76,0.3)' }}>
+            <svg className="w-3.5 h-3.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+              <polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
+            Condomínio {condoName}
+          </div>
+        </div>
+      )}
+
+      {/* Price summary */}
       <div className="p-5 border-b" style={{ borderColor: '#ede9df' }}>
         {hasSale && (
           <div className={`flex items-baseline justify-between ${hasRent || iptu ? 'mb-2' : ''}`}>
@@ -864,79 +908,103 @@ function BrokerCard({ broker, whatsappNum, whatsappMsg, visitMsg, p }: {
             <span className="text-gray-700 font-medium">{fmtCurr(iptu)}</span>
           </div>
         )}
-        {p.condoFee && Number(p.condoFee) > 0 && (
+        {condoFeeNum && (
           <div className="flex items-baseline justify-between text-sm py-0.5">
-            <span className="text-gray-500">Condomínio</span>
-            <span className="text-gray-700 font-medium">{fmtCurr(Number(p.condoFee))}/mês</span>
+            <span className="text-gray-500">Condomínio/mês</span>
+            <span className="text-gray-700 font-medium">{fmtCurr(condoFeeNum)}</span>
           </div>
         )}
-        {totalRent && (
+        {totalRent && hasRent && (iptu || condoFeeNum) && (
           <div className="flex items-baseline justify-between text-sm pt-2 mt-1 border-t font-semibold" style={{ borderColor: '#ede9df' }}>
-            <span className="text-gray-600">Total Locação/mês</span>
+            <span className="text-gray-600">Total/mês</span>
             <span style={{ color: '#1B2B5B' }}>{fmtCurr(totalRent)}</span>
           </div>
         )}
       </div>
 
-      {/* Broker info */}
-      <div className="p-5">
-        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Gostou do imóvel?</p>
+      {/* Broker profile */}
+      <div className="px-5 pt-4 pb-3">
+        <div className="flex items-center gap-3.5">
+          {/* Avatar */}
+          {broker?.avatarUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={broker.avatarUrl} alt={broker.name}
+              className="h-16 w-16 rounded-2xl object-cover flex-shrink-0 shadow-md"
+              style={{ border: '2.5px solid #C9A84C' }} />
+          ) : (
+            <div className="h-16 w-16 rounded-2xl flex items-center justify-center text-white text-2xl font-bold flex-shrink-0 shadow-md"
+              style={{ background: 'linear-gradient(135deg, #1B2B5B, #2d4a8a)', border: '2.5px solid #C9A84C' }}>
+              {broker?.name?.charAt(0).toUpperCase() ?? 'L'}
+            </div>
+          )}
+          {/* Info */}
+          <div className="min-w-0 flex-1">
+            <p className="font-bold text-base leading-tight truncate" style={{ color: '#1B2B5B' }}>
+              {broker?.name ?? 'Imobiliária Lemos'}
+            </p>
+            <p className="text-xs text-gray-500 mt-0.5">{(broker as any)?.cargo ?? 'Corretor de Imóveis'}</p>
+            <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+              <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full" style={{ backgroundColor: 'rgba(201,168,76,0.12)', color: '#92710a' }}>
+                CRECI {broker?.creciNumber || '279051-F'}
+              </span>
+              <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-blue-50 text-blue-700">
+                Verificado ✓
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
 
-        {/* CTA buttons */}
-        <div className="space-y-2.5 mb-5">
-          <a href={`https://wa.me/${whatsappNum}?text=${whatsappMsg}`} target="_blank" rel="noreferrer"
-            className="flex items-center justify-center gap-2.5 w-full py-3.5 rounded-xl text-sm font-bold transition-all hover:scale-[1.02] hover:shadow-lg shadow-sm"
-            style={{ background: 'linear-gradient(135deg, #25D366, #128C7E)', color: 'white' }}>
-            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
-            </svg>
-            Fale com o corretor
-          </a>
+      {/* CTA buttons */}
+      <div className="px-5 pb-5 space-y-2.5">
+        {/* WhatsApp — primary */}
+        <a href={`https://wa.me/${whatsappNum}?text=${whatsappMsg}`} target="_blank" rel="noreferrer"
+          className="flex items-center justify-center gap-2.5 w-full py-3.5 rounded-xl text-sm font-bold transition-all hover:scale-[1.02] hover:shadow-lg shadow-sm"
+          style={{ background: 'linear-gradient(135deg, #25D366, #128C7E)', color: 'white' }}>
+          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
+          </svg>
+          Falar com o Corretor
+        </a>
 
+        {/* Agendar visita + ligar */}
+        <div className="grid grid-cols-2 gap-2">
           <ScheduleVisitModal
             propertyId={p.id}
             propertyTitle={p.title ?? 'Imóvel'}
             propertySlug={p.slug ?? ''}
           />
-
           <a href={`tel:${broker?.phone ?? '1637230045'}`}
-            className="flex items-center justify-center gap-2.5 w-full py-3.5 rounded-xl text-sm font-bold transition-all hover:shadow-md"
+            className="flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold transition-all hover:shadow-md"
             style={{ backgroundColor: '#f5f3ef', color: '#1B2B5B', border: '2px solid #ddd9d0' }}>
-            <Phone className="w-5 h-5" style={{ color: '#C9A84C' }} />
-            {broker?.phone ?? '(16) 3723-0045'}
+            <Phone className="w-4 h-4" style={{ color: '#C9A84C' }} />
+            Ligar
           </a>
-
-          {/* Online Proposal */}
-          {(p.purpose === 'SALE' || p.purpose === 'BOTH') && (
-            <div className="pt-1">
-              <PropostaOnline
-                propertyId={p.id} propertyTitle={p.title}
-                propertyPrice={p.price ? Number(p.price) : undefined}
-                propertyReference={p.reference}
-              />
-              <p className="text-[10px] text-gray-500 text-center mt-1.5">Negocie 100% online · Retorno em até 24h</p>
-            </div>
-          )}
         </div>
 
-        {/* Broker info */}
-        <div className="flex items-center gap-3 pt-4 border-t" style={{ borderColor: '#ede9df' }}>
-          {broker?.avatarUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={broker.avatarUrl} alt={broker.name}
-              className="h-14 w-14 rounded-full object-cover border-2 flex-shrink-0"
-              style={{ borderColor: '#C9A84C' }} />
-          ) : (
-            <div className="h-14 w-14 rounded-full flex items-center justify-center text-white text-xl font-bold border-2 flex-shrink-0"
-              style={{ backgroundColor: '#1B2B5B', borderColor: '#C9A84C' }}>
-              {broker?.name?.charAt(0).toUpperCase() ?? 'L'}
-            </div>
-          )}
+        {/* Online Proposal */}
+        {(p.purpose === 'SALE' || p.purpose === 'BOTH') && (
+          <div className="pt-1">
+            <PropostaOnline
+              propertyId={p.id} propertyTitle={p.title}
+              propertyPrice={p.price ? Number(p.price) : undefined}
+              propertyReference={p.reference}
+            />
+            <p className="text-[10px] text-gray-500 text-center mt-1.5">Negocie 100% online · Retorno em até 24h</p>
+          </div>
+        )}
+
+        {/* Imobiliária info footer */}
+        <div className="flex items-center gap-2.5 pt-3 mt-1 border-t" style={{ borderColor: '#ede9df' }}>
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#1B2B5B' }}>
+            <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+              <polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
+          </div>
           <div className="min-w-0">
-            <p className="font-bold text-sm truncate" style={{ color: '#1B2B5B' }}>{broker?.name ?? 'Imobiliária Lemos'}</p>
-            <p className="text-xs text-gray-500">{(broker as any)?.cargo ?? 'Corretor de Imóveis'}</p>
-            {broker?.creciNumber && <p className="text-xs font-medium" style={{ color: '#C9A84C' }}>CRECI {broker.creciNumber}</p>}
-            {!broker?.creciNumber && <p className="text-xs font-medium" style={{ color: '#C9A84C' }}>CRECI 279051-f</p>}
+            <p className="text-xs font-bold truncate" style={{ color: '#1B2B5B' }}>Imobiliária Lemos</p>
+            <p className="text-[11px] text-gray-400">(16) 3723-0045 · CRECI-J 61053-F</p>
           </div>
         </div>
       </div>
