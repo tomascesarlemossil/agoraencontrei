@@ -953,6 +953,9 @@ enum ContractStatus {
   ACTIVE
   FINISHED
   CANCELED
+  IN_RENEWAL
+  EXPIRED
+  IN_NEGOTIATION
 }
 
 enum RentalStatus {
@@ -1057,6 +1060,18 @@ model Contract {
   isActive          Boolean        @default(true)
   contractHtml      String?        @db.Text   // HTML do contrato gerado por IA
   guaranteeType     String?        // fiador | caucao | seguro
+
+  // Rescisão detalhada
+  rescissionReason  String?        // motivo da rescisão
+  rescissionFine    Decimal?       @db.Decimal(12, 2) // multa rescisória
+  rescissionRefund  Decimal?       @db.Decimal(12, 2) // devolução de caução
+  rescissionNotes   String?        @db.Text
+
+  // Renovação
+  renewedFromId     String?        // contrato original que foi renovado
+  renewalCount      Int            @default(0) // quantas vezes foi renovado
+  lastAdjustmentAt  DateTime?      // data do último reajuste aplicado
+
   createdAt         DateTime       @default(now())
   updatedAt         DateTime       @updatedAt
 
@@ -1064,6 +1079,7 @@ model Contract {
   invoices          Invoice[]
   documents         Document[]
   legalCases        LegalCase[]
+  history           ContractHistory[]
   @@unique([companyId, legacyId])
   @@index([companyId])
   @@index([tenantId])
@@ -1474,4 +1490,29 @@ model LegalCaseUpdate {
   @@index([caseId])
   @@index([companyId])
   @@map("legal_case_updates")
+}
+
+// ── Histórico de Contratos ────────────────────────────────────────────────────
+model ContractHistory {
+  id            String    @id @default(cuid())
+  contractId    String
+  contract      Contract  @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  companyId     String
+
+  action        String    // REAJUSTE | RENOVACAO | RESCISAO | ALTERACAO | CRIACAO
+  description   String    @db.Text
+  field         String?   // campo alterado (ex: rentValue, status)
+  oldValue      String?   // valor anterior
+  newValue      String?   // valor novo
+
+  userId        String?
+  userName      String?
+
+  metadata      Json      @default("{}")
+  createdAt     DateTime  @default(now())
+
+  @@index([contractId])
+  @@index([companyId])
+  @@index([action])
+  @@map("contract_history")
 }

@@ -895,11 +895,43 @@ export const financeApi = {
       { token },
     ),
 
-  registrarRescisao: (token: string, contractId: string, body: { rescissionDate?: string; status?: 'FINISHED' | 'CANCELED' }) =>
+  registrarRescisao: (token: string, contractId: string, body: {
+    rescissionDate?: string; status?: 'FINISHED' | 'CANCELED';
+    reason?: string; fine?: number; refund?: number; notes?: string;
+  }) =>
     request<any>(`/api/v1/finance/contracts/${contractId}/rescisao`, {
       method: 'POST',
       token,
       body: JSON.stringify(body),
+    }),
+
+  renovarContrato: (token: string, contractId: string, body: {
+    newRentValue: number; newDuration: number; newStartDate: string;
+    adjustmentIndex?: string; adjustmentPercent?: number; notes?: string;
+  }) =>
+    request<any>(`/api/v1/finance/contracts/${contractId}/renovar`, {
+      method: 'POST',
+      token,
+      body: JSON.stringify(body),
+    }),
+
+  reajustarContrato: (token: string, contractId: string, body: {
+    index: string; percent: number; newValue: number; applyDate?: string;
+  }) =>
+    request<any>(`/api/v1/finance/contracts/${contractId}/reajuste`, {
+      method: 'POST',
+      token,
+      body: JSON.stringify(body),
+    }),
+
+  historicoContrato: (token: string, contractId: string) =>
+    request<{ data: any[] }>(`/api/v1/finance/contracts/${contractId}/historico`, { token }),
+
+  alterarStatusContrato: (token: string, contractId: string, status: string) =>
+    request<any>(`/api/v1/finance/contracts/${contractId}/status`, {
+      method: 'PATCH',
+      token,
+      body: JSON.stringify({ status }),
     }),
 
   pagarAluguel: (token: string, rentalId: string, body: { paidAmount?: number; paymentDate?: string }) =>

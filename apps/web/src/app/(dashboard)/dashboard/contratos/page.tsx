@@ -135,9 +135,12 @@ function EditContratoModal({ contract, token, onClose }: { contract: LegacyContr
 }
 
 const STATUS_CONFIG: Record<string, { label: string; icon: typeof CheckCircle; color: string }> = {
-  ACTIVE:   { label: 'Ativo',     icon: CheckCircle, color: 'text-green-600 bg-green-50' },
-  FINISHED: { label: 'Encerrado', icon: XCircle,     color: 'text-gray-500 bg-gray-50'  },
-  CANCELED: { label: 'Cancelado', icon: Clock,       color: 'text-red-600 bg-red-50'    },
+  ACTIVE:         { label: 'Ativo',          icon: CheckCircle, color: 'text-green-600 bg-green-50' },
+  FINISHED:       { label: 'Encerrado',      icon: XCircle,     color: 'text-gray-500 bg-gray-50'  },
+  CANCELED:       { label: 'Cancelado',      icon: Clock,       color: 'text-red-600 bg-red-50'    },
+  IN_RENEWAL:     { label: 'Em Renovação',   icon: Clock,       color: 'text-blue-600 bg-blue-50'  },
+  EXPIRED:        { label: 'Vencido',        icon: Clock,       color: 'text-orange-600 bg-orange-50' },
+  IN_NEGOTIATION: { label: 'Em Negociação',  icon: Clock,       color: 'text-purple-600 bg-purple-50' },
 }
 
 const fmt = (v: number | null) =>
@@ -266,6 +269,26 @@ export default function ContratosPage() {
           }`}
         >
           Cancelados
+        </button>
+        <button
+          onClick={() => { setStatus('IN_RENEWAL'); setPage(1) }}
+          className={`px-4 py-2 rounded-xl text-sm font-semibold border transition-all ${
+            status === 'IN_RENEWAL'
+              ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+              : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+          }`}
+        >
+          Em Renovação
+        </button>
+        <button
+          onClick={() => { setStatus('EXPIRED'); setPage(1) }}
+          className={`px-4 py-2 rounded-xl text-sm font-semibold border transition-all ${
+            status === 'EXPIRED'
+              ? 'bg-orange-600 text-white border-orange-600 shadow-sm'
+              : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+          }`}
+        >
+          Vencidos
         </button>
       </div>
 
