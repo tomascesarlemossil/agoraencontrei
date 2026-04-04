@@ -101,8 +101,8 @@ export default async function BairroPage({ params }: { params: { cidade: string;
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'Início', item: 'https://www.agoraencontrei.com.br' },
       { '@type': 'ListItem', position: 2, name: 'Imóveis', item: 'https://www.agoraencontrei.com.br/imoveis' },
-      { '@type': 'ListItem', position: 3, name: `${cityName}`, item: `https://www.imobiliarialemos.com.br/imoveis/${params.cidade}` },
-      { '@type': 'ListItem', position: 4, name: bairroName, item: `https://www.imobiliarialemos.com.br/imoveis/${params.cidade}/${params.bairro}` },
+      { '@type': 'ListItem', position: 3, name: `${cityName}`, item: `https://www.agoraencontrei.com.br/imoveis/em/${params.cidade}` },
+      { '@type': 'ListItem', position: 4, name: bairroName, item: `https://www.agoraencontrei.com.br/imoveis/em/${params.cidade}/${params.bairro}` },
     ],
   }
 
