@@ -32,22 +32,19 @@ export default async function photoEditorRoutes(app: FastifyInstance) {
   })
 
   // POST /api/v1/photo-editor/preview — gera preview com filtro (por URL)
-  app.post('/preview', {
-    schema: {
-      body: z.object({
+  app.post('/preview', async (req, reply) => {
+    try {
+      const body = z.object({
         image_url: z.string().url(),
         filter_id: z.string(),
         apply_logo: z.boolean().default(true),
         logo_position: z.enum(['bottom-right', 'bottom-left', 'top-right', 'top-left', 'center']).default('bottom-right'),
         preview_width: z.number().int().min(400).max(1600).default(800),
-      }),
-    },
-  }, async (req, reply) => {
-    try {
+      }).parse(req.body)
       const data = await proxyToProcessor('/preview', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(req.body),
+        body: JSON.stringify(body),
       })
       return reply.send(data)
     } catch (e: any) {
@@ -98,22 +95,19 @@ export default async function photoEditorRoutes(app: FastifyInstance) {
   })
 
   // POST /api/v1/photo-editor/process — processa imagem em qualidade completa
-  app.post('/process', {
-    schema: {
-      body: z.object({
+  app.post('/process', async (req, reply) => {
+    try {
+      const body = z.object({
         image_url: z.string().url(),
         filter_id: z.string(),
         apply_logo: z.boolean().default(true),
         logo_position: z.enum(['bottom-right', 'bottom-left', 'top-right', 'top-left', 'center']).default('bottom-right'),
         output_quality: z.number().int().min(60).max(100).default(92),
-      }),
-    },
-  }, async (req, reply) => {
-    try {
+      }).parse(req.body)
       const data = await proxyToProcessor('/process', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(req.body),
+        body: JSON.stringify(body),
       })
       return reply.send(data)
     } catch (e: any) {
@@ -122,22 +116,19 @@ export default async function photoEditorRoutes(app: FastifyInstance) {
   })
 
   // POST /api/v1/photo-editor/process/batch — processa múltiplas imagens
-  app.post('/process/batch', {
-    schema: {
-      body: z.object({
+  app.post('/process/batch', async (req, reply) => {
+    try {
+      const body = z.object({
         image_urls: z.array(z.string().url()).min(1).max(50),
         filter_id: z.string(),
         apply_logo: z.boolean().default(true),
         logo_position: z.enum(['bottom-right', 'bottom-left', 'top-right', 'top-left', 'center']).default('bottom-right'),
         output_quality: z.number().int().min(60).max(100).default(92),
-      }),
-    },
-  }, async (req, reply) => {
-    try {
+      }).parse(req.body)
       const data = await proxyToProcessor('/process/batch', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(req.body),
+        body: JSON.stringify(body),
       })
       return reply.send(data)
     } catch (e: any) {

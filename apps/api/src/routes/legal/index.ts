@@ -125,42 +125,37 @@ export default async function legalRoutes(app: FastifyInstance) {
     const total = parseInt(countRows[0]?.total || '0')
     return reply.send({ data: rows, meta: { total, page, limit, totalPages: Math.ceil(total / limit) } })
   })
-
-  // ── POST /api/v1/legal ──────────────────────────────────────────────────
-  app.post('/', {
-    schema: {
-      body: z.object({
-        title:          z.string().min(3),
-        type:           z.enum(['DESPEJO','COBRANCA','REVISIONAL','RESCISAO','DANO','TRABALHISTA','CRIMINAL','OUTROS']),
-        status:         z.enum(['ATIVO','ENCERRADO','SUSPENSO','ARQUIVADO']).default('ATIVO'),
-        priority:       z.enum(['BAIXA','NORMAL','ALTA','URGENTE']).default('NORMAL'),
-        caseNumber:     z.string().optional(),
-        plaintiffName:  z.string().optional(),
-        defendantName:  z.string().optional(),
-        lawyerName:     z.string().optional(),
-        lawyerOab:      z.string().optional(),
-        lawyerPhone:    z.string().optional(),
-        lawyerEmail:    z.string().email().optional().or(z.literal('')),
-        court:          z.string().optional(),
-        courtSection:   z.string().optional(),
-        courtCity:      z.string().optional(),
-        openedAt:       z.string().optional(),
-        closedAt:       z.string().optional(),
-        nextHearingAt:  z.string().optional(),
-        claimedValue:   z.number().optional(),
-        settledValue:   z.number().optional(),
-        courtCosts:     z.number().optional(),
-        clientId:       z.string().optional(),
-        contractId:     z.string().optional(),
-        propertyId:     z.string().optional(),
-        observations:   z.string().optional(),
-        internalNotes:  z.string().optional(),
-        tags:           z.array(z.string()).default([]),
-      }),
-    },
-  }, async (req, reply) => {
+  // ── POST /api/v1/legal ──────────────────────────────────────────────────────────
+  app.post('/', async (req, reply) => {
     const cid = req.user.cid
-    const b = req.body as any
+    const b = z.object({
+      title:          z.string().min(3),
+      type:           z.enum(['DESPEJO','COBRANCA','REVISIONAL','RESCISAO','DANO','TRABALHISTA','CRIMINAL','OUTROS']),
+      status:         z.enum(['ATIVO','ENCERRADO','SUSPENSO','ARQUIVADO']).default('ATIVO'),
+      priority:       z.enum(['BAIXA','NORMAL','ALTA','URGENTE']).default('NORMAL'),
+      caseNumber:     z.string().optional(),
+      plaintiffName:  z.string().optional(),
+      defendantName:  z.string().optional(),
+      lawyerName:     z.string().optional(),
+      lawyerOab:      z.string().optional(),
+      lawyerPhone:    z.string().optional(),
+      lawyerEmail:    z.string().email().optional().or(z.literal('')),
+      court:          z.string().optional(),
+      courtSection:   z.string().optional(),
+      courtCity:      z.string().optional(),
+      openedAt:       z.string().optional(),
+      closedAt:       z.string().optional(),
+      nextHearingAt:  z.string().optional(),
+      claimedValue:   z.number().optional(),
+      settledValue:   z.number().optional(),
+      courtCosts:     z.number().optional(),
+      clientId:       z.string().optional(),
+      contractId:     z.string().optional(),
+      propertyId:     z.string().optional(),
+      observations:   z.string().optional(),
+      internalNotes:  z.string().optional(),
+      tags:           z.array(z.string()).default([]),
+    }).parse(req.body)
     const id = genId()
     await app.prisma.$executeRawUnsafe(`
       INSERT INTO legal_cases (
@@ -377,20 +372,16 @@ export default async function legalRoutes(app: FastifyInstance) {
     return reply.send({ success: true })
   })
 
-  // ── POST /api/v1/legal/:id/updates ─────────────────────────────────────
-  app.post('/:id/updates', {
-    schema: {
-      body: z.object({
-        description: z.string().min(3),
-        type: z.enum(['ANDAMENTO','AUDIENCIA','DECISAO','RECURSO','ACORDO','CITACAO','PETICAO','OUTROS']).default('ANDAMENTO'),
-        occurredAt: z.string().optional(),
-      }),
-    },
-  }, async (req, reply) => {
+  // ── POST /api/v1/legal/:id/updates ───────────────────────────────────────────────────
+  app.post('/:id/updates', async (req, reply) => {
     const cid = req.user.cid
     const userId = req.user.sub
     const { id } = req.params as { id: string }
-    const b = req.body as any
+    const b = z.object({
+      description: z.string().min(3),
+      type: z.enum(['ANDAMENTO','AUDIENCIA','DECISAO','RECURSO','ACORDO','CITACAO','PETICAO','OUTROS']).default('ANDAMENTO'),
+      occurredAt: z.string().optional(),
+    }).parse(req.body)
     const existing = await app.prisma.$queryRawUnsafe<any[]>(
       `SELECT id FROM legal_cases WHERE id = $1 AND "companyId" = $2`, id, cid)
     if (!existing.length) return reply.status(404).send({ error: 'NOT_FOUND' })
