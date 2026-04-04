@@ -494,6 +494,13 @@ Use estilos CSS inline para impressão A4. Inclua espaço para assinaturas ao fi
         guaranteeType:        data.guaranteeType || undefined,
         status:               'ACTIVE',
       }
+      // Campos extras do formulário (metadata)
+      if (data.caucaoValue)        body.caucaoValue = Number(data.caucaoValue)
+      if (data.fireInsurance)      body.fireInsurance = true
+      if (data.fireInsuranceValue) body.fireInsuranceValue = Number(data.fireInsuranceValue)
+      if (data.autoBoleto)         body.autoBoleto = true
+      if (data.sendBoletoWhatsapp) body.sendBoletoWhatsapp = true
+      if (data.sendBoletoEmail)    body.sendBoletoEmail = true
       if (data.tenantId)    body.tenantId    = data.tenantId
       if (data.guarantorId) body.guarantorId = data.guarantorId
 

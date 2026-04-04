@@ -1062,6 +1062,10 @@ export default async function financeRoutes(app: FastifyInstance) {
       contractHtml?:       string
       guaranteeType?:      string
       status?:             string
+      adjustmentMonth?:    number
+      iptuAnnual?:         number
+      iptuParcels?:        number
+      bankFee?:            number
     }
 
     const created = await app.prisma.contract.create({
@@ -1084,6 +1088,10 @@ export default async function financeRoutes(app: FastifyInstance) {
         commission:        body.commission         ?? null,
         contractHtml:      body.contractHtml       ?? null,
         guaranteeType:     body.guaranteeType      ?? null,
+        adjustmentMonth:   body.adjustmentMonth    ?? null,
+        iptuAnnual:        body.iptuAnnual         ?? null,
+        iptuParcels:       body.iptuParcels        ?? null,
+        bankFee:           body.bankFee            ?? null,
         status:            (body.status as any)    ?? 'ACTIVE',
         isActive:          (body.status ?? 'ACTIVE') === 'ACTIVE',
       },
