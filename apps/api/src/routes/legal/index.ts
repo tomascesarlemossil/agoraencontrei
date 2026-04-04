@@ -11,7 +11,7 @@ function genId() { return 'c' + nanoid(24).toLowerCase().replace(/[^a-z0-9]/g, '
 // Guard: verifica se o usuário tem acesso ao módulo jurídico
 async function checkLegalAccess(app: FastifyInstance, userId: string, cid: string) {
   const rows = await app.prisma.$queryRawUnsafe<any[]>(
-    `SELECT settings FROM users WHERE id = $1 AND "companyId" = $2`,
+    `SELECT settings, role FROM users WHERE id = $1 AND "companyId" = $2`,
     userId, cid
   )
   if (!rows.length) return false
