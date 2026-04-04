@@ -1223,6 +1223,9 @@ model FiscalNote {
   nfeNumber            String?
   nfeKey               String?
   nfeXml               String?          @db.Text
+  asaasNfeId           String?          // ID da NFS-e no Asaas
+  asaasNfeStatus       String?          // PENDING | SCHEDULED | AUTHORIZED | ERROR
+  asaasNfePdfUrl       String?          // URL do PDF da NFS-e no Asaas
   status               FiscalNoteStatus @default(DRAFT)
   createdById          String?
   createdAt            DateTime         @default(now())
