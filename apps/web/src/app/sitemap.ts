@@ -39,7 +39,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // Páginas de cidades
   const cityPages: MetadataRoute.Sitemap = CIDADES.map(cidade => ({
-    url: `${WEB_URL}/imoveis/${cidade}`,
+    url: `${WEB_URL}/imoveis/em/${cidade}`,
     lastModified: now,
     changeFrequency: 'daily' as const,
     priority: 0.85,
@@ -75,7 +75,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         if (p.neighborhood) neighborhoods.add(p.neighborhood.trim())
       })
       neighborhoodPages = Array.from(neighborhoods).map(bairro => ({
-        url: `${WEB_URL}/imoveis/franca/${cityToSlug(bairro)}`,
+        url: `${WEB_URL}/imoveis/em/franca/${cityToSlug(bairro)}`,
         lastModified: now,
         changeFrequency: 'daily' as const,
         priority: 0.8,

@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { LoadMoreProperties } from '../../LoadMoreProperties'
+import { LoadMoreProperties } from '../../../LoadMoreProperties'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 
@@ -83,7 +83,7 @@ export async function generateMetadata({ params }: { params: { cidade: string; b
       images: [{ url: '/og-image.jpg', width: 1200, height: 630 }],
     },
     alternates: {
-      canonical: `/imoveis/${params.cidade}/${params.bairro}`,
+      canonical: `/imoveis/em/${params.cidade}/${params.bairro}`,
     },
   }
 }
@@ -99,8 +99,8 @@ export default async function BairroPage({ params }: { params: { cidade: string;
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
     itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Início', item: 'https://www.imobiliarialemos.com.br' },
-      { '@type': 'ListItem', position: 2, name: 'Imóveis', item: 'https://www.imobiliarialemos.com.br/imoveis' },
+      { '@type': 'ListItem', position: 1, name: 'Início', item: 'https://www.agoraencontrei.com.br' },
+      { '@type': 'ListItem', position: 2, name: 'Imóveis', item: 'https://www.agoraencontrei.com.br/imoveis' },
       { '@type': 'ListItem', position: 3, name: `${cityName}`, item: `https://www.imobiliarialemos.com.br/imoveis/${params.cidade}` },
       { '@type': 'ListItem', position: 4, name: bairroName, item: `https://www.imobiliarialemos.com.br/imoveis/${params.cidade}/${params.bairro}` },
     ],
@@ -151,7 +151,7 @@ export default async function BairroPage({ params }: { params: { cidade: string;
               <span>/</span>
               <Link href="/imoveis" className="hover:text-white">Imóveis</Link>
               <span>/</span>
-              <Link href={`/imoveis/${params.cidade}`} className="hover:text-white">{cityName}</Link>
+              <Link href={`/imoveis/em/${params.cidade}`} className="hover:text-white">{cityName}</Link>
               <span>/</span>
               <span className="text-white">{bairroName}</span>
             </nav>
@@ -196,7 +196,7 @@ export default async function BairroPage({ params }: { params: { cidade: string;
             <div className="text-center py-16 text-gray-500">
               <p className="text-lg font-medium">Nenhum imóvel ativo no {bairroName} no momento.</p>
               <div className="flex gap-3 justify-center mt-4">
-                <Link href={`/imoveis/${params.cidade}`} className="px-6 py-2 bg-[#1B2B5B] text-white rounded-lg hover:bg-[#2d4a8a] transition-colors">
+                <Link href={`/imoveis/em/${params.cidade}`} className="px-6 py-2 bg-[#1B2B5B] text-white rounded-lg hover:bg-[#2d4a8a] transition-colors">
                   Ver imóveis em {cityName}
                 </Link>
                 <Link href="/imoveis" className="px-6 py-2 border border-[#1B2B5B] text-[#1B2B5B] rounded-lg hover:bg-gray-100 transition-colors">

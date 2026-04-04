@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { LoadMoreProperties } from '../LoadMoreProperties'
+import { LoadMoreProperties } from '../../LoadMoreProperties'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 
@@ -103,7 +103,7 @@ export async function generateMetadata({ params }: { params: { cidade: string } 
       images: [{ url: '/og-image.jpg', width: 1200, height: 630 }],
     },
     alternates: {
-      canonical: `/imoveis/${params.cidade}`,
+      canonical: `/imoveis/em/${params.cidade}`,
     },
   }
 }
@@ -134,8 +134,8 @@ export default async function CidadePage({ params }: { params: { cidade: string 
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
     itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Início', item: 'https://www.imobiliarialemos.com.br' },
-      { '@type': 'ListItem', position: 2, name: 'Imóveis', item: 'https://www.imobiliarialemos.com.br/imoveis' },
+      { '@type': 'ListItem', position: 1, name: 'Início', item: 'https://www.agoraencontrei.com.br' },
+      { '@type': 'ListItem', position: 2, name: 'Imóveis', item: 'https://www.agoraencontrei.com.br/imoveis' },
       { '@type': 'ListItem', position: 3, name: `Imóveis em ${cityName}`, item: `https://www.imobiliarialemos.com.br/imoveis/${params.cidade}` },
     ],
   }
@@ -199,7 +199,7 @@ export default async function CidadePage({ params }: { params: { cidade: string 
                 {neighborhoods.map(([bairro, count]) => (
                   <Link
                     key={bairro}
-                    href={`/imoveis/${params.cidade}/${cityToSlug(bairro)}`}
+                    href={`/imoveis/em/${params.cidade}/${cityToSlug(bairro)}`}
                     className="group flex flex-col items-center p-3 bg-white rounded-xl border hover:border-[#C9A84C] hover:shadow-md transition-all text-center"
                   >
                     <span className="text-sm font-medium text-gray-800 group-hover:text-[#1B2B5B] leading-tight">
