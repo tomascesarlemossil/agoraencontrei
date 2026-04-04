@@ -13,23 +13,8 @@ import { env } from '../../utils/env.js'
 import { emitAutomation } from '../../services/automation.emitter.js'
 
 export default async function agentsRoutes(app: FastifyInstance) {
-  // GET /api/v1/agents/status — público, sem autenticação
-  // Registrado em sub-plugin encapsulado para isolar do addHook de auth abaixo
-  app.register(async (publicApp) => {
-    publicApp.get('/status', {
-      schema: { tags: ['agents'] },
-    }, async (_req, reply) => {
-      return reply.send({
-        configured: !!env.ANTHROPIC_API_KEY,
-        model: env.ANTHROPIC_API_KEY ? 'claude-3-5-sonnet-20241022' : null,
-        message: env.ANTHROPIC_API_KEY
-          ? 'Agentes de IA ativos e prontos.'
-          : 'ANTHROPIC_API_KEY não configurada. Acesse Railway → Settings → Variables para ativar.',
-      })
-    })
-  })
-
   // Todas as rotas abaixo requerem autenticação
+  // NOTA: GET /api/v1/agents/status é público e está registrado no server.ts (escopo raiz)
   app.addHook('preHandler', app.authenticate)
 
   const AI_NOT_CONFIGURED_RESPONSE = {
