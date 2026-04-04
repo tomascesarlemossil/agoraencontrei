@@ -169,7 +169,7 @@ async function main() {
     include: {
       tenant: { select: { id: true, name: true, document: true, email: true, phoneMobile: true, phone: true } },
       landlord: { select: { id: true, name: true, document: true } },
-      property: { select: { id: true, reference: true, street: true, neighborhood: true, city: true } },
+      property: { select: { id: true, reference: true, street: true, neighborhood: true, city: true, condoFee: true, iptu: true } },
     },
     orderBy: [{ legacyId: 'asc' }],
   })
@@ -275,13 +275,27 @@ async function main() {
     const dueDayFixed = Math.min(Math.max(dueDay, 1), 28)
     const dueDate = `${refYear}-${String(refMonth).padStart(2, '0')}-${String(dueDayFixed).padStart(2, '0')}`
 
+    // Calcular encargos adicionais
+    const bankFee = Number((contract as any).bankFee ?? 3.50)
+    const iptuAnnual = Number((contract as any).iptuAnnual ?? (contract as any).property?.iptu ?? 0)
+    const iptuParcels = Number((contract as any).iptuParcels ?? (iptuAnnual > 0 ? 8 : 0))
+    let iptuAmount = 0
+    let iptuParcela = ''
+    if (iptuAnnual > 0 && iptuParcels > 0 && refMonth <= iptuParcels) {
+      iptuAmount = Math.round((iptuAnnual / iptuParcels) * 100) / 100
+      iptuParcela = `${refMonth}/${iptuParcels}`
+    }
+    const condoFee = Number((contract as any).property?.condoFee ?? 0)
+    const totalValue = rentValue + iptuAmount + bankFee + condoFee
+
     const contractRef = contract.legacyId ?? contract.id.slice(0, 8)
 
     console.log(`[${i + 1}/${validContracts.length}] Contrato: ${contractRef}`)
     console.log(`  Inquilino: ${tenant.name} | CPF: ${tenant.document}`)
     console.log(`  Proprietário: ${landlord?.name ?? 'N/A'}`)
     console.log(`  Imóvel: ${contract.propertyAddress ?? contract.property?.street ?? 'N/A'}`)
-    console.log(`  Valor: R$ ${rentValue.toFixed(2)} | Venc: dia ${dueDayFixed} → ${dueDate}`)
+    console.log(`  Aluguel: R$ ${rentValue.toFixed(2)}${iptuAmount > 0 ? ` + IPTU ${iptuParcela}: R$ ${iptuAmount.toFixed(2)}` : ''}${condoFee > 0 ? ` + Cond: R$ ${condoFee.toFixed(2)}` : ''} + Tx: R$ ${bankFee.toFixed(2)} = R$ ${totalValue.toFixed(2)}`)
+    console.log(`  Vencimento: dia ${dueDayFixed} → ${dueDate}`)
 
     // Já tem cobrança no mês?
     if (invoicedContractIds.has(contract.id)) {
@@ -291,7 +305,7 @@ async function main() {
     }
 
     if (DRY_RUN) {
-      console.log(`  [DRY-RUN] OK — criaria customer + cobrança R$ ${rentValue.toFixed(2)}`)
+      console.log(`  [DRY-RUN] OK — criaria customer + cobrança R$ ${totalValue.toFixed(2)}`)
       results.chargesSkipped++
       continue
     }
@@ -333,23 +347,29 @@ async function main() {
         }
       }
 
-      // 3. Montar descrição com dados do contrato
+      // 3. Montar descrição com lançamentos detalhados (padrão Lemos)
       const endereco = contract.propertyAddress ?? contract.property?.street ?? 'Imóvel'
+      const mesRef = `${String(refMonth).padStart(2, '0')}/${refYear}`
       const descLines = [
         `Aluguel — ${endereco}`,
         `Contrato: ${contractRef} | Inquilino: ${tenant.name}`,
         `Proprietário: ${landlord?.name ?? 'N/A'}`,
-        `ALUGUEL ${String(refMonth).padStart(2, '0')}/${refYear}: R$ ${rentValue.toFixed(2)}`,
-        'NAO RECEBER APOS 5 DIAS DO VENCIMENTO',
-        'Apos o vencto cobrar multa de 10%',
-        'Apos o vencto cobrar juros de mora de 1% ao mes',
+        `ALUGUEL ${mesRef}: R$ ${rentValue.toFixed(2)}`,
       ]
+      if (iptuAmount > 0) descLines.push(`IPTU PARCELA ${iptuParcela}: R$ ${iptuAmount.toFixed(2)}`)
+      if (condoFee > 0) descLines.push(`CONDOMÍNIO: R$ ${condoFee.toFixed(2)}`)
+      if (bankFee > 0) descLines.push(`Tx Bancária: R$ ${bankFee.toFixed(2)}`)
+      descLines.push(
+        'NAO RECEBER APOS 5 DIAS DO VENCIMENTO',
+        `Apos o vencto cobrar multa de : R$ ${(totalValue * 0.10).toFixed(2)}`,
+        `Apos o vencto cobrar juros de mora de R$: ${(totalValue * 0.01 / 30).toFixed(2)} ao dia`,
+      )
 
       // 4. Criar cobrança no Asaas
       const charge = await asaasRequest('POST', '/payments', {
         customer: customerId,
         billingType: 'BOLETO',
-        value: rentValue,
+        value: totalValue,
         dueDate,
         description: descLines.join('\n'),
         externalReference: contract.id,
@@ -363,7 +383,7 @@ async function main() {
       await prisma.invoice.create({
         data: {
           companyId: contract.companyId, contractId: contract.id,
-          dueDate: new Date(dueDate), issueDate: new Date(), amount: rentValue,
+          dueDate: new Date(dueDate), issueDate: new Date(), amount: totalValue,
           asaasId: charge.id, asaasStatus: charge.status,
           asaasBankSlipUrl: charge.bankSlipUrl ?? charge.invoiceUrl ?? null,
           cedente: 'IMOBILIARIA LEMOS', nossoNumero: charge.nossoNumero ?? null,
@@ -372,7 +392,7 @@ async function main() {
         },
       })
 
-      // 6. Criar rental se não existir
+      // 6. Criar rental com todos os lançamentos
       const existingRental = await prisma.rental.findFirst({
         where: {
           contractId: contract.id,
@@ -383,14 +403,20 @@ async function main() {
         await prisma.rental.create({
           data: {
             companyId: contract.companyId, contractId: contract.id,
-            dueDate: new Date(dueDate), rentAmount: rentValue, totalAmount: rentValue,
+            dueDate: new Date(dueDate),
+            rentAmount:     rentValue,
+            condoAmount:    condoFee > 0 ? condoFee : null,
+            iptuAmount:     iptuAmount > 0 ? iptuAmount : null,
+            iptuParcela:    iptuParcela || null,
+            bankFeeAmount:  bankFee > 0 ? bankFee : null,
+            totalAmount:    totalValue,
             status: new Date(dueDate) < new Date() ? 'LATE' : 'PENDING',
           },
         })
       }
 
       results.chargesCreated++
-      results.created.push({ contractId: contractRef, chargeId: charge.id, value: rentValue, tenant: tenant.name })
+      results.created.push({ contractId: contractRef, chargeId: charge.id, value: totalValue, tenant: tenant.name })
 
       // Rate limiting
       await new Promise(r => setTimeout(r, 1200))

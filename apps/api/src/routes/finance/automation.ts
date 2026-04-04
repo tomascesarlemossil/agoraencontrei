@@ -206,6 +206,7 @@ export default async function financeAutomationRoutes(app: FastifyInstance) {
       where: contractWhere,
       include: {
         tenant: { select: { id: true, name: true, phone: true, email: true, document: true } },
+        property: { select: { id: true, condoFee: true, iptu: true } },
         rentals: {
           where: { dueDate: { gte: periodStart, lte: periodEnd } },
           take: 1,
@@ -248,18 +249,41 @@ export default async function financeAutomationRoutes(app: FastifyInstance) {
         }
 
         const rentValue    = Number(contract.rentValue ?? 0)
-        const condoAmount  = 0 // será preenchido manualmente se necessário
-        const totalAmount  = rentValue + condoAmount
+        const condoAmount  = Number((contract as any).property?.condoFee ?? 0)
+        const bankFee      = Number((contract as any).bankFee ?? 3.50)
+
+        // Calcular IPTU parcela mensal (se configurado no contrato)
+        const iptuAnnual   = Number((contract as any).iptuAnnual ?? (contract as any).property?.iptu ?? 0)
+        const iptuParcels  = Number((contract as any).iptuParcels ?? 0)
+        let iptuAmount     = 0
+        let iptuParcela    = ''
+        if (iptuAnnual > 0 && iptuParcels > 0) {
+          // Verifica se o mês atual cai dentro das parcelas (ex: 8 parcelas = jan-ago)
+          if (m <= iptuParcels) {
+            iptuAmount = Math.round((iptuAnnual / iptuParcels) * 100) / 100
+            iptuParcela = `${m}/${iptuParcels}`
+          }
+        }
+
+        // Taxa de administração
+        const adminPercent = Number((contract as any).adminFeePercent ?? contract.commission ?? 0)
+
+        const totalAmount  = rentValue + condoAmount + iptuAmount + bankFee
 
         // Verificar se está atrasado
         const status = dueDate < now ? 'LATE' : 'PENDING'
 
         const rental = await app.prisma.rental.create({
           data: {
-            companyId:   cid,
-            contractId:  contract.id,
+            companyId:      cid,
+            contractId:     contract.id,
             dueDate,
-            rentAmount:  rentValue,
+            rentAmount:     rentValue,
+            condoAmount:    condoAmount > 0 ? condoAmount : null,
+            iptuAmount:     iptuAmount > 0 ? iptuAmount : null,
+            iptuParcela:    iptuParcela || null,
+            bankFeeAmount:  bankFee > 0 ? bankFee : null,
+            adminFeeAmount: adminPercent > 0 ? Math.round(rentValue * adminPercent / 100 * 100) / 100 : null,
             totalAmount,
             status,
           },
@@ -270,6 +294,10 @@ export default async function financeAutomationRoutes(app: FastifyInstance) {
           tenantName: contract.tenantName ?? contract.tenant?.name,
           propertyAddress: contract.propertyAddress,
           rentValue,
+          iptuAmount,
+          bankFee,
+          condoAmount,
+          totalAmount,
           dueDate: rental.dueDate,
           status,
         })
@@ -722,5 +750,201 @@ export default async function financeAutomationRoutes(app: FastifyInstance) {
       },
       detalhes: { pagos, pendentes, atrasados },
     })
+  })
+
+  // ── REAJUSTE AUTOMÁTICO ─────────────────────────────────────────────────────
+  // GET /api/v1/finance/automation/reajustes-pendentes — contratos com reajuste no mês
+  app.get('/reajustes-pendentes', async (req, reply) => {
+    const cid = req.user.cid
+    const q = req.query as Record<string, string>
+    const now = new Date()
+    const currentMonth = q.month ? Number(q.month) : (now.getMonth() + 1)
+
+    // Buscar contratos ativos com adjustmentMonth == mês atual
+    // E que NÃO foram reajustados neste ano
+    const currentYear = now.getFullYear()
+    const contracts = await app.prisma.contract.findMany({
+      where: {
+        companyId: cid,
+        status: 'ACTIVE',
+        isActive: true,
+        adjustmentMonth: currentMonth,
+        OR: [
+          { lastAdjustmentAt: null },
+          { lastAdjustmentAt: { lt: new Date(currentYear, 0, 1) } },
+        ],
+      },
+      include: {
+        tenant:   { select: { id: true, name: true, email: true, phone: true, phoneMobile: true } },
+        landlord: { select: { id: true, name: true, email: true, phone: true, phoneMobile: true } },
+      },
+      orderBy: { legacyId: 'asc' },
+    })
+
+    return reply.send({
+      month: currentMonth,
+      year: currentYear,
+      total: contracts.length,
+      contracts: contracts.map(c => ({
+        id: c.id,
+        legacyId: c.legacyId,
+        tenantName: c.tenantName ?? c.tenant?.name,
+        landlordName: c.landlordName ?? c.landlord?.name,
+        propertyAddress: c.propertyAddress,
+        currentRentValue: Number(c.rentValue),
+        adjustmentIndex: c.adjustmentIndex,
+        adjustmentPercent: c.adjustmentPercent ? Number(c.adjustmentPercent) : null,
+        lastAdjustmentAt: c.lastAdjustmentAt,
+        startDate: c.startDate,
+      })),
+    })
+  })
+
+  // POST /api/v1/finance/automation/aplicar-reajustes — aplica reajuste em lote
+  app.post('/aplicar-reajustes', async (req, reply) => {
+    const cid = req.user.cid
+    const body = req.body as {
+      contractIds: string[]
+      percent: number       // percentual a aplicar
+      index: string         // IGPM, IPCA, INPC, FIXO
+      notifyTenant?: boolean
+      notifyLandlord?: boolean
+      notifyAdmin?: boolean
+    }
+
+    if (!body.contractIds?.length || !body.percent || !body.index) {
+      return reply.status(400).send({ error: 'MISSING_FIELDS', required: ['contractIds', 'percent', 'index'] })
+    }
+
+    const results = { applied: 0, errors: [] as string[], notifications: { tenant: 0, landlord: 0, admin: 0 } }
+
+    for (const contractId of body.contractIds) {
+      try {
+        const contract = await app.prisma.contract.findFirst({
+          where: { id: contractId, companyId: cid, status: 'ACTIVE' },
+          include: {
+            tenant:   { select: { name: true, email: true, phone: true, phoneMobile: true } },
+            landlord: { select: { name: true, email: true, phone: true, phoneMobile: true } },
+          },
+        })
+        if (!contract) { results.errors.push(`${contractId}: não encontrado`); continue }
+
+        const oldValue = Number(contract.rentValue ?? 0)
+        const newValue = Math.round(oldValue * (1 + body.percent / 100) * 100) / 100
+
+        // Aplicar reajuste
+        await app.prisma.contract.update({
+          where: { id: contractId },
+          data: {
+            rentValue: newValue,
+            adjustmentIndex: body.index,
+            adjustmentPercent: body.percent,
+            lastAdjustmentAt: new Date(),
+          },
+        })
+
+        // Registrar no histórico
+        await app.prisma.contractHistory.create({
+          data: {
+            contractId, companyId: cid,
+            action: 'REAJUSTE',
+            description: `Reajuste automático de ${body.percent}% (${body.index}). De R$ ${oldValue.toFixed(2)} para R$ ${newValue.toFixed(2)}.`,
+            field: 'rentValue',
+            oldValue: oldValue.toFixed(2),
+            newValue: newValue.toFixed(2),
+            userId: req.user.sub,
+            userName: (req.user as any).name ?? null,
+            metadata: { index: body.index, percent: body.percent, automatic: true },
+          },
+        })
+
+        results.applied++
+
+        // Notificações
+        const msg = `Reajuste de Aluguel - Contrato ${contract.legacyId ?? contractId}\n` +
+          `Imóvel: ${contract.propertyAddress ?? 'N/A'}\n` +
+          `Índice: ${body.index} (${body.percent}%)\n` +
+          `Valor anterior: R$ ${oldValue.toFixed(2)}\n` +
+          `Novo valor: R$ ${newValue.toFixed(2)}\n` +
+          `Vigência: a partir do próximo vencimento`
+
+        // Notificar inquilino
+        if (body.notifyTenant && contract.tenant?.email) {
+          try {
+            const nodemailer = await import('nodemailer')
+            const smtpHost = process.env.SMTP_HOST ?? ''
+            if (smtpHost) {
+              const transporter = nodemailer.createTransport({
+                host: smtpHost, port: Number(process.env.SMTP_PORT ?? '587'),
+                auth: { user: process.env.SMTP_USER ?? '', pass: process.env.SMTP_PASS ?? '' },
+              })
+              await transporter.sendMail({
+                from: process.env.SMTP_FROM ?? 'noreply@agoraencontrei.com.br',
+                to: contract.tenant.email,
+                subject: `Aviso de Reajuste de Aluguel — Imobiliária Lemos`,
+                text: msg,
+              })
+              results.notifications.tenant++
+            }
+          } catch { /* SMTP não configurado */ }
+        }
+
+        // Notificar proprietário
+        if (body.notifyLandlord && contract.landlord?.email) {
+          try {
+            const nodemailer = await import('nodemailer')
+            const smtpHost = process.env.SMTP_HOST ?? ''
+            if (smtpHost) {
+              const transporter = nodemailer.createTransport({
+                host: smtpHost, port: Number(process.env.SMTP_PORT ?? '587'),
+                auth: { user: process.env.SMTP_USER ?? '', pass: process.env.SMTP_PASS ?? '' },
+              })
+              await transporter.sendMail({
+                from: process.env.SMTP_FROM ?? 'noreply@agoraencontrei.com.br',
+                to: contract.landlord.email,
+                subject: `Aviso de Reajuste — Contrato ${contract.legacyId ?? contractId}`,
+                text: msg,
+              })
+              results.notifications.landlord++
+            }
+          } catch { /* SMTP não configurado */ }
+        }
+
+      } catch (err: any) {
+        results.errors.push(`${contractId}: ${err.message}`)
+      }
+    }
+
+    // Notificar admin (tomas)
+    if (body.notifyAdmin && results.applied > 0) {
+      try {
+        const nodemailer = await import('nodemailer')
+        const smtpHost = process.env.SMTP_HOST ?? ''
+        if (smtpHost) {
+          const transporter = nodemailer.createTransport({
+            host: smtpHost, port: Number(process.env.SMTP_PORT ?? '587'),
+            auth: { user: process.env.SMTP_USER ?? '', pass: process.env.SMTP_PASS ?? '' },
+          })
+          await transporter.sendMail({
+            from: process.env.SMTP_FROM ?? 'noreply@agoraencontrei.com.br',
+            to: 'tomas@agoraencontrei.com.br',
+            subject: `${results.applied} contrato(s) reajustados — ${body.index} ${body.percent}%`,
+            text: `Foram aplicados ${results.applied} reajustes automáticos.\nÍndice: ${body.index}\nPercentual: ${body.percent}%\nErros: ${results.errors.length}`,
+          })
+          results.notifications.admin++
+        }
+      } catch { /* SMTP não configurado */ }
+    }
+
+    await createAuditLog({
+      prisma: app.prisma as any, req,
+      action: 'contract.adjustment',
+      resource: 'contract',
+      resourceId: 'batch',
+      before: null,
+      after: { applied: results.applied, index: body.index, percent: body.percent },
+    })
+
+    return reply.send(results)
   })
 }
