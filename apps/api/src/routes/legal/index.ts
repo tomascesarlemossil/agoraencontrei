@@ -272,7 +272,7 @@ export default async function legalRoutes(app: FastifyInstance) {
     fields.push(`"updatedAt" = NOW()`)
     params.push(id, cid)
     await app.prisma.$executeRawUnsafe(
-      `UPDATE legal_cases SET ${fields.join(', ')} WHERE id = $${pi++} AND "companyId" = $${pi}`,
+      `UPDATE legal_cases SET ${fields.join(', ')} WHERE id = $${pi} AND "companyId" = $${pi + 1}`,
       ...params)
     const rows = await app.prisma.$queryRawUnsafe<any[]>(
       `SELECT * FROM legal_cases WHERE id = $1`, id)

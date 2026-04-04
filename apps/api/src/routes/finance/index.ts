@@ -1412,6 +1412,123 @@ export default async function financeRoutes(app: FastifyInstance) {
     return reply.send(updated)
   })
 
+  // ── ENDPOINTS DE DOCUMENTOS FINANCEIROS (boletos, reajustes, IPTU) ───────────
+
+  // GET /api/v1/finance/boletos — Lista boletos com filtros
+  app.get('/boletos', async (req, reply) => {
+    const { contractId, clientId, month, year, page = '1', limit = '20' } = req.query as any
+    const skip = (parseInt(page) - 1) * parseInt(limit)
+    const where: any = { companyId: req.user.cid, type: 'BOLETO' }
+    if (contractId) where.contractId = contractId
+    if (clientId) where.clientId = clientId
+    if (month) where.month = month
+    if (year) where.year = parseInt(year)
+    const [docs, total] = await Promise.all([
+      app.prisma.document.findMany({
+        where,
+        orderBy: [{ year: 'desc' }, { month: 'desc' }, { createdAt: 'desc' }],
+        skip, take: parseInt(limit),
+        include: {
+          client: { select: { id: true, name: true, email: true } },
+          contract: { select: { id: true, rentValue: true, status: true, isActive: true } },
+        },
+      }),
+      app.prisma.document.count({ where }),
+    ])
+    const enriched = docs.map((d: any) => ({ ...d, publicUrl: (d.metadata as any)?.publicUrl ?? null }))
+    return reply.send({ data: enriched, total, page: parseInt(page), limit: parseInt(limit) })
+  })
+
+  // GET /api/v1/finance/boletos/por-contrato/:contractId — Histórico de boletos de um contrato
+  app.get('/boletos/por-contrato/:contractId', async (req, reply) => {
+    const { contractId } = req.params as { contractId: string }
+    const docs = await app.prisma.document.findMany({
+      where: { companyId: req.user.cid, contractId, type: { in: ['BOLETO', 'REAJUSTE', 'EXTRATO', 'FINANCEIRO'] } },
+      orderBy: [{ year: 'desc' }, { month: 'desc' }],
+      include: { client: { select: { id: true, name: true } } },
+    })
+    const enriched = docs.map((d: any) => ({ ...d, publicUrl: (d.metadata as any)?.publicUrl ?? null }))
+    return reply.send(enriched)
+  })
+
+  // GET /api/v1/finance/reajustes — Lista reajustes de aluguel
+  app.get('/reajustes', async (req, reply) => {
+    const { contractId, year, page = '1', limit = '20' } = req.query as any
+    const skip = (parseInt(page) - 1) * parseInt(limit)
+    const where: any = { companyId: req.user.cid, type: 'REAJUSTE' }
+    if (contractId) where.contractId = contractId
+    if (year) where.year = parseInt(year)
+    const [docs, total] = await Promise.all([
+      app.prisma.document.findMany({
+        where,
+        orderBy: [{ year: 'desc' }, { month: 'desc' }],
+        skip, take: parseInt(limit),
+        include: {
+          client: { select: { id: true, name: true } },
+          contract: { select: { id: true, rentValue: true, adjustmentIndex: true, adjustmentPercent: true } },
+        },
+      }),
+      app.prisma.document.count({ where }),
+    ])
+    const enriched = docs.map((d: any) => ({ ...d, publicUrl: (d.metadata as any)?.publicUrl ?? null }))
+    return reply.send({ data: enriched, total, page: parseInt(page), limit: parseInt(limit) })
+  })
+
+  // GET /api/v1/finance/iptu — Lista documentos de IPTU
+  app.get('/iptu', async (req, reply) => {
+    const { year, page = '1', limit = '20' } = req.query as any
+    const skip = (parseInt(page) - 1) * parseInt(limit)
+    const where: any = { companyId: req.user.cid, category: 'iptu' }
+    if (year) where.year = parseInt(year)
+    const [docs, total] = await Promise.all([
+      app.prisma.document.findMany({
+        where,
+        orderBy: [{ year: 'desc' }, { createdAt: 'desc' }],
+        skip, take: parseInt(limit),
+        include: { client: { select: { id: true, name: true } } },
+      }),
+      app.prisma.document.count({ where }),
+    ])
+    const enriched = docs.map((d: any) => ({ ...d, publicUrl: (d.metadata as any)?.publicUrl ?? null }))
+    return reply.send({ data: enriched, total, page: parseInt(page), limit: parseInt(limit) })
+  })
+
+  // GET /api/v1/finance/historico-financeiro — Resumo financeiro por contrato ativo
+  app.get('/historico-financeiro', async (req, reply) => {
+    const contracts = await app.prisma.contract.findMany({
+      where: { companyId: req.user.cid, isActive: true },
+      include: {
+        tenant: { select: { id: true, name: true, email: true, phone: true } },
+        property: { select: { id: true, street: true, number: true, complement: true, neighborhood: true } },
+        documents: {
+          where: { type: { in: ['BOLETO', 'REAJUSTE', 'EXTRATO', 'FINANCEIRO'] } },
+          orderBy: [{ year: 'desc' }, { month: 'desc' }],
+          take: 12,
+          select: { id: true, type: true, category: true, month: true, year: true, name: true, metadata: true },
+        },
+      },
+      orderBy: { updatedAt: 'desc' },
+    })
+    const result = contracts.map((c: any) => ({
+      id: c.id,
+      tenant: c.tenant,
+      property: c.property,
+      rentValue: c.rentValue,
+      adjustmentIndex: c.adjustmentIndex,
+      adjustmentPercent: c.adjustmentPercent,
+      startDate: c.startDate,
+      status: c.status,
+      boletos: c.documents.filter((d: any) => d.type === 'BOLETO').map((d: any) => ({
+        ...d, publicUrl: (d.metadata as any)?.publicUrl ?? null,
+      })),
+      reajustes: c.documents.filter((d: any) => d.type === 'REAJUSTE').map((d: any) => ({
+        ...d, publicUrl: (d.metadata as any)?.publicUrl ?? null,
+      })),
+      ultimoReajuste: c.documents.find((d: any) => d.type === 'REAJUSTE') ?? null,
+    }))
+    return reply.send(result)
+  })
+
   // PATCH /api/v1/finance/rentals/:id/repasse-estorno — Estornar repasse pago
   app.patch('/rentals/:id/repasse-estorno', async (req, reply) => {
     const { id } = req.params as { id: string }

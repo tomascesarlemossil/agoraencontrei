@@ -94,7 +94,7 @@ async function processImages(
 
 // ── Component ─────────────────────────────────────────────────────────────────
 export function PhotoEditorPanel({ propertyId, photos, onPhotosUpdated, onClose }: PhotoEditorPanelProps) {
-  const { token } = useAuthStore()
+  const token = useAuthStore(s => s.accessToken)
 
   // Estado
   const [selectedFilterId, setSelectedFilterId] = useState<string | null>(null)
