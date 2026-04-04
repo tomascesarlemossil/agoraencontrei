@@ -571,6 +571,13 @@ Agente IA com history+edit, Lemosbank wizard 6 steps, SEO JSON-LD, KPI cards cli
 - **`ANTHROPIC_API_KEY`**: confirmada configurada no Railway (todas as 25 variáveis presentes)
 - Build Next.js: **55 páginas** sem erros
 
+### Commits `9113d85` + `cc9fda17` — 2026-04-04 (fix definitivo agents/status público)
+- **Problema raiz descoberto**: no Fastify, `addHook('preHandler')` em um plugin propaga para TODOS os sub-plugins filhos (mesmo os registrados antes do hook)
+- **Solução definitiva**: endpoint `GET /api/v1/agents/status` registrado diretamente no **escopo raiz** do servidor (`server.ts`), antes do `app.register(agentsRoutes)` — assim não herda nenhum hook de autenticação
+- **Padrão aprendido**: para endpoints públicos dentro de plugins que usam `addHook('preHandler', authenticate)`, a única solução correta é registrar a rota no escopo pai (server.ts) com o path completo
+- **Deploy**: commit `cc9fda17` em SUCCESS — endpoint testado e retornando `{ configured: true, model: 'claude-3-5-sonnet-20241022', message: 'Agentes de IA ativos e prontos.' }`
+- **Dashboard AI Status Indicator**: agora funciona corretamente (verde = IA ativa)
+
 ---
 
 ## 16. PADRÕES DE CÓDIGO
