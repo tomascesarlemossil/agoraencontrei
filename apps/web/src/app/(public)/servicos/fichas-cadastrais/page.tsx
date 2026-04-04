@@ -195,7 +195,7 @@ function FichaForm({ ficha }: { ficha: Ficha }) {
           <p className="font-bold text-gray-900 text-sm">{ficha.title}</p>
           <p className="text-xs text-gray-500 mt-0.5">{ficha.description}</p>
         </div>
-        {open ? <ChevronUp className="w-4 h-4 text-gray-400 flex-shrink-0" /> : <ChevronDown className="w-4 h-4 text-gray-400 flex-shrink-0" />}
+        {open ? <ChevronUp className="w-4 h-4 text-gray-500 flex-shrink-0" /> : <ChevronDown className="w-4 h-4 text-gray-500 flex-shrink-0" />}
       </button>
 
       {open && (
@@ -259,7 +259,7 @@ function FichaForm({ ficha }: { ficha: Ficha }) {
                 </button>
               </div>
 
-              <p className="sm:col-span-2 text-xs text-gray-400 text-center">
+              <p className="sm:col-span-2 text-xs text-gray-500 text-center">
                 Ao enviar, você será redirecionado para o WhatsApp com os dados preenchidos.
               </p>
             </form>

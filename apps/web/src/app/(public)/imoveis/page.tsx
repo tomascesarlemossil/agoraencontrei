@@ -263,7 +263,7 @@ export default async function ImoveisPage({ searchParams }: { searchParams: Sear
         <div className="text-center py-12">
           <p className="text-5xl mb-4">🔍</p>
           <p className="text-gray-700 text-xl font-bold mb-1">Nenhum imóvel encontrado com esses filtros</p>
-          <p className="text-gray-400 text-sm mb-6">Tente ajustar ou remover alguns filtros para ampliar a busca.</p>
+          <p className="text-gray-500 text-sm mb-6">Tente ajustar ou remover alguns filtros para ampliar a busca.</p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center mb-10">
             <Link
               href="/imoveis"
@@ -288,7 +288,7 @@ export default async function ImoveisPage({ searchParams }: { searchParams: Sear
               <p className="text-base font-bold mb-1" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>
                 Imóveis mais próximos da sua busca:
               </p>
-              <p className="text-sm text-gray-400 mb-5">
+              <p className="text-sm text-gray-500 mb-5">
                 Não encontramos exatamente o que você procura, mas separamos opções similares:
               </p>
               <LoadMoreProperties

@@ -245,7 +245,7 @@ export default async function HomePage() {
                     {p.title}
                   </p>
                   {(p.city || p.neighborhood) && (
-                    <p className="text-xs text-gray-400 mt-1">
+                    <p className="text-xs text-gray-500 mt-1">
                       {[p.neighborhood, p.city].filter(Boolean).join(' · ')}
                     </p>
                   )}
@@ -435,7 +435,7 @@ export default async function HomePage() {
                 {broker.initial}
               </div>
               <p className="font-bold text-sm leading-snug" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>{broker.name}</p>
-              <p className="text-xs text-gray-400 mt-0.5">{broker.role}</p>
+              <p className="text-xs text-gray-500 mt-0.5">{broker.role}</p>
               <p className="text-xs font-semibold mt-1" style={{ color: '#C9A84C' }}>CRECI {broker.creci}</p>
               <a
                 href={`https://wa.me/${broker.phone}?text=Olá, ${broker.name.split(' ')[0]}! Vim pelo site e gostaria de informações.`}
