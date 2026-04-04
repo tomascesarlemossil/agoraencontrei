@@ -714,6 +714,13 @@ export default async function publicRoutes(app: FastifyInstance) {
       ogImageUrl:       siteConfig.ogImageUrl       ?? seoConfig.ogImage ?? null,
       cookieBannerText: siteConfig.cookieBannerText ?? 'Usamos cookies para melhorar sua experiência.',
       showCookieBanner: siteConfig.showCookieBanner ?? true,
+      // ── Vídeo de Apresentação ─────────────────────────────────────────────
+      presentationMediaType:  siteConfig.presentationMediaType  ?? 'video',
+      presentationVideoUrl:   siteConfig.presentationVideoUrl   ?? null,
+      presentationBannerUrl:  siteConfig.presentationBannerUrl  ?? null,
+      presentationBannerLink: siteConfig.presentationBannerLink ?? null,
+      presentationTitle:      siteConfig.presentationTitle      ?? null,
+      presentationSubtitle:   siteConfig.presentationSubtitle   ?? null,
     })
   })
 

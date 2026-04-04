@@ -100,6 +100,14 @@ export const DEFAULT_SYSTEM_CONFIG = {
     showAnunciarSection:    true,
     showCookieBanner:       true,
 
+    // Vídeo de Apresentação (exibido antes das Redes Sociais na página inicial)
+    presentationMediaType:     'video',
+    presentationVideoUrl:      'https://files.manuscdn.com/user_upload_by_module/session_file/310519663481419273/MbhJNDOYKAGxseOh.mp4',
+    presentationBannerUrl:     '',
+    presentationBannerLink:    '',
+    presentationTitle:         '',
+    presentationSubtitle:      '',
+
     // Textos do footer
     footerTagline:     'Há mais de 20 anos conectando pessoas aos melhores imóveis de Franca e região.',
     footerFoundedYear: '2002',

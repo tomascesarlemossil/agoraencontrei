@@ -311,6 +311,70 @@ export function SystemConfigPanel() {
                 <SaveButton onClick={() => save('site')} isPending={saveMutation.isPending} saved={saved} />
               </div>
             </Section>
+
+            <Section title="Vídeo de Apresentação do Site" icon={ImageIcon}>
+              <div className="space-y-3">
+                <p className="text-xs text-white/40">
+                  Exibido na página inicial antes da seção "Siga-nas nas Redes Sociais".
+                  Escolha entre um <strong className="text-white/60">vídeo</strong> (com autoplay silencioso) ou um <strong className="text-white/60">banner/imagem</strong>.
+                  Deixe em branco para usar o vídeo padrão de apresentação do novo site.
+                </p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-semibold text-white/70 mb-1.5 block">Tipo de conteúdo</label>
+                    <select
+                      value={cfg.site?.presentationMediaType ?? 'video'}
+                      onChange={e => updateCfg('site', 'presentationMediaType', e.target.value)}
+                      className="bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white outline-none focus:border-yellow-400/50 w-full"
+                    >
+                      <option value="video">Vídeo (autoplay)</option>
+                      <option value="banner">Banner / Imagem</option>
+                      <option value="none">Ocultar seção</option>
+                    </select>
+                  </div>
+                  <DarkInput
+                    label="URL do vídeo ou banner"
+                    value={cfg.site?.presentationVideoUrl ?? ''}
+                    onChange={e => updateCfg('site', 'presentationVideoUrl', e.target.value)}
+                    placeholder="https://... (MP4 ou imagem)"
+                    hint="Cole a URL do arquivo de vídeo (.mp4) ou imagem"
+                  />
+                </div>
+                <DarkInput
+                  label="URL do banner (se tipo = Banner)"
+                  value={cfg.site?.presentationBannerUrl ?? ''}
+                  onChange={e => updateCfg('site', 'presentationBannerUrl', e.target.value)}
+                  placeholder="https://... (JPG, PNG, WebP)"
+                />
+                <DarkInput
+                  label="Link do banner (opcional)"
+                  value={cfg.site?.presentationBannerLink ?? ''}
+                  onChange={e => updateCfg('site', 'presentationBannerLink', e.target.value)}
+                  placeholder="/imoveis ou https://..."
+                  hint="Ao clicar no banner, redireciona para este link"
+                />
+                <div className="grid grid-cols-2 gap-3">
+                  <DarkInput
+                    label="Título (opcional)"
+                    value={cfg.site?.presentationTitle ?? ''}
+                    onChange={e => updateCfg('site', 'presentationTitle', e.target.value)}
+                    placeholder="Conheça o nosso novo site"
+                  />
+                  <DarkInput
+                    label="Subtítulo (opcional)"
+                    value={cfg.site?.presentationSubtitle ?? ''}
+                    onChange={e => updateCfg('site', 'presentationSubtitle', e.target.value)}
+                    placeholder="Veja tudo que preparamos para você"
+                  />
+                </div>
+                <div className="p-3 rounded-xl bg-yellow-400/10 border border-yellow-400/20">
+                  <p className="text-xs text-yellow-300 font-semibold mb-1">Vídeo padrão atual:</p>
+                  <p className="text-xs text-white/50 break-all">https://files.manuscdn.com/user_upload_by_module/session_file/310519663481419273/MbhJNDOYKAGxseOh.mp4</p>
+                  <p className="text-xs text-white/40 mt-1">Deixe o campo URL em branco para usar este vídeo. Substitua pela URL do novo vídeo quando quiser trocar.</p>
+                </div>
+                <SaveButton onClick={() => save('site')} isPending={saveMutation.isPending} saved={saved} />
+              </div>
+            </Section>
           </div>
         )}
 

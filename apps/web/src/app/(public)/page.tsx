@@ -5,6 +5,7 @@ import { Search, BedDouble, Bath, Car, Maximize, ArrowRight, Star, Shield, Clock
 import { HeroSearchForm } from './HeroSearchForm'
 import { HeroBackground } from './HeroBackground'
 import { SmartQuiz } from './SmartQuiz'
+import { PresentationSection } from './PresentationSection'
 
 export const metadata: Metadata = {
   title: 'Imobiliária Lemos — Franca/SP | Comprar, Alugar e Avaliar Imóveis',
@@ -280,7 +281,28 @@ export default async function HomePage() {
         </section>
       )}
 
-      {/* ── SOCIAL MEDIA ────────────────────────────────────────────── */}
+       {/* ── VÍDEO DE APRESENTAÇÃO ────────────────────────────── */}
+      {(siteSettings.presentationVideoUrl || siteSettings.presentationBannerUrl) && (
+        <PresentationSection
+          videoUrl={siteSettings.presentationVideoUrl ?? null}
+          bannerUrl={siteSettings.presentationBannerUrl ?? null}
+          bannerLink={siteSettings.presentationBannerLink ?? null}
+          title={siteSettings.presentationTitle ?? null}
+          subtitle={siteSettings.presentationSubtitle ?? null}
+        />
+      )}
+      {/* Vídeo padrão de apresentação — exibido se não houver config no banco */}
+      {!siteSettings.presentationVideoUrl && !siteSettings.presentationBannerUrl && (
+        <PresentationSection
+          videoUrl="https://files.manuscdn.com/user_upload_by_module/session_file/310519663481419273/MbhJNDOYKAGxseOh.mp4"
+          bannerUrl={null}
+          bannerLink={null}
+          title={null}
+          subtitle={null}
+        />
+      )}
+
+      {/* ── SOCIAL MEDIA ──────────────────────────────────────────── */}
       <section className="max-w-4xl mx-auto px-4 sm:px-6 py-10">
         <div className="text-center mb-6">
           <h2 className="text-xl font-bold" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>Siga-nos nas Redes Sociais</h2>
