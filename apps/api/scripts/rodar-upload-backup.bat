@@ -1,8 +1,12 @@
 @echo off
-REM ─────────────────────────────────────────────────────────────────────────────
+REM ───────────────────────────────────────────────────────────────────────────────
 REM rodar-upload-backup.bat
 REM Execute este arquivo na pasta apps\api para fazer o upload do backup
-REM ─────────────────────────────────────────────────────────────────────────────
+REM ───────────────────────────────────────────────────────────────────────────────
+setlocal enabledelayedexpansion
+
+REM Navegar para o diretorio correto (apps\api)
+cd /d "%~dp0.."
 
 echo.
 echo ============================================================
@@ -27,7 +31,7 @@ for /f "usebackq tokens=1,* delims==" %%A in (".env.backup-upload") do (
 )
 
 REM Verificar se a chave foi configurada
-if "%SUPABASE_SERVICE_ROLE_KEY%"=="COLE_AQUI_A_CHAVE_SERVICE_ROLE" (
+if "!SUPABASE_SERVICE_ROLE_KEY!"=="COLE_AQUI_A_CHAVE_SERVICE_ROLE" (
     echo.
     echo [ERRO] A SUPABASE_SERVICE_ROLE_KEY ainda nao foi configurada!
     echo.
@@ -42,8 +46,8 @@ if "%SUPABASE_SERVICE_ROLE_KEY%"=="COLE_AQUI_A_CHAVE_SERVICE_ROLE" (
     exit /b 1
 )
 
-echo [OK] SUPABASE_URL: %SUPABASE_URL%
-echo [OK] BACKUP_PATH: %BACKUP_PATH%
+echo [OK] SUPABASE_URL: !SUPABASE_URL!
+echo [OK] BACKUP_PATH: !BACKUP_PATH!
 echo.
 
 echo Opcoes de upload:
@@ -57,40 +61,40 @@ echo  6. Somente IPTU 2026
 echo  7. Somente JURIDICO 2026
 echo  8. Somente RESCISAO 2026
 echo  9. Somente VISTORIAS DE IMOVEIS
-echo  0. Dry-run (teste sem enviar arquivos)
+echo  0. Dry-run (teste sem enviar arquivos - RECOMENDADO PRIMEIRO)
 echo.
 set /p opcao="Escolha uma opcao (0-9): "
 
-if "%opcao%"=="0" (
+if "!opcao!"=="0" (
     echo Executando DRY-RUN (sem upload real)...
-    npx tsx scripts/upload-documents-supabase.ts --dry-run
-) else if "%opcao%"=="1" (
+    node_modules\.bin\tsx.cmd scripts/upload-documents-supabase.ts --dry-run
+) else if "!opcao!"=="1" (
     echo Executando upload COMPLETO de todas as pastas...
-    npx tsx scripts/upload-documents-supabase.ts
-) else if "%opcao%"=="2" (
+    node_modules\.bin\tsx.cmd scripts/upload-documents-supabase.ts
+) else if "!opcao!"=="2" (
     echo Executando upload: ARQUIVO MORTO 2025...
-    npx tsx scripts/upload-documents-supabase.ts --folder "ARQUIVO MORTO 2025"
-) else if "%opcao%"=="3" (
+    node_modules\.bin\tsx.cmd scripts/upload-documents-supabase.ts --folder "ARQUIVO MORTO 2025"
+) else if "!opcao!"=="3" (
     echo Executando upload: FINANCEIRO 2026...
-    npx tsx scripts/upload-documents-supabase.ts --folder "FINANCEIRO 2026"
-) else if "%opcao%"=="4" (
+    node_modules\.bin\tsx.cmd scripts/upload-documents-supabase.ts --folder "FINANCEIRO 2026"
+) else if "!opcao!"=="4" (
     echo Executando upload: LOCACAO 2026...
-    npx tsx scripts/upload-documents-supabase.ts --folder "LOCACAO 2026"
-) else if "%opcao%"=="5" (
+    node_modules\.bin\tsx.cmd scripts/upload-documents-supabase.ts --folder "LOCACAO 2026"
+) else if "!opcao!"=="5" (
     echo Executando upload: ADITIVO 2026...
-    npx tsx scripts/upload-documents-supabase.ts --folder "ADITIVO 2026"
-) else if "%opcao%"=="6" (
+    node_modules\.bin\tsx.cmd scripts/upload-documents-supabase.ts --folder "ADITIVO 2026"
+) else if "!opcao!"=="6" (
     echo Executando upload: IPTU 2026...
-    npx tsx scripts/upload-documents-supabase.ts --folder "IPTU 2026"
-) else if "%opcao%"=="7" (
+    node_modules\.bin\tsx.cmd scripts/upload-documents-supabase.ts --folder "IPTU 2026"
+) else if "!opcao!"=="7" (
     echo Executando upload: JURIDICO 2026...
-    npx tsx scripts/upload-documents-supabase.ts --folder "JURIDICO 20256"
-) else if "%opcao%"=="8" (
+    node_modules\.bin\tsx.cmd scripts/upload-documents-supabase.ts --folder "JURIDICO 2026"
+) else if "!opcao!"=="8" (
     echo Executando upload: RESCISAO 2026...
-    npx tsx scripts/upload-documents-supabase.ts --folder "RESCISAO 2026"
-) else if "%opcao%"=="9" (
+    node_modules\.bin\tsx.cmd scripts/upload-documents-supabase.ts --folder "RESCISAO 2026"
+) else if "!opcao!"=="9" (
     echo Executando upload: VISTORIAS DE IMOVEIS...
-    npx tsx scripts/upload-documents-supabase.ts --folder "VISTORIAS DE IMOVEIS"
+    node_modules\.bin\tsx.cmd scripts/upload-documents-supabase.ts --folder "VISTORIAS DE IMOVEIS"
 ) else (
     echo Opcao invalida.
     pause
