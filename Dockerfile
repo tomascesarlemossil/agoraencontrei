@@ -3,8 +3,8 @@ FROM node:22-slim AS base
 # Install OpenSSL (required by Prisma) and other deps
 RUN apt-get update -y && apt-get install -y openssl ca-certificates && rm -rf /var/lib/apt/lists/*
 
-# Install pnpm
-RUN corepack enable && corepack prepare pnpm@latest --activate
+# Install pnpm (pinned version to avoid breaking changes from pnpm@latest)
+RUN corepack enable && corepack prepare pnpm@10.0.0 --activate
 
 WORKDIR /app
 
@@ -13,11 +13,11 @@ COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
 COPY packages/database/package.json ./packages/database/
 COPY apps/api/package.json ./apps/api/
 
-# Install dependencies
+# Install dependencies (pnpm.onlyBuiltDependencies in package.json allows build scripts)
 RUN pnpm install --frozen-lockfile
 
-# Cache bust — increment to force rebuild: v3
-ARG CACHE_BUST=4
+# Cache bust — increment to force rebuild: v5
+ARG CACHE_BUST=5
 
 # Copy source
 COPY packages/database ./packages/database
