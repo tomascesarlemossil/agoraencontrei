@@ -1,6 +1,6 @@
 import type { MetadataRoute } from 'next'
 
-const WEB_URL = process.env.NEXT_PUBLIC_WEB_URL ?? 'https://www.imobiliarialemos.com.br'
+const WEB_URL = process.env.NEXT_PUBLIC_WEB_URL ?? 'https://www.agoraencontrei.com.br'
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 
 // Cidades atendidas
