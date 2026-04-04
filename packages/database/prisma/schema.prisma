@@ -985,6 +985,23 @@ model Client {
   zipCode             String?
   roles               ClientRole[]
   notes               String?
+  // ── Dados complementares ─────────────────────────────────────────────────
+  maritalStatus       String?      // solteiro | casado | divorciado | viuvo | uniao_estavel
+  nationality         String?      // Brasileiro, Estrangeiro, etc.
+  spouseName          String?      // Nome do cônjuge
+  spouseDocument      String?      // CPF do cônjuge
+  spouseProfession    String?      // Profissão do cônjuge
+  income              Decimal?     @db.Decimal(12, 2)  // Renda mensal
+  spouseIncome        Decimal?     @db.Decimal(12, 2)  // Renda do cônjuge
+  bankName            String?      // Banco
+  bankBranch          String?      // Agência
+  bankAccount         String?      // Conta corrente
+  bankAccountType     String?      // corrente | poupanca
+  pixKey              String?      // Chave PIX
+  observations        String?      // Observações internas detalhadas
+  isArchived          Boolean      @default(false)  // Arquivo morto
+  archivedAt          DateTime?    // Data de arquivamento
+  archivedReason      String?      // Motivo do arquivamento
   createdAt           DateTime     @default(now())
   updatedAt           DateTime     @updatedAt
 

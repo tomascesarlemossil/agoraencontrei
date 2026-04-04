@@ -135,7 +135,7 @@ export default function ServicosPage() {
               <div className="flex-1">
                 <p className="font-bold text-sm text-gray-800 flex items-center gap-1">
                   Mapa de Zoneamento Urbano
-                  <ExternalLink className="w-3 h-3 text-gray-400" />
+                  <ExternalLink className="w-3 h-3 text-gray-500" />
                 </p>
                 <p className="text-xs text-gray-500 mt-0.5">Consulte o uso do solo, bairros e logradouros de Franca/SP no mapa oficial da Prefeitura.</p>
               </div>
@@ -153,7 +153,7 @@ export default function ServicosPage() {
               <div className="flex-1">
                 <p className="font-bold text-sm text-gray-800 flex items-center gap-1">
                   IPTU e Tributos Municipais
-                  <ExternalLink className="w-3 h-3 text-gray-400" />
+                  <ExternalLink className="w-3 h-3 text-gray-500" />
                 </p>
                 <p className="text-xs text-gray-500 mt-0.5">Consulte e emita boletos de IPTU, taxas e outros tributos municipais de Franca/SP.</p>
               </div>
@@ -171,7 +171,7 @@ export default function ServicosPage() {
               <div className="flex-1">
                 <p className="font-bold text-sm text-gray-800 flex items-center gap-1">
                   Portal da Prefeitura de Franca
-                  <ExternalLink className="w-3 h-3 text-gray-400" />
+                  <ExternalLink className="w-3 h-3 text-gray-500" />
                 </p>
                 <p className="text-xs text-gray-500 mt-0.5">Acesse certidões, serviços municipais, legislação e informações da cidade.</p>
               </div>
@@ -189,7 +189,7 @@ export default function ServicosPage() {
               <div className="flex-1">
                 <p className="font-bold text-sm text-gray-800 flex items-center gap-1">
                   Consulta de Logradouros
-                  <ExternalLink className="w-3 h-3 text-gray-400" />
+                  <ExternalLink className="w-3 h-3 text-gray-500" />
                 </p>
                 <p className="text-xs text-gray-500 mt-0.5">Pesquise endereços, lotes e informações cadastrais de imóveis em Franca/SP.</p>
               </div>

@@ -167,7 +167,7 @@ export function PropertyGallery({
         style={{ backgroundColor: '#f0ece4' }}
       >
         <span className="text-5xl opacity-30">🏠</span>
-        <p className="text-sm text-gray-400">Sem fotos disponíveis</p>
+        <p className="text-sm text-gray-500">Sem fotos disponíveis</p>
       </div>
     )
   }

@@ -57,17 +57,17 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
           </div>
           <div className="flex items-center gap-4">
             <span className="text-white/50">CRECI 279051</span>
-            <a href="https://www.instagram.com/imobiliarialemos" target="_blank" rel="noreferrer" className="flex items-center gap-1 hover:text-white transition-colors" title="@imobiliarialemos">
-              <Instagram className="w-3.5 h-3.5" />
+            <a href="https://www.instagram.com/imobiliarialemos" target="_blank" rel="noreferrer" className="flex items-center gap-1 hover:text-white transition-colors" aria-label="Instagram da Imobiliária Lemos (@imobiliarialemos)">
+              <Instagram className="w-3.5 h-3.5" aria-hidden="true" />
             </a>
-            <a href="https://www.instagram.com/tomaslemosbr" target="_blank" rel="noreferrer" className="flex items-center gap-1 hover:text-white transition-colors" title="@tomaslemosbr">
-              <Instagram className="w-3.5 h-3.5" />
+            <a href="https://www.instagram.com/tomaslemosbr" target="_blank" rel="noreferrer" className="flex items-center gap-1 hover:text-white transition-colors" aria-label="Instagram de Tomás Lemos (@tomaslemosbr)">
+              <Instagram className="w-3.5 h-3.5" aria-hidden="true" />
             </a>
-            <a href="https://facebook.com/imobiliarialemos" target="_blank" rel="noreferrer" className="hover:text-white transition-colors">
-              <Facebook className="w-3.5 h-3.5" />
+            <a href="https://facebook.com/imobiliarialemos" target="_blank" rel="noreferrer" className="hover:text-white transition-colors" aria-label="Facebook da Imobiliária Lemos">
+              <Facebook className="w-3.5 h-3.5" aria-hidden="true" />
             </a>
-            <a href="https://www.youtube.com/@imobiliarialemos" target="_blank" rel="noreferrer" className="hover:text-white transition-colors" title="YouTube Imobiliária Lemos">
-              <Youtube className="w-3.5 h-3.5" />
+            <a href="https://www.youtube.com/@imobiliarialemos" target="_blank" rel="noreferrer" className="hover:text-white transition-colors" aria-label="Canal YouTube da Imobiliária Lemos">
+              <Youtube className="w-3.5 h-3.5" aria-hidden="true" />
             </a>
           </div>
         </div>
@@ -110,6 +110,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
                     target="_blank"
                     rel="noreferrer"
                     className="flex items-center gap-2.5 group"
+                    aria-label="Instagram da Imobiliária Lemos (@imobiliarialemos)"
                   >
                     <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 text-white/60 group-hover:text-white transition-colors" style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
                       <Instagram className="w-3.5 h-3.5" />
@@ -121,6 +122,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
                     target="_blank"
                     rel="noreferrer"
                     className="flex items-center gap-2.5 group"
+                    aria-label="Instagram de Tomás Lemos (@tomaslemosbr)"
                   >
                     <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 text-white/60 group-hover:text-white transition-colors" style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
                       <Instagram className="w-3.5 h-3.5" />
@@ -132,6 +134,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
                     target="_blank"
                     rel="noreferrer"
                     className="flex items-center gap-2.5 group"
+                    aria-label="Canal YouTube da Imobiliária Lemos"
                   >
                     <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 text-white/60 group-hover:text-white transition-colors" style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
                       <Youtube className="w-3.5 h-3.5" />
@@ -143,6 +146,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
                     target="_blank"
                     rel="noreferrer"
                     className="flex items-center gap-2.5 group"
+                    aria-label="Facebook da Imobiliária Lemos"
                   >
                     <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 text-white/60 group-hover:text-white transition-colors" style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
                       <Facebook className="w-3.5 h-3.5" />

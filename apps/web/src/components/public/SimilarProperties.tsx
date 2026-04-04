@@ -147,7 +147,7 @@ export function SimilarProperties({ slug, apiUrl }: Props) {
               </p>
 
               {(p.neighborhood || p.city) && (
-                <p className="flex items-center gap-1 text-xs text-gray-400 mt-0.5 truncate">
+                <p className="flex items-center gap-1 text-xs text-gray-500 mt-0.5 truncate">
                   <MapPin className="w-3 h-3 flex-shrink-0" style={{ color: '#C9A84C' }} />
                   {[p.neighborhood, p.city].filter(Boolean).join(' - ')}
                 </p>

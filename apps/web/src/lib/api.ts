@@ -783,6 +783,23 @@ export interface LegacyClient {
   profession: string | null
   birthDate: string | null
   roles: string[]
+  notes: string | null
+  maritalStatus: string | null
+  nationality: string | null
+  spouseName: string | null
+  spouseDocument: string | null
+  spouseProfession: string | null
+  income: number | null
+  spouseIncome: number | null
+  bankName: string | null
+  bankBranch: string | null
+  bankAccount: string | null
+  bankAccountType: string | null
+  pixKey: string | null
+  observations: string | null
+  isArchived: boolean
+  archivedAt: string | null
+  archivedReason: string | null
   createdAt: string
   contractsAsTenant?: LegacyContract[]
   contractsAsLandlord?: LegacyContract[]
@@ -844,6 +861,18 @@ export const financeApi = {
 
   client: (token: string, id: string) =>
     request<LegacyClient>(`/api/v1/finance/clients/${id}`, { token }),
+  createClient: (token: string, body: Partial<LegacyClient> & { name: string }) =>
+    request<LegacyClient>('/api/v1/finance/clients', {
+      method: 'POST',
+      token,
+      body: JSON.stringify(body),
+    }),
+  updateClient: (token: string, id: string, body: Partial<LegacyClient>) =>
+    request<LegacyClient>(`/api/v1/finance/clients/${id}`, {
+      method: 'PATCH',
+      token,
+      body: JSON.stringify(body),
+    }),
 
   contracts: (token: string, params?: Record<string, string>) =>
     request<{ data: LegacyContract[]; meta: { total: number; page: number; limit: number; totalPages: number } }>(

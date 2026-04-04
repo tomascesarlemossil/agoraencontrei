@@ -258,7 +258,7 @@ export function SmartQuiz() {
             <Sparkles className="w-4 h-4" />
             Iniciar Quiz Inteligente
           </button>
-          <p className="text-gray-400 text-xs mt-3">Gratuito · 2 minutos · Sem compromisso</p>
+          <p className="text-gray-500 text-xs mt-3">Gratuito · 2 minutos · Sem compromisso</p>
         </div>
       </section>
 
@@ -294,7 +294,7 @@ export function SmartQuiz() {
                 </div>
                 <button
                   onClick={() => setIsOpen(false)}
-                  className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors text-gray-400"
+                  className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors text-gray-500"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -308,7 +308,7 @@ export function SmartQuiz() {
                 >
                   🤖
                 </div>
-                <span className="text-xs text-gray-400">
+                <span className="text-xs text-gray-500">
                   {done ? 'Concluído!' : `Pergunta ${Math.min(step + 1, totalSteps)} de ${totalSteps}`}
                 </span>
               </div>
@@ -348,7 +348,7 @@ export function SmartQuiz() {
                   <p className="text-gray-500 text-sm mb-2">
                     Sua consulta foi registrada e um corretor entrará em contato em breve.
                   </p>
-                  <p className="text-gray-400 text-xs">Redirecionando para os imóveis encontrados...</p>
+                  <p className="text-gray-500 text-xs">Redirecionando para os imóveis encontrados...</p>
                   <Loader2 className="w-5 h-5 mx-auto mt-4 animate-spin text-gray-300" />
                 </div>
               )}
@@ -359,7 +359,7 @@ export function SmartQuiz() {
                   <h3 className="text-xl font-bold mb-1 leading-snug" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>
                     {currentStep.question}
                   </h3>
-                  <p className="text-gray-400 text-sm mb-6 leading-relaxed">{currentStep.subtitle}</p>
+                  <p className="text-gray-500 text-sm mb-6 leading-relaxed">{currentStep.subtitle}</p>
 
                   <div className="flex flex-col gap-3">
                     {currentStep.options.map(opt => (
@@ -432,7 +432,7 @@ export function SmartQuiz() {
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-gray-600 mb-1.5">E-mail <span className="font-normal text-gray-400">(opcional)</span></label>
+                      <label className="block text-xs font-semibold text-gray-600 mb-1.5">E-mail <span className="font-normal text-gray-500">(opcional)</span></label>
                       <input
                         type="email"
                         placeholder="seu@email.com"
@@ -454,7 +454,7 @@ export function SmartQuiz() {
                       {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <span>🔍</span>}
                       {submitting ? 'Buscando...' : 'Ver meus imóveis recomendados'}
                     </button>
-                    <p className="text-center text-xs text-gray-400">
+                    <p className="text-center text-xs text-gray-500">
                       Seus dados são protegidos e não serão compartilhados.
                     </p>
                   </form>

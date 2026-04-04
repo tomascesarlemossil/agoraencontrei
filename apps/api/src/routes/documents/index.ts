@@ -99,12 +99,18 @@ export default async function documentsRoutes(app: FastifyInstance) {
     const { id } = req.params as { id: string }
 
     const rows = await app.prisma.$queryRawUnsafe<any[]>(
-      `SELECT name, "mimeType", "fileData" FROM documents WHERE id = $1 AND "companyId" = $2`,
+      `SELECT name, "mimeType", "fileData", metadata FROM documents WHERE id = $1 AND "companyId" = $2`,
       id, cid
     )
 
     if (!rows.length) return reply.status(404).send({ error: 'NOT_FOUND' })
     const doc = rows[0]
+
+    // Try Supabase Storage public URL first
+    const meta = typeof doc.metadata === 'string' ? JSON.parse(doc.metadata) : (doc.metadata ?? {})
+    if (meta?.publicUrl) {
+      return reply.redirect(meta.publicUrl)
+    }
 
     // Serve from DB
     if (!doc.fileData) return reply.status(404).send({ error: 'NO_FILE_DATA' })
