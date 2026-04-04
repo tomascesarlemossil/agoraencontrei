@@ -924,7 +924,7 @@ export default async function financeRoutes(app: FastifyInstance) {
 <body>
   <div class="header">
     <h1>Imobiliária Lemos</h1>
-    <p>CRECI 61053-F</p>
+    <p>CRECI 279051</p>
     <p>Rua Simão Caleiro, 2383 — Franca/SP</p>
     <p>Tel: (16) 3723-0045</p>
   </div>
@@ -1155,7 +1155,7 @@ export default async function financeRoutes(app: FastifyInstance) {
 
     const textMessage = body.message ?? [
       `*Recibo de Aluguel — Imobiliária Lemos*`,
-      `CRECI 61053-F | (16) 3723-0045`,
+      `CRECI 279051 | (16) 3723-0045`,
       ``,
       `Locatário: ${rental.contract?.tenantName ?? '—'}`,
       `Imóvel: ${rental.contract?.propertyAddress ?? '—'}`,

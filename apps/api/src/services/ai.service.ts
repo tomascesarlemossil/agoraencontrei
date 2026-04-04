@@ -425,7 +425,7 @@ CABEÇALHO PADRÃO:
 - Nome: IMOBILIÁRIA LEMOS
 - Endereço: Rua Simão Caleiro, 2383 · Vila França · Franca/SP · CEP 14401-155
 - Telefone: (16) 3723-0045
-- CRECI: 61053-F
+- CRECI: 279051
 - Responsável: Noêmia Pires Lemos da Silva
 
 ESTILO CSS A4:

@@ -537,7 +537,7 @@ export default async function financeAutomationRoutes(app: FastifyInstance) {
           ``,
           `Por favor, entre em contato para regularizar: *(16) 3723-0045*`,
           ``,
-          `Imobiliária Lemos — CRECI 61053-F`,
+          `Imobiliária Lemos — CRECI 279051`,
         ].join('\n')
 
         try {
