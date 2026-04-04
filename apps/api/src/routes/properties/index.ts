@@ -197,13 +197,14 @@ export default async function propertiesRoutes(app: FastifyInstance) {
           id: true, reference: true, title: true, slug: true,
           type: true, purpose: true, status: true,
           price: true, priceRent: true, condoFee: true,
-          neighborhood: true, city: true, state: true, street: true,
+          neighborhood: true, city: true, state: true, street: true, number: true,
           totalArea: true, builtArea: true,
           bedrooms: true, suites: true, bathrooms: true, parkingSpaces: true,
           coverImage: true, images: true,
           isFeatured: true, isPremium: true,
           views: true, favorites: true,
           createdAt: true,
+          latitude: true, longitude: true,
           // Cross-reference data
           contracts: {
             where: { status: 'ACTIVE' },
