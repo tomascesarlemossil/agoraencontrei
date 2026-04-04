@@ -1,9 +1,10 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { Loader2, MapPin, Building2, AlertCircle } from 'lucide-react'
+import { Loader2, MapPin, Building2, AlertCircle, RefreshCw, Satellite } from 'lucide-react'
 import { useAuthStore } from '@/stores/auth.store'
+import { Button } from '@/components/ui/button'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 
@@ -29,14 +30,14 @@ const TYPE_LABELS: Record<string, string> = {
   HOUSE:     'Casa',
   APARTMENT: 'Apartamento',
   LAND:      'Terreno',
-  FARM:      'Chacara/Sitio',
+  FARM:      'Chácara/Sítio',
   RANCH:     'Fazenda',
-  WAREHOUSE: 'Galpao',
-  OFFICE:    'Escritorio',
+  WAREHOUSE: 'Galpão',
+  OFFICE:    'Escritório',
   STORE:     'Loja',
   STUDIO:    'Studio',
   PENTHOUSE: 'Cobertura',
-  CONDO:     'Condominio',
+  CONDO:     'Condomínio',
   KITNET:    'Kitnet',
 }
 
@@ -73,6 +74,12 @@ interface MapPin {
   isFeatured: boolean
 }
 
+interface GeoStatus {
+  total: number
+  withCoords: number
+  withoutCoords: number
+}
+
 interface AdminPropertyMapProps {
   statusFilter?: string
   purposeFilter?: string
@@ -105,8 +112,8 @@ function addMarkersToCluster(L: any, clusterGroup: any, pins: MapPin[], router: 
 
     const hasImage = p.coverImage && !FAKE_IMAGE_PATTERNS.some(pat => p.coverImage!.includes(pat))
     const priceStr = (p.purpose === 'RENT' || p.purpose === 'SEASON')
-      ? (p.priceRent ? fmt.format(Number(p.priceRent)) + '/mes' : 'Consulte')
-      : (p.price ? fmt.format(Number(p.price)) : (p.priceRent ? fmt.format(Number(p.priceRent)) + '/mes' : 'Consulte'))
+      ? (p.priceRent ? fmt.format(Number(p.priceRent)) + '/mês' : 'Consulte')
+      : (p.price ? fmt.format(Number(p.price)) : (p.priceRent ? fmt.format(Number(p.priceRent)) + '/mês' : 'Consulte'))
 
     const address = [p.street, p.number, p.neighborhood, p.city].filter(Boolean).join(', ')
 
@@ -116,7 +123,7 @@ function addMarkersToCluster(L: any, clusterGroup: any, pins: MapPin[], router: 
     const addrHtml = address ? `<div style="font-size:11px;color:#64748b;margin-bottom:6px;">${address}</div>` : ''
     const bedsHtml = p.bedrooms ? `<span>${p.bedrooms} qts</span>` : ''
     const bathHtml = p.bathrooms ? `<span>${p.bathrooms} ban</span>` : ''
-    const areaHtml = p.totalArea ? `<span>${p.totalArea}m2</span>` : ''
+    const areaHtml = p.totalArea ? `<span>${p.totalArea}m²</span>` : ''
 
     const popupHtml = `<div style="width:240px;font-family:system-ui,sans-serif;">${imgHtml}<div style="padding:10px 12px;"><div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;flex-wrap:wrap;"><span style="background:${statusColor}22;color:${statusColor};font-size:10px;font-weight:600;padding:2px 8px;border-radius:999px;">${STATUS_LABELS[p.status?.toUpperCase()] ?? p.status}</span>${featHtml}</div>${refHtml}<div style="font-size:12px;font-weight:600;color:#1e293b;line-height:1.3;margin-bottom:4px;">${p.title}</div><div style="font-size:11px;color:#64748b;margin-bottom:6px;">${TYPE_LABELS[p.type?.toUpperCase()] ?? p.type} - ${PURPOSE_LABELS[p.purpose?.toUpperCase()] ?? p.purpose}</div>${addrHtml}<div style="display:flex;gap:8px;font-size:11px;color:#64748b;margin-bottom:8px;flex-wrap:wrap;">${bedsHtml}${bathHtml}${areaHtml}</div><div style="font-size:14px;font-weight:700;color:#1B2B5B;margin-bottom:8px;">${priceStr}</div><button onclick="window.__adminMapNav('${p.id}')" style="width:100%;background:linear-gradient(135deg,#1B2B5B,#2d4a8a);color:white;text-align:center;padding:7px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;border:none;">Abrir Cadastro</button></div></div>`
 
@@ -136,10 +143,14 @@ export default function AdminPropertyMap({ statusFilter, purposeFilter, searchFi
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [stats, setStats] = useState({ total: 0, active: 0, inactive: 0, sold: 0, rented: 0 })
+  const [geoStatus, setGeoStatus] = useState<GeoStatus | null>(null)
+  const [geocoding, setGeocoding] = useState(false)
+  const [geocodeMsg, setGeocodeMsg] = useState<string | null>(null)
 
-  useEffect(() => {
+  const loadPins = useCallback(() => {
     if (!accessToken) return
     setLoading(true)
+    setError(null)
     fetch(`${API_URL}/api/v1/properties/map-pins`, {
       headers: { Authorization: `Bearer ${accessToken}` },
     })
@@ -157,17 +168,58 @@ export default function AdminPropertyMap({ statusFilter, purposeFilter, searchFi
         setLoading(false)
       })
       .catch(() => {
-        setError('Erro ao carregar imoveis do mapa.')
+        setError('Erro ao carregar imóveis do mapa. Verifique sua conexão.')
         setLoading(false)
       })
   }, [accessToken])
+
+  const loadGeoStatus = useCallback(() => {
+    if (!accessToken) return
+    fetch(`${API_URL}/api/v1/properties/geocode-status`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    })
+      .then(r => r.json())
+      .then((data: GeoStatus) => setGeoStatus(data))
+      .catch(() => {})
+  }, [accessToken])
+
+  useEffect(() => {
+    loadPins()
+    loadGeoStatus()
+  }, [loadPins, loadGeoStatus])
+
+  const handleGeocoding = async () => {
+    if (!accessToken || geocoding) return
+    setGeocoding(true)
+    setGeocodeMsg(null)
+    try {
+      const res = await fetch(`${API_URL}/api/v1/properties/geocode-batch`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${accessToken}` },
+      })
+      const data = await res.json()
+      setGeocodeMsg(data.message ?? 'Geocoding iniciado!')
+      // Reload status and pins after a delay to show updated results
+      setTimeout(() => {
+        loadGeoStatus()
+        loadPins()
+      }, 5000)
+      setTimeout(() => {
+        loadGeoStatus()
+        loadPins()
+        setGeocoding(false)
+      }, 30000)
+    } catch {
+      setGeocodeMsg('Erro ao iniciar geocoding. Tente novamente.')
+      setGeocoding(false)
+    }
+  }
 
   useEffect(() => {
     if (!mapRef.current || loading || pins.length === 0) return
     if (mapInstanceRef.current) return
 
     async function initMap() {
-      // Inject Leaflet CSS via link tags (avoids TS module resolution issues)
       const injectCss = (href: string, id: string) => {
         if (!document.getElementById(id)) {
           const link = document.createElement('link')
@@ -264,12 +316,50 @@ export default function AdminPropertyMap({ statusFilter, purposeFilter, searchFi
     })
   }, [statusFilter, purposeFilter, searchFilter, pins, router])
 
+  // ── Geocoding banner — shown when there are properties without coordinates ──
+  const GeocodePanel = () => {
+    if (!geoStatus || geoStatus.withoutCoords === 0) return null
+    const pct = Math.round((geoStatus.withCoords / geoStatus.total) * 100)
+    return (
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 p-3 rounded-xl border border-amber-200 bg-amber-50 text-sm">
+        <Satellite className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5 sm:mt-0" />
+        <div className="flex-1 min-w-0">
+          <p className="font-medium text-amber-800">
+            {geoStatus.withoutCoords} imóvel(is) sem coordenadas no mapa
+          </p>
+          <p className="text-amber-700 text-xs mt-0.5">
+            {geoStatus.withCoords} de {geoStatus.total} imóveis ({pct}%) já possuem localização.
+            Clique em "Geocodificar" para buscar automaticamente pelo endereço.
+          </p>
+          {geocodeMsg && (
+            <p className="text-amber-900 text-xs mt-1 font-medium">{geocodeMsg}</p>
+          )}
+        </div>
+        <Button
+          size="sm"
+          variant="outline"
+          className="border-amber-400 text-amber-800 hover:bg-amber-100 flex-shrink-0"
+          onClick={handleGeocoding}
+          disabled={geocoding}
+        >
+          {geocoding ? (
+            <><Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />Processando...</>
+          ) : (
+            <><Satellite className="h-3.5 w-3.5 mr-1.5" />Geocodificar {geoStatus.withoutCoords} imóvel(is)</>
+          )}
+        </Button>
+      </div>
+    )
+  }
+
   if (loading) {
     return (
-      <div className="flex items-center justify-center rounded-2xl border bg-muted/30" style={{ height: 580 }}>
-        <div className="flex flex-col items-center gap-3 text-muted-foreground">
-          <Loader2 className="h-8 w-8 animate-spin" />
-          <p className="text-sm">Carregando mapa de imoveis...</p>
+      <div className="space-y-3">
+        <div className="flex items-center justify-center rounded-2xl border bg-muted/30" style={{ height: 580 }}>
+          <div className="flex flex-col items-center gap-3 text-muted-foreground">
+            <Loader2 className="h-8 w-8 animate-spin" />
+            <p className="text-sm">Carregando mapa de imóveis...</p>
+          </div>
         </div>
       </div>
     )
@@ -277,10 +367,16 @@ export default function AdminPropertyMap({ statusFilter, purposeFilter, searchFi
 
   if (error) {
     return (
-      <div className="flex items-center justify-center rounded-2xl border bg-muted/30" style={{ height: 580 }}>
-        <div className="flex flex-col items-center gap-3 text-destructive">
-          <AlertCircle className="h-8 w-8" />
-          <p className="text-sm">{error}</p>
+      <div className="space-y-3">
+        <div className="flex items-center justify-center rounded-2xl border bg-muted/30" style={{ height: 580 }}>
+          <div className="flex flex-col items-center gap-3 text-destructive">
+            <AlertCircle className="h-8 w-8" />
+            <p className="text-sm font-medium">{error}</p>
+            <Button size="sm" variant="outline" onClick={loadPins}>
+              <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
+              Tentar novamente
+            </Button>
+          </div>
         </div>
       </div>
     )
@@ -288,11 +384,18 @@ export default function AdminPropertyMap({ statusFilter, purposeFilter, searchFi
 
   if (pins.length === 0) {
     return (
-      <div className="flex items-center justify-center rounded-2xl border bg-muted/30" style={{ height: 580 }}>
-        <div className="flex flex-col items-center gap-3 text-muted-foreground">
-          <MapPin className="h-8 w-8" />
-          <p className="text-sm font-medium">Nenhum imovel com localizacao cadastrada</p>
-          <p className="text-xs text-center max-w-xs">Para aparecer no mapa, o imovel precisa ter latitude e longitude preenchidas no cadastro.</p>
+      <div className="space-y-3">
+        <GeocodePanel />
+        <div className="flex items-center justify-center rounded-2xl border bg-muted/30" style={{ height: 500 }}>
+          <div className="flex flex-col items-center gap-3 text-muted-foreground text-center px-6">
+            <MapPin className="h-10 w-10 opacity-40" />
+            <p className="text-sm font-medium">Nenhum imóvel com localização cadastrada</p>
+            <p className="text-xs max-w-xs">
+              {geoStatus && geoStatus.withoutCoords > 0
+                ? `Há ${geoStatus.withoutCoords} imóvel(is) sem coordenadas. Use o botão acima para geocodificar automaticamente pelo endereço.`
+                : 'Para aparecer no mapa, o imóvel precisa ter endereço cadastrado ou latitude/longitude preenchidas.'}
+            </p>
+          </div>
         </div>
       </div>
     )
@@ -300,6 +403,10 @@ export default function AdminPropertyMap({ statusFilter, purposeFilter, searchFi
 
   return (
     <div className="space-y-3">
+      {/* Geocoding alert banner */}
+      <GeocodePanel />
+
+      {/* Stats bar */}
       <div className="flex flex-wrap gap-2 text-xs">
         <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted font-medium">
           <Building2 className="h-3.5 w-3.5" />
@@ -325,8 +432,17 @@ export default function AdminPropertyMap({ statusFilter, purposeFilter, searchFi
             {stats.rented} alugados
           </span>
         )}
+        <button
+          onClick={() => { loadPins(); loadGeoStatus() }}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full font-medium bg-muted hover:bg-muted/80 transition-colors ml-auto"
+          title="Recarregar mapa"
+        >
+          <RefreshCw className="h-3.5 w-3.5" />
+          Atualizar
+        </button>
       </div>
 
+      {/* Map */}
       <div
         ref={mapRef}
         className="rounded-2xl overflow-hidden border shadow-sm"
@@ -334,7 +450,7 @@ export default function AdminPropertyMap({ statusFilter, purposeFilter, searchFi
       />
 
       <p className="text-xs text-muted-foreground text-center">
-        Clique em um marcador para ver detalhes - Clique em "Abrir Cadastro" para editar o imovel
+        Clique em um marcador para ver detalhes · Clique em "Abrir Cadastro" para editar o imóvel
       </p>
     </div>
   )

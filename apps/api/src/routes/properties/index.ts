@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 import { createAuditLog } from '../../services/audit.service.js'
+import { geocodeProperty, sleep } from '../../services/geocoding.service.js'
 
 const toUpper = (v: unknown) => typeof v === 'string' ? v.toUpperCase() : v
 
@@ -238,10 +239,9 @@ export default async function propertiesRoutes(app: FastifyInstance) {
     preHandler: [app.authenticate],
     schema: { tags: ['properties'] },
   }, async (req, reply) => {
-    const user = (req as any).user
     const items = await app.prisma.property.findMany({
       where: {
-        companyId: user.companyId,
+        companyId: req.user.cid,
         latitude:  { not: null },
         longitude: { not: null },
       },
@@ -270,7 +270,89 @@ export default async function propertiesRoutes(app: FastifyInstance) {
       },
       orderBy: { createdAt: 'desc' },
     })
-    return reply.send(items)
+     return reply.send(items)
+  })
+
+  // POST /api/v1/properties/geocode-batch — geocode all properties without lat/lng
+  app.post('/geocode-batch', {
+    preHandler: [app.authenticate],
+    schema: { tags: ['properties'] },
+  }, async (req, reply) => {
+    // Only ADMIN/MANAGER can run batch geocoding
+    if (!['ADMIN', 'MANAGER', 'OWNER'].includes(req.user.role)) {
+      return reply.status(403).send({ error: 'FORBIDDEN' })
+    }
+
+    const properties = await app.prisma.property.findMany({
+      where: {
+        companyId: req.user.cid,
+        OR: [
+          { latitude: null },
+          { longitude: null },
+        ],
+      },
+      select: {
+        id: true,
+        street: true,
+        number: true,
+        neighborhood: true,
+        city: true,
+        state: true,
+        zipCode: true,
+      },
+    })
+
+    if (properties.length === 0) {
+      return reply.send({ message: 'Todos os imóveis já possuem coordenadas.', total: 0, updated: 0 })
+    }
+
+    // Run geocoding in background, respond immediately with count
+    reply.send({
+      message: `Geocoding iniciado para ${properties.length} imóvel(is). Processo em background.`,
+      total: properties.length,
+    })
+
+    // Background processing (non-blocking)
+    ;(async () => {
+      let updated = 0
+      let failed = 0
+      for (const prop of properties) {
+        try {
+          const result = await geocodeProperty(prop)
+          if (result) {
+            await app.prisma.property.update({
+              where: { id: prop.id },
+              data: { latitude: result.latitude, longitude: result.longitude },
+            })
+            updated++
+          } else {
+            failed++
+          }
+        } catch {
+          failed++
+        }
+        // Rate limit: 1.1s between requests
+        await sleep(1100)
+      }
+      app.log.info(`[geocode-batch] Done: ${updated} updated, ${failed} failed out of ${properties.length}`)
+    })().catch(e => app.log.error('[geocode-batch] Error:', e))
+  })
+
+  // GET /api/v1/properties/geocode-status — count properties without coordinates
+  app.get('/geocode-status', {
+    preHandler: [app.authenticate],
+    schema: { tags: ['properties'] },
+  }, async (req, reply) => {
+    const [withCoords, withoutCoords, total] = await Promise.all([
+      app.prisma.property.count({
+        where: { companyId: req.user.cid, latitude: { not: null }, longitude: { not: null } },
+      }),
+      app.prisma.property.count({
+        where: { companyId: req.user.cid, OR: [{ latitude: null }, { longitude: null }] },
+      }),
+      app.prisma.property.count({ where: { companyId: req.user.cid } }),
+    ])
+    return reply.send({ total, withCoords, withoutCoords })
   })
 
   // GET /api/v1/properties/:slug — public detail
@@ -357,8 +439,22 @@ export default async function propertiesRoutes(app: FastifyInstance) {
     preHandler: [app.authenticate],
     schema: { tags: ['properties'], summary: 'Create a property' },
   }, async (req, reply) => {
-    const body = CreatePropertyBody.parse(req.body)
+     const body = CreatePropertyBody.parse(req.body)
     const slug = buildSlug(body.title, body.reference)
+
+    // Auto-geocode if address is provided but lat/lng are missing
+    let autoLat = body.latitude
+    let autoLng = body.longitude
+    if ((!autoLat || !autoLng) && (body.street || body.neighborhood || body.city)) {
+      try {
+        const geo = await geocodeProperty({
+          street: body.street, number: body.number,
+          neighborhood: body.neighborhood, city: body.city,
+          state: body.state, zipCode: body.zipCode,
+        })
+        if (geo) { autoLat = geo.latitude; autoLng = geo.longitude }
+      } catch { /* geocoding failure is non-fatal */ }
+    }
 
     const property = await app.prisma.property.create({
       data: {
@@ -370,6 +466,7 @@ export default async function propertiesRoutes(app: FastifyInstance) {
         priceRent: body.priceRent ? body.priceRent : undefined,
         publishedAt: body.status === 'ACTIVE' ? new Date() : undefined,
         portalDescriptions: body.portalDescriptions as any,
+        ...(autoLat && autoLng && { latitude: autoLat, longitude: autoLng }),
       },
     })
 
@@ -408,21 +505,42 @@ export default async function propertiesRoutes(app: FastifyInstance) {
       where: { id, companyId: req.user.cid },
     })
     if (!existing) return reply.status(404).send({ error: 'NOT_FOUND' })
-
     // Brokers can only edit their own
     if (req.user.role === 'BROKER' && existing.userId !== req.user.sub) {
       return reply.status(403).send({ error: 'FORBIDDEN' })
+    }
+
+    // Auto-geocode when address fields change and lat/lng are missing
+    let geoUpdate: { latitude?: number; longitude?: number } = {}
+    const addressChanged = body.street !== undefined || body.neighborhood !== undefined ||
+      body.city !== undefined || body.zipCode !== undefined
+    const hasNoCoords = !body.latitude && !body.longitude && !existing.latitude && !existing.longitude
+    if (addressChanged && hasNoCoords) {
+      const addrForGeo = {
+        street: body.street ?? existing.street,
+        number: body.number ?? existing.number,
+        neighborhood: body.neighborhood ?? existing.neighborhood,
+        city: body.city ?? existing.city,
+        state: body.state ?? existing.state,
+        zipCode: body.zipCode ?? existing.zipCode,
+      }
+      if (addrForGeo.street || addrForGeo.neighborhood || addrForGeo.city) {
+        try {
+          const geo = await geocodeProperty(addrForGeo)
+          if (geo) geoUpdate = { latitude: geo.latitude, longitude: geo.longitude }
+        } catch { /* non-fatal */ }
+      }
     }
 
     const updated = await app.prisma.property.update({
       where: { id },
       data: {
         ...body,
+        ...geoUpdate,
         ...(body.status === 'ACTIVE' && !existing.publishedAt && { publishedAt: new Date() }),
         ...(body.portalDescriptions !== undefined && { portalDescriptions: body.portalDescriptions as any }),
       },
     })
-
     await createAuditLog({
       prisma: app.prisma as any, req,
       action: 'property.update',
