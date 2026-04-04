@@ -136,7 +136,7 @@ function VideoCard({ post }: { post: Post }) {
         )}
 
         {/* Meta row */}
-        <div className="flex items-center justify-between text-xs text-gray-400">
+        <div className="flex items-center justify-between text-xs text-gray-500">
           <div className="flex items-center gap-3">
             {date && (
               <span className="flex items-center gap-1">
@@ -179,7 +179,7 @@ export function BlogFeed({ posts }: { posts: Post[] }) {
       <div className="text-center py-20">
         <p className="text-4xl mb-4">📰</p>
         <p className="text-gray-500 text-lg">Nenhum artigo publicado ainda.</p>
-        <p className="text-gray-400 text-sm mt-1">Volte em breve!</p>
+        <p className="text-gray-500 text-sm mt-1">Volte em breve!</p>
       </div>
     )
   }

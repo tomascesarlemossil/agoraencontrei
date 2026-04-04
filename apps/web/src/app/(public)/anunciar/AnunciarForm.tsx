@@ -359,7 +359,7 @@ export function AnunciarForm() {
                 </button>
               ))}
             </div>
-            <p className="text-xs text-gray-400 mt-2">
+            <p className="text-xs text-gray-500 mt-2">
               As fotos serão enviadas por WhatsApp após o contato inicial do corretor.
             </p>
           </div>
@@ -428,7 +428,7 @@ export function AnunciarForm() {
           )}
         </button>
 
-        <p className="text-center text-xs text-gray-400">
+        <p className="text-center text-xs text-gray-500">
           Ao enviar, você concorda em receber contato de um corretor da Imobiliária Lemos.
         </p>
       </div>

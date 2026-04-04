@@ -44,7 +44,7 @@ function PriceDisplay({ price, priceRent, purpose }: { price: number | null; pri
   }
   if (hasRent) return <p className="text-base font-bold mt-3" style={{ color: '#1B2B5B' }}>{fmt.format(Number(priceRent))}/mês</p>
   if (hasSale) return <p className="text-base font-bold mt-3" style={{ color: '#1B2B5B' }}>{fmt.format(Number(price))}</p>
-  return <p className="text-sm font-medium mt-3 text-gray-400">Consulte</p>
+  return <p className="text-sm font-medium mt-3 text-gray-500">Consulte</p>
 }
 
 function PropertyCardCarousel({ images, coverImage, title, isFeatured, purpose }: {

@@ -234,7 +234,7 @@ export function HeroSearchForm() {
             <div className="flex items-center gap-2 mb-2">
               <Sparkles className="w-4 h-4 flex-shrink-0" style={{ color: '#C9A84C' }} />
               <p className="text-xs font-bold uppercase tracking-wide" style={{ color: '#C9A84C' }}>Busca Inteligente com IA</p>
-              <span className="text-xs text-gray-400 ml-auto">Descreva o imóvel que você quer</span>
+              <span className="text-xs text-gray-500 ml-auto">Descreva o imóvel que você quer</span>
             </div>
 
             <div className="flex items-center gap-2 mt-3">
@@ -270,7 +270,7 @@ export function HeroSearchForm() {
         {aiMode && (
           <div className="flex items-center gap-3 px-5 py-2.5" style={{ backgroundColor: '#fafafa' }}>
             <div className="flex-1 h-px" style={{ backgroundColor: '#e5e7eb' }} />
-            <span className="text-xs text-gray-400 font-medium">ou filtre manualmente</span>
+            <span className="text-xs text-gray-500 font-medium">ou filtre manualmente</span>
             <div className="flex-1 h-px" style={{ backgroundColor: '#e5e7eb' }} />
           </div>
         )}
@@ -281,7 +281,7 @@ export function HeroSearchForm() {
           <label className="flex items-start gap-4 px-5 py-4 border-b cursor-pointer hover:bg-gray-50 transition-colors" style={{ borderColor: '#f0ece4' }}>
             <MapPin className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: '#1B2B5B' }} />
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-0.5">Cidade</p>
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-0.5">Cidade</p>
               <input
                 value={city}
                 onChange={e => setCity(e.target.value)}
@@ -296,7 +296,7 @@ export function HeroSearchForm() {
             <label className="flex items-start gap-4 px-5 py-4 border-b cursor-pointer hover:bg-gray-50 transition-colors" style={{ borderColor: '#f0ece4' }}>
               <Home className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: '#1B2B5B' }} />
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-0.5">Bairro</p>
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-0.5">Bairro</p>
                 <input
                   value={neighborhood}
                   onChange={e => { setNeighborhood(e.target.value); setShowSuggestions(true) }}
@@ -319,10 +319,10 @@ export function HeroSearchForm() {
                     }}
                     className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm hover:bg-gray-50 transition-colors border-b border-gray-50 last:border-0"
                   >
-                    <MapPin className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                    <MapPin className="w-4 h-4 text-gray-500 flex-shrink-0" />
                     <div>
                       <span className="font-medium text-gray-800">{s.neighborhood}</span>
-                      {s.city && <span className="text-gray-400 ml-1.5">· {s.city}</span>}
+                      {s.city && <span className="text-gray-500 ml-1.5">· {s.city}</span>}
                     </div>
                   </button>
                 ))}
@@ -335,7 +335,7 @@ export function HeroSearchForm() {
             <label className="flex items-start gap-3 px-5 py-4 border-r cursor-pointer hover:bg-gray-50 transition-colors relative" style={{ borderColor: '#f0ece4' }}>
               <DollarSign className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: '#1B2B5B' }} />
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-0.5">
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-0.5">
                   {purpose === 'RENT' ? 'Aluguel até' : 'Valor até'}
                 </p>
                 <div className="relative">
@@ -348,7 +348,7 @@ export function HeroSearchForm() {
                       <option key={o.label} value={o.value}>{o.label}</option>
                     ))}
                   </select>
-                  <ChevronDown className="absolute right-0 top-0.5 w-4 h-4 text-gray-400 pointer-events-none" />
+                  <ChevronDown className="absolute right-0 top-0.5 w-4 h-4 text-gray-500 pointer-events-none" />
                 </div>
               </div>
             </label>
@@ -356,7 +356,7 @@ export function HeroSearchForm() {
             <label className="flex items-start gap-3 px-5 py-4 cursor-pointer hover:bg-gray-50 transition-colors relative">
               <BedDouble className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: '#1B2B5B' }} />
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-0.5">Quartos</p>
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-0.5">Quartos</p>
                 <div className="relative">
                   <select
                     value={bedrooms}
@@ -367,7 +367,7 @@ export function HeroSearchForm() {
                       <option key={o.label} value={o.value}>{o.label}</option>
                     ))}
                   </select>
-                  <ChevronDown className="absolute right-0 top-0.5 w-4 h-4 text-gray-400 pointer-events-none" />
+                  <ChevronDown className="absolute right-0 top-0.5 w-4 h-4 text-gray-500 pointer-events-none" />
                 </div>
               </div>
             </label>

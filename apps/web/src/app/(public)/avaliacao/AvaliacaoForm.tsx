@@ -103,7 +103,7 @@ export function AvaliacaoForm() {
     <div>
       {/* Progress bar */}
       <div className="mb-6">
-        <div className="flex justify-between text-xs text-gray-400 mb-2">
+        <div className="flex justify-between text-xs text-gray-500 mb-2">
           <span>Etapa {step} de {totalSteps}</span>
           <span>{Math.round(progress)}% concluído</span>
         </div>

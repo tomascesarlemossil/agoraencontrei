@@ -79,13 +79,13 @@ export function PropertyFiltersForm({ initialValues }: Props) {
       {/* Main row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
         <div className="relative lg:col-span-2 flex items-center">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
           <input
             name="search"
             value={searchValue}
             onChange={e => setSearchValue(e.target.value)}
             placeholder="Buscar bairro, cidade, código..."
-            className="w-full pl-9 pr-9 py-2.5 text-sm rounded-xl border focus:outline-none focus:ring-2 focus:ring-[#1B2B5B] transition-all text-gray-800 placeholder:text-gray-400"
+            className="w-full pl-9 pr-9 py-2.5 text-sm rounded-xl border focus:outline-none focus:ring-2 focus:ring-[#1B2B5B] transition-all text-gray-800 placeholder:text-gray-500"
             style={{ borderColor: '#e0dbd0' }}
           />
           <span className="absolute right-2 top-1/2 -translate-y-1/2">
@@ -163,7 +163,7 @@ export function PropertyFiltersForm({ initialValues }: Props) {
               type="number"
               defaultValue={initialValues.minPrice}
               placeholder="0"
-              className="w-full px-3 py-2 text-sm rounded-xl border focus:outline-none text-gray-800 placeholder:text-gray-400"
+              className="w-full px-3 py-2 text-sm rounded-xl border focus:outline-none text-gray-800 placeholder:text-gray-500"
               style={{ borderColor: '#e0dbd0' }}
             />
           </div>
@@ -174,7 +174,7 @@ export function PropertyFiltersForm({ initialValues }: Props) {
               type="number"
               defaultValue={initialValues.maxPrice}
               placeholder="Sem limite"
-              className="w-full px-3 py-2 text-sm rounded-xl border focus:outline-none text-gray-800 placeholder:text-gray-400"
+              className="w-full px-3 py-2 text-sm rounded-xl border focus:outline-none text-gray-800 placeholder:text-gray-500"
               style={{ borderColor: '#e0dbd0' }}
             />
           </div>
@@ -204,7 +204,7 @@ export function PropertyFiltersForm({ initialValues }: Props) {
               name="city"
               defaultValue={initialValues.city}
               placeholder="Ex: Franca"
-              className="w-full px-3 py-2 text-sm rounded-xl border focus:outline-none text-gray-800 placeholder:text-gray-400"
+              className="w-full px-3 py-2 text-sm rounded-xl border focus:outline-none text-gray-800 placeholder:text-gray-500"
               style={{ borderColor: '#e0dbd0' }}
             />
           </div>
@@ -214,7 +214,7 @@ export function PropertyFiltersForm({ initialValues }: Props) {
               name="neighborhood"
               defaultValue={initialValues.neighborhood}
               placeholder="Ex: Centro"
-              className="w-full px-3 py-2 text-sm rounded-xl border focus:outline-none text-gray-800 placeholder:text-gray-400"
+              className="w-full px-3 py-2 text-sm rounded-xl border focus:outline-none text-gray-800 placeholder:text-gray-500"
               style={{ borderColor: '#e0dbd0' }}
             />
           </div>
@@ -225,7 +225,7 @@ export function PropertyFiltersForm({ initialValues }: Props) {
               type="number"
               defaultValue={initialValues.minArea}
               placeholder="0"
-              className="w-full px-3 py-2 text-sm rounded-xl border focus:outline-none text-gray-800 placeholder:text-gray-400"
+              className="w-full px-3 py-2 text-sm rounded-xl border focus:outline-none text-gray-800 placeholder:text-gray-500"
               style={{ borderColor: '#e0dbd0' }}
             />
           </div>
@@ -236,7 +236,7 @@ export function PropertyFiltersForm({ initialValues }: Props) {
               type="number"
               defaultValue={initialValues.maxArea}
               placeholder="Sem limite"
-              className="w-full px-3 py-2 text-sm rounded-xl border focus:outline-none text-gray-800 placeholder:text-gray-400"
+              className="w-full px-3 py-2 text-sm rounded-xl border focus:outline-none text-gray-800 placeholder:text-gray-500"
               style={{ borderColor: '#e0dbd0' }}
             />
           </div>

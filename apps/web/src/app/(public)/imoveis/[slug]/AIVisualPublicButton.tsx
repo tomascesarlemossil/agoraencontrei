@@ -189,7 +189,7 @@ export function AIVisualPublicButton({ propertySlug, images, title }: Props) {
               </div>
               <button
                 onClick={handleClose}
-                className="ml-4 p-1.5 rounded-xl text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors flex-shrink-0"
+                className="ml-4 p-1.5 rounded-xl text-gray-500 hover:text-gray-600 hover:bg-gray-100 transition-colors flex-shrink-0"
                 aria-label="Fechar"
               >
                 <X className="h-5 w-5" />
@@ -280,7 +280,7 @@ export function AIVisualPublicButton({ propertySlug, images, title }: Props) {
                       rows={4}
                       required
                       placeholder="Descreva a reforma ou decoração desejada... Ex: quero um quarto moderno com paredes cinza, cama king, iluminação LED embutida e closet planejado."
-                      className="w-full rounded-xl border px-4 py-3 text-sm text-gray-800 placeholder:text-gray-400 resize-none focus:outline-none focus:ring-2 transition-all"
+                      className="w-full rounded-xl border px-4 py-3 text-sm text-gray-800 placeholder:text-gray-500 resize-none focus:outline-none focus:ring-2 transition-all"
                       style={{ borderColor: '#ddd9d0' }}
                       onFocus={e => (e.target.style.borderColor = '#C9A84C')}
                       onBlur={e => (e.target.style.borderColor = '#ddd9d0')}
@@ -303,7 +303,7 @@ export function AIVisualPublicButton({ propertySlug, images, title }: Props) {
                           <option key={s.value} value={s.value}>{s.label}</option>
                         ))}
                       </select>
-                      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+                      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500 pointer-events-none" />
                     </div>
                   </div>
 
@@ -333,7 +333,7 @@ export function AIVisualPublicButton({ propertySlug, images, title }: Props) {
                   </button>
 
                   {loading && jobId && (
-                    <p className="text-xs text-center text-gray-400">
+                    <p className="text-xs text-center text-gray-500">
                       Isso pode levar até 30 segundos. Por favor aguarde...
                     </p>
                   )}

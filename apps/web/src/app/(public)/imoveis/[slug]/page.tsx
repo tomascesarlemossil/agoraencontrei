@@ -358,7 +358,7 @@ export default async function PropertyDetailPage({ params }: { params: { slug: s
 
       {/* ── Breadcrumb ─────────────────────────────────────── */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-4 pb-2">
-        <nav className="flex items-center gap-1.5 text-sm text-gray-400 flex-wrap">
+        <nav className="flex items-center gap-1.5 text-sm text-gray-500 flex-wrap">
           <Link href="/" className="hover:text-gray-600 transition-colors">Início</Link>
           <ChevronRight className="w-3.5 h-3.5 flex-shrink-0" />
           <Link href="/imoveis" className="hover:text-gray-600 transition-colors">Imóveis</Link>
@@ -419,7 +419,7 @@ export default async function PropertyDetailPage({ params }: { params: { slug: s
                       <Star className="w-3 h-3 fill-current" /> Destaque
                     </span>
                   )}
-                  {p.reference && <span className="text-xs text-gray-400 ml-auto font-mono">Ref: {p.reference}</span>}
+                  {p.reference && <span className="text-xs text-gray-500 ml-auto font-mono">Ref: {p.reference}</span>}
                 </div>
 
                 {/* Title */}
@@ -450,7 +450,7 @@ export default async function PropertyDetailPage({ params }: { params: { slug: s
                     <div className={`flex items-baseline justify-between ${(iptu || p.condoFee) ? 'border-b pb-3 mb-3' : ''}`} style={{ borderColor: '#ede9df' }}>
                       <span className="font-bold text-sm" style={{ color: '#1B2B5B' }}>Locação</span>
                       <span className="text-2xl font-bold" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>
-                        {fmtCurrency(Number(p.priceRent))}<span className="text-sm font-normal text-gray-400">/mês</span>
+                        {fmtCurrency(Number(p.priceRent))}<span className="text-sm font-normal text-gray-500">/mês</span>
                       </span>
                     </div>
                   )}
@@ -489,7 +489,7 @@ export default async function PropertyDetailPage({ params }: { params: { slug: s
                 </div>
 
                 {/* Views + year */}
-                <div className="flex items-center gap-4 mt-4 pt-4 border-t text-xs text-gray-400" style={{ borderColor: '#f0ece4' }}>
+                <div className="flex items-center gap-4 mt-4 pt-4 border-t text-xs text-gray-500" style={{ borderColor: '#f0ece4' }}>
                   <span className="flex items-center gap-1"><Eye className="w-3.5 h-3.5" /> {p.views ?? 0} visualizações</span>
                   {p.yearBuilt && <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" /> Construído em {p.yearBuilt}</span>}
                 </div>
@@ -726,7 +726,7 @@ export default async function PropertyDetailPage({ params }: { params: { slug: s
                     showExactLocation={p.showExactLocation ?? false}
                   />
                   {!(p.showExactLocation) && (
-                    <p className="text-xs text-gray-400 mt-3 text-center">
+                    <p className="text-xs text-gray-500 mt-3 text-center">
                       * Localização aproximada para preservar a privacidade do imóvel.
                     </p>
                   )}
@@ -803,7 +803,7 @@ export default async function PropertyDetailPage({ params }: { params: { slug: s
             {/* Company info */}
             {p.company && (
               <div className="bg-white rounded-2xl border p-4 text-center" style={{ borderColor: '#ddd9d0' }}>
-                <p className="text-[10px] text-gray-400 uppercase tracking-wide mb-1">Anúncio de</p>
+                <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">Anúncio de</p>
                 <p className="font-bold text-sm" style={{ color: '#1B2B5B' }}>{p.company.name}</p>
                 {p.company.phone && (
                   <a href={`tel:${p.company.phone}`} className="text-xs mt-0.5 block hover:opacity-80 flex items-center justify-center gap-1"
@@ -811,7 +811,7 @@ export default async function PropertyDetailPage({ params }: { params: { slug: s
                     <Phone className="w-3 h-3" />{p.company.phone}
                   </a>
                 )}
-                <p className="text-[10px] text-gray-400 mt-1">CRECI 61053-F</p>
+                <p className="text-[10px] text-gray-500 mt-1">CRECI 61053-F</p>
               </div>
             )}
           </div>
@@ -854,7 +854,7 @@ function BrokerCard({ broker, whatsappNum, whatsappMsg, visitMsg, p }: {
           <div className="flex items-baseline justify-between mb-1">
             <span className="font-bold text-sm" style={{ color: '#1B2B5B' }}>Locação</span>
             <span className="text-xl font-bold" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>
-              {fmtCurr(Number(p.priceRent))}<span className="text-xs font-normal text-gray-400">/mês</span>
+              {fmtCurr(Number(p.priceRent))}<span className="text-xs font-normal text-gray-500">/mês</span>
             </span>
           </div>
         )}
@@ -880,7 +880,7 @@ function BrokerCard({ broker, whatsappNum, whatsappMsg, visitMsg, p }: {
 
       {/* Broker info */}
       <div className="p-5">
-        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Gostou do imóvel?</p>
+        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Gostou do imóvel?</p>
 
         {/* CTA buttons */}
         <div className="space-y-2.5 mb-5">
@@ -914,7 +914,7 @@ function BrokerCard({ broker, whatsappNum, whatsappMsg, visitMsg, p }: {
                 propertyPrice={p.price ? Number(p.price) : undefined}
                 propertyReference={p.reference}
               />
-              <p className="text-[10px] text-gray-400 text-center mt-1.5">Negocie 100% online · Retorno em até 24h</p>
+              <p className="text-[10px] text-gray-500 text-center mt-1.5">Negocie 100% online · Retorno em até 24h</p>
             </div>
           )}
         </div>
@@ -934,7 +934,7 @@ function BrokerCard({ broker, whatsappNum, whatsappMsg, visitMsg, p }: {
           )}
           <div className="min-w-0">
             <p className="font-bold text-sm truncate" style={{ color: '#1B2B5B' }}>{broker?.name ?? 'Imobiliária Lemos'}</p>
-            <p className="text-xs text-gray-400">{(broker as any)?.cargo ?? 'Corretor de Imóveis'}</p>
+            <p className="text-xs text-gray-500">{(broker as any)?.cargo ?? 'Corretor de Imóveis'}</p>
             {broker?.creciNumber && <p className="text-xs font-medium" style={{ color: '#C9A84C' }}>CRECI {broker.creciNumber}</p>}
             {!broker?.creciNumber && <p className="text-xs font-medium" style={{ color: '#C9A84C' }}>CRECI 279051-f</p>}
           </div>

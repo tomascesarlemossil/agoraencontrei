@@ -132,7 +132,7 @@ export function PropertyMap({ latitude, longitude, city, neighborhood, state, la
 
   if (error) {
     return (
-      <div className="h-64 rounded-xl bg-gray-100 flex flex-col items-center justify-center gap-2 text-gray-400">
+      <div className="h-64 rounded-xl bg-gray-100 flex flex-col items-center justify-center gap-2 text-gray-500">
         <MapPin className="w-8 h-8" />
         <p className="text-sm">Localização não disponível</p>
       </div>

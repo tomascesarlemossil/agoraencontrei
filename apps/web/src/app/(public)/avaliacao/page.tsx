@@ -110,7 +110,7 @@ export default function AvaliacaoPage() {
                   <h2 className="text-xl font-bold mb-1" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>
                     Solicitar Avaliação Gratuita
                   </h2>
-                  <p className="text-gray-400 text-sm">Preencha os dados do seu imóvel em 3 etapas simples.</p>
+                  <p className="text-gray-500 text-sm">Preencha os dados do seu imóvel em 3 etapas simples.</p>
                 </div>
                 <AvaliacaoForm />
               </div>
@@ -134,7 +134,7 @@ export default function AvaliacaoPage() {
                       </div>
                       <div>
                         <p className="text-sm font-semibold" style={{ color: '#1B2B5B' }}>{b.title}</p>
-                        <p className="text-xs text-gray-400 mt-0.5 leading-relaxed">{b.desc}</p>
+                        <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">{b.desc}</p>
                       </div>
                     </div>
                   ))}

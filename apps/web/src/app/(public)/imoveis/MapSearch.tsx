@@ -483,7 +483,7 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
               <p className="font-semibold text-gray-900 text-sm">
                 {totalInPolygon > 0 ? `${totalInPolygon} imóvel${totalInPolygon !== 1 ? 'is' : ''} na área` : 'Imóveis selecionados'}
               </p>
-              <p className="text-xs text-gray-400 mt-0.5">
+              <p className="text-xs text-gray-500 mt-0.5">
                 {selectedNeighborhoods.slice(0, 2).join(', ')}
                 {selectedNeighborhoods.length > 2 ? ` +${selectedNeighborhoods.length - 2} bairros` : ''}
               </p>
@@ -511,7 +511,7 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
               <div className="w-6 h-6 border-2 border-[#1B2B5B] border-t-transparent rounded-full animate-spin" />
             </div>
           ) : properties.length === 0 ? (
-            <div className="text-center py-8 text-gray-400 text-sm">
+            <div className="text-center py-8 text-gray-500 text-sm">
               Nenhum imóvel encontrado nesta área
             </div>
           ) : (
@@ -544,12 +544,12 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
                   <div className="p-2.5">
                     <p className="text-xs font-semibold text-gray-800 line-clamp-2 leading-tight">{p.title}</p>
                     {p.neighborhood && (
-                      <p className="text-xs text-gray-400 mt-1 flex items-center gap-0.5">
+                      <p className="text-xs text-gray-500 mt-1 flex items-center gap-0.5">
                         <MapPin className="w-3 h-3 flex-shrink-0" />
                         {p.neighborhood}
                       </p>
                     )}
-                    <div className="flex items-center gap-2 mt-1.5 text-xs text-gray-400">
+                    <div className="flex items-center gap-2 mt-1.5 text-xs text-gray-500">
                       {p.bedrooms > 0 && <span className="flex items-center gap-0.5"><BedDouble className="w-3 h-3" />{p.bedrooms}</span>}
                       {p.totalArea && <span className="flex items-center gap-0.5"><Maximize className="w-3 h-3" />{p.totalArea}m²</span>}
                     </div>

@@ -201,7 +201,7 @@ export function PropostaOnline({ propertyId, propertyTitle, propertyPrice, prope
               Nossa equipe irá analisar junto ao proprietário e retornará em até <strong>24 horas</strong>.
             </p>
             {propertyReference && (
-              <p className="text-xs text-gray-400 mb-6">Código do imóvel: <strong>{propertyReference}</strong></p>
+              <p className="text-xs text-gray-500 mb-6">Código do imóvel: <strong>{propertyReference}</strong></p>
             )}
             <button
               onClick={() => { setOpen(false); setStep('dados'); setForm(INITIAL) }}
@@ -226,7 +226,7 @@ export function PropostaOnline({ propertyId, propertyTitle, propertyPrice, prope
                 return (
                   <div key={s.key} className="flex items-center">
                     <div className={`flex items-center gap-1 px-2 py-1 rounded-lg transition-colors ${
-                      current ? 'text-white' : done ? 'text-green-600' : 'text-gray-400'
+                      current ? 'text-white' : done ? 'text-green-600' : 'text-gray-500'
                     }`} style={current ? { backgroundColor: '#C9A84C' } : {}}>
                       {s.icon}
                       <span className="hidden sm:inline">{s.label}</span>
@@ -501,7 +501,7 @@ export function PropostaOnline({ propertyId, propertyTitle, propertyPrice, prope
                       </div>
                     )}
                   </div>
-                  <p className="text-xs text-gray-400 leading-relaxed">
+                  <p className="text-xs text-gray-500 leading-relaxed">
                     Ao enviar esta proposta, você concorda que a Imobiliária Lemos entrará em contato para negociação.
                     Esta proposta não constitui contrato e está sujeita à aprovação do proprietário.
                   </p>
