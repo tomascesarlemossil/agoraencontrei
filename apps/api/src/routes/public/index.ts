@@ -294,14 +294,24 @@ export default async function publicRoutes(app: FastifyInstance) {
         })
       }
 
-      // Step 2: same purpose only (drop type)
+      // Step 2: same purpose only (drop type) — but keep residential/rural separation
       if (fallbackItems.length < 3 && filters.purpose) {
+        const RESIDENTIAL = ['HOUSE','APARTMENT','STUDIO','KITNET','PENTHOUSE','CONDO']
+        const RURAL = ['FARM','RANCH']
+        const isResidentialSearch = filters.type && RESIDENTIAL.includes(filters.type)
+        const isRuralSearch = filters.type && RURAL.includes(filters.type)
         const purposeFilter: any = filters.purpose === 'RENT' ? { purpose: { in: ['RENT', 'BOTH'] } }
           : filters.purpose === 'SALE' ? { purpose: { in: ['SALE', 'BOTH'] } }
           : { purpose: filters.purpose }
         const existing = new Set(fallbackItems.map((p: any) => p.id))
+        // When searching for residential, exclude rural types and vice versa
+        const typeFilter = isResidentialSearch
+          ? { type: { in: RESIDENTIAL } }
+          : isRuralSearch
+          ? { type: { in: RURAL } }
+          : {}
         const more = await app.prisma.property.findMany({
-          where: { ...baseWhere, ...purposeFilter, id: { notIn: Array.from(existing) as string[] } },
+          where: { ...baseWhere, ...purposeFilter, ...typeFilter, id: { notIn: Array.from(existing) as string[] } },
           select: PUBLIC_PROPERTY_SELECT,
           orderBy: [{ isFeatured: 'desc' }, { createdAt: 'desc' }],
           take: limit - fallbackItems.length,
@@ -333,10 +343,19 @@ export default async function publicRoutes(app: FastifyInstance) {
         fallbackItems = [...fallbackItems, ...more]
       }
 
-      // Step 5: any active featured properties as last resort
+      // Step 5: any active featured properties as last resort — keep residential/rural separation
       if (fallbackItems.length === 0) {
+        const RESIDENTIAL_LAST = ['HOUSE','APARTMENT','STUDIO','KITNET','PENTHOUSE','CONDO'] as const
+        const RURAL_LAST = ['FARM','RANCH'] as const
+        const isResidentialSearch = filters.type && (RESIDENTIAL_LAST as readonly string[]).includes(filters.type)
+        const isRuralSearch = filters.type && (RURAL_LAST as readonly string[]).includes(filters.type)
+        const typeFilter: any = isResidentialSearch
+          ? { type: { in: RESIDENTIAL_LAST } }
+          : isRuralSearch
+          ? { type: { in: RURAL_LAST } }
+          : {}
         fallbackItems = await app.prisma.property.findMany({
-          where: baseWhere,
+          where: { ...baseWhere, ...typeFilter },
           select: PUBLIC_PROPERTY_SELECT,
           orderBy: [{ isFeatured: 'desc' }, { createdAt: 'desc' }],
           take: limit,

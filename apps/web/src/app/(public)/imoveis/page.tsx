@@ -80,8 +80,17 @@ async function fetchProperties(params: SearchParams) {
   }
 }
 
+// Tipos residenciais/urbanos — nunca misturar com rurais no fallback
+const RESIDENTIAL_TYPES = ['HOUSE', 'APARTMENT', 'STUDIO', 'KITNET', 'PENTHOUSE', 'CONDO']
+const RURAL_TYPES = ['FARM', 'RANCH']
+
 // Fetch "closest alternatives" when exact search yields 0 results
 async function fetchAlternatives(params: SearchParams) {
+  // Determine if the original search was for residential types
+  const isResidential = params.type && RESIDENTIAL_TYPES.includes(params.type.toUpperCase())
+  const isRural = params.type && RURAL_TYPES.includes(params.type.toUpperCase())
+
+  // Build attempts — never drop to "just purpose" if that would mix rural/residential
   const attempts: Record<string, string>[] = [
     // Relax price
     { maxPrice: '', minPrice: '' },
@@ -89,12 +98,15 @@ async function fetchAlternatives(params: SearchParams) {
     { bedrooms: '' },
     // Relax neighborhood but keep city + type + purpose
     { neighborhood: '', search: '' },
-    // Relax type but keep city + purpose
-    { type: '', neighborhood: '', search: '' },
-    // Just city + purpose
-    { type: '', neighborhood: '', search: '', maxPrice: '', minPrice: '', bedrooms: '' },
-    // Just purpose
-    { type: '', neighborhood: '', search: '', city: '', maxPrice: '', minPrice: '', bedrooms: '' },
+    // Relax type but keep city + purpose (only if not residential — avoid mixing with farms)
+    ...(!isResidential ? [{ type: '', neighborhood: '', search: '' }] : []),
+    // Just city + purpose (keep type for residential to avoid showing farms)
+    ...(isResidential
+      ? [{ neighborhood: '', search: '', maxPrice: '', minPrice: '', bedrooms: '' }]
+      : [{ type: '', neighborhood: '', search: '', maxPrice: '', minPrice: '', bedrooms: '' }]
+    ),
+    // City + purpose + residential types filter (last resort for residential)
+    ...(isResidential ? [{ neighborhood: '', search: '', maxPrice: '', minPrice: '', bedrooms: '', city: params.city || 'Franca' }] : []),
   ]
 
   for (const override of attempts) {
@@ -103,7 +115,17 @@ async function fetchAlternatives(params: SearchParams) {
       const res = await fetch(`${API_URL}/api/v1/public/properties?${qs}`, { next: { revalidate: 60 } })
       if (!res.ok) continue
       const data = await res.json()
-      if ((data.data ?? []).length > 0) return { items: data.data, relaxedBy: override }
+      const items: any[] = data.data ?? []
+      if (items.length === 0) continue
+
+      // Filter out rural types when searching for residential
+      const filtered = isResidential
+        ? items.filter((p: any) => !RURAL_TYPES.includes(p.type))
+        : isRural
+        ? items.filter((p: any) => RURAL_TYPES.includes(p.type))
+        : items
+
+      if (filtered.length > 0) return { items: filtered, relaxedBy: override }
     } catch {}
   }
   return { items: [], relaxedBy: {} }

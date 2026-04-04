@@ -288,10 +288,15 @@ export async function interpretSearchQuery(query: string): Promise<SearchFilters
 
 Busca: "${query}"
 
+CONTEXTO IMPORTANTE — A imobiliária atua principalmente em FRANCA/SP e região. Os seguintes nomes são BAIRROS de Franca (NÃO são cidades):
+CENTRO, CIDADE NOVA, ESTAÇÃO, JARDIM AEROPORTO, JARDIM ALVORADA, JARDIM BARÃO, JARDIM BOTÂNICO, JARDIM BRASILÂNDIA, JARDIM CENTENÁRIO, JARDIM CONSOLAÇÃO, JARDIM DO ÉDEN, JARDIM FRANCANO, JARDIM INTEGRAÇÃO, JARDIM LIMA, JARDIM LÍBANO, JARDIM NATAL, JARDIM NOÊMIA, JARDIM PALESTINA, JARDIM PAULISTA, JARDIM PAULISTANO, JARDIM PIRATININGA, JARDIM PORTINARI, JARDIM PULICANO, JARDIM REDENTOR, JARDIM RIVIERA, JARDIM SAMELLO, JARDIM SANTA LÚCIA, JARDIM SANTANA, JARDIM TRÊS COLINAS, JARDIM VENEZA, JARDIM ÂNGELA ROSA, MIRAMONTES, MORADA DO VERDE, PARQUE DAS ÁRVORES, PARQUE DO CASTELO, PARQUE DO MIRANTE, PARQUE DOS LIMA, PARQUE DOUTOR CARRÃO, PARQUE FRANVILLE, PARQUE MOEMA, PARQUE MUNDO NOVO, PARQUE UNIVERSITÁRIO, PARQUE VICENTE LEPORACE, RECANTO DO ITAMBÉ, RECREIO CAMPO BELO, RESERVA ABAETÉ, RESIDENCIAL AMAZONAS, RESIDENCIAL BALDASSARI, RESIDENCIAL COLINA DO ESPRAIADO, RESIDENCIAL DOURADO, RESIDENCIAL MEIRELES, RESIDENCIAL NOSSO LAR, RESIDENCIAL OLIVITO, RESIDENCIAL PARAÍSO, RESIDENCIAL SAN DIEGO, RESIDENCIAL SÃO JERÔNIMO, RESIDENCIAL ZANETTI, SANTO AGOSTINHO, SÃO JOAQUIM, SÃO JOSÉ, VALE DA LUA AZUL, VEREDAS DE FRANCA, VILA APARECIDA, VILA CHICO JÚLIO, VILA FLORES, VILA HÍPICA, VILA INDUSTRIAL, VILA SANTA CRUZ, VILA SANTA RITA, VILA SANTOS DUMONT, VILA SCARABUCCI, VILA SÃO SEBASTIÃO, VILLA PIEMONTE, VILLA SÃO VICENTE, VILLAGGIO DI FIRENZE, VILLAGIO MUNDO NOVO, FRANCA PÓLO CLUB, ESPLANADA PRIMO MENEGHETTI, PARQUE RESIDENCIAL NOVA FRANCA
+
+Se a busca mencionar qualquer um desses nomes (ou variação próxima), use neighborhood e city="Franca", NÃO use city com esse nome.
+
 REGRAS OBRIGATÓRIAS:
 
 1. TIPO DO IMÓVEL — detecte mesmo abreviado ou errado:
-   casa/casinha/cs → HOUSE
+   casa/casinha/cs/sobrado → HOUSE
    apartamento/apto/ap/apartamen → APARTMENT
    terreno/lote/terra → LAND
    fazenda/sítio/sitio/chácara/chacara → FARM
@@ -317,16 +322,16 @@ REGRAS OBRIGATÓRIAS:
    "a partir de X" / "minimo X" / "de X" → minPrice
    faixa "de X a Y" / "entre X e Y" → minPrice + maxPrice
 
-5. CIDADE — identifique qualquer cidade brasileira mencionada, mesmo com erros de grafia. Corrija o nome para a grafia correta:
-   "guarulhos" → "Guarulhos"
-   "s paulo" / "sp" / "são paulo" → "São Paulo"
-   "rj" / "rio" → "Rio de Janeiro"
-   "campinas" → "Campinas"
-   Corrija o nome da cidade para a grafia correta em português.
+5. CIDADE — identifique qualquer cidade brasileira mencionada. ATENÇÃO: nomes de bairros de Franca listados acima NÃO são cidades. Corrija o nome da cidade para a grafia correta em português. Se não há cidade explícita mas há bairro de Franca, use city="Franca".
 
-6. BAIRRO — se mencionado, extraia no campo neighborhood
+6. BAIRRO — se mencionado (mesmo parcialmente), extraia no campo neighborhood e normalize para o nome mais próximo da lista acima:
+   "Santa Cruz" → "Vila Santa Cruz"
+   "São José" / "Sao Jose" → "São José"
+   "Jardim Paulista" → "Jardim Paulista"
+   "Centro" → "Centro"
+   "Paulistano" → "Jardim Paulistano"
 
-7. CARACTERÍSTICAS EXTRAS — coloque em search (piscina, varanda, churrasqueira, condomínio, etc.)
+7. CARACTERÍSTICAS EXTRAS — coloque em search (piscina, varanda, churrasqueira, condomínio fechado, etc.)
 
 EXEMPLOS:
 "guarulhos ate 500 mil" → {"city":"Guarulhos","maxPrice":500000,"search":""}
@@ -335,6 +340,10 @@ EXEMPLOS:
 "kitnet alugar" → {"type":"KITNET","purpose":"RENT","search":""}
 "imovel com piscina guarulhos" → {"city":"Guarulhos","search":"piscina"}
 "fazenda riberao preto ate 2 mi" → {"type":"FARM","city":"Ribeirão Preto","maxPrice":2000000,"search":""}
+"casas a venda Santa Cruz" → {"type":"HOUSE","purpose":"SALE","neighborhood":"Vila Santa Cruz","city":"Franca","search":""}
+"apartamento jardim paulista alugar" → {"type":"APARTMENT","purpose":"RENT","neighborhood":"Jardim Paulista","city":"Franca","search":""}
+"casa sao jose franca" → {"type":"HOUSE","neighborhood":"São José","city":"Franca","search":""}
+"imovel no centro de franca" → {"neighborhood":"Centro","city":"Franca","search":""}
 
 IMPORTANTE: Seja agressivo na extração. Prefira extrair um campo com confiança média a não extrair nada. Se não há campo search útil, retorne "".
 
