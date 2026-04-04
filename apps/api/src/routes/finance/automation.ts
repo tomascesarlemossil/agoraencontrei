@@ -386,10 +386,10 @@ export default async function financeAutomationRoutes(app: FastifyInstance) {
           billingType,
           value:             Number(rental.totalAmount ?? rental.rentAmount ?? 0),
           dueDate,
-          description:       `Aluguel ${rental.contract?.propertyAddress ?? ''} — ${new Date(dueDate).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}`,
+          description:       `Aluguel ${rental.contract?.propertyAddress ?? ''} — ${new Date(dueDate).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}\nNAO RECEBER APOS 5 DIAS DO VENCIMENTO\nApos o vencto cobrar multa de 10%\nApos o vencto cobrar juros de mora de 1% ao mes`,
           externalReference: rental.id,
-          fine:              { value: 2 },     // 2% multa
-          interest:          { value: 1 },     // 1% ao mês
+          fine:              { value: 10 },    // 10% multa (padrão Imobiliária Lemos)
+          interest:          { value: 1 },    // 1% ao mês juros de mora
         })
 
         // Criar invoice vinculado ao rental

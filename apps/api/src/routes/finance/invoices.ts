@@ -103,16 +103,25 @@ export default async function invoiceRoutes(app: FastifyInstance) {
     // 2. Cria cobrança
     const dueDate = body.dueDate ?? invoice.dueDate?.toISOString().slice(0, 10) ?? new Date().toISOString().slice(0, 10)
 
+    // Montar descrição detalhada com lançamentos (padrão Imobiliária Lemos)
+    const lancamentos: string[] = []
+    if (invoice.mensagem) lancamentos.push(invoice.mensagem)
+    else lancamentos.push(`Aluguel — ${invoice.contract?.propertyAddress ?? invoice.legacyContractCode ?? ''}`)
+    if (invoice.instrucoes) lancamentos.push(invoice.instrucoes)
+    lancamentos.push('NAO RECEBER APOS 5 DIAS DO VENCIMENTO')
+    lancamentos.push(`Apos o vencto cobrar multa de 10% sobre o valor`)
+    lancamentos.push(`Apos o vencto cobrar juros de mora de 1% ao mes`)
+
     const charge = await createCharge({
       customer:          customer.id,
       billingType:       body.billingType ?? 'BOLETO',
       value:             Number(invoice.amount),
       dueDate,
-      description:       `Aluguel — ${invoice.contract?.propertyAddress ?? invoice.legacyContractCode ?? invoice.id}`,
+      description:       lancamentos.join('\n'),
       externalReference: invoice.id,
       ...(body.discount ? { discount: { value: body.discount, dueDateLimitDays: 5, type: 'PERCENTAGE' } } : {}),
-      fine:              { value: 2 },      // 2% multa
-      interest:          { value: 1 },      // 1% ao mês
+      fine:              { value: 10 },     // 10% multa (padrão Imobiliária Lemos)
+      interest:          { value: 1 },     // 1% ao mês juros de mora
     })
 
     // 3. Busca PIX se disponível

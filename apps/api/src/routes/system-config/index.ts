@@ -270,7 +270,7 @@ export const DEFAULT_SYSTEM_CONFIG = {
   financial: {
     defaultDueDay:          5,
     landlordDefaultDueDay:  10,
-    lateFeePercent:         2.0,
+    lateFeePercent:         10.0,
     interestPercentMonth:   1.0,
     currency:               'BRL',
     fiscalServicePercent:   8.0,
