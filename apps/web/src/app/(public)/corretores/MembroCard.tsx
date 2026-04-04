@@ -41,7 +41,9 @@ export function MembroCard({ membro }: { membro: Membro }) {
               <img
                 src={membro.photo}
                 alt={membro.name}
-                className="w-full h-full object-cover object-top"
+                className={`w-full h-full object-cover ${
+                  membro.photo.includes('icon') ? 'object-center' : 'object-top'
+                }`}
                 onError={() => setImgError(true)}
               />
             )}

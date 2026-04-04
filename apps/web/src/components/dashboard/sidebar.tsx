@@ -42,6 +42,7 @@ import {
   ReceiptText,
   Scale,
   DollarSign,
+  FolderOpen,
 } from 'lucide-react'
 import { useNotifications } from '@/stores/notifications.store'
 import { UserAvatar } from '@/components/ui/UserAvatar'
@@ -82,6 +83,7 @@ const lemosbankSubItems = [
   { href: '/dashboard/lemosbank/historico',             icon: Archive,      label: 'Histórico' },
   { href: '/dashboard/lemosbank/historico-financeiro',   icon: DollarSign,   label: 'Hist. Financeiro' },
   { href: '/dashboard/lemosbank/arquivo-morto',          icon: Archive,      label: 'Arquivo Morto' },
+  { href: '/dashboard/lemosbank/arquivo-documentos',      icon: FolderOpen,   label: 'Arquivo de Docs' },
 ]
 
 const juridicoSubItems = [

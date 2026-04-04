@@ -67,7 +67,7 @@ const EQUIPE = {
       creci: '279051-F',
       phone: '5516993116199',
       email: 'tomas@imobiliarialemos.com.br',
-      photo: '/corretores/tomas-lemos.jpg',  // ← trocar foto aqui
+      photo: '/corretores/tomas-lemos-crop.jpg',  // foto recortada
       specialties: ['Tecnologia Imobiliária', 'Marketing Digital', 'Inovação'],
       bio: 'Responsável pela transformação digital da Imobiliária Lemos, integrando tecnologia e inovação ao mercado.',
     },
@@ -80,7 +80,7 @@ const EQUIPE = {
       creci: '305711-F',
       phone: '5516992411378',
       email: 'gabriel@imobiliarialemos.com.br',
-      photo: '/corretores/gabriel-leal.jpg',  // foto real
+      photo: '/corretores/gabriel-icon-v2.jpg',  // icon dourado 400x400
       specialties: ['Lançamentos', 'Residencial', 'Atendimento Digital'],
       bio: 'Atendimento moderno e presença digital para encontrar o imóvel ideal. Especialista em lançamentos.',
     },
@@ -91,7 +91,7 @@ const EQUIPE = {
       creci: '',
       phone: '5516991275404',
       email: 'artmiriamchagas@gmail.com',
-      photo: '/corretores/miriam-chagas.jpg',  // foto real
+      photo: '/corretores/miriam-icon-final.png',  // icon dourado 600x600
       specialties: ['Residencial', 'Locação', 'Compra e Venda'],
       bio: 'Corretora dedicada ao atendimento personalizado, especialista em imóveis residenciais e locação.',
     },
@@ -102,7 +102,7 @@ const EQUIPE = {
       creci: '',
       phone: '5516991083946',
       email: 'lorenaassis@imobiliarialemos.com.br',
-      photo: '/corretores/lorena-sesso.jpg',  // foto real
+      photo: '/corretores/lorena-icon-final.png',  // icon dourado 600x600
       specialties: ['Residencial', 'Locação', 'Primeiro Imóvel'],
       bio: 'Especialista em ajudar clientes a realizarem o sonho do primeiro imóvel. Atendimento acolhedor.',
     },
@@ -113,7 +113,7 @@ const EQUIPE = {
       creci: '',
       phone: '5516993404117',
       email: 'laura@imobiliarialemos.com.br',
-      photo: '/corretores/laura-sesso.jpg',  // foto real
+      photo: '/corretores/laura-icon-final.png',  // icon dourado 600x600
       specialties: ['Residencial', 'Compra e Venda', 'Avaliação'],
       bio: 'Corretora comprometida com o melhor atendimento na compra, venda e avaliação de imóveis.',
     },
@@ -124,7 +124,7 @@ const EQUIPE = {
       creci: '',
       phone: '5516991957528',
       email: 'lucas@imobiliarialemos.com.br',
-      photo: '/corretores/lucas-rodrigues.jpg',  // foto real
+      photo: '/corretores/lucas-icon-final.png',  // icon dourado 600x600
       specialties: ['Residencial', 'Locação', 'Novos Empreendimentos'],
       bio: 'Corretor dinâmico e atualizado com as tendências do mercado imobiliário de Franca/SP.',
     },
@@ -137,7 +137,7 @@ const EQUIPE = {
       creci: '',
       phone: '5516981010004',
       email: 'geraldo@imobiliarialemos.com.br',
-      photo: '/corretores/geraldo.jpg',  // foto real
+      photo: '/corretores/geraldo-icon-final.png',  // icon dourado 600x600
       specialties: ['Administração', 'Suporte Operacional'],
       bio: 'Responsável pelo suporte administrativo e operacional, garantindo o funcionamento eficiente de todos os processos.',
     },
