@@ -380,6 +380,7 @@ model Property {
   coverImage      String?
   images          String[]
   videoUrl        String?
+  videos          String[]         // uploaded video URLs (mp4, mov, webm)
   virtualTourUrl  String?
 
   // Features & amenities

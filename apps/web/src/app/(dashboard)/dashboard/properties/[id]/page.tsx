@@ -15,7 +15,7 @@ import { Controller, useForm } from 'react-hook-form'
 import {
   ArrowLeft, Edit, Save, X, MapPin, BedDouble, Bath, Car, Ruler, Eye,
   Calendar, ImagePlus, Trash2, Star, Upload, Phone, Mail, User as UserIcon, ZoomIn,
-  Home, Globe, Settings, Shield, Briefcase, Building2, Search, MessageSquare, Clock, Wand2,
+  Home, Globe, Settings, Shield, Briefcase, Building2, Search, MessageSquare, Clock, Wand2, Film,
 } from 'lucide-react'
 import Link from 'next/link'
 import { useState, useRef, useEffect } from 'react'
@@ -25,6 +25,7 @@ import { PropertyImageLightbox } from '@/components/dashboard/PropertyImageLight
 import { PropertyFeaturesEditor } from '@/components/dashboard/PropertyFeaturesEditor'
 import { SocialPostPanel } from './SocialPostPanel'
 import { PhotoEditorPanel } from '@/components/dashboard/PhotoEditorPanel'
+import { MediaEditorModal } from '@/components/dashboard/MediaEditorModal'
 
 const STATUS_BADGE: Record<string, string> = {
   ACTIVE:   'bg-emerald-500/20 text-emerald-400',
@@ -364,16 +365,26 @@ export default function PropertyDetailPage() {
     onSuccess: () => router.push('/dashboard/properties'),
   })
 
-  // Image management
+  // Image & Video management
   const [uploadingImages, setUploadingImages] = useState(false)
+  const [uploadingVideos, setUploadingVideos] = useState(false)
   const [urlInput, setUrlInput] = useState('')
   const [showUrlInput, setShowUrlInput] = useState(false)
   const [showPhotoEditor, setShowPhotoEditor] = useState(false)
+  const [showMediaEditor, setShowMediaEditor] = useState(false)
+  const [newUploadedMedia, setNewUploadedMedia] = useState<{urls: string[], types: ('photo'|'video')[]} | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const videoInputRef = useRef<HTMLInputElement>(null)
 
   const saveImages = async (coverImage: string | undefined, images: string[]) => {
     const token = await getValidToken()
     await propertiesApi.update(token!, id, { coverImage, images } as any)
+    qc.invalidateQueries({ queryKey: ['property', id] })
+  }
+
+  const saveVideos = async (videos: string[]) => {
+    const token = await getValidToken()
+    await propertiesApi.update(token!, id, { videos } as any)
     qc.invalidateQueries({ queryKey: ['property', id] })
   }
 
@@ -390,10 +401,35 @@ export default function PropertyDetailPage() {
       const existing = p?.images ?? []
       const cover = p?.coverImage ?? urls[0]
       await saveImages(cover, [...existing, ...urls])
+      // Abrir editor automaticamente após upload
+      setNewUploadedMedia({ urls, types: urls.map(() => 'photo' as const) })
+      setShowMediaEditor(true)
     } catch (e: any) {
       alert(e.message || 'Erro ao fazer upload')
     } finally {
       setUploadingImages(false)
+    }
+  }
+
+  const handleVideoUpload = async (files: FileList | null) => {
+    if (!files || files.length === 0) return
+    setUploadingVideos(true)
+    try {
+      const token = await getValidToken()
+      const urls: string[] = []
+      for (const file of Array.from(files)) {
+        const { url } = await uploadApi.upload(token!, file)
+        urls.push(url)
+      }
+      const existing = (p as any)?.videos ?? []
+      await saveVideos([...existing, ...urls])
+      // Abrir editor automaticamente após upload de vídeo
+      setNewUploadedMedia({ urls, types: urls.map(() => 'video' as const) })
+      setShowMediaEditor(true)
+    } catch (e: any) {
+      alert(e.message || 'Erro ao fazer upload de vídeo')
+    } finally {
+      setUploadingVideos(false)
     }
   }
 
@@ -468,27 +504,33 @@ export default function PropertyDetailPage() {
         </div>
       </div>
 
-      {/* ── PHOTOS section (always visible) ──────────────────────────────── */}
+      {/* ── PHOTOS & VIDEOS section (always visible) ─────────────────────── */}
       <div className="bg-white/5 rounded-xl border border-white/10 p-4 space-y-3">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-2">
           <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider">
-            Fotos ({allPhotos.length})
+            Mídia · {allPhotos.length} foto{allPhotos.length !== 1 ? 's' : ''} · {((p as any)?.videos ?? []).length} vídeo{((p as any)?.videos ?? []).length !== 1 ? 's' : ''}
           </h3>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <button onClick={() => setShowUrlInput(v => !v)}
               className="flex items-center gap-1.5 text-xs text-white/50 hover:text-white transition-colors px-2 py-1 rounded-lg hover:bg-white/10">
-              <ImagePlus className="h-3.5 w-3.5" /> URL
+              <ImagePlus className="h-3.5 w-3.5" /> URL Foto
             </button>
             <button onClick={() => fileInputRef.current?.click()} disabled={uploadingImages}
               className="flex items-center gap-1.5 text-xs text-white/50 hover:text-white transition-colors px-2 py-1 rounded-lg hover:bg-white/10 disabled:opacity-40">
-              <Upload className="h-3.5 w-3.5" /> {uploadingImages ? 'Enviando...' : 'Upload'}
+              <Upload className="h-3.5 w-3.5" /> {uploadingImages ? 'Enviando...' : 'Fotos'}
             </button>
-            <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden"
+            <input ref={fileInputRef} type="file" accept="image/*,.heic,.heif" multiple className="hidden"
               onChange={(e) => handleFileUpload(e.target.files)} />
-            {allPhotos.length > 0 && (
-              <button onClick={() => setShowPhotoEditor(true)}
+            <button onClick={() => videoInputRef.current?.click()} disabled={uploadingVideos}
+              className="flex items-center gap-1.5 text-xs text-blue-400 hover:text-blue-300 transition-colors px-2 py-1 rounded-lg hover:bg-blue-400/10 border border-blue-400/20 disabled:opacity-40">
+              <Film className="h-3.5 w-3.5" /> {uploadingVideos ? 'Enviando...' : 'Vídeos'}
+            </button>
+            <input ref={videoInputRef} type="file" accept="video/mp4,video/mov,video/quicktime,video/webm,video/*" multiple className="hidden"
+              onChange={(e) => handleVideoUpload(e.target.files)} />
+            {(allPhotos.length > 0 || ((p as any)?.videos ?? []).length > 0) && (
+              <button onClick={() => setShowMediaEditor(true)}
                 className="flex items-center gap-1.5 text-xs text-yellow-400 hover:text-yellow-300 transition-colors px-2 py-1 rounded-lg hover:bg-yellow-400/10 border border-yellow-400/30">
-                <Wand2 className="h-3.5 w-3.5" /> Editar Fotos
+                <Wand2 className="h-3.5 w-3.5" /> Efeitos & Logo
               </button>
             )}
           </div>
@@ -550,7 +592,58 @@ export default function PropertyDetailPage() {
         )}
       </div>
 
-      {/* ── PHOTO EDITOR PANEL ──────────────────────────────────────────── */}
+      {/* ── VIDEOS GRID ──────────────────────────────────────── */}
+      {((p as any)?.videos ?? []).length > 0 && (
+        <div className="bg-white/5 rounded-xl border border-white/10 p-4 space-y-3">
+          <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider">
+            Vídeos ({((p as any)?.videos ?? []).length})
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {((p as any)?.videos ?? []).map((url: string, idx: number) => (
+              <div key={idx} className="relative group rounded-xl overflow-hidden bg-black border border-white/10">
+                <video src={url} className="w-full aspect-video object-contain" controls preload="metadata" />
+                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button
+                    onClick={async () => {
+                      const newVideos = ((p as any)?.videos ?? []).filter((_: string, i: number) => i !== idx)
+                      await saveVideos(newVideos)
+                    }}
+                    className="p-1.5 bg-red-500/80 rounded-lg hover:bg-red-500 text-white"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </button>
+                </div>
+                <div className="absolute bottom-2 left-2">
+                  <span className="bg-black/60 text-white/60 text-[10px] px-2 py-0.5 rounded-full">Vídeo {idx + 1}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── MEDIA EDITOR MODAL (efeitos + logo para fotos e vídeos) ─────── */}
+      {showMediaEditor && (
+        <MediaEditorModal
+          propertyId={id}
+          photos={allPhotos}
+          videos={(p as any)?.videos ?? []}
+          logoUrl={(p as any)?.company?.logoUrl ?? null}
+          token={''}  // token obtido via getValidToken dentro do onSave
+          newMediaUrls={newUploadedMedia?.urls}
+          newMediaTypes={newUploadedMedia?.types}
+          onSave={async (newPhotos, newVideos) => {
+            const cover = newPhotos[0]
+            const rest = newPhotos.slice(1)
+            await saveImages(cover, rest)
+            await saveVideos(newVideos)
+            setNewUploadedMedia(null)
+          }}
+          onClose={() => { setShowMediaEditor(false); setNewUploadedMedia(null) }}
+        />
+      )}
+
+      {/* ── PHOTO EDITOR PANEL (legado) ─────────────────────────── */}
       {showPhotoEditor && (
         <PhotoEditorPanel
           propertyId={id}
