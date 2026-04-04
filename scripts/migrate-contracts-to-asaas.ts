@@ -12,6 +12,13 @@
  */
 
 import { PrismaClient } from '@prisma/client'
+import { config } from 'dotenv'
+import { resolve } from 'path'
+
+// Carrega .env da API (apps/api/.env)
+config({ path: resolve(__dirname, '../apps/api/.env') })
+// Fallback: tenta .env da raiz também
+config({ path: resolve(__dirname, '../.env') })
 
 const ASAAS_BASE = 'https://api.asaas.com/v3'
 const ASAAS_KEY = process.env.ASAAS_API_KEY ?? ''
