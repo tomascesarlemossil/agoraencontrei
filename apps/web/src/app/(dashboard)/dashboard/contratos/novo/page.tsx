@@ -72,9 +72,13 @@ interface WizardData {
   endDate: string
   adjustmentIndex: 'IGPM' | 'IPCA' | 'FIXO'
   adjustmentPercent: string
+  adjustmentMonth: string
   penaltyPercent: string
   adminFeePercent: string
   caucaoValue: string
+  iptuAnnual: string
+  iptuParcels: string
+  bankFee: string
   fireInsurance: boolean
   fireInsuranceValue: string
   autoBoleto: boolean
@@ -205,8 +209,11 @@ const defaultData: WizardData = {
   guarantorId: '', guarantorName: '', guarantorCpf: '', guarantorRg: '',
   guarantorPhone: '', guarantorEmail: '', guarantorAddress: '',
   rentValue: '', dueDay: '5', startDate: '', endDate: '',
-  adjustmentIndex: 'IGPM', adjustmentPercent: '3', penaltyPercent: '3',
-  adminFeePercent: '10', caucaoValue: '', fireInsurance: true,
+  adjustmentIndex: 'IGPM', adjustmentPercent: '3', adjustmentMonth: '',
+  penaltyPercent: '3',
+  adminFeePercent: '10', caucaoValue: '',
+  iptuAnnual: '', iptuParcels: '8', bankFee: '3.50',
+  fireInsurance: true,
   fireInsuranceValue: '', autoBoleto: false, sendBoletoWhatsapp: false,
   sendBoletoEmail: false, contractHtml: '',
 }
@@ -477,8 +484,12 @@ Use estilos CSS inline para impressão A4. Inclua espaço para assinaturas ao fi
         rescissionDate:       data.endDate   || undefined,
         adjustmentIndex:      data.adjustmentIndex,
         adjustmentPercent:    Number(data.adjustmentPercent) || undefined,
+        adjustmentMonth:      Number(data.adjustmentMonth)   || undefined,
         penalty:              Number(data.penaltyPercent)    || undefined,
         commission:           Number(data.adminFeePercent)   || undefined,
+        iptuAnnual:           Number(data.iptuAnnual)        || undefined,
+        iptuParcels:          Number(data.iptuParcels)       || undefined,
+        bankFee:              data.bankFee !== '' ? Number(data.bankFee) : undefined,
         contractHtml:         data.contractHtml || undefined,
         guaranteeType:        data.guaranteeType || undefined,
         status:               'ACTIVE',
@@ -938,7 +949,7 @@ Use estilos CSS inline para impressão A4. Inclua espaço para assinaturas ao fi
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-4 gap-4">
             <div>
               <label className={labelCls()}>Índice de Reajuste</label>
               <select value={data.adjustmentIndex} onChange={e => set('adjustmentIndex', e.target.value)} className={inputCls()}>
@@ -950,6 +961,24 @@ Use estilos CSS inline para impressão A4. Inclua espaço para assinaturas ao fi
             <div>
               <label className={labelCls()}>% Reajuste Anual</label>
               <input type="number" min="0" step="0.01" value={data.adjustmentPercent} onChange={e => set('adjustmentPercent', e.target.value)} className={inputCls()} />
+            </div>
+            <div>
+              <label className={labelCls()}>Mês do Reajuste Anual</label>
+              <select value={data.adjustmentMonth} onChange={e => set('adjustmentMonth', e.target.value)} className={inputCls()}>
+                <option value="">Selecione...</option>
+                <option value="1">1 - Janeiro</option>
+                <option value="2">2 - Fevereiro</option>
+                <option value="3">3 - Março</option>
+                <option value="4">4 - Abril</option>
+                <option value="5">5 - Maio</option>
+                <option value="6">6 - Junho</option>
+                <option value="7">7 - Julho</option>
+                <option value="8">8 - Agosto</option>
+                <option value="9">9 - Setembro</option>
+                <option value="10">10 - Outubro</option>
+                <option value="11">11 - Novembro</option>
+                <option value="12">12 - Dezembro</option>
+              </select>
             </div>
             <div>
               <label className={labelCls()}>Multa Rescisão (%)</label>
@@ -965,6 +994,21 @@ Use estilos CSS inline para impressão A4. Inclua espaço para assinaturas ao fi
             <div>
               <label className={labelCls()}>Depósito Caução (R$)</label>
               <input type="number" min="0" step="0.01" value={data.caucaoValue} onChange={e => set('caucaoValue', e.target.value)} className={inputCls()} />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <label className={labelCls()}>IPTU Anual (R$)</label>
+              <input type="number" min="0" step="0.01" value={data.iptuAnnual} onChange={e => set('iptuAnnual', e.target.value)} placeholder="Ex: 1200.00" className={inputCls()} />
+            </div>
+            <div>
+              <label className={labelCls()}>Parcelas do IPTU</label>
+              <input type="number" min="1" max="12" value={data.iptuParcels} onChange={e => set('iptuParcels', e.target.value)} className={inputCls()} />
+            </div>
+            <div>
+              <label className={labelCls()}>Taxa Bancária por Boleto (R$)</label>
+              <input type="number" min="0" step="0.01" value={data.bankFee} onChange={e => set('bankFee', e.target.value)} className={inputCls()} />
             </div>
           </div>
 

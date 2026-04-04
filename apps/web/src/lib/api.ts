@@ -934,7 +934,14 @@ export const financeApi = {
       body: JSON.stringify({ status }),
     }),
 
-  pagarAluguel: (token: string, rentalId: string, body: { paidAmount?: number; paymentDate?: string }) =>
+  pagarAluguel: (token: string, rentalId: string, body: {
+    paidAmount?: number;
+    paymentDate?: string;
+    paymentMethod?: string;
+    proofReference?: string;
+    bankName?: string;
+    observations?: string;
+  }) =>
     request<any>(`/api/v1/finance/rentals/${rentalId}/pay`, {
       method: 'POST',
       token,

@@ -16,6 +16,11 @@ interface Rental {
   dueDate: string
   status: 'PENDING' | 'LATE' | 'PAID' | 'CANCELLED'
   totalAmount: number
+  rentAmount?: number
+  condoAmount?: number
+  iptuAmount?: number
+  iptuParcela?: string
+  bankFeeAmount?: number
   paidAmount?: number
   paymentDate?: string
 }
@@ -376,8 +381,15 @@ function RentalCard({ rental }: { rental: Rental }) {
           {rental.status === 'PAID' && rental.paymentDate
             ? `Pago em ${fmtDate(rental.paymentDate)}`
             : `Vencimento: ${fmtDate(rental.dueDate)}`}
-
         </p>
+        {(rental.rentAmount || rental.iptuAmount || rental.bankFeeAmount) && (
+          <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1">
+            {rental.rentAmount && <span className="text-[10px] text-gray-400">Aluguel: {fmt(rental.rentAmount)}</span>}
+            {rental.iptuAmount && <span className="text-[10px] text-gray-400">IPTU {rental.iptuParcela ?? ''}: {fmt(rental.iptuAmount)}</span>}
+            {rental.condoAmount && Number(rental.condoAmount) > 0 && <span className="text-[10px] text-gray-400">Cond: {fmt(Number(rental.condoAmount))}</span>}
+            {rental.bankFeeAmount && <span className="text-[10px] text-gray-400">Tx: {fmt(rental.bankFeeAmount)}</span>}
+          </div>
+        )}
       </div>
     </div>
   )

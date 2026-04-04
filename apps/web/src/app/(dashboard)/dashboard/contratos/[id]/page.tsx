@@ -476,9 +476,15 @@ export default function ContratoDetailPage() {
               </div>
             )}
             {contract.adjustmentIndex && (
-              <div className="col-span-2">
+              <div>
                 <p className="text-white/40 text-xs">Índice de Reajuste</p>
                 <p className="text-white">{contract.adjustmentIndex} {contract.adjustmentPercent != null && Number(contract.adjustmentPercent) > 0 ? `(${Number(contract.adjustmentPercent)}%)` : ''}</p>
+              </div>
+            )}
+            {(contract as any).adjustmentMonth && (
+              <div>
+                <p className="text-white/40 text-xs">Mês do Reajuste</p>
+                <p className="text-white">{['', 'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'][(contract as any).adjustmentMonth]}</p>
               </div>
             )}
             {contract.landlordDueDay && (
@@ -491,6 +497,18 @@ export default function ContratoDetailPage() {
               <div>
                 <p className="text-white/40 text-xs">Comissão Adm.</p>
                 <p className="text-white">{Number(contract.commission)}%</p>
+              </div>
+            )}
+            {(contract as any).iptuAnnual != null && Number((contract as any).iptuAnnual) > 0 && (
+              <div>
+                <p className="text-white/40 text-xs">IPTU Anual</p>
+                <p className="text-white">{fmt(Number((contract as any).iptuAnnual))} ({(contract as any).iptuParcels ?? 8}x)</p>
+              </div>
+            )}
+            {(contract as any).bankFee != null && Number((contract as any).bankFee) > 0 && (
+              <div>
+                <p className="text-white/40 text-xs">Taxa Bancária</p>
+                <p className="text-white">{fmt(Number((contract as any).bankFee))}</p>
               </div>
             )}
             {contract.penalty != null && Number(contract.penalty) > 0 && (
