@@ -737,7 +737,7 @@ export default async function financeRoutes(app: FastifyInstance) {
         oldValue:   contract.status,
         newValue:   updated.status,
         userId:     req.user.sub,
-        userName:   req.user.name ?? null,
+        userName:   (req.user as any).name ?? null,
         metadata:   { fine: body.fine, refund: body.refund },
       },
     })
@@ -821,7 +821,7 @@ export default async function financeRoutes(app: FastifyInstance) {
         oldValue:    'ACTIVE',
         newValue:    'FINISHED',
         userId:      req.user.sub,
-        userName:    req.user.name ?? null,
+        userName:    (req.user as any).name ?? null,
         metadata:    { renewedContractId: renewed.id, newRentValue: body.newRentValue },
       },
     })
@@ -837,7 +837,7 @@ export default async function financeRoutes(app: FastifyInstance) {
         oldValue:    null,
         newValue:    id,
         userId:      req.user.sub,
-        userName:    req.user.name ?? null,
+        userName:    (req.user as any).name ?? null,
         metadata:    { originalContractId: id },
       },
     })
@@ -893,7 +893,7 @@ export default async function financeRoutes(app: FastifyInstance) {
         oldValue:    oldValue.toFixed(2),
         newValue:    body.newValue.toFixed(2),
         userId:      req.user.sub,
-        userName:    req.user.name ?? null,
+        userName:    (req.user as any).name ?? null,
         metadata:    { index: body.index, percent: body.percent },
       },
     })
@@ -964,7 +964,7 @@ export default async function financeRoutes(app: FastifyInstance) {
         oldValue:    contract.status,
         newValue:    body.status,
         userId:      req.user.sub,
-        userName:    req.user.name ?? null,
+        userName:    (req.user as any).name ?? null,
       },
     })
 

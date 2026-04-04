@@ -1,4 +1,5 @@
 import type { FastifyInstance } from 'fastify'
+import { createAuditLog } from '../../services/audit.service.js'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DEFAULT SYSTEM CONFIG — todas as configurações padrão do sistema
@@ -178,6 +179,15 @@ export const DEFAULT_SYSTEM_CONFIG = {
   internalModuleAccess: {
     restrictedModules: ['lemosbank', 'juridico', 'fiscal', 'financiamentos'],
     allowedUsers:      ['tomas', 'nadia', 'naira', 'geraldo', 'noemia'],
+  },
+
+  // ── Permissões granulares por módulo por usuário ────────────────────────────
+  modulePermissions: {
+    lemosbank:       [] as string[],
+    juridico:        [] as string[],
+    fiscal:          [] as string[],
+    financiamentos:  [] as string[],
+    relatorios:      [] as string[],
   },
 
   // ── Sidebar — itens visíveis ─────────────────────────────────────────────────
@@ -414,6 +424,16 @@ export default async function systemConfigRoutes(app: FastifyInstance) {
       data:  { settings: { ...currentSettings, systemConfig: newConfig } },
     })
 
+    await createAuditLog({
+      prisma: app.prisma as any,
+      req,
+      action: 'config.update',
+      resource: 'system-config',
+      resourceId: req.user.cid,
+      before: currentConfig,
+      after: newConfig,
+    })
+
     const finalConfig = deepMerge(DEFAULT_SYSTEM_CONFIG, newConfig)
     return reply.send({ success: true, config: finalConfig })
   })
@@ -450,6 +470,16 @@ export default async function systemConfigRoutes(app: FastifyInstance) {
     await app.prisma.company.update({
       where: { id: req.user.cid },
       data:  { settings: { ...currentSettings, systemConfig: newConfig } },
+    })
+
+    await createAuditLog({
+      prisma: app.prisma as any,
+      req,
+      action: 'config.update',
+      resource: 'permissions',
+      resourceId: req.user.cid,
+      before: currentConfig.internalModuleAccess ?? {},
+      after: newConfig.internalModuleAccess ?? {},
     })
 
     const finalConfig = deepMerge(DEFAULT_SYSTEM_CONFIG, newConfig)

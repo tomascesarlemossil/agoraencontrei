@@ -3,6 +3,7 @@ import type { FastifyRequest } from 'fastify'
 
 export type AuditAction =
   | 'contract.create' | 'contract.update' | 'contract.delete' | 'contract.rescission'
+  | 'contract.renewal' | 'contract.adjustment'
   | 'rental.pay' | 'rental.estorno' | 'rental.repasse_paid' | 'rental.repasse_estorno'
   | 'rental.batch_generate' | 'rental.repasse_lote'
   | 'client.create'   | 'client.update'   | 'client.delete'
@@ -10,6 +11,11 @@ export type AuditAction =
   | 'contact.create'  | 'contact.update'  | 'contact.delete'
   | 'deal.create'     | 'deal.update'
   | 'user.login'      | 'user.register'
+  | 'config.update'
+  | 'lead.create' | 'lead.update' | 'lead.delete'
+  | 'blog.create' | 'blog.update' | 'blog.delete'
+  | 'legal.create' | 'legal.update' | 'legal.delete'
+  | 'user.update'
 
 export interface AuditOptions {
   prisma:     PrismaClient
