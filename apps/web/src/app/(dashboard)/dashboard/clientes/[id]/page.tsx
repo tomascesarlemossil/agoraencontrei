@@ -2,13 +2,14 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '@/stores/auth.store'
-import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import {
   ArrowLeft, Users, Phone, Mail, MapPin, BadgeCheck, FileText,
   Building2, User, Home, Calendar, Briefcase, CreditCard, Hash, Download,
-  MessageSquare, Clock, TrendingUp,
+  MessageSquare, Clock, TrendingUp, Pencil, Banknote, Heart, DollarSign,
+  Archive, UserPlus,
 } from 'lucide-react'
+import Link from 'next/link'
 import { financeApi, type LegacyClient, type LegacyContract } from '@/lib/api'
 
 const ROLE_LABELS: Record<string, { label: string; color: string }> = {
@@ -146,6 +147,24 @@ export default function ClienteDetailPage() {
             </div>
           </div>
         )}
+        <div className="ml-auto flex gap-2">
+          <Link
+            href="/dashboard/clientes/novo"
+            className="flex items-center gap-1.5 px-3 py-2 text-sm border border-gray-200 rounded-xl hover:bg-gray-50 text-gray-600 transition-colors"
+          >
+            <UserPlus className="w-4 h-4" />
+            Novo
+          </Link>
+          {c && (
+            <Link
+              href={`/dashboard/clientes/${c.id}/editar`}
+              className="flex items-center gap-1.5 px-3 py-2 text-sm bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors"
+            >
+              <Pencil className="w-4 h-4" />
+              Editar
+            </Link>
+          )}
+        </div>
       </div>
 
       {isLoading ? (
@@ -208,6 +227,53 @@ export default function ClienteDetailPage() {
               </div>
             </div>
 
+            {/* Dados Complementares */}
+            {((c as any).maritalStatus || (c as any).nationality || (c as any).income || (c as any).bankName || (c as any).pixKey || (c as any).observations) && (
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+                <h2 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                  <Banknote className="w-4 h-4 text-gray-400" />
+                  Dados Complementares
+                </h2>
+                <div className="space-y-0.5">
+                  {(c as any).maritalStatus && (() => {
+                    const MARITAL_MAP: Record<string, string> = {'solteiro':'Solteiro(a)','casado':'Casado(a)','divorciado':'Divorciado(a)','viuvo':'Viúvo(a)','uniao_estavel':'União Estável','separado':'Separado(a)'}
+                    return <InfoRow label="Estado Civil" value={MARITAL_MAP[(c as any).maritalStatus] ?? (c as any).maritalStatus} icon={Heart} />
+                  })()}
+                  {(c as any).nationality && <InfoRow label="Nacionalidade" value={(c as any).nationality} icon={User} />}
+                  {(c as any).income && (
+                    <InfoRow label="Renda Mensal" value={new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(Number((c as any).income))} icon={DollarSign} />
+                  )}
+                  {(c as any).spouseName && <InfoRow label="Cônjuge" value={(c as any).spouseName} icon={Heart} />}
+                  {(c as any).bankName && (
+                    <InfoRow label="Banco" value={`${(c as any).bankName}${(c as any).bankBranch ? ` — Ag. ${(c as any).bankBranch}` : ''}${(c as any).bankAccount ? ` / Cc. ${(c as any).bankAccount}` : ''}`} icon={Banknote} />
+                  )}
+                  {(c as any).pixKey && <InfoRow label="Chave PIX" value={(c as any).pixKey} icon={CreditCard} />}
+                </div>
+                {(c as any).observations && (
+                  <div className="mt-3 pt-3 border-t border-gray-50">
+                    <p className="text-xs text-gray-400 mb-1">Observações</p>
+                    <p className="text-sm text-gray-700 whitespace-pre-wrap">{(c as any).observations}</p>
+                  </div>
+                )}
+              </div>
+            )}
+            {/* Arquivo Morto badge */}
+            {(c as any).isArchived && (
+              <div className="md:col-span-2 flex items-center gap-3 p-4 bg-amber-50 border border-amber-200 rounded-2xl">
+                <Archive className="w-5 h-5 text-amber-600 flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-semibold text-amber-800">Cliente em Arquivo Morto</p>
+                  {(c as any).archivedReason && (
+                    <p className="text-xs text-amber-600 mt-0.5">Motivo: {(c as any).archivedReason}</p>
+                  )}
+                  {(c as any).archivedAt && (
+                    <p className="text-xs text-amber-500 mt-0.5">
+                      Arquivado em: {new Date((c as any).archivedAt).toLocaleDateString('pt-BR')}
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
             {/* Resumo de contratos */}
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
               <h2 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">

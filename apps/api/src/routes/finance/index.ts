@@ -438,6 +438,104 @@ export default async function financeRoutes(app: FastifyInstance) {
 
     return reply.send({ ...client, leads })
   })
+  // POST /api/v1/finance/clients — criar novo cliente
+  app.post('/clients', async (req, reply) => {
+    const cid = req.user.cid
+    const body = req.body as any
+    if (!body.name?.trim()) return reply.status(400).send({ error: 'NAME_REQUIRED' })
+    if (body.document) {
+      const doc = String(body.document).replace(/\D/g, '')
+      const existing = await app.prisma.client.findFirst({
+        where: { companyId: cid, document: doc },
+        select: { id: true, name: true },
+      })
+      if (existing) return reply.status(409).send({ error: 'DOCUMENT_ALREADY_EXISTS', existing })
+    }
+    const client = await app.prisma.client.create({
+      data: {
+        companyId:        cid,
+        name:             body.name.trim(),
+        document:         body.document ? String(body.document).replace(/\D/g, '') : null,
+        rg:               body.rg ?? null,
+        profession:       body.profession ?? null,
+        birthDate:        body.birthDate ? new Date(body.birthDate) : null,
+        email:            body.email ?? null,
+        phone:            body.phone ?? null,
+        phoneMobile:      body.phoneMobile ?? null,
+        phoneWork:        body.phoneWork ?? null,
+        address:          body.address ?? null,
+        addressComplement: body.addressComplement ?? null,
+        neighborhood:     body.neighborhood ?? null,
+        city:             body.city ?? null,
+        state:            body.state ?? null,
+        zipCode:          body.zipCode ?? null,
+        roles:            (body.roles ?? []) as any,
+        notes:            body.notes ?? null,
+        maritalStatus:    body.maritalStatus ?? null,
+        nationality:      body.nationality ?? null,
+        spouseName:       body.spouseName ?? null,
+        spouseDocument:   body.spouseDocument ? String(body.spouseDocument).replace(/\D/g, '') : null,
+        spouseProfession: body.spouseProfession ?? null,
+        income:           body.income ?? null,
+        spouseIncome:     body.spouseIncome ?? null,
+        bankName:         body.bankName ?? null,
+        bankBranch:       body.bankBranch ?? null,
+        bankAccount:      body.bankAccount ?? null,
+        bankAccountType:  body.bankAccountType ?? null,
+        pixKey:           body.pixKey ?? null,
+        observations:     body.observations ?? null,
+      } as any,
+    })
+    await createAuditLog({
+      prisma: app.prisma as any, req,
+      action: 'client.create', resource: 'client', resourceId: client.id,
+      before: null, after: { name: client.name },
+    })
+    return reply.status(201).send(client)
+  })
+
+  // PATCH /api/v1/finance/clients/:id — editar cliente
+  app.patch('/clients/:id', async (req, reply) => {
+    const { id } = req.params as { id: string }
+    const cid = req.user.cid
+    const body = req.body as Record<string, any>
+    const existing = await app.prisma.client.findFirst({ where: { id, companyId: cid } })
+    if (!existing) return reply.status(404).send({ error: 'NOT_FOUND' })
+    const allowed = [
+      'name','document','rg','profession','birthDate','email','phone','phoneMobile','phoneWork',
+      'address','addressComplement','neighborhood','city','state','zipCode','roles','notes',
+      'maritalStatus','nationality','spouseName','spouseDocument','spouseProfession',
+      'income','spouseIncome','bankName','bankBranch','bankAccount','bankAccountType',
+      'pixKey','observations','isArchived','archivedAt','archivedReason',
+    ]
+    const data: Record<string, any> = {}
+    for (const key of allowed) {
+      if (key in body) {
+        if (key === 'birthDate' || key === 'archivedAt') {
+          data[key] = body[key] ? new Date(body[key]) : null
+        } else if (key === 'document' || key === 'spouseDocument') {
+          data[key] = body[key] ? String(body[key]).replace(/\D/g, '') : null
+        } else {
+          data[key] = body[key]
+        }
+      }
+    }
+    if (data.isArchived === true && !(existing as any).isArchived) {
+      data.archivedAt = data.archivedAt ?? new Date()
+    }
+    if (data.isArchived === false) {
+      data.archivedAt = null
+      data.archivedReason = null
+    }
+    const updated = await app.prisma.client.update({ where: { id }, data: data as any })
+    await createAuditLog({
+      prisma: app.prisma as any, req,
+      action: 'client.update', resource: 'client', resourceId: id,
+      before: existing, after: data,
+    })
+    return reply.send(updated)
+  })
+
 
   // GET /api/v1/finance/rentals — aluguéis paginados com info de contrato
   app.get('/rentals', async (req, reply) => {

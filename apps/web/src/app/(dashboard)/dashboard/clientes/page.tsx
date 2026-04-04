@@ -4,7 +4,8 @@ import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '@/stores/auth.store'
 import { useRouter } from 'next/navigation'
-import { Users, Phone, Mail, MapPin, BadgeCheck } from 'lucide-react'
+import { Users, Phone, Mail, MapPin, BadgeCheck, UserPlus } from 'lucide-react'
+import Link from 'next/link'
 import { SearchInputWithVoice } from '@/components/ui/SearchInputWithVoice'
 import { financeApi, type LegacyClient } from '@/lib/api'
 
@@ -65,8 +66,15 @@ export default function ClientesPage() {
           <p className="text-sm text-gray-500">Proprietários, inquilinos, fiadores, leads e interessados</p>
         </div>
         {meta && (
-          <span className="ml-auto text-sm text-gray-400">{meta.total.toLocaleString('pt-BR')} registros</span>
+          <span className="text-sm text-gray-400">{meta.total.toLocaleString('pt-BR')} registros</span>
         )}
+        <Link
+          href="/dashboard/clientes/novo"
+          className="ml-auto flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-xl hover:bg-indigo-700 transition-colors"
+        >
+          <UserPlus className="w-4 h-4" />
+          Novo Cliente
+        </Link>
       </div>
 
       {/* Filters */}

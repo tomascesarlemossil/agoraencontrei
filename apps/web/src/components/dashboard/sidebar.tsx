@@ -77,7 +77,8 @@ const lemosbankSubItems = [
   { href: '/dashboard/lemosbank/repasses',     icon: RefreshCw,  label: 'Repasses' },
   { href: '/dashboard/lemosbank/rescisoes',    icon: Scissors,   label: 'Rescisões' },
   { href: '/dashboard/lemosbank/relatorios',   icon: BarChart3,  label: 'Relatórios' },
-  { href: '/dashboard/lemosbank/historico',    icon: Archive,    label: 'Histórico' },
+  { href: '/dashboard/lemosbank/historico',      icon: Archive,    label: 'Histórico' },
+  { href: '/dashboard/lemosbank/arquivo-morto',  icon: Archive,    label: 'Arquivo Morto' },
 ]
 
 const bottomItems = [
