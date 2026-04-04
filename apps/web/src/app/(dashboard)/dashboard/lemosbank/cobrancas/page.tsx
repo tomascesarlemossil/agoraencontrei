@@ -48,6 +48,10 @@ function DarBaixaModal({
   const qc = useQueryClient()
   const [payDate, setPayDate] = useState(new Date().toISOString().split('T')[0])
   const [paidAmount, setPaidAmount] = useState(String(rental.totalAmount ?? rental.rentAmount ?? ''))
+  const [paymentMethod, setPaymentMethod] = useState('')
+  const [proofReference, setProofReference] = useState('')
+  const [bankName, setBankName] = useState('')
+  const [observations, setObservations] = useState('')
   const [paid, setPaid] = useState(false)
   const [paidRentalId, setPaidRentalId] = useState<string | null>(null)
   const [msg, setMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
@@ -57,6 +61,10 @@ function DarBaixaModal({
       financeApi.pagarAluguel(token, rental.id, {
         paymentDate: payDate,
         paidAmount: paidAmount ? Number(paidAmount) : undefined,
+        paymentMethod: paymentMethod || undefined,
+        proofReference: proofReference || undefined,
+        bankName: bankName || undefined,
+        observations: observations || undefined,
       }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['finance-rentals'] })
@@ -83,8 +91,8 @@ function DarBaixaModal({
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
-        <div className="flex items-center justify-between p-6 border-b border-gray-100">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between p-6 border-b border-gray-100 sticky top-0 bg-white">
           <h2 className="font-semibold text-gray-900">Dar Baixa no Aluguel</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X className="w-5 h-5" /></button>
         </div>
@@ -118,6 +126,52 @@ function DarBaixaModal({
                   onChange={e => setPaidAmount(e.target.value)}
                   placeholder={fmt(rental.totalAmount ?? rental.rentAmount)}
                   className="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1.5">Forma de Pagamento</label>
+                <select
+                  value={paymentMethod}
+                  onChange={e => setPaymentMethod(e.target.value)}
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                >
+                  <option value="">Selecione...</option>
+                  <option value="PIX">PIX</option>
+                  <option value="BOLETO">Boleto</option>
+                  <option value="DINHEIRO">Dinheiro</option>
+                  <option value="TRANSFERENCIA">Transferência</option>
+                  <option value="CHEQUE">Cheque</option>
+                  <option value="CARTAO">Cartão</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1.5">Nº Comprovante</label>
+                <input
+                  type="text"
+                  value={proofReference}
+                  onChange={e => setProofReference(e.target.value)}
+                  placeholder="Número do comprovante"
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1.5">Banco</label>
+                <input
+                  type="text"
+                  value={bankName}
+                  onChange={e => setBankName(e.target.value)}
+                  placeholder="Nome do banco"
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1.5">Observações</label>
+                <textarea
+                  value={observations}
+                  onChange={e => setObservations(e.target.value)}
+                  placeholder="Observações sobre o pagamento"
+                  rows={3}
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none"
                 />
               </div>
 

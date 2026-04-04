@@ -335,6 +335,10 @@ export default async function financeRoutes(app: FastifyInstance) {
           orderBy: { dueDate: 'desc' },
           take: 36,
         },
+        history: {
+          orderBy: { createdAt: 'desc' },
+          take: 20,
+        },
       },
     })
     if (!contract) return reply.status(404).send({ error: 'NOT_FOUND' })
@@ -390,7 +394,9 @@ export default async function financeRoutes(app: FastifyInstance) {
           include: {
             landlord:  { select: { id: true, name: true, phone: true } },
             property:  { select: { id: true, reference: true, type: true, title: true, neighborhood: true, city: true } },
-            _count:    { select: { documents: true } },
+            _count:    { select: { documents: true, rentals: true } },
+            rentals:   { orderBy: { dueDate: 'desc' }, take: 12, select: { id: true, dueDate: true, status: true, totalAmount: true, paidAmount: true, paymentDate: true, paymentMethod: true } },
+            invoices:  { orderBy: { dueDate: 'desc' }, take: 12, select: { id: true, dueDate: true, amount: true, asaasStatus: true, numBoleto: true } },
           },
         },
         contractsAsLandlord: {
@@ -399,7 +405,8 @@ export default async function financeRoutes(app: FastifyInstance) {
           include: {
             tenant:   { select: { id: true, name: true, phone: true } },
             property: { select: { id: true, reference: true, type: true, title: true, neighborhood: true, city: true } },
-            _count:   { select: { documents: true } },
+            _count:   { select: { documents: true, rentals: true } },
+            rentals:  { orderBy: { dueDate: 'desc' }, take: 12, select: { id: true, dueDate: true, status: true, totalAmount: true, paidAmount: true, paymentDate: true, repassePaidAt: true } },
           },
         },
         contractsAsGuarantor: {
@@ -701,6 +708,9 @@ export default async function financeRoutes(app: FastifyInstance) {
     const body = req.body as {
       rescissionDate?: string
       status?: 'FINISHED' | 'CANCELED'
+      reason?: string
+      fine?: number
+      refund?: number
       notes?: string
     }
 
@@ -713,10 +723,39 @@ export default async function financeRoutes(app: FastifyInstance) {
     const updated = await app.prisma.contract.update({
       where: { id },
       data: {
-        status:         body.status ?? 'FINISHED',
-        isActive:       false,
-        rescissionDate: body.rescissionDate ? new Date(body.rescissionDate) : new Date(),
+        status:           body.status ?? 'FINISHED',
+        isActive:         false,
+        rescissionDate:   body.rescissionDate ? new Date(body.rescissionDate) : new Date(),
+        rescissionReason: body.reason   ?? null,
+        rescissionFine:   body.fine     ?? null,
+        rescissionRefund: body.refund   ?? null,
+        rescissionNotes:  body.notes    ?? null,
       },
+    })
+
+    // Registrar no histórico do contrato
+    await app.prisma.contractHistory.create({
+      data: {
+        contractId: id,
+        companyId:  req.user.cid,
+        action:     'RESCISAO',
+        description: `Contrato ${body.status === 'CANCELED' ? 'cancelado' : 'encerrado'}. ${body.reason ? 'Motivo: ' + body.reason : ''}`.trim(),
+        field:      'status',
+        oldValue:   contract.status,
+        newValue:   updated.status,
+        userId:     req.user.sub,
+        userName:   (req.user as any).name ?? null,
+        metadata:   { fine: body.fine, refund: body.refund },
+      },
+    })
+
+    // Cancelar aluguéis pendentes do contrato rescindido
+    const cancelledRentals = await app.prisma.rental.updateMany({
+      where: {
+        contractId: id,
+        status: { in: ['PENDING', 'LATE'] },
+      },
+      data: { status: 'CANCELLED' },
     })
 
     await createAuditLog({
@@ -725,7 +764,233 @@ export default async function financeRoutes(app: FastifyInstance) {
       resource: 'contract',
       resourceId: id,
       before: { status: contract.status, isActive: contract.isActive },
-      after:  { status: updated.status, isActive: false, rescissionDate: updated.rescissionDate },
+      after:  { status: updated.status, isActive: false, rescissionDate: updated.rescissionDate, cancelledRentals: cancelledRentals.count },
+    })
+
+    return reply.send({ ...updated, cancelledRentals: cancelledRentals.count })
+  })
+
+  // POST /api/v1/finance/contracts/:id/renovar — renovar contrato (gera novo contrato vinculado)
+  app.post('/contracts/:id/renovar', async (req, reply) => {
+    const { id } = req.params as { id: string }
+    const cid = req.user.cid
+    const body = req.body as {
+      newRentValue:      number
+      newDuration:       number   // meses
+      newStartDate:      string
+      adjustmentIndex?:  string   // IGPM | IPCA | INPC | FIXO
+      adjustmentPercent?: number
+      notes?:            string
+    }
+
+    const original = await app.prisma.contract.findFirst({
+      where: { id, companyId: cid },
+    })
+    if (!original) return reply.status(404).send({ error: 'NOT_FOUND' })
+
+    // Encerrar contrato original
+    await app.prisma.contract.update({
+      where: { id },
+      data: { status: 'FINISHED', isActive: false },
+    })
+
+    // Criar novo contrato renovado
+    const renewed = await app.prisma.contract.create({
+      data: {
+        companyId:         cid,
+        propertyAddress:   original.propertyAddress,
+        propertyId:        original.propertyId,
+        iptuCode:          original.iptuCode,
+        landlordId:        original.landlordId,
+        tenantId:          original.tenantId,
+        guarantorId:       original.guarantorId,
+        landlordName:      original.landlordName,
+        tenantName:        original.tenantName,
+        startDate:         new Date(body.newStartDate),
+        duration:          body.newDuration,
+        rentValue:         body.newRentValue,
+        initialValue:      original.rentValue,
+        commission:        original.commission,
+        tenantDueDay:      original.tenantDueDay,
+        landlordDueDay:    original.landlordDueDay,
+        penalty:           original.penalty,
+        adjustmentIndex:   body.adjustmentIndex ?? original.adjustmentIndex,
+        adjustmentPercent: body.adjustmentPercent ?? null,
+        guaranteeType:     original.guaranteeType,
+        unit:              original.unit,
+        status:            'ACTIVE',
+        isActive:          true,
+        renewedFromId:     id,
+        renewalCount:      (original.renewalCount ?? 0) + 1,
+        legacyPropertyCode: original.legacyPropertyCode,
+      },
+    })
+
+    // Histórico no contrato original
+    await app.prisma.contractHistory.create({
+      data: {
+        contractId:  id,
+        companyId:   cid,
+        action:      'RENOVACAO',
+        description: `Contrato renovado. Novo contrato: ${renewed.id}. Valor: R$ ${body.newRentValue}. Duração: ${body.newDuration} meses.`,
+        field:       'status',
+        oldValue:    'ACTIVE',
+        newValue:    'FINISHED',
+        userId:      req.user.sub,
+        userName:    (req.user as any).name ?? null,
+        metadata:    { renewedContractId: renewed.id, newRentValue: body.newRentValue },
+      },
+    })
+
+    // Histórico no novo contrato
+    await app.prisma.contractHistory.create({
+      data: {
+        contractId:  renewed.id,
+        companyId:   cid,
+        action:      'CRIACAO',
+        description: `Contrato criado por renovação do contrato ${original.legacyId ?? id}.`,
+        field:       'renewedFromId',
+        oldValue:    null,
+        newValue:    id,
+        userId:      req.user.sub,
+        userName:    (req.user as any).name ?? null,
+        metadata:    { originalContractId: id },
+      },
+    })
+
+    await createAuditLog({
+      prisma: app.prisma as any, req,
+      action: 'contract.renewal',
+      resource: 'contract',
+      resourceId: id,
+      before: { status: 'ACTIVE', rentValue: original.rentValue },
+      after:  { renewedContractId: renewed.id, newRentValue: body.newRentValue },
+    })
+
+    return reply.status(201).send(renewed)
+  })
+
+  // POST /api/v1/finance/contracts/:id/reajuste — aplicar reajuste de aluguel
+  app.post('/contracts/:id/reajuste', async (req, reply) => {
+    const { id } = req.params as { id: string }
+    const cid = req.user.cid
+    const body = req.body as {
+      index:      string   // IGPM | IPCA | INPC | FIXO
+      percent:    number   // percentual de reajuste (ex: 4.52)
+      newValue:   number   // novo valor do aluguel já calculado
+      applyDate?: string
+    }
+
+    const contract = await app.prisma.contract.findFirst({
+      where: { id, companyId: cid },
+    })
+    if (!contract) return reply.status(404).send({ error: 'NOT_FOUND' })
+    if (contract.status !== 'ACTIVE') return reply.status(400).send({ error: 'CONTRACT_NOT_ACTIVE' })
+
+    const oldValue = Number(contract.rentValue ?? 0)
+
+    const updated = await app.prisma.contract.update({
+      where: { id },
+      data: {
+        rentValue:         body.newValue,
+        adjustmentIndex:   body.index,
+        adjustmentPercent: body.percent,
+        lastAdjustmentAt:  body.applyDate ? new Date(body.applyDate) : new Date(),
+      },
+    })
+
+    await app.prisma.contractHistory.create({
+      data: {
+        contractId:  id,
+        companyId:   cid,
+        action:      'REAJUSTE',
+        description: `Reajuste de ${body.percent}% (${body.index}). De R$ ${oldValue.toFixed(2)} para R$ ${body.newValue.toFixed(2)}.`,
+        field:       'rentValue',
+        oldValue:    oldValue.toFixed(2),
+        newValue:    body.newValue.toFixed(2),
+        userId:      req.user.sub,
+        userName:    (req.user as any).name ?? null,
+        metadata:    { index: body.index, percent: body.percent },
+      },
+    })
+
+    await createAuditLog({
+      prisma: app.prisma as any, req,
+      action: 'contract.adjustment',
+      resource: 'contract',
+      resourceId: id,
+      before: { rentValue: oldValue, adjustmentIndex: contract.adjustmentIndex },
+      after:  { rentValue: body.newValue, adjustmentIndex: body.index, adjustmentPercent: body.percent },
+    })
+
+    return reply.send(updated)
+  })
+
+  // GET /api/v1/finance/contracts/:id/historico — histórico de alterações do contrato
+  app.get('/contracts/:id/historico', async (req, reply) => {
+    const { id } = req.params as { id: string }
+    const cid = req.user.cid
+
+    const contract = await app.prisma.contract.findFirst({
+      where: { id, companyId: cid },
+      select: { id: true },
+    })
+    if (!contract) return reply.status(404).send({ error: 'NOT_FOUND' })
+
+    const history = await app.prisma.contractHistory.findMany({
+      where: { contractId: id, companyId: cid },
+      orderBy: { createdAt: 'desc' },
+      take: 100,
+    })
+
+    return reply.send({ data: history })
+  })
+
+  // PATCH /api/v1/finance/contracts/:id/status — alterar status do contrato
+  app.patch('/contracts/:id/status', async (req, reply) => {
+    const { id } = req.params as { id: string }
+    const cid = req.user.cid
+    const body = req.body as { status: string }
+
+    const validStatuses = ['ACTIVE', 'FINISHED', 'CANCELED', 'IN_RENEWAL', 'EXPIRED', 'IN_NEGOTIATION']
+    if (!validStatuses.includes(body.status)) {
+      return reply.status(400).send({ error: 'INVALID_STATUS', message: `Status deve ser: ${validStatuses.join(', ')}` })
+    }
+
+    const contract = await app.prisma.contract.findFirst({
+      where: { id, companyId: cid },
+    })
+    if (!contract) return reply.status(404).send({ error: 'NOT_FOUND' })
+
+    const updated = await app.prisma.contract.update({
+      where: { id },
+      data: {
+        status:   body.status as any,
+        isActive: ['ACTIVE', 'IN_RENEWAL', 'IN_NEGOTIATION'].includes(body.status),
+      },
+    })
+
+    await app.prisma.contractHistory.create({
+      data: {
+        contractId:  id,
+        companyId:   cid,
+        action:      'ALTERACAO',
+        description: `Status alterado de ${contract.status} para ${body.status}.`,
+        field:       'status',
+        oldValue:    contract.status,
+        newValue:    body.status,
+        userId:      req.user.sub,
+        userName:    (req.user as any).name ?? null,
+      },
+    })
+
+    await createAuditLog({
+      prisma: app.prisma as any, req,
+      action: 'contract.update',
+      resource: 'contract',
+      resourceId: id,
+      before: { status: contract.status },
+      after:  { status: body.status },
     })
 
     return reply.send(updated)
@@ -737,6 +1002,10 @@ export default async function financeRoutes(app: FastifyInstance) {
     const body = req.body as {
       paidAmount?: number
       paymentDate?: string
+      paymentMethod?: string    // PIX | BOLETO | DINHEIRO | TRANSFERENCIA | CHEQUE | CARTAO
+      proofReference?: string   // nº comprovante
+      bankName?: string         // banco
+      observations?: string     // observações
     }
 
     const rental = await app.prisma.rental.findFirst({
@@ -747,9 +1016,13 @@ export default async function financeRoutes(app: FastifyInstance) {
     const updated = await app.prisma.rental.update({
       where: { id },
       data: {
-        status:      'PAID',
-        paidAmount:  body.paidAmount   ?? Number(rental.totalAmount ?? rental.rentAmount ?? 0),
-        paymentDate: body.paymentDate  ? new Date(body.paymentDate) : new Date(),
+        status:         'PAID',
+        paidAmount:     body.paidAmount      ?? Number(rental.totalAmount ?? rental.rentAmount ?? 0),
+        paymentDate:    body.paymentDate     ? new Date(body.paymentDate) : new Date(),
+        paymentMethod:  body.paymentMethod   ?? null,
+        proofReference: body.proofReference  ?? null,
+        bankName:       body.bankName        ?? null,
+        observations:   body.observations    ?? null,
       },
     })
 
@@ -810,6 +1083,7 @@ export default async function financeRoutes(app: FastifyInstance) {
         penalty:           body.penalty            ?? null,
         commission:        body.commission         ?? null,
         contractHtml:      body.contractHtml       ?? null,
+        guaranteeType:     body.guaranteeType      ?? null,
         status:            (body.status as any)    ?? 'ACTIVE',
         isActive:          (body.status ?? 'ACTIVE') === 'ACTIVE',
       },

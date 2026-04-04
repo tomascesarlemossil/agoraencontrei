@@ -129,6 +129,8 @@ export default async function portalRoutes(app: FastifyInstance) {
         take: 36,
         select: {
           id: true, dueDate: true, status: true, totalAmount: true,
+          rentAmount: true, condoAmount: true, iptuAmount: true,
+          iptuParcela: true, bankFeeAmount: true,
           paidAmount: true, paymentDate: true,
         },
       }) : Promise.resolve([]),

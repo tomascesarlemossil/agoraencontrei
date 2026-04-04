@@ -1,4 +1,5 @@
 import type { FastifyInstance } from 'fastify'
+import { createAuditLog } from '../../services/audit.service.js'
 
 function slugify(text: string) {
   return text
@@ -133,6 +134,16 @@ export default async function blogRoutes(app: FastifyInstance) {
         sourceUrl:     body.sourceUrl ?? null,
       },
     })
+
+    await createAuditLog({
+      prisma: app.prisma as any, req,
+      action: 'blog.create',
+      resource: 'blog',
+      resourceId: post.id,
+      before: null,
+      after: post as any,
+    })
+
     return reply.status(201).send(post)
   })
 
@@ -165,6 +176,16 @@ export default async function blogRoutes(app: FastifyInstance) {
         ...(!wasPublished && nowPublished && { publishedAt: new Date() }),
       },
     })
+
+    await createAuditLog({
+      prisma: app.prisma as any, req,
+      action: 'blog.update',
+      resource: 'blog',
+      resourceId: post.id,
+      before: existing as any,
+      after: post as any,
+    })
+
     return reply.send(post)
   })
 
@@ -174,6 +195,16 @@ export default async function blogRoutes(app: FastifyInstance) {
     const existing = await app.prisma.blogPost.findFirst({ where: { id, companyId: req.user.cid } })
     if (!existing) return reply.status(404).send({ error: 'NOT_FOUND' })
     await app.prisma.blogPost.delete({ where: { id } })
+
+    await createAuditLog({
+      prisma: app.prisma as any, req,
+      action: 'blog.delete',
+      resource: 'blog',
+      resourceId: id,
+      before: existing as any,
+      after: null,
+    })
+
     return reply.send({ deleted: true })
   })
 }

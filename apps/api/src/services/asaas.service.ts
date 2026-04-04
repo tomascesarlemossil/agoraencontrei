@@ -182,3 +182,78 @@ export interface AsaasWebhookEvent {
     netValue: number
   }
 }
+
+// ── NFS-e (Nota Fiscal de Serviço) ──────────────────────────────────────────
+
+export interface AsaasInvoicePayload {
+  payment?: string              // ID do pagamento vinculado (opcional)
+  serviceDescription: string    // descrição do serviço
+  observations?: string
+  value: number
+  deductions?: number
+  effectiveDate: string         // data de competência YYYY-MM-DD
+  municipalServiceId?: string   // código do serviço municipal
+  municipalServiceCode?: string // código de tributação municipal
+  municipalServiceName?: string // nome do serviço
+  taxes?: {
+    retainIss: boolean
+    iss?: number
+    cofins?: number
+    csll?: number
+    inss?: number
+    ir?: number
+    pis?: number
+  }
+  externalReference?: string
+}
+
+export interface AsaasInvoice {
+  id: string
+  status: string  // PENDING | SCHEDULED | PROCESSING | AUTHORIZED | CANCELLED | ERROR
+  number?: string
+  rpsBatch?: string
+  rpsNumber?: string
+  rpsSeries?: string
+  serviceDescription: string
+  observations?: string
+  value: number
+  effectiveDate: string
+  pdfUrl?: string
+  xmlUrl?: string
+  externalReference?: string
+  taxes?: Record<string, any>
+}
+
+export async function createInvoice(payload: AsaasInvoicePayload): Promise<AsaasInvoice> {
+  return asaasFetch<AsaasInvoice>('/invoices', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
+}
+
+export async function getInvoice(invoiceId: string): Promise<AsaasInvoice> {
+  return asaasFetch<AsaasInvoice>(`/invoices/${invoiceId}`)
+}
+
+export async function cancelInvoice(invoiceId: string): Promise<{ deleted: boolean }> {
+  return asaasFetch(`/invoices/${invoiceId}`, { method: 'DELETE' })
+}
+
+export async function listInvoices(params?: {
+  status?: string; limit?: number; offset?: number; effectiveDateGE?: string; effectiveDateLE?: string
+}): Promise<{ data: AsaasInvoice[]; totalCount: number }> {
+  const qs = new URLSearchParams()
+  if (params?.status)           qs.set('status', params.status)
+  if (params?.limit)            qs.set('limit', String(params.limit))
+  if (params?.offset)           qs.set('offset', String(params.offset))
+  if (params?.effectiveDateGE)  qs.set('effectiveDate[ge]', params.effectiveDateGE)
+  if (params?.effectiveDateLE)  qs.set('effectiveDate[le]', params.effectiveDateLE)
+  return asaasFetch(`/invoices?${qs}`)
+}
+
+export async function scheduleInvoice(paymentId: string): Promise<AsaasInvoice> {
+  return asaasFetch<AsaasInvoice>(`/invoices`, {
+    method: 'POST',
+    body: JSON.stringify({ payment: paymentId }),
+  })
+}

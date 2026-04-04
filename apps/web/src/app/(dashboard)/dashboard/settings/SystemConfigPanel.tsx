@@ -10,6 +10,7 @@ import {
   Star, Lock, Unlock, Plus, Trash2, RefreshCw, Code, Image as ImageIcon,
   FileText, MessageSquare, MapPin, Phone, Mail, Instagram, Youtube,
   Facebook, Twitter, Linkedin, Hash, ToggleLeft, ToggleRight,
+  ClipboardList, History, Paintbrush, UserCog,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -165,8 +166,82 @@ const SUB_TABS = [
   { id: 'juridico',    label: 'Jurídico',          icon: Scale },
   { id: 'locacao',     label: 'Locação',           icon: Home },
   { id: 'notificacoes',label: 'Notificações',      icon: Bell },
+  { id: 'campos',      label: 'Campos de Cadastro', icon: ClipboardList },
+  { id: 'aparencia',   label: 'Cores & Botões',     icon: Paintbrush },
+  { id: 'perm-granular',label: 'Permissões Usuário', icon: UserCog },
+  { id: 'historico',   label: 'Histórico',          icon: History },
   { id: 'avancado',    label: 'Avançado',          icon: Code },
 ]
+
+// ── Config History Tab ────────────────────────────────────────────────────────
+function ConfigHistoryTab() {
+  const { getValidToken } = useAuth()
+  const { data, isLoading } = useQuery({
+    queryKey: ['config-history'],
+    queryFn: async () => {
+      const token = await getValidToken()
+      const res = await fetch(`${API_URL}/api/v1/audit-logs?resource=system-config&limit=50`, {
+        headers: { Authorization: `Bearer ${token}` },
+        credentials: 'include',
+      })
+      return res.json()
+    },
+  })
+
+  const logs = data?.data ?? []
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <h2 className="text-base font-bold text-white mb-1">Histórico de Configurações</h2>
+        <p className="text-xs text-white/40">Todas as alterações de configurações com data, usuário e valores anteriores.</p>
+      </div>
+      {isLoading ? (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-6 w-6 text-white/30 animate-spin" />
+        </div>
+      ) : logs.length === 0 ? (
+        <div className="text-center py-12">
+          <History className="h-10 w-10 text-white/20 mx-auto mb-3" />
+          <p className="text-sm text-white/40">Nenhuma alteração registrada</p>
+          <p className="text-xs text-white/30 mt-1">As próximas alterações de configuração aparecerão aqui.</p>
+        </div>
+      ) : (
+        <div className="space-y-2 max-h-[600px] overflow-y-auto">
+          {logs.map((log: any) => (
+            <div key={log.id} className="p-4 rounded-xl bg-white/5 border border-white/10 space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex px-2 py-0.5 rounded-md bg-yellow-500/20 text-yellow-400 text-xs font-medium">
+                    {log.action}
+                  </span>
+                  {log.userName && (
+                    <span className="text-xs text-white/50">por {log.userName}</span>
+                  )}
+                </div>
+                <span className="text-xs text-white/30">
+                  {new Date(log.createdAt).toLocaleString('pt-BR')}
+                </span>
+              </div>
+              {log.payload?.changes && Object.keys(log.payload.changes).length > 0 && (
+                <div className="mt-2 space-y-1">
+                  {Object.entries(log.payload.changes).slice(0, 10).map(([key, val]: [string, any]) => (
+                    <div key={key} className="text-xs flex items-center gap-2">
+                      <span className="text-white/50 font-mono">{key}:</span>
+                      <span className="text-red-400 line-through">{JSON.stringify(val?.before ?? '—')}</span>
+                      <span className="text-white/30">→</span>
+                      <span className="text-green-400">{JSON.stringify(val?.after ?? '—')}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
 
 // ── Main Component ────────────────────────────────────────────────────────────
 export function SystemConfigPanel() {
@@ -1033,6 +1108,277 @@ export function SystemConfigPanel() {
             </Section>
             <SaveButton onClick={() => save('notifications')} isPending={saveMutation.isPending} saved={saved} />
           </div>
+        )}
+
+        {/* ── CAMPOS DE CADASTRO ─────────────────────────────────────── */}
+        {subTab === 'campos' && (
+          <div className="space-y-4">
+            <div>
+              <h2 className="text-base font-bold text-white mb-1">Campos de Cadastro Configuráveis</h2>
+              <p className="text-xs text-white/40">Defina quais campos são obrigatórios ou opcionais em cada formulário do sistema.</p>
+            </div>
+            {(['client', 'property', 'contract', 'legalCase', 'lead'] as const).map(form => {
+              const labels: Record<string, string> = { client: 'Clientes', property: 'Imóveis', contract: 'Contratos', legalCase: 'Processos Jurídicos', lead: 'Leads' }
+              const formCfg = cfg.forms?.[form] ?? { requiredFields: [], showFields: [] }
+              const allFields = formCfg.showFields ?? []
+              const required = formCfg.requiredFields ?? []
+              return (
+                <Section key={form} title={labels[form]} icon={ClipboardList}>
+                  <div className="space-y-2">
+                    <p className="text-xs text-white/40 mb-2">Marque os campos obrigatórios. Campos desmarcados serão opcionais.</p>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                      {allFields.map((field: string) => (
+                        <label key={field} className="flex items-center gap-2 p-2 rounded-lg bg-white/5 hover:bg-white/10 cursor-pointer transition-colors">
+                          <input
+                            type="checkbox"
+                            checked={required.includes(field)}
+                            onChange={e => {
+                              const newRequired = e.target.checked
+                                ? [...required, field]
+                                : required.filter((f: string) => f !== field)
+                              updateCfg('forms', form, { ...formCfg, requiredFields: newRequired })
+                            }}
+                            className="rounded border-white/20 bg-white/5 text-yellow-400 focus:ring-yellow-400"
+                          />
+                          <span className="text-xs text-white/70">{field}</span>
+                          {required.includes(field) && <span className="text-[10px] text-yellow-400 font-bold">*</span>}
+                        </label>
+                      ))}
+                    </div>
+                    <div className="mt-3">
+                      <p className="text-xs text-white/50 mb-1">Adicionar campo ao formulário:</p>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          placeholder="Nome do campo..."
+                          className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white flex-1 outline-none focus:border-yellow-400/50"
+                          onKeyDown={e => {
+                            if (e.key === 'Enter') {
+                              const v = (e.target as HTMLInputElement).value.trim()
+                              if (v && !allFields.includes(v)) {
+                                updateCfg('forms', form, { ...formCfg, showFields: [...allFields, v] })
+                                ;(e.target as HTMLInputElement).value = ''
+                              }
+                            }
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </Section>
+              )
+            })}
+            <SaveButton onClick={() => save()} isPending={saveMutation.isPending} saved={saved} />
+          </div>
+        )}
+
+        {/* ── CORES & BOTÕES ──────────────────────────────────────────── */}
+        {subTab === 'aparencia' && (
+          <div className="space-y-4">
+            <div>
+              <h2 className="text-base font-bold text-white mb-1">Cores & Botões Editáveis</h2>
+              <p className="text-xs text-white/40">Personalize as cores do site público e do dashboard.</p>
+            </div>
+            <Section title="Cores do Site Público" icon={Paintbrush}>
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-semibold text-white/70 mb-1.5 block">Cor Primária</label>
+                    <div className="flex items-center gap-2">
+                      <input type="color" value={cfg.site?.primaryColor ?? '#1B2B5B'} onChange={e => updateCfg('site', 'primaryColor', e.target.value)} className="h-10 w-10 rounded-lg border border-white/10 bg-transparent cursor-pointer" />
+                      <input type="text" value={cfg.site?.primaryColor ?? '#1B2B5B'} onChange={e => updateCfg('site', 'primaryColor', e.target.value)} className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white font-mono flex-1" />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-white/70 mb-1.5 block">Cor de Destaque</label>
+                    <div className="flex items-center gap-2">
+                      <input type="color" value={cfg.site?.accentColor ?? '#C9A84C'} onChange={e => updateCfg('site', 'accentColor', e.target.value)} className="h-10 w-10 rounded-lg border border-white/10 bg-transparent cursor-pointer" />
+                      <input type="text" value={cfg.site?.accentColor ?? '#C9A84C'} onChange={e => updateCfg('site', 'accentColor', e.target.value)} className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white font-mono flex-1" />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-white/70 mb-1.5 block">Cor de Fundo</label>
+                    <div className="flex items-center gap-2">
+                      <input type="color" value={cfg.site?.backgroundColor ?? '#f9f7f4'} onChange={e => updateCfg('site', 'backgroundColor', e.target.value)} className="h-10 w-10 rounded-lg border border-white/10 bg-transparent cursor-pointer" />
+                      <input type="text" value={cfg.site?.backgroundColor ?? '#f9f7f4'} onChange={e => updateCfg('site', 'backgroundColor', e.target.value)} className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white font-mono flex-1" />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-white/70 mb-1.5 block">Cor do Texto</label>
+                    <div className="flex items-center gap-2">
+                      <input type="color" value={cfg.site?.textColor ?? '#1a1a1a'} onChange={e => updateCfg('site', 'textColor', e.target.value)} className="h-10 w-10 rounded-lg border border-white/10 bg-transparent cursor-pointer" />
+                      <input type="text" value={cfg.site?.textColor ?? '#1a1a1a'} onChange={e => updateCfg('site', 'textColor', e.target.value)} className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white font-mono flex-1" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Section>
+            <Section title="Botões do Site" icon={Paintbrush}>
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-semibold text-white/70 mb-1.5 block">Cor do Botão Principal</label>
+                    <div className="flex items-center gap-2">
+                      <input type="color" value={cfg.site?.buttonPrimaryColor ?? '#1B2B5B'} onChange={e => updateCfg('site', 'buttonPrimaryColor', e.target.value)} className="h-10 w-10 rounded-lg border border-white/10 bg-transparent cursor-pointer" />
+                      <input type="text" value={cfg.site?.buttonPrimaryColor ?? '#1B2B5B'} onChange={e => updateCfg('site', 'buttonPrimaryColor', e.target.value)} className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white font-mono flex-1" />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-white/70 mb-1.5 block">Texto do Botão</label>
+                    <div className="flex items-center gap-2">
+                      <input type="color" value={cfg.site?.buttonTextColor ?? '#ffffff'} onChange={e => updateCfg('site', 'buttonTextColor', e.target.value)} className="h-10 w-10 rounded-lg border border-white/10 bg-transparent cursor-pointer" />
+                      <input type="text" value={cfg.site?.buttonTextColor ?? '#ffffff'} onChange={e => updateCfg('site', 'buttonTextColor', e.target.value)} className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white font-mono flex-1" />
+                    </div>
+                  </div>
+                </div>
+                <DarkInput label="Raio da borda (px)" type="number" value={cfg.site?.buttonBorderRadius ?? 12} onChange={e => updateCfg('site', 'buttonBorderRadius', Number(e.target.value))} hint="Ex: 0 = quadrado, 12 = arredondado, 999 = pílula" />
+                <div className="mt-3 p-4 rounded-xl bg-white/5 border border-white/10">
+                  <p className="text-xs text-white/50 mb-2">Pré-visualização:</p>
+                  <button
+                    className="px-6 py-3 font-semibold text-sm transition-all"
+                    style={{
+                      backgroundColor: cfg.site?.buttonPrimaryColor ?? '#1B2B5B',
+                      color: cfg.site?.buttonTextColor ?? '#ffffff',
+                      borderRadius: `${cfg.site?.buttonBorderRadius ?? 12}px`,
+                    }}
+                  >
+                    Botão de Exemplo
+                  </button>
+                </div>
+              </div>
+            </Section>
+            <Section title="Cores do Dashboard" icon={Monitor}>
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-semibold text-white/70 mb-1.5 block">Cor Primária Dashboard</label>
+                    <div className="flex items-center gap-2">
+                      <input type="color" value={cfg.design?.primaryColor ?? '#6366f1'} onChange={e => updateCfg('design', 'primaryColor', e.target.value)} className="h-10 w-10 rounded-lg border border-white/10 bg-transparent cursor-pointer" />
+                      <input type="text" value={cfg.design?.primaryColor ?? '#6366f1'} onChange={e => updateCfg('design', 'primaryColor', e.target.value)} className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white font-mono flex-1" />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-white/70 mb-1.5 block">Cor de Destaque Dashboard</label>
+                    <div className="flex items-center gap-2">
+                      <input type="color" value={cfg.design?.accentColor ?? '#f59e0b'} onChange={e => updateCfg('design', 'accentColor', e.target.value)} className="h-10 w-10 rounded-lg border border-white/10 bg-transparent cursor-pointer" />
+                      <input type="text" value={cfg.design?.accentColor ?? '#f59e0b'} onChange={e => updateCfg('design', 'accentColor', e.target.value)} className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white font-mono flex-1" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Section>
+            <SaveButton onClick={() => save()} isPending={saveMutation.isPending} saved={saved} />
+          </div>
+        )}
+
+        {/* ── PERMISSÕES POR USUÁRIO ─────────────────────────────────── */}
+        {subTab === 'perm-granular' && (
+          <div className="space-y-4">
+            <div>
+              <h2 className="text-base font-bold text-white mb-1">Permissões Granulares por Usuário</h2>
+              <p className="text-xs text-white/40">Configure permissões individuais por módulo para cada usuário, além dos roles padrão.</p>
+            </div>
+            <Section title="Módulos com Acesso Restrito" icon={Lock}>
+              <div className="space-y-2">
+                <p className="text-xs text-white/40 mb-2">Selecione quais módulos exigem permissão especial para acesso.</p>
+                {['lemosbank', 'juridico', 'fiscal', 'financiamentos', 'relatorios', 'marketing', 'crm', 'automations', 'blog'].map(mod => (
+                  <Toggle
+                    key={mod}
+                    label={mod.charAt(0).toUpperCase() + mod.slice(1)}
+                    checked={(cfg.internalModuleAccess?.restrictedModules ?? []).includes(mod)}
+                    onChange={checked => {
+                      const current = cfg.internalModuleAccess?.restrictedModules ?? []
+                      const updated = checked ? [...current, mod] : current.filter((m: string) => m !== mod)
+                      updateCfg('internalModuleAccess', 'restrictedModules', updated)
+                    }}
+                  />
+                ))}
+              </div>
+            </Section>
+            <Section title="Usuários Autorizados" icon={UserCog}>
+              <div className="space-y-3">
+                <p className="text-xs text-white/40">Usuários na lista abaixo podem acessar todos os módulos restritos.</p>
+                <div className="flex flex-wrap gap-2">
+                  {(cfg.internalModuleAccess?.allowedUsers ?? []).map((u: string, i: number) => (
+                    <span key={i} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-green-500/20 text-green-400 text-xs font-medium">
+                      {u}
+                      <button
+                        onClick={() => {
+                          const updated = (cfg.internalModuleAccess?.allowedUsers ?? []).filter((_: string, j: number) => j !== i)
+                          updateCfg('internalModuleAccess', 'allowedUsers', updated)
+                        }}
+                        className="hover:text-red-400 transition-colors"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="Nome do usuário..."
+                    className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white flex-1 outline-none focus:border-yellow-400/50"
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') {
+                        const v = (e.target as HTMLInputElement).value.trim().toLowerCase()
+                        if (v && !(cfg.internalModuleAccess?.allowedUsers ?? []).includes(v)) {
+                          updateCfg('internalModuleAccess', 'allowedUsers', [...(cfg.internalModuleAccess?.allowedUsers ?? []), v])
+                          ;(e.target as HTMLInputElement).value = ''
+                        }
+                      }
+                    }}
+                  />
+                </div>
+              </div>
+            </Section>
+            <Section title="Permissões por Módulo por Usuário" icon={Shield}>
+              <div className="space-y-3">
+                <p className="text-xs text-white/40">Configure acesso específico para cada módulo e usuário individualmente.</p>
+                {['lemosbank', 'juridico', 'fiscal', 'financiamentos', 'relatorios'].map(mod => {
+                  const modulePerms = cfg.modulePermissions?.[mod] ?? []
+                  return (
+                    <div key={mod} className="p-3 rounded-xl bg-white/5 border border-white/10">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-semibold text-white">{mod.charAt(0).toUpperCase() + mod.slice(1)}</span>
+                        <span className="text-xs text-white/40">{modulePerms.length} usuário(s)</span>
+                      </div>
+                      <div className="flex flex-wrap gap-1.5 mb-2">
+                        {modulePerms.map((u: string, i: number) => (
+                          <span key={i} className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-blue-500/20 text-blue-400 text-[11px]">
+                            {u}
+                            <button onClick={() => {
+                              const updated = modulePerms.filter((_: string, j: number) => j !== i)
+                              updateCfg('modulePermissions', mod, updated)
+                            }} className="hover:text-red-400"><Trash2 className="h-2.5 w-2.5" /></button>
+                          </span>
+                        ))}
+                      </div>
+                      <input
+                        type="text" placeholder={`Adicionar usuário a ${mod}...`}
+                        className="bg-white/5 border border-white/10 rounded-lg px-2.5 py-1 text-[11px] text-white w-full outline-none focus:border-blue-400/50"
+                        onKeyDown={e => {
+                          if (e.key === 'Enter') {
+                            const v = (e.target as HTMLInputElement).value.trim().toLowerCase()
+                            if (v && !modulePerms.includes(v)) {
+                              updateCfg('modulePermissions', mod, [...modulePerms, v])
+                              ;(e.target as HTMLInputElement).value = ''
+                            }
+                          }
+                        }}
+                      />
+                    </div>
+                  )
+                })}
+              </div>
+            </Section>
+            <SaveButton onClick={() => save()} isPending={saveMutation.isPending} saved={saved} />
+          </div>
+        )}
+
+        {/* ── HISTÓRICO DE CONFIGURAÇÕES ──────────────────────────────── */}
+        {subTab === 'historico' && (
+          <ConfigHistoryTab />
         )}
 
         {/* ── AVANÇADO ──────────────────────────────────────────────────── */}

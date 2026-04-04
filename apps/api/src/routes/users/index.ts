@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
+import { createAuditLog } from '../../services/audit.service.js'
 
 const UpdateUserBody = z.object({
   name: z.string().min(2).max(100).optional(),
@@ -92,6 +93,15 @@ export default async function usersRoutes(app: FastifyInstance) {
         id: true, name: true, email: true, role: true,
         status: true, creciNumber: true, settings: true, createdAt: true,
       },
+    })
+
+    await createAuditLog({
+      prisma: app.prisma as any, req,
+      action: 'user.update',
+      resource: 'user',
+      resourceId: user.id,
+      before: null,
+      after: user as any,
     })
 
     return reply.status(201).send(user)
@@ -258,6 +268,15 @@ export default async function usersRoutes(app: FastifyInstance) {
 
     const body = UpdateUserBody.parse(req.body)
 
+    const existing = await app.prisma.user.findFirst({
+      where: { id, companyId: req.user.cid },
+      select: {
+        id: true, name: true, email: true, phone: true,
+        avatarUrl: true, role: true, bio: true, creciNumber: true,
+      },
+    })
+    if (!existing) return reply.status(404).send({ error: 'NOT_FOUND' })
+
     const user = await app.prisma.user.update({
       where: { id },
       data: body,
@@ -265,6 +284,15 @@ export default async function usersRoutes(app: FastifyInstance) {
         id: true, name: true, email: true, phone: true,
         avatarUrl: true, role: true, bio: true, creciNumber: true,
       },
+    })
+
+    await createAuditLog({
+      prisma: app.prisma as any, req,
+      action: 'user.update',
+      resource: 'user',
+      resourceId: user.id,
+      before: existing as any,
+      after: user as any,
     })
 
     return reply.send(user)
@@ -283,9 +311,24 @@ export default async function usersRoutes(app: FastifyInstance) {
       return reply.status(400).send({ error: 'CANNOT_DELETE_SELF' })
     }
 
+    const existing = await app.prisma.user.findFirst({
+      where: { id, companyId: req.user.cid },
+      select: { id: true, name: true, email: true, role: true, status: true },
+    })
+    if (!existing) return reply.status(404).send({ error: 'NOT_FOUND' })
+
     await app.prisma.user.update({
       where: { id, companyId: req.user.cid },
       data: { status: 'INACTIVE' },
+    })
+
+    await createAuditLog({
+      prisma: app.prisma as any, req,
+      action: 'user.update',
+      resource: 'user',
+      resourceId: id,
+      before: existing as any,
+      after: { ...existing, status: 'INACTIVE' } as any,
     })
 
     return reply.send({ success: true })

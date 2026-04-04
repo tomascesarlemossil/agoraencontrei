@@ -953,12 +953,17 @@ enum ContractStatus {
   ACTIVE
   FINISHED
   CANCELED
+  IN_RENEWAL
+  EXPIRED
+  IN_NEGOTIATION
 }
 
 enum RentalStatus {
   PENDING
   PAID
   LATE
+  PARTIAL
+  CANCELLED
 }
 
 enum TransactionType {
@@ -1057,6 +1062,23 @@ model Contract {
   isActive          Boolean        @default(true)
   contractHtml      String?        @db.Text   // HTML do contrato gerado por IA
   guaranteeType     String?        // fiador | caucao | seguro
+
+  // Rescisão detalhada
+  rescissionReason  String?        // motivo da rescisão
+  rescissionFine    Decimal?       @db.Decimal(12, 2) // multa rescisória
+  rescissionRefund  Decimal?       @db.Decimal(12, 2) // devolução de caução
+  rescissionNotes   String?        @db.Text
+
+  // Renovação e Reajuste
+  renewedFromId     String?        // contrato original que foi renovado
+  renewalCount      Int            @default(0) // quantas vezes foi renovado
+  lastAdjustmentAt  DateTime?      // data do último reajuste aplicado
+  adjustmentMonth   Int?           // mês do reajuste anual (1-12, ex: 1=janeiro)
+  iptuAnnual        Decimal?       @db.Decimal(12, 2) // valor anual do IPTU
+  iptuParcels       Int?           // número de parcelas do IPTU (ex: 8, 10, 12)
+  bankFee           Decimal?       @db.Decimal(12, 2) // taxa bancária por boleto (ex: 3.50)
+  adminFeePercent   Decimal?       @db.Decimal(5, 2)  // taxa de administração % (comissão)
+
   createdAt         DateTime       @default(now())
   updatedAt         DateTime       @updatedAt
 
@@ -1064,6 +1086,7 @@ model Contract {
   invoices          Invoice[]
   documents         Document[]
   legalCases        LegalCase[]
+  history           ContractHistory[]
   @@unique([companyId, legacyId])
   @@index([companyId])
   @@index([tenantId])
@@ -1087,9 +1110,17 @@ model Rental {
   electricAmount  Decimal?     @db.Decimal(12, 2)  // VLLUZ
   taxAmount       Decimal?     @db.Decimal(12, 2)  // VLTAXA
   penaltyAmount   Decimal?     @db.Decimal(12, 2)  // VLMULTA
+  iptuAmount      Decimal?     @db.Decimal(12, 2)  // IPTU parcela mensal
+  iptuParcela     String?                           // ex: "2/8" (parcela 2 de 8)
+  bankFeeAmount   Decimal?     @db.Decimal(12, 2)  // taxa bancária
+  adminFeeAmount  Decimal?     @db.Decimal(12, 2)  // taxa de administração
   totalAmount     Decimal?     @db.Decimal(12, 2)
   paidAmount      Decimal?     @db.Decimal(12, 2)  // VLPAGO
   paymentDate     DateTime?                         // DTPAGTO
+  paymentMethod   String?                           // PIX | BOLETO | DINHEIRO | TRANSFERENCIA | CHEQUE | CARTAO
+  proofReference  String?                           // nº comprovante ou referência
+  bankName        String?                           // banco utilizado no pagamento
+  observations    String?        @db.Text           // observações da baixa
   repassePaidAt   DateTime?                         // data em que o repasse foi pago ao proprietário
   status          RentalStatus @default(PENDING)
   createdAt       DateTime     @default(now())
@@ -1192,6 +1223,9 @@ model FiscalNote {
   nfeNumber            String?
   nfeKey               String?
   nfeXml               String?          @db.Text
+  asaasNfeId           String?          // ID da NFS-e no Asaas
+  asaasNfeStatus       String?          // PENDING | SCHEDULED | AUTHORIZED | ERROR
+  asaasNfePdfUrl       String?          // URL do PDF da NFS-e no Asaas
   status               FiscalNoteStatus @default(DRAFT)
   createdById          String?
   createdAt            DateTime         @default(now())
@@ -1474,4 +1508,29 @@ model LegalCaseUpdate {
   @@index([caseId])
   @@index([companyId])
   @@map("legal_case_updates")
+}
+
+// ── Histórico de Contratos ────────────────────────────────────────────────────
+model ContractHistory {
+  id            String    @id @default(cuid())
+  contractId    String
+  contract      Contract  @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  companyId     String
+
+  action        String    // REAJUSTE | RENOVACAO | RESCISAO | ALTERACAO | CRIACAO
+  description   String    @db.Text
+  field         String?   // campo alterado (ex: rentValue, status)
+  oldValue      String?   // valor anterior
+  newValue      String?   // valor novo
+
+  userId        String?
+  userName      String?
+
+  metadata      Json      @default("{}")
+  createdAt     DateTime  @default(now())
+
+  @@index([contractId])
+  @@index([companyId])
+  @@index([action])
+  @@map("contract_history")
 }

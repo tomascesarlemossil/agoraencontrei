@@ -1,4 +1,5 @@
 import type { FastifyInstance } from 'fastify'
+import { createAuditLog } from '../../services/audit.service.js'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DEFAULT SYSTEM CONFIG — todas as configurações padrão do sistema
@@ -136,6 +137,14 @@ export const DEFAULT_SYSTEM_CONFIG = {
     mapDefaultLat:       -20.5386,
     mapDefaultLng:       -47.4009,
     mapDefaultZoom:      13,
+    // Cores do site público
+    primaryColor:        '#1B2B5B',
+    accentColor:         '#C9A84C',
+    backgroundColor:     '#f9f7f4',
+    textColor:           '#1a1a1a',
+    buttonPrimaryColor:  '#1B2B5B',
+    buttonTextColor:     '#ffffff',
+    buttonBorderRadius:  12,
   },
 
   // ── Design / Tema do Dashboard ───────────────────────────────────────────────
@@ -178,6 +187,15 @@ export const DEFAULT_SYSTEM_CONFIG = {
   internalModuleAccess: {
     restrictedModules: ['lemosbank', 'juridico', 'fiscal', 'financiamentos'],
     allowedUsers:      ['tomas', 'nadia', 'naira', 'geraldo', 'noemia'],
+  },
+
+  // ── Permissões granulares por módulo por usuário ────────────────────────────
+  modulePermissions: {
+    lemosbank:       [] as string[],
+    juridico:        [] as string[],
+    fiscal:          [] as string[],
+    financiamentos:  [] as string[],
+    relatorios:      [] as string[],
   },
 
   // ── Sidebar — itens visíveis ─────────────────────────────────────────────────
@@ -252,7 +270,7 @@ export const DEFAULT_SYSTEM_CONFIG = {
   financial: {
     defaultDueDay:          5,
     landlordDefaultDueDay:  10,
-    lateFeePercent:         2.0,
+    lateFeePercent:         10.0,
     interestPercentMonth:   1.0,
     currency:               'BRL',
     fiscalServicePercent:   8.0,
@@ -414,6 +432,16 @@ export default async function systemConfigRoutes(app: FastifyInstance) {
       data:  { settings: { ...currentSettings, systemConfig: newConfig } },
     })
 
+    await createAuditLog({
+      prisma: app.prisma as any,
+      req,
+      action: 'config.update',
+      resource: 'system-config',
+      resourceId: req.user.cid,
+      before: currentConfig,
+      after: newConfig,
+    })
+
     const finalConfig = deepMerge(DEFAULT_SYSTEM_CONFIG, newConfig)
     return reply.send({ success: true, config: finalConfig })
   })
@@ -450,6 +478,16 @@ export default async function systemConfigRoutes(app: FastifyInstance) {
     await app.prisma.company.update({
       where: { id: req.user.cid },
       data:  { settings: { ...currentSettings, systemConfig: newConfig } },
+    })
+
+    await createAuditLog({
+      prisma: app.prisma as any,
+      req,
+      action: 'config.update',
+      resource: 'permissions',
+      resourceId: req.user.cid,
+      before: currentConfig.internalModuleAccess ?? {},
+      after: newConfig.internalModuleAccess ?? {},
     })
 
     const finalConfig = deepMerge(DEFAULT_SYSTEM_CONFIG, newConfig)
