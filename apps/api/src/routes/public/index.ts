@@ -894,4 +894,77 @@ export default async function publicRoutes(app: FastifyInstance) {
       count:        r._count.id,
     })))
   })
+
+  // POST /api/v1/public/voice-search
+  // Recebe áudio (multipart), transcreve com Whisper e interpreta como busca
+  // Funciona em Safari iOS (MediaRecorder) e todos os navegadores
+  app.post('/voice-search', async (req, reply) => {
+    try {
+      const data = await req.file()
+      if (!data) return reply.status(400).send({ error: 'NO_AUDIO', message: 'Nenhum arquivo de áudio enviado' })
+
+      const apiKey = process.env.OPENAI_API_KEY ?? env.OPENAI_API_KEY
+      if (!apiKey) {
+        // Sem chave OpenAI: retorna vazio para o frontend usar busca textual
+        return reply.send({ transcript: '', filters: {} })
+      }
+
+      // Ler buffer do áudio
+      const chunks: Buffer[] = []
+      for await (const chunk of data.file) chunks.push(chunk)
+      const audioBuffer = Buffer.concat(chunks)
+
+      if (audioBuffer.length < 100) {
+        return reply.status(400).send({ error: 'AUDIO_TOO_SHORT', message: 'Áudio muito curto' })
+      }
+
+      // Mapear mimetype para extensão aceita pelo Whisper
+      const mime = data.mimetype ?? 'audio/webm'
+      const extMap: Record<string, string> = {
+        'audio/webm': 'webm', 'audio/ogg': 'ogg', 'audio/mp4': 'm4a',
+        'audio/mpeg': 'mp3', 'audio/wav': 'wav', 'audio/x-m4a': 'm4a',
+        'video/webm': 'webm', 'audio/aac': 'aac', 'audio/flac': 'flac',
+      }
+      const ext = extMap[mime] ?? 'webm'
+
+      // Chamar Whisper via fetch (sem SDK)
+      const formData = new FormData()
+      const blob = new Blob([audioBuffer], { type: mime })
+      formData.append('file', blob, `audio.${ext}`)
+      formData.append('model', 'whisper-1')
+      formData.append('language', 'pt')
+      formData.append('response_format', 'json')
+
+      const whisperRes = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${apiKey}` },
+        body: formData,
+      })
+
+      if (!whisperRes.ok) {
+        const errText = await whisperRes.text()
+        app.log.warn({ status: whisperRes.status, body: errText }, '[voice-search] Whisper error')
+        return reply.send({ transcript: '', filters: {} })
+      }
+
+      const whisperData = await whisperRes.json() as { text: string }
+      const transcript = (whisperData.text ?? '').trim()
+
+      if (!transcript) return reply.send({ transcript: '', filters: {} })
+
+      // Interpretar transcrição com IA (reutiliza função existente)
+      let filters: Record<string, unknown> = {}
+      try {
+        const { interpretSearchQuery } = await import('../../services/ai.service.js')
+        filters = await interpretSearchQuery(transcript) as Record<string, unknown>
+      } catch {
+        filters = { search: transcript }
+      }
+
+      return reply.send({ transcript, filters })
+    } catch (err) {
+      app.log.error({ err }, '[voice-search] Unexpected error')
+      return reply.status(500).send({ error: 'INTERNAL_ERROR', message: 'Erro ao processar áudio' })
+    }
+  })
 }

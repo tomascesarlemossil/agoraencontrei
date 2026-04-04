@@ -114,7 +114,19 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
   const [properties, setProperties] = useState<Property[]>([])
   const [loadingProps, setLoadingProps] = useState(false)
   const [isLoaded, setIsLoaded] = useState(false)
+  const [mapError, setMapError] = useState<string | null>(null)
   const router = useRouter()
+
+  // Inject Leaflet CSS once via useEffect (avoids hydration mismatch from inline <link>)
+  useEffect(() => {
+    if (!document.getElementById('leaflet-css')) {
+      const link = document.createElement('link')
+      link.id = 'leaflet-css'
+      link.rel = 'stylesheet'
+      link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'
+      document.head.appendChild(link)
+    }
+  }, [])
 
   // Load clusters from API
   useEffect(() => {
@@ -159,32 +171,40 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
     if (!mapRef.current || mapInstance.current) return
 
     import('leaflet').then(L => {
-      // Fix default marker icons
-      delete (L.Icon.Default.prototype as any)._getIconUrl
-      L.Icon.Default.mergeOptions({
-        iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-        iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-        shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-      })
+      try {
+        // Fix default marker icons
+        delete (L.Icon.Default.prototype as any)._getIconUrl
+        L.Icon.Default.mergeOptions({
+          iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+          iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+          shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+        })
 
-      const map = L.map(mapRef.current!, {
-        center: FRANCA_CENTER,
-        zoom: 13,
-        zoomControl: true,
-      })
+        const map = L.map(mapRef.current!, {
+          center: FRANCA_CENTER,
+          zoom: 13,
+          zoomControl: true,
+        })
 
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors',
-        maxZoom: 19,
-      }).addTo(map)
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '© OpenStreetMap contributors',
+          maxZoom: 19,
+        }).addTo(map)
 
-      mapInstance.current = map
-      setIsLoaded(true)
+        mapInstance.current = map
+        setIsLoaded(true)
+      } catch (err) {
+        console.error('[MapSearch] Leaflet init error:', err)
+        setMapError('Não foi possível carregar o mapa. Tente recarregar a página.')
+      }
+    }).catch(err => {
+      console.error('[MapSearch] Leaflet import error:', err)
+      setMapError('Não foi possível carregar o mapa. Tente recarregar a página.')
     })
 
     return () => {
       if (mapInstance.current) {
-        mapInstance.current.remove()
+        try { mapInstance.current.remove() } catch {}
         mapInstance.current = null
       }
     }
@@ -411,10 +431,19 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
 
   return (
     <div className="relative rounded-2xl overflow-hidden border border-gray-200 shadow-xl" style={{ height: 580 }}>
-      {/* Leaflet CSS */}
-      <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-
-      {/* Map container */}
+      {/* Map container — Leaflet CSS injected via useEffect to avoid hydration mismatch */}
+      {mapError ? (
+        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-gray-50 gap-3">
+          <MapPin className="w-10 h-10 text-gray-400" />
+          <p className="text-sm text-gray-500 text-center max-w-xs px-4">{mapError}</p>
+          <button
+            onClick={() => { setMapError(null); mapInstance.current = null; }}
+            className="px-4 py-2 rounded-lg text-sm font-medium bg-[#1B2B5B] text-white hover:opacity-90"
+          >
+            Tentar novamente
+          </button>
+        </div>
+      ) : null}
       <div ref={mapRef} className="absolute inset-0 z-0" />
 
       {/* Top controls */}
