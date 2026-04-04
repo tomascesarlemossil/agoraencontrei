@@ -299,7 +299,18 @@ export default function ContratoDetailPage() {
               </select>
             </div>
           </div>
-          <div className="flex gap-2">
+          <div className="grid grid-cols-2 gap-3 mt-3">
+            <div>
+              <label className="text-xs text-white/50 block mb-1">Percentual de Reajuste (%)</label>
+              <input
+                type="number" step="0.01" value={renPercent}
+                onChange={e => setRenPercent(e.target.value)}
+                placeholder="Ex: 4.52"
+                className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white"
+              />
+            </div>
+          </div>
+          <div className="flex gap-2 mt-3">
             <button
               onClick={() => renovacaoMutation.mutate()}
               disabled={renovacaoMutation.isPending || !renNewValue || !renDuration}

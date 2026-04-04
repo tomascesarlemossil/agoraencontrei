@@ -1083,6 +1083,7 @@ export default async function financeRoutes(app: FastifyInstance) {
         penalty:           body.penalty            ?? null,
         commission:        body.commission         ?? null,
         contractHtml:      body.contractHtml       ?? null,
+        guaranteeType:     body.guaranteeType      ?? null,
         status:            (body.status as any)    ?? 'ACTIVE',
         isActive:          (body.status ?? 'ACTIVE') === 'ACTIVE',
       },
