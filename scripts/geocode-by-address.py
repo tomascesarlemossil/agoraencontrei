@@ -14,20 +14,29 @@ import re
 DB_URL = "postgresql://neondb_owner:npg_KAver0xR2jiU@ep-holy-band-andfuwo5.c-6.us-east-1.aws.neon.tech/neondb?sslmode=require"
 NEON_API = "https://ep-holy-band-andfuwo5.c-6.us-east-1.aws.neon.tech/sql"
 
-def neon_query(sql, params=None):
+def neon_query(sql, params=None, retries=4):
     payload = {"query": sql}
     if params:
         payload["params"] = params
-    req = urllib.request.Request(
-        NEON_API,
-        data=json.dumps(payload).encode(),
-        headers={
-            "Content-Type": "application/json",
-            "Neon-Connection-String": DB_URL,
-        }
-    )
-    with urllib.request.urlopen(req, timeout=30) as resp:
-        return json.loads(resp.read())
+    last_err = None
+    for attempt in range(retries):
+        try:
+            req = urllib.request.Request(
+                NEON_API,
+                data=json.dumps(payload).encode(),
+                headers={
+                    "Content-Type": "application/json",
+                    "Neon-Connection-String": DB_URL,
+                }
+            )
+            with urllib.request.urlopen(req, timeout=45) as resp:
+                return json.loads(resp.read())
+        except Exception as e:
+            last_err = e
+            wait = 5 * (attempt + 1)  # 5s, 10s, 15s, 20s
+            print(f"  [DB retry {attempt+1}/{retries} in {wait}s: {e}]", flush=True)
+            time.sleep(wait)
+    raise RuntimeError(f"DB query failed after {retries} retries: {last_err}")
 
 def normalize(s):
     """Remove extra spaces and normalize unicode."""
@@ -84,15 +93,18 @@ def geocode_address(street, number, neighborhood, city, state):
 
     return None, None, None
 
+RESUME_OFFSET = 900   # skip first 900 (already done) — set to 0 for full re-run
+
 def main():
     # Get all properties WITH street data (regardless of current lat/lng — refresh with precise coords)
-    result = neon_query("""
+    result = neon_query(f"""
         SELECT id, reference, street, number, neighborhood, city, state
         FROM properties
         WHERE street IS NOT NULL AND street != ''
           AND city IS NOT NULL
         ORDER BY city, reference
         LIMIT 5000
+        OFFSET {RESUME_OFFSET}
     """)
     props = result.get("rows", [])
     print(f"Properties with street address: {len(props)}")
