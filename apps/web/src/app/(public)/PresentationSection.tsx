@@ -15,24 +15,46 @@ interface Props {
 
 export function PresentationSection({ videoUrl, bannerUrl, bannerLink, title, subtitle }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null)
-  const [playing, setPlaying] = useState(true)
-  const [muted, setMuted] = useState(true)
-  const [visible, setVisible] = useState(false)
+  const [playing, setPlaying] = useState(false)
+  const [muted, setMuted] = useState(false) // começa com som ligado
 
-  // Intersection Observer — só reproduz quando visível
+  // Tenta autoplay com som; se bloqueado pelo browser, cai para muted
   useEffect(() => {
     const el = videoRef.current
     if (!el) return
+
+    el.volume = 0.15 // volume baixo (15%)
+    el.muted = false
+
+    const tryPlay = async () => {
+      try {
+        await el.play()
+        setPlaying(true)
+        setMuted(false)
+      } catch {
+        // Browser bloqueou autoplay com som — tenta muted
+        el.muted = true
+        setMuted(true)
+        try {
+          await el.play()
+          setPlaying(true)
+        } catch {
+          setPlaying(false)
+        }
+      }
+    }
+
+    // Intersection Observer — só reproduz quando visível
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          setVisible(true)
-          el.play().catch(() => {})
+          tryPlay()
         } else {
           el.pause()
+          setPlaying(false)
         }
       },
-      { threshold: 0.3 },
+      { threshold: 0.2 },
     )
     observer.observe(el)
     return () => observer.disconnect()
@@ -49,13 +71,20 @@ export function PresentationSection({ videoUrl, bannerUrl, bannerLink, title, su
     const el = videoRef.current
     if (!el) return
     el.muted = !el.muted
+    if (!el.muted) el.volume = 0.15
     setMuted(el.muted)
   }
 
   // ── Banner mode ─────────────────────────────────────────────────────────────
   if (bannerUrl && !videoUrl) {
     const inner = (
-      <div className="relative w-full overflow-hidden rounded-2xl shadow-xl">
+      <div
+        className="relative w-full overflow-hidden rounded-2xl shadow-xl"
+        style={{
+          border: '4px solid #C9A84C',
+          boxShadow: '0 0 0 2px #8B6914, 0 8px 32px rgba(201,168,76,0.35)',
+        }}
+      >
         <Image
           src={bannerUrl}
           alt={title ?? 'Banner Imobiliária Lemos'}
@@ -77,7 +106,7 @@ export function PresentationSection({ videoUrl, bannerUrl, bannerLink, title, su
       </div>
     )
     return (
-      <section className="max-w-6xl mx-auto px-4 sm:px-6 py-10">
+      <section className="max-w-4xl mx-auto px-4 sm:px-6 py-10">
         {bannerLink ? (
           <Link href={bannerLink} target="_blank" rel="noopener noreferrer">
             {inner}
@@ -91,7 +120,7 @@ export function PresentationSection({ videoUrl, bannerUrl, bannerLink, title, su
   if (!videoUrl) return null
 
   return (
-    <section className="max-w-6xl mx-auto px-4 sm:px-6 py-10">
+    <section className="max-w-4xl mx-auto px-4 sm:px-6 py-10">
       {/* Header */}
       <div className="text-center mb-6">
         <p className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: '#C9A84C' }}>
@@ -110,51 +139,67 @@ export function PresentationSection({ videoUrl, bannerUrl, bannerLink, title, su
         )}
       </div>
 
-      {/* Video container */}
+      {/* Video container — borda dourada igual ao ícone dos corretores */}
       <div
-        className="relative w-full overflow-hidden rounded-2xl shadow-2xl bg-black"
-        style={{ aspectRatio: '16/9' }}
+        className="relative w-full overflow-hidden rounded-2xl bg-black"
+        style={{
+          aspectRatio: '16/9',
+          border: '4px solid #C9A84C',
+          boxShadow: '0 0 0 2px #8B6914, 0 12px 40px rgba(201,168,76,0.4), 0 4px 20px rgba(0,0,0,0.3)',
+          borderRadius: '20px',
+        }}
       >
         <video
           ref={videoRef}
           src={videoUrl}
-          autoPlay
-          muted
           loop
           playsInline
           className="w-full h-full object-cover"
           onPlay={() => setPlaying(true)}
           onPause={() => setPlaying(false)}
+          onVolumeChange={() => {
+            const el = videoRef.current
+            if (el) setMuted(el.muted)
+          }}
         />
 
         {/* Gradient overlay (bottom) */}
         <div
           className="absolute bottom-0 left-0 right-0 h-24 pointer-events-none"
-          style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.5), transparent)' }}
+          style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.55), transparent)' }}
         />
 
         {/* Controls */}
         <div className="absolute bottom-4 left-4 flex items-center gap-2">
           <button
             onClick={togglePlay}
-            className="flex items-center justify-center w-9 h-9 rounded-full bg-white/20 backdrop-blur-sm text-white hover:bg-white/30 transition-colors"
+            className="flex items-center justify-center w-9 h-9 rounded-full bg-white/20 backdrop-blur-sm text-white hover:bg-white/35 transition-colors"
             aria-label={playing ? 'Pausar' : 'Reproduzir'}
           >
             {playing ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
           </button>
           <button
             onClick={toggleMute}
-            className="flex items-center justify-center w-9 h-9 rounded-full bg-white/20 backdrop-blur-sm text-white hover:bg-white/30 transition-colors"
+            className="flex items-center justify-center w-9 h-9 rounded-full backdrop-blur-sm text-white transition-colors"
+            style={{
+              backgroundColor: muted ? 'rgba(255,255,255,0.2)' : 'rgba(201,168,76,0.75)',
+            }}
             aria-label={muted ? 'Ativar som' : 'Silenciar'}
+            title={muted ? 'Clique para ativar o som' : 'Som ativo — clique para silenciar'}
           >
             {muted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
           </button>
+          {muted && (
+            <span className="text-white/80 text-xs backdrop-blur-sm bg-black/30 px-2 py-0.5 rounded-full">
+              Toque para ativar o som
+            </span>
+          )}
         </div>
 
         {/* Lemos badge */}
         <div
           className="absolute top-4 right-4 px-3 py-1.5 rounded-full text-xs font-bold backdrop-blur-sm"
-          style={{ backgroundColor: 'rgba(201,168,76,0.85)', color: '#1B2B5B' }}
+          style={{ backgroundColor: 'rgba(201,168,76,0.9)', color: '#1B2B5B' }}
         >
           Imobiliária Lemos
         </div>
