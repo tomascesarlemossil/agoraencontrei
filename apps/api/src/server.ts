@@ -157,6 +157,17 @@ async function bootstrap() {
   await app.register(portalsRoutes,   { prefix: '/api/v1/portals' })
   await app.register(whatsappRoutes,  { prefix: '/api/v1/whatsapp' })
   await app.register(inboxRoutes,     { prefix: '/api/v1/inbox' })
+  // GET /api/v1/agents/status — público, sem autenticação
+  // Registrado no escopo raiz para não herdar o addHook('preHandler') do agentsRoutes
+  app.get('/api/v1/agents/status', { schema: { tags: ['agents'] } }, async (_req, reply) => {
+    return reply.send({
+      configured: !!env.ANTHROPIC_API_KEY,
+      model: env.ANTHROPIC_API_KEY ? 'claude-3-5-sonnet-20241022' : null,
+      message: env.ANTHROPIC_API_KEY
+        ? 'Agentes de IA ativos e prontos.'
+        : 'ANTHROPIC_API_KEY não configurada. Acesse Railway → Settings → Variables para ativar.',
+    })
+  })
   await app.register(agentsRoutes,    { prefix: '/api/v1/agents' })
   await app.register(uploadRoutes,      { prefix: '/api/v1/upload' })
   await app.register(automationsRoutes, { prefix: '/api/v1/automations' })
