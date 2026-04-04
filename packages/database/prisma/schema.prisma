@@ -156,6 +156,7 @@ model Company {
   marketingCampaigns MarketingCampaign[]
   blogPosts         BlogPost[]
   documents         Document[]
+  legalCases        LegalCase[]
 
   @@map("companies")
 }
@@ -482,7 +483,7 @@ model Property {
   visualAIJobs    VisualAIJob[]
   contracts       Contract[]
   documents       Document[]
-
+  legalCases      LegalCase[]
   @@unique([companyId, slug])
   @@unique([companyId, reference])
   @@index([companyId])
@@ -1010,7 +1011,7 @@ model Client {
   contractsAsGuarantor Contract[]        @relation("GuarantorContracts")
   forecasts            FinancialForecast[]
   documents            Document[]
-
+  legalCases           LegalCase[]
   @@unique([companyId, document])
   @@index([companyId])
   @@index([name])
@@ -1059,7 +1060,7 @@ model Contract {
   rentals           Rental[]
   invoices          Invoice[]
   documents         Document[]
-
+  legalCases        LegalCase[]
   @@unique([companyId, legacyId])
   @@index([companyId])
   @@index([tenantId])
@@ -1385,4 +1386,82 @@ model Document {
   @@index([propertyId])
   @@index([clientId])
   @@map("documents")
+}
+
+// ── Módulo Jurídico ───────────────────────────────────────────────────────────
+
+model LegalCase {
+  id            String    @id @default(cuid())
+  companyId     String
+  company       Company   @relation(fields: [companyId], references: [id])
+
+  caseNumber    String?
+  title         String
+  type          String    // DESPEJO | COBRANCA | REVISIONAL | RESCISAO | DANO | OUTROS
+  status        String    @default("ATIVO")
+
+  plaintiffName String?
+  defendantName String?
+  lawyerName    String?
+  lawyerOab     String?
+  lawyerPhone   String?
+  lawyerEmail   String?
+
+  court         String?
+  courtSection  String?
+  courtCity     String?
+
+  openedAt      DateTime?
+  closedAt      DateTime?
+  nextHearingAt DateTime?
+
+  claimedValue  Float?
+  settledValue  Float?
+  courtCosts    Float?
+
+  contractId    String?
+  contract      Contract? @relation(fields: [contractId], references: [id])
+  clientId      String?
+  client        Client?   @relation(fields: [clientId], references: [id])
+  propertyId    String?
+  property      Property? @relation(fields: [propertyId], references: [id])
+
+  observations  String?   @db.Text
+  internalNotes String?   @db.Text
+  priority      String    @default("NORMAL")
+  tags          String[]  @default([])
+  metadata      Json      @default("{}")
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  updates       LegalCaseUpdate[]
+
+  @@index([companyId])
+  @@index([contractId])
+  @@index([clientId])
+  @@index([propertyId])
+  @@index([status])
+  @@index([type])
+  @@map("legal_cases")
+}
+
+model LegalCaseUpdate {
+  id          String    @id @default(cuid())
+  caseId      String
+  case        LegalCase @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  companyId   String
+
+  date        DateTime  @default(now())
+  description String    @db.Text
+  type        String    @default("ANDAMENTO")
+
+  userId      String?
+  userName    String?
+
+  createdAt   DateTime  @default(now())
+
+  @@index([caseId])
+  @@index([companyId])
+  @@map("legal_case_updates")
 }

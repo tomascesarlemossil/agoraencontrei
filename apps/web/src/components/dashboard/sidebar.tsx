@@ -40,6 +40,7 @@ import {
   History,
   PlusCircle,
   ReceiptText,
+  Scale,
 } from 'lucide-react'
 import { useNotifications } from '@/stores/notifications.store'
 import { UserAvatar } from '@/components/ui/UserAvatar'
@@ -81,6 +82,11 @@ const lemosbankSubItems = [
   { href: '/dashboard/lemosbank/arquivo-morto',  icon: Archive,    label: 'Arquivo Morto' },
 ]
 
+const juridicoSubItems = [
+  { href: '/dashboard/juridico',      icon: Scale,      label: 'Processos' },
+  { href: '/dashboard/juridico/novo', icon: PlusCircle, label: 'Novo Processo' },
+]
+
 const bottomItems = [
   { href: '/dashboard/historico-alteracoes', icon: History,  label: 'Hist. Alterações' },
   { href: '/dashboard/notifications',        icon: Bell,     label: 'Notificações' },
@@ -95,7 +101,9 @@ function NavContent({ onClose }: { onClose?: () => void }) {
   const lemosbankActive = pathname.startsWith('/dashboard/lemosbank') ||
     pathname.startsWith('/dashboard/contratos') ||
     pathname.startsWith('/dashboard/clientes')
+  const juridicoActive = pathname.startsWith('/dashboard/juridico')
   const [lemosbankOpen, setLemosbankOpen] = useState(lemosbankActive)
+  const [juridicoOpen, setJuridicoOpen] = useState(juridicoActive)
 
   return (
     <div className="flex flex-col h-full">
@@ -174,6 +182,44 @@ function NavContent({ onClose }: { onClose?: () => void }) {
                       'flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors',
                       active
                         ? 'bg-blue-600/20 text-blue-300'
+                        : 'text-white/50 hover:bg-white/5 hover:text-white/80',
+                    )}
+                  >
+                    <Icon className="h-3.5 w-3.5 flex-shrink-0" />
+                    <span className="truncate">{label}</span>
+                  </Link>
+                )
+              })}
+            </div>
+          )}
+        </div>}
+
+        {/* ── Jurídico Section ─────────────────────────────────── */}
+        {!isBroker && <div>
+          <button
+            onClick={() => setJuridicoOpen(o => !o)}
+            className={cn(
+              'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors hover:bg-white/5',
+              (juridicoActive || juridicoOpen) ? 'text-indigo-300' : 'text-white/60',
+            )}
+          >
+            <Scale className="h-4 w-4 flex-shrink-0" />
+            <span className="truncate">Jurídico</span>
+            <ChevronDown className={cn('ml-auto h-3 w-3 flex-shrink-0 transition-transform', (juridicoOpen || juridicoActive) && 'rotate-180')} />
+          </button>
+          {(juridicoOpen || juridicoActive) && (
+            <div className="ml-3 pl-3 border-l border-white/10 space-y-0.5">
+              {juridicoSubItems.map(({ href, icon: Icon, label }) => {
+                const active = pathname === href || (href !== '/dashboard/juridico' && pathname.startsWith(href))
+                return (
+                  <Link
+                    key={href}
+                    href={href}
+                    onClick={onClose}
+                    className={cn(
+                      'flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors',
+                      active
+                        ? 'bg-indigo-600/20 text-indigo-300'
                         : 'text-white/50 hover:bg-white/5 hover:text-white/80',
                     )}
                   >

@@ -15,7 +15,7 @@ import { Controller, useForm } from 'react-hook-form'
 import {
   ArrowLeft, Edit, Save, X, MapPin, BedDouble, Bath, Car, Ruler, Eye,
   Calendar, ImagePlus, Trash2, Star, Upload, Phone, Mail, User as UserIcon, ZoomIn,
-  Home, Globe, Settings, Shield, Briefcase, Building2, Search, MessageSquare, Clock,
+  Home, Globe, Settings, Shield, Briefcase, Building2, Search, MessageSquare, Clock, Wand2,
 } from 'lucide-react'
 import Link from 'next/link'
 import { useState, useRef, useEffect } from 'react'
@@ -24,6 +24,7 @@ import { uploadApi, usersApi, type User } from '@/lib/api'
 import { PropertyImageLightbox } from '@/components/dashboard/PropertyImageLightbox'
 import { PropertyFeaturesEditor } from '@/components/dashboard/PropertyFeaturesEditor'
 import { SocialPostPanel } from './SocialPostPanel'
+import { PhotoEditorPanel } from '@/components/dashboard/PhotoEditorPanel'
 
 const STATUS_BADGE: Record<string, string> = {
   ACTIVE:   'bg-emerald-500/20 text-emerald-400',
@@ -367,6 +368,7 @@ export default function PropertyDetailPage() {
   const [uploadingImages, setUploadingImages] = useState(false)
   const [urlInput, setUrlInput] = useState('')
   const [showUrlInput, setShowUrlInput] = useState(false)
+  const [showPhotoEditor, setShowPhotoEditor] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const saveImages = async (coverImage: string | undefined, images: string[]) => {
@@ -483,6 +485,12 @@ export default function PropertyDetailPage() {
             </button>
             <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden"
               onChange={(e) => handleFileUpload(e.target.files)} />
+            {allPhotos.length > 0 && (
+              <button onClick={() => setShowPhotoEditor(true)}
+                className="flex items-center gap-1.5 text-xs text-yellow-400 hover:text-yellow-300 transition-colors px-2 py-1 rounded-lg hover:bg-yellow-400/10 border border-yellow-400/30">
+                <Wand2 className="h-3.5 w-3.5" /> Editar Fotos
+              </button>
+            )}
           </div>
         </div>
         {showUrlInput && (
@@ -541,6 +549,21 @@ export default function PropertyDetailPage() {
           </>
         )}
       </div>
+
+      {/* ── PHOTO EDITOR PANEL ──────────────────────────────────────────── */}
+      {showPhotoEditor && (
+        <PhotoEditorPanel
+          propertyId={id}
+          photos={allPhotos}
+          onPhotosUpdated={async (newPhotos) => {
+            const cover = newPhotos[0]
+            const rest = newPhotos.slice(1)
+            await saveImages(cover, rest)
+            setShowPhotoEditor(false)
+          }}
+          onClose={() => setShowPhotoEditor(false)}
+        />
+      )}
 
       {/* ── TABS ─────────────────────────────────────────────────────────── */}
       {editing ? (

@@ -46,6 +46,9 @@ import socialRoutes from './routes/social/index.js'
 import documentsRoutes from './routes/documents/index.js'
 import portalClientRoutes from './routes/portal/index.js'
 import auditLogsRoutes from './routes/audit-logs/index.js'
+import photoEditorRoutes from './routes/photo-editor/index.js'
+import systemConfigRoutes from './routes/system-config/index.js'
+import legalRoutes from './routes/legal/index.js'
 
 const app = Fastify({
   logger: {
@@ -186,6 +189,9 @@ async function bootstrap() {
   await app.register(documentsRoutes,    { prefix: '/api/v1/documents' })
   await app.register(portalClientRoutes, { prefix: '/api/v1/portal' })
   await app.register(auditLogsRoutes,    { prefix: '/api/v1/audit-logs' })
+  await app.register(photoEditorRoutes,  { prefix: '/api/v1/photo-editor' })
+  await app.register(systemConfigRoutes, { prefix: '/api/v1/system-config' })
+  await app.register(legalRoutes,        { prefix: '/api/v1/legal' })
 
   // ── 404 Handler ─────────────────────────────────────────────────────────
   app.setNotFoundHandler((_req, reply) => {

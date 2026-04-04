@@ -626,17 +626,94 @@ export default async function publicRoutes(app: FastifyInstance) {
     }
   })
 
-  // GET /api/v1/public/site-settings — public site configuration (hero video, etc.)
+  // GET /api/v1/public/site-settings — public site configuration (hero video, theme, SEO, etc.)
   app.get('/site-settings', async (_req, reply) => {
     const company = await resolveCompany(app)
     if (!company) return reply.status(503).send({ error: 'SERVICE_UNAVAILABLE' })
 
-    const settings = (company.settings as any) ?? {}
+    const settings     = (company.settings as any) ?? {}
+    const systemConfig = settings.systemConfig ?? {}
+    const siteConfig   = systemConfig.site ?? {}
+    const seoConfig    = systemConfig.seo  ?? {}
+
     return reply.send({
-      heroVideoUrl: settings.heroVideoUrl ?? null,
-      heroVideoType: settings.heroVideoType ?? 'youtube', // 'youtube' | 'upload'
-      companyName: company.name,
-      logoUrl: company.logoUrl,
+      // ── Legado (compatibilidade) ──────────────────────────────────────
+      heroVideoUrl:  settings.heroVideoUrl  ?? siteConfig.heroVideoUrl  ?? null,
+      heroVideoType: settings.heroVideoType ?? siteConfig.heroVideoType ?? 'youtube',
+      logoUrl:       settings.logoUrl       ?? company.logoUrl          ?? null,
+      heroImageUrl:  settings.heroImageUrl  ?? siteConfig.heroImageUrl  ?? null,
+      // ── Empresa ──────────────────────────────────────────────────────
+      companyName:    company.tradeName || company.name,
+      companyPhone:   company.phone    ?? '',
+      companyEmail:   company.email    ?? '',
+      companyAddress: company.address  ?? '',
+      companyCity:    company.city     ?? '',
+      companyState:   company.state    ?? '',
+      companyCnpj:    company.cnpj     ?? '',
+      companyCreci:   company.creci    ?? '',
+      companyWebsite: company.website  ?? '',
+      // ── Tema visual ───────────────────────────────────────────────────
+      siteTheme: siteConfig.siteTheme ?? 'classic-blue',
+      // ── Textos do hero ────────────────────────────────────────────────
+      heroBadge:          siteConfig.heroBadge          ?? null,
+      heroTitle:          siteConfig.heroTitle          ?? null,
+      heroTitleHighlight: siteConfig.heroTitleHighlight ?? null,
+      heroSubtitle:       siteConfig.heroSubtitle       ?? null,
+      featuredTitle:      siteConfig.featuredTitle      ?? null,
+      featuredSubtitle:   siteConfig.featuredSubtitle   ?? null,
+      trustTitle:         siteConfig.trustTitle         ?? null,
+      ctaTitle:           siteConfig.ctaTitle           ?? null,
+      ctaSubtitle:        siteConfig.ctaSubtitle        ?? null,
+      ctaButton:          siteConfig.ctaButton          ?? null,
+      // ── Contato ───────────────────────────────────────────────────────
+      whatsappNumber:  siteConfig.whatsappNumber  ?? '',
+      whatsappMessage: siteConfig.whatsappMessage ?? 'Olá! Gostaria de saber mais sobre os imóveis.',
+      phoneFixed:      siteConfig.phoneFixed      ?? company.phone ?? '',
+      phoneMobile:     siteConfig.phoneMobile     ?? '',
+      // ── Redes sociais ─────────────────────────────────────────────────
+      instagramUrl:      siteConfig.instagramUrl      ?? '',
+      instagramUrlTomas: siteConfig.instagramUrlTomas ?? '',
+      facebookUrl:       siteConfig.facebookUrl       ?? '',
+      youtubeUrl:        siteConfig.youtubeUrl        ?? '',
+      linkedinUrl:       siteConfig.linkedinUrl       ?? '',
+      tiktokUrl:         siteConfig.tiktokUrl         ?? '',
+      // ── SEO ───────────────────────────────────────────────────────────
+      seoTitle:            seoConfig.title            ?? null,
+      seoDescription:      seoConfig.description      ?? null,
+      seoKeywords:         seoConfig.keywords         ?? [],
+      seoOgImage:          seoConfig.ogImage          ?? null,
+      seoCanonical:        seoConfig.canonical        ?? null,
+      seoGoogleAnalytics:  seoConfig.googleAnalytics  ?? null,
+      seoGoogleTagManager: seoConfig.googleTagManager ?? null,
+      seoFacebookPixel:    seoConfig.facebookPixel    ?? null,
+      seoGoogleSiteVerify: seoConfig.googleSiteVerify ?? null,
+      seoBingVerify:       seoConfig.bingVerify       ?? null,
+      seoRobots:           seoConfig.robots           ?? 'index, follow',
+      seoSchemaOrg:        seoConfig.schemaOrg        ?? true,
+      // ── Seções visíveis ───────────────────────────────────────────────
+      showHeroVideo:           siteConfig.showHeroVideo           ?? true,
+      showSearchBar:           siteConfig.showSearchBar           ?? true,
+      showFeaturedProperties:  siteConfig.showFeaturedProperties  ?? true,
+      showServicesSection:     siteConfig.showServicesSection     ?? true,
+      showBlogSection:         siteConfig.showBlogSection         ?? true,
+      showCorretoresSection:   siteConfig.showCorretoresSection   ?? true,
+      showFinanciamentos:      siteConfig.showFinanciamentos      ?? true,
+      showWhatsappButton:      siteConfig.showWhatsappButton      ?? true,
+      showChatWidget:          siteConfig.showChatWidget          ?? true,
+      showTrustBadges:         siteConfig.showTrustBadges         ?? true,
+      showStatsBar:            siteConfig.showStatsBar            ?? true,
+      showSmartQuiz:           siteConfig.showSmartQuiz           ?? true,
+      showAvaliacao:           siteConfig.showAvaliacao           ?? true,
+      showAnunciarSection:     siteConfig.showAnunciarSection     ?? true,
+      maintenanceMode:         siteConfig.maintenanceMode         ?? false,
+      maintenanceMessage:      siteConfig.maintenanceMessage      ?? 'Site em manutenção. Voltamos em breve.',
+      // ── Customização visual extra ─────────────────────────────────────
+      customCss:        siteConfig.customCss        ?? '',
+      customJs:         siteConfig.customJs         ?? '',
+      faviconUrl:       siteConfig.faviconUrl       ?? null,
+      ogImageUrl:       siteConfig.ogImageUrl       ?? seoConfig.ogImage ?? null,
+      cookieBannerText: siteConfig.cookieBannerText ?? 'Usamos cookies para melhorar sua experiência.',
+      showCookieBanner: siteConfig.showCookieBanner ?? true,
     })
   })
 

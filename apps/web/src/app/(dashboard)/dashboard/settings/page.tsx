@@ -11,6 +11,7 @@ import {
   Plus, Trash2, Loader2, Eye, EyeOff, Save, Settings, Plug, Camera, X, Link,
 } from 'lucide-react'
 import { UserAvatar } from '@/components/ui/UserAvatar'
+import { SystemConfigPanel } from './SystemConfigPanel'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 
@@ -136,6 +137,7 @@ export default function SettingsPage() {
     { id: 'seguranca',    label: 'Segurança',     icon: Shield,    show: true },
     { id: 'site',         label: 'Site & IA',     icon: Globe,     show: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'].includes(user?.role ?? '') },
     { id: 'integracoes',  label: 'Integrações',   icon: Plug,      show: ['SUPER_ADMIN', 'ADMIN'].includes(user?.role ?? '') },
+    { id: 'sistema',      label: 'Sistema',       icon: Settings,  show: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'].includes(user?.role ?? '') },
   ].filter(t => t.show)
 
   const [activeTab, setActiveTab] = useState('empresa')
@@ -929,6 +931,13 @@ export default function SettingsPage() {
                 {integSaved ? 'Salvo!' : 'Salvar tokens'}
               </button>
             </div>
+          </div>
+        )}
+
+        {/* ── SISTEMA ─────────────────────────────────────────────────────── */}
+        {activeTab === 'sistema' && (
+          <div>
+            <SystemConfigPanel />
           </div>
         )}
       </div>
