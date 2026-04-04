@@ -192,12 +192,17 @@ export default function DocumentosPage() {
   // ── image upload ────────────────────────────────────────────────────────────
   async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files ?? [])
+    // Normaliza HEIC/HEIF (iPhone) → image/jpeg (Claude não suporta HEIC)
+    const normalizeType = (t: string) => {
+      if (t === 'image/heic' || t === 'image/heif' || t === '') return 'image/jpeg'
+      return t
+    }
     for (const file of files) {
       const base64 = await toBase64(file)
       const preview = await toPreviewUrl(file)
       setUploadedImages(prev => [...prev, {
         base64,
-        mediaType: file.type,
+        mediaType: normalizeType(file.type),
         name: file.name,
         description: `Documento para OCR: extraia nome, CPF, RG, endereço e demais dados visíveis`,
         preview,

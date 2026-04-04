@@ -16,13 +16,16 @@ type AllowedMediaType = typeof ALLOWED_MEDIA_TYPES[number]
 function normalizeMediaType(mt: string): AllowedMediaType | null {
   const lower = (mt ?? '').toLowerCase().trim()
   if (lower === 'image/jpg') return 'image/jpeg'
+  // HEIC/HEIF (iPhone) → treat as JPEG (Claude doesn't support HEIC natively)
+  if (lower === 'image/heic' || lower === 'image/heif' || lower === '') return 'image/jpeg'
   if (ALLOWED_MEDIA_TYPES.includes(lower as AllowedMediaType)) return lower as AllowedMediaType
   // Try to infer from common aliases
-  if (lower.includes('jpeg') || lower.includes('jpg')) return 'image/jpeg'
+  if (lower.includes('jpeg') || lower.includes('jpg') || lower.includes('heic') || lower.includes('heif')) return 'image/jpeg'
   if (lower.includes('png')) return 'image/png'
   if (lower.includes('gif')) return 'image/gif'
   if (lower.includes('webp')) return 'image/webp'
-  return null // unsupported type — skip this image
+  // Unknown type — assume JPEG (better to try than skip)
+  return 'image/jpeg'
 }
 
 // ── PDF Extractor ────────────────────────────────────────────────────────────
@@ -584,7 +587,18 @@ ADMINISTRATIVO (protocolo-documentos, regulamento-condominio, folha-rosto):
       addedImages++
     }
     if (addedImages > 0) {
-      userContent.push({ type: 'text', text: 'Extraia os dados das imagens acima (documentos pessoais, comprovantes, etc.)' })
+      userContent.push({
+        type: 'text',
+        text: `Analise CUIDADOSAMENTE as ${addedImages} imagem(ns) acima.
+
+Se for CNH (Carteira Nacional de Habilitação): extraia nome_completo, cpf, rg, data_nascimento, naturalidade, nome_pai, nome_mae, validade, categoria, numero_registro.
+Se for RG: extraia nome_completo, rg, rg_orgao, rg_data, cpf, data_nascimento, naturalidade, nome_pai, nome_mae.
+Se for CPF: extraia nome_completo, cpf, data_nascimento.
+Se for comprovante de residência: extraia nome_completo, endereco_completo, bairro, cidade, estado, cep.
+Se for contrato ou documento imobiliário: extraia todos os dados relevantes.
+
+IMPORTANTE: Extraia TODOS os dados visíveis no documento, mesmo que parcialmente legíveis. Não deixe campos em branco se o dado estiver na imagem.`
+      })
     }
   }
 

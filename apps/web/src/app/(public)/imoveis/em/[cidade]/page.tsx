@@ -255,6 +255,98 @@ const BAIRROS_POR_CIDADE: Record<string, string[]> = {
   ],
 }
 
+// Condomínios e loteamentos por cidade (cidades menores)
+const CONDOMINIOS_POR_CIDADE: Record<string, string[]> = {
+  'rifaina': [
+    'Condomínio Lago Azul', 'Condomínio Beira Lago', 'Condomínio Água Vermelha',
+    'Condomínio das Flores', 'Condomínio Paraíso', 'Condomínio Primavera',
+    'Loteamento Lago Azul', 'Loteamento Beira Lago', 'Loteamento das Palmeiras',
+    'Rancho Lago Azul', 'Rancho Água Vermelha', 'Sítio Lago Azul',
+    'Balneário Lago Azul', 'Portal do Lago', 'Residencial Lago Azul',
+  ],
+  'cristais-paulista': [
+    'Condomínio Serra Verde', 'Condomínio das Flores', 'Condomínio Primavera',
+    'Loteamento Bela Vista', 'Loteamento Novo Horizonte', 'Loteamento das Palmeiras',
+    'Residencial Serra Verde', 'Residencial das Flores', 'Residencial Primavera',
+    'Chácara São João', 'Sítio Serra Verde', 'Portal da Serra',
+  ],
+  'patrocinio-paulista': [
+    'Condomínio das Flores', 'Condomínio Primavera', 'Condomínio Novo Horizonte',
+    'Loteamento Bela Vista', 'Loteamento Industrial', 'Loteamento das Palmeiras',
+    'Residencial das Flores', 'Residencial Primavera', 'Residencial Bela Vista',
+    'Portal das Flores', 'Portal Primavera', 'Chácara das Flores',
+  ],
+  'pedregulho': [
+    'Condomínio das Flores', 'Condomínio Primavera', 'Condomínio Bela Vista',
+    'Loteamento Bela Vista', 'Loteamento Industrial', 'Loteamento das Palmeiras',
+    'Residencial das Flores', 'Residencial Primavera', 'Residencial Bela Vista',
+    'Portal das Flores', 'Chácara das Flores', 'Sítio das Palmeiras',
+  ],
+  'itirapua': [
+    'Condomínio das Flores', 'Condomínio Primavera', 'Condomínio Bela Vista',
+    'Loteamento Bela Vista', 'Loteamento das Palmeiras',
+    'Residencial das Flores', 'Residencial Primavera', 'Residencial Bela Vista',
+    'Chácara das Flores', 'Sítio das Palmeiras',
+  ],
+  'delfinopolis': [
+    'Condomínio Lago de Furnas', 'Condomínio Beira Lago', 'Condomínio das Flores',
+    'Loteamento Lago de Furnas', 'Loteamento Beira Lago', 'Loteamento das Palmeiras',
+    'Residencial Lago de Furnas', 'Residencial Beira Lago', 'Residencial das Flores',
+    'Rancho Lago de Furnas', 'Sítio Lago de Furnas', 'Portal do Lago',
+    'Pousada do Lago', 'Condomínio Primavera', 'Condomínio Paraíso',
+  ],
+  'capitolio': [
+    'Escarpas do Lago', 'Condomínio Lago de Furnas', 'Condomínio Beira Lago',
+    'Loteamento Lago de Furnas', 'Loteamento Beira Lago', 'Loteamento das Palmeiras',
+    'Residencial Lago de Furnas', 'Residencial Beira Lago', 'Residencial das Flores',
+    'Rancho Lago de Furnas', 'Sítio Lago de Furnas', 'Portal do Lago',
+    'Pousada do Lago', 'Condomínio Primavera', 'Condomínio Paraíso',
+    'Condomínio das Flores', 'Condomínio Novo Horizonte',
+  ],
+  'cassia': [
+    'Condomínio das Flores', 'Condomínio Primavera', 'Condomínio Bela Vista',
+    'Loteamento Bela Vista', 'Loteamento Industrial', 'Loteamento das Palmeiras',
+    'Residencial das Flores', 'Residencial Primavera', 'Residencial Bela Vista',
+    'Portal das Flores', 'Chácara das Flores', 'Sítio das Palmeiras',
+  ],
+  'ibiraci': [
+    'Condomínio das Flores', 'Condomínio Primavera', 'Condomínio Bela Vista',
+    'Loteamento Bela Vista', 'Loteamento das Palmeiras',
+    'Residencial das Flores', 'Residencial Primavera', 'Residencial Bela Vista',
+    'Chácara das Flores', 'Sítio das Palmeiras',
+  ],
+  'capetinga': [
+    'Condomínio das Flores', 'Condomínio Primavera', 'Condomínio Bela Vista',
+    'Loteamento Bela Vista', 'Loteamento das Palmeiras',
+    'Residencial das Flores', 'Residencial Primavera', 'Residencial Bela Vista',
+    'Chácara das Flores', 'Sítio das Palmeiras',
+  ],
+  'sacramento': [
+    'Condomínio das Flores', 'Condomínio Primavera', 'Condomínio Bela Vista',
+    'Loteamento Bela Vista', 'Loteamento Industrial', 'Loteamento das Palmeiras',
+    'Residencial das Flores', 'Residencial Primavera', 'Residencial Bela Vista',
+    'Portal das Flores', 'Chácara das Flores', 'Sítio das Palmeiras',
+    'Condomínio Novo Horizonte', 'Condomínio Paraíso',
+  ],
+  'restinga': [
+    'Condomínio das Flores', 'Condomínio Primavera', 'Condomínio Bela Vista',
+    'Loteamento Bela Vista', 'Loteamento das Palmeiras',
+    'Residencial das Flores', 'Residencial Primavera', 'Residencial Bela Vista',
+    'Chácara das Flores', 'Sítio das Palmeiras',
+  ],
+  'ribeirao-preto': [
+    'Alphaville Ribeirão Preto', 'Condomínio Bougainville', 'Condomínio Campos do Conde',
+    'Condomínio Castanheiras', 'Condomínio Colinas do Sul', 'Condomínio Country Club',
+    'Condomínio Fazenda Imperial', 'Condomínio Fazenda Jequitibá', 'Condomínio Green Park',
+    'Condomínio Jardim Botânico', 'Condomínio Jardim Canadá', 'Condomínio Jardim Paulistano',
+    'Condomínio Palmeiras', 'Condomínio Quinta da Primavera', 'Condomínio Residencial Morro do Ipê',
+    'Condomínio Solar das Acácias', 'Condomínio Spazio', 'Condomínio Ville de France',
+    'Condomínio Villa Lobos', 'Condomínio Villa Toscana', 'Jardim Botânico',
+    'Nova Ribeirânia', 'Parque Anhangüera', 'Residencial Morro do Ipê',
+    'Residencial Recreio dos Bandeirantes', 'Residencial Samambaia',
+  ],
+}
+
 function slugToCity(slug: string): string {
   return slug
     .split('-')
@@ -358,6 +450,11 @@ export default async function CidadePage({ params }: { params: { cidade: string 
   const estado = cidade?.estado ?? 'SP'
 
   const isFranca = params.cidade === 'franca'
+
+  // Condomínios da cidade atual
+  const condominiosDaCidade = isFranca
+    ? CONDOMINIOS_FRANCA
+    : (CONDOMINIOS_POR_CIDADE[params.cidade] ?? [])
 
   // Bairros estáticos da cidade atual (se houver)
   const bairrosEstaticos = isFranca
@@ -492,20 +589,20 @@ export default async function CidadePage({ params }: { params: { cidade: string 
             </section>
           )}
 
-          {/* Condomínios e Edifícios (apenas para Franca) */}
-          {isFranca && (
+          {/* Condomínios e Edifícios (para todas as cidades que têm dados) */}
+          {condominiosDaCidade.length > 0 && (
             <section className="mb-10">
               <h2 className="text-xl font-bold text-[#1B2B5B] mb-2">
-                Condomínios e Edifícios em Franca/SP
+                Condomínios e {isFranca ? 'Edifícios' : 'Loteamentos'} em {cityName}/{estado}
               </h2>
               <p className="text-sm text-gray-500 mb-4">
-                Encontre imóveis nos principais condomínios e edifícios de Franca/SP.
+                Encontre imóveis nos principais condomínios e {isFranca ? 'edifícios' : 'loteamentos'} de {cityName}/{estado}.
               </p>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                {CONDOMINIOS_FRANCA.slice(0, 40).map((cond) => (
+                {condominiosDaCidade.slice(0, 40).map((cond) => (
                   <Link
                     key={cond}
-                    href={`/imoveis?city=Franca&q=${encodeURIComponent(cond)}`}
+                    href={`/imoveis?city=${encodeURIComponent(cityName)}&q=${encodeURIComponent(cond)}`}
                     className="group p-3 bg-white rounded-xl border hover:border-[#C9A84C] hover:shadow-md transition-all text-center"
                   >
                     <span className="text-sm font-medium text-gray-800 group-hover:text-[#1B2B5B] leading-tight">
@@ -514,24 +611,26 @@ export default async function CidadePage({ params }: { params: { cidade: string 
                   </Link>
                 ))}
               </div>
-              <details className="mt-4">
-                <summary className="cursor-pointer text-sm text-[#C9A84C] hover:underline font-medium">
-                  Ver todos os {CONDOMINIOS_FRANCA.length} condomínios e edifícios →
-                </summary>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mt-4">
-                  {CONDOMINIOS_FRANCA.slice(40).map((cond) => (
-                    <Link
-                      key={cond}
-                      href={`/imoveis?city=Franca&q=${encodeURIComponent(cond)}`}
-                      className="group p-3 bg-white rounded-xl border hover:border-[#C9A84C] hover:shadow-md transition-all text-center"
-                    >
-                      <span className="text-sm font-medium text-gray-800 group-hover:text-[#1B2B5B] leading-tight">
-                        {cond}
-                      </span>
-                    </Link>
-                  ))}
-                </div>
-              </details>
+              {condominiosDaCidade.length > 40 && (
+                <details className="mt-4">
+                  <summary className="cursor-pointer text-sm text-[#C9A84C] hover:underline font-medium">
+                    Ver todos os {condominiosDaCidade.length} condomínios e {isFranca ? 'edifícios' : 'loteamentos'} →
+                  </summary>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mt-4">
+                    {condominiosDaCidade.slice(40).map((cond) => (
+                      <Link
+                        key={cond}
+                        href={`/imoveis?city=${encodeURIComponent(cityName)}&q=${encodeURIComponent(cond)}`}
+                        className="group p-3 bg-white rounded-xl border hover:border-[#C9A84C] hover:shadow-md transition-all text-center"
+                      >
+                        <span className="text-sm font-medium text-gray-800 group-hover:text-[#1B2B5B] leading-tight">
+                          {cond}
+                        </span>
+                      </Link>
+                    ))}
+                  </div>
+                </details>
+              )}
             </section>
           )}
 

@@ -247,10 +247,15 @@ export default function NovoContratoPage() {
           r.readAsDataURL(f)
         })
 
+      // Normaliza mediaType: HEIC/HEIF do iPhone → image/jpeg (Claude não suporta HEIC)
+      const normalizeType = (t: string) => {
+        if (t === 'image/heic' || t === 'image/heif' || t === '') return 'image/jpeg'
+        return t
+      }
       const images = await Promise.all(
         files
-          .filter(f => f.type.startsWith('image/'))
-          .map(async f => ({ base64: await toBase64(f), mediaType: f.type })),
+          .filter(f => f.type.startsWith('image/') || f.type === '')
+          .map(async f => ({ base64: await toBase64(f), mediaType: normalizeType(f.type) })),
       )
 
       const resp = await fetch(`${API_URL}/api/v1/agents/documents/identify`, {
@@ -268,12 +273,35 @@ export default function NovoContratoPage() {
 
       if (!resp.ok) throw new Error('Erro na análise de documentos')
       const result = await resp.json()
-      const extracted = result?.result ?? result
+      // A API retorna { templateId, confidence, extractedData, reasoning }
+      // extractedData contém os campos no formato do sistema (locatario_nome, etc.)
+      // Mas também pode retornar campos diretos no nível raiz
+      const raw = result?.extractedData ?? result?.result ?? result
+      // Mapeamento: campos do sistema legado → campos do wizard
+      const extracted = {
+        tenantName:           raw.locatario_nome   ?? raw.tenantName           ?? raw.nome_completo ?? raw.nome,
+        tenantCpf:            raw.locatario_cpf    ?? raw.tenantCpf            ?? raw.cpf,
+        tenantRg:             raw.locatario_rg     ?? raw.tenantRg             ?? raw.rg,
+        tenantPhone:          raw.locatario_tel    ?? raw.tenantPhone          ?? raw.telefone ?? raw.celular,
+        tenantEmail:          raw.locatario_email  ?? raw.tenantEmail          ?? raw.email,
+        tenantAddress:        raw.locatario_endereco_atual ?? raw.tenantAddress ?? raw.endereco,
+        guarantorName:        raw.fiador_nome      ?? raw.guarantorName,
+        guarantorCpf:         raw.fiador_cpf       ?? raw.guarantorCpf,
+        guarantorRg:          raw.fiador_rg        ?? raw.guarantorRg,
+        guarantorPhone:       raw.fiador_tel       ?? raw.guarantorPhone,
+        propertyAddress:      raw.imovel_endereco  ?? raw.propertyAddress,
+        propertyNeighborhood: raw.imovel_bairro    ?? raw.propertyNeighborhood,
+        rentValue:            raw.valor_aluguel    ?? raw.rentValue,
+        dueDay:               raw.dia_vencimento   ?? raw.dueDay,
+        startDate:            raw.data_inicio      ?? raw.startDate,
+        endDate:              raw.data_fim         ?? raw.endDate,
+        adjustmentIndex:      raw.indice_reajuste  ?? raw.adjustmentIndex,
+      }
 
       // Auto-fill wizard fields from AI extraction
       setData(d => ({
         ...d,
-        aiRaw: JSON.stringify(extracted, null, 2),
+        aiRaw: JSON.stringify(raw, null, 2),
         tenantName:           extracted.tenantName           ?? d.tenantName,
         tenantCpf:            extracted.tenantCpf            ?? d.tenantCpf,
         tenantRg:             extracted.tenantRg             ?? d.tenantRg,
