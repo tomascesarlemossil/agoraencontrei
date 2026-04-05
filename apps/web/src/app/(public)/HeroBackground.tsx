@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 const DEFAULT_VIDEO_ID = 'tET8AYkIxgw'
 
@@ -18,11 +18,25 @@ interface Props {
 export function HeroBackground({ videoUrl, videoType }: Props) {
   const isUpload = videoType === 'upload'
   const [isMobile, setIsMobile] = useState(false)
+  const videoRef = useRef<HTMLVideoElement>(null)
 
   useEffect(() => {
     // Detect mobile/tablet — YouTube iframe autoplay blocked on iOS
     const mobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.innerWidth < 768
     setIsMobile(mobile)
+  }, [])
+
+  // Autoplay with sound; fallback to muted if browser blocks unmuted autoplay
+  useEffect(() => {
+    const el = videoRef.current
+    if (!el) return
+    el.volume = 0.15
+    el.muted = false
+    el.play().catch(() => {
+      // Browser blocked unmuted autoplay — retry muted
+      el.muted = true
+      el.play().catch(() => {})
+    })
   }, [])
 
   const videoId = extractYouTubeId(videoUrl ?? '')
@@ -44,9 +58,10 @@ export function HeroBackground({ videoUrl, videoType }: Props) {
         {isUpload && videoUrl ? (
           // Direct video upload — always works on mobile with autoPlay muted
           <video
+            ref={videoRef}
             src={videoUrl}
             autoPlay
-            muted
+            muted={false}
             loop
             playsInline
             className="w-full h-full object-cover"

@@ -1542,3 +1542,25 @@ model ContractHistory {
   @@index([action])
   @@map("contract_history")
 }
+
+// =============================================================================
+// PROPERTY ALERTS
+// =============================================================================
+
+model PropertyAlert {
+  id        String   @id @default(cuid())
+  email     String
+  city      String?
+  type      String?
+  purpose   String?
+  minPrice  Float?
+  maxPrice  Float?
+  bedrooms  Int?
+  active    Boolean  @default(true)
+  token     String   @default(cuid())
+  createdAt DateTime @default(now())
+
+  @@index([email])
+  @@index([active])
+  @@map("property_alerts")
+}
