@@ -21,9 +21,9 @@ async function fetchTeamFromDB(): Promise<Record<string, string>> {
 }
 
 export const metadata: Metadata = {
-  title: 'Nossa Equipe | Imobiliária Lemos — Franca/SP',
+  title: 'Nossa Equipe | AgoraEncontrei — Imobiliária Lemos — Franca/SP',
   description: 'Conheça a equipe da Imobiliária Lemos em Franca/SP. Diretoria, corretores e administrativo especializados em compra, venda e locação de imóveis. CRECI 279051.',
-  keywords: ['corretores Franca SP', 'Imobiliária Lemos equipe', 'CRECI Franca', 'corretor de imóveis Franca'],
+  keywords: ['corretores Franca SP', 'Imobiliária Lemos equipe', 'CRECI Franca', 'corretor de imóveis Franca', 'AgoraEncontrei equipe'],
 }
 
 export const revalidate = 300

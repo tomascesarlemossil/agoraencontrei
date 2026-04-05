@@ -4,15 +4,15 @@ import { TrendingUp, Home, DollarSign, Gavel, BookOpen, Building } from 'lucide-
 import { BlogFeed } from './BlogFeed'
 
 export const metadata: Metadata = {
-  title: 'Blog Imobiliário | Imobiliária Lemos — Dicas, Notícias e Mercado',
-  description: 'Fique por dentro do mercado imobiliário de Franca e região. Dicas para comprar e alugar imóveis, financiamento imobiliário, leilões, legislação e muito mais.',
-  keywords: 'imóveis franca sp, comprar imóvel franca sp, alugar imóvel franca sp, financiamento imobiliário franca, mercado imobiliário franca, leilão imóvel franca, administração imóveis franca, investimento imobiliário franca, ITBI franca sp, IPTU franca sp, escritura imóvel franca, vistoria imóvel franca, contrato locação franca, lei do inquilinato, dicas compra imóvel, como financiar imóvel caixa, FGTS compra imóvel, minha casa minha vida franca, imóvel franca creci, imobiliária franca sp blog, casas à venda franca sp dicas, apartamentos para alugar franca dicas',
+  title: 'Blog Imobiliário | AgoraEncontrei — Dicas, Notícias e Mercado',
+  description: 'Fique por dentro do mercado imobiliário de Franca e região. Dicas para comprar e alugar imóveis, financiamento imobiliário, guias de bairros, legislação e muito mais. AgoraEncontrei — Imobiliária Lemos.',
+  keywords: 'blog imobiliário, imóveis franca sp, comprar imóvel franca sp, alugar imóvel franca sp, financiamento imobiliário franca, mercado imobiliário franca, guia bairros franca, administração imóveis franca, investimento imobiliário franca, ITBI franca sp, IPTU franca sp, escritura imóvel franca, contrato locação franca, lei do inquilinato, dicas compra imóvel, como financiar imóvel caixa, FGTS compra imóvel, minha casa minha vida franca, agoraencontrei blog, casas à venda franca sp dicas, apartamentos para alugar franca dicas',
   openGraph: {
     type: 'website',
     locale: 'pt_BR',
-    title: 'Blog Imobiliário | Imobiliária Lemos',
-    description: 'Tudo sobre o mercado imobiliário de Franca: compra, venda, aluguel, financiamento, investimento e legislação.',
-    siteName: 'Imobiliária Lemos',
+    title: 'Blog Imobiliário | AgoraEncontrei — Imobiliária Lemos',
+    description: 'Tudo sobre o mercado imobiliário de Franca: compra, venda, aluguel, financiamento, investimento e guias de bairros.',
+    siteName: 'AgoraEncontrei — Imobiliária Lemos',
   },
 }
 

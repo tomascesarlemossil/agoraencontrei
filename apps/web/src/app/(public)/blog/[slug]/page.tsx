@@ -33,7 +33,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
       description: post.seoDescription ?? post.excerpt,
       images: post.coverImage ? [post.coverImage] : [],
       publishedTime: post.publishedAt,
-      siteName: 'Imobiliária Lemos',
+      siteName: 'AgoraEncontrei — Imobiliária Lemos',
     },
     alternates: { canonical: `${WEB_URL}/blog/${post.slug}` },
   }
@@ -80,7 +80,7 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         {/* Breadcrumb */}
-        <nav className="flex items-center gap-2 text-sm text-gray-500 mb-8">
+        <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-sm text-gray-500 mb-8">
           <Link href="/" className="hover:text-gray-800">Home</Link>
           <span>/</span>
           <Link href="/blog" className="hover:text-gray-800">Blog</Link>
@@ -107,7 +107,7 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
           </div>
         ) : post.coverImage ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={post.coverImage} alt={post.title} className="w-full h-64 sm:h-96 object-cover rounded-2xl mb-8" />
+          <img src={post.coverImage} alt={post.title} loading="lazy" className="w-full h-64 sm:h-96 object-cover rounded-2xl mb-8" />
         ) : null}
 
         {/* Meta */}

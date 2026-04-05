@@ -429,7 +429,7 @@ export async function generateMetadata({ params }: { params: { cidade: string } 
       description,
       type: 'website',
       locale: 'pt_BR',
-      siteName: 'Imobiliária Lemos',
+      siteName: 'AgoraEncontrei — Imobiliária Lemos',
       images: [{ url: '/og-image.jpg', width: 1200, height: 630 }],
     },
     alternates: {
@@ -499,7 +499,7 @@ export default async function CidadePage({ params }: { params: { cidade: string 
         <div className="bg-[#1B2B5B] text-white py-12 px-4">
           <div className="max-w-6xl mx-auto">
             {/* Breadcrumb */}
-            <nav className="text-sm text-blue-200 mb-4 flex items-center gap-2">
+            <nav aria-label="Breadcrumb" className="text-sm text-blue-200 mb-4 flex items-center gap-2">
               <Link href="/" className="hover:text-white">Início</Link>
               <span>/</span>
               <Link href="/imoveis" className="hover:text-white">Imóveis</Link>

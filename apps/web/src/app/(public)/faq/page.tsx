@@ -161,7 +161,7 @@ export default function FaqPage() {
 
       {/* Breadcrumb */}
       <div className="max-w-4xl mx-auto px-4 pt-4 pb-2">
-        <nav className="flex items-center gap-1.5 text-sm text-gray-500">
+        <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-sm text-gray-500">
           <Link href="/" className="hover:text-gray-600 transition-colors">
             Início
           </Link>

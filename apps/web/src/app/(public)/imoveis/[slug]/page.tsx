@@ -386,7 +386,7 @@ export default async function PropertyDetailPage({ params }: { params: { slug: s
 
       {/* ── Breadcrumb ─────────────────────────────────────── */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-4 pb-2">
-        <nav className="flex items-center gap-1.5 text-sm text-gray-500 flex-wrap">
+        <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-sm text-gray-500 flex-wrap">
           <Link href="/" className="hover:text-gray-600 transition-colors">Início</Link>
           <ChevronRight className="w-3.5 h-3.5 flex-shrink-0" />
           <Link href="/imoveis" className="hover:text-gray-600 transition-colors">Imóveis</Link>

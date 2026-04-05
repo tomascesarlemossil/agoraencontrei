@@ -218,7 +218,7 @@ export function AIVisualPublicButton({ propertySlug, images, title }: Props) {
                         }}
                         aria-label={`Foto ${i + 1}`}
                       >
-                        <img src={url} alt="" className="w-full h-full object-cover" loading="lazy" />
+                        <img src={url} alt={`Foto ${i + 1} do imóvel`} className="w-full h-full object-cover" loading="lazy" />
                       </button>
                     ))}
                   </div>
