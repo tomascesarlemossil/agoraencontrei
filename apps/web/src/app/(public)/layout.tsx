@@ -243,6 +243,11 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
             <p className="text-white/50 text-xs">
               © {new Date().getFullYear()} Imobiliária Lemos. Todos os direitos reservados.
             </p>
+            <div className="flex items-center gap-4 text-xs text-white/40">
+              <a href="/politica-privacidade" className="hover:text-white/70 transition-colors">Política de Privacidade</a>
+              <a href="/termos-uso" className="hover:text-white/70 transition-colors">Termos de Uso</a>
+              <a href="/favoritos" className="hover:text-white/70 transition-colors">Favoritos</a>
+            </div>
             <p className="text-white/50 text-xs">Fundada em 2002 · CRECI 279051</p>
           </div>
         </div>
