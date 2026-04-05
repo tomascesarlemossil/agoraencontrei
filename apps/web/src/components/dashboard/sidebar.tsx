@@ -293,7 +293,21 @@ function NavContent({ onClose }: { onClose?: () => void }) {
             onClick={onClose}
             className="relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-white/60 hover:bg-white/10 hover:text-white transition-colors"
           >
-            <Icon className="h-4 w-4" />
+            {label === 'Notificações' ? (
+              <span className="relative">
+                <Icon className="h-4 w-4" />
+                {unreadCount > 0 && (
+                  <>
+                    <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-0.5 text-[9px] font-bold text-white ring-2 ring-gray-900">
+                      {unreadCount > 99 ? '99+' : unreadCount}
+                    </span>
+                    <span className="absolute -top-1.5 -right-1.5 h-4 min-w-4 rounded-full bg-red-500 animate-ping opacity-75" />
+                  </>
+                )}
+              </span>
+            ) : (
+              <Icon className="h-4 w-4" />
+            )}
             <span>{label}</span>
             {label === 'Notificações' && unreadCount > 0 && (
               <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
