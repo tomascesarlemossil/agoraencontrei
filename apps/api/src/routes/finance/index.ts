@@ -335,6 +335,10 @@ export default async function financeRoutes(app: FastifyInstance) {
           orderBy: { dueDate: 'desc' },
           take: 36,
         },
+        history: {
+          orderBy: { createdAt: 'desc' },
+          take: 50,
+        },
       },
     })
     if (!contract) return reply.status(404).send({ error: 'NOT_FOUND' })
@@ -768,6 +772,8 @@ export default async function financeRoutes(app: FastifyInstance) {
       rescissionDate?: string
       status?: 'FINISHED' | 'CANCELED'
       notes?: string
+      motivo?: string
+      multaRescisao?: number
     }
 
     const contract = await app.prisma.contract.findFirst({
@@ -779,9 +785,26 @@ export default async function financeRoutes(app: FastifyInstance) {
     const updated = await app.prisma.contract.update({
       where: { id },
       data: {
-        status:         body.status ?? 'FINISHED',
-        isActive:       false,
-        rescissionDate: body.rescissionDate ? new Date(body.rescissionDate) : new Date(),
+        status:            body.status ?? 'FINISHED',
+        isActive:          false,
+        rescissionDate:    body.rescissionDate ? new Date(body.rescissionDate) : new Date(),
+        rescissionReason:  body.motivo ?? body.notes ?? null,
+        rescissionFine:    body.multaRescisao ?? null,
+      },
+    })
+
+    // Registrar no histórico do contrato
+    await app.prisma.contractHistory.create({
+      data: {
+        contractId: id,
+        companyId:  req.user.cid,
+        action:     'RESCISAO',
+        description: `Contrato ${body.status === 'CANCELED' ? 'cancelado' : 'encerrado'} em ${body.rescissionDate ?? new Date().toISOString().slice(0, 10)}${body.motivo ? '. Motivo: ' + body.motivo : ''}${body.multaRescisao ? '. Multa: R$ ' + body.multaRescisao : ''}.`,
+        field:      'status',
+        oldValue:   contract.status,
+        newValue:   body.status ?? 'FINISHED',
+        userId:     req.user.sub,
+        userName:   (req.user as any).name ?? null,
       },
     })
 
@@ -819,6 +842,20 @@ export default async function financeRoutes(app: FastifyInstance) {
         ...(body.indiceReajuste ? { adjustmentIndex: body.indiceReajuste as any } : {}),
       } as any,
     })
+    // Registrar no histórico do contrato
+    await app.prisma.contractHistory.create({
+      data: {
+        contractId: id,
+        companyId:  req.user.cid,
+        action:     'RENOVACAO',
+        description: `Contrato renovado por ${body.duration ?? 12} meses. Nova data de término: ${newEndDate.toLocaleDateString('pt-BR')}${body.novoValor ? '. Novo valor: R$ ' + body.novoValor : ''}${body.indiceReajuste ? '. Índice: ' + body.indiceReajuste : ''}.`,
+        field:      'endDate',
+        oldValue:   contract.endDate?.toISOString().slice(0, 10) ?? null,
+        newValue:   newEndDate.toISOString().slice(0, 10),
+        userId:     req.user.sub,
+        userName:   (req.user as any).name ?? null,
+      },
+    })
     await createAuditLog({
       prisma: app.prisma as any, req,
       action: 'contract.renewal',
@@ -847,6 +884,21 @@ export default async function financeRoutes(app: FastifyInstance) {
       data: {
         rentValue: new Prisma.Decimal(newValue),
       } as any,
+    })
+    // Registrar no histórico do contrato
+    await app.prisma.contractHistory.create({
+      data: {
+        contractId: id,
+        companyId:  req.user.cid,
+        action:     'REAJUSTE',
+        description: `Reajuste de ${body.percentual}% aplicado${body.motivo ? '. Motivo: ' + body.motivo : ''}. De R$ ${oldValue.toFixed(2)} para R$ ${newValue.toFixed(2)}.`,
+        field:      'rentValue',
+        oldValue:   oldValue.toFixed(2),
+        newValue:   newValue.toFixed(2),
+        userId:     req.user.sub,
+        userName:   (req.user as any).name ?? null,
+        metadata:   { percentual: body.percentual, motivo: body.motivo, dataAplicacao: body.dataAplicacao },
+      },
     })
     await createAuditLog({
       prisma: app.prisma as any, req,
@@ -1761,6 +1813,21 @@ export default async function financeRoutes(app: FastifyInstance) {
       ultimoReajuste: c.documents.find((d: any) => d.type === 'REAJUSTE') ?? null,
     }))
     return reply.send(result)
+  })
+
+  // GET /api/v1/finance/contracts/:id/history — Histórico de alterações do contrato
+  app.get('/contracts/:id/history', async (req, reply) => {
+    const { id } = req.params as { id: string }
+    const contract = await app.prisma.contract.findFirst({
+      where: { id, companyId: req.user.cid },
+    })
+    if (!contract) return reply.status(404).send({ error: 'NOT_FOUND' })
+    const history = await app.prisma.contractHistory.findMany({
+      where: { contractId: id },
+      orderBy: { createdAt: 'desc' },
+      take: 100,
+    })
+    return reply.send({ data: history, total: history.length })
   })
 
   // PATCH /api/v1/finance/rentals/:id/repasse-estorno — Estornar repasse pago

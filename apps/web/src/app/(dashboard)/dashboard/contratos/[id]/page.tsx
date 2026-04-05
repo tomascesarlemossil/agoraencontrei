@@ -133,7 +133,7 @@ export default function ContratoDetailPage() {
   const paidRentals = rentals.filter(r => r.status === 'PAID')
   const lateRentals = rentals.filter(r => r.status === 'LATE')
   const totalPago = paidRentals.reduce((s, r) => s + (r.paidAmount ?? r.totalAmount ?? 0), 0)
-  const contractHistory = (contract as any).contractHistory ?? []
+  const contractHistory = (contract as any).history ?? (contract as any).contractHistory ?? []
 
   return (
     <div className="p-4 md:p-6 max-w-4xl mx-auto space-y-4">

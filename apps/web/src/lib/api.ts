@@ -976,6 +976,9 @@ export const financeApi = {
       token,
       body: JSON.stringify({}),
     }),
+
+  contractHistory: (token: string, contractId: string) =>
+    request<{ data: any[]; total: number }>(`/api/v1/finance/contracts/${contractId}/history`, { token }),
 }
 
 // ── Upload ─────────────────────────────────────────────────────────────────────

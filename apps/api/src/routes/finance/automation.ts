@@ -770,8 +770,8 @@ export default async function financeAutomationRoutes(app: FastifyInstance) {
         isActive: true,
         adjustmentMonth: currentMonth,
         OR: [
-          { lastAdjustmentAt: null },
-          { lastAdjustmentAt: { lt: new Date(currentYear, 0, 1) } },
+          { lastAdjustmentDate: null },
+          { lastAdjustmentDate: { lt: new Date(currentYear, 0, 1) } },
         ],
       },
       include: {
@@ -794,7 +794,7 @@ export default async function financeAutomationRoutes(app: FastifyInstance) {
         currentRentValue: Number(c.rentValue),
         adjustmentIndex: c.adjustmentIndex,
         adjustmentPercent: c.adjustmentPercent ? Number(c.adjustmentPercent) : null,
-        lastAdjustmentAt: c.lastAdjustmentAt,
+        lastAdjustmentDate: c.lastAdjustmentDate,
         startDate: c.startDate,
       })),
     })
@@ -839,7 +839,7 @@ export default async function financeAutomationRoutes(app: FastifyInstance) {
             rentValue: newValue,
             adjustmentIndex: body.index,
             adjustmentPercent: body.percent,
-            lastAdjustmentAt: new Date(),
+            lastAdjustmentDate: new Date(),
           },
         })
 

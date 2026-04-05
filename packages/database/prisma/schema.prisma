@@ -1148,6 +1148,8 @@ model Contract {
   rescissionReason  String?        // Motivo da rescisão
   rescissionFine    Decimal?       @db.Decimal(12, 2)  // Multa de rescisão
   rescissionRefund  Decimal?       @db.Decimal(12, 2)  // Devolução ao inquilino
+  // Reajuste
+  adjustmentMonth   Int?           // Mês do reajuste anual (1-12)
   // Segundo fiador
   guarantor2Id      String?        // Segundo fiador
   guarantor2Name    String?        // Nome do segundo fiador (desnormalizado)
@@ -1164,6 +1166,7 @@ model Contract {
   invoices          Invoice[]
   documents         Document[]
   legalCases        LegalCase[]
+  history           ContractHistory[]
   @@unique([companyId, legacyId])
   @@index([companyId])
   @@index([tenantId])
@@ -1219,6 +1222,10 @@ model Rental {
   repasValue      Decimal?     @db.Decimal(12, 2)  // Valor líquido do repasse
   repasMethod     String?      // Método do repasse (TED, PIX, etc.)
   repasRef        String?      // Referência do repasse
+   // Campos extras de cobrança
+  bankFeeAmount   Decimal?     @db.Decimal(12, 2)  // Taxa bancária
+  adminFeeAmount  Decimal?     @db.Decimal(12, 2)  // Taxa de administração
+  iptuParcela     String?      // Parcela IPTU (ex: "1/10")
   // Observações
   notes           String?      // Observações da cobrança
   internalNotes   String?      // Notas internas
@@ -1226,7 +1233,6 @@ model Rental {
   competenceYear  Int?         // Ano de competência
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @default(now()) @updatedAt
-
   @@index([companyId])
   @@index([contractId])
   @@index([status])
@@ -1325,6 +1331,10 @@ model FiscalNote {
   nfeNumber            String?
   nfeKey               String?
   nfeXml               String?          @db.Text
+  // Asaas NFS-e integration
+  asaasNfeId           String?          // ID da NFS-e no Asaas
+  asaasNfeStatus       String?          // Status no Asaas (AUTHORIZED, CANCELLED, ERROR)
+  asaasNfePdfUrl       String?          // URL do PDF da NFS-e
   status               FiscalNoteStatus @default(DRAFT)
   createdById          String?
   createdAt            DateTime         @default(now())
@@ -1652,4 +1662,45 @@ model LegalCaseUpdate {
   @@index([caseId])
   @@index([companyId])
   @@map("legal_case_updates")
+}
+
+// ── Alertas de Imóveis (notificações para interessados) ──────────────────────
+model PropertyAlert {
+  id        String   @id @default(cuid())
+  email     String
+  city      String?
+  type      String?  // HOUSE, APARTMENT, etc.
+  purpose   String?  // SALE, RENT
+  minPrice  Decimal? @db.Decimal(12, 2)
+  maxPrice  Decimal? @db.Decimal(12, 2)
+  bedrooms  Int?
+  token     String?  @unique @default(cuid())  // token para cancelar alerta
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([email])
+  @@index([city])
+  @@map("property_alerts")
+}
+
+// ── Histórico de Contratos (reajustes, renovações, alterações) ───────────────
+model ContractHistory {
+  id          String   @id @default(cuid())
+  companyId   String
+  contractId  String
+  contract    Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  action      String   // REAJUSTE | RENOVACAO | RESCISAO | ALTERACAO | CRIACAO
+  description String?  @db.Text
+  field       String?  // campo alterado
+  oldValue    String?  // valor anterior
+  newValue    String?  // novo valor
+  userId      String?
+  userName    String?
+  metadata    Json     @default("{}")
+  createdAt   DateTime @default(now())
+
+  @@index([contractId])
+  @@index([companyId])
+  @@map("contract_history")
 }
