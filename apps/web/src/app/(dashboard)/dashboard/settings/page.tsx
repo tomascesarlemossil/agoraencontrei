@@ -232,9 +232,11 @@ export default function SettingsPage() {
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ ...empresa, logoUrl }),
       })
+      if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.message ?? 'Erro ao salvar empresa') }
       return res.json()
     },
     onSuccess: () => { setEmpresaSaved(true); setTimeout(() => setEmpresaSaved(false), 3000) },
+    onError: (e: Error) => { alert('Erro ao salvar: ' + e.message) },
   })
 
   // ── Integrations ──────────────────────────────────────────────────────────
@@ -256,9 +258,11 @@ export default function SettingsPage() {
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify(integrations),
       })
+      if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.message ?? 'Erro ao salvar integrações') }
       return res.json()
     },
     onSuccess: () => { setIntegSaved(true); setTimeout(() => setIntegSaved(false), 3000) },
+    onError: (e: Error) => { alert('Erro ao salvar: ' + e.message) },
   })
 
   // ── Site Settings ──────────────────────────────────────────────────────────
@@ -316,9 +320,11 @@ export default function SettingsPage() {
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ heroVideoUrl: videoUrl, heroVideoType: videoType, ...siteSettings }),
       })
+      if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.message ?? 'Erro ao salvar configurações do site') }
       return res.json()
     },
     onSuccess: () => { setSiteSaved(true); setTimeout(() => setSiteSaved(false), 3000) },
+    onError: (e: Error) => { alert('Erro ao salvar: ' + e.message) },
   })
 
   // ── Team ──────────────────────────────────────────────────────────────────
@@ -345,11 +351,13 @@ export default function SettingsPage() {
       return usersApi.create(token!, newUser as Parameters<typeof usersApi.create>[1])
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['users'] }); setShowNewUser(false); setNewUser({ name: '', email: '', password: '', role: 'BROKER', phone: '', creciNumber: '' }) },
+    onError: (e: Error) => { alert('Erro ao criar usuário: ' + e.message) },
   })
 
   const deleteUserMutation = useMutation({
     mutationFn: async (id: string) => { const token = await getValidToken(); return usersApi.delete(token!, id) },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['users'] }),
+    onError: (e: Error) => { alert('Erro ao excluir usuário: ' + e.message) },
   })
 
   const updateTeamUserMutation = useMutation({

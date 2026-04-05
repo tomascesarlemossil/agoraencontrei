@@ -106,7 +106,7 @@ export default async function HomePage() {
           {/* Badge */}
           <div
             className="inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-semibold mb-6"
-            style={{ backgroundColor: 'rgba(201, 168, 76, 0.15)', color: '#C9A84C', border: '1px solid rgba(201,168,76,0.3)' }}
+            style={{ backgroundColor: 'rgba(201, 168, 76, 0.15)', color: 'var(--site-accent-color, #C9A84C)', border: '1px solid rgba(201,168,76,0.3)' }}
           >
             <Star className="w-3 h-3 fill-current" />
             Mais de 20 anos de tradição em Franca/SP
@@ -118,7 +118,7 @@ export default async function HomePage() {
           >
             Encontre o imóvel
             <br />
-            <span style={{ color: '#C9A84C' }}>dos seus sonhos</span>
+            <span style={{ color: 'var(--site-accent-color, #C9A84C)' }}>dos seus sonhos</span>
           </h1>
           <p className="text-white/60 text-lg mb-10 max-w-xl mx-auto">
             {stats.total > 0
@@ -137,7 +137,7 @@ export default async function HomePage() {
               { label: 'Famílias atendidas', value: '5.000+' },
             ].map(stat => (
               <div key={stat.label} className="text-center">
-                <p className="text-2xl font-bold" style={{ color: '#C9A84C', fontFamily: 'Georgia, serif' }}>
+                <p className="text-2xl font-bold" style={{ color: 'var(--site-accent-color, #C9A84C)', fontFamily: 'Georgia, serif' }}>
                   {stat.value}
                 </p>
                 <p className="text-white/40 text-xs mt-0.5">{stat.label}</p>
@@ -149,7 +149,7 @@ export default async function HomePage() {
         {/* Wave */}
         <div className="absolute bottom-0 left-0 right-0">
           <svg viewBox="0 0 1440 60" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full">
-            <path d="M0 60L60 50C120 40 240 20 360 15C480 10 600 20 720 25C840 30 960 30 1080 25C1200 20 1320 10 1380 5L1440 0V60H1380C1320 60 1200 60 1080 60C960 60 840 60 720 60C600 60 480 60 360 60C240 60 120 60 60 60H0Z" fill="#f8f6f1"/>
+            <path d="M0 60L60 50C120 40 240 20 360 15C480 10 600 20 720 25C840 30 960 30 1080 25C1200 20 1320 10 1380 5L1440 0V60H1380C1320 60 1200 60 1080 60C960 60 840 60 720 60C600 60 480 60 360 60C240 60 120 60 60 60H0Z" fill="var(--site-background-color, #f8f6f1)"/>
           </svg>
         </div>
       </section>
@@ -157,7 +157,7 @@ export default async function HomePage() {
       {/* ── CATEGORIES ──────────────────────────────────────────────── */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 py-16">
         <div className="text-center mb-10">
-          <h2 className="text-2xl font-bold" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>
+          <h2 className="text-2xl font-bold" style={{ color: 'var(--site-primary-color, #1B2B5B)', fontFamily: 'Georgia, serif' }}>
             O que você procura?
           </h2>
           <p className="text-gray-500 text-sm mt-1">Selecione o tipo de imóvel e explore as opções</p>
@@ -190,7 +190,7 @@ export default async function HomePage() {
         <section className="max-w-7xl mx-auto px-4 sm:px-6 pb-16">
           <div className="flex items-center justify-between mb-8">
             <div>
-              <h2 className="text-2xl font-bold" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>
+              <h2 className="text-2xl font-bold" style={{ color: 'var(--site-primary-color, #1B2B5B)', fontFamily: 'Georgia, serif' }}>
                 Imóveis em Destaque
               </h2>
               <p className="text-gray-500 text-sm mt-0.5">Recém cadastrados — os mais novos do portfólio</p>
@@ -198,7 +198,7 @@ export default async function HomePage() {
             <Link
               href="/imoveis"
               className="flex items-center gap-2 text-sm font-semibold hover:gap-3 transition-all"
-              style={{ color: '#C9A84C' }}
+              style={{ color: 'var(--site-accent-color, #C9A84C)' }}
             >
               Ver todos <ArrowRight className="w-4 h-4" />
             </Link>
@@ -231,8 +231,8 @@ export default async function HomePage() {
                     <span
                       className="text-xs font-bold px-2 py-0.5 rounded-full"
                       style={{
-                        backgroundColor: p.purpose === 'RENT' ? '#1B2B5B' : '#C9A84C',
-                        color: p.purpose === 'RENT' ? 'white' : '#1B2B5B',
+                        backgroundColor: p.purpose === 'RENT' ? 'var(--site-primary-color, #1B2B5B)' : 'var(--site-accent-color, #C9A84C)',
+                        color: p.purpose === 'RENT' ? 'white' : 'var(--site-primary-color, #1B2B5B)',
                       }}
                     >
                       {p.purpose === 'SALE' ? 'Venda' : p.purpose === 'RENT' ? 'Aluguel' : p.purpose === 'BOTH' ? 'Venda/Alug.' : 'Temporada'}
@@ -271,7 +271,7 @@ export default async function HomePage() {
                   </div>
 
                   {/* Price */}
-                  <p className="text-base font-bold mt-3" style={{ color: '#1B2B5B' }}>
+                  <p className="text-base font-bold mt-3" style={{ color: 'var(--site-primary-color, #1B2B5B)' }}>
                     {formatPrice(p)}
                   </p>
                 </div>
@@ -305,7 +305,7 @@ export default async function HomePage() {
       {/* ── SOCIAL MEDIA ──────────────────────────────────────────── */}
       <section className="max-w-4xl mx-auto px-4 sm:px-6 py-10">
         <div className="text-center mb-6">
-          <h2 className="text-xl font-bold" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>Siga-nos nas Redes Sociais</h2>
+          <h2 className="text-xl font-bold" style={{ color: 'var(--site-primary-color, #1B2B5B)', fontFamily: 'Georgia, serif' }}>Siga-nos nas Redes Sociais</h2>
           <p className="text-gray-500 text-sm mt-1">Acompanhe os melhores imóveis, dicas e novidades</p>
         </div>
         <div className="flex flex-wrap justify-center gap-4">
@@ -352,11 +352,11 @@ export default async function HomePage() {
       <SmartQuiz />
 
       {/* ── WHY LEMOS ───────────────────────────────────────────────── */}
-      <section style={{ backgroundColor: '#1B2B5B' }} className="py-16">
+      <section style={{ backgroundColor: 'var(--site-primary-color, #1B2B5B)' }} className="py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="text-center mb-12">
             <h2 className="text-2xl font-bold text-white" style={{ fontFamily: 'Georgia, serif' }}>
-              Por que escolher a <span style={{ color: '#C9A84C' }}>Imobiliária Lemos?</span>
+              Por que escolher a <span style={{ color: 'var(--site-accent-color, #C9A84C)' }}>Imobiliária Lemos?</span>
             </h2>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -389,7 +389,7 @@ export default async function HomePage() {
               >
                 <div
                   className="inline-flex items-center justify-center w-12 h-12 rounded-xl mb-4"
-                  style={{ backgroundColor: 'rgba(201,168,76,0.15)', color: '#C9A84C' }}
+                  style={{ backgroundColor: 'rgba(201,168,76,0.15)', color: 'var(--site-accent-color, #C9A84C)' }}
                 >
                   {item.icon}
                 </div>
@@ -404,9 +404,9 @@ export default async function HomePage() {
       </section>
 
       {/* ── CTA AVALIAÇÃO ───────────────────────────────────────────── */}
-      <section style={{ backgroundColor: '#f8f6f1' }} className="py-16">
+      <section style={{ backgroundColor: 'var(--site-background-color, #f8f6f1)' }} className="py-16">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 text-center">
-          <h2 className="text-2xl font-bold mb-3" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>
+          <h2 className="text-2xl font-bold mb-3" style={{ color: 'var(--site-primary-color, #1B2B5B)', fontFamily: 'Georgia, serif' }}>
             Quer saber quanto vale seu imóvel?
           </h2>
           <p className="text-gray-500 text-sm mb-8 max-w-lg mx-auto">
@@ -416,7 +416,7 @@ export default async function HomePage() {
             <Link
               href="/avaliacao"
               className="px-8 py-3 rounded-xl text-sm font-bold transition-all hover:brightness-110"
-              style={{ backgroundColor: '#C9A84C', color: '#1B2B5B' }}
+              style={{ backgroundColor: 'var(--site-accent-color, #C9A84C)', color: 'var(--site-primary-color, #1B2B5B)' }}
             >
               Solicitar avaliação gratuita
             </Link>
@@ -425,7 +425,7 @@ export default async function HomePage() {
               target="_blank"
               rel="noreferrer"
               className="px-8 py-3 rounded-xl text-sm font-bold border-2 transition-all hover:bg-[#1B2B5B] hover:text-white"
-              style={{ borderColor: '#1B2B5B', color: '#1B2B5B' }}
+              style={{ borderColor: 'var(--site-primary-color, #1B2B5B)', color: 'var(--site-primary-color, #1B2B5B)' }}
             >
               Falar pelo WhatsApp
             </a>
@@ -436,8 +436,8 @@ export default async function HomePage() {
       {/* ── NOSSA EQUIPE ────────────────────────────────────────────── */}
       <section className="max-w-6xl mx-auto px-4 sm:px-6 pb-16">
         <div className="text-center mb-8">
-          <p className="text-sm font-semibold uppercase tracking-widest mb-2" style={{ color: '#C9A84C' }}>Imobiliária Lemos</p>
-          <h2 className="text-2xl font-bold" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>
+          <p className="text-sm font-semibold uppercase tracking-widest mb-2" style={{ color: 'var(--site-accent-color, #C9A84C)' }}>Imobiliária Lemos</p>
+          <h2 className="text-2xl font-bold" style={{ color: 'var(--site-primary-color, #1B2B5B)', fontFamily: 'Georgia, serif' }}>
             Nossa Equipe de Corretores
           </h2>
           <p className="text-gray-500 text-sm mt-1">Profissionais especializados prontos para te atender</p>
@@ -456,9 +456,9 @@ export default async function HomePage() {
                 style={{ background: `linear-gradient(135deg, ${broker.color}, #4a6fa8)` }}>
                 {broker.initial}
               </div>
-              <p className="font-bold text-sm leading-snug" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>{broker.name}</p>
+              <p className="font-bold text-sm leading-snug" style={{ color: 'var(--site-primary-color, #1B2B5B)', fontFamily: 'Georgia, serif' }}>{broker.name}</p>
               <p className="text-xs text-gray-500 mt-0.5">{broker.role}</p>
-              <p className="text-xs font-semibold mt-1" style={{ color: '#C9A84C' }}>CRECI {broker.creci}</p>
+              <p className="text-xs font-semibold mt-1" style={{ color: 'var(--site-accent-color, #C9A84C)' }}>CRECI {broker.creci}</p>
               <a
                 href={`https://wa.me/${broker.phone}?text=Olá, ${broker.name.split(' ')[0]}! Vim pelo site e gostaria de informações.`}
                 target="_blank"
@@ -476,7 +476,7 @@ export default async function HomePage() {
         </div>
 
         <div className="text-center mt-6">
-          <Link href="/corretores" className="inline-flex items-center gap-2 text-sm font-semibold hover:gap-3 transition-all" style={{ color: '#C9A84C' }}>
+          <Link href="/corretores" className="inline-flex items-center gap-2 text-sm font-semibold hover:gap-3 transition-all" style={{ color: 'var(--site-accent-color, #C9A84C)' }}>
             Ver toda a equipe <ArrowRight className="w-4 h-4" />
           </Link>
         </div>

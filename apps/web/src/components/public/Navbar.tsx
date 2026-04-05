@@ -80,7 +80,6 @@ export function Navbar() {
       className="sticky top-0 z-50 transition-all duration-300"
       style={{
         backgroundColor: 'var(--site-primary-color, #1B2B5B)',
-        opacity: scrolled ? 0.97 : 1,
         backdropFilter: scrolled ? 'blur(12px)' : 'none',
         boxShadow: scrolled ? '0 2px 24px rgba(27,43,91,0.3)' : 'none',
       }}

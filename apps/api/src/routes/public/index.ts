@@ -9,6 +9,7 @@ const PublicFilters = z.object({
   page:         z.coerce.number().int().min(1).default(1),
   limit:        z.coerce.number().int().min(1).max(50).default(12),
   search:       z.string().optional(),
+  ids:          z.string().optional(),  // CSV de IDs para favoritos/comparação
   // type and purpose: coerce to uppercase then validate against enum — invalid values return 400
   type:         z.preprocess(
     v => typeof v === 'string' ? v.toUpperCase() : v,
@@ -192,6 +193,7 @@ export default async function publicRoutes(app: FastifyInstance) {
       companyId: company.id,
       status: 'ACTIVE',
       authorizedPublish: true,
+      ...(filters.ids && { id: { in: filters.ids.split(',').map(s => s.trim()).filter(Boolean) } }),
       ...(filters.search && {
         OR: [
           { title:        { contains: filters.search, mode: 'insensitive' } },
