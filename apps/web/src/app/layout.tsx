@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import { Providers } from '@/components/providers'
+import { CookieConsent } from '@/components/CookieConsent'
 import Script from 'next/script'
 import './globals.css'
 
@@ -168,6 +169,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="pt-BR" suppressHydrationWarning className="dark">
       <head>
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#1B2B5B" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         {/* ── Structured Data JSON-LD — LocalBusiness + RealEstateAgent ── */}
         <script
           type="application/ld+json"
@@ -202,6 +207,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className={inter.className}>
         <Providers>{children}</Providers>
+        <CookieConsent />
       </body>
     </html>
   )

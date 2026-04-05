@@ -1,0 +1,27 @@
+{
+  "name": "AgoraEncontrei — Imobiliária Lemos",
+  "short_name": "AgoraEncontrei",
+  "description": "Encontre seu imóvel ideal em Franca e região. Busca inteligente com IA, mapa interativo e 1.000+ imóveis.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f9f7f4",
+  "theme_color": "#1B2B5B",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "pt-BR",
+  "categories": ["business", "lifestyle"],
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
