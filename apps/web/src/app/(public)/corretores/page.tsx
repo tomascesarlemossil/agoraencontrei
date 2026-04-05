@@ -81,7 +81,7 @@ const EQUIPE = {
     {
       id: 'geraldo',
       name: 'Geraldo',
-      role: 'Administração · Suporte & Operações',
+      role: 'Suporte & Operações',
       creci: '',
       phone: '5516981010004',
       email: 'geraldo@imobiliarialemos.com.br',
@@ -242,8 +242,8 @@ export default async function CorretoresPage() {
 
       <div className="max-w-7xl mx-auto px-4 py-16 space-y-16">
         <SecaoEquipe
-          badge="Diretoria"
-          titulo="Liderança & Gestão"
+          badge="Diretoria & Operações"
+          titulo="Liderança, Gestão & Suporte"
           cor="#C9A84C"
           membros={diretoria}
         />
