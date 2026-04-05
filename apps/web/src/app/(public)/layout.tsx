@@ -8,15 +8,15 @@ import { SystemThemeInjector } from '@/components/public/SystemThemeInjector'
 
 export const metadata: Metadata = {
   title: {
-    template: '%s | Imobiliária Lemos',
-    default: 'Imobiliária Lemos — Franca/SP',
+    template: '%s | AgoraEncontrei — Imobiliária Lemos',
+    default: 'AgoraEncontrei — Marketplace Imobiliário de Franca/SP',
   },
-  description: 'Encontre o imóvel dos seus sonhos em Franca e região. Compra, venda e locação. CRECI 279051.',
+  description: 'Encontre o imóvel dos seus sonhos em Franca e região. 1.000+ imóveis com busca por IA, mapa interativo e filtros avançados. Marketplace criado pela Imobiliária Lemos. CRECI 279051.',
   metadataBase: new URL('https://www.agoraencontrei.com.br'),
-  keywords: 'imóveis franca, casas franca, apartamentos franca, terrenos franca, imobiliária franca, comprar imóvel franca, alugar imóvel franca, financiamento imobiliário, leilão imóvel, CRECI 279051, imobiliária lemos, aluguel franca sp, investimento imóvel franca',
-  authors: [{ name: 'Imobiliária Lemos', url: 'https://www.agoraencontrei.com.br' }],
-  creator: 'Imobiliária Lemos',
-  publisher: 'Imobiliária Lemos',
+  keywords: 'agoraencontrei, marketplace imobiliário, imóveis franca, casas franca, apartamentos franca, terrenos franca, imobiliária franca, comprar imóvel franca, alugar imóvel franca, financiamento imobiliário, busca imóvel IA, mapa imóveis franca, CRECI 279051, imobiliária lemos, aluguel franca sp, anunciar imóvel grátis, investimento imóvel franca',
+  authors: [{ name: 'AgoraEncontrei — Imobiliária Lemos', url: 'https://www.agoraencontrei.com.br' }],
+  creator: 'AgoraEncontrei — Imobiliária Lemos',
+  publisher: 'AgoraEncontrei — Imobiliária Lemos',
   robots: { index: true, follow: true, googleBot: { index: true, follow: true } },
 }
 
@@ -43,6 +43,14 @@ const FOOTER_SERVICOS = [
 export default function PublicLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--site-background-color, #f8f6f1)' }}>
+      {/* Skip navigation for accessibility */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[9999] focus:px-4 focus:py-2 focus:rounded-md focus:text-sm focus:font-semibold focus:text-white focus:outline-none focus:ring-2 focus:ring-white"
+        style={{ backgroundColor: 'var(--site-primary-color, #1B2B5B)' }}
+      >
+        Pular para o conteúdo principal
+      </a>
       <SystemThemeInjector />
       {/* Top info bar */}
       <div style={{ backgroundColor: 'var(--site-primary-color, #1B2B5B)' }} className="hidden lg:block">
@@ -78,7 +86,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
 
       <Navbar />
 
-      <main>{children}</main>
+      <main id="main-content" tabIndex={-1}>{children}</main>
       <CompareBar />
       <FloatingChatbot />
 
@@ -103,7 +111,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
               <p className="text-white/50 text-xs leading-relaxed">
                 Desde 2002 conectando pessoas aos melhores imóveis de Franca e região.
               </p>
-              <p className="text-white/40 text-xs mt-2">CRECI PF: 279051</p>
+              <p className="text-white/60 text-xs mt-2">CRECI PF: 279051</p>
 
               {/* Social media */}
               <div className="mt-5">

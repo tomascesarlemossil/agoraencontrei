@@ -30,11 +30,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${WEB_URL}/blog`,                lastModified: now, changeFrequency: 'daily',   priority: 0.8 },
     { url: `${WEB_URL}/corretores`,          lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
     { url: `${WEB_URL}/avaliacao`,           lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
+    { url: `${WEB_URL}/sobre`,               lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
+    { url: `${WEB_URL}/contato`,             lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
+    { url: `${WEB_URL}/faq`,                 lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
+    { url: `${WEB_URL}/depoimentos`,         lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
     { url: `${WEB_URL}/anunciar`,            lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
     { url: `${WEB_URL}/financiamentos`,      lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
+    { url: `${WEB_URL}/favoritos`,           lastModified: now, changeFrequency: 'monthly', priority: 0.5 },
+    { url: `${WEB_URL}/comparar`,            lastModified: now, changeFrequency: 'monthly', priority: 0.5 },
+    { url: `${WEB_URL}/servicos`,            lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
     { url: `${WEB_URL}/servicos/2via-boleto`,            lastModified: now, changeFrequency: 'monthly', priority: 0.5 },
     { url: `${WEB_URL}/servicos/extrato-proprietario`,   lastModified: now, changeFrequency: 'monthly', priority: 0.5 },
     { url: `${WEB_URL}/servicos/fichas-cadastrais`,      lastModified: now, changeFrequency: 'monthly', priority: 0.5 },
+    { url: `${WEB_URL}/politica-privacidade`,            lastModified: now, changeFrequency: 'yearly',  priority: 0.3 },
+    { url: `${WEB_URL}/termos-uso`,                      lastModified: now, changeFrequency: 'yearly',  priority: 0.3 },
   ]
 
   // Páginas de cidades

@@ -19,25 +19,29 @@ export interface SEOConfig {
 // ============================================================
 
 export const defaultSEO: SEOConfig = {
-  title: 'Imobiliária Lemos - Imóveis em Franca SP | 22 anos de mercado',
+  title: 'AgoraEncontrei — Marketplace Imobiliário de Franca/SP | Imobiliária Lemos',
   description:
-    'Encontre casas, apartamentos, terrenos e chácaras em Franca SP e região. Imobiliária Lemos: 22 anos de experiência, 500+ imóveis disponíveis, atendimento 100% digital.',
+    'Encontre casas, apartamentos, terrenos e chácaras em Franca SP e região. AgoraEncontrei: marketplace imobiliário criado pela Imobiliária Lemos, 1.000+ imóveis disponíveis, busca com IA e atendimento 100% digital.',
   keywords: [
+    'agoraencontrei',
+    'marketplace imobiliário franca',
     'imóveis franca sp',
     'casas venda franca',
     'apartamento franca sp',
     'imobiliária franca',
+    'imobiliária lemos',
     'aluguel franca sp',
     'terrenos franca',
     'chácara rifaina',
     'imóveis rifaina',
+    'anunciar imóvel grátis',
   ],
-  ogImage: 'https://www.imobiliarialemos.com.br/og-image.jpg',
-  canonical: 'https://www.imobiliarialemos.com.br',
+  ogImage: 'https://www.agoraencontrei.com.br/og-image.jpg',
+  canonical: 'https://www.agoraencontrei.com.br',
 }
 
-const APP_URL = import.meta.env.VITE_APP_URL ?? 'https://www.imobiliarialemos.com.br'
-const APP_NAME = import.meta.env.VITE_APP_NAME ?? 'Imobiliária Lemos'
+const APP_URL = import.meta.env.VITE_APP_URL ?? 'https://www.agoraencontrei.com.br'
+const APP_NAME = import.meta.env.VITE_APP_NAME ?? 'AgoraEncontrei | Imobiliária Lemos'
 
 // ============================================================
 // BUILDERS

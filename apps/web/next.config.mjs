@@ -3,8 +3,10 @@ const nextConfig = {
   reactStrictMode: true,
   experimental: {
     scrollRestoration: true,
+    optimizePackageImports: ['lucide-react', '@heroicons/react', 'recharts'],
   },
   images: {
+    formats: ['image/avif', 'image/webp'],
     remotePatterns: [
       { protocol: 'https', hostname: 'cdnuso.com' },
       { protocol: 'https', hostname: 'cdn2.uso.com.br' },
@@ -12,6 +14,8 @@ const nextConfig = {
       { protocol: 'https', hostname: '*.cloudfront.net' },
       { protocol: 'https', hostname: 'agoraencontrei-media.s3.us-east-1.amazonaws.com' },
     ],
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256],
   },
   async rewrites() {
     return [
