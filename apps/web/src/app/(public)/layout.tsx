@@ -83,7 +83,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
       <FloatingChatbot />
 
       {/* Footer */}
-      <footer style={{ backgroundColor: 'var(--site-primary-color, #1B2B5B)' }} className="mt-20 pt-14 pb-8">
+      <footer style={{ backgroundColor: 'var(--site-primary-color, #1B2B5B)' }} className="mt-20 pt-14 pb-8" role="contentinfo">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-10 mb-10">
             {/* Brand */}

@@ -169,6 +169,7 @@ export function FloatingChatbot() {
             <button
               onClick={() => setOpen(false)}
               className="text-white/60 hover:text-white transition-colors p-1 ml-2"
+              aria-label="Fechar chat"
             >
               <X className="w-4 h-4" />
             </button>
@@ -275,6 +276,7 @@ export function FloatingChatbot() {
               disabled={!input.trim() || isTyping}
               className="p-2 rounded-xl transition-all hover:brightness-110 disabled:opacity-40"
               style={{ backgroundColor: '#1B2B5B', color: 'white' }}
+              aria-label="Enviar mensagem"
             >
               <Send className="w-3.5 h-3.5" />
             </button>

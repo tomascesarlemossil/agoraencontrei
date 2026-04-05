@@ -26,6 +26,7 @@ export function CompareBar() {
         <div className="flex items-center gap-2">
           <button
             onClick={clearCompare}
+            aria-label="Limpar seleção de imóveis para comparação"
             className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium text-white/70 hover:text-white hover:bg-white/10 transition-colors"
           >
             <X className="w-3.5 h-3.5" />
@@ -33,6 +34,7 @@ export function CompareBar() {
           </button>
           <button
             onClick={() => router.push('/comparar')}
+            aria-label="Comparar imóveis selecionados"
             className="flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-semibold transition-all hover:brightness-110"
             style={{ backgroundColor: '#C9A84C', color: '#1B2B5B' }}
           >
