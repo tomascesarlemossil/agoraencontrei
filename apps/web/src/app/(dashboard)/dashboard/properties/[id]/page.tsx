@@ -21,6 +21,7 @@ import Link from 'next/link'
 import { useState, useRef, useEffect } from 'react'
 import { cn } from '@/lib/utils'
 import { uploadApi, usersApi, type User } from '@/lib/api'
+import { revalidatePublicPages, PAGES } from '@/lib/revalidate'
 import { PropertyImageLightbox } from '@/components/dashboard/PropertyImageLightbox'
 import { PropertyFeaturesEditor } from '@/components/dashboard/PropertyFeaturesEditor'
 import { SocialPostPanel } from './SocialPostPanel'
@@ -354,6 +355,8 @@ export default function PropertyDetailPage() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['property', id] })
       setEditing(false)
+      // Revalidar páginas públicas imediatamente
+      revalidatePublicPages([`/imoveis/${property?.slug || id}`, ...PAGES.properties])
     },
   })
 
@@ -380,12 +383,15 @@ export default function PropertyDetailPage() {
     const token = await getValidToken()
     await propertiesApi.update(token!, id, { coverImage, images } as any)
     qc.invalidateQueries({ queryKey: ['property', id] })
+    // Revalidar páginas públicas de imóveis imediatamente
+    revalidatePublicPages([`/imoveis/${property?.slug || id}`, ...PAGES.properties])
   }
 
   const saveVideos = async (videos: string[]) => {
     const token = await getValidToken()
     await propertiesApi.update(token!, id, { videos } as any)
     qc.invalidateQueries({ queryKey: ['property', id] })
+    revalidatePublicPages([`/imoveis/${property?.slug || id}`, ...PAGES.properties])
   }
 
   const handleFileUpload = async (files: FileList | null) => {
