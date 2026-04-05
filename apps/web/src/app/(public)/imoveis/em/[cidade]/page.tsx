@@ -442,7 +442,7 @@ export async function generateStaticParams() {
   return Object.keys(CIDADES).map(cidade => ({ cidade }))
 }
 
-export const revalidate = 3600
+export const revalidate = 120
 
 export default async function CidadePage({ params }: { params: { cidade: string } }) {
   const { properties, total, neighborhoods, cityName, citySlug } = await fetchCityData(params.cidade)

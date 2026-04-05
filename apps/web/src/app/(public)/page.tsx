@@ -28,14 +28,14 @@ export const metadata: Metadata = {
   alternates: { canonical: 'https://www.agoraencontrei.com.br' },
 }
 
-export const revalidate = 300
+export const revalidate = 60
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 
 async function fetchFeaturedProperties() {
   try {
     const res = await fetch(`${API_URL}/api/v1/public/properties?limit=8&sortBy=createdAt`, {
-      next: { revalidate: 300 },
+      next: { revalidate: 60 },
     })
     if (!res.ok) return []
     const data = await res.json()
@@ -48,7 +48,7 @@ async function fetchFeaturedProperties() {
 async function fetchStats() {
   try {
     const res = await fetch(`${API_URL}/api/v1/public/properties?limit=1`, {
-      next: { revalidate: 300 },
+      next: { revalidate: 60 },
     })
     if (!res.ok) return { total: 0 }
     const data = await res.json()
@@ -61,7 +61,7 @@ async function fetchStats() {
 async function fetchTeam() {
   try {
     const res = await fetch(`${API_URL}/api/v1/public/team`, {
-      next: { revalidate: 300 },
+      next: { revalidate: 60 },
     })
     if (!res.ok) return []
     const data = await res.json()

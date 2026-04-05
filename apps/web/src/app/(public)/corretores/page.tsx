@@ -6,7 +6,7 @@ import { MembroCard, type Membro } from './MembroCard'
 async function fetchTeamFromDB(): Promise<Record<string, { creci?: string; avatarUrl?: string }>> {
   try {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'https://www.agoraencontrei.com.br/api/v1'
-    const res = await fetch(`${apiUrl}/public/team`, { next: { revalidate: 300 } })
+    const res = await fetch(`${apiUrl}/public/team`, { next: { revalidate: 60 } })
     if (!res.ok) return {}
     const users: Array<{ name: string; email: string; creciNumber?: string; avatarUrl?: string }> = await res.json()
     // Mapeia email -> { creci, avatarUrl }
@@ -26,7 +26,7 @@ export const metadata: Metadata = {
   keywords: ['corretores Franca SP', 'Imobiliária Lemos equipe', 'CRECI Franca', 'corretor de imóveis Franca', 'AgoraEncontrei equipe'],
 }
 
-export const revalidate = 300
+export const revalidate = 60
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DADOS DA EQUIPE — Fotos podem ser trocadas pelo Dashboard (Settings > Equipe)

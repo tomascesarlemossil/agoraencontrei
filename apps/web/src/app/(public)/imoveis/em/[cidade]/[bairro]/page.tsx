@@ -88,7 +88,7 @@ export async function generateMetadata({ params }: { params: { cidade: string; b
   }
 }
 
-export const revalidate = 3600
+export const revalidate = 120
 
 export default async function BairroPage({ params }: { params: { cidade: string; bairro: string } }) {
   const { properties, total, cityName, bairroName, citySlug, bairroSlug } = await fetchBairroData(params.cidade, params.bairro)
