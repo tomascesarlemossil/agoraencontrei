@@ -41,7 +41,7 @@ const EQUIPE = {
       creci: '279051-F',
       phone: '5516981010005',
       email: 'noemia@imobiliarialemos.com.br',
-      photo: '/corretores/noemia-pires.jpg',  // foto real
+      photo: '/corretores/noemia-pires.jpg',
       specialties: ['Compra e Venda', 'Locação', 'Avaliação de Imóveis'],
       bio: 'Fundadora da Imobiliária Lemos, com mais de 20 anos de experiência no mercado imobiliário de Franca/SP.',
     },
@@ -52,42 +52,53 @@ const EQUIPE = {
       creci: '',
       phone: '5516999654949',
       email: 'nilton@imobiliarialemos.com.br',
-      photo: '/corretores/nilton-lemos.jpg',  // foto real
+      photo: '/corretores/nilton-lemos.jpg',
       specialties: ['Gestão', 'Obras', 'Investimentos', 'Reformas'],
       bio: 'Co-fundador da Imobiliária Lemos, responsável pela gestão de obras, investimentos e reformas.',
     },
     {
       id: 'naira',
       name: 'Naira Cristina Lemos',
-      role: 'Diretoria',
+      role: 'Diretoria · Suporte & Operações',
       creci: '',
       phone: '5516981010003',
       email: 'blognairalemos@gmail.com',
-      photo: '/corretores/naira-lemos.jpg',  // foto real
+      photo: '/corretores/naira-lemos.jpg',
       specialties: ['Residencial', 'Locação', 'Financiamento'],
       bio: 'Especialista em imóveis residenciais e locação. Atendimento humanizado e dedicado a cada cliente.',
     },
     {
-      id: 'nadia',
-      name: 'Nádia Maria Cristina Lemos',
-      role: 'Diretoria',
-      creci: '',
-      phone: '5516992533583',
-      email: 'nadia@imobiliarialemos.com.br',
-      photo: '/corretores/nadia-lemos.jpg',  // foto real
-      specialties: ['Imóveis Comerciais', 'Compra e Venda', 'Avaliação'],
-      bio: 'Especialista em imóveis comerciais e negociações diferenciadas. Comprometida com os melhores resultados.',
-    },
-    {
       id: 'tomas',
       name: 'Tomás César Lemos Silva',
-      role: 'Diretoria | Tecnologia',
+      role: 'Diretoria · Tecnologia & Inovação',
       creci: '279051-F',
       phone: '5516993116199',
       email: 'tomas@imobiliarialemos.com.br',
-      photo: '/corretores/tomas-lemos-crop.jpg',  // foto recortada
+      photo: '/corretores/tomas-lemos-crop.jpg',
       specialties: ['Tecnologia Imobiliária', 'Marketing Digital', 'Inovação'],
       bio: 'Responsável pela transformação digital da Imobiliária Lemos, integrando tecnologia e inovação ao mercado.',
+    },
+    {
+      id: 'geraldo',
+      name: 'Geraldo',
+      role: 'Suporte & Operações',
+      creci: '',
+      phone: '5516981010004',
+      email: 'geraldo@imobiliarialemos.com.br',
+      photo: '/corretores/geraldo-icon-final.png',
+      specialties: ['Administração', 'Suporte Operacional', 'Integração'],
+      bio: 'Responsável pelo suporte administrativo e operacional, garantindo o funcionamento eficiente de todos os processos.',
+    },
+    {
+      id: 'nadia',
+      name: 'Nádia Maria Cristina Lemos',
+      role: 'Diretoria · Suporte & Operações',
+      creci: '',
+      phone: '5516992533583',
+      email: 'nadia@imobiliarialemos.com.br',
+      photo: '/corretores/nadia-lemos.jpg',
+      specialties: ['Imóveis Comerciais', 'Compra e Venda', 'Avaliação'],
+      bio: 'Especialista em imóveis comerciais e negociações diferenciadas. Comprometida com os melhores resultados.',
     },
   ],
   corretores: [
@@ -147,19 +158,7 @@ const EQUIPE = {
       bio: 'Corretor dinâmico e atualizado com as tendências do mercado imobiliário de Franca/SP.',
     },
   ],
-  administrativo: [
-    {
-      id: 'geraldo',
-      name: 'Geraldo',
-      role: 'Administrativo',
-      creci: '',
-      phone: '5516981010004',
-      email: 'geraldo@imobiliarialemos.com.br',
-      photo: '/corretores/geraldo-icon-final.png',  // icon dourado 600x600
-      specialties: ['Administração', 'Suporte Operacional'],
-      bio: 'Responsável pelo suporte administrativo e operacional, garantindo o funcionamento eficiente de todos os processos.',
-    },
-  ],
+  administrativo: [],
 }
 
 // MembroCard e type Membro movidos para ./MembroCard.tsx (Client Component)
@@ -243,8 +242,8 @@ export default async function CorretoresPage() {
 
       <div className="max-w-7xl mx-auto px-4 py-16 space-y-16">
         <SecaoEquipe
-          badge="Diretoria"
-          titulo="Liderança & Gestão"
+          badge="Diretoria & Operações"
+          titulo="Liderança, Gestão & Suporte"
           cor="#C9A84C"
           membros={diretoria}
         />
@@ -254,12 +253,14 @@ export default async function CorretoresPage() {
           cor="#2e7d32"
           membros={corretores}
         />
-        <SecaoEquipe
-          badge="Administrativo"
-          titulo="Suporte & Operações"
-          cor="#1565c0"
-          membros={administrativo}
-        />
+        {administrativo.length > 0 && (
+          <SecaoEquipe
+            badge="Administrativo"
+            titulo="Suporte & Operações"
+            cor="#1565c0"
+            membros={administrativo}
+          />
+        )}
 
         {/* CTA final */}
         <section className="text-center py-12 rounded-3xl relative overflow-hidden"
