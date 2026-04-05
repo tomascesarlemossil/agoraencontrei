@@ -3,8 +3,16 @@ import { CheckCircle, TrendingUp, Clock, Shield, Star, MapPin, Phone } from 'luc
 import { AvaliacaoForm } from './AvaliacaoForm'
 
 export const metadata: Metadata = {
-  title: 'Avaliação Gratuita de Imóvel | Franca e Região',
-  description: 'Solicite a avaliação gratuita do seu imóvel em Franca e região. Laudo profissional com base em dados reais de mercado. Imobiliária Lemos — CRECI 279051.',
+  title: 'Avaliação Gratuita de Imóvel | AgoraEncontrei — Franca e Região',
+  description: 'Solicite a avaliação gratuita do seu imóvel em Franca e região. Laudo profissional com base em dados reais de mercado. AgoraEncontrei — Imobiliária Lemos — CRECI 279051.',
+  keywords: 'avaliação imóvel gratuita, avaliação imóvel franca, laudo imobiliário, quanto vale meu imóvel, avaliação casa franca sp',
+  openGraph: {
+    title: 'Avaliação Gratuita de Imóvel | AgoraEncontrei',
+    description: 'Descubra quanto vale seu imóvel. Avaliação gratuita e profissional em Franca e região.',
+    type: 'website',
+    locale: 'pt_BR',
+    siteName: 'AgoraEncontrei — Imobiliária Lemos',
+  },
 }
 
 const BENEFICIOS = [

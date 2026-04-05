@@ -25,6 +25,7 @@ export function AvaliacaoForm() {
   const [step, setStep] = useState(1)
   const [loading, setLoading] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+  const [honeypot, setHoneypot] = useState('')
   const [form, setForm] = useState({
     type: '',
     purpose: '',
@@ -47,6 +48,7 @@ export function AvaliacaoForm() {
   }
 
   async function handleSubmit() {
+    if (honeypot) return // bot detected
     setLoading(true)
     try {
       await fetch(`${API_URL}/api/v1/public/leads`, {
@@ -101,6 +103,11 @@ export function AvaliacaoForm() {
 
   return (
     <div>
+      {/* Honeypot anti-spam (hidden from users) */}
+      <div className="absolute opacity-0 -z-10 h-0 overflow-hidden" aria-hidden="true" tabIndex={-1}>
+        <label htmlFor="website_url">Website</label>
+        <input id="website_url" name="website_url" type="text" value={honeypot} onChange={e => setHoneypot(e.target.value)} autoComplete="off" tabIndex={-1} />
+      </div>
       {/* Progress bar */}
       <div className="mb-6">
         <div className="flex justify-between text-xs text-gray-500 mb-2">

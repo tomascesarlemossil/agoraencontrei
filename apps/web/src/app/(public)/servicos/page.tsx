@@ -3,9 +3,16 @@ import Link from 'next/link'
 import { FileText, Building, CreditCard, BarChart3, Calculator, ClipboardList, Home, Phone, Mail, MapPin, ExternalLink } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'Nossos Serviços | Imobiliária Lemos — Franca/SP',
+  title: 'Nossos Serviços | AgoraEncontrei — Imobiliária Lemos — Franca/SP',
   description: 'Conheça todos os serviços da Imobiliária Lemos: 2ª via de boleto, extrato do proprietário, fichas cadastrais, financiamento, avaliação e muito mais. CRECI 279051.',
-  keywords: '2 via boleto aluguel franca, extrato proprietário imóvel, ficha cadastral locação, financiamento imobiliário franca, imobiliária lemos serviços',
+  keywords: '2 via boleto aluguel franca, extrato proprietário imóvel, ficha cadastral locação, financiamento imobiliário franca, imobiliária lemos serviços, agoraencontrei serviços',
+  openGraph: {
+    title: 'Nossos Serviços | AgoraEncontrei — Imobiliária Lemos',
+    description: 'Serviços completos: 2ª via de boleto, extrato do proprietário, fichas cadastrais, financiamento e avaliação de imóveis em Franca/SP.',
+    type: 'website',
+    locale: 'pt_BR',
+    siteName: 'AgoraEncontrei — Imobiliária Lemos',
+  },
 }
 
 const SERVICES = [

@@ -10,9 +10,11 @@ export default function ContatoPage() {
   const [submitted, setSubmitted] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
+  const [honeypot, setHoneypot] = useState('')
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
+    if (honeypot) return // bot detected
     setSubmitting(true)
     setErrorMessage('')
     try {
@@ -196,6 +198,10 @@ export default function ContatoPage() {
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-5">
+                {/* Honeypot anti-spam */}
+                <div className="absolute opacity-0 -z-10 h-0 overflow-hidden" aria-hidden="true" tabIndex={-1}>
+                  <input name="website_url" type="text" value={honeypot} onChange={e => setHoneypot(e.target.value)} autoComplete="off" tabIndex={-1} />
+                </div>
                 <div>
                   <label htmlFor="name" className="block text-sm font-medium mb-1.5" style={{ color: '#1B2B5B' }}>
                     Nome

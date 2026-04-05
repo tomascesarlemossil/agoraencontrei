@@ -76,13 +76,6 @@ export default async function BlogPage({ searchParams }: { searchParams: { categ
         })}
       </div>
 
-      {/* SEO hidden keywords */}
-      <div className="hidden" aria-hidden="true">
-        imóveis franca sp, casas para vender franca, apartamentos aluguel franca,
-        imobiliária franca creci, financiamento caixa econômica, ITBI franca, IPTU franca,
-        administração de imóveis franca, vistoria imóvel, contrato locação, lei do inquilinato
-      </div>
-
       {/* Feed with autoplay */}
       <BlogFeed posts={posts ?? []} />
     </div>
