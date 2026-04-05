@@ -378,11 +378,22 @@ export default async function PropertyDetailPage({ params }: { params: { slug: s
   const youtubeId = getYouTubeId(p.videoUrl)
 
   const jsonLd = buildJsonLd(p, SITE_URL)
+  const breadcrumbJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Início', item: SITE_URL },
+      { '@type': 'ListItem', position: 2, name: 'Imóveis', item: `${SITE_URL}/imoveis` },
+      ...(p.city ? [{ '@type': 'ListItem', position: 3, name: p.city, item: `${SITE_URL}/imoveis?cidade=${encodeURIComponent(p.city)}` }] : []),
+      { '@type': 'ListItem', position: p.city ? 4 : 3, name: p.title?.slice(0, 60) || (TYPE_LABEL[p.type] ?? p.type) },
+    ],
+  }
 
   return (
     <div style={{ backgroundColor: '#f5f3ef' }} className="min-h-screen">
       {/* JSON-LD Structured Data — client component to avoid React 18 script hoisting hydration mismatch */}
       <JsonLdScript data={jsonLd} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
 
       {/* ── Breadcrumb ─────────────────────────────────────── */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-4 pb-2">
@@ -930,7 +941,7 @@ function BrokerCard({ broker, whatsappNum, whatsappMsg, visitMsg, p, condoName }
           {/* Avatar */}
           {broker?.avatarUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={broker.avatarUrl} alt={broker.name}
+            <img src={broker.avatarUrl} alt={broker.name} loading="lazy"
               className="h-16 w-16 rounded-2xl object-cover flex-shrink-0 shadow-md"
               style={{ border: '2.5px solid #C9A84C' }} />
           ) : (

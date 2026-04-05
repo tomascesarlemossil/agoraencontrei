@@ -8,9 +8,9 @@ import { SmartQuiz } from './SmartQuiz'
 import { PresentationSection } from './PresentationSection'
 
 export const metadata: Metadata = {
-  title: 'Imobiliária Lemos — Franca/SP | Comprar, Alugar e Avaliar Imóveis',
-  description: 'Há mais de 20 anos conectando pessoas aos melhores imóveis de Franca e região. Compra, venda, locação e avaliação. CRECI 279051. Casas, apartamentos, terrenos e imóveis comerciais.',
-  keywords: ['imobiliária franca', 'imóveis franca sp', 'alugar casa franca', 'comprar apartamento franca', 'imobiliária lemos', 'locação franca', 'venda imóveis franca', 'CRECI 279051'],
+  title: 'AgoraEncontrei — Marketplace Imobiliário de Franca/SP | Imobiliária Lemos',
+  description: 'Encontre seu imóvel ideal em Franca e região. 1.000+ imóveis com busca por IA e mapa interativo. Casas, apartamentos, terrenos e imóveis comerciais. Marketplace criado pela Imobiliária Lemos — 22+ anos de tradição. CRECI 279051.',
+  keywords: ['agoraencontrei', 'marketplace imobiliário', 'imobiliária franca', 'imóveis franca sp', 'alugar casa franca', 'comprar apartamento franca', 'imobiliária lemos', 'locação franca', 'venda imóveis franca', 'CRECI 279051', 'busca imóvel IA', 'mapa imóveis franca', 'anunciar imóvel grátis'],
   openGraph: {
     title: 'AgoraEncontrei — Marketplace Imobiliário de Franca/SP',
     description: 'Há mais de 22 anos conectando pessoas aos melhores imóveis de Franca e região. Marketplace criado pela Imobiliária Lemos.',

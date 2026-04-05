@@ -8,6 +8,7 @@ export const metadata: Metadata = {
     default: 'Portal do Cliente — Imobiliária Lemos',
   },
   description: 'Portal exclusivo para clientes da Imobiliária Lemos. Acesse seus contratos, boletos e documentos.',
+  robots: { index: false, follow: false },
 }
 
 export default function PortalLayout({ children }: { children: React.ReactNode }) {

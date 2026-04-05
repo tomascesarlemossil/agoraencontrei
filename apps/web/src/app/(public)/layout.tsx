@@ -1,10 +1,13 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import dynamic from 'next/dynamic'
 import { Phone, MapPin, Instagram, Facebook, Youtube } from 'lucide-react'
 import { Navbar } from '@/components/public/Navbar'
-import { FloatingChatbot } from '@/components/chat/FloatingChatbot'
-import { CompareBar } from '@/components/CompareBar'
 import { SystemThemeInjector } from '@/components/public/SystemThemeInjector'
+
+// Lazy load heavy client components (chat widget + compare bar)
+const FloatingChatbot = dynamic(() => import('@/components/chat/FloatingChatbot').then(m => m.FloatingChatbot), { ssr: false })
+const CompareBar = dynamic(() => import('@/components/CompareBar').then(m => m.CompareBar), { ssr: false })
 
 export const metadata: Metadata = {
   title: {
