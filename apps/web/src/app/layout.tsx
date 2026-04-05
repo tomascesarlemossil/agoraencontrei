@@ -16,10 +16,12 @@ export const metadata: Metadata = {
     default: 'Imobiliária Lemos — Franca/SP | Comprar, Alugar e Avaliar Imóveis',
     template: '%s | Imobiliária Lemos',
   },
-  description: 'Imobiliária Lemos em Franca/SP há mais de 20 anos. Casas à venda, apartamentos para alugar, terrenos e imóveis comerciais. Residencial Amazonas, Villa Piemonte, Centro e todos os bairros. CRECI 279051.',
+  description: 'AgoraEncontrei — o marketplace imobiliário de Franca/SP criado pela Imobiliária Lemos. Casas à venda, apartamentos para alugar, terrenos e imóveis comerciais. Anuncie grátis. CRECI 279051.',
   keywords: [
-    // Marca
+    // Marca & Marketplace
     'imobiliária lemos', 'imobiliária lemos franca', 'lemos imóveis', 'CRECI 279051',
+    'marketplace imobiliário', 'marketplace imobiliário franca', 'anunciar imóvel grátis',
+    'anunciar imóvel franca', 'agoraencontrei', 'agoraencontrei marketplace',
     // Cidade principal — intenções de compra
     'imóveis franca sp', 'casas à venda franca sp', 'apartamentos para alugar franca sp',
     'imobiliária franca sp', 'comprar casa franca sp', 'alugar apartamento franca sp',
