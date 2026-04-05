@@ -665,7 +665,7 @@ export default function SettingsPage() {
                   <div className="relative group flex-shrink-0">
                     <UserAvatar
                       name={editUser.name}
-                      avatarUrl={editAvatarPreview ?? editUser.avatarUrl || undefined}
+                      avatarUrl={editAvatarPreview ?? (editUser.avatarUrl || undefined)}
                       size="lg"
                       showRing
                     />
