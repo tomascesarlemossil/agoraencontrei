@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { useEffect, useRef, useState } from 'react'
-import { Menu, X, ChevronDown, LayoutDashboard, UserCheck, Users, CreditCard, BarChart3, ClipboardList, Home, Calculator, Building, Wrench } from 'lucide-react'
+import { Menu, X, ChevronDown, LayoutDashboard, UserCheck, Users, CreditCard, BarChart3, ClipboardList, Home, Calculator, Building, Wrench, Bell } from 'lucide-react'
 
 const NAV_LINKS = [
   { href: '/imoveis?purpose=SALE', label: 'Comprar' },
@@ -21,7 +21,8 @@ const SERVICOS_MENU = [
   { href: '/servicos/extrato-proprietario', icon: <BarChart3 className="w-4 h-4" />, label: 'Extrato do Proprietário', desc: 'Consulte repasses e extratos', color: '#C9A84C' },
   { href: '/financiamentos', icon: <Calculator className="w-4 h-4" />, label: 'Financiamentos', desc: 'Simule e financie seu imóvel', color: '#2563eb' },
   { href: '/servicos/fichas-cadastrais', icon: <ClipboardList className="w-4 h-4" />, label: 'Fichas Cadastrais', desc: 'Propostas e cadastros online', color: '#16a34a' },
-  { href: '/financiamentos#simulador', icon: <Home className="w-4 h-4" />, label: 'Simule seu Financiamento', desc: 'Calcule parcelas e taxas', color: '#2563eb' },
+  { href: '/financiamentos/simulador', icon: <Home className="w-4 h-4" />, label: 'Simulador de Financiamento', desc: 'Calcule parcelas e taxas', color: '#2563eb' },
+  { href: '/alertas', icon: <Bell className="w-4 h-4" />, label: 'Alertas de Imóveis', desc: 'Receba novidades por e-mail', color: '#f59e0b' },
 ]
 
 const ACCESS_AREAS = [

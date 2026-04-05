@@ -37,7 +37,10 @@ const FOOTER_SERVICOS = [
   { href: '/servicos/extrato-proprietario', label: 'Extrato do Proprietário' },
   { href: '/servicos/fichas-cadastrais', label: 'Fichas Cadastrais' },
   { href: '/financiamentos', label: 'Financiamentos' },
+  { href: '/financiamentos/simulador', label: 'Simulador de Financiamento' },
   { href: '/anunciar', label: 'Cadastre seu Imóvel' },
+  { href: '/alertas', label: 'Alertas de Imóveis' },
+  { href: '/depoimentos', label: 'Depoimentos' },
 ]
 
 export default function PublicLayout({ children }: { children: React.ReactNode }) {
@@ -265,6 +268,8 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
               © {new Date().getFullYear()} Imobiliária Lemos. Todos os direitos reservados.
             </p>
             <div className="flex items-center gap-4 text-xs text-white/40">
+              <a href="/sobre" className="hover:text-white/70 transition-colors">Sobre Nós</a>
+              <a href="/faq" className="hover:text-white/70 transition-colors">FAQ</a>
               <a href="/politica-privacidade" className="hover:text-white/70 transition-colors">Política de Privacidade</a>
               <a href="/termos-uso" className="hover:text-white/70 transition-colors">Termos de Uso</a>
               <a href="/favoritos" className="hover:text-white/70 transition-colors">Favoritos</a>

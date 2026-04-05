@@ -386,15 +386,35 @@ export default async function PropertyDetailPage({ params }: { params: { slug: s
 
       {/* ── Breadcrumb ─────────────────────────────────────── */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-4 pb-2">
-        <nav className="flex items-center gap-1.5 text-sm text-gray-500 flex-wrap">
-          <Link href="/" className="hover:text-gray-600 transition-colors">Início</Link>
-          <ChevronRight className="w-3.5 h-3.5 flex-shrink-0" />
+        <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs sm:text-sm text-gray-400 flex-wrap">
+          <Link href="/" className="hover:text-gray-600 transition-colors">Home</Link>
+          <span className="text-gray-300">&gt;</span>
           <Link href="/imoveis" className="hover:text-gray-600 transition-colors">Imóveis</Link>
-          <ChevronRight className="w-3.5 h-3.5 flex-shrink-0" />
-          {p.city && <><Link href={`/imoveis?cidade=${encodeURIComponent(p.city)}`} className="hover:text-gray-600 transition-colors">{p.city}</Link><ChevronRight className="w-3.5 h-3.5 flex-shrink-0" /></>}
-          <span className="text-gray-600 font-medium truncate">{TYPE_LABEL[p.type] ?? p.type}</span>
+          {p.city && (<>
+            <span className="text-gray-300">&gt;</span>
+            <Link href={`/imoveis?cidade=${encodeURIComponent(p.city)}`} className="hover:text-gray-600 transition-colors">{p.city}</Link>
+          </>)}
+          {p.neighborhood && (<>
+            <span className="text-gray-300">&gt;</span>
+            <Link href={`/imoveis?cidade=${encodeURIComponent(p.city ?? '')}&bairro=${encodeURIComponent(p.neighborhood)}`} className="hover:text-gray-600 transition-colors">{p.neighborhood}</Link>
+          </>)}
+          <span className="text-gray-300">&gt;</span>
+          <span className="text-gray-500 font-medium truncate max-w-[40vw]">{p.title}</span>
         </nav>
       </div>
+
+      {/* JSON-LD BreadcrumbList */}
+      <JsonLdScript data={{
+        '@context': 'https://schema.org',
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Home', item: SITE_URL },
+          { '@type': 'ListItem', position: 2, name: 'Imóveis', item: `${SITE_URL}/imoveis` },
+          ...(p.city ? [{ '@type': 'ListItem', position: 3, name: p.city, item: `${SITE_URL}/imoveis?cidade=${encodeURIComponent(p.city)}` }] : []),
+          ...(p.neighborhood ? [{ '@type': 'ListItem', position: p.city ? 4 : 3, name: p.neighborhood, item: `${SITE_URL}/imoveis?cidade=${encodeURIComponent(p.city ?? '')}&bairro=${encodeURIComponent(p.neighborhood)}` }] : []),
+          { '@type': 'ListItem', position: (p.city ? 3 : 2) + (p.neighborhood ? 1 : 0) + 1, name: p.title, item: `${SITE_URL}/imoveis/${p.slug}` },
+        ],
+      }} />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-20">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
