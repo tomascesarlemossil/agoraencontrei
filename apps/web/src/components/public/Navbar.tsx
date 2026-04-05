@@ -103,6 +103,17 @@ export function Navbar() {
               LEMOS
             </p>
           </div>
+          <span
+            className="hidden lg:inline-flex items-center px-2 py-0.5 rounded text-[9px] font-semibold uppercase tracking-wider ml-1 self-start mt-0.5"
+            style={{
+              color: 'var(--site-accent-color, #C9A84C)',
+              backgroundColor: 'rgba(201,168,76,0.12)',
+              border: '1px solid rgba(201,168,76,0.25)',
+              letterSpacing: '0.08em',
+            }}
+          >
+            Marketplace
+          </span>
         </Link>
 
         {/* Desktop nav */}

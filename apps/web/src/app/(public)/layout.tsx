@@ -243,7 +243,24 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
             </div>
           </div>
 
-          <div className="border-t border-white/10 pt-6 flex flex-col sm:flex-row justify-between items-center gap-3">
+          {/* Powered by */}
+          <div className="border-t border-white/10 pt-6 pb-4 text-center">
+            <p className="text-white/40 text-[11px] leading-relaxed max-w-xl mx-auto">
+              <span style={{ color: 'var(--site-accent-color, #C9A84C)' }}>AgoraEncontrei</span> é o marketplace imobiliário criado e desenvolvido pela{' '}
+              <a
+                href="https://www.imobiliarialemos.com.br"
+                target="_blank"
+                rel="noreferrer"
+                className="hover:text-white/60 transition-colors underline decoration-white/20 underline-offset-2"
+                style={{ color: 'var(--site-accent-color, #C9A84C)' }}
+              >
+                Imobiliária Lemos
+              </a>
+              {' '}&mdash; referência em Franca/SP desde 2002
+            </p>
+          </div>
+
+          <div className="border-t border-white/5 pt-4 flex flex-col sm:flex-row justify-between items-center gap-3">
             <p className="text-white/50 text-xs">
               © {new Date().getFullYear()} Imobiliária Lemos. Todos os direitos reservados.
             </p>

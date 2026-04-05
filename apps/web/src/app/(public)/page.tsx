@@ -449,6 +449,69 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {/* ── MARKETPLACE ───────────────────────────────────────────── */}
+      <section style={{ backgroundColor: 'var(--site-primary-color, #1B2B5B)' }} className="py-20">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6">
+          <div className="text-center mb-12">
+            <p
+              className="text-[11px] font-semibold uppercase tracking-[0.2em] mb-3"
+              style={{ color: 'var(--site-accent-color, #C9A84C)' }}
+            >
+              Criado pela Imobiliária Lemos, referência desde 2002
+            </p>
+            <h2
+              className="text-2xl sm:text-3xl font-bold text-white leading-snug"
+              style={{ fontFamily: 'Georgia, serif' }}
+            >
+              O Marketplace Imobiliário de{' '}
+              <span style={{ color: 'var(--site-accent-color, #C9A84C)' }}>Franca e Região</span>
+            </h2>
+            <p className="text-white/50 text-sm mt-4 max-w-2xl mx-auto leading-relaxed">
+              O AgoraEncontrei é a plataforma mais avançada para compra, venda e locação de imóveis
+              em Franca/SP e região. Aberto para corretores, proprietários e investidores
+              anunciarem com tecnologia de ponta.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
+            {[
+              { label: 'Busca com IA', desc: 'Encontre imóveis por conversa inteligente' },
+              { label: 'Mapa Interativo', desc: 'Navegue por bairros e regiões no mapa' },
+              { label: '1000+ Imóveis', desc: 'O maior acervo imobiliário da região' },
+              { label: 'Anúncio Gratuito', desc: 'Cadastre seu imóvel sem custo inicial' },
+            ].map(feat => (
+              <div
+                key={feat.label}
+                className="rounded-xl p-5 text-center"
+                style={{ backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.06)' }}
+              >
+                <p className="text-white font-semibold text-sm mb-1" style={{ fontFamily: 'Georgia, serif' }}>
+                  {feat.label}
+                </p>
+                <p className="text-white/40 text-xs leading-relaxed">{feat.desc}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Link
+              href="/anunciar"
+              className="px-8 py-3 rounded-xl text-sm font-bold transition-all hover:brightness-110 text-center"
+              style={{ backgroundColor: 'var(--site-accent-color, #C9A84C)', color: 'var(--site-primary-color, #1B2B5B)' }}
+            >
+              Anuncie seu Imóvel
+            </Link>
+            <Link
+              href="/contato"
+              className="px-8 py-3 rounded-xl text-sm font-bold text-center transition-all hover:bg-white/10"
+              style={{ border: '1px solid rgba(201,168,76,0.4)', color: 'var(--site-accent-color, #C9A84C)' }}
+            >
+              Seja um Corretor Parceiro
+            </Link>
+          </div>
+        </div>
+      </section>
+
       {/* ── NOSSA EQUIPE ────────────────────────────────────────────── */}
       {team.length > 0 && (
         <section className="max-w-6xl mx-auto px-4 sm:px-6 pb-16">
