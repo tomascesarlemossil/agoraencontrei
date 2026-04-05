@@ -4,11 +4,12 @@ import { ChevronRight, HelpCircle } from 'lucide-react'
 import { FaqAccordion } from './FaqAccordion'
 
 export const metadata: Metadata = {
-  title: 'Perguntas Frequentes (FAQ) | Imobiliária Lemos — Franca/SP',
+  title: 'Perguntas Frequentes (FAQ) | AgoraEncontrei — Imobiliária Lemos',
   description:
     'Tire suas dúvidas sobre compra, venda, locação, financiamento, documentação, FGTS e avaliação de imóveis com a Imobiliária Lemos em Franca/SP.',
   keywords: [
     'FAQ imobiliária',
+    'FAQ agoraencontrei',
     'perguntas frequentes imóveis',
     'compra de imóvel',
     'financiamento imobiliário',
@@ -18,11 +19,12 @@ export const metadata: Metadata = {
     'Imobiliária Lemos',
   ],
   openGraph: {
-    title: 'Perguntas Frequentes | Imobiliária Lemos — Franca/SP',
+    title: 'Perguntas Frequentes | AgoraEncontrei — Imobiliária Lemos',
     description:
       'Dúvidas sobre compra, venda, locação e financiamento? Confira nossas respostas.',
     type: 'website',
     locale: 'pt_BR',
+    siteName: 'AgoraEncontrei — Imobiliária Lemos',
   },
 }
 

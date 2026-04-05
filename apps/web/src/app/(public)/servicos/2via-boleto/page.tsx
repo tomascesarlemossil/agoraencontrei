@@ -3,8 +3,8 @@ import Link from 'next/link'
 import { CreditCard, Phone, MessageSquare, Mail } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: '2ª Via de Boleto | Imobiliária Lemos',
-  description: 'Solicite a 2ª via do seu boleto de aluguel. Entre em contato com a Imobiliária Lemos pelo WhatsApp, telefone ou e-mail.',
+  title: '2ª Via de Boleto | AgoraEncontrei — Imobiliária Lemos',
+  description: 'Solicite a 2ª via do seu boleto de aluguel. Entre em contato com a Imobiliária Lemos pelo WhatsApp, telefone ou e-mail. Franca/SP.',
 }
 
 export default function SegundaViaBoletoPage() {

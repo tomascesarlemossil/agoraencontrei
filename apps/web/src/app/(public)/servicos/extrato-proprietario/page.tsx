@@ -3,8 +3,8 @@ import Link from 'next/link'
 import { BarChart3, MessageSquare, Mail, Lock } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'Extrato do Proprietário | Imobiliária Lemos',
-  description: 'Proprietários: consulte o extrato de repasses, aluguéis recebidos e despesas dos seus imóveis administrados pela Imobiliária Lemos.',
+  title: 'Extrato do Proprietário | AgoraEncontrei — Imobiliária Lemos',
+  description: 'Proprietários: consulte o extrato de repasses, aluguéis recebidos e despesas dos seus imóveis administrados pela Imobiliária Lemos em Franca/SP.',
 }
 
 export default function ExtratoProprietarioPage() {

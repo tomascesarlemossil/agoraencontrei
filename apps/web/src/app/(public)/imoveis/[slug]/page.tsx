@@ -170,7 +170,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
       images: images.map(url => ({ url, width: 1200, height: 630, alt: p.title })),
       type: 'website',
       url: `${SITE_URL}/imoveis/${p.slug}`,
-      siteName: 'Imobiliária Lemos — AgoraEncontrei',
+      siteName: 'AgoraEncontrei — Imobiliária Lemos',
       locale: 'pt_BR',
     },
     twitter: {

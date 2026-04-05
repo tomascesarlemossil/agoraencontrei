@@ -3,22 +3,24 @@ import Link from 'next/link'
 import { ChevronRight, Quote, Star, MessageSquareHeart } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'Depoimentos | Imobiliária Lemos — Franca/SP',
+  title: 'Depoimentos | AgoraEncontrei — Imobiliária Lemos — Franca/SP',
   description:
-    'Veja o que nossos clientes dizem sobre a Imobiliária Lemos. Depoimentos reais de compradores, inquilinos e proprietários satisfeitos em Franca/SP.',
+    'Veja o que nossos clientes dizem sobre a Imobiliária Lemos e o AgoraEncontrei. Depoimentos reais de compradores, inquilinos e proprietários satisfeitos em Franca/SP.',
   keywords: [
     'depoimentos imobiliária lemos',
+    'depoimentos agoraencontrei',
     'avaliações clientes',
     'Franca SP',
     'imobiliária confiável',
     'opinião clientes imobiliária',
   ],
   openGraph: {
-    title: 'Depoimentos | Imobiliária Lemos — Franca/SP',
+    title: 'Depoimentos | AgoraEncontrei — Imobiliária Lemos',
     description:
-      'Veja o que nossos clientes dizem sobre a Imobiliária Lemos. Mais de 20 anos de confiança.',
+      'Veja o que nossos clientes dizem. Mais de 22 anos de confiança em Franca/SP.',
     type: 'website',
     locale: 'pt_BR',
+    siteName: 'AgoraEncontrei — Imobiliária Lemos',
   },
 }
 
