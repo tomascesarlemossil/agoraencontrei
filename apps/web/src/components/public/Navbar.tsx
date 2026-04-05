@@ -122,6 +122,8 @@ export function Navbar() {
             <button
               onClick={() => setServicosOpen(v => !v)}
               className="flex items-center gap-1 px-4 py-2 text-sm font-medium text-white/80 hover:text-white rounded-lg transition-colors hover:bg-white/10"
+              aria-label="Abrir menu de serviços"
+              aria-expanded={servicosOpen}
             >
               Serviços
               <ChevronDown className={`w-3.5 h-3.5 transition-transform ${servicosOpen ? 'rotate-180' : ''}`} />
@@ -166,6 +168,8 @@ export function Navbar() {
             <button
               onClick={() => setAccessOpen(v => !v)}
               className="hidden sm:flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-white/80 hover:text-white rounded-lg transition-colors hover:bg-white/10 border border-white/20"
+              aria-label="Abrir menu de acesso"
+              aria-expanded={accessOpen}
             >
               <LayoutDashboard className="w-4 h-4" />
               <span>Área de Acesso</span>

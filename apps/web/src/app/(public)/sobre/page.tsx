@@ -85,7 +85,7 @@ export default function SobrePage() {
 
       {/* Breadcrumb */}
       <div className="max-w-6xl mx-auto px-4 pt-4 pb-2">
-        <nav className="flex items-center gap-1.5 text-sm text-gray-500">
+        <nav className="flex items-center gap-1.5 text-sm text-gray-500" aria-label="Breadcrumb">
           <Link href="/" className="hover:text-gray-600 transition-colors">
             Início
           </Link>
