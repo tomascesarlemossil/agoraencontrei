@@ -1,11 +1,16 @@
 'use client'
 
+import { useMemo } from 'react'
 import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '@/stores/auth.store'
-import { propertiesApi, leadsApi } from '@/lib/api'
+import { propertiesApi, leadsApi, financeApi } from '@/lib/api'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { formatCurrency, formatNumber } from '@/lib/utils'
+import {
+  BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid,
+  Tooltip, ResponsiveContainer, Legend,
+} from 'recharts'
 import {
   Building2,
   UserCheck,
@@ -52,6 +57,38 @@ export default function DashboardPage() {
     enabled: !!accessToken,
     staleTime: 60_000,
   })
+
+  const { data: cashflowData } = useQuery({
+    queryKey: ['cashflow'],
+    queryFn: () => financeApi.cashflow(accessToken!),
+    enabled: !!accessToken,
+    staleTime: 5 * 60_000,
+  })
+
+  const { data: allLeads } = useQuery({
+    queryKey: ['leads-for-chart'],
+    queryFn: () => leadsApi.list(accessToken!, { limit: 500 }),
+    enabled: !!accessToken,
+    staleTime: 5 * 60_000,
+  })
+
+  const leadsPerMonth = useMemo(() => {
+    if (!allLeads?.data?.length) return []
+    const counts: Record<string, number> = {}
+    for (const lead of allLeads.data) {
+      const d = new Date(lead.createdAt)
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+      counts[key] = (counts[key] ?? 0) + 1
+    }
+    return Object.entries(counts)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .slice(-12)
+      .map(([key, count]) => {
+        const [y, m] = key.split('-')
+        const label = new Date(Number(y), Number(m) - 1).toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' })
+        return { label, count }
+      })
+  }, [allLeads])
 
   const kpis = [
     {
@@ -166,6 +203,64 @@ export default function DashboardPage() {
             </Card>
           </Link>
         ))}
+      </div>
+
+      {/* Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Fluxo de Caixa */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Fluxo de Caixa</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {cashflowData?.data?.length ? (
+              <ResponsiveContainer width="100%" height={280}>
+                <BarChart data={cashflowData.data} margin={{ top: 4, right: 8, left: -12, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis dataKey="label" tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" />
+                  <YAxis tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" tickFormatter={(v: number) => formatCurrency(v)} />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 13 }}
+                    labelStyle={{ color: 'hsl(var(--foreground))' }}
+                    formatter={((value: any, name: any) => [formatCurrency(Number(value)), name === 'income' ? 'Receita' : 'Despesas']) as any}
+                    labelFormatter={((label: any) => String(label)) as any}
+                  />
+                  <Legend formatter={(value: string) => value === 'income' ? 'Receita' : 'Despesas'} />
+                  <Bar dataKey="income" fill="#22c55e" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="expenses" fill="#ef4444" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <p className="text-sm text-muted-foreground py-10 text-center">Sem dados de fluxo de caixa</p>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Leads por Mes */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Leads por Mes</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {leadsPerMonth.length ? (
+              <ResponsiveContainer width="100%" height={280}>
+                <LineChart data={leadsPerMonth} margin={{ top: 4, right: 8, left: -12, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis dataKey="label" tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" />
+                  <YAxis tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" allowDecimals={false} />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 13 }}
+                    labelStyle={{ color: 'hsl(var(--foreground))' }}
+                    formatter={((value: any) => [value, 'Leads']) as any}
+                  />
+                  <Line type="monotone" dataKey="count" stroke="#3b82f6" strokeWidth={2} dot={{ r: 4, fill: '#3b82f6' }} name="Leads" />
+                </LineChart>
+              </ResponsiveContainer>
+            ) : (
+              <p className="text-sm text-muted-foreground py-10 text-center">Sem dados de leads</p>
+            )}
+          </CardContent>
+        </Card>
       </div>
 
       {/* Two column section */}
