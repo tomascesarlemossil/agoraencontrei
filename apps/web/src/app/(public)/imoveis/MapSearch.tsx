@@ -118,18 +118,23 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
   const [mapError, setMapError] = useState<string | null>(null)
   const router = useRouter()
 
-  // Inject Leaflet CSS synchronously before map init to avoid broken tiles
+  // Inject Leaflet CSS before map init to avoid broken tiles
+  // Uses dynamic import to bundle CSS locally (no CDN dependency)
   useEffect(() => {
     if (!document.getElementById('leaflet-css')) {
-      const link = document.createElement('link')
-      link.id = 'leaflet-css'
-      link.rel = 'stylesheet'
-      link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'
-      // Insert at head start so it loads before map init
-      document.head.insertBefore(link, document.head.firstChild)
-      // Wait for CSS to load before initializing map
-      link.onload = () => setIsCssLoaded(true)
-      link.onerror = () => setIsCssLoaded(true) // proceed anyway
+      // Try to import CSS from npm package first (bundled, no CDN)
+      import('leaflet/dist/leaflet.css' as any)
+        .then(() => setIsCssLoaded(true))
+        .catch(() => {
+          // Fallback to CDN if bundled import fails
+          const link = document.createElement('link')
+          link.id = 'leaflet-css'
+          link.rel = 'stylesheet'
+          link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'
+          document.head.insertBefore(link, document.head.firstChild)
+          link.onload = () => setIsCssLoaded(true)
+          link.onerror = () => setIsCssLoaded(true)
+        })
     } else {
       setIsCssLoaded(true)
     }
