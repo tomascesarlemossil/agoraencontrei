@@ -1,9 +1,30 @@
-'use client'
-
-import { useState } from 'react'
+import type { Metadata } from 'next'
 import Link from 'next/link'
-import { ChevronDown, ChevronRight, HelpCircle } from 'lucide-react'
-import Script from 'next/script'
+import { ChevronRight, HelpCircle } from 'lucide-react'
+import { FaqAccordion } from './FaqAccordion'
+
+export const metadata: Metadata = {
+  title: 'Perguntas Frequentes (FAQ) | Imobiliária Lemos — Franca/SP',
+  description:
+    'Tire suas dúvidas sobre compra, venda, locação, financiamento, documentação, FGTS e avaliação de imóveis com a Imobiliária Lemos em Franca/SP.',
+  keywords: [
+    'FAQ imobiliária',
+    'perguntas frequentes imóveis',
+    'compra de imóvel',
+    'financiamento imobiliário',
+    'FGTS imóvel',
+    'documentos imóvel',
+    'locação Franca SP',
+    'Imobiliária Lemos',
+  ],
+  openGraph: {
+    title: 'Perguntas Frequentes | Imobiliária Lemos — Franca/SP',
+    description:
+      'Dúvidas sobre compra, venda, locação e financiamento? Confira nossas respostas.',
+    type: 'website',
+    locale: 'pt_BR',
+  },
+}
 
 const FAQ_ITEMS: { question: string; answer: string }[] = [
   {
@@ -101,63 +122,11 @@ const jsonLd = {
   })),
 }
 
-function Accordion({
-  question,
-  answer,
-  isOpen,
-  onToggle,
-}: {
-  question: string
-  answer: string
-  isOpen: boolean
-  onToggle: () => void
-}) {
-  return (
-    <div
-      className="bg-white rounded-2xl border shadow-sm overflow-hidden transition-all"
-      style={{ borderColor: isOpen ? '#C9A84C' : '#ddd9d0' }}
-    >
-      <button
-        onClick={onToggle}
-        className="w-full flex items-center justify-between gap-4 p-5 text-left hover:bg-gray-50 transition-colors"
-      >
-        <span
-          className="font-semibold text-sm sm:text-base"
-          style={{ color: '#1B2B5B' }}
-        >
-          {question}
-        </span>
-        <ChevronDown
-          className="w-5 h-5 flex-shrink-0 transition-transform duration-200"
-          style={{
-            color: '#C9A84C',
-            transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-          }}
-        />
-      </button>
-      <div
-        className="overflow-hidden transition-all duration-200"
-        style={{
-          maxHeight: isOpen ? '500px' : '0',
-          opacity: isOpen ? 1 : 0,
-        }}
-      >
-        <div className="px-5 pb-5 text-sm text-gray-600 leading-relaxed border-t" style={{ borderColor: '#ede9df' }}>
-          <p className="pt-4">{answer}</p>
-        </div>
-      </div>
-    </div>
-  )
-}
-
 export default function FaqPage() {
-  const [openIndex, setOpenIndex] = useState<number | null>(0)
-
   return (
     <main className="min-h-screen" style={{ backgroundColor: '#f9f7f4' }}>
       {/* JSON-LD */}
-      <Script
-        id="faq-jsonld"
+      <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
@@ -213,17 +182,7 @@ export default function FaqPage() {
           </h2>
         </div>
 
-        <div className="space-y-3">
-          {FAQ_ITEMS.map((item, idx) => (
-            <Accordion
-              key={idx}
-              question={item.question}
-              answer={item.answer}
-              isOpen={openIndex === idx}
-              onToggle={() => setOpenIndex(openIndex === idx ? null : idx)}
-            />
-          ))}
-        </div>
+        <FaqAccordion items={FAQ_ITEMS} />
       </section>
 
       {/* CTA */}
