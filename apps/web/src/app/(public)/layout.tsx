@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { Phone, MapPin, Instagram, Facebook, Youtube } from 'lucide-react'
 import { Navbar } from '@/components/public/Navbar'
 import { FloatingChatbot } from '@/components/chat/FloatingChatbot'
+import { CompareBar } from '@/components/CompareBar'
 import { SystemThemeInjector } from '@/components/public/SystemThemeInjector'
 
 export const metadata: Metadata = {
@@ -78,6 +79,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
       <Navbar />
 
       <main>{children}</main>
+      <CompareBar />
       <FloatingChatbot />
 
       {/* Footer */}

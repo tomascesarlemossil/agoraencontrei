@@ -4,6 +4,8 @@ import { useEffect, useState, useRef } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { BedDouble, Bath, Car, Maximize, ChevronLeft, ChevronRight, MapPin } from 'lucide-react'
+import { FavoriteButton } from '@/components/FavoriteButton'
+import { CompareButton } from '@/components/CompareButton'
 
 interface Property {
   id: string
@@ -119,6 +121,11 @@ export function SimilarProperties({ slug, apiUrl }: Props) {
                   Cód. {p.reference}
                 </div>
               )}
+              {/* Favorite & Compare buttons */}
+              <div className="absolute top-2 right-2 z-10 flex flex-col gap-1.5">
+                <FavoriteButton propertyId={p.id} />
+                <CompareButton propertyId={p.id} />
+              </div>
               {p.coverImage ? (
                 <Image
                   src={p.coverImage}

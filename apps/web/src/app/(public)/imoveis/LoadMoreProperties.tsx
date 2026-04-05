@@ -3,6 +3,8 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import { BedDouble, Bath, Car, Maximize, Loader2, Building2, ChevronLeft, ChevronRight } from 'lucide-react'
+import { FavoriteButton } from '@/components/FavoriteButton'
+import { CompareButton } from '@/components/CompareButton'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 
@@ -47,12 +49,13 @@ function PriceDisplay({ price, priceRent, purpose }: { price: number | null; pri
   return <p className="text-sm font-medium mt-3 text-gray-500">Consulte</p>
 }
 
-function PropertyCardCarousel({ images, coverImage, title, isFeatured, purpose }: {
+function PropertyCardCarousel({ images, coverImage, title, isFeatured, purpose, propertyId }: {
   images?: string[] | null
   coverImage?: string | null
   title: string
   isFeatured?: boolean
   purpose: string
+  propertyId: string
 }) {
   const [currentIdx, setCurrentIdx] = useState(0)
   const [isHovered, setIsHovered] = useState(false)
@@ -152,6 +155,12 @@ function PropertyCardCarousel({ images, coverImage, title, isFeatured, purpose }
           </span>
         )}
       </div>
+
+      {/* Favorite & Compare buttons */}
+      <div className="absolute top-3 right-3 flex flex-col gap-1.5 z-10">
+        <FavoriteButton propertyId={propertyId} />
+        <CompareButton propertyId={propertyId} />
+      </div>
     </div>
   )
 }
@@ -169,6 +178,7 @@ function PropertyCard({ p }: { p: any }) {
         title={p.title}
         isFeatured={p.isFeatured}
         purpose={p.purpose}
+        propertyId={p.id}
       />
       <div className="p-4">
         <p className="font-semibold text-gray-900 line-clamp-2 text-sm leading-snug group-hover:text-[#1B2B5B] transition-colors">
