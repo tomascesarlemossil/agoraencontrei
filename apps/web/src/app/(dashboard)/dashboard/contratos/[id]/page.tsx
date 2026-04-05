@@ -11,7 +11,8 @@ import {
   ArrowLeft, FileText, User, Home, Calendar, DollarSign,
   Phone, Mail, CheckCircle, Clock, AlertCircle,
   Scissors, Building2, Percent, RefreshCw, Link2, Download,
-  History, TrendingUp, RotateCcw,
+  TrendingUp, History, Shield, Edit3, ChevronDown, ChevronUp,
+  UserCheck, PlusCircle,
 } from 'lucide-react'
 
 const fmt = (v: number | null | undefined) =>
@@ -22,12 +23,9 @@ const fmtDate = (d: string | null | undefined) =>
   d ? new Date(d).toLocaleDateString('pt-BR') : '—'
 
 const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
-  ACTIVE:         { label: 'Ativo',          color: 'text-green-400 bg-green-500/20' },
-  FINISHED:       { label: 'Encerrado',      color: 'text-gray-400 bg-white/10' },
-  CANCELED:       { label: 'Cancelado',      color: 'text-red-400 bg-red-500/20' },
-  IN_RENEWAL:     { label: 'Em Renovação',   color: 'text-blue-400 bg-blue-500/20' },
-  EXPIRED:        { label: 'Vencido',        color: 'text-orange-400 bg-orange-500/20' },
-  IN_NEGOTIATION: { label: 'Em Negociação',  color: 'text-purple-400 bg-purple-500/20' },
+  ACTIVE:   { label: 'Ativo',     color: 'text-green-400 bg-green-500/20' },
+  FINISHED: { label: 'Encerrado', color: 'text-gray-400 bg-white/10' },
+  CANCELED: { label: 'Cancelado', color: 'text-red-400 bg-red-500/20' },
 }
 
 const RENTAL_STATUS: Record<string, { label: string; icon: typeof CheckCircle; color: string }> = {
@@ -37,8 +35,6 @@ const RENTAL_STATUS: Record<string, { label: string; icon: typeof CheckCircle; c
   PARTIAL:   { label: 'Parcial',   icon: Clock,       color: 'text-orange-400' },
   CANCELLED: { label: 'Cancelado', icon: AlertCircle, color: 'text-gray-400' },
 }
-
-const ADJUSTMENT_INDICES = ['IGPM', 'IPCA', 'INPC', 'IGP-M', 'FIXO']
 
 export default function ContratoDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -51,89 +47,69 @@ export default function ContratoDetailPage() {
     enabled: !!token && !!id,
   })
 
-  const { data: historyData } = useQuery({
-    queryKey: ['contract-history', id],
-    queryFn: () => financeApi.historicoContrato(token!, id),
-    enabled: !!token && !!id,
-  })
-
   const qc = useQueryClient()
-  const invalidateAll = () => {
-    qc.invalidateQueries({ queryKey: ['contract', id] })
-    qc.invalidateQueries({ queryKey: ['contract-history', id] })
-    qc.invalidateQueries({ queryKey: ['finance-contracts'] })
-    qc.invalidateQueries({ queryKey: ['finance-summary'] })
-  }
 
-  // ── Rescisão state ──
+  // Rescisão
   const [showRescisao, setShowRescisao] = useState(false)
   const [rescDate, setRescDate] = useState(new Date().toISOString().split('T')[0])
   const [rescType, setRescType] = useState<'FINISHED' | 'CANCELED'>('FINISHED')
-  const [rescReason, setRescReason] = useState('')
-  const [rescFine, setRescFine] = useState('')
-  const [rescRefund, setRescRefund] = useState('')
-  const [rescNotes, setRescNotes] = useState('')
+  const [rescMotivo, setRescMotivo] = useState('')
+  const [rescMulta, setRescMulta] = useState('')
 
-  // ── Renovação state ──
+  // Renovação
   const [showRenovacao, setShowRenovacao] = useState(false)
-  const [renNewValue, setRenNewValue] = useState('')
-  const [renDuration, setRenDuration] = useState('12')
-  const [renStartDate, setRenStartDate] = useState(new Date().toISOString().split('T')[0])
-  const [renIndex, setRenIndex] = useState('IGPM')
-  const [renPercent, setRenPercent] = useState('')
+  const [renovDuration, setRenovDuration] = useState('12')
+  const [renovNovoValor, setRenovNovoValor] = useState('')
+  const [renovIndice, setRenovIndice] = useState('IGPM')
 
-  // ── Reajuste state ──
+  // Reajuste Manual
   const [showReajuste, setShowReajuste] = useState(false)
-  const [reajIndex, setReajIndex] = useState('IGPM')
-  const [reajPercent, setReajPercent] = useState('')
-  const [reajNewValue, setReajNewValue] = useState('')
+  const [reajustePercent, setReajustePercent] = useState('')
+  const [reajusteMotivo, setReajusteMotivo] = useState('')
+  const [reajusteData, setReajusteData] = useState(new Date().toISOString().split('T')[0])
 
-  // ── Tab state ──
-  const [activeTab, setActiveTab] = useState<'alugueis' | 'historico' | 'documentos'>('alugueis')
+  // Histórico expandido
+  const [showHistorico, setShowHistorico] = useState(false)
 
   const rescisaoMutation = useMutation({
     mutationFn: () => financeApi.registrarRescisao(token!, id, {
       rescissionDate: rescDate,
       status: rescType,
-      reason: rescReason || undefined,
-      fine: rescFine ? Number(rescFine) : undefined,
-      refund: rescRefund ? Number(rescRefund) : undefined,
-      notes: rescNotes || undefined,
-    }),
-    onSuccess: () => { invalidateAll(); setShowRescisao(false) },
+      motivo: rescMotivo || undefined,
+      multaRescisao: rescMulta ? Number(rescMulta) : undefined,
+    } as any),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['contract', id] })
+      qc.invalidateQueries({ queryKey: ['finance-contracts'] })
+      qc.invalidateQueries({ queryKey: ['finance-summary'] })
+      setShowRescisao(false)
+    },
   })
 
   const renovacaoMutation = useMutation({
     mutationFn: () => financeApi.renovarContrato(token!, id, {
-      newRentValue: Number(renNewValue),
-      newDuration: Number(renDuration),
-      newStartDate: renStartDate,
-      adjustmentIndex: renIndex,
-      adjustmentPercent: renPercent ? Number(renPercent) : undefined,
-    }),
-    onSuccess: (data: any) => {
-      invalidateAll()
+      duration: Number(renovDuration),
+      novoValor: renovNovoValor ? Number(renovNovoValor) : undefined,
+      indiceReajuste: renovIndice,
+    } as any),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['contract', id] })
+      qc.invalidateQueries({ queryKey: ['finance-contracts'] })
       setShowRenovacao(false)
-      router.push(`/dashboard/contratos/${data.id}`)
     },
   })
 
   const reajusteMutation = useMutation({
-    mutationFn: () => financeApi.reajustarContrato(token!, id, {
-      index: reajIndex,
-      percent: Number(reajPercent),
-      newValue: Number(reajNewValue),
-    }),
-    onSuccess: () => { invalidateAll(); setShowReajuste(false) },
+    mutationFn: () => financeApi.aplicarReajuste(token!, id, {
+      percentual: Number(reajustePercent),
+      motivo: reajusteMotivo || undefined,
+      dataAplicacao: reajusteData,
+    } as any),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['contract', id] })
+      setShowReajuste(false)
+    },
   })
-
-  // Auto-calculate adjustment value
-  const calcReajuste = () => {
-    if (!contract || !reajPercent) return
-    const current = Number(contract.rentValue ?? 0)
-    const pct = Number(reajPercent)
-    setReajNewValue((current * (1 + pct / 100)).toFixed(2))
-  }
 
   if (isLoading) {
     return (
@@ -157,7 +133,7 @@ export default function ContratoDetailPage() {
   const paidRentals = rentals.filter(r => r.status === 'PAID')
   const lateRentals = rentals.filter(r => r.status === 'LATE')
   const totalPago = paidRentals.reduce((s, r) => s + (r.paidAmount ?? r.totalAmount ?? 0), 0)
-  const history = historyData?.data ?? []
+  const contractHistory = (contract as any).contractHistory ?? []
 
   return (
     <div className="p-4 md:p-6 max-w-4xl mx-auto space-y-4">
@@ -175,18 +151,19 @@ export default function ContratoDetailPage() {
           </div>
           {contract.legacyId && <p className="text-xs text-white/40 mt-0.5">Ref. #{contract.legacyId}</p>}
         </div>
+        {/* Ações rápidas */}
         {contract.status === 'ACTIVE' && (
-          <div className="flex gap-2 ml-auto">
+          <div className="flex items-center gap-2 ml-auto">
             <button
               onClick={() => { setShowReajuste(s => !s); setShowRescisao(false); setShowRenovacao(false) }}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 rounded-lg text-xs font-medium transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-yellow-500/20 text-yellow-400 hover:bg-yellow-500/30 rounded-lg text-xs font-medium transition-colors"
             >
               <TrendingUp className="h-3.5 w-3.5" />
               Reajuste
             </button>
             <button
               onClick={() => { setShowRenovacao(s => !s); setShowRescisao(false); setShowReajuste(false) }}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-green-500/20 text-green-400 hover:bg-green-500/30 rounded-lg text-xs font-medium transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 rounded-lg text-xs font-medium transition-colors"
             >
               <RefreshCw className="h-3.5 w-3.5" />
               Renovar
@@ -202,51 +179,58 @@ export default function ContratoDetailPage() {
         )}
       </div>
 
-      {/* ── Modal Reajuste ── */}
+      {/* Painel de Reajuste Manual */}
       {showReajuste && contract.status === 'ACTIVE' && (
-        <div className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-4 space-y-3">
-          <h3 className="text-sm font-semibold text-blue-400 flex items-center gap-2">
-            <TrendingUp className="h-4 w-4" /> Aplicar Reajuste
+        <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-2xl p-4 space-y-3">
+          <h3 className="text-sm font-semibold text-yellow-400 flex items-center gap-2">
+            <TrendingUp className="h-4 w-4" /> Aplicar Reajuste Manual
           </h3>
-          <p className="text-xs text-white/50">Valor atual: {fmt(contract.rentValue as unknown as number)}</p>
           <div className="grid grid-cols-3 gap-3">
-            <div>
-              <label className="text-xs text-white/50 block mb-1">Índice</label>
-              <select
-                value={reajIndex}
-                onChange={e => setReajIndex(e.target.value)}
-                className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white"
-              >
-                {ADJUSTMENT_INDICES.map(i => <option key={i} value={i}>{i}</option>)}
-              </select>
-            </div>
             <div>
               <label className="text-xs text-white/50 block mb-1">Percentual (%)</label>
               <input
-                type="number" step="0.01" value={reajPercent}
-                onChange={e => setReajPercent(e.target.value)}
-                onBlur={calcReajuste}
-                placeholder="4.52"
+                type="number" step="0.01" min="0" max="100"
+                value={reajustePercent}
+                onChange={e => setReajustePercent(e.target.value)}
+                placeholder="Ex: 5.93"
                 className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white"
               />
             </div>
             <div>
-              <label className="text-xs text-white/50 block mb-1">Novo Valor (R$)</label>
+              <label className="text-xs text-white/50 block mb-1">Data de Aplicação</label>
               <input
-                type="number" step="0.01" value={reajNewValue}
-                onChange={e => setReajNewValue(e.target.value)}
-                placeholder="1.880,00"
+                type="date"
+                value={reajusteData}
+                onChange={e => setReajusteData(e.target.value)}
+                className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white"
+              />
+            </div>
+            <div>
+              <label className="text-xs text-white/50 block mb-1">Motivo</label>
+              <input
+                type="text"
+                value={reajusteMotivo}
+                onChange={e => setReajusteMotivo(e.target.value)}
+                placeholder="Ex: Reajuste anual IGPM"
                 className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white"
               />
             </div>
           </div>
+          {reajustePercent && (
+            <div className="bg-white/5 rounded-lg p-3 text-sm text-white/70">
+              Valor atual: <span className="text-white font-medium">{fmt(contract.rentValue as unknown as number)}</span>
+              {' → '}Novo valor: <span className="text-yellow-400 font-bold">
+                {fmt(Number(contract.rentValue) * (1 + Number(reajustePercent) / 100))}
+              </span>
+            </div>
+          )}
           <div className="flex gap-2">
             <button
               onClick={() => reajusteMutation.mutate()}
-              disabled={reajusteMutation.isPending || !reajPercent || !reajNewValue}
-              className="px-4 py-2 bg-blue-500 text-white text-sm rounded-lg hover:bg-blue-600 disabled:opacity-50"
+              disabled={reajusteMutation.isPending || !reajustePercent}
+              className="px-4 py-2 bg-yellow-500 text-white text-sm rounded-lg hover:bg-yellow-600 disabled:opacity-50"
             >
-              {reajusteMutation.isPending ? 'Aplicando...' : 'Confirmar Reajuste'}
+              {reajusteMutation.isPending ? 'Aplicando...' : 'Aplicar Reajuste'}
             </button>
             <button onClick={() => setShowReajuste(false)} className="px-4 py-2 bg-white/5 text-white/60 text-sm rounded-lg hover:bg-white/10">
               Cancelar
@@ -255,66 +239,52 @@ export default function ContratoDetailPage() {
         </div>
       )}
 
-      {/* ── Modal Renovação ── */}
+      {/* Painel de Renovação */}
       {showRenovacao && contract.status === 'ACTIVE' && (
-        <div className="bg-green-500/10 border border-green-500/20 rounded-2xl p-4 space-y-3">
-          <h3 className="text-sm font-semibold text-green-400 flex items-center gap-2">
+        <div className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-4 space-y-3">
+          <h3 className="text-sm font-semibold text-blue-400 flex items-center gap-2">
             <RefreshCw className="h-4 w-4" /> Renovar Contrato
           </h3>
-          <p className="text-xs text-white/50">Será criado um novo contrato e o atual será encerrado</p>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <div>
-              <label className="text-xs text-white/50 block mb-1">Novo Valor (R$)</label>
-              <input
-                type="number" step="0.01" value={renNewValue}
-                onChange={e => setRenNewValue(e.target.value)}
-                placeholder={String(contract.rentValue ?? '')}
-                className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white"
-              />
-            </div>
+          <div className="grid grid-cols-3 gap-3">
             <div>
               <label className="text-xs text-white/50 block mb-1">Duração (meses)</label>
               <input
-                type="number" value={renDuration}
-                onChange={e => setRenDuration(e.target.value)}
+                type="number" min="1" max="120"
+                value={renovDuration}
+                onChange={e => setRenovDuration(e.target.value)}
                 className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white"
               />
             </div>
             <div>
-              <label className="text-xs text-white/50 block mb-1">Início</label>
+              <label className="text-xs text-white/50 block mb-1">Novo Valor Aluguel (R$)</label>
               <input
-                type="date" value={renStartDate}
-                onChange={e => setRenStartDate(e.target.value)}
+                type="number" step="0.01" min="0"
+                value={renovNovoValor}
+                onChange={e => setRenovNovoValor(e.target.value)}
+                placeholder="Deixe em branco para manter"
                 className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white"
               />
             </div>
             <div>
-              <label className="text-xs text-white/50 block mb-1">Índice</label>
+              <label className="text-xs text-white/50 block mb-1">Índice de Reajuste</label>
               <select
-                value={renIndex}
-                onChange={e => setRenIndex(e.target.value)}
+                value={renovIndice}
+                onChange={e => setRenovIndice(e.target.value)}
                 className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white"
               >
-                {ADJUSTMENT_INDICES.map(i => <option key={i} value={i}>{i}</option>)}
+                <option value="IGPM">IGP-M</option>
+                <option value="IPCA">IPCA</option>
+                <option value="INPC">INPC</option>
+                <option value="FIXO">Fixo</option>
+                <option value="LIVRE">Livre Negociação</option>
               </select>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3 mt-3">
-            <div>
-              <label className="text-xs text-white/50 block mb-1">Percentual de Reajuste (%)</label>
-              <input
-                type="number" step="0.01" value={renPercent}
-                onChange={e => setRenPercent(e.target.value)}
-                placeholder="Ex: 4.52"
-                className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white"
-              />
-            </div>
-          </div>
-          <div className="flex gap-2 mt-3">
+          <div className="flex gap-2">
             <button
               onClick={() => renovacaoMutation.mutate()}
-              disabled={renovacaoMutation.isPending || !renNewValue || !renDuration}
-              className="px-4 py-2 bg-green-500 text-white text-sm rounded-lg hover:bg-green-600 disabled:opacity-50"
+              disabled={renovacaoMutation.isPending}
+              className="px-4 py-2 bg-blue-500 text-white text-sm rounded-lg hover:bg-blue-600 disabled:opacity-50"
             >
               {renovacaoMutation.isPending ? 'Renovando...' : 'Confirmar Renovação'}
             </button>
@@ -325,7 +295,7 @@ export default function ContratoDetailPage() {
         </div>
       )}
 
-      {/* ── Modal Rescisão (expandido) ── */}
+      {/* Painel de Rescisão */}
       {showRescisao && contract.status === 'ACTIVE' && (
         <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-4 space-y-3">
           <h3 className="text-sm font-semibold text-red-400 flex items-center gap-2">
@@ -335,7 +305,8 @@ export default function ContratoDetailPage() {
             <div>
               <label className="text-xs text-white/50 block mb-1">Data da Rescisão</label>
               <input
-                type="date" value={rescDate}
+                type="date"
+                value={rescDate}
                 onChange={e => setRescDate(e.target.value)}
                 className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white"
               />
@@ -351,40 +322,24 @@ export default function ContratoDetailPage() {
                 <option value="CANCELED">Cancelado (judicial)</option>
               </select>
             </div>
-            <div className="col-span-2">
-              <label className="text-xs text-white/50 block mb-1">Motivo</label>
-              <input
-                type="text" value={rescReason}
-                onChange={e => setRescReason(e.target.value)}
-                placeholder="Ex: Mudança do inquilino, inadimplência..."
-                className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white"
-              />
-            </div>
             <div>
               <label className="text-xs text-white/50 block mb-1">Multa Rescisória (R$)</label>
               <input
-                type="number" step="0.01" value={rescFine}
-                onChange={e => setRescFine(e.target.value)}
-                placeholder="0,00"
+                type="number" step="0.01" min="0"
+                value={rescMulta}
+                onChange={e => setRescMulta(e.target.value)}
+                placeholder="0.00"
                 className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white"
               />
             </div>
             <div>
-              <label className="text-xs text-white/50 block mb-1">Devolução Caução (R$)</label>
+              <label className="text-xs text-white/50 block mb-1">Motivo</label>
               <input
-                type="number" step="0.01" value={rescRefund}
-                onChange={e => setRescRefund(e.target.value)}
-                placeholder="0,00"
+                type="text"
+                value={rescMotivo}
+                onChange={e => setRescMotivo(e.target.value)}
+                placeholder="Motivo da rescisão"
                 className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white"
-              />
-            </div>
-            <div className="col-span-2">
-              <label className="text-xs text-white/50 block mb-1">Observações</label>
-              <textarea
-                value={rescNotes}
-                onChange={e => setRescNotes(e.target.value)}
-                rows={2}
-                className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white resize-none"
               />
             </div>
           </div>
@@ -478,13 +433,13 @@ export default function ContratoDetailPage() {
             {contract.adjustmentIndex && (
               <div>
                 <p className="text-white/40 text-xs">Índice de Reajuste</p>
-                <p className="text-white">{contract.adjustmentIndex} {contract.adjustmentPercent != null && Number(contract.adjustmentPercent) > 0 ? `(${Number(contract.adjustmentPercent)}%)` : ''}</p>
+                <p className="text-white">{contract.adjustmentIndex}</p>
               </div>
             )}
-            {(contract as any).adjustmentMonth && (
+            {(contract as any).adjustmentPercent != null && Number((contract as any).adjustmentPercent) > 0 && (
               <div>
-                <p className="text-white/40 text-xs">Mês do Reajuste</p>
-                <p className="text-white">{['', 'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'][(contract as any).adjustmentMonth]}</p>
+                <p className="text-white/40 text-xs">% Reajuste</p>
+                <p className="text-white">{Number((contract as any).adjustmentPercent)}%</p>
               </div>
             )}
             {contract.landlordDueDay && (
@@ -499,18 +454,6 @@ export default function ContratoDetailPage() {
                 <p className="text-white">{Number(contract.commission)}%</p>
               </div>
             )}
-            {(contract as any).iptuAnnual != null && Number((contract as any).iptuAnnual) > 0 && (
-              <div>
-                <p className="text-white/40 text-xs">IPTU Anual</p>
-                <p className="text-white">{fmt(Number((contract as any).iptuAnnual))} ({(contract as any).iptuParcels ?? 8}x)</p>
-              </div>
-            )}
-            {(contract as any).bankFee != null && Number((contract as any).bankFee) > 0 && (
-              <div>
-                <p className="text-white/40 text-xs">Taxa Bancária</p>
-                <p className="text-white">{fmt(Number((contract as any).bankFee))}</p>
-              </div>
-            )}
             {contract.penalty != null && Number(contract.penalty) > 0 && (
               <div>
                 <p className="text-white/40 text-xs">Multa</p>
@@ -523,10 +466,16 @@ export default function ContratoDetailPage() {
                 <p className="text-white">{fmt(Number(contract.initialValue))}</p>
               </div>
             )}
+            {(contract as any).caucaoValue != null && Number((contract as any).caucaoValue) > 0 && (
+              <div>
+                <p className="text-white/40 text-xs">Caução</p>
+                <p className="text-white">{fmt(Number((contract as any).caucaoValue))}</p>
+              </div>
+            )}
             {contract.rescissionDate && (
               <div className="col-span-2">
                 <p className="text-white/40 text-xs">Data de Rescisão</p>
-                <p className="text-red-400 font-medium">{fmtDate(contract.rescissionDate)}</p>
+                <p className="text-red-400 font-medium">{new Date(contract.rescissionDate).toLocaleDateString('pt-BR')}</p>
               </div>
             )}
           </div>
@@ -589,6 +538,48 @@ export default function ContratoDetailPage() {
             <p className="text-white/40 text-sm">{contract.landlordName ?? '—'}</p>
           )}
         </div>
+
+        {/* Fiador (se existir) */}
+        {((contract as any).guarantor || (contract as any).guarantorName) && (
+          <div className="bg-white/5 rounded-2xl border border-white/10 p-5">
+            <div className="flex items-center gap-2 mb-4">
+              <Shield className="h-4 w-4 text-purple-400" />
+              <h2 className="text-sm font-semibold text-white">Fiador / Garantidor</h2>
+            </div>
+            {(contract as any).guarantor ? (
+              <div className="space-y-2 text-sm">
+                <p className="font-medium text-white">{(contract as any).guarantor.name}</p>
+                <Link href={`/dashboard/clientes/${(contract as any).guarantor.id}`} className="text-xs text-blue-400 hover:underline">
+                  Ver perfil completo
+                </Link>
+                {(contract as any).guarantor.document && <p className="text-white/40 text-xs">Doc: {(contract as any).guarantor.document}</p>}
+                {(contract as any).guarantor.phone && (
+                  <div className="flex items-center gap-1.5 text-white/60">
+                    <Phone className="h-3 w-3" />{(contract as any).guarantor.phone}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <p className="text-white/40 text-sm">{(contract as any).guarantorName}</p>
+            )}
+          </div>
+        )}
+
+        {/* Seguro Incêndio (se existir) */}
+        {(contract as any).fireInsurance && (
+          <div className="bg-amber-500/10 rounded-2xl border border-amber-500/20 p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <Shield className="h-4 w-4 text-amber-400" />
+              <h2 className="text-sm font-semibold text-white">Seguro Incêndio</h2>
+            </div>
+            <div className="space-y-1 text-sm">
+              <p className="text-white/60">Ativo: <span className="text-amber-400 font-medium">Sim</span></p>
+              {(contract as any).fireInsuranceValue && (
+                <p className="text-white/60">Valor: <span className="text-white">{fmt(Number((contract as any).fireInsuranceValue))}/ano</span></p>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Resumo financeiro */}
@@ -612,28 +603,90 @@ export default function ContratoDetailPage() {
         </div>
       </div>
 
-      {/* Tabs: Aluguéis | Histórico | Documentos */}
-      <div className="flex gap-1 bg-white/5 rounded-xl p-1">
-        {([
-          { key: 'alugueis', label: 'Aluguéis', icon: DollarSign },
-          { key: 'historico', label: 'Histórico', icon: History },
-          { key: 'documentos', label: 'Documentos', icon: FileText },
-        ] as const).map(tab => (
+      {/* Histórico de Alterações do Contrato */}
+      {contractHistory.length > 0 && (
+        <div className="bg-white/5 rounded-2xl border border-white/10 overflow-hidden">
           <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
-              activeTab === tab.key ? 'bg-white/10 text-white' : 'text-white/40 hover:text-white/60'
-            }`}
+            onClick={() => setShowHistorico(s => !s)}
+            className="w-full px-5 py-4 border-b border-white/10 flex items-center justify-between hover:bg-white/5 transition-colors"
           >
-            <tab.icon className="h-3.5 w-3.5" />
-            {tab.label}
+            <div className="flex items-center gap-2">
+              <History className="h-4 w-4 text-white/40" />
+              <h2 className="text-sm font-semibold text-white">Histórico de Alterações</h2>
+              <span className="text-xs text-white/40">({contractHistory.length} registros)</span>
+            </div>
+            {showHistorico ? <ChevronUp className="h-4 w-4 text-white/40" /> : <ChevronDown className="h-4 w-4 text-white/40" />}
           </button>
-        ))}
-      </div>
+          {showHistorico && (
+            <div className="divide-y divide-white/5 max-h-72 overflow-y-auto">
+              {contractHistory.map((h: any) => (
+                <div key={h.id} className="flex items-start gap-3 px-5 py-3">
+                  <div className="w-1.5 h-1.5 rounded-full bg-purple-400 mt-2 shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-white">{h.description ?? h.action}</p>
+                    {h.changedBy && <p className="text-xs text-white/40 mt-0.5">Por: {h.changedBy}</p>}
+                  </div>
+                  <p className="text-xs text-white/30 shrink-0">{fmtDate(h.createdAt)}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
-      {/* Tab: Aluguéis */}
-      {activeTab === 'alugueis' && rentals.length > 0 && (
+      {/* Documentos vinculados */}
+      {(contract as any).documents?.length > 0 && (
+        <div className="bg-white/5 rounded-2xl border border-white/10 overflow-hidden">
+          <div className="px-5 py-4 border-b border-white/10 flex items-center justify-between">
+            <div>
+              <h2 className="text-sm font-semibold text-white">Documentos Vinculados</h2>
+              <p className="text-xs text-white/40">{(contract as any).documents.length} arquivo(s)</p>
+            </div>
+            <Link2 className="h-4 w-4 text-white/30" />
+          </div>
+          <div className="divide-y divide-white/5 max-h-72 overflow-y-auto">
+            {(contract as any).documents.map((doc: any) => {
+              const typeColors: Record<string, string> = {
+                BOLETO: 'text-orange-400 bg-orange-500/10',
+                EXTRATO: 'text-blue-400 bg-blue-500/10',
+                REAJUSTE: 'text-yellow-400 bg-yellow-500/10',
+                FINANCEIRO: 'text-green-400 bg-green-500/10',
+                CONTRATO: 'text-purple-400 bg-purple-500/10',
+              }
+              const color = typeColors[doc.type] ?? 'text-white/60 bg-white/10'
+              return (
+                <div key={doc.id} className="flex items-center justify-between px-5 py-3 group hover:bg-white/5 transition-colors">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <span className={`inline-flex px-2 py-0.5 rounded text-xs font-medium shrink-0 ${color}`}>
+                      {doc.type}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="text-sm text-white truncate">{doc.name}</p>
+                      {(doc.month || doc.year) && (
+                        <p className="text-xs text-white/40">
+                          {doc.month ? `${String(doc.month).padStart(2, '0')}/` : ''}{doc.year ?? ''}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <a
+                    href={`/api/v1/documents/${doc.id}/download`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="shrink-0 p-1.5 text-white/30 hover:text-white hover:bg-white/10 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                    onClick={e => e.stopPropagation()}
+                  >
+                    <Download className="h-3.5 w-3.5" />
+                  </a>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Histórico de aluguéis */}
+      {rentals.length > 0 && (
         <div className="bg-white/5 rounded-2xl border border-white/10 overflow-hidden">
           <div className="px-5 py-4 border-b border-white/10">
             <h2 className="text-sm font-semibold text-white">Histórico de Aluguéis</h2>
@@ -650,6 +703,7 @@ export default function ContratoDetailPage() {
                     <div>
                       <p className="text-sm text-white">Venc. {fmtDate(r.dueDate)}</p>
                       {r.paymentDate && <p className="text-xs text-white/40">Pago em {fmtDate(r.paymentDate)}</p>}
+                      {(r as any).paymentMethod && <p className="text-xs text-white/30">{(r as any).paymentMethod}</p>}
                     </div>
                   </div>
                   <div className="text-right">
@@ -660,110 +714,6 @@ export default function ContratoDetailPage() {
               )
             })}
           </div>
-        </div>
-      )}
-
-      {/* Tab: Histórico de alterações */}
-      {activeTab === 'historico' && (
-        <div className="bg-white/5 rounded-2xl border border-white/10 overflow-hidden">
-          <div className="px-5 py-4 border-b border-white/10">
-            <h2 className="text-sm font-semibold text-white">Histórico de Alterações</h2>
-            <p className="text-xs text-white/40">{history.length} registro(s)</p>
-          </div>
-          {history.length === 0 ? (
-            <div className="p-8 text-center">
-              <History className="h-8 w-8 text-white/20 mx-auto mb-2" />
-              <p className="text-sm text-white/40">Nenhuma alteração registrada</p>
-            </div>
-          ) : (
-            <div className="divide-y divide-white/5 max-h-96 overflow-y-auto">
-              {history.map((h: any) => {
-                const actionColors: Record<string, string> = {
-                  REAJUSTE: 'text-blue-400 bg-blue-500/10',
-                  RENOVACAO: 'text-green-400 bg-green-500/10',
-                  RESCISAO: 'text-red-400 bg-red-500/10',
-                  ALTERACAO: 'text-yellow-400 bg-yellow-500/10',
-                  CRIACAO: 'text-purple-400 bg-purple-500/10',
-                }
-                const color = actionColors[h.action] ?? 'text-white/60 bg-white/10'
-                return (
-                  <div key={h.id} className="px-5 py-3">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className={`inline-flex px-2 py-0.5 rounded text-xs font-medium ${color}`}>
-                        {h.action}
-                      </span>
-                      <span className="text-xs text-white/40">{new Date(h.createdAt).toLocaleString('pt-BR')}</span>
-                      {h.userName && <span className="text-xs text-white/30">por {h.userName}</span>}
-                    </div>
-                    <p className="text-sm text-white/80">{h.description}</p>
-                    {h.field && h.oldValue && (
-                      <p className="text-xs text-white/40 mt-0.5">
-                        {h.field}: <span className="text-red-400 line-through">{h.oldValue}</span> → <span className="text-green-400">{h.newValue}</span>
-                      </p>
-                    )}
-                  </div>
-                )
-              })}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Tab: Documentos */}
-      {activeTab === 'documentos' && (
-        <div className="bg-white/5 rounded-2xl border border-white/10 overflow-hidden">
-          <div className="px-5 py-4 border-b border-white/10 flex items-center justify-between">
-            <div>
-              <h2 className="text-sm font-semibold text-white">Documentos Vinculados</h2>
-              <p className="text-xs text-white/40">{(contract as any).documents?.length ?? 0} arquivo(s)</p>
-            </div>
-            <Link2 className="h-4 w-4 text-white/30" />
-          </div>
-          {(contract as any).documents?.length > 0 ? (
-            <div className="divide-y divide-white/5 max-h-72 overflow-y-auto">
-              {(contract as any).documents.map((doc: any) => {
-                const typeColors: Record<string, string> = {
-                  BOLETO: 'text-orange-400 bg-orange-500/10',
-                  EXTRATO: 'text-blue-400 bg-blue-500/10',
-                  REAJUSTE: 'text-yellow-400 bg-yellow-500/10',
-                  FINANCEIRO: 'text-green-400 bg-green-500/10',
-                  CONTRATO: 'text-purple-400 bg-purple-500/10',
-                }
-                const color = typeColors[doc.type] ?? 'text-white/60 bg-white/10'
-                return (
-                  <div key={doc.id} className="flex items-center justify-between px-5 py-3 group hover:bg-white/5 transition-colors">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <span className={`inline-flex px-2 py-0.5 rounded text-xs font-medium shrink-0 ${color}`}>
-                        {doc.type}
-                      </span>
-                      <div className="min-w-0">
-                        <p className="text-sm text-white truncate">{doc.name}</p>
-                        {(doc.month || doc.year) && (
-                          <p className="text-xs text-white/40">
-                            {doc.month ? `${String(doc.month).padStart(2, '0')}/` : ''}{doc.year ?? ''}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    <a
-                      href={`/api/v1/documents/${doc.id}/download`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="shrink-0 p-1.5 text-white/30 hover:text-white hover:bg-white/10 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
-                      onClick={e => e.stopPropagation()}
-                    >
-                      <Download className="h-3.5 w-3.5" />
-                    </a>
-                  </div>
-                )
-              })}
-            </div>
-          ) : (
-            <div className="p-8 text-center">
-              <FileText className="h-8 w-8 text-white/20 mx-auto mb-2" />
-              <p className="text-sm text-white/40">Nenhum documento vinculado</p>
-            </div>
-          )}
         </div>
       )}
     </div>

@@ -134,20 +134,15 @@ export default async function blogRoutes(app: FastifyInstance) {
         sourceUrl:     body.sourceUrl ?? null,
       },
     })
-
     await createAuditLog({
-      prisma: app.prisma as any, req,
+      prisma: app.prisma, req,
       action: 'blog.create',
-      resource: 'blog',
-      resourceId: post.id,
-      before: null,
-      after: post as any,
+      resource: 'blog', resourceId: post.id,
+      after: { title: post.title, published: post.published } as any,
     })
-
     return reply.status(201).send(post)
   })
-
-  // PATCH /api/v1/blog/:id — update post
+  // PATCH /api/v1/blog/:id — update postt
   app.patch('/:id', { preHandler: [app.authenticate] }, async (req, reply) => {
     const { id } = req.params as { id: string }
     const cid  = req.user.cid
@@ -176,35 +171,28 @@ export default async function blogRoutes(app: FastifyInstance) {
         ...(!wasPublished && nowPublished && { publishedAt: new Date() }),
       },
     })
-
+     const action = !wasPublished && (body.published ?? false) ? 'blog.publish' : 'blog.update'
     await createAuditLog({
-      prisma: app.prisma as any, req,
-      action: 'blog.update',
-      resource: 'blog',
-      resourceId: post.id,
-      before: existing as any,
-      after: post as any,
+      prisma: app.prisma, req,
+      action,
+      resource: 'blog', resourceId: id,
+      before: { title: existing.title, published: existing.published } as any,
+      after: { title: post.title, published: post.published } as any,
     })
-
     return reply.send(post)
   })
-
   // DELETE /api/v1/blog/:id
   app.delete('/:id', { preHandler: [app.authenticate] }, async (req, reply) => {
     const { id } = req.params as { id: string }
     const existing = await app.prisma.blogPost.findFirst({ where: { id, companyId: req.user.cid } })
     if (!existing) return reply.status(404).send({ error: 'NOT_FOUND' })
     await app.prisma.blogPost.delete({ where: { id } })
-
     await createAuditLog({
-      prisma: app.prisma as any, req,
+      prisma: app.prisma, req,
       action: 'blog.delete',
-      resource: 'blog',
-      resourceId: id,
-      before: existing as any,
-      after: null,
+      resource: 'blog', resourceId: id,
+      before: { title: existing.title, published: existing.published } as any,
     })
-
     return reply.send({ deleted: true })
   })
 }

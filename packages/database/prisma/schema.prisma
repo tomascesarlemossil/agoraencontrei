@@ -953,17 +953,12 @@ enum ContractStatus {
   ACTIVE
   FINISHED
   CANCELED
-  IN_RENEWAL
-  EXPIRED
-  IN_NEGOTIATION
 }
 
 enum RentalStatus {
   PENDING
   PAID
   LATE
-  PARTIAL
-  CANCELLED
 }
 
 enum TransactionType {
@@ -1007,6 +1002,71 @@ model Client {
   bankAccountType     String?      // corrente | poupanca
   pixKey              String?      // Chave PIX
   observations        String?      // Observações internas detalhadas
+  // ── Dados Uniloc/Univen complementares ────────────────────────────────────
+  sex                 String?      // M | F | OUTRO
+  education           String?      // fundamental | medio | superior | pos | mestrado | doutorado
+  cargo               String?      // Cargo/função na empresa
+  businessSector      String?      // Ramo de atividade
+  employerName        String?      // Empresa empregadora (para PJ ou PF com vínculo)
+  employerCnpj        String?      // CNPJ da empresa empregadora
+  employerAddress     String?      // Endereço da empresa empregadora
+  employerPhone       String?      // Telefone comercial da empresa empregadora
+  captorName          String?      // Captador/corretor que cadastrou
+  captorId            String?      // FK para User (corretor captador)
+  negotiationTemp     String?      // Termômetro: FRIO | MORNO | QUENTE | FECHADO
+  category            String?      // LANDLORD | TENANT | GUARANTOR | BENEFICIARY | BUYER | SELLER
+  // ── Documentos adicionais ──────────────────────────────────────────────────
+  rgIssuer            String?      // Órgão emissor do RG (SSP, DETRAN, etc.)
+  rgIssueDate         DateTime?    // Data de emissão do RG
+  rgState             String?      // Estado de emissão do RG
+  cnh                 String?      // CNH (Carteira de Motorista)
+  cnhCategory         String?      // Categoria da CNH (A, B, AB, etc.)
+  cnhExpiry           DateTime?    // Validade da CNH
+  passportNumber      String?      // Passaporte
+  passportExpiry      DateTime?    // Validade do passaporte
+  // ── Contato adicional ──────────────────────────────────────────────────────
+  phoneResidential    String?      // Telefone residencial
+  whatsapp            String?      // WhatsApp
+  instagram           String?      // @instagram
+  facebook            String?      // Facebook
+  website             String?      // Site pessoal/empresa
+  // ── Endereço de correspondência (se diferente do residencial) ──────────────
+  mailingAddress      String?      // Endereço de correspondência
+  mailingComplement   String?
+  mailingNeighborhood String?
+  mailingCity         String?
+  mailingState        String?
+  mailingZipCode      String?
+  // ── Dados bancários adicionais ─────────────────────────────────────────────
+  bankAgencyDigit     String?      // Dígito da agência
+  bankAccountDigit    String?      // Dígito da conta
+  bankAccountSecond   String?      // Segunda conta bancária
+  bankAccountSecondType String?    // Tipo da segunda conta
+  // ── Garantia ──────────────────────────────────────────────────────────────
+  guarantorType       String?      // FIADOR | CAUCAO | SEGURO_FIANCA | TITULO_CAPITALIZACAO
+  guarantorValue      Decimal?     @db.Decimal(12, 2)  // Valor da garantia (caução)
+  guarantorInsurance  String?      // Seguradora (seguro fiança)
+  guarantorPolicyNum  String?      // Número da apólice
+  guarantorExpiry     DateTime?    // Vencimento da garantia
+  // ── Preferências de busca (compradores/locatários) ─────────────────────────
+  searchType          String?      // COMPRA | LOCACAO | AMBOS
+  searchPropertyType  String[]     // Tipos de imóvel de interesse
+  searchMinPrice      Decimal?     @db.Decimal(12, 2)
+  searchMaxPrice      Decimal?     @db.Decimal(12, 2)
+  searchMinArea       Float?
+  searchMaxArea       Float?
+  searchBedrooms      Int?
+  searchNeighborhoods String[]     // Bairros de interesse
+  searchCities        String[]     // Cidades de interesse
+  searchNotes         String?      // Observações sobre a busca
+  // ── Controle interno ───────────────────────────────────────────────────────
+  lastContactAt       DateTime?    // Data do último contato
+  nextContactAt       DateTime?    // Data do próximo contato agendado
+  contactChannel      String?      // Canal preferido: WHATSAPP | EMAIL | TELEFONE | PRESENCIAL
+  rating              Int?         // Avaliação interna 1-5
+  tags                String[]     // Tags personalizadas
+  importSource        String?      // uniloc | univen | manual | portal
+  importedAt          DateTime?    // Data da importação
   isArchived          Boolean      @default(false)  // Arquivo morto
   archivedAt          DateTime?    // Data de arquivamento
   archivedReason      String?      // Motivo do arquivamento
@@ -1061,30 +1121,42 @@ model Contract {
   status            ContractStatus @default(ACTIVE)
   isActive          Boolean        @default(true)
   contractHtml      String?        @db.Text   // HTML do contrato gerado por IA
-  guaranteeType     String?        // fiador | caucao | seguro
-
-  // Encargos inclusos no aluguel (dados migrados do Uniloc)
-  condoIncluded     Boolean        @default(false)
-  waterIncluded     Boolean        @default(false)
-  electricIncluded  Boolean        @default(false)
-  iptuIncluded      Boolean        @default(false)
-
-  // Rescisão detalhada
-  rescissionReason  String?        // motivo da rescisão
-  rescissionFine    Decimal?       @db.Decimal(12, 2) // multa rescisória
-  rescissionRefund  Decimal?       @db.Decimal(12, 2) // devolução de caução
-  rescissionNotes   String?        @db.Text
-
-  // Renovação e Reajuste
-  renewedFromId     String?        // contrato original que foi renovado
-  renewalCount      Int            @default(0) // quantas vezes foi renovado
-  lastAdjustmentAt  DateTime?      // data do último reajuste aplicado
-  adjustmentMonth   Int?           // mês do reajuste anual (1-12, ex: 1=janeiro)
-  iptuAnnual        Decimal?       @db.Decimal(12, 2) // valor anual do IPTU
-  iptuParcels       Int?           // número de parcelas do IPTU (ex: 8, 10, 12)
-  bankFee           Decimal?       @db.Decimal(12, 2) // taxa bancária por boleto (ex: 3.50)
-  adminFeePercent   Decimal?       @db.Decimal(5, 2)  // taxa de administração % (comissão)
-
+  guaranteeType     String?        // fiador | caucao | seguro | titulo_capitalizacao
+  // ── Dados adicionais do contrato (Uniloc) ──────────────────────────────
+  endDate           DateTime?      // Data de término prevista
+  renewalDate       DateTime?      // Data de renovação
+  renewalCount      Int            @default(0)  // Número de renovações
+  lastAdjustmentDate DateTime?     // Data do último reajuste
+  nextAdjustmentDate DateTime?     // Data do próximo reajuste
+  // Valores adicionais
+  adminFee          Decimal?       @db.Decimal(5, 2)   // Taxa de administração %
+  adminFeeValue     Decimal?       @db.Decimal(12, 2)  // Valor da taxa adm (calculado)
+  insuranceValue    Decimal?       @db.Decimal(12, 2)  // Seguro incêndio
+  insuranceCompany  String?        // Seguradora
+  insurancePolicyNum String?       // Número da apólice de seguro
+  insuranceExpiry   DateTime?      // Vencimento do seguro
+  waterIncluded     Boolean        @default(false)  // Água incluída no aluguel
+  electricIncluded  Boolean        @default(false)  // Luz incluída no aluguel
+  condoIncluded     Boolean        @default(false)  // Condomínio incluído
+  iptuIncluded      Boolean        @default(false)  // IPTU incluído
+  // Vistoria
+  inspectionDate    DateTime?      // Data da vistoria de entrada
+  inspectionNotes   String?        @db.Text  // Observações da vistoria
+  exitInspectionDate DateTime?     // Data da vistoria de saída
+  exitInspectionNotes String?      @db.Text  // Observações da vistoria de saída
+  // Rescisão
+  rescissionReason  String?        // Motivo da rescisão
+  rescissionFine    Decimal?       @db.Decimal(12, 2)  // Multa de rescisão
+  rescissionRefund  Decimal?       @db.Decimal(12, 2)  // Devolução ao inquilino
+  // Segundo fiador
+  guarantor2Id      String?        // Segundo fiador
+  guarantor2Name    String?        // Nome do segundo fiador (desnormalizado)
+  // Observações
+  internalNotes     String?        @db.Text  // Observações internas
+  // Boleto / cobrança
+  boletoMessage     String?        // Mensagem no boleto do inquilino
+  boletoInstructions String?       // Instruções do boleto
+  serviceLabel      String?        // Rótulo do serviço no boleto (ex: "Aluguel" ou nome personalizado)
   createdAt         DateTime       @default(now())
   updatedAt         DateTime       @updatedAt
 
@@ -1092,7 +1164,6 @@ model Contract {
   invoices          Invoice[]
   documents         Document[]
   legalCases        LegalCase[]
-  history           ContractHistory[]
   @@unique([companyId, legacyId])
   @@index([companyId])
   @@index([tenantId])
@@ -1116,19 +1187,43 @@ model Rental {
   electricAmount  Decimal?     @db.Decimal(12, 2)  // VLLUZ
   taxAmount       Decimal?     @db.Decimal(12, 2)  // VLTAXA
   penaltyAmount   Decimal?     @db.Decimal(12, 2)  // VLMULTA
-  iptuAmount      Decimal?     @db.Decimal(12, 2)  // IPTU parcela mensal
-  iptuParcela     String?                           // ex: "2/8" (parcela 2 de 8)
-  bankFeeAmount   Decimal?     @db.Decimal(12, 2)  // taxa bancária
-  adminFeeAmount  Decimal?     @db.Decimal(12, 2)  // taxa de administração
   totalAmount     Decimal?     @db.Decimal(12, 2)
   paidAmount      Decimal?     @db.Decimal(12, 2)  // VLPAGO
   paymentDate     DateTime?                         // DTPAGTO
-  paymentMethod   String?                           // PIX | BOLETO | DINHEIRO | TRANSFERENCIA | CHEQUE | CARTAO
-  proofReference  String?                           // nº comprovante ou referência
-  bankName        String?                           // banco utilizado no pagamento
-  observations    String?        @db.Text           // observações da baixa
   repassePaidAt   DateTime?                         // data em que o repasse foi pago ao proprietário
   status          RentalStatus @default(PENDING)
+  // ── Campos adicionais (Uniloc) ───────────────────────────────────────────────
+  interestAmount  Decimal?     @db.Decimal(12, 2)  // Juros de mora
+  discountAmount  Decimal?     @db.Decimal(12, 2)  // Desconto concedido
+  insuranceAmount Decimal?     @db.Decimal(12, 2)  // Seguro incêndio
+  iptuAmount      Decimal?     @db.Decimal(12, 2)  // IPTU proporcional
+  otherAmount     Decimal?     @db.Decimal(12, 2)  // Outros encargos
+  otherDescription String?                         // Descrição de outros encargos
+  // Boleto
+  boletoId        String?      // ID do boleto gerado (Invoice.id)
+  boletoNumber    String?      // Número do boleto
+  boletoUrl       String?      // URL do boleto PDF
+  boletoPixCode   String?      // Código PIX do boleto
+  boletoEmittedAt DateTime?    // Data de emissão do boleto
+  // Baixa manual
+  receivedBy      String?      // Quem registrou a baixa (userId)
+  receivedByName  String?      // Nome de quem registrou a baixa
+  paymentMethod   String?      // BOLETO | PIX | DINHEIRO | TRANSFERENCIA | CHEQUE | CARTAO
+  paymentBank     String?      // Banco do pagamento
+  paymentRef      String?      // Referência do pagamento (número cheque, TED, etc.)
+  // Estorno
+  reversedAt      DateTime?    // Data do estorno
+  reversedBy      String?      // Quem fez o estorno
+  reversalReason  String?      // Motivo do estorno
+  // Repasse ao proprietário
+  repasValue      Decimal?     @db.Decimal(12, 2)  // Valor líquido do repasse
+  repasMethod     String?      // Método do repasse (TED, PIX, etc.)
+  repasRef        String?      // Referência do repasse
+  // Observações
+  notes           String?      // Observações da cobrança
+  internalNotes   String?      // Notas internas
+  competenceMonth Int?         // Mês de competência (1-12)
+  competenceYear  Int?         // Ano de competência
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @default(now()) @updatedAt
 
@@ -1230,9 +1325,6 @@ model FiscalNote {
   nfeNumber            String?
   nfeKey               String?
   nfeXml               String?          @db.Text
-  asaasNfeId           String?          // ID da NFS-e no Asaas
-  asaasNfeStatus       String?          // PENDING | SCHEDULED | AUTHORIZED | ERROR
-  asaasNfePdfUrl       String?          // URL do PDF da NFS-e no Asaas
   status               FiscalNoteStatus @default(DRAFT)
   createdById          String?
   createdAt            DateTime         @default(now())
@@ -1291,7 +1383,49 @@ model Invoice {
   asaasStatus     String?       // PENDING | RECEIVED | CONFIRMED | OVERDUE | REFUNDED
   asaasBankSlipUrl String?      // URL do boleto gerado pelo Asaas
   asaasPixCode    String?       // Código PIX Copia e Cola
-  status          String?       @default("PENDING")  // PENDING | PAID | CANCELLED
+  // ── Dados completos de emissão ─────────────────────────────────────────────
+  rentalId        String?       // FK para Rental (cobrança de aluguel)
+  tenantId        String?       // FK para Client (inquilino)
+  tenantName      String?       // Nome do inquilino (desnormalizado)
+  propertyId      String?       // FK para Property
+  propertyAddress String?       // Endereço do imóvel (desnormalizado)
+  competenceMonth Int?          // Mês de competência
+  competenceYear  Int?          // Ano de competência
+  description     String?       // Descrição do boleto
+  // Valores detalhados
+  rentAmount      Decimal?      @db.Decimal(12, 2)  // Valor do aluguel
+  condoAmount     Decimal?      @db.Decimal(12, 2)  // Condomínio
+  waterAmount     Decimal?      @db.Decimal(12, 2)  // Água
+  electricAmount  Decimal?      @db.Decimal(12, 2)  // Luz
+  iptuAmount      Decimal?      @db.Decimal(12, 2)  // IPTU
+  insuranceAmount Decimal?      @db.Decimal(12, 2)  // Seguro incêndio
+  interestAmount  Decimal?      @db.Decimal(12, 2)  // Juros de mora
+  penaltyAmount   Decimal?      @db.Decimal(12, 2)  // Multa
+  discountAmount  Decimal?      @db.Decimal(12, 2)  // Desconto
+  otherAmount     Decimal?      @db.Decimal(12, 2)  // Outros
+  otherDescription String?      // Descrição de outros
+  // Baixa
+  paidAmount      Decimal?      @db.Decimal(12, 2)  // Valor pago
+  paidAt          DateTime?     // Data do pagamento
+  paidBy          String?       // Quem registrou a baixa (userId)
+  paidByName      String?       // Nome de quem registrou
+  paymentMethod   String?       // BOLETO | PIX | DINHEIRO | TRANSFERENCIA | CHEQUE | CARTAO
+  paymentBank     String?       // Banco do pagamento
+  paymentRef      String?       // Referência do pagamento
+  // Estorno
+  reversedAt      DateTime?     // Data do estorno
+  reversedBy      String?       // Quem fez o estorno
+  reversalReason  String?       // Motivo do estorno
+  // Repasse
+  repasValue      Decimal?      @db.Decimal(12, 2)  // Valor líquido do repasse ao proprietário
+  repasAt         DateTime?     // Data do repasse
+  repasMethod     String?       // Método do repasse
+  repasRef        String?       // Referência do repasse
+  // Status interno
+  status          String        @default("PENDING")  // PENDING | EMITTED | PAID | OVERDUE | REVERSED | CANCELLED
+  emittedAt       DateTime?     // Data de emissão do boleto
+  emittedBy       String?       // Quem emitiu
+  notes           String?       // Observações
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 
@@ -1299,6 +1433,8 @@ model Invoice {
   @@index([contractId])
   @@index([dueDate])
   @@index([asaasId])
+  @@index([status])
+  @@index([tenantId])
   @@map("invoices")
 }
 
@@ -1516,51 +1652,4 @@ model LegalCaseUpdate {
   @@index([caseId])
   @@index([companyId])
   @@map("legal_case_updates")
-}
-
-// ── Histórico de Contratos ────────────────────────────────────────────────────
-model ContractHistory {
-  id            String    @id @default(cuid())
-  contractId    String
-  contract      Contract  @relation(fields: [contractId], references: [id], onDelete: Cascade)
-  companyId     String
-
-  action        String    // REAJUSTE | RENOVACAO | RESCISAO | ALTERACAO | CRIACAO
-  description   String    @db.Text
-  field         String?   // campo alterado (ex: rentValue, status)
-  oldValue      String?   // valor anterior
-  newValue      String?   // valor novo
-
-  userId        String?
-  userName      String?
-
-  metadata      Json      @default("{}")
-  createdAt     DateTime  @default(now())
-
-  @@index([contractId])
-  @@index([companyId])
-  @@index([action])
-  @@map("contract_history")
-}
-
-// =============================================================================
-// PROPERTY ALERTS
-// =============================================================================
-
-model PropertyAlert {
-  id        String   @id @default(cuid())
-  email     String
-  city      String?
-  type      String?
-  purpose   String?
-  minPrice  Float?
-  maxPrice  Float?
-  bedrooms  Int?
-  active    Boolean  @default(true)
-  token     String   @default(cuid())
-  createdAt DateTime @default(now())
-
-  @@index([email])
-  @@index([active])
-  @@map("property_alerts")
 }

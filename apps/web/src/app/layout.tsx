@@ -1,28 +1,25 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import { Providers } from '@/components/providers'
-import { WebVitals } from '@/components/WebVitals'
-import { CookieConsent } from '@/components/CookieConsent'
 import { ConditionalMetaPixel } from '@/components/ConditionalMetaPixel'
+import { WebVitals } from '@/components/WebVitals'
 import './globals.css'
 
-const inter = Inter({ subsets: ['latin'], display: 'swap' })
+const inter = Inter({ subsets: ['latin'] })
 
-
+const META_PIXEL_ID = '932688306232065'
 
 const WEB_URL = 'https://www.agoraencontrei.com.br'
 
 export const metadata: Metadata = {
   title: {
-    default: 'AgoraEncontrei — Marketplace Imobiliário de Franca/SP | Imobiliária Lemos',
-    template: '%s | AgoraEncontrei — Imobiliária Lemos',
+    default: 'Imobiliária Lemos — Franca/SP | Comprar, Alugar e Avaliar Imóveis',
+    template: '%s | Imobiliária Lemos',
   },
-  description: 'AgoraEncontrei — o marketplace imobiliário de Franca/SP criado pela Imobiliária Lemos. 1.000+ imóveis: casas à venda, apartamentos para alugar, terrenos e imóveis comerciais. Busca com IA, mapa interativo. Anuncie grátis. CRECI 279051.',
+  description: 'Imobiliária Lemos em Franca/SP há mais de 20 anos. Casas à venda, apartamentos para alugar, terrenos e imóveis comerciais. Residencial Amazonas, Villa Piemonte, Centro e todos os bairros. CRECI 279051.',
   keywords: [
-    // Marca & Marketplace
+    // Marca
     'imobiliária lemos', 'imobiliária lemos franca', 'lemos imóveis', 'CRECI 279051',
-    'marketplace imobiliário', 'marketplace imobiliário franca', 'anunciar imóvel grátis',
-    'anunciar imóvel franca', 'agoraencontrei', 'agoraencontrei marketplace',
     // Cidade principal — intenções de compra
     'imóveis franca sp', 'casas à venda franca sp', 'apartamentos para alugar franca sp',
     'imobiliária franca sp', 'comprar casa franca sp', 'alugar apartamento franca sp',
@@ -80,36 +77,36 @@ export const metadata: Metadata = {
     'imóvel novo franca sp', 'imóvel usado franca sp',
     'imóvel pronto para morar franca sp', 'imóvel na planta franca sp',
   ].join(', '),
-  authors: [{ name: 'AgoraEncontrei — Imobiliária Lemos', url: WEB_URL }],
-  creator: 'AgoraEncontrei — Imobiliária Lemos',
-  publisher: 'AgoraEncontrei — Imobiliária Lemos',
+  authors: [{ name: 'Imobiliária Lemos', url: WEB_URL }],
+  creator: 'Imobiliária Lemos',
+  publisher: 'Imobiliária Lemos',
   robots: { index: true, follow: true, googleBot: { index: true, follow: true, 'max-image-preview': 'large', 'max-snippet': -1, 'max-video-preview': -1 } },
   alternates: { canonical: WEB_URL },
   openGraph: {
-    siteName: 'AgoraEncontrei — Imobiliária Lemos',
+    siteName: 'Imobiliária Lemos',
     locale: 'pt_BR',
     type: 'website',
     url: WEB_URL,
-    title: 'AgoraEncontrei — Marketplace Imobiliário de Franca/SP | Imobiliária Lemos',
-    description: 'Encontre seu imóvel ideal em Franca e região. 1.000+ imóveis com busca inteligente por IA, mapa interativo e filtros avançados. Casas, apartamentos e terrenos. Marketplace criado pela Imobiliária Lemos.',
+    title: 'Imobiliária Lemos — Franca/SP | Comprar, Alugar e Avaliar Imóveis',
+    description: 'Imobiliária Lemos em Franca/SP há mais de 20 anos. Casas à venda, apartamentos para alugar, terrenos e imóveis comerciais em todos os bairros de Franca. CRECI 279051.',
     images: [
       {
         url: `${WEB_URL}/og-image.jpg`,
         width: 1200,
         height: 630,
-        alt: 'AgoraEncontrei — Marketplace Imobiliário de Franca/SP',
+        alt: 'Imobiliária Lemos — Franca/SP',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'AgoraEncontrei — Marketplace Imobiliário de Franca/SP',
-    description: 'Encontre seu imóvel ideal em Franca e região. 1.000+ imóveis com busca por IA. Marketplace criado pela Imobiliária Lemos. CRECI 279051.',
+    title: 'Imobiliária Lemos — Franca/SP | Comprar, Alugar e Avaliar Imóveis',
+    description: 'Imobiliária em Franca/SP há mais de 20 anos. Casas, apartamentos, terrenos e imóveis comerciais. CRECI 279051.',
     images: [`${WEB_URL}/og-image.jpg`],
   },
   verification: {
     google: 'Jt8clgdW34zz2sb7qj3fCYHPFRd2Y1D5394Rah3L9Yk',
-    other: { 'facebook-domain-verification': '932688306232065' },
+    other: { 'facebook-domain-verification': META_PIXEL_ID },
   },
 }
 
@@ -117,8 +114,8 @@ const jsonLdBusiness = {
   '@context': 'https://schema.org',
   '@type': ['RealEstateAgent', 'LocalBusiness'],
   name: 'Imobiliária Lemos',
-  alternateName: ['Lemos Imóveis', 'AgoraEncontrei'],
-  description: 'Imobiliária em Franca/SP fundada por Noêmia em 2002, com mais de 22 anos de tradição. AgoraEncontrei é o marketplace imobiliário criado por Tomás Lemos em 2026, oferecendo busca com IA e mapa interativo.',
+  alternateName: 'Lemos Imóveis',
+  description: 'Imobiliária em Franca/SP há mais de 20 anos especializada em compra, venda e locação de imóveis residenciais e comerciais.',
   url: WEB_URL,
   telephone: '+55-16-3723-0045',
   email: 'contato@agoraencontrei.com.br',
@@ -145,18 +142,13 @@ const jsonLdBusiness = {
     { '@type': 'City', name: 'Batatais' },
     { '@type': 'City', name: 'Ribeirão Preto' },
     { '@type': 'City', name: 'Patrocínio Paulista' },
-    { '@type': 'City', name: 'Rifaina' },
-    { '@type': 'City', name: 'Cristais Paulista' },
-    { '@type': 'City', name: 'Pedregulho' },
-    { '@type': 'City', name: 'Itirapuã' },
   ],
   hasMap: 'https://maps.google.com/?q=Imobiliária+Lemos+Franca+SP',
   logo: `${WEB_URL}/logo-lemos.png`,
   image: `${WEB_URL}/og-image.jpg`,
   sameAs: [
     'https://www.instagram.com/imobiliarialemos',
-    'https://www.instagram.com/tomaslemosbr',
-    'https://www.youtube.com/@imobiliarialemos',
+    'https://www.youtube.com/@tomaslemosbr',
     'https://www.facebook.com/imobiliarialemos',
   ],
   knowsAbout: [
@@ -164,68 +156,33 @@ const jsonLdBusiness = {
     'Locação residencial e comercial em Franca SP',
     'Avaliação de imóveis',
     'Financiamento imobiliário',
-    'Busca de imóveis com inteligência artificial',
-    'Marketplace imobiliário',
     'Imóveis no Residencial Amazonas Franca',
     'Imóveis no Villa Piemonte Franca',
     'Imóveis no Villa di Capri Franca',
   ],
   numberOfEmployees: { '@type': 'QuantitativeValue', value: 10 },
-  foundingDate: '2002',
-  founder: { '@type': 'Person', name: 'Noêmia Lemos' },
+  foundingDate: '2003',
   slogan: 'Agora você encontrou o imóvel ideal',
-}
-
-const jsonLdWebSite = {
-  '@context': 'https://schema.org',
-  '@type': 'WebSite',
-  name: 'AgoraEncontrei',
-  alternateName: 'AgoraEncontrei — Imobiliária Lemos',
-  url: WEB_URL,
-  description: 'Marketplace imobiliário de Franca/SP com busca inteligente por IA. Encontre casas, apartamentos e terrenos.',
-  publisher: {
-    '@type': 'Organization',
-    name: 'Imobiliária Lemos',
-    url: WEB_URL,
-    logo: { '@type': 'ImageObject', url: `${WEB_URL}/logo-lemos.png` },
-  },
-  potentialAction: {
-    '@type': 'SearchAction',
-    target: {
-      '@type': 'EntryPoint',
-      urlTemplate: `${WEB_URL}/imoveis?q={search_term_string}`,
-    },
-    'query-input': 'required name=search_term_string',
-  },
-  inLanguage: 'pt-BR',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="pt-BR" suppressHydrationWarning className="dark">
       <head>
-        <link rel="manifest" href="/manifest.json" />
-        <meta name="theme-color" content="#1B2B5B" />
-        <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         {/* ── Structured Data JSON-LD — LocalBusiness + RealEstateAgent ── */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdBusiness) }}
         />
-        {/* ── Structured Data JSON-LD — WebSite + SearchAction ── */}
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdWebSite) }}
-        />
-        {/* ── Meta Pixel (condicional — só carrega após consentimento LGPD) ── */}
-        {/* Movido para <ConditionalMetaPixel /> no body para respeitar consentimento de cookies */}
+        {/* ── Meta Pixel condicional (LGPD) ─────────────────── */}
+        {/* Carregado apenas após consentimento de cookies */}
       </head>
       <body className={inter.className}>
         <Providers>{children}</Providers>
-        <WebVitals />
+        {/* ── Meta Pixel condicional (LGPD) ───────────────────── */}
         <ConditionalMetaPixel />
-        <CookieConsent />
+        {/* ── Core Web Vitals monitoring ──────────────────────── */}
+        <WebVitals />
       </body>
     </html>
   )

@@ -1,8 +1,8 @@
 import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
-import { createAuditLog } from '../../services/audit.service.js'
 import { emitAutomation } from '../../services/automation.emitter.js'
 import { emitSSE } from '../../services/sse.emitter.js'
+import { createAuditLog } from '../../services/audit.service.js'
 
 const CreateLeadBody = z.object({
   name:       z.string().min(2),
@@ -119,11 +119,9 @@ export default async function leadsRoutes(app: FastifyInstance) {
     emitSSE({ type: 'lead_created', companyId: req.user.cid, payload: { id: lead.id, name: lead.name, source: lead.source } })
 
     await createAuditLog({
-      prisma: app.prisma as any, req,
+      prisma: app.prisma, req,
       action: 'lead.create',
-      resource: 'lead',
-      resourceId: lead.id,
-      before: null,
+      resource: 'lead', resourceId: lead.id,
       after: lead as any,
     })
 
@@ -194,10 +192,9 @@ export default async function leadsRoutes(app: FastifyInstance) {
     }
 
     await createAuditLog({
-      prisma: app.prisma as any, req,
+      prisma: app.prisma, req,
       action: 'lead.update',
-      resource: 'lead',
-      resourceId: lead.id,
+      resource: 'lead', resourceId: id,
       before: existing as any,
       after: lead as any,
     })

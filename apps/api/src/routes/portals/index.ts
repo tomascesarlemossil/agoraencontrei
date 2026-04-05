@@ -306,6 +306,78 @@ export default async function portalsRoutes(app: FastifyInstance) {
     return reply.send({ success: true })
   })
 
+  // GET /api/v1/portals/feed/:portalId — gera feed XML público para portais (sem auth)
+  app.get('/feed/:portalId', {
+    schema: { tags: ['portals'] },
+    config: { skipAuth: true },
+  }, async (req, reply) => {
+    const { portalId } = req.params as { portalId: string }
+    const properties = await app.prisma.property.findMany({
+      where: { status: 'ACTIVE', authorizedPublish: true },
+      take: 500,
+      orderBy: { updatedAt: 'desc' },
+    })
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.agoraencontrei.com.br'
+    const now = new Date().toISOString()
+    let xml = `<?xml version="1.0" encoding="UTF-8"?>
+<ListingDataFeed xmlns="http://www.vivareal.com/schemas/1.0/VRSync">
+  <Header>
+    <Provider>Lemos Imobiliária</Provider>
+    <Email>contato@imobiliarialemos.com.br</Email>
+    <PublishDate>${now}</PublishDate>
+  </Header>
+  <Listings>
+`
+    for (const p of properties) {
+      const url = `${baseUrl}/imoveis/${p.slug ?? p.id}`
+      const price = p.purpose === 'RENT' ? (p.priceRent ? Number(p.priceRent) : 0) : (p.price ? Number(p.price) : 0)
+      const images = (p.images as string[] ?? []).slice(0, 20)
+      const features = (p.features as string[] ?? [])
+      xml += `    <Listing>
+      <ListingID>${p.reference ?? p.id}</ListingID>
+      <Title><![CDATA[${p.title ?? ''}]]></Title>
+      <TransactionType>${p.purpose === 'RENT' ? 'For Rent' : 'For Sale'}</TransactionType>
+      <PropertyType>${p.type ?? 'Residential/Apartment'}</PropertyType>
+      <Description><![CDATA[${(p.description ?? '').replace(/]]>/g, ']]]]><![CDATA[>')}]]></Description>
+      <ListingURL>${url}</ListingURL>
+      <PublicationDate>${p.createdAt.toISOString()}</PublicationDate>
+      <LastUpdated>${p.updatedAt.toISOString()}</LastUpdated>
+      <ListPrice>${price}</ListPrice>
+      <ListPriceCurrency>BRL</ListPriceCurrency>
+      <Location>
+        <Address><![CDATA[${p.street ?? ''}, ${p.number ?? 'S/N'}]]></Address>
+        <District><![CDATA[${p.neighborhood ?? ''}]]></District>
+        <City><![CDATA[${p.city ?? ''}]]></City>
+        <State><![CDATA[${p.state ?? ''}]]></State>
+        <PostalCode>${p.zipCode ?? ''}</PostalCode>
+        <Country>Brazil</Country>
+        ${p.latitude ? `<Latitude>${p.latitude}</Latitude>` : ''}
+        ${p.longitude ? `<Longitude>${p.longitude}</Longitude>` : ''}
+      </Location>
+      <Details>
+        <Bedrooms>${p.bedrooms ?? 0}</Bedrooms>
+        <Suites>${p.suites ?? 0}</Suites>
+        <Bathrooms>${p.bathrooms ?? 0}</Bathrooms>
+        <Garages>${p.parkingSpaces ?? 0}</Garages>
+        <TotalArea>${p.totalArea ?? p.builtArea ?? 0}</TotalArea>
+        <UsableArea>${p.builtArea ?? 0}</UsableArea>
+        <CondoFee>${p.condoFee ? Number(p.condoFee) : 0}</CondoFee>
+        <PropertyTax>${p.iptu ? Number(p.iptu) : 0}</PropertyTax>
+        ${features.map(f => `<Feature><![CDATA[${f}]]></Feature>`).join('\n        ')}
+      </Details>
+      <Media>
+        ${images.map((img, i) => `<Item medium="image" caption="Foto ${i+1}" url="${img}" />`).join('\n        ')}
+      </Media>
+    </Listing>
+`
+    }
+    xml += `  </Listings>
+</ListingDataFeed>`
+    reply.header('Content-Type', 'application/xml; charset=utf-8')
+    reply.header('Cache-Control', 'public, max-age=3600')
+    return reply.send(xml)
+  })
+
   // POST /api/v1/portals/test/:portalId — testa conexão com o portal
   app.post('/test/:portalId', {
     schema: { tags: ['portals'] },

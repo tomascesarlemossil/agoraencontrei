@@ -2,20 +2,43 @@ import type { PrismaClient } from '@prisma/client'
 import type { FastifyRequest } from 'fastify'
 
 export type AuditAction =
-  | 'contract.create' | 'contract.update' | 'contract.delete' | 'contract.rescission'
-  | 'contract.renewal' | 'contract.adjustment'
-  | 'rental.pay' | 'rental.estorno' | 'rental.repasse_paid' | 'rental.repasse_estorno'
+  // Contratos & Locação
+  | 'contract.create' | 'contract.update' | 'contract.delete' | 'contract.rescission' | 'contract.renewal' | 'contract.adjustment'
+  | 'rental.pay' | 'rental.estorno' | 'rental.estornar' | 'rental.repasse_paid' | 'rental.repasse_estorno'
   | 'rental.batch_generate' | 'rental.repasse_lote'
+  // Clientes
   | 'client.create'   | 'client.update'   | 'client.delete'
+  // Imóveis
   | 'property.create' | 'property.update' | 'property.delete'
+  // Contatos
   | 'contact.create'  | 'contact.update'  | 'contact.delete'
-  | 'deal.create'     | 'deal.update'
-  | 'user.login'      | 'user.register'
-  | 'config.update'
-  | 'lead.create' | 'lead.update' | 'lead.delete'
-  | 'blog.create' | 'blog.update' | 'blog.delete'
-  | 'legal.create' | 'legal.update' | 'legal.delete'
-  | 'user.update'
+  // Negócios (CRM)
+  | 'deal.create'     | 'deal.update'     | 'deal.delete'
+  // Leads
+  | 'lead.create'     | 'lead.update'     | 'lead.delete'
+  // Jurídico
+  | 'legal.create'    | 'legal.update'    | 'legal.delete'
+  // Blog
+  | 'blog.create'     | 'blog.update'     | 'blog.delete'     | 'blog.publish'
+  // Usuários
+  | 'user.login'      | 'user.register'   | 'user.update'     | 'user.delete'
+  | 'user.password_change' | 'user.role_change' | 'user.invite'
+  // Configurações do sistema
+  | 'config.update'   | 'config.reset'    | 'config.permissions_update'
+  // Financeiro
+  | 'finance.create'  | 'finance.update'  | 'finance.delete'
+  // Fiscal / NF
+  | 'fiscal.create'   | 'fiscal.update'   | 'fiscal.delete'
+  // Financiamentos
+  | 'financing.create'| 'financing.update'| 'financing.delete'
+  // Automações
+  | 'automation.create'| 'automation.update'| 'automation.delete'| 'automation.run'
+  // Portais
+  | 'portal.sync'     | 'portal.update'
+  // Documentos IA
+  | 'document.create' | 'document.update' | 'document.delete'
+  // Notificações
+  | 'notification.read' | 'notification.delete_all'
 
 export interface AuditOptions {
   prisma:     PrismaClient
@@ -25,12 +48,22 @@ export interface AuditOptions {
   resourceId: string
   before?:    Record<string, unknown> | null
   after?:     Record<string, unknown> | null
+  meta?:      Record<string, unknown>   // extra context (e.g. section name for config)
 }
 
 /** Strip fields we never want in audit snapshots (large blobs, binary) */
 function sanitize(obj: Record<string, unknown> | null | undefined) {
   if (!obj) return obj ?? null
-  const { contractHtml: _html, images: _imgs, fileData: _fd, portalDescriptions: _pd, ...rest } = obj as any
+  const {
+    contractHtml: _html,
+    images: _imgs,
+    fileData: _fd,
+    portalDescriptions: _pd,
+    customCss: _css,
+    customJs: _js,
+    contractTemplateHtml: _tpl,
+    ...rest
+  } = obj as any
   return rest as Record<string, unknown>
 }
 
@@ -57,6 +90,7 @@ export async function createAuditLog(opts: AuditOptions): Promise<void> {
     if (before  !== null) payload.before  = before
     if (after   !== null) payload.after   = after
     if (changes.length)   payload.changes = changes
+    if (opts.meta)        payload.meta    = opts.meta
 
     await prisma.auditLog.create({
       data: {

@@ -4,12 +4,10 @@ import { createAuditLog } from '../../services/audit.service.js'
 
 const UpdateUserBody = z.object({
   name: z.string().min(2).max(100).optional(),
-  email: z.string().email().optional(),
   phone: z.string().optional(),
   bio: z.string().max(500).optional(),
   creciNumber: z.string().optional(),
   avatarUrl: z.string().url().optional(),
-  role: z.enum(['ADMIN', 'MANAGER', 'BROKER', 'FINANCIAL', 'LAWYER', 'CLIENT']).optional(),
 })
 
 const CreateUserBody = z.object({
@@ -98,14 +96,11 @@ export default async function usersRoutes(app: FastifyInstance) {
     })
 
     await createAuditLog({
-      prisma: app.prisma as any, req,
-      action: 'user.update',
-      resource: 'user',
-      resourceId: user.id,
-      before: null,
-      after: user as any,
+      prisma: app.prisma, req,
+      action: 'user.register',
+      resource: 'user', resourceId: user.id,
+      after: { name: user.name, email: user.email, role: user.role } as any,
     })
-
     return reply.status(201).send(user)
   })
 
@@ -269,34 +264,7 @@ export default async function usersRoutes(app: FastifyInstance) {
     }
 
     const body = UpdateUserBody.parse(req.body)
-
-    // Only admins can change role and email (and only for other users)
-    const isAdmin = ['SUPER_ADMIN', 'ADMIN'].includes(req.user.role)
-    const isEditingSelf = id === req.user.sub
-    if (!isAdmin || isEditingSelf) {
-      delete (body as any).role
-      delete (body as any).email
-    }
-
-    // If email is being changed, check for duplicates
-    if (body.email) {
-      const emailTaken = await app.prisma.user.findFirst({
-        where: { email: body.email.toLowerCase(), id: { not: id } },
-      })
-      if (emailTaken) {
-        return reply.status(409).send({ error: 'EMAIL_EXISTS', message: 'E-mail já cadastrado' })
-      }
-      body.email = body.email.toLowerCase()
-    }
-
-    const existing = await app.prisma.user.findFirst({
-      where: { id, companyId: req.user.cid },
-      select: {
-        id: true, name: true, email: true, phone: true,
-        avatarUrl: true, role: true, bio: true, creciNumber: true,
-      },
-    })
-    if (!existing) return reply.status(404).send({ error: 'NOT_FOUND' })
+    const existingUser = await app.prisma.user.findUnique({ where: { id }, select: { id: true, name: true, role: true, phone: true, bio: true, creciNumber: true } })
 
     const user = await app.prisma.user.update({
       where: { id },
@@ -308,11 +276,10 @@ export default async function usersRoutes(app: FastifyInstance) {
     })
 
     await createAuditLog({
-      prisma: app.prisma as any, req,
+      prisma: app.prisma, req,
       action: 'user.update',
-      resource: 'user',
-      resourceId: user.id,
-      before: existing as any,
+      resource: 'user', resourceId: id,
+      before: existingUser as any,
       after: user as any,
     })
 
@@ -332,24 +299,15 @@ export default async function usersRoutes(app: FastifyInstance) {
       return reply.status(400).send({ error: 'CANNOT_DELETE_SELF' })
     }
 
-    const existing = await app.prisma.user.findFirst({
-      where: { id, companyId: req.user.cid },
-      select: { id: true, name: true, email: true, role: true, status: true },
-    })
-    if (!existing) return reply.status(404).send({ error: 'NOT_FOUND' })
-
     await app.prisma.user.update({
       where: { id, companyId: req.user.cid },
       data: { status: 'INACTIVE' },
     })
 
     await createAuditLog({
-      prisma: app.prisma as any, req,
-      action: 'user.update',
-      resource: 'user',
-      resourceId: id,
-      before: existing as any,
-      after: { ...existing, status: 'INACTIVE' } as any,
+      prisma: app.prisma, req,
+      action: 'user.delete',
+      resource: 'user', resourceId: id,
     })
 
     return reply.send({ success: true })

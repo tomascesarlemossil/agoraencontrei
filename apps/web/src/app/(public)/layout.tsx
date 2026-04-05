@@ -1,25 +1,21 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import dynamic from 'next/dynamic'
 import { Phone, MapPin, Instagram, Facebook, Youtube } from 'lucide-react'
 import { Navbar } from '@/components/public/Navbar'
-import { SystemThemeInjector } from '@/components/public/SystemThemeInjector'
-
-// Lazy load heavy client components (chat widget + compare bar)
-const FloatingChatbot = dynamic(() => import('@/components/chat/FloatingChatbot').then(m => m.FloatingChatbot), { ssr: false })
-const CompareBar = dynamic(() => import('@/components/CompareBar').then(m => m.CompareBar), { ssr: false })
+import { FloatingChatbot } from '@/components/chat/FloatingChatbot'
+import { SkipNav } from '@/components/SkipNav'
 
 export const metadata: Metadata = {
   title: {
-    template: '%s | AgoraEncontrei — Imobiliária Lemos',
-    default: 'AgoraEncontrei — Marketplace Imobiliário de Franca/SP',
+    template: '%s | Imobiliária Lemos',
+    default: 'Imobiliária Lemos — Franca/SP',
   },
-  description: 'Encontre o imóvel dos seus sonhos em Franca e região. 1.000+ imóveis com busca por IA, mapa interativo e filtros avançados. Marketplace criado pela Imobiliária Lemos. CRECI 279051.',
+  description: 'Encontre o imóvel dos seus sonhos em Franca e região. Compra, venda e locação. CRECI 279051.',
   metadataBase: new URL('https://www.agoraencontrei.com.br'),
-  keywords: 'agoraencontrei, marketplace imobiliário, imóveis franca, casas franca, apartamentos franca, terrenos franca, imobiliária franca, comprar imóvel franca, alugar imóvel franca, financiamento imobiliário, busca imóvel IA, mapa imóveis franca, CRECI 279051, imobiliária lemos, aluguel franca sp, anunciar imóvel grátis, investimento imóvel franca',
-  authors: [{ name: 'AgoraEncontrei — Imobiliária Lemos', url: 'https://www.agoraencontrei.com.br' }],
-  creator: 'AgoraEncontrei — Imobiliária Lemos',
-  publisher: 'AgoraEncontrei — Imobiliária Lemos',
+  keywords: 'imóveis franca, casas franca, apartamentos franca, terrenos franca, imobiliária franca, comprar imóvel franca, alugar imóvel franca, financiamento imobiliário, leilão imóvel, CRECI 279051, imobiliária lemos, aluguel franca sp, investimento imóvel franca',
+  authors: [{ name: 'Imobiliária Lemos', url: 'https://www.agoraencontrei.com.br' }],
+  creator: 'Imobiliária Lemos',
+  publisher: 'Imobiliária Lemos',
   robots: { index: true, follow: true, googleBot: { index: true, follow: true } },
 }
 
@@ -45,18 +41,9 @@ const FOOTER_SERVICOS = [
 
 export default function PublicLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--site-background-color, #f8f6f1)' }}>
-      {/* Skip navigation for accessibility */}
-      <a
-        href="#main-content"
-        className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[9999] focus:px-4 focus:py-2 focus:rounded-md focus:text-sm focus:font-semibold focus:text-white focus:outline-none focus:ring-2 focus:ring-white"
-        style={{ backgroundColor: 'var(--site-primary-color, #1B2B5B)' }}
-      >
-        Pular para o conteúdo principal
-      </a>
-      <SystemThemeInjector />
+    <div className="min-h-screen" style={{ backgroundColor: '#f8f6f1' }}>
       {/* Top info bar */}
-      <div style={{ backgroundColor: 'var(--site-primary-color, #1B2B5B)' }} className="hidden lg:block">
+      <div style={{ backgroundColor: '#1B2B5B' }} className="hidden lg:block">
         <div className="max-w-7xl mx-auto px-6 h-9 flex items-center justify-between text-xs text-white/70">
           <div className="flex items-center gap-6">
             <a href="tel:1637230045" className="flex items-center gap-1.5 hover:text-white transition-colors">
@@ -87,14 +74,14 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
         </div>
       </div>
 
+      <SkipNav />
       <Navbar />
 
       <main id="main-content" tabIndex={-1}>{children}</main>
-      <CompareBar />
       <FloatingChatbot />
 
       {/* Footer */}
-      <footer style={{ backgroundColor: 'var(--site-primary-color, #1B2B5B)' }} className="mt-20 pt-14 pb-8" role="contentinfo">
+      <footer style={{ backgroundColor: '#1B2B5B' }} className="mt-20 pt-14 pb-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-10 mb-10">
             {/* Brand */}
@@ -102,19 +89,19 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
               <div className="flex items-center gap-3 mb-4">
                 <div
                   className="h-10 w-10 rounded-lg flex items-center justify-center text-white font-bold"
-                  style={{ backgroundColor: 'var(--site-accent-color, #C9A84C)' }}
+                  style={{ backgroundColor: '#C9A84C' }}
                 >
                   IL
                 </div>
                 <div>
                   <p className="font-bold text-white text-sm" style={{ fontFamily: 'Georgia, serif' }}>IMOBILIÁRIA</p>
-                  <p className="font-bold text-sm" style={{ color: 'var(--site-accent-color, #C9A84C)', fontFamily: 'Georgia, serif' }}>LEMOS</p>
+                  <p className="font-bold text-sm" style={{ color: '#C9A84C', fontFamily: 'Georgia, serif' }}>LEMOS</p>
                 </div>
               </div>
               <p className="text-white/50 text-xs leading-relaxed">
                 Desde 2002 conectando pessoas aos melhores imóveis de Franca e região.
               </p>
-              <p className="text-white/60 text-xs mt-2">CRECI PF: 279051</p>
+              <p className="text-white/40 text-xs mt-2">CRECI PF: 279051</p>
 
               {/* Social media */}
               <div className="mt-5">
@@ -174,7 +161,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
 
             {/* Imóveis */}
             <div>
-              <p className="text-sm font-semibold mb-4 tracking-wide uppercase" style={{ color: 'var(--site-accent-color, #C9A84C)' }}>Imóveis</p>
+              <p className="text-sm font-semibold mb-4 tracking-wide uppercase" style={{ color: '#C9A84C' }}>Imóveis</p>
               <ul className="space-y-2.5">
                 {FOOTER_IMOVEIS.map(l => (
                   <li key={l.href}>
@@ -186,7 +173,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
 
             {/* Serviços */}
             <div>
-              <p className="text-sm font-semibold mb-4 tracking-wide uppercase" style={{ color: 'var(--site-accent-color, #C9A84C)' }}>Serviços</p>
+              <p className="text-sm font-semibold mb-4 tracking-wide uppercase" style={{ color: '#C9A84C' }}>Serviços</p>
               <ul className="space-y-2.5">
                 {FOOTER_SERVICOS.map(l => (
                   <li key={l.href}>
@@ -195,11 +182,11 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
                 ))}
               </ul>
               {/* Área de Acesso */}
-              <p className="text-sm font-semibold mt-6 mb-3 tracking-wide uppercase" style={{ color: 'var(--site-accent-color, #C9A84C)' }}>Área de Acesso</p>
+              <p className="text-sm font-semibold mt-6 mb-3 tracking-wide uppercase" style={{ color: '#C9A84C' }}>Área de Acesso</p>
               <ul className="space-y-2.5">
                 <li>
                   <Link href="/dashboard" className="flex items-center gap-2 text-white/50 text-sm hover:text-white transition-colors group">
-                    <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ backgroundColor: 'var(--site-accent-color, #C9A84C)' }} />
+                    <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ backgroundColor: '#C9A84C' }} />
                     Painel Administrativo
                   </Link>
                 </li>
@@ -220,7 +207,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
 
             {/* Contato */}
             <div>
-              <p className="text-sm font-semibold mb-4 tracking-wide uppercase" style={{ color: 'var(--site-accent-color, #C9A84C)' }}>Contato</p>
+              <p className="text-sm font-semibold mb-4 tracking-wide uppercase" style={{ color: '#C9A84C' }}>Contato</p>
               <ul className="space-y-3 text-sm">
                 <li>
                   <p className="text-white/40 text-xs uppercase tracking-wider mb-0.5">Fixo</p>
@@ -233,7 +220,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
                 <li>
                   <p className="text-white/40 text-xs uppercase tracking-wider mb-0.5">WhatsApp</p>
                   <a href="https://wa.me/5516981010004" target="_blank" rel="noreferrer"
-                    className="hover:opacity-80 transition-opacity" style={{ color: 'var(--site-accent-color, #C9A84C)' }}>
+                    className="hover:opacity-80 transition-opacity" style={{ color: '#C9A84C' }}>
                     (16) 98101-0004
                   </a>
                 </li>
@@ -245,7 +232,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
                     target="_blank"
                     rel="noreferrer"
                     className="text-xs mt-1 inline-block hover:opacity-80 transition-opacity"
-                    style={{ color: 'var(--site-accent-color, #C9A84C)' }}
+                    style={{ color: '#C9A84C' }}
                   >
                     www.imobiliarialemos.com.br
                   </a>
@@ -254,33 +241,11 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
             </div>
           </div>
 
-          {/* Powered by */}
-          <div className="border-t border-white/10 pt-6 pb-4 text-center">
-            <p className="text-white/40 text-[11px] leading-relaxed max-w-xl mx-auto">
-              <span style={{ color: 'var(--site-accent-color, #C9A84C)' }}>AgoraEncontrei</span> é o marketplace imobiliário criado e desenvolvido pela{' '}
-              <a
-                href="https://www.imobiliarialemos.com.br"
-                target="_blank"
-                rel="noreferrer"
-                className="hover:text-white/60 transition-colors underline decoration-white/20 underline-offset-2"
-                style={{ color: 'var(--site-accent-color, #C9A84C)' }}
-              >
-                Imobiliária Lemos
-              </a>
-              {' '}&mdash; referência em Franca/SP desde 2002
-            </p>
-          </div>
-
-          <div className="border-t border-white/5 pt-4 flex flex-col sm:flex-row justify-between items-center gap-3">
+          <div className="border-t border-white/10 pt-6 flex flex-col sm:flex-row justify-between items-center gap-3">
             <p className="text-white/50 text-xs">
               © {new Date().getFullYear()} Imobiliária Lemos. Todos os direitos reservados.
             </p>
-            <div className="flex items-center gap-4 text-xs text-white/40">
-              <a href="/politica-privacidade" className="hover:text-white/70 transition-colors">Política de Privacidade</a>
-              <a href="/termos-uso" className="hover:text-white/70 transition-colors">Termos de Uso</a>
-              <a href="/favoritos" className="hover:text-white/70 transition-colors">Favoritos</a>
-            </div>
-            <p className="text-white/50 text-xs">AgoraEncontrei · Fundado em 2026 por Tomás Lemos · Imobiliária Lemos, criada por Noêmia em 2002 · CRECI 279051</p>
+            <p className="text-white/50 text-xs">Fundada em 2002 · CRECI 279051</p>
           </div>
         </div>
       </footer>

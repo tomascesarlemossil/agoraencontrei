@@ -1,7 +1,7 @@
 import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
-import { createAuditLog } from '../../services/audit.service.js'
 import { emitAutomation } from '../../services/automation.emitter.js'
+import { createAuditLog } from '../../services/audit.service.js'
 
 const toUpper = (v: unknown) => typeof v === 'string' ? v.toUpperCase() : v
 
@@ -196,16 +196,12 @@ export default async function dealsRoutes(app: FastifyInstance) {
     })
 
     emitAutomation({ companyId: req.user.cid, event: 'deal_created', data: { id: deal.id, title: deal.title, status: deal.status, contactId: deal.contactId, brokerId: deal.brokerId } })
-
     await createAuditLog({
-      prisma: app.prisma as any, req,
+      prisma: app.prisma, req,
       action: 'deal.create',
-      resource: 'deal',
-      resourceId: deal.id,
-      before: null,
-      after: deal as any,
+      resource: 'deal', resourceId: deal.id,
+      after: { title: deal.title, status: deal.status, value: deal.value } as any,
     })
-
     return reply.status(201).send(deal)
   })
 
@@ -254,16 +250,13 @@ export default async function dealsRoutes(app: FastifyInstance) {
       })
       emitAutomation({ companyId: req.user.cid, event: 'deal_status_changed', data: { id: updated.id, status: updated.status, previousStatus: prevStatus, contactId: updated.contactId } })
     }
-
     await createAuditLog({
-      prisma: app.prisma as any, req,
+      prisma: app.prisma, req,
       action: 'deal.update',
-      resource: 'deal',
-      resourceId: updated.id,
-      before: existing as any,
-      after: updated as any,
+      resource: 'deal', resourceId: id,
+      before: { title: existing.title, status: existing.status, value: existing.value } as any,
+      after: { title: updated.title, status: updated.status, value: updated.value } as any,
     })
-
     return reply.send(updated)
   })
 

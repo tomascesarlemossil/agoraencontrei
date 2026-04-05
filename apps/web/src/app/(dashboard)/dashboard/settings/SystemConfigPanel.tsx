@@ -10,7 +10,7 @@ import {
   Star, Lock, Unlock, Plus, Trash2, RefreshCw, Code, Image as ImageIcon,
   FileText, MessageSquare, MapPin, Phone, Mail, Instagram, Youtube,
   Facebook, Twitter, Linkedin, Hash, ToggleLeft, ToggleRight,
-  ClipboardList, History, Paintbrush, UserCog,
+  Building2, Paintbrush, FormInput, Share2, History, CreditCard, Banknote,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -155,99 +155,30 @@ function ThemeSelector({ value, onChange }: { value: string; onChange: (id: stri
 
 // ── Sub-abas do painel ────────────────────────────────────────────────────────
 const SUB_TABS = [
-  { id: 'temas',       label: 'Temas do Site',     icon: Palette },
-  { id: 'seo',         label: 'SEO & Google',      icon: Search },
-  { id: 'site-texts',  label: 'Textos & Seções',   icon: FileText },
-  { id: 'design',      label: 'Design Dashboard',  icon: Monitor },
-  { id: 'modulos',     label: 'Módulos',           icon: LayoutDashboard },
-  { id: 'permissoes',  label: 'Permissões',        icon: Shield },
-  { id: 'dashboard',   label: 'Dashboard Widgets', icon: LayoutDashboard },
-  { id: 'financeiro',  label: 'Financeiro',        icon: DollarSign },
-  { id: 'juridico',    label: 'Jurídico',          icon: Scale },
-  { id: 'locacao',     label: 'Locação',           icon: Home },
-  { id: 'notificacoes',label: 'Notificações',      icon: Bell },
-  { id: 'campos',      label: 'Campos de Cadastro', icon: ClipboardList },
-  { id: 'aparencia',   label: 'Cores & Botões',     icon: Paintbrush },
-  { id: 'perm-granular',label: 'Permissões Usuário', icon: UserCog },
-  { id: 'historico',   label: 'Histórico',          icon: History },
-  { id: 'avancado',    label: 'Avançado',          icon: Code },
+  { id: 'empresa',       label: 'Empresa',           icon: Building2 },
+  { id: 'temas',         label: 'Temas do Site',     icon: Palette },
+  { id: 'seo',           label: 'SEO & Google',      icon: Search },
+  { id: 'site-texts',    label: 'Textos & Seções',   icon: FileText },
+  { id: 'design',        label: 'Design Dashboard',  icon: Monitor },
+  { id: 'cores',         label: 'Cores & Botões',    icon: Paintbrush },
+  { id: 'cadastros',     label: 'Campos Cadastro',   icon: FormInput },
+  { id: 'modulos',       label: 'Módulos',           icon: LayoutDashboard },
+  { id: 'permissoes',    label: 'Permissões',        icon: Shield },
+  { id: 'dashboard',     label: 'Dashboard Widgets', icon: LayoutDashboard },
+  { id: 'financeiro',    label: 'Financeiro',        icon: DollarSign },
+  { id: 'juridico',      label: 'Jurídico',          icon: Scale },
+  { id: 'locacao',       label: 'Locação',           icon: Home },
+  { id: 'portais',       label: 'Portais',           icon: Share2 },
+  { id: 'notificacoes',  label: 'Notificações',      icon: Bell },
+  { id: 'historico-cfg', label: 'Histórico Config',  icon: History },
+  { id: 'avancado',      label: 'Avançado',          icon: Code },
 ]
-
-// ── Config History Tab ────────────────────────────────────────────────────────
-function ConfigHistoryTab() {
-  const { getValidToken } = useAuth()
-  const { data, isLoading } = useQuery({
-    queryKey: ['config-history'],
-    queryFn: async () => {
-      const token = await getValidToken()
-      const res = await fetch(`${API_URL}/api/v1/audit-logs?resource=system-config&limit=50`, {
-        headers: { Authorization: `Bearer ${token}` },
-        credentials: 'include',
-      })
-      return res.json()
-    },
-  })
-
-  const logs = data?.data ?? []
-
-  return (
-    <div className="space-y-4">
-      <div>
-        <h2 className="text-base font-bold text-white mb-1">Histórico de Configurações</h2>
-        <p className="text-xs text-white/40">Todas as alterações de configurações com data, usuário e valores anteriores.</p>
-      </div>
-      {isLoading ? (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-6 w-6 text-white/30 animate-spin" />
-        </div>
-      ) : logs.length === 0 ? (
-        <div className="text-center py-12">
-          <History className="h-10 w-10 text-white/20 mx-auto mb-3" />
-          <p className="text-sm text-white/40">Nenhuma alteração registrada</p>
-          <p className="text-xs text-white/30 mt-1">As próximas alterações de configuração aparecerão aqui.</p>
-        </div>
-      ) : (
-        <div className="space-y-2 max-h-[600px] overflow-y-auto">
-          {logs.map((log: any) => (
-            <div key={log.id} className="p-4 rounded-xl bg-white/5 border border-white/10 space-y-2">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="inline-flex px-2 py-0.5 rounded-md bg-yellow-500/20 text-yellow-400 text-xs font-medium">
-                    {log.action}
-                  </span>
-                  {log.userName && (
-                    <span className="text-xs text-white/50">por {log.userName}</span>
-                  )}
-                </div>
-                <span className="text-xs text-white/30">
-                  {new Date(log.createdAt).toLocaleString('pt-BR')}
-                </span>
-              </div>
-              {log.payload?.changes && Object.keys(log.payload.changes).length > 0 && (
-                <div className="mt-2 space-y-1">
-                  {Object.entries(log.payload.changes).slice(0, 10).map(([key, val]: [string, any]) => (
-                    <div key={key} className="text-xs flex items-center gap-2">
-                      <span className="text-white/50 font-mono">{key}:</span>
-                      <span className="text-red-400 line-through">{JSON.stringify(val?.before ?? '—')}</span>
-                      <span className="text-white/30">→</span>
-                      <span className="text-green-400">{JSON.stringify(val?.after ?? '—')}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  )
-}
 
 // ── Main Component ────────────────────────────────────────────────────────────
 export function SystemConfigPanel() {
   const { getValidToken, user } = useAuth()
   const qc = useQueryClient()
-  const [subTab, setSubTab] = useState('temas')
+  const [subTab, setSubTab] = useState('empresa')
   const [saved, setSaved] = useState(false)
 
   // ── Fetch config ────────────────────────────────────────────────────────────
@@ -1110,277 +1041,6 @@ export function SystemConfigPanel() {
           </div>
         )}
 
-        {/* ── CAMPOS DE CADASTRO ─────────────────────────────────────── */}
-        {subTab === 'campos' && (
-          <div className="space-y-4">
-            <div>
-              <h2 className="text-base font-bold text-white mb-1">Campos de Cadastro Configuráveis</h2>
-              <p className="text-xs text-white/40">Defina quais campos são obrigatórios ou opcionais em cada formulário do sistema.</p>
-            </div>
-            {(['client', 'property', 'contract', 'legalCase', 'lead'] as const).map(form => {
-              const labels: Record<string, string> = { client: 'Clientes', property: 'Imóveis', contract: 'Contratos', legalCase: 'Processos Jurídicos', lead: 'Leads' }
-              const formCfg = cfg.forms?.[form] ?? { requiredFields: [], showFields: [] }
-              const allFields = formCfg.showFields ?? []
-              const required = formCfg.requiredFields ?? []
-              return (
-                <Section key={form} title={labels[form]} icon={ClipboardList}>
-                  <div className="space-y-2">
-                    <p className="text-xs text-white/40 mb-2">Marque os campos obrigatórios. Campos desmarcados serão opcionais.</p>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                      {allFields.map((field: string) => (
-                        <label key={field} className="flex items-center gap-2 p-2 rounded-lg bg-white/5 hover:bg-white/10 cursor-pointer transition-colors">
-                          <input
-                            type="checkbox"
-                            checked={required.includes(field)}
-                            onChange={e => {
-                              const newRequired = e.target.checked
-                                ? [...required, field]
-                                : required.filter((f: string) => f !== field)
-                              updateCfg('forms', form, { ...formCfg, requiredFields: newRequired })
-                            }}
-                            className="rounded border-white/20 bg-white/5 text-yellow-400 focus:ring-yellow-400"
-                          />
-                          <span className="text-xs text-white/70">{field}</span>
-                          {required.includes(field) && <span className="text-[10px] text-yellow-400 font-bold">*</span>}
-                        </label>
-                      ))}
-                    </div>
-                    <div className="mt-3">
-                      <p className="text-xs text-white/50 mb-1">Adicionar campo ao formulário:</p>
-                      <div className="flex gap-2">
-                        <input
-                          type="text"
-                          placeholder="Nome do campo..."
-                          className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white flex-1 outline-none focus:border-yellow-400/50"
-                          onKeyDown={e => {
-                            if (e.key === 'Enter') {
-                              const v = (e.target as HTMLInputElement).value.trim()
-                              if (v && !allFields.includes(v)) {
-                                updateCfg('forms', form, { ...formCfg, showFields: [...allFields, v] })
-                                ;(e.target as HTMLInputElement).value = ''
-                              }
-                            }
-                          }}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </Section>
-              )
-            })}
-            <SaveButton onClick={() => save()} isPending={saveMutation.isPending} saved={saved} />
-          </div>
-        )}
-
-        {/* ── CORES & BOTÕES ──────────────────────────────────────────── */}
-        {subTab === 'aparencia' && (
-          <div className="space-y-4">
-            <div>
-              <h2 className="text-base font-bold text-white mb-1">Cores & Botões Editáveis</h2>
-              <p className="text-xs text-white/40">Personalize as cores do site público e do dashboard.</p>
-            </div>
-            <Section title="Cores do Site Público" icon={Paintbrush}>
-              <div className="space-y-3">
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-xs font-semibold text-white/70 mb-1.5 block">Cor Primária</label>
-                    <div className="flex items-center gap-2">
-                      <input type="color" value={cfg.site?.primaryColor ?? '#1B2B5B'} onChange={e => updateCfg('site', 'primaryColor', e.target.value)} className="h-10 w-10 rounded-lg border border-white/10 bg-transparent cursor-pointer" />
-                      <input type="text" value={cfg.site?.primaryColor ?? '#1B2B5B'} onChange={e => updateCfg('site', 'primaryColor', e.target.value)} className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white font-mono flex-1" />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-white/70 mb-1.5 block">Cor de Destaque</label>
-                    <div className="flex items-center gap-2">
-                      <input type="color" value={cfg.site?.accentColor ?? '#C9A84C'} onChange={e => updateCfg('site', 'accentColor', e.target.value)} className="h-10 w-10 rounded-lg border border-white/10 bg-transparent cursor-pointer" />
-                      <input type="text" value={cfg.site?.accentColor ?? '#C9A84C'} onChange={e => updateCfg('site', 'accentColor', e.target.value)} className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white font-mono flex-1" />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-white/70 mb-1.5 block">Cor de Fundo</label>
-                    <div className="flex items-center gap-2">
-                      <input type="color" value={cfg.site?.backgroundColor ?? '#f9f7f4'} onChange={e => updateCfg('site', 'backgroundColor', e.target.value)} className="h-10 w-10 rounded-lg border border-white/10 bg-transparent cursor-pointer" />
-                      <input type="text" value={cfg.site?.backgroundColor ?? '#f9f7f4'} onChange={e => updateCfg('site', 'backgroundColor', e.target.value)} className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white font-mono flex-1" />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-white/70 mb-1.5 block">Cor do Texto</label>
-                    <div className="flex items-center gap-2">
-                      <input type="color" value={cfg.site?.textColor ?? '#1a1a1a'} onChange={e => updateCfg('site', 'textColor', e.target.value)} className="h-10 w-10 rounded-lg border border-white/10 bg-transparent cursor-pointer" />
-                      <input type="text" value={cfg.site?.textColor ?? '#1a1a1a'} onChange={e => updateCfg('site', 'textColor', e.target.value)} className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white font-mono flex-1" />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </Section>
-            <Section title="Botões do Site" icon={Paintbrush}>
-              <div className="space-y-3">
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-xs font-semibold text-white/70 mb-1.5 block">Cor do Botão Principal</label>
-                    <div className="flex items-center gap-2">
-                      <input type="color" value={cfg.site?.buttonPrimaryColor ?? '#1B2B5B'} onChange={e => updateCfg('site', 'buttonPrimaryColor', e.target.value)} className="h-10 w-10 rounded-lg border border-white/10 bg-transparent cursor-pointer" />
-                      <input type="text" value={cfg.site?.buttonPrimaryColor ?? '#1B2B5B'} onChange={e => updateCfg('site', 'buttonPrimaryColor', e.target.value)} className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white font-mono flex-1" />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-white/70 mb-1.5 block">Texto do Botão</label>
-                    <div className="flex items-center gap-2">
-                      <input type="color" value={cfg.site?.buttonTextColor ?? '#ffffff'} onChange={e => updateCfg('site', 'buttonTextColor', e.target.value)} className="h-10 w-10 rounded-lg border border-white/10 bg-transparent cursor-pointer" />
-                      <input type="text" value={cfg.site?.buttonTextColor ?? '#ffffff'} onChange={e => updateCfg('site', 'buttonTextColor', e.target.value)} className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white font-mono flex-1" />
-                    </div>
-                  </div>
-                </div>
-                <DarkInput label="Raio da borda (px)" type="number" value={cfg.site?.buttonBorderRadius ?? 12} onChange={e => updateCfg('site', 'buttonBorderRadius', Number(e.target.value))} hint="Ex: 0 = quadrado, 12 = arredondado, 999 = pílula" />
-                <div className="mt-3 p-4 rounded-xl bg-white/5 border border-white/10">
-                  <p className="text-xs text-white/50 mb-2">Pré-visualização:</p>
-                  <button
-                    className="px-6 py-3 font-semibold text-sm transition-all"
-                    style={{
-                      backgroundColor: cfg.site?.buttonPrimaryColor ?? '#1B2B5B',
-                      color: cfg.site?.buttonTextColor ?? '#ffffff',
-                      borderRadius: `${cfg.site?.buttonBorderRadius ?? 12}px`,
-                    }}
-                  >
-                    Botão de Exemplo
-                  </button>
-                </div>
-              </div>
-            </Section>
-            <Section title="Cores do Dashboard" icon={Monitor}>
-              <div className="space-y-3">
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-xs font-semibold text-white/70 mb-1.5 block">Cor Primária Dashboard</label>
-                    <div className="flex items-center gap-2">
-                      <input type="color" value={cfg.design?.primaryColor ?? '#6366f1'} onChange={e => updateCfg('design', 'primaryColor', e.target.value)} className="h-10 w-10 rounded-lg border border-white/10 bg-transparent cursor-pointer" />
-                      <input type="text" value={cfg.design?.primaryColor ?? '#6366f1'} onChange={e => updateCfg('design', 'primaryColor', e.target.value)} className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white font-mono flex-1" />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-white/70 mb-1.5 block">Cor de Destaque Dashboard</label>
-                    <div className="flex items-center gap-2">
-                      <input type="color" value={cfg.design?.accentColor ?? '#f59e0b'} onChange={e => updateCfg('design', 'accentColor', e.target.value)} className="h-10 w-10 rounded-lg border border-white/10 bg-transparent cursor-pointer" />
-                      <input type="text" value={cfg.design?.accentColor ?? '#f59e0b'} onChange={e => updateCfg('design', 'accentColor', e.target.value)} className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white font-mono flex-1" />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </Section>
-            <SaveButton onClick={() => save()} isPending={saveMutation.isPending} saved={saved} />
-          </div>
-        )}
-
-        {/* ── PERMISSÕES POR USUÁRIO ─────────────────────────────────── */}
-        {subTab === 'perm-granular' && (
-          <div className="space-y-4">
-            <div>
-              <h2 className="text-base font-bold text-white mb-1">Permissões Granulares por Usuário</h2>
-              <p className="text-xs text-white/40">Configure permissões individuais por módulo para cada usuário, além dos roles padrão.</p>
-            </div>
-            <Section title="Módulos com Acesso Restrito" icon={Lock}>
-              <div className="space-y-2">
-                <p className="text-xs text-white/40 mb-2">Selecione quais módulos exigem permissão especial para acesso.</p>
-                {['lemosbank', 'juridico', 'fiscal', 'financiamentos', 'relatorios', 'marketing', 'crm', 'automations', 'blog'].map(mod => (
-                  <Toggle
-                    key={mod}
-                    label={mod.charAt(0).toUpperCase() + mod.slice(1)}
-                    checked={(cfg.internalModuleAccess?.restrictedModules ?? []).includes(mod)}
-                    onChange={checked => {
-                      const current = cfg.internalModuleAccess?.restrictedModules ?? []
-                      const updated = checked ? [...current, mod] : current.filter((m: string) => m !== mod)
-                      updateCfg('internalModuleAccess', 'restrictedModules', updated)
-                    }}
-                  />
-                ))}
-              </div>
-            </Section>
-            <Section title="Usuários Autorizados" icon={UserCog}>
-              <div className="space-y-3">
-                <p className="text-xs text-white/40">Usuários na lista abaixo podem acessar todos os módulos restritos.</p>
-                <div className="flex flex-wrap gap-2">
-                  {(cfg.internalModuleAccess?.allowedUsers ?? []).map((u: string, i: number) => (
-                    <span key={i} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-green-500/20 text-green-400 text-xs font-medium">
-                      {u}
-                      <button
-                        onClick={() => {
-                          const updated = (cfg.internalModuleAccess?.allowedUsers ?? []).filter((_: string, j: number) => j !== i)
-                          updateCfg('internalModuleAccess', 'allowedUsers', updated)
-                        }}
-                        className="hover:text-red-400 transition-colors"
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </button>
-                    </span>
-                  ))}
-                </div>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    placeholder="Nome do usuário..."
-                    className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white flex-1 outline-none focus:border-yellow-400/50"
-                    onKeyDown={e => {
-                      if (e.key === 'Enter') {
-                        const v = (e.target as HTMLInputElement).value.trim().toLowerCase()
-                        if (v && !(cfg.internalModuleAccess?.allowedUsers ?? []).includes(v)) {
-                          updateCfg('internalModuleAccess', 'allowedUsers', [...(cfg.internalModuleAccess?.allowedUsers ?? []), v])
-                          ;(e.target as HTMLInputElement).value = ''
-                        }
-                      }
-                    }}
-                  />
-                </div>
-              </div>
-            </Section>
-            <Section title="Permissões por Módulo por Usuário" icon={Shield}>
-              <div className="space-y-3">
-                <p className="text-xs text-white/40">Configure acesso específico para cada módulo e usuário individualmente.</p>
-                {['lemosbank', 'juridico', 'fiscal', 'financiamentos', 'relatorios'].map(mod => {
-                  const modulePerms = cfg.modulePermissions?.[mod] ?? []
-                  return (
-                    <div key={mod} className="p-3 rounded-xl bg-white/5 border border-white/10">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-semibold text-white">{mod.charAt(0).toUpperCase() + mod.slice(1)}</span>
-                        <span className="text-xs text-white/40">{modulePerms.length} usuário(s)</span>
-                      </div>
-                      <div className="flex flex-wrap gap-1.5 mb-2">
-                        {modulePerms.map((u: string, i: number) => (
-                          <span key={i} className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-blue-500/20 text-blue-400 text-[11px]">
-                            {u}
-                            <button onClick={() => {
-                              const updated = modulePerms.filter((_: string, j: number) => j !== i)
-                              updateCfg('modulePermissions', mod, updated)
-                            }} className="hover:text-red-400"><Trash2 className="h-2.5 w-2.5" /></button>
-                          </span>
-                        ))}
-                      </div>
-                      <input
-                        type="text" placeholder={`Adicionar usuário a ${mod}...`}
-                        className="bg-white/5 border border-white/10 rounded-lg px-2.5 py-1 text-[11px] text-white w-full outline-none focus:border-blue-400/50"
-                        onKeyDown={e => {
-                          if (e.key === 'Enter') {
-                            const v = (e.target as HTMLInputElement).value.trim().toLowerCase()
-                            if (v && !modulePerms.includes(v)) {
-                              updateCfg('modulePermissions', mod, [...modulePerms, v])
-                              ;(e.target as HTMLInputElement).value = ''
-                            }
-                          }
-                        }}
-                      />
-                    </div>
-                  )
-                })}
-              </div>
-            </Section>
-            <SaveButton onClick={() => save()} isPending={saveMutation.isPending} saved={saved} />
-          </div>
-        )}
-
-        {/* ── HISTÓRICO DE CONFIGURAÇÕES ──────────────────────────────── */}
-        {subTab === 'historico' && (
-          <ConfigHistoryTab />
-        )}
-
         {/* ── AVANÇADO ──────────────────────────────────────────────────── */}
         {subTab === 'avancado' && (
           <div className="space-y-4">
@@ -1448,7 +1108,373 @@ export function SystemConfigPanel() {
           </div>
         )}
 
+        {/* ── EMPRESA ──────────────────────────────────────────────────────── */}
+        {subTab === 'empresa' && (
+          <div className="space-y-4">
+            <div>
+              <h2 className="text-base font-bold text-white mb-1">Dados da Empresa</h2>
+              <p className="text-xs text-white/40">Informações institucionais, contato, CRECI e dados bancários.</p>
+            </div>
+            <Section title="Identificação" icon={Building2}>
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <DarkInput label="Razão Social" value={cfg.company?.name ?? ''} onChange={e => updateCfg('company','name',e.target.value)} />
+                  <DarkInput label="Nome Fantasia" value={cfg.company?.tradeName ?? ''} onChange={e => updateCfg('company','tradeName',e.target.value)} />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <DarkInput label="CNPJ" value={cfg.company?.cnpj ?? ''} onChange={e => updateCfg('company','cnpj',e.target.value)} placeholder="00.000.000/0001-00" />
+                  <div className="grid grid-cols-2 gap-2">
+                    <DarkInput label="CRECI" value={cfg.company?.creci ?? ''} onChange={e => updateCfg('company','creci',e.target.value)} />
+                    <div>
+                      <label className="text-xs font-semibold text-white/70 mb-1.5 block">Tipo CRECI</label>
+                      <select value={cfg.company?.creciType ?? 'J'} onChange={e => updateCfg('company','creciType',e.target.value)} className="bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white outline-none focus:border-yellow-400/50 w-full">
+                        <option value="J">Jurídico (J)</option>
+                        <option value="F">Físico (F)</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+                <DarkInput label="Descrição" value={cfg.company?.description ?? ''} onChange={e => updateCfg('company','description',e.target.value)} />
+                <div className="grid grid-cols-2 gap-3">
+                  <DarkInput label="Ano de Fundação" type="number" value={cfg.company?.foundedYear ?? 2003} onChange={e => updateCfg('company','foundedYear',Number(e.target.value))} />
+                  <DarkInput label="Horário de Funcionamento" value={cfg.company?.openingHours ?? ''} onChange={e => updateCfg('company','openingHours',e.target.value)} placeholder="Seg-Sex: 8h-18h" />
+                </div>
+              </div>
+            </Section>
+            <Section title="Endereço" icon={MapPin}>
+              <div className="space-y-3">
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="col-span-2"><DarkInput label="Endereço" value={cfg.company?.address ?? ''} onChange={e => updateCfg('company','address',e.target.value)} /></div>
+                  <DarkInput label="CEP" value={cfg.company?.zipCode ?? ''} onChange={e => updateCfg('company','zipCode',e.target.value)} />
+                </div>
+                <div className="grid grid-cols-3 gap-3">
+                  <DarkInput label="Bairro" value={cfg.company?.neighborhood ?? ''} onChange={e => updateCfg('company','neighborhood',e.target.value)} />
+                  <DarkInput label="Cidade" value={cfg.company?.city ?? ''} onChange={e => updateCfg('company','city',e.target.value)} />
+                  <DarkInput label="Estado" value={cfg.company?.state ?? ''} onChange={e => updateCfg('company','state',e.target.value)} maxLength={2} />
+                </div>
+              </div>
+            </Section>
+            <Section title="Contato" icon={Phone}>
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <DarkInput label="Telefone Fixo" value={cfg.company?.phone ?? ''} onChange={e => updateCfg('company','phone',e.target.value)} />
+                  <DarkInput label="Celular / WhatsApp" value={cfg.company?.phoneMobile ?? ''} onChange={e => updateCfg('company','phoneMobile',e.target.value)} />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <DarkInput label="E-mail Geral" type="email" value={cfg.company?.email ?? ''} onChange={e => updateCfg('company','email',e.target.value)} />
+                  <DarkInput label="E-mail Financeiro" type="email" value={cfg.company?.emailFinanceiro ?? ''} onChange={e => updateCfg('company','emailFinanceiro',e.target.value)} />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <DarkInput label="E-mail Jurídico" type="email" value={cfg.company?.emailJuridico ?? ''} onChange={e => updateCfg('company','emailJuridico',e.target.value)} />
+                  <DarkInput label="Website" value={cfg.company?.website ?? ''} onChange={e => updateCfg('company','website',e.target.value)} />
+                </div>
+              </div>
+            </Section>
+            <Section title="Logotipos" icon={ImageIcon}>
+              <div className="space-y-3">
+                <DarkInput label="URL do Logo (fundo escuro)" value={cfg.company?.logoUrl ?? ''} onChange={e => updateCfg('company','logoUrl',e.target.value)} placeholder="https://..." />
+                <DarkInput label="URL do Logo Branco (fundo escuro)" value={cfg.company?.logoWhiteUrl ?? ''} onChange={e => updateCfg('company','logoWhiteUrl',e.target.value)} placeholder="https://..." />
+              </div>
+            </Section>
+            <Section title="Dados Bancários" icon={Banknote}>
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <DarkInput label="Banco" value={cfg.company?.bankName ?? ''} onChange={e => updateCfg('company','bankName',e.target.value)} />
+                  <DarkInput label="Agência" value={cfg.company?.bankAgency ?? ''} onChange={e => updateCfg('company','bankAgency',e.target.value)} />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <DarkInput label="Conta" value={cfg.company?.bankAccount ?? ''} onChange={e => updateCfg('company','bankAccount',e.target.value)} />
+                  <div>
+                    <label className="text-xs font-semibold text-white/70 mb-1.5 block">Tipo de Conta</label>
+                    <select value={cfg.company?.bankAccountType ?? 'corrente'} onChange={e => updateCfg('company','bankAccountType',e.target.value)} className="bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white outline-none focus:border-yellow-400/50 w-full">
+                      <option value="corrente">Conta Corrente</option>
+                      <option value="poupanca">Conta Poupança</option>
+                      <option value="pagamento">Conta Pagamento</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <DarkInput label="Chave PIX" value={cfg.company?.bankPix ?? ''} onChange={e => updateCfg('company','bankPix',e.target.value)} />
+                  <div>
+                    <label className="text-xs font-semibold text-white/70 mb-1.5 block">Tipo da Chave PIX</label>
+                    <select value={cfg.company?.bankPixType ?? 'cnpj'} onChange={e => updateCfg('company','bankPixType',e.target.value)} className="bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white outline-none focus:border-yellow-400/50 w-full">
+                      <option value="cnpj">CNPJ</option>
+                      <option value="cpf">CPF</option>
+                      <option value="email">E-mail</option>
+                      <option value="phone">Telefone</option>
+                      <option value="random">Chave Aleatória</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </Section>
+            <SaveButton onClick={() => save('company')} isPending={saveMutation.isPending} saved={saved} />
+          </div>
+        )}
+
+        {/* ── CORES & BOTÕES ───────────────────────────────────────────────── */}
+        {subTab === 'cores' && (
+          <div className="space-y-4">
+            <div>
+              <h2 className="text-base font-bold text-white mb-1">Cores & Botões</h2>
+              <p className="text-xs text-white/40">Personalize as cores do dashboard, botões, sidebar e badges de status.</p>
+            </div>
+            <Section title="Cores Primárias" icon={Paintbrush}>
+              <div className="grid grid-cols-2 gap-4">
+                {[
+                  { key: 'primaryColor', label: 'Cor Primária' },
+                  { key: 'primaryColorHover', label: 'Primária (hover)' },
+                  { key: 'secondaryColor', label: 'Cor Secundária' },
+                  { key: 'accentColor', label: 'Cor de Destaque' },
+                  { key: 'dangerColor', label: 'Cor de Perigo' },
+                  { key: 'successColor', label: 'Cor de Sucesso' },
+                  { key: 'warningColor', label: 'Cor de Aviso' },
+                ].map(({ key, label }) => (
+                  <div key={key} className="flex items-center gap-3">
+                    <input type="color" value={cfg.colors?.[key] ?? '#C9A84C'} onChange={e => setCfg((p: any) => ({ ...p, colors: { ...p.colors, [key]: e.target.value } }))} className="w-10 h-10 rounded-lg border border-white/20 bg-transparent cursor-pointer" />
+                    <div>
+                      <p className="text-xs font-semibold text-white/70">{label}</p>
+                      <p className="text-xs text-white/40 font-mono">{cfg.colors?.[key] ?? ''}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Section>
+            <Section title="Botões" icon={Paintbrush}>
+              <div className="grid grid-cols-2 gap-4">
+                {[
+                  { key: 'btnPrimaryBg', label: 'Botão Primário (fundo)' },
+                  { key: 'btnPrimaryText', label: 'Botão Primário (texto)' },
+                  { key: 'btnSecondaryBg', label: 'Botão Secundário (fundo)' },
+                  { key: 'btnSecondaryText', label: 'Botão Secundário (texto)' },
+                  { key: 'btnDangerBg', label: 'Botão Perigo (fundo)' },
+                  { key: 'btnDangerText', label: 'Botão Perigo (texto)' },
+                ].map(({ key, label }) => (
+                  <div key={key} className="flex items-center gap-3">
+                    <input type="color" value={cfg.colors?.[key]?.startsWith('#') ? cfg.colors[key] : '#ffffff'} onChange={e => setCfg((p: any) => ({ ...p, colors: { ...p.colors, [key]: e.target.value } }))} className="w-10 h-10 rounded-lg border border-white/20 bg-transparent cursor-pointer" />
+                    <div>
+                      <p className="text-xs font-semibold text-white/70">{label}</p>
+                      <p className="text-xs text-white/40 font-mono">{cfg.colors?.[key] ?? ''}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Section>
+            <Section title="Sidebar" icon={Monitor}>
+              <div className="grid grid-cols-2 gap-4">
+                {[
+                  { key: 'sidebarBg', label: 'Fundo da Sidebar' },
+                  { key: 'sidebarText', label: 'Texto da Sidebar' },
+                  { key: 'sidebarActiveColor', label: 'Item Ativo' },
+                ].map(({ key, label }) => (
+                  <div key={key} className="flex items-center gap-3">
+                    <input type="color" value={cfg.colors?.[key]?.startsWith('#') ? cfg.colors[key] : '#0f0f0f'} onChange={e => setCfg((p: any) => ({ ...p, colors: { ...p.colors, [key]: e.target.value } }))} className="w-10 h-10 rounded-lg border border-white/20 bg-transparent cursor-pointer" />
+                    <div>
+                      <p className="text-xs font-semibold text-white/70">{label}</p>
+                      <p className="text-xs text-white/40 font-mono">{cfg.colors?.[key] ?? ''}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Section>
+            <Section title="Badges de Status" icon={Star}>
+              <div className="space-y-3">
+                <p className="text-xs text-white/40">Cores dos badges de status nos contratos, cobranças e imóveis.</p>
+                <div className="grid grid-cols-2 gap-4">
+                  {[
+                    { key: 'statusActiveText', label: 'Ativo (texto)' },
+                    { key: 'statusPendingText', label: 'Pendente (texto)' },
+                    { key: 'statusLateText', label: 'Atrasado (texto)' },
+                    { key: 'statusFinishedText', label: 'Encerrado (texto)' },
+                  ].map(({ key, label }) => (
+                    <div key={key} className="flex items-center gap-3">
+                      <input type="color" value={cfg.colors?.[key]?.startsWith('#') ? cfg.colors[key] : '#22C55E'} onChange={e => setCfg((p: any) => ({ ...p, colors: { ...p.colors, [key]: e.target.value } }))} className="w-10 h-10 rounded-lg border border-white/20 bg-transparent cursor-pointer" />
+                      <p className="text-xs font-semibold text-white/70">{label}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </Section>
+            <SaveButton onClick={() => save('colors')} isPending={saveMutation.isPending} saved={saved} />
+          </div>
+        )}
+
+        {/* ── CAMPOS DE CADASTRO ───────────────────────────────────────────── */}
+        {subTab === 'cadastros' && (
+          <div className="space-y-4">
+            <div>
+              <h2 className="text-base font-bold text-white mb-1">Configuração de Campos de Cadastro</h2>
+              <p className="text-xs text-white/40">Defina quais campos são obrigatórios e visíveis em cada formulário do sistema.</p>
+            </div>
+            {[
+              { key: 'imovel', label: 'Imóvel', icon: Home },
+              { key: 'cliente', label: 'Cliente', icon: Users },
+              { key: 'contrato', label: 'Contrato', icon: FileText },
+              { key: 'cobranca', label: 'Cobrança / Boleto', icon: CreditCard },
+            ].map(({ key, label, icon: Icon }) => (
+              <Section key={key} title={label} icon={Icon}>
+                <div className="space-y-3">
+                  <p className="text-xs text-white/40">Campos obrigatórios e visíveis no formulário de {label.toLowerCase()}.</p>
+                  <div>
+                    <label className="text-xs font-semibold text-white/70 mb-1.5 block">Campos Obrigatórios (separados por vírgula)</label>
+                    <input
+                      value={(cfg.cadastroConfig?.[key]?.requiredFields ?? []).join(', ')}
+                      onChange={e => setCfg((p: any) => ({ ...p, cadastroConfig: { ...p.cadastroConfig, [key]: { ...p.cadastroConfig?.[key], requiredFields: e.target.value.split(',').map((s: string) => s.trim()).filter(Boolean) } } }))}
+                      className="bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-white/40 outline-none focus:border-yellow-400/50 w-full font-mono"
+                      placeholder="name, email, phone"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-white/70 mb-1.5 block">Campos Visíveis (separados por vírgula)</label>
+                    <textarea
+                      value={(cfg.cadastroConfig?.[key]?.visibleFields ?? []).join(', ')}
+                      onChange={e => setCfg((p: any) => ({ ...p, cadastroConfig: { ...p.cadastroConfig, [key]: { ...p.cadastroConfig?.[key], visibleFields: e.target.value.split(',').map((s: string) => s.trim()).filter(Boolean) } } }))}
+                      rows={3}
+                      className="bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-white/40 outline-none focus:border-yellow-400/50 w-full font-mono resize-none"
+                      placeholder="name, email, phone, cpf..."
+                    />
+                  </div>
+                  {key === 'cobranca' && (
+                    <div>
+                      <label className="text-xs font-semibold text-white/70 mb-1.5 block">Formas de Pagamento Aceitas</label>
+                      <input
+                        value={(cfg.cadastroConfig?.cobranca?.paymentMethods ?? []).join(', ')}
+                        onChange={e => setCfg((p: any) => ({ ...p, cadastroConfig: { ...p.cadastroConfig, cobranca: { ...p.cadastroConfig?.cobranca, paymentMethods: e.target.value.split(',').map((s: string) => s.trim()).filter(Boolean) } } }))}
+                        className="bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-white/40 outline-none focus:border-yellow-400/50 w-full font-mono"
+                        placeholder="Dinheiro, PIX, Boleto, Transferência..."
+                      />
+                    </div>
+                  )}
+                </div>
+              </Section>
+            ))}
+            <SaveButton onClick={() => save('cadastroConfig')} isPending={saveMutation.isPending} saved={saved} />
+          </div>
+        )}
+
+        {/* ── PORTAIS ──────────────────────────────────────────────────────── */}
+        {subTab === 'portais' && (
+          <div className="space-y-4">
+            <div>
+              <h2 className="text-base font-bold text-white mb-1">Portais de Imóveis</h2>
+              <p className="text-xs text-white/40">Configure a integração com portais de imóveis para publicar automaticamente seu portfólio.</p>
+            </div>
+            {[
+              { key: 'zapImoveis', label: 'ZAP Imóveis', color: '#e8002d' },
+              { key: 'vivaReal', label: 'Viva Real', color: '#00a650' },
+              { key: 'olx', label: 'OLX', color: '#6e0ad6' },
+              { key: 'chavesMao', label: 'Chaves na Mão', color: '#ff6600' },
+              { key: 'imovelWeb', label: 'Imóvel Web', color: '#0066cc' },
+            ].map(({ key, label, color }) => (
+              <Section key={key} title={label} icon={Share2}>
+                <div className="space-y-3">
+                  <Toggle
+                    label={`Habilitar integração com ${label}`}
+                    checked={cfg.portals?.[key]?.enabled ?? false}
+                    onChange={v => setCfg((p: any) => ({ ...p, portals: { ...p.portals, [key]: { ...p.portals?.[key], enabled: v } } }))}
+                  />
+                  {cfg.portals?.[key]?.enabled && (
+                    <>
+                      <DarkInput
+                        label="Token / API Key"
+                        type="password"
+                        value={cfg.portals?.[key]?.token ?? ''}
+                        onChange={e => setCfg((p: any) => ({ ...p, portals: { ...p.portals, [key]: { ...p.portals?.[key], token: e.target.value } } }))}
+                        placeholder="Token de acesso do portal"
+                      />
+                      <Toggle
+                        label="Publicar automaticamente ao cadastrar imóvel"
+                        checked={cfg.portals?.[key]?.autoPublish ?? false}
+                        onChange={v => setCfg((p: any) => ({ ...p, portals: { ...p.portals, [key]: { ...p.portals?.[key], autoPublish: v } } }))}
+                      />
+                      <Toggle
+                        label="Publicar imóveis à venda"
+                        checked={cfg.portals?.[key]?.publishVenda ?? true}
+                        onChange={v => setCfg((p: any) => ({ ...p, portals: { ...p.portals, [key]: { ...p.portals?.[key], publishVenda: v } } }))}
+                      />
+                      <Toggle
+                        label="Publicar imóveis para locação"
+                        checked={cfg.portals?.[key]?.publishLocacao ?? true}
+                        onChange={v => setCfg((p: any) => ({ ...p, portals: { ...p.portals, [key]: { ...p.portals?.[key], publishLocacao: v } } }))}
+                      />
+                      <DarkInput
+                        label="URL do Feed XML (gerado pelo sistema)"
+                        value={`${typeof window !== 'undefined' ? window.location.origin : 'https://www.agoraencontrei.com.br'}/api/feed/${key}`}
+                        readOnly
+                        hint="Copie esta URL e configure no painel do portal"
+                      />
+                    </>
+                  )}
+                </div>
+              </Section>
+            ))}
+            <SaveButton onClick={() => save('portals')} isPending={saveMutation.isPending} saved={saved} />
+          </div>
+        )}
+
+        {/* ── HISTÓRICO DE CONFIGURAÇÕES ─────────────────────────────────── */}
+        {subTab === 'historico-cfg' && (
+          <div className="space-y-4">
+            <div>
+              <h2 className="text-base font-bold text-white mb-1">Histórico de Configurações</h2>
+              <p className="text-xs text-white/40">Todas as alterações feitas nas configurações do sistema são registradas aqui.</p>
+            </div>
+            <HistoricoConfiguracoes getValidToken={getValidToken} />
+          </div>
+        )}
+
       </div>
+    </div>
+  )
+}
+
+// ── Componente de Histórico de Configurações ────────────────────────────────
+function HistoricoConfiguracoes({ getValidToken }: { getValidToken: () => Promise<string | null> }) {
+  const { data, isLoading } = useQuery({
+    queryKey: ['audit-logs-config'],
+    queryFn: async () => {
+      const token = await getValidToken()
+      const res = await fetch(`${API_URL}/api/v1/audit-logs?action=config&limit=50`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (!res.ok) return { logs: [] }
+      return res.json()
+    },
+  })
+
+  if (isLoading) return <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-yellow-400" /></div>
+
+  const logs = data?.logs ?? []
+
+  if (logs.length === 0) {
+    return (
+      <div className="text-center py-12 text-white/40">
+        <History className="w-12 h-12 mx-auto mb-3 opacity-30" />
+        <p className="text-sm">Nenhuma alteração de configuração registrada ainda.</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-3">
+      {logs.map((log: any) => (
+        <div key={log.id} className="bg-white/5 rounded-2xl border border-white/10 p-4">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-yellow-400/20 flex items-center justify-center flex-shrink-0">
+                <Settings2 className="w-4 h-4 text-yellow-400" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-white">{log.action?.replace('config.', '').replace('_', ' ').toUpperCase()}</p>
+                <p className="text-xs text-white/40">{log.userName ?? 'Sistema'} • {log.meta?.sections?.join(', ') ?? 'configurações'}</p>
+              </div>
+            </div>
+            <p className="text-xs text-white/30 flex-shrink-0">
+              {log.createdAt ? new Date(log.createdAt).toLocaleString('pt-BR') : ''}
+            </p>
+          </div>
+        </div>
+      ))}
     </div>
   )
 }

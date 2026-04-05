@@ -5,6 +5,7 @@
 import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 import { nanoid } from 'nanoid'
+import { createAuditLog } from '../../services/audit.service.js'
 
 function genId() { return 'c' + nanoid(24).toLowerCase().replace(/[^a-z0-9]/g, 'x') }
 
@@ -272,6 +273,12 @@ export default async function legalRoutes(app: FastifyInstance) {
       }
     })
 
+    await createAuditLog({
+      prisma: app.prisma, req,
+      action: 'legal.create',
+      resource: 'legal', resourceId: newCase.id,
+      after: { title: newCase.title, type: newCase.type, status: newCase.status } as any,
+    })
     return reply.status(201).send(newCase)
   })
   // ── GET /api/v1/legal/:id ───────────────────────────────────────────────
@@ -359,6 +366,12 @@ export default async function legalRoutes(app: FastifyInstance) {
       ...params)
     const rows = await app.prisma.$queryRawUnsafe<any[]>(
       `SELECT * FROM legal_cases WHERE id = $1`, id)
+    await createAuditLog({
+      prisma: app.prisma, req,
+      action: 'legal.update',
+      resource: 'legal', resourceId: id,
+      after: rows[0] as any,
+    })
     return reply.send(rows[0])
   })
 
@@ -369,6 +382,11 @@ export default async function legalRoutes(app: FastifyInstance) {
     const rows = await app.prisma.$queryRawUnsafe<any[]>(
       `DELETE FROM legal_cases WHERE id = $1 AND "companyId" = $2 RETURNING id`, id, cid)
     if (!rows.length) return reply.status(404).send({ error: 'NOT_FOUND' })
+    await createAuditLog({
+      prisma: app.prisma, req,
+      action: 'legal.delete',
+      resource: 'legal', resourceId: id,
+    })
     return reply.send({ success: true })
   })
 

@@ -242,7 +242,7 @@ export const usersApi = {
   create: (token: string, body: { name: string; email: string; password: string; role: string; phone?: string; creciNumber?: string }) =>
     request<User>('/api/v1/users', { method: 'POST', token, body: JSON.stringify(body) }),
 
-  update: (token: string, id: string, body: { name?: string; email?: string; phone?: string; bio?: string; creciNumber?: string; avatarUrl?: string; role?: string }) =>
+  update: (token: string, id: string, body: { name?: string; phone?: string; bio?: string; creciNumber?: string; avatarUrl?: string }) =>
     request<User>(`/api/v1/users/${id}`, { method: 'PATCH', token, body: JSON.stringify(body) }),
 
   delete: (token: string, id: string) =>
@@ -895,53 +895,28 @@ export const financeApi = {
       { token },
     ),
 
-  registrarRescisao: (token: string, contractId: string, body: {
-    rescissionDate?: string; status?: 'FINISHED' | 'CANCELED';
-    reason?: string; fine?: number; refund?: number; notes?: string;
-  }) =>
+  registrarRescisao: (token: string, contractId: string, body: { rescissionDate?: string; status?: 'FINISHED' | 'CANCELED'; motivo?: string; multaRescisao?: number }) =>
     request<any>(`/api/v1/finance/contracts/${contractId}/rescisao`, {
       method: 'POST',
       token,
       body: JSON.stringify(body),
     }),
 
-  renovarContrato: (token: string, contractId: string, body: {
-    newRentValue: number; newDuration: number; newStartDate: string;
-    adjustmentIndex?: string; adjustmentPercent?: number; notes?: string;
-  }) =>
+  renovarContrato: (token: string, contractId: string, body: { duration: number; novoValor?: number; indiceReajuste?: string }) =>
     request<any>(`/api/v1/finance/contracts/${contractId}/renovar`, {
       method: 'POST',
       token,
       body: JSON.stringify(body),
     }),
 
-  reajustarContrato: (token: string, contractId: string, body: {
-    index: string; percent: number; newValue: number; applyDate?: string;
-  }) =>
+  aplicarReajuste: (token: string, contractId: string, body: { percentual: number; motivo?: string; dataAplicacao?: string }) =>
     request<any>(`/api/v1/finance/contracts/${contractId}/reajuste`, {
       method: 'POST',
       token,
       body: JSON.stringify(body),
     }),
 
-  historicoContrato: (token: string, contractId: string) =>
-    request<{ data: any[] }>(`/api/v1/finance/contracts/${contractId}/historico`, { token }),
-
-  alterarStatusContrato: (token: string, contractId: string, status: string) =>
-    request<any>(`/api/v1/finance/contracts/${contractId}/status`, {
-      method: 'PATCH',
-      token,
-      body: JSON.stringify({ status }),
-    }),
-
-  pagarAluguel: (token: string, rentalId: string, body: {
-    paidAmount?: number;
-    paymentDate?: string;
-    paymentMethod?: string;
-    proofReference?: string;
-    bankName?: string;
-    observations?: string;
-  }) =>
+  pagarAluguel: (token: string, rentalId: string, body: { paidAmount?: number; paymentDate?: string; paymentMethod?: string; bankName?: string; docNumber?: string; observations?: string }) =>
     request<any>(`/api/v1/finance/rentals/${rentalId}/pay`, {
       method: 'POST',
       token,

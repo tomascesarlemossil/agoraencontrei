@@ -1,5 +1,6 @@
 import type { MetadataRoute } from 'next'
 
+// CORRIGIDO: domínio padrão é agoraencontrei.com.br
 const WEB_URL = process.env.NEXT_PUBLIC_WEB_URL ?? 'https://www.agoraencontrei.com.br'
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 
@@ -25,25 +26,25 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // Páginas estáticas principais
   const staticPages: MetadataRoute.Sitemap = [
-    { url: WEB_URL,                          lastModified: now, changeFrequency: 'daily',   priority: 1.0 },
-    { url: `${WEB_URL}/imoveis`,             lastModified: now, changeFrequency: 'hourly',  priority: 0.95 },
-    { url: `${WEB_URL}/blog`,                lastModified: now, changeFrequency: 'daily',   priority: 0.8 },
-    { url: `${WEB_URL}/corretores`,          lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
-    { url: `${WEB_URL}/avaliacao`,           lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
-    { url: `${WEB_URL}/sobre`,               lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
-    { url: `${WEB_URL}/contato`,             lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
-    { url: `${WEB_URL}/faq`,                 lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
-    { url: `${WEB_URL}/depoimentos`,         lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
-    { url: `${WEB_URL}/anunciar`,            lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
-    { url: `${WEB_URL}/financiamentos`,      lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
-    { url: `${WEB_URL}/favoritos`,           lastModified: now, changeFrequency: 'monthly', priority: 0.5 },
-    { url: `${WEB_URL}/comparar`,            lastModified: now, changeFrequency: 'monthly', priority: 0.5 },
-    { url: `${WEB_URL}/servicos`,            lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
-    { url: `${WEB_URL}/servicos/2via-boleto`,            lastModified: now, changeFrequency: 'monthly', priority: 0.5 },
-    { url: `${WEB_URL}/servicos/extrato-proprietario`,   lastModified: now, changeFrequency: 'monthly', priority: 0.5 },
-    { url: `${WEB_URL}/servicos/fichas-cadastrais`,      lastModified: now, changeFrequency: 'monthly', priority: 0.5 },
-    { url: `${WEB_URL}/politica-privacidade`,            lastModified: now, changeFrequency: 'yearly',  priority: 0.3 },
-    { url: `${WEB_URL}/termos-uso`,                      lastModified: now, changeFrequency: 'yearly',  priority: 0.3 },
+    { url: WEB_URL,                                         lastModified: now, changeFrequency: 'daily',   priority: 1.0 },
+    { url: `${WEB_URL}/imoveis`,                           lastModified: now, changeFrequency: 'hourly',  priority: 0.95 },
+    { url: `${WEB_URL}/blog`,                              lastModified: now, changeFrequency: 'daily',   priority: 0.8 },
+    { url: `${WEB_URL}/corretores`,                        lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
+    { url: `${WEB_URL}/sobre`,                             lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
+    { url: `${WEB_URL}/avaliacao`,                         lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
+    { url: `${WEB_URL}/anunciar`,                          lastModified: now, changeFrequency: 'monthly', priority: 0.65 },
+    { url: `${WEB_URL}/financiamentos`,                    lastModified: now, changeFrequency: 'monthly', priority: 0.65 },
+    { url: `${WEB_URL}/contato`,                           lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
+    { url: `${WEB_URL}/faq`,                               lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
+    { url: `${WEB_URL}/depoimentos`,                       lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
+    { url: `${WEB_URL}/favoritos`,                         lastModified: now, changeFrequency: 'weekly',  priority: 0.5 },
+    { url: `${WEB_URL}/comparar`,                          lastModified: now, changeFrequency: 'weekly',  priority: 0.5 },
+    { url: `${WEB_URL}/servicos`,                          lastModified: now, changeFrequency: 'monthly', priority: 0.55 },
+    { url: `${WEB_URL}/servicos/2via-boleto`,              lastModified: now, changeFrequency: 'monthly', priority: 0.5 },
+    { url: `${WEB_URL}/servicos/extrato-proprietario`,     lastModified: now, changeFrequency: 'monthly', priority: 0.5 },
+    { url: `${WEB_URL}/servicos/fichas-cadastrais`,        lastModified: now, changeFrequency: 'monthly', priority: 0.5 },
+    { url: `${WEB_URL}/politica-privacidade`,              lastModified: now, changeFrequency: 'yearly',  priority: 0.3 },
+    { url: `${WEB_URL}/termos-uso`,                        lastModified: now, changeFrequency: 'yearly',  priority: 0.3 },
   ]
 
   // Páginas de cidades
@@ -57,7 +58,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Páginas de imóveis individuais
   let propertyPages: MetadataRoute.Sitemap = []
   try {
-    const res = await fetch(`${API_URL}/api/v1/public/properties?limit=1000&page=1`, {
+    const res = await fetch(`${API_URL}/api/v1/public/properties?limit=2000&page=1`, {
       next: { revalidate: 3600 },
     })
     if (res.ok) {
@@ -66,7 +67,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         url: `${WEB_URL}/imoveis/${p.slug}`,
         lastModified: new Date(p.updatedAt ?? now),
         changeFrequency: 'weekly' as const,
-        priority: 0.7,
+        priority: 0.75,
       }))
     }
   } catch { /* ignore */ }
@@ -102,7 +103,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         url: `${WEB_URL}/blog/${p.slug}`,
         lastModified: new Date(p.publishedAt ?? p.createdAt ?? now),
         changeFrequency: 'monthly' as const,
-        priority: 0.6,
+        priority: 0.65,
       }))
     }
   } catch { /* ignore */ }

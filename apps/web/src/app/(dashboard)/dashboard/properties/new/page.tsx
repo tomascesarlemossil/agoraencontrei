@@ -134,6 +134,31 @@ const schema = z.object({
   exclusivityContract:    z.boolean().default(false),
   commercialConditions:   z.string().optional(),
   keyLocation:            z.string().optional(),
+  // Detalhes adicionais
+  usefulArea:             z.coerce.number().positive().optional().or(z.literal('')),
+  privateArea:            z.coerce.number().positive().optional().or(z.literal('')),
+  terrainFront:           z.coerce.number().positive().optional().or(z.literal('')),
+  terrainDepth:           z.coerce.number().positive().optional().or(z.literal('')),
+  terrainBack:            z.coerce.number().positive().optional().or(z.literal('')),
+  terrainSide:            z.coerce.number().positive().optional().or(z.literal('')),
+  kitchens:               z.coerce.number().int().min(0).default(0),
+  laundryRooms:           z.coerce.number().int().min(0).default(0),
+  serviceRooms:           z.coerce.number().int().min(0).default(0),
+  balconies:              z.coerce.number().int().min(0).default(0),
+  pools:                  z.coerce.number().int().min(0).default(0),
+  condoUnits:             z.coerce.number().int().min(0).optional().or(z.literal('')),
+  condoTowers:            z.coerce.number().int().min(0).optional().or(z.literal('')),
+  condoFloors:            z.coerce.number().int().min(0).optional().or(z.literal('')),
+  condoUnitsPerFloor:     z.coerce.number().int().min(0).optional().or(z.literal('')),
+  gasInfo:                z.string().optional(),
+  internetInfo:           z.string().optional(),
+  // Proprietário vinculado
+  ownerClientId:          z.string().optional(),
+  ownerName:              z.string().optional(),
+  ownerPhone:             z.string().optional(),
+  ownerEmail:             z.string().optional(),
+  ownerDocument:          z.string().optional(),
+  ownerNotes:             z.string().optional(),
   // Confidencial
   cib:                    z.string().optional(),
   iptuRegistration:       z.string().optional(),
@@ -145,6 +170,12 @@ const schema = z.object({
   isReserved:             z.boolean().default(false),
   authorizedPublish:      z.boolean().default(false),
   showExactLocation:      z.boolean().default(false),
+  // Financeiro do imóvel
+  pricePerMeter:          z.coerce.number().positive().optional().or(z.literal('')),
+  rentPerMeter:           z.coerce.number().positive().optional().or(z.literal('')),
+  fireInsurance:          z.coerce.number().positive().optional().or(z.literal('')),
+  administrationFee:      z.coerce.number().positive().optional().or(z.literal('')),
+  administrationFeePct:   z.coerce.number().positive().optional().or(z.literal('')),
 })
 
 type FormData = z.infer<typeof schema>
@@ -517,6 +548,11 @@ export default function NewPropertyPage() {
                 <NumInput reg={register('suitesWithCloset')} label="Suítes c/ Closet" />
                 <NumInput reg={register('demiSuites')} label="Demi-suítes" />
                 <NumInput reg={register('bathrooms')} label="Banheiros" />
+                <NumInput reg={register('kitchens')} label="Cozinhas" />
+                <NumInput reg={register('laundryRooms')} label="Lavanderia" />
+                <NumInput reg={register('serviceRooms')} label="Dep. Serviço" />
+                <NumInput reg={register('balconies')} label="Varandas" />
+                <NumInput reg={register('pools')} label="Piscinas" />
                 <NumInput reg={register('rooms')} label="Salas (total)" />
                 <NumInput reg={register('livingRooms')} label="Sala de Estar" />
                 <NumInput reg={register('diningRooms')} label="Sala de Jantar" />
@@ -536,9 +572,15 @@ export default function NewPropertyPage() {
                   <Input {...register('builtArea')} type="number" step="0.01" className={inputCls} />
                 </Field>
                 <Field label="Área Útil (m²)">
+                  <Input {...register('usefulArea')} type="number" step="0.01" className={inputCls} />
+                </Field>
+                <Field label="Área Privativa (m²)">
+                  <Input {...register('privateArea')} type="number" step="0.01" className={inputCls} />
+                </Field>
+                <Field label="Área Total (m²)">
                   <Input {...register('totalArea')} type="number" step="0.01" className={inputCls} />
                 </Field>
-                <Field label="Área Total Terreno (m²)">
+                <Field label="Área Terreno (m²)">
                   <Input {...register('landArea')} type="number" step="0.01" className={inputCls} />
                 </Field>
                 <Field label="Área Comum (m²)">
@@ -549,6 +591,18 @@ export default function NewPropertyPage() {
                 </Field>
                 <Field label="Dimensão Terreno">
                   <Input {...register('landDimensions')} placeholder="Ex: 10x20" className={inputCls} />
+                </Field>
+                <Field label="Frente do Terreno (m)">
+                  <Input {...register('terrainFront')} type="number" step="0.01" className={inputCls} />
+                </Field>
+                <Field label="Fundo do Terreno (m)">
+                  <Input {...register('terrainDepth')} type="number" step="0.01" className={inputCls} />
+                </Field>
+                <Field label="Lateral Esq. (m)">
+                  <Input {...register('terrainSide')} type="number" step="0.01" className={inputCls} />
+                </Field>
+                <Field label="Lateral Dir. (m)">
+                  <Input {...register('terrainBack')} type="number" step="0.01" className={inputCls} />
                 </Field>
                 <Field label="Face">
                   <Controller name="landFace" control={control} render={({ field }) => (
@@ -747,7 +801,70 @@ export default function NewPropertyPage() {
         {/* ── TAB: CONFIDENCIAL ───────────────────────────────────────────── */}
         {activeTab === 'confidencial' && (
           <div className="space-y-4">
-            <Section title="Documentação">
+
+            {/* Proprietário Vinculado */}
+            <Section title="Proprietário Vinculado">
+              <p className="text-xs text-white/40 -mt-1">Vincule o proprietário do imóvel a um cliente cadastrado ou preencha manualmente.</p>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                <Field label="Nome do Proprietário" span="sm:col-span-2">
+                  <Input {...register('ownerName')} className={inputCls} placeholder="Nome completo" />
+                </Field>
+                <Field label="CPF/CNPJ do Proprietário">
+                  <Input {...register('ownerDocument')} className={inputCls} placeholder="000.000.000-00" />
+                </Field>
+                <Field label="Telefone do Proprietário">
+                  <Input {...register('ownerPhone')} className={inputCls} placeholder="(16) 99999-9999" />
+                </Field>
+                <Field label="E-mail do Proprietário">
+                  <Input {...register('ownerEmail')} className={inputCls} placeholder="email@exemplo.com" />
+                </Field>
+              </div>
+              <Field label="Observações sobre o Proprietário">
+                <textarea {...register('ownerNotes')} rows={2} className={textareaCls} placeholder="Preferências, restrições, contatos adicionais..." />
+              </Field>
+            </Section>
+
+            {/* Financeiro do Imóvel */}
+            <Section title="Financeiro do Imóvel">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <Field label="Preço por m² (Venda)">
+                  <Input {...register('pricePerMeter')} type="number" step="0.01" className={inputCls} />
+                </Field>
+                <Field label="Preço por m² (Aluguel)">
+                  <Input {...register('rentPerMeter')} type="number" step="0.01" className={inputCls} />
+                </Field>
+                <Field label="Seguro Incêndio (R$)">
+                  <Input {...register('fireInsurance')} type="number" step="0.01" className={inputCls} />
+                </Field>
+                <Field label="Taxa de Administração (R$)">
+                  <Input {...register('administrationFee')} type="number" step="0.01" className={inputCls} />
+                </Field>
+                <Field label="Taxa de Administração (%)">
+                  <Input {...register('administrationFeePct')} type="number" step="0.01" min={0} max={100} className={inputCls} />
+                </Field>
+              </div>
+            </Section>
+
+            {/* Concessías e Serviços */}
+            <Section title="Concessionárias e Serviços">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                <Field label="Eletricidade (Concessionária / Nº Medidor)">
+                  <Input {...register('electricityInfo')} className={inputCls} placeholder="CPFL / Nº 12345" />
+                </Field>
+                <Field label="Água e Saneamento (Nº Hidrometro)">
+                  <Input {...register('waterInfo')} className={inputCls} placeholder="SAAE / Nº 67890" />
+                </Field>
+                <Field label="Gás (Concessionária / Nº)">
+                  <Input {...register('gasInfo')} className={inputCls} placeholder="Comgás / Nº 11111" />
+                </Field>
+                <Field label="Internet / TV a Cabo">
+                  <Input {...register('internetInfo')} className={inputCls} placeholder="Claro / Vivo / NET" />
+                </Field>
+              </div>
+            </Section>
+
+            {/* Documentação */}
+            <Section title="Documentação Cartória e Prefeitura">
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                 <Field label="CIB (Código Imobiliário Brasileiro)">
                   <Input {...register('cib')} className={inputCls} />
@@ -758,12 +875,6 @@ export default function NewPropertyPage() {
                 <Field label="Cartório de Imóveis (Nº Matrícula)">
                   <Input {...register('cartorioMatricula')} className={inputCls} />
                 </Field>
-                <Field label="Eletricidade (Concessionária)">
-                  <Input {...register('electricityInfo')} className={inputCls} />
-                </Field>
-                <Field label="Água e Saneamento">
-                  <Input {...register('waterInfo')} className={inputCls} />
-                </Field>
               </div>
               <div className="pt-2">
                 <Controller name="documentationPending" control={control} render={({ field }) => (
@@ -773,6 +884,24 @@ export default function NewPropertyPage() {
               <Field label="Observações de Documentação">
                 <textarea {...register('documentationNotes')} rows={3} className={textareaCls} />
               </Field>
+            </Section>
+
+            {/* Condomínio */}
+            <Section title="Dados do Condomínio / Empreendimento">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <Field label="Nº de Unidades">
+                  <Input {...register('condoUnits')} type="number" min={0} className={inputCls} />
+                </Field>
+                <Field label="Nº de Torres">
+                  <Input {...register('condoTowers')} type="number" min={0} className={inputCls} />
+                </Field>
+                <Field label="Nº de Andares">
+                  <Input {...register('condoFloors')} type="number" min={0} className={inputCls} />
+                </Field>
+                <Field label="Unidades por Andar">
+                  <Input {...register('condoUnitsPerFloor')} type="number" min={0} className={inputCls} />
+                </Field>
+              </div>
             </Section>
 
             <Section title="Reserva e Publicação">

@@ -335,10 +335,6 @@ export default async function financeRoutes(app: FastifyInstance) {
           orderBy: { dueDate: 'desc' },
           take: 36,
         },
-        history: {
-          orderBy: { createdAt: 'desc' },
-          take: 20,
-        },
       },
     })
     if (!contract) return reply.status(404).send({ error: 'NOT_FOUND' })
@@ -394,9 +390,7 @@ export default async function financeRoutes(app: FastifyInstance) {
           include: {
             landlord:  { select: { id: true, name: true, phone: true } },
             property:  { select: { id: true, reference: true, type: true, title: true, neighborhood: true, city: true } },
-            _count:    { select: { documents: true, rentals: true } },
-            rentals:   { orderBy: { dueDate: 'desc' }, take: 12, select: { id: true, dueDate: true, status: true, totalAmount: true, paidAmount: true, paymentDate: true, paymentMethod: true } },
-            invoices:  { orderBy: { dueDate: 'desc' }, take: 12, select: { id: true, dueDate: true, amount: true, asaasStatus: true, numBoleto: true } },
+            _count:    { select: { documents: true } },
           },
         },
         contractsAsLandlord: {
@@ -405,8 +399,7 @@ export default async function financeRoutes(app: FastifyInstance) {
           include: {
             tenant:   { select: { id: true, name: true, phone: true } },
             property: { select: { id: true, reference: true, type: true, title: true, neighborhood: true, city: true } },
-            _count:   { select: { documents: true, rentals: true } },
-            rentals:  { orderBy: { dueDate: 'desc' }, take: 12, select: { id: true, dueDate: true, status: true, totalAmount: true, paidAmount: true, paymentDate: true, repassePaidAt: true } },
+            _count:   { select: { documents: true } },
           },
         },
         contractsAsGuarantor: {
@@ -460,37 +453,92 @@ export default async function financeRoutes(app: FastifyInstance) {
     }
     const client = await app.prisma.client.create({
       data: {
-        companyId:        cid,
-        name:             body.name.trim(),
-        document:         body.document ? String(body.document).replace(/\D/g, '') : null,
-        rg:               body.rg ?? null,
-        profession:       body.profession ?? null,
-        birthDate:        body.birthDate ? new Date(body.birthDate) : null,
-        email:            body.email ?? null,
-        phone:            body.phone ?? null,
-        phoneMobile:      body.phoneMobile ?? null,
-        phoneWork:        body.phoneWork ?? null,
-        address:          body.address ?? null,
-        addressComplement: body.addressComplement ?? null,
-        neighborhood:     body.neighborhood ?? null,
-        city:             body.city ?? null,
-        state:            body.state ?? null,
-        zipCode:          body.zipCode ?? null,
-        roles:            (body.roles ?? []) as any,
-        notes:            body.notes ?? null,
-        maritalStatus:    body.maritalStatus ?? null,
-        nationality:      body.nationality ?? null,
-        spouseName:       body.spouseName ?? null,
-        spouseDocument:   body.spouseDocument ? String(body.spouseDocument).replace(/\D/g, '') : null,
-        spouseProfession: body.spouseProfession ?? null,
-        income:           body.income ?? null,
-        spouseIncome:     body.spouseIncome ?? null,
-        bankName:         body.bankName ?? null,
-        bankBranch:       body.bankBranch ?? null,
-        bankAccount:      body.bankAccount ?? null,
-        bankAccountType:  body.bankAccountType ?? null,
-        pixKey:           body.pixKey ?? null,
-        observations:     body.observations ?? null,
+        companyId:           cid,
+        name:                body.name.trim(),
+        document:            body.document ? String(body.document).replace(/\D/g, '') : null,
+        rg:                  body.rg ?? null,
+        rgIssuer:            body.rgIssuer ?? null,
+        rgIssueDate:         body.rgIssueDate ? new Date(body.rgIssueDate) : null,
+        rgState:             body.rgState ?? null,
+        cnh:                 body.cnh ?? null,
+        cnhCategory:         body.cnhCategory ?? null,
+        cnhExpiry:           body.cnhExpiry ? new Date(body.cnhExpiry) : null,
+        passportNumber:      body.passportNumber ?? null,
+        passportExpiry:      body.passportExpiry ? new Date(body.passportExpiry) : null,
+        profession:          body.profession ?? null,
+        birthDate:           body.birthDate ? new Date(body.birthDate) : null,
+        nationality:         body.nationality ?? null,
+        maritalStatus:       body.maritalStatus ?? null,
+        sex:                 body.sex ?? null,
+        education:           body.education ?? null,
+        cargo:               body.cargo ?? null,
+        businessSector:      body.businessSector ?? null,
+        employerName:        body.employerName ?? null,
+        employerCnpj:        body.employerCnpj ?? null,
+        employerAddress:     body.employerAddress ?? null,
+        employerPhone:       body.employerPhone ?? null,
+        email:               body.email ?? null,
+        phone:               body.phone ?? null,
+        phoneMobile:         body.phoneMobile ?? null,
+        phoneWork:           body.phoneWork ?? null,
+        phoneResidential:    body.phoneResidential ?? null,
+        whatsapp:            body.whatsapp ?? null,
+        instagram:           body.instagram ?? null,
+        facebook:            body.facebook ?? null,
+        website:             body.website ?? null,
+        contactChannel:      body.contactChannel ?? null,
+        address:             body.address ?? null,
+        addressComplement:   body.addressComplement ?? null,
+        neighborhood:        body.neighborhood ?? null,
+        city:                body.city ?? null,
+        state:               body.state ?? null,
+        zipCode:             body.zipCode ?? null,
+        mailingAddress:      body.mailingAddress ?? null,
+        mailingComplement:   body.mailingComplement ?? null,
+        mailingNeighborhood: body.mailingNeighborhood ?? null,
+        mailingCity:         body.mailingCity ?? null,
+        mailingState:        body.mailingState ?? null,
+        mailingZipCode:      body.mailingZipCode ?? null,
+        roles:               (body.roles ?? []) as any,
+        notes:               body.notes ?? null,
+        observations:        body.observations ?? null,
+        spouseName:          body.spouseName ?? null,
+        spouseDocument:      body.spouseDocument ? String(body.spouseDocument).replace(/\D/g, '') : null,
+        spouseProfession:    body.spouseProfession ?? null,
+        income:              body.income ?? null,
+        spouseIncome:        body.spouseIncome ?? null,
+        bankName:            body.bankName ?? null,
+        bankBranch:          body.bankBranch ?? null,
+        bankAgencyDigit:     body.bankAgencyDigit ?? null,
+        bankAccount:         body.bankAccount ?? null,
+        bankAccountDigit:    body.bankAccountDigit ?? null,
+        bankAccountType:     body.bankAccountType ?? null,
+        bankAccountSecond:   body.bankAccountSecond ?? null,
+        bankAccountSecondType: body.bankAccountSecondType ?? null,
+        pixKey:              body.pixKey ?? null,
+        guarantorType:       body.guarantorType ?? null,
+        guarantorValue:      body.guarantorValue ?? null,
+        guarantorInsurance:  body.guarantorInsurance ?? null,
+        guarantorPolicyNum:  body.guarantorPolicyNum ?? null,
+        guarantorExpiry:     body.guarantorExpiry ? new Date(body.guarantorExpiry) : null,
+        searchType:          body.searchType ?? null,
+        searchPropertyType:  body.searchPropertyType ?? [],
+        searchMinPrice:      body.searchMinPrice ?? null,
+        searchMaxPrice:      body.searchMaxPrice ?? null,
+        searchMinArea:       body.searchMinArea ?? null,
+        searchMaxArea:       body.searchMaxArea ?? null,
+        searchBedrooms:      body.searchBedrooms ?? null,
+        searchNeighborhoods: body.searchNeighborhoods ?? [],
+        searchCities:        body.searchCities ?? [],
+        searchNotes:         body.searchNotes ?? null,
+        negotiationTemp:     body.negotiationTemp ?? null,
+        category:            body.category ?? null,
+        captorName:          body.captorName ?? null,
+        captorId:            body.captorId ?? null,
+        lastContactAt:       body.lastContactAt ? new Date(body.lastContactAt) : null,
+        nextContactAt:       body.nextContactAt ? new Date(body.nextContactAt) : null,
+        rating:              body.rating ?? null,
+        tags:                body.tags ?? [],
       } as any,
     })
     await createAuditLog({
@@ -509,16 +557,27 @@ export default async function financeRoutes(app: FastifyInstance) {
     const existing = await app.prisma.client.findFirst({ where: { id, companyId: cid } })
     if (!existing) return reply.status(404).send({ error: 'NOT_FOUND' })
     const allowed = [
-      'name','document','rg','profession','birthDate','email','phone','phoneMobile','phoneWork',
-      'address','addressComplement','neighborhood','city','state','zipCode','roles','notes',
-      'maritalStatus','nationality','spouseName','spouseDocument','spouseProfession',
-      'income','spouseIncome','bankName','bankBranch','bankAccount','bankAccountType',
-      'pixKey','observations','isArchived','archivedAt','archivedReason',
+      'name','document','rg','rgIssuer','rgIssueDate','rgState','cnh','cnhCategory','cnhExpiry',
+      'passportNumber','passportExpiry','profession','birthDate','nationality','maritalStatus',
+      'sex','education','cargo','businessSector',
+      'employerName','employerCnpj','employerAddress','employerPhone',
+      'email','phone','phoneMobile','phoneWork','phoneResidential','whatsapp','instagram','facebook','website','contactChannel',
+      'address','addressComplement','neighborhood','city','state','zipCode',
+      'mailingAddress','mailingComplement','mailingNeighborhood','mailingCity','mailingState','mailingZipCode',
+      'roles','notes','observations',
+      'spouseName','spouseDocument','spouseProfession','income','spouseIncome',
+      'bankName','bankBranch','bankAgencyDigit','bankAccount','bankAccountDigit','bankAccountType',
+      'bankAccountSecond','bankAccountSecondType','pixKey',
+      'guarantorType','guarantorValue','guarantorInsurance','guarantorPolicyNum','guarantorExpiry',
+      'searchType','searchPropertyType','searchMinPrice','searchMaxPrice','searchMinArea','searchMaxArea',
+      'searchBedrooms','searchNeighborhoods','searchCities','searchNotes',
+      'negotiationTemp','category','captorName','captorId','lastContactAt','nextContactAt','rating','tags',
+      'isArchived','archivedAt','archivedReason',
     ]
     const data: Record<string, any> = {}
     for (const key of allowed) {
       if (key in body) {
-        if (key === 'birthDate' || key === 'archivedAt') {
+        if (['birthDate','archivedAt','rgIssueDate','cnhExpiry','passportExpiry','guarantorExpiry','lastContactAt','nextContactAt'].includes(key)) {
           data[key] = body[key] ? new Date(body[key]) : null
         } else if (key === 'document' || key === 'spouseDocument') {
           data[key] = body[key] ? String(body[key]).replace(/\D/g, '') : null
@@ -708,9 +767,6 @@ export default async function financeRoutes(app: FastifyInstance) {
     const body = req.body as {
       rescissionDate?: string
       status?: 'FINISHED' | 'CANCELED'
-      reason?: string
-      fine?: number
-      refund?: number
       notes?: string
     }
 
@@ -723,39 +779,10 @@ export default async function financeRoutes(app: FastifyInstance) {
     const updated = await app.prisma.contract.update({
       where: { id },
       data: {
-        status:           body.status ?? 'FINISHED',
-        isActive:         false,
-        rescissionDate:   body.rescissionDate ? new Date(body.rescissionDate) : new Date(),
-        rescissionReason: body.reason   ?? null,
-        rescissionFine:   body.fine     ?? null,
-        rescissionRefund: body.refund   ?? null,
-        rescissionNotes:  body.notes    ?? null,
+        status:         body.status ?? 'FINISHED',
+        isActive:       false,
+        rescissionDate: body.rescissionDate ? new Date(body.rescissionDate) : new Date(),
       },
-    })
-
-    // Registrar no histórico do contrato
-    await app.prisma.contractHistory.create({
-      data: {
-        contractId: id,
-        companyId:  req.user.cid,
-        action:     'RESCISAO',
-        description: `Contrato ${body.status === 'CANCELED' ? 'cancelado' : 'encerrado'}. ${body.reason ? 'Motivo: ' + body.reason : ''}`.trim(),
-        field:      'status',
-        oldValue:   contract.status,
-        newValue:   updated.status,
-        userId:     req.user.sub,
-        userName:   (req.user as any).name ?? null,
-        metadata:   { fine: body.fine, refund: body.refund },
-      },
-    })
-
-    // Cancelar aluguéis pendentes do contrato rescindido
-    const cancelledRentals = await app.prisma.rental.updateMany({
-      where: {
-        contractId: id,
-        status: { in: ['PENDING', 'LATE'] },
-      },
-      data: { status: 'CANCELLED' },
     })
 
     await createAuditLog({
@@ -764,248 +791,84 @@ export default async function financeRoutes(app: FastifyInstance) {
       resource: 'contract',
       resourceId: id,
       before: { status: contract.status, isActive: contract.isActive },
-      after:  { status: updated.status, isActive: false, rescissionDate: updated.rescissionDate, cancelledRentals: cancelledRentals.count },
+      after:  { status: updated.status, isActive: false, rescissionDate: updated.rescissionDate },
     })
 
-    return reply.send({ ...updated, cancelledRentals: cancelledRentals.count })
+    return reply.send(updated)
   })
 
-  // POST /api/v1/finance/contracts/:id/renovar — renovar contrato (gera novo contrato vinculado)
+  // POST /api/v1/finance/contracts/:id/renovar — renovar contrato
   app.post('/contracts/:id/renovar', async (req, reply) => {
     const { id } = req.params as { id: string }
-    const cid = req.user.cid
-    const body = req.body as {
-      newRentValue:      number
-      newDuration:       number   // meses
-      newStartDate:      string
-      adjustmentIndex?:  string   // IGPM | IPCA | INPC | FIXO
-      adjustmentPercent?: number
-      notes?:            string
-    }
-
-    const original = await app.prisma.contract.findFirst({
-      where: { id, companyId: cid },
+    const body = req.body as { duration: number; novoValor?: number; indiceReajuste?: string }
+    const contract = await app.prisma.contract.findFirst({
+      where: { id, companyId: req.user.cid },
     })
-    if (!original) return reply.status(404).send({ error: 'NOT_FOUND' })
-
-    // Encerrar contrato original
-    await app.prisma.contract.update({
+    if (!contract) return reply.status(404).send({ error: 'NOT_FOUND' })
+    if (contract.status !== 'ACTIVE') return reply.status(400).send({ error: 'CONTRACT_NOT_ACTIVE' })
+    const baseDate = contract.endDate ?? new Date()
+    const newEndDate = new Date(baseDate)
+    newEndDate.setMonth(newEndDate.getMonth() + (body.duration ?? 12))
+    const { Prisma } = await import('@prisma/client')
+    const updated = await app.prisma.contract.update({
       where: { id },
-      data: { status: 'FINISHED', isActive: false },
-    })
-
-    // Criar novo contrato renovado
-    const renewed = await app.prisma.contract.create({
       data: {
-        companyId:         cid,
-        propertyAddress:   original.propertyAddress,
-        propertyId:        original.propertyId,
-        iptuCode:          original.iptuCode,
-        landlordId:        original.landlordId,
-        tenantId:          original.tenantId,
-        guarantorId:       original.guarantorId,
-        landlordName:      original.landlordName,
-        tenantName:        original.tenantName,
-        startDate:         new Date(body.newStartDate),
-        duration:          body.newDuration,
-        rentValue:         body.newRentValue,
-        initialValue:      original.rentValue,
-        commission:        original.commission,
-        tenantDueDay:      original.tenantDueDay,
-        landlordDueDay:    original.landlordDueDay,
-        penalty:           original.penalty,
-        adjustmentIndex:   body.adjustmentIndex ?? original.adjustmentIndex,
-        adjustmentPercent: body.adjustmentPercent ?? null,
-        guaranteeType:     original.guaranteeType,
-        unit:              original.unit,
-        status:            'ACTIVE',
-        isActive:          true,
-        renewedFromId:     id,
-        renewalCount:      (original.renewalCount ?? 0) + 1,
-        legacyPropertyCode: original.legacyPropertyCode,
-      },
+        duration:        body.duration ?? 12,
+        endDate:         newEndDate,
+        ...(body.novoValor ? { rentValue: new Prisma.Decimal(body.novoValor) } : {}),
+        ...(body.indiceReajuste ? { adjustmentIndex: body.indiceReajuste as any } : {}),
+      } as any,
     })
-
-    // Histórico no contrato original
-    await app.prisma.contractHistory.create({
-      data: {
-        contractId:  id,
-        companyId:   cid,
-        action:      'RENOVACAO',
-        description: `Contrato renovado. Novo contrato: ${renewed.id}. Valor: R$ ${body.newRentValue}. Duração: ${body.newDuration} meses.`,
-        field:       'status',
-        oldValue:    'ACTIVE',
-        newValue:    'FINISHED',
-        userId:      req.user.sub,
-        userName:    (req.user as any).name ?? null,
-        metadata:    { renewedContractId: renewed.id, newRentValue: body.newRentValue },
-      },
-    })
-
-    // Histórico no novo contrato
-    await app.prisma.contractHistory.create({
-      data: {
-        contractId:  renewed.id,
-        companyId:   cid,
-        action:      'CRIACAO',
-        description: `Contrato criado por renovação do contrato ${original.legacyId ?? id}.`,
-        field:       'renewedFromId',
-        oldValue:    null,
-        newValue:    id,
-        userId:      req.user.sub,
-        userName:    (req.user as any).name ?? null,
-        metadata:    { originalContractId: id },
-      },
-    })
-
     await createAuditLog({
       prisma: app.prisma as any, req,
       action: 'contract.renewal',
       resource: 'contract',
       resourceId: id,
-      before: { status: 'ACTIVE', rentValue: original.rentValue },
-      after:  { renewedContractId: renewed.id, newRentValue: body.newRentValue },
+      before: { duration: contract.duration, rentValue: contract.rentValue, endDate: contract.endDate },
+      after:  { duration: updated.duration, rentValue: updated.rentValue, endDate: updated.endDate },
     })
-
-    return reply.status(201).send(renewed)
+    return reply.send(updated)
   })
 
-  // POST /api/v1/finance/contracts/:id/reajuste — aplicar reajuste de aluguel
+  // POST /api/v1/finance/contracts/:id/reajuste — aplicar reajuste manual de aluguel
   app.post('/contracts/:id/reajuste', async (req, reply) => {
     const { id } = req.params as { id: string }
-    const cid = req.user.cid
-    const body = req.body as {
-      index:      string   // IGPM | IPCA | INPC | FIXO
-      percent:    number   // percentual de reajuste (ex: 4.52)
-      newValue:   number   // novo valor do aluguel já calculado
-      applyDate?: string
-    }
-
+    const body = req.body as { percentual: number; motivo?: string; dataAplicacao?: string }
     const contract = await app.prisma.contract.findFirst({
-      where: { id, companyId: cid },
+      where: { id, companyId: req.user.cid },
     })
     if (!contract) return reply.status(404).send({ error: 'NOT_FOUND' })
     if (contract.status !== 'ACTIVE') return reply.status(400).send({ error: 'CONTRACT_NOT_ACTIVE' })
-
     const oldValue = Number(contract.rentValue ?? 0)
-
+    const newValue = parseFloat((oldValue * (1 + body.percentual / 100)).toFixed(2))
+    const { Prisma } = await import('@prisma/client')
     const updated = await app.prisma.contract.update({
       where: { id },
       data: {
-        rentValue:         body.newValue,
-        adjustmentIndex:   body.index,
-        adjustmentPercent: body.percent,
-        lastAdjustmentAt:  body.applyDate ? new Date(body.applyDate) : new Date(),
-      },
+        rentValue: new Prisma.Decimal(newValue),
+      } as any,
     })
-
-    await app.prisma.contractHistory.create({
-      data: {
-        contractId:  id,
-        companyId:   cid,
-        action:      'REAJUSTE',
-        description: `Reajuste de ${body.percent}% (${body.index}). De R$ ${oldValue.toFixed(2)} para R$ ${body.newValue.toFixed(2)}.`,
-        field:       'rentValue',
-        oldValue:    oldValue.toFixed(2),
-        newValue:    body.newValue.toFixed(2),
-        userId:      req.user.sub,
-        userName:    (req.user as any).name ?? null,
-        metadata:    { index: body.index, percent: body.percent },
-      },
-    })
-
     await createAuditLog({
       prisma: app.prisma as any, req,
       action: 'contract.adjustment',
       resource: 'contract',
       resourceId: id,
-      before: { rentValue: oldValue, adjustmentIndex: contract.adjustmentIndex },
-      after:  { rentValue: body.newValue, adjustmentIndex: body.index, adjustmentPercent: body.percent },
+      before: { rentValue: oldValue },
+      after:  { rentValue: newValue, percentual: body.percentual, motivo: body.motivo },
     })
-
-    return reply.send(updated)
-  })
-
-  // GET /api/v1/finance/contracts/:id/historico — histórico de alterações do contrato
-  app.get('/contracts/:id/historico', async (req, reply) => {
-    const { id } = req.params as { id: string }
-    const cid = req.user.cid
-
-    const contract = await app.prisma.contract.findFirst({
-      where: { id, companyId: cid },
-      select: { id: true },
-    })
-    if (!contract) return reply.status(404).send({ error: 'NOT_FOUND' })
-
-    const history = await app.prisma.contractHistory.findMany({
-      where: { contractId: id, companyId: cid },
-      orderBy: { createdAt: 'desc' },
-      take: 100,
-    })
-
-    return reply.send({ data: history })
-  })
-
-  // PATCH /api/v1/finance/contracts/:id/status — alterar status do contrato
-  app.patch('/contracts/:id/status', async (req, reply) => {
-    const { id } = req.params as { id: string }
-    const cid = req.user.cid
-    const body = req.body as { status: string }
-
-    const validStatuses = ['ACTIVE', 'FINISHED', 'CANCELED', 'IN_RENEWAL', 'EXPIRED', 'IN_NEGOTIATION']
-    if (!validStatuses.includes(body.status)) {
-      return reply.status(400).send({ error: 'INVALID_STATUS', message: `Status deve ser: ${validStatuses.join(', ')}` })
-    }
-
-    const contract = await app.prisma.contract.findFirst({
-      where: { id, companyId: cid },
-    })
-    if (!contract) return reply.status(404).send({ error: 'NOT_FOUND' })
-
-    const updated = await app.prisma.contract.update({
-      where: { id },
-      data: {
-        status:   body.status as any,
-        isActive: ['ACTIVE', 'IN_RENEWAL', 'IN_NEGOTIATION'].includes(body.status),
-      },
-    })
-
-    await app.prisma.contractHistory.create({
-      data: {
-        contractId:  id,
-        companyId:   cid,
-        action:      'ALTERACAO',
-        description: `Status alterado de ${contract.status} para ${body.status}.`,
-        field:       'status',
-        oldValue:    contract.status,
-        newValue:    body.status,
-        userId:      req.user.sub,
-        userName:    (req.user as any).name ?? null,
-      },
-    })
-
-    await createAuditLog({
-      prisma: app.prisma as any, req,
-      action: 'contract.update',
-      resource: 'contract',
-      resourceId: id,
-      before: { status: contract.status },
-      after:  { status: body.status },
-    })
-
-    return reply.send(updated)
+    return reply.send({ ...updated, novoValor: newValue, valorAnterior: oldValue })
   })
 
   // POST /api/v1/finance/rentals/:id/pay — registrar pagamento manual de aluguel
   app.post('/rentals/:id/pay', async (req, reply) => {
     const { id } = req.params as { id: string }
     const body = req.body as {
-      paidAmount?: number
-      paymentDate?: string
-      paymentMethod?: string    // PIX | BOLETO | DINHEIRO | TRANSFERENCIA | CHEQUE | CARTAO
-      proofReference?: string   // nº comprovante
-      bankName?: string         // banco
-      observations?: string     // observações
+      paidAmount?:     number
+      paymentDate?:    string
+      paymentMethod?:  string
+      bankName?:       string
+      docNumber?:      string
+      observations?:   string
     }
 
     const rental = await app.prisma.rental.findFirst({
@@ -1017,13 +880,13 @@ export default async function financeRoutes(app: FastifyInstance) {
       where: { id },
       data: {
         status:         'PAID',
-        paidAmount:     body.paidAmount      ?? Number(rental.totalAmount ?? rental.rentAmount ?? 0),
-        paymentDate:    body.paymentDate     ? new Date(body.paymentDate) : new Date(),
-        paymentMethod:  body.paymentMethod   ?? null,
-        proofReference: body.proofReference  ?? null,
-        bankName:       body.bankName        ?? null,
-        observations:   body.observations    ?? null,
-      },
+        paidAmount:     body.paidAmount   ?? Number(rental.totalAmount ?? rental.rentAmount ?? 0),
+        paymentDate:    body.paymentDate  ? new Date(body.paymentDate) : new Date(),
+        paymentMethod:  body.paymentMethod  ?? null,
+        paymentBank:    body.bankName       ?? null,
+        paymentDocNum:  body.docNumber      ?? null,
+        paymentObs:     body.observations   ?? null,
+      } as any,
     })
 
     await createAuditLog({
@@ -1032,7 +895,45 @@ export default async function financeRoutes(app: FastifyInstance) {
       resource: 'rental',
       resourceId: id,
       before: { status: rental.status, paidAmount: rental.paidAmount },
-      after:  { status: 'PAID', paidAmount: updated.paidAmount, paymentDate: updated.paymentDate },
+      after:  { status: 'PAID', paidAmount: updated.paidAmount, paymentDate: updated.paymentDate, paymentMethod: body.paymentMethod },
+    })
+
+    return reply.send(updated)
+  })
+
+  // POST /api/v1/finance/rentals/:id/estornar — Estornar pagamento de aluguel
+  app.post('/rentals/:id/estornar', async (req, reply) => {
+    const { id } = req.params as { id: string }
+    const body = req.body as {
+      reason?: string
+      estornoDate?: string
+    }
+    const rental = await app.prisma.rental.findFirst({
+      where: { id, companyId: req.user.cid },
+    })
+    if (!rental) return reply.status(404).send({ error: 'NOT_FOUND' })
+    if ((rental as any).status !== 'PAID') return reply.status(400).send({ error: 'RENTAL_NOT_PAID' })
+
+    const updated = await app.prisma.rental.update({
+      where: { id },
+      data: {
+        status:         'PENDING',
+        paidAmount:     null,
+        paymentDate:    null,
+        paymentMethod:  null,
+        paymentBank:    null,
+        paymentDocNum:  null,
+        paymentObs:     body.reason ? `[ESTORNO] ${body.reason}` : '[ESTORNO]',
+      } as any,
+    })
+
+    await createAuditLog({
+      prisma: app.prisma as any, req,
+      action: 'rental.estornar',
+      resource: 'rental',
+      resourceId: id,
+      before: { status: 'PAID', paidAmount: rental.paidAmount, paymentDate: rental.paymentDate },
+      after:  { status: 'PENDING', reason: body.reason },
     })
 
     return reply.send(updated)
@@ -1062,10 +963,6 @@ export default async function financeRoutes(app: FastifyInstance) {
       contractHtml?:       string
       guaranteeType?:      string
       status?:             string
-      adjustmentMonth?:    number
-      iptuAnnual?:         number
-      iptuParcels?:        number
-      bankFee?:            number
     }
 
     const created = await app.prisma.contract.create({
@@ -1087,11 +984,6 @@ export default async function financeRoutes(app: FastifyInstance) {
         penalty:           body.penalty            ?? null,
         commission:        body.commission         ?? null,
         contractHtml:      body.contractHtml       ?? null,
-        guaranteeType:     body.guaranteeType      ?? null,
-        adjustmentMonth:   body.adjustmentMonth    ?? null,
-        iptuAnnual:        body.iptuAnnual         ?? null,
-        iptuParcels:       body.iptuParcels        ?? null,
-        bankFee:           body.bankFee            ?? null,
         status:            (body.status as any)    ?? 'ACTIVE',
         isActive:          (body.status ?? 'ACTIVE') === 'ACTIVE',
       },
