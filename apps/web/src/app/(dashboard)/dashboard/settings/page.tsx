@@ -8,7 +8,7 @@ import { usersApi, authApi, type User } from '@/lib/api'
 import { cn } from '@/lib/utils'
 import {
   Building2, Users, User as UserIcon, Shield, Globe, Youtube, Upload, CheckCircle2,
-  Plus, Trash2, Loader2, Eye, EyeOff, Save, Settings, Plug, Camera, X, Link,
+  Plus, Trash2, Loader2, Eye, EyeOff, Save, Settings, Plug, Camera, X, Link, Pencil,
 } from 'lucide-react'
 import { UserAvatar } from '@/components/ui/UserAvatar'
 import { SystemConfigPanel } from './SystemConfigPanel'
@@ -324,6 +324,11 @@ export default function SettingsPage() {
   // ── Team ──────────────────────────────────────────────────────────────────
   const [showNewUser, setShowNewUser] = useState(false)
   const [newUser, setNewUser] = useState({ name: '', email: '', password: '', role: 'BROKER', phone: '', creciNumber: '' })
+  const [editingUserId, setEditingUserId] = useState<string | null>(null)
+  const [editUser, setEditUser] = useState({ name: '', email: '', phone: '', role: '', creciNumber: '', bio: '', avatarUrl: '' })
+  const [editUserSaved, setEditUserSaved] = useState(false)
+  const [editAvatarFile, setEditAvatarFile] = useState<File | null>(null)
+  const [editAvatarPreview, setEditAvatarPreview] = useState<string | null>(null)
 
   const { data: teamUsers, isLoading: loadingTeam } = useQuery({
     queryKey: ['users'],
@@ -346,6 +351,53 @@ export default function SettingsPage() {
     mutationFn: async (id: string) => { const token = await getValidToken(); return usersApi.delete(token!, id) },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['users'] }),
   })
+
+  const updateTeamUserMutation = useMutation({
+    mutationFn: async () => {
+      if (!editingUserId) return
+      const token = await getValidToken()
+      let avatarUrl = editUser.avatarUrl || undefined
+      if (editAvatarFile) {
+        const fd = new FormData()
+        fd.append('file', editAvatarFile)
+        fd.append('folder', 'avatars')
+        const res = await fetch(`${API_URL}/api/v1/upload`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` },
+          body: fd,
+        })
+        if (res.ok) {
+          const data = await res.json()
+          avatarUrl = data.url
+        }
+      }
+      const { avatarUrl: _omit, ...editFields } = editUser
+      return usersApi.update(token!, editingUserId, { ...editFields, ...(avatarUrl ? { avatarUrl } : {}) })
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['users'] })
+      setEditUserSaved(true)
+      setEditAvatarFile(null)
+      setEditAvatarPreview(null)
+      setTimeout(() => { setEditUserSaved(false); setEditingUserId(null) }, 1500)
+    },
+  })
+
+  const startEditUser = (u: User) => {
+    setEditingUserId(u.id)
+    setEditUser({
+      name: u.name ?? '',
+      email: u.email ?? '',
+      phone: u.phone ?? '',
+      role: u.role ?? 'BROKER',
+      creciNumber: u.creciNumber ?? '',
+      bio: (u as any).bio ?? '',
+      avatarUrl: u.avatarUrl ?? '',
+    })
+    setEditAvatarFile(null)
+    setEditAvatarPreview(null)
+    setShowNewUser(false)
+  }
 
   // ── Profile ───────────────────────────────────────────────────────────────
   const [profile, setProfile] = useState({ name: '', phone: '', creciNumber: '', bio: '' })
@@ -402,8 +454,10 @@ export default function SettingsPage() {
     },
     onSuccess: (data) => {
       qc.invalidateQueries({ queryKey: ['me'] })
-      if (avatarPreview) updateUser({ avatarUrl: avatarPreview } as any)
+      if (data?.avatarUrl) updateUser({ avatarUrl: data.avatarUrl } as any)
+      else if (avatarPreview) updateUser({ avatarUrl: avatarPreview } as any)
       setAvatarFile(null)
+      setAvatarPreview(null)
       setProfileSaved(true)
       setTimeout(() => setProfileSaved(false), 3000)
     },
@@ -566,7 +620,7 @@ export default function SettingsPage() {
                           if (res.ok) {
                             const data = await res.json()
                             await usersApi.update(token!, u.id, { avatarUrl: data.url })
-                            qc.invalidateQueries({ queryKey: ['team-users'] })
+                            qc.invalidateQueries({ queryKey: ['users'] })
                           }
                         } catch {}
                       }}
@@ -583,14 +637,101 @@ export default function SettingsPage() {
                     {ROLE_LABELS[u.role] ?? u.role}
                   </span>
                   {u.id !== user?.id && (
-                    <button onClick={() => { if (confirm(`Remover ${u.name}?`)) deleteUserMutation.mutate(u.id) }}
-                      className="text-white/50 hover:text-red-400 transition-colors ml-1">
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    <div className="flex items-center gap-1 ml-1">
+                      <button onClick={() => startEditUser(u)}
+                        className="text-white/50 hover:text-yellow-400 transition-colors"
+                        title="Editar usuário">
+                        <Pencil className="w-4 h-4" />
+                      </button>
+                      <button onClick={() => { if (confirm(`Remover ${u.name}?`)) deleteUserMutation.mutate(u.id) }}
+                        className="text-white/50 hover:text-red-400 transition-colors">
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   )}
                 </div>
               ))}
             </div>
+
+            {/* Edit user panel */}
+            {editingUserId && (
+              <div className="bg-white/5 rounded-2xl border border-yellow-400/30 p-5 space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-bold text-white">Editar Membro</h3>
+                  <button onClick={() => { setEditingUserId(null); setEditAvatarFile(null); setEditAvatarPreview(null) }} className="text-white/60 hover:text-white text-xs">Cancelar</button>
+                </div>
+                {/* Avatar upload for edited user */}
+                <div className="flex items-center gap-4">
+                  <div className="relative group flex-shrink-0">
+                    <UserAvatar
+                      name={editUser.name}
+                      avatarUrl={editAvatarPreview ?? editUser.avatarUrl || undefined}
+                      size="lg"
+                      showRing
+                    />
+                    <label
+                      htmlFor="edit-user-avatar-upload"
+                      className="absolute inset-0 rounded-full bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                      title="Trocar foto"
+                    >
+                      <Camera className="w-4 h-4 text-white" />
+                    </label>
+                    <input
+                      id="edit-user-avatar-upload"
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0]
+                        if (!file) return
+                        setEditAvatarFile(file)
+                        const reader = new FileReader()
+                        reader.onload = ev => setEditAvatarPreview(ev.target?.result as string)
+                        reader.readAsDataURL(file)
+                      }}
+                    />
+                  </div>
+                  <div className="text-sm">
+                    <label
+                      htmlFor="edit-user-avatar-upload"
+                      className="inline-flex items-center gap-1.5 text-xs text-[#C9A84C] hover:text-[#e8c66a] cursor-pointer transition-colors"
+                    >
+                      <Camera className="w-3 h-3" />
+                      {editAvatarFile ? editAvatarFile.name : 'Trocar foto'}
+                    </label>
+                    {editAvatarFile && (
+                      <button type="button" onClick={() => { setEditAvatarFile(null); setEditAvatarPreview(null) }}
+                        className="ml-2 text-xs text-red-400 hover:text-red-300">Remover</button>
+                    )}
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <DarkInput label="Nome *" value={editUser.name} onChange={e => setEditUser(p => ({ ...p, name: e.target.value }))} placeholder="Nome completo" />
+                  <DarkInput label="E-mail *" type="email" value={editUser.email} onChange={e => setEditUser(p => ({ ...p, email: e.target.value }))} placeholder="email@exemplo.com" />
+                  <DarkInput label="Telefone" value={editUser.phone} onChange={e => setEditUser(p => ({ ...p, phone: e.target.value }))} placeholder="(16) 99999-9999" />
+                  <DarkSelect label="Perfil" value={editUser.role} onChange={e => setEditUser(p => ({ ...p, role: e.target.value }))}>
+                    <option value="BROKER">Corretor</option>
+                    <option value="MANAGER">Gerente</option>
+                    <option value="FINANCIAL">Financeiro</option>
+                    <option value="LAWYER">Advogado</option>
+                    <option value="ADMIN">Administrador</option>
+                  </DarkSelect>
+                  <DarkInput label="CRECI" value={editUser.creciNumber} onChange={e => setEditUser(p => ({ ...p, creciNumber: e.target.value }))} placeholder="000000-F" />
+                </div>
+                <DarkTextarea label="Bio / Apresentação" value={editUser.bio} onChange={e => setEditUser(p => ({ ...p, bio: e.target.value }))} rows={3} placeholder="Sobre o usuário..." />
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => updateTeamUserMutation.mutate()}
+                    disabled={updateTeamUserMutation.isPending || !editUser.name}
+                    className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold disabled:opacity-50"
+                    style={{ background: 'linear-gradient(135deg, #C9A84C, #e8c66a)', color: '#1B2B5B' }}>
+                    {updateTeamUserMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                    {editUserSaved ? 'Salvo!' : 'Salvar Alterações'}
+                  </button>
+                  {updateTeamUserMutation.isError && <p className="text-xs text-red-400">Erro ao salvar</p>}
+                </div>
+              </div>
+            )}
 
             {/* Add user panel */}
             {showNewUser && (

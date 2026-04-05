@@ -746,8 +746,9 @@ export default async function publicRoutes(app: FastifyInstance) {
 
     const settings     = (company.settings as any) ?? {}
     const systemConfig = settings.systemConfig ?? {}
-    const siteConfig   = systemConfig.site ?? {}
-    const seoConfig    = systemConfig.seo  ?? {}
+    const siteConfig   = systemConfig.site   ?? {}
+    const seoConfig    = systemConfig.seo    ?? {}
+    const designConfig = systemConfig.design ?? {}
 
     return reply.send({
       // ── Legado (compatibilidade) ──────────────────────────────────────
@@ -820,6 +821,17 @@ export default async function publicRoutes(app: FastifyInstance) {
       showAnunciarSection:     siteConfig.showAnunciarSection     ?? true,
       maintenanceMode:         siteConfig.maintenanceMode         ?? false,
       maintenanceMessage:      siteConfig.maintenanceMessage      ?? 'Site em manutenção. Voltamos em breve.',
+      // ── Cores do site público ──────────────────────────────────────────
+      primaryColor:       siteConfig.primaryColor       ?? '#1B2B5B',
+      accentColor:        siteConfig.accentColor        ?? '#C9A84C',
+      backgroundColor:    siteConfig.backgroundColor    ?? '#f9f7f4',
+      textColor:          siteConfig.textColor          ?? '#1a1a1a',
+      buttonPrimaryColor: siteConfig.buttonPrimaryColor ?? '#1B2B5B',
+      buttonTextColor:    siteConfig.buttonTextColor    ?? '#ffffff',
+      buttonBorderRadius: siteConfig.buttonBorderRadius ?? 12,
+      // ── Cores do design ───────────────────────────────────────────────
+      designPrimaryColor: designConfig.primaryColor ?? '#1B2B5B',
+      designAccentColor:  designConfig.accentColor  ?? '#C9A84C',
       // ── Customização visual extra ─────────────────────────────────────
       customCss:        siteConfig.customCss        ?? '',
       customJs:         siteConfig.customJs         ?? '',

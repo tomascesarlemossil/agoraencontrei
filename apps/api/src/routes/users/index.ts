@@ -4,10 +4,12 @@ import { createAuditLog } from '../../services/audit.service.js'
 
 const UpdateUserBody = z.object({
   name: z.string().min(2).max(100).optional(),
+  email: z.string().email().optional(),
   phone: z.string().optional(),
   bio: z.string().max(500).optional(),
   creciNumber: z.string().optional(),
   avatarUrl: z.string().url().optional(),
+  role: z.enum(['ADMIN', 'MANAGER', 'BROKER', 'FINANCIAL', 'LAWYER', 'CLIENT']).optional(),
 })
 
 const CreateUserBody = z.object({
@@ -267,6 +269,25 @@ export default async function usersRoutes(app: FastifyInstance) {
     }
 
     const body = UpdateUserBody.parse(req.body)
+
+    // Only admins can change role and email (and only for other users)
+    const isAdmin = ['SUPER_ADMIN', 'ADMIN'].includes(req.user.role)
+    const isEditingSelf = id === req.user.sub
+    if (!isAdmin || isEditingSelf) {
+      delete (body as any).role
+      delete (body as any).email
+    }
+
+    // If email is being changed, check for duplicates
+    if (body.email) {
+      const emailTaken = await app.prisma.user.findFirst({
+        where: { email: body.email.toLowerCase(), id: { not: id } },
+      })
+      if (emailTaken) {
+        return reply.status(409).send({ error: 'EMAIL_EXISTS', message: 'E-mail já cadastrado' })
+      }
+      body.email = body.email.toLowerCase()
+    }
 
     const existing = await app.prisma.user.findFirst({
       where: { id, companyId: req.user.cid },
