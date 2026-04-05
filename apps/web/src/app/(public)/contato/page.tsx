@@ -9,10 +9,12 @@ export default function ContatoPage() {
   const [form, setForm] = useState({ name: '', email: '', phone: '', message: '' })
   const [submitted, setSubmitted] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [errorMessage, setErrorMessage] = useState('')
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     setSubmitting(true)
+    setErrorMessage('')
     try {
       const res = await fetch(`${API_URL}/api/v1/public/leads`, {
         method: 'POST',
@@ -30,7 +32,7 @@ export default function ContatoPage() {
       }
       setSubmitted(true)
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Erro ao enviar mensagem. Tente novamente.')
+      setErrorMessage(err instanceof Error ? err.message : 'Erro ao enviar mensagem. Tente novamente.')
     } finally {
       setSubmitting(false)
     }
@@ -249,6 +251,11 @@ export default function ContatoPage() {
                     placeholder="Como podemos ajudar?"
                   />
                 </div>
+                {errorMessage && (
+                  <div className="p-3 rounded-xl bg-red-50 border border-red-200" role="alert">
+                    <p className="text-sm text-red-700 font-medium">{errorMessage}</p>
+                  </div>
+                )}
                 <button
                   type="submit"
                   disabled={submitting}

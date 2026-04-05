@@ -3,12 +3,12 @@ import { Inter } from 'next/font/google'
 import { Providers } from '@/components/providers'
 import { WebVitals } from '@/components/WebVitals'
 import { CookieConsent } from '@/components/CookieConsent'
-import Script from 'next/script'
+import { ConditionalMetaPixel } from '@/components/ConditionalMetaPixel'
 import './globals.css'
 
 const inter = Inter({ subsets: ['latin'], display: 'swap' })
 
-const META_PIXEL_ID = '932688306232065'
+
 
 const WEB_URL = 'https://www.agoraencontrei.com.br'
 
@@ -109,7 +109,7 @@ export const metadata: Metadata = {
   },
   verification: {
     google: 'Jt8clgdW34zz2sb7qj3fCYHPFRd2Y1D5394Rah3L9Yk',
-    other: { 'facebook-domain-verification': META_PIXEL_ID },
+    other: { 'facebook-domain-verification': '932688306232065' },
   },
 }
 
@@ -218,36 +218,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdWebSite) }}
         />
-        {/* ── Meta Pixel ───────────────────────────────────────── */}
-        <Script id="meta-pixel" strategy="afterInteractive">
-          {`
-            !function(f,b,e,v,n,t,s)
-            {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-            n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-            if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-            n.queue=[];t=b.createElement(e);t.async=!0;
-            t.src=v;s=b.getElementsByTagName(e)[0];
-            s.parentNode.insertBefore(t,s)}(window, document,'script',
-            'https://connect.facebook.net/en_US/fbevents.js');
-            fbq('init', '${META_PIXEL_ID}');
-            fbq('track', 'PageView');
-          `}
-        </Script>
-        <noscript>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            height="1"
-            width="1"
-            style={{ display: 'none' }}
-            src={`https://www.facebook.com/tr?id=${META_PIXEL_ID}&ev=PageView&noscript=1`}
-            alt=""
-          />
-        </noscript>
-        {/* ── End Meta Pixel ───────────────────────────────────── */}
+        {/* ── Meta Pixel (condicional — só carrega após consentimento LGPD) ── */}
+        {/* Movido para <ConditionalMetaPixel /> no body para respeitar consentimento de cookies */}
       </head>
       <body className={inter.className}>
         <Providers>{children}</Providers>
         <WebVitals />
+        <ConditionalMetaPixel />
         <CookieConsent />
       </body>
     </html>

@@ -19,7 +19,7 @@ export function CompareBar() {
         <div className="flex items-center gap-3">
           <Columns2 className="w-5 h-5 flex-shrink-0" style={{ color: '#C9A84C' }} />
           <span className="text-white text-sm font-medium">
-            {compareIds.length} {compareIds.length === 1 ? 'imovel selecionado' : 'imoveis selecionados'}
+            {compareIds.length} {compareIds.length === 1 ? 'imóvel selecionado' : 'imóveis selecionados'}
           </span>
         </div>
 
