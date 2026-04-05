@@ -114,19 +114,26 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
   const [properties, setProperties] = useState<Property[]>([])
   const [loadingProps, setLoadingProps] = useState(false)
   const [isLoaded, setIsLoaded] = useState(false)
+  const [isCssLoaded, setIsCssLoaded] = useState(false)
   const [mapError, setMapError] = useState<string | null>(null)
   const router = useRouter()
 
-  // Inject Leaflet CSS once via useEffect (avoids hydration mismatch from inline <link>)
+  // Inject Leaflet CSS synchronously before map init to avoid broken tiles
   useEffect(() => {
     if (!document.getElementById('leaflet-css')) {
       const link = document.createElement('link')
       link.id = 'leaflet-css'
       link.rel = 'stylesheet'
       link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'
-      document.head.appendChild(link)
+      // Insert at head start so it loads before map init
+      document.head.insertBefore(link, document.head.firstChild)
+      // Wait for CSS to load before initializing map
+      link.onload = () => setIsCssLoaded(true)
+      link.onerror = () => setIsCssLoaded(true) // proceed anyway
+    } else {
+      setIsCssLoaded(true)
     }
-  }, [])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Load clusters from API
   useEffect(() => {
@@ -166,9 +173,9 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
     loadClusters()
   }, [initialPurpose])
 
-  // Initialize Leaflet map
+  // Initialize Leaflet map — only after CSS is loaded to avoid broken tiles
   useEffect(() => {
-    if (!mapRef.current || mapInstance.current) return
+    if (!mapRef.current || mapInstance.current || !isCssLoaded) return
 
     import('leaflet').then(L => {
       try {
@@ -193,6 +200,19 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
 
         mapInstance.current = map
         setIsLoaded(true)
+
+        // Force tile redraw after container is fully visible
+        setTimeout(() => { try { map.invalidateSize() } catch {} }, 50)
+        setTimeout(() => { try { map.invalidateSize() } catch {} }, 200)
+        setTimeout(() => { try { map.invalidateSize() } catch {} }, 600)
+
+        // ResizeObserver: auto-invalidate when container resizes
+        if (typeof ResizeObserver !== 'undefined' && mapRef.current) {
+          const ro = new ResizeObserver(() => {
+            try { map.invalidateSize() } catch {}
+          })
+          ro.observe(mapRef.current)
+        }
       } catch (err) {
         console.error('[MapSearch] Leaflet init error:', err)
         setMapError('Não foi possível carregar o mapa. Tente recarregar a página.')
@@ -389,13 +409,17 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
     }
 
     setLoadingProps(true)
-    // Fetch all selected neighborhoods
+    // Fetch all selected neighborhoods — use 'neighborhood' param for precise filtering
     Promise.all(
       selectedNeighborhoods.map(async n => {
-        const params = new URLSearchParams({ search: n, limit: '20' })
+        const params = new URLSearchParams({ limit: '20' })
+        params.set('neighborhood', n) // precise neighborhood filter
         if (initialPurpose) params.set('purpose', initialPurpose)
         if (initialMaxPrice) params.set('maxPrice', initialMaxPrice)
         if (initialBedrooms) params.set('bedrooms', initialBedrooms)
+        // Also add city to narrow results
+        const cluster = clusters.find(c => c.neighborhood === n)
+        if (cluster?.city) params.set('city', cluster.city)
         const res = await fetch(`${API_URL}/api/v1/public/properties?${params}`)
         if (!res.ok) return []
         const data = await res.json()
@@ -418,7 +442,13 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
   function goToListings() {
     const params = new URLSearchParams()
     if (initialPurpose) params.set('purpose', initialPurpose)
-    if (selectedNeighborhoods.length === 1) params.set('search', selectedNeighborhoods[0])
+    if (selectedNeighborhoods.length === 1) {
+      // Use neighborhood param for precise filtering
+      params.set('neighborhood', selectedNeighborhoods[0])
+    } else if (selectedNeighborhoods.length > 1) {
+      // Multiple neighborhoods — use search with first one
+      params.set('search', selectedNeighborhoods[0])
+    }
     if (initialMaxPrice) params.set('maxPrice', initialMaxPrice)
     if (initialBedrooms) params.set('bedrooms', initialBedrooms)
     router.push(`/imoveis?${params}`)
