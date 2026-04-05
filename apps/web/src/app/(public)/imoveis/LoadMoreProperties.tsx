@@ -222,10 +222,25 @@ export function LoadMoreProperties({ initialProperties, initialTotal, initialTot
     if (searchParams.type) qs.set('type', searchParams.type)
     if (searchParams.purpose) qs.set('purpose', searchParams.purpose)
     if (searchParams.city) qs.set('city', searchParams.city)
+    if (searchParams.neighborhood) qs.set('neighborhood', searchParams.neighborhood)
     if (searchParams.minPrice) qs.set('minPrice', searchParams.minPrice)
     if (searchParams.maxPrice) qs.set('maxPrice', searchParams.maxPrice)
     if (searchParams.bedrooms) qs.set('bedrooms', searchParams.bedrooms)
-    if (searchParams.sortBy) qs.set('sortBy', searchParams.sortBy)
+    if (searchParams.minArea) qs.set('minArea', searchParams.minArea)
+    if (searchParams.maxArea) qs.set('maxArea', searchParams.maxArea)
+    if (searchParams.bathrooms) qs.set('bathrooms', searchParams.bathrooms)
+    if (searchParams.closedCondo) qs.set('closedCondo', searchParams.closedCondo)
+    // Sort: decompose the user-facing `sort` param into API `sortBy` + `sortOrder`
+    const SORT_MAP: Record<string, { sortBy: string; sortOrder: string }> = {
+      'createdAt_desc': { sortBy: 'createdAt', sortOrder: 'desc' },
+      'price_asc':      { sortBy: 'price',     sortOrder: 'asc'  },
+      'price_desc':     { sortBy: 'price',     sortOrder: 'desc' },
+      'views_desc':     { sortBy: 'views',     sortOrder: 'desc' },
+    }
+    const sortVal = searchParams.sort ?? 'createdAt_desc'
+    const sortParsed = SORT_MAP[sortVal] ?? { sortBy: 'createdAt', sortOrder: 'desc' }
+    qs.set('sortBy', sortParsed.sortBy)
+    qs.set('sortOrder', sortParsed.sortOrder)
 
     try {
       const res = await fetch(`${API_URL}/api/v1/public/properties?${qs}`)

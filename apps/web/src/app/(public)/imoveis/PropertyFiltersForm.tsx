@@ -30,10 +30,10 @@ const TYPE_OPTIONS = [
 ]
 
 const SORT_OPTIONS = [
-  { value: 'createdAt', label: 'Mais recentes' },
-  { value: 'price', label: 'Menor preço' },
-  { value: '-price', label: 'Maior preço' },
-  { value: 'views', label: 'Mais visitados' },
+  { value: 'createdAt_desc', label: 'Mais Recentes' },
+  { value: 'price_asc', label: 'Menor Preço' },
+  { value: 'price_desc', label: 'Maior Preço' },
+  { value: 'views_desc', label: 'Mais Vistos' },
 ]
 
 const BEDROOM_OPTIONS = ['', '1', '2', '3', '4', '5']
@@ -66,7 +66,7 @@ export function PropertyFiltersForm({ initialValues }: Props) {
   }
 
   const hasActiveFilters = Object.entries(initialValues).some(
-    ([k, v]) => v && k !== 'sortBy'
+    ([k, v]) => v && k !== 'sort' && k !== 'sortBy'
   )
 
   return (
@@ -114,8 +114,8 @@ export function PropertyFiltersForm({ initialValues }: Props) {
           {TYPE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
         </select>
         <select
-          name="sortBy"
-          defaultValue={initialValues.sortBy ?? 'createdAt'}
+          name="sort"
+          defaultValue={initialValues.sort ?? 'createdAt_desc'}
           className="px-3 py-2.5 text-sm rounded-xl border focus:outline-none appearance-none text-gray-800"
           style={{ borderColor: '#e0dbd0' }}
         >

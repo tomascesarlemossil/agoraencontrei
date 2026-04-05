@@ -42,9 +42,29 @@ interface SearchParams {
   minArea?: string
   maxArea?: string
   bathrooms?: string
+  sort?: string
   sortBy?: string
+  sortOrder?: string
   view?: string
   closedCondo?: string
+}
+
+// Map the user-facing `sort` param to API `sortBy` + `sortOrder`
+const SORT_MAP: Record<string, { sortBy: string; sortOrder: string }> = {
+  'createdAt_desc': { sortBy: 'createdAt', sortOrder: 'desc' },
+  'price_asc':      { sortBy: 'price',     sortOrder: 'asc'  },
+  'price_desc':     { sortBy: 'price',     sortOrder: 'desc' },
+  'views_desc':     { sortBy: 'views',     sortOrder: 'desc' },
+}
+
+function parseSortParam(params: SearchParams): { sortBy: string; sortOrder: string } {
+  if (params.sort && SORT_MAP[params.sort]) return SORT_MAP[params.sort]
+  // Legacy support: if sortBy was passed directly (old URLs)
+  if (params.sortBy === '-price') return { sortBy: 'price', sortOrder: 'desc' }
+  if (params.sortBy === 'price')  return { sortBy: 'price', sortOrder: 'asc'  }
+  if (params.sortBy === 'views')  return { sortBy: 'views', sortOrder: 'desc' }
+  if (params.sortBy)              return { sortBy: params.sortBy, sortOrder: params.sortOrder ?? 'desc' }
+  return { sortBy: 'createdAt', sortOrder: 'desc' }
 }
 
 function buildQs(params: SearchParams, overrides?: Record<string, string>) {
@@ -61,8 +81,10 @@ function buildQs(params: SearchParams, overrides?: Record<string, string>) {
   if (params.minArea)   qs.set('minArea', params.minArea)
   if (params.maxArea)   qs.set('maxArea', params.maxArea)
   if (params.bathrooms)   qs.set('bathrooms', params.bathrooms)
-  if (params.sortBy)      qs.set('sortBy', params.sortBy)
   if (params.closedCondo) qs.set('closedCondo', params.closedCondo)
+  const { sortBy, sortOrder } = parseSortParam(params)
+  qs.set('sortBy', sortBy)
+  qs.set('sortOrder', sortOrder)
   qs.set('limit', '48')
   if (overrides) Object.entries(overrides).forEach(([k, v]) => v ? qs.set(k, v) : qs.delete(k))
   return qs

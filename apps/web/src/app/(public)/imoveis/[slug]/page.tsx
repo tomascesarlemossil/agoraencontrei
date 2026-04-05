@@ -11,6 +11,7 @@ import { LeadCaptureForm } from './LeadCaptureForm'
 import { BankButton } from './BankButton'
 import { JsonLdScript } from './JsonLdScript'
 import { PrintButton } from './PrintButton'
+import { CopyLinkButton } from './CopyLinkButton'
 import { PropostaOnline } from './PropostaOnline'
 import { ScheduleVisitModal } from '../ScheduleVisitModal'
 import { PropertyGallery } from '@/components/public/PropertyGallery'
@@ -818,6 +819,7 @@ export default async function PropertyDetailPage({ params }: { params: { slug: s
                   style={{ borderColor: '#ddd9d0', color: '#6b7280' }}>
                   <Mail className="w-5 h-5" />
                 </a>
+                <CopyLinkButton url={propertyUrl} />
                 <a href={`https://wa.me/${whatsappNum}?text=${whatsappMsg}`} target="_blank" rel="noreferrer"
                   className="ml-auto flex items-center gap-1.5 text-xs font-semibold hover:underline"
                   style={{ color: '#1B2B5B' }}>
