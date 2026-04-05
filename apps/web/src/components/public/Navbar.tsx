@@ -106,7 +106,7 @@ export function Navbar() {
         </Link>
 
         {/* Desktop nav */}
-        <nav className="hidden md:flex items-center gap-1">
+        <nav className="hidden md:flex items-center gap-1" role="navigation" aria-label="Menu principal">
           {NAV_LINKS.map(link => (
             <Link
               key={link.href}
@@ -215,6 +215,7 @@ export function Navbar() {
           <button
             onClick={() => setMenuOpen(v => !v)}
             className="md:hidden p-2 text-white hover:bg-white/10 rounded-lg transition-colors"
+            aria-label={menuOpen ? 'Fechar menu' : 'Abrir menu'}
           >
             {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
