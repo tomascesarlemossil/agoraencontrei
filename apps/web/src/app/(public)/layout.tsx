@@ -269,7 +269,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
               <a href="/termos-uso" className="hover:text-white/70 transition-colors">Termos de Uso</a>
               <a href="/favoritos" className="hover:text-white/70 transition-colors">Favoritos</a>
             </div>
-            <p className="text-white/50 text-xs">Fundada em 2002 · CRECI 279051</p>
+            <p className="text-white/50 text-xs">AgoraEncontrei · Fundado em 2026 por Tomás Lemos · Imobiliária Lemos, criada por Noêmia em 2002 · CRECI 279051</p>
           </div>
         </div>
       </footer>
