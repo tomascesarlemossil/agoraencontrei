@@ -26,6 +26,7 @@ export function AnunciarForm() {
   const [loading, setLoading] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [photoCount, setPhotoCount] = useState(0)
+  const [honeypot, setHoneypot] = useState('')
   const [form, setForm] = useState({
     name: '',
     email: '',
@@ -52,6 +53,7 @@ export function AnunciarForm() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    if (honeypot) return // bot detected
     if (!form.name || !form.phone || !form.type || !form.purpose) return
     setLoading(true)
     try {
@@ -127,6 +129,10 @@ export function AnunciarForm() {
 
   return (
     <form onSubmit={handleSubmit} className="bg-white rounded-3xl border shadow-sm overflow-hidden" style={{ borderColor: '#e8e4dc' }}>
+      {/* Honeypot anti-spam */}
+      <div className="absolute opacity-0 -z-10 h-0 overflow-hidden" aria-hidden="true" tabIndex={-1}>
+        <input name="website_url" type="text" value={honeypot} onChange={e => setHoneypot(e.target.value)} autoComplete="off" tabIndex={-1} />
+      </div>
       {/* Header */}
       <div className="px-6 py-5 border-b" style={{ borderColor: '#ede9df', backgroundColor: '#fafaf8' }}>
         <h2 className="text-lg font-bold" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>

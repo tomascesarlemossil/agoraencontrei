@@ -3,22 +3,25 @@ import Link from 'next/link'
 import { Users, Home, Award, Shield, Eye, Heart, Building2, ChevronRight } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'Sobre Nós | Imobiliária Lemos — Franca/SP',
+  title: 'Sobre Nós | AgoraEncontrei — Imobiliária Lemos — Franca/SP',
   description:
-    'Conheça a Imobiliária Lemos, fundada em 2002 em Franca/SP por Noêmia Pires Lemos. Mais de 20 anos de experiência, 1.000+ imóveis administrados e equipe de 10+ profissionais. CRECI 279051.',
+    'Conheça o AgoraEncontrei, marketplace imobiliário fundado em 2026 por Tomás Lemos, através da Imobiliária Lemos — criada por Noêmia em 2002 em Franca/SP. Mais de 22 anos de experiência, 1.000+ imóveis administrados e equipe de 10+ profissionais. CRECI 279051.',
   keywords: [
+    'AgoraEncontrei',
     'Imobiliária Lemos',
     'sobre nós',
     'Franca SP',
     'CRECI 279051',
     'Noêmia Pires Lemos',
+    'Tomás Lemos',
+    'marketplace imobiliário',
     'imobiliária Franca',
     'história imobiliária',
   ],
   openGraph: {
-    title: 'Sobre Nós | Imobiliária Lemos — Franca/SP',
+    title: 'Sobre Nós | AgoraEncontrei — Imobiliária Lemos — Franca/SP',
     description:
-      'Fundada em 2002, a Imobiliária Lemos é referência em Franca/SP com mais de 1.000 imóveis administrados.',
+      'AgoraEncontrei: marketplace imobiliário fundado em 2026 por Tomás Lemos. Imobiliária Lemos, fundada por Noêmia em 2002, é referência em Franca/SP com mais de 1.000 imóveis.',
     type: 'website',
     locale: 'pt_BR',
   },

@@ -4,9 +4,16 @@ import { Calculator, TrendingDown, Shield, Phone, CheckCircle } from 'lucide-rea
 import { BankLogo } from './BankLogo'
 
 export const metadata: Metadata = {
-  title: 'Financiamento Imobiliário em Franca/SP | Imobiliária Lemos',
-  description: 'Simule e financie seu imóvel com os melhores bancos. Caixa Econômica, Bradesco, Itaú, Santander, BB, Inter, SICOOB, Sicredi e BEXT. Imobiliária Lemos — CRECI 279051.',
-  keywords: 'financiamento imobiliário franca, simulador financiamento franca, caixa econômica federal franca, financiar casa franca sp, crédito imobiliário franca',
+  title: 'Financiamento Imobiliário em Franca/SP | AgoraEncontrei',
+  description: 'Simule e financie seu imóvel com os melhores bancos. Caixa, Bradesco, Itaú, Santander, BB, Inter, SICOOB, Sicredi e BEXT. AgoraEncontrei — Imobiliária Lemos — CRECI 279051.',
+  keywords: 'financiamento imobiliário franca, simulador financiamento franca, caixa econômica federal franca, financiar casa franca sp, crédito imobiliário franca, agoraencontrei financiamento',
+  openGraph: {
+    title: 'Financiamento Imobiliário | AgoraEncontrei — Imobiliária Lemos',
+    description: 'Simule seu financiamento imobiliário com os principais bancos do Brasil. Orientação gratuita em Franca/SP.',
+    type: 'website',
+    locale: 'pt_BR',
+    siteName: 'AgoraEncontrei — Imobiliária Lemos',
+  },
 }
 
 const BANKS = [

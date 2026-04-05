@@ -79,7 +79,7 @@ export async function generateMetadata({ params }: { params: { cidade: string; b
       description,
       type: 'website',
       locale: 'pt_BR',
-      siteName: 'Imobiliária Lemos',
+      siteName: 'AgoraEncontrei — Imobiliária Lemos',
       images: [{ url: '/og-image.jpg', width: 1200, height: 630 }],
     },
     alternates: {
@@ -88,7 +88,7 @@ export async function generateMetadata({ params }: { params: { cidade: string; b
   }
 }
 
-export const revalidate = 3600
+export const revalidate = 120
 
 export default async function BairroPage({ params }: { params: { cidade: string; bairro: string } }) {
   const { properties, total, cityName, bairroName, citySlug, bairroSlug } = await fetchBairroData(params.cidade, params.bairro)

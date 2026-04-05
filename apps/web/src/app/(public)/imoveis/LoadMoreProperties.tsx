@@ -115,12 +115,15 @@ function PropertyCardCarousel({ images, coverImage, title, isFeatured, purpose, 
 
       {/* Dot indicators */}
       {hasMultiple && isHovered && (
-        <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1 z-10">
+        <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1 z-10" role="tablist" aria-label="Fotos do imóvel">
           {allImages.slice(0, 8).map((_, i) => (
             <button
               key={i}
               onClick={(e) => goTo(i, e)}
               className="rounded-full transition-all"
+              role="tab"
+              aria-selected={i === currentIdx}
+              aria-label={`Foto ${i + 1} de ${Math.min(allImages.length, 8)}`}
               style={{
                 width: i === currentIdx ? 16 : 6,
                 height: 6,

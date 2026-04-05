@@ -2,18 +2,18 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { MembroCard, type Membro } from './MembroCard'
 
-// Busca corretores do banco para obter creciNumber atualizado
-async function fetchTeamFromDB(): Promise<Record<string, string>> {
+// Busca corretores do banco para obter creciNumber e avatarUrl atualizados
+async function fetchTeamFromDB(): Promise<Record<string, { creci?: string; avatarUrl?: string }>> {
   try {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'https://www.agoraencontrei.com.br/api/v1'
-    const res = await fetch(`${apiUrl}/public/team`, { next: { revalidate: 300 } })
+    const res = await fetch(`${apiUrl}/public/team`, { next: { revalidate: 60 } })
     if (!res.ok) return {}
-    const users: Array<{ name: string; email: string; creciNumber?: string }> = await res.json()
-    // Mapeia email -> creciNumber
+    const users: Array<{ name: string; email: string; creciNumber?: string; avatarUrl?: string }> = await res.json()
+    // Mapeia email -> { creci, avatarUrl }
     return Object.fromEntries(
       users
-        .filter(u => u.email && u.creciNumber)
-        .map(u => [u.email.toLowerCase(), u.creciNumber!])
+        .filter(u => u.email)
+        .map(u => [u.email.toLowerCase(), { creci: u.creciNumber, avatarUrl: u.avatarUrl }])
     )
   } catch {
     return {}
@@ -21,16 +21,17 @@ async function fetchTeamFromDB(): Promise<Record<string, string>> {
 }
 
 export const metadata: Metadata = {
-  title: 'Nossa Equipe | Imobiliária Lemos — Franca/SP',
+  title: 'Nossa Equipe | AgoraEncontrei — Imobiliária Lemos — Franca/SP',
   description: 'Conheça a equipe da Imobiliária Lemos em Franca/SP. Diretoria, corretores e administrativo especializados em compra, venda e locação de imóveis. CRECI 279051.',
-  keywords: ['corretores Franca SP', 'Imobiliária Lemos equipe', 'CRECI Franca', 'corretor de imóveis Franca'],
+  keywords: ['corretores Franca SP', 'Imobiliária Lemos equipe', 'CRECI Franca', 'corretor de imóveis Franca', 'AgoraEncontrei equipe'],
 }
 
-export const revalidate = 300
+export const revalidate = 60
 
 // ─────────────────────────────────────────────────────────────────────────────
-// DADOS DA EQUIPE — Para trocar foto, altere o campo "photo" de cada membro
-// Coloque a nova foto em /apps/web/public/corretores/<nome-do-arquivo>.jpg
+// DADOS DA EQUIPE — Fotos podem ser trocadas pelo Dashboard (Settings > Equipe)
+// A foto do banco (avatarUrl) tem prioridade sobre a foto estática abaixo.
+// Para fallback manual: coloque em /apps/web/public/corretores/<nome>.jpg
 // ─────────────────────────────────────────────────────────────────────────────
 const EQUIPE = {
   diretoria: [
@@ -185,6 +186,8 @@ function SecaoEquipe({ titulo, badge, cor, membros }: {
           ? 'grid-cols-2 sm:grid-cols-1 max-w-xs mx-auto'
           : membros.length <= 3
           ? 'grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 max-w-3xl mx-auto'
+          : membros.length <= 6
+          ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-6'
           : 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5'
       }`}>
         {membros.map((m) => (
@@ -195,20 +198,25 @@ function SecaoEquipe({ titulo, badge, cor, membros }: {
   )
 }
 
-// Mescla dados estáticos com creciNumber do banco (por email)
-function mergeCreci(membros: Membro[], creciMap: Record<string, string>): Membro[] {
-  return membros.map(m => ({
-    ...m,
-    creci: creciMap[m.email?.toLowerCase() ?? ''] ?? m.creci,
-  }))
+// Mescla dados estáticos com creciNumber e avatarUrl do banco (por email)
+function mergeFromDB(membros: Membro[], dbMap: Record<string, { creci?: string; avatarUrl?: string }>): Membro[] {
+  return membros.map(m => {
+    const dbData = dbMap[m.email?.toLowerCase() ?? '']
+    return {
+      ...m,
+      creci: dbData?.creci ?? m.creci,
+      // Foto do banco tem prioridade sobre a estática (permite trocar pelo dashboard)
+      photo: dbData?.avatarUrl || m.photo,
+    }
+  })
 }
 
 export default async function CorretoresPage() {
-  const creciMap = await fetchTeamFromDB()
+  const dbMap = await fetchTeamFromDB()
 
-  const diretoria = mergeCreci(EQUIPE.diretoria, creciMap)
-  const corretores = mergeCreci(EQUIPE.corretores, creciMap)
-  const administrativo = mergeCreci(EQUIPE.administrativo, creciMap)
+  const diretoria = mergeFromDB(EQUIPE.diretoria, dbMap)
+  const corretores = mergeFromDB(EQUIPE.corretores, dbMap)
+  const administrativo = mergeFromDB(EQUIPE.administrativo, dbMap)
 
   return (
     <main className="min-h-screen" style={{ backgroundColor: '#f9f7f4' }}>

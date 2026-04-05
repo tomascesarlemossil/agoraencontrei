@@ -100,7 +100,7 @@ function VideoCard({ post }: { post: Post }) {
             </div>
           )
         ) : thumbUrl ? (
-          <img src={thumbUrl} alt={post.title} className="w-full h-full object-cover" />
+          <img src={thumbUrl} alt={post.title} loading="lazy" className="w-full h-full object-cover" />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-gray-100">
             <Play className="w-12 h-12 text-gray-300" />

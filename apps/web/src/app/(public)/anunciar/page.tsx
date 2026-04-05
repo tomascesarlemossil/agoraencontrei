@@ -3,9 +3,16 @@ import { Phone, TrendingUp, Users, Shield, Star, CheckCircle } from 'lucide-reac
 import { AnunciarForm } from './AnunciarForm'
 
 export const metadata: Metadata = {
-  title: 'Anuncie seu Imóvel em Franca/SP | Imobiliária Lemos',
-  description: 'Cadastre seu imóvel para venda ou locação com a Imobiliária Lemos em Franca/SP. Atendimento personalizado, ampla divulgação e CRECI 279051.',
-  keywords: 'anunciar imóvel franca, cadastrar imóvel franca sp, vender casa franca, alugar imóvel franca, imobiliária lemos franca',
+  title: 'Anuncie seu Imóvel Grátis em Franca/SP | AgoraEncontrei',
+  description: 'Cadastre seu imóvel para venda ou locação no AgoraEncontrei — marketplace da Imobiliária Lemos. Anúncio gratuito, ampla divulgação e CRECI 279051.',
+  keywords: 'anunciar imóvel grátis, anunciar imóvel franca, cadastrar imóvel franca sp, vender casa franca, alugar imóvel franca, agoraencontrei anunciar, marketplace imobiliário franca',
+  openGraph: {
+    title: 'Anuncie seu Imóvel Grátis | AgoraEncontrei — Imobiliária Lemos',
+    description: 'Cadastre seu imóvel gratuitamente no marketplace imobiliário de Franca/SP. Ampla divulgação e atendimento personalizado.',
+    type: 'website',
+    locale: 'pt_BR',
+    siteName: 'AgoraEncontrei — Imobiliária Lemos',
+  },
 }
 
 const VANTAGENS = [

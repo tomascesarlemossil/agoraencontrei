@@ -9,10 +9,14 @@ export default function ContatoPage() {
   const [form, setForm] = useState({ name: '', email: '', phone: '', message: '' })
   const [submitted, setSubmitted] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [errorMessage, setErrorMessage] = useState('')
+  const [honeypot, setHoneypot] = useState('')
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
+    if (honeypot) return // bot detected
     setSubmitting(true)
+    setErrorMessage('')
     try {
       const res = await fetch(`${API_URL}/api/v1/public/leads`, {
         method: 'POST',
@@ -30,7 +34,7 @@ export default function ContatoPage() {
       }
       setSubmitted(true)
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Erro ao enviar mensagem. Tente novamente.')
+      setErrorMessage(err instanceof Error ? err.message : 'Erro ao enviar mensagem. Tente novamente.')
     } finally {
       setSubmitting(false)
     }
@@ -194,6 +198,10 @@ export default function ContatoPage() {
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-5">
+                {/* Honeypot anti-spam */}
+                <div className="absolute opacity-0 -z-10 h-0 overflow-hidden" aria-hidden="true" tabIndex={-1}>
+                  <input name="website_url" type="text" value={honeypot} onChange={e => setHoneypot(e.target.value)} autoComplete="off" tabIndex={-1} />
+                </div>
                 <div>
                   <label htmlFor="name" className="block text-sm font-medium mb-1.5" style={{ color: '#1B2B5B' }}>
                     Nome
@@ -249,6 +257,11 @@ export default function ContatoPage() {
                     placeholder="Como podemos ajudar?"
                   />
                 </div>
+                {errorMessage && (
+                  <div className="p-3 rounded-xl bg-red-50 border border-red-200" role="alert">
+                    <p className="text-sm text-red-700 font-medium">{errorMessage}</p>
+                  </div>
+                )}
                 <button
                   type="submit"
                   disabled={submitting}

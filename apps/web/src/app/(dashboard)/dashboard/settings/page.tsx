@@ -5,6 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@/hooks/useAuth'
 import { useAuthStore } from '@/stores/auth.store'
 import { usersApi, authApi, type User } from '@/lib/api'
+import { revalidatePublicPages, PAGES } from '@/lib/revalidate'
 import { cn } from '@/lib/utils'
 import {
   Building2, Users, User as UserIcon, Shield, Globe, Youtube, Upload, CheckCircle2,
@@ -235,7 +236,12 @@ export default function SettingsPage() {
       if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.message ?? 'Erro ao salvar empresa') }
       return res.json()
     },
-    onSuccess: () => { setEmpresaSaved(true); setTimeout(() => setEmpresaSaved(false), 3000) },
+    onSuccess: () => {
+      setEmpresaSaved(true)
+      setTimeout(() => setEmpresaSaved(false), 3000)
+      // Revalidar todas as páginas públicas (logo, configurações)
+      revalidatePublicPages(PAGES.all)
+    },
     onError: (e: Error) => { alert('Erro ao salvar: ' + e.message) },
   })
 
@@ -388,6 +394,8 @@ export default function SettingsPage() {
       setEditAvatarFile(null)
       setEditAvatarPreview(null)
       setTimeout(() => { setEditUserSaved(false); setEditingUserId(null) }, 1500)
+      // Revalidar páginas públicas imediatamente
+      revalidatePublicPages(PAGES.team)
     },
   })
 
@@ -468,6 +476,8 @@ export default function SettingsPage() {
       setAvatarPreview(null)
       setProfileSaved(true)
       setTimeout(() => setProfileSaved(false), 3000)
+      // Revalidar páginas públicas imediatamente
+      revalidatePublicPages(PAGES.team)
     },
   })
 
@@ -629,6 +639,8 @@ export default function SettingsPage() {
                             const data = await res.json()
                             await usersApi.update(token!, u.id, { avatarUrl: data.url })
                             qc.invalidateQueries({ queryKey: ['users'] })
+                            // Revalidar páginas públicas imediatamente
+                            revalidatePublicPages(PAGES.team)
                           }
                         } catch {}
                       }}

@@ -176,7 +176,7 @@ export function FloatingChatbot() {
           </div>
 
           {/* Messages */}
-          <div className="bg-white h-72 overflow-y-auto p-4 space-y-3">
+          <div className="bg-white h-72 overflow-y-auto p-4 space-y-3" role="log" aria-live="polite" aria-label="Mensagens do chat">
             {messages.map((msg, i) => (
               <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                 {msg.role === 'bot' && (
@@ -265,6 +265,7 @@ export function FloatingChatbot() {
               onChange={e => setInput(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(input) } }}
               placeholder={isTyping ? 'Aguarde...' : 'Digite sua mensagem...'}
+              aria-label="Digite sua mensagem para o assistente"
               className="flex-1 text-xs px-3 py-2 rounded-xl border focus:outline-none focus:ring-1 focus:ring-[#1B2B5B] placeholder-gray-400"
               style={{ borderColor: '#e0dbd0', backgroundColor: '#ffffff', color: '#111827', caretColor: '#1B2B5B', opacity: 1 }}
               autoComplete="off"

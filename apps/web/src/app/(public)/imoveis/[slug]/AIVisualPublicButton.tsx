@@ -218,7 +218,7 @@ export function AIVisualPublicButton({ propertySlug, images, title }: Props) {
                         }}
                         aria-label={`Foto ${i + 1}`}
                       >
-                        <img src={url} alt="" className="w-full h-full object-cover" loading="lazy" />
+                        <img src={url} alt={`Foto ${i + 1} do imóvel`} className="w-full h-full object-cover" loading="lazy" />
                       </button>
                     ))}
                   </div>
@@ -228,7 +228,7 @@ export function AIVisualPublicButton({ propertySlug, images, title }: Props) {
               {/* Result */}
               {outputUrl && (
                 <div className="rounded-2xl overflow-hidden border-2" style={{ borderColor: '#C9A84C' }}>
-                  <img src={outputUrl} alt="Visualização gerada por IA" className="w-full object-cover" />
+                  <img src={outputUrl} alt="Visualização gerada por IA" loading="lazy" className="w-full object-cover" />
                   <div className="px-4 py-3 text-center space-y-3" style={{ backgroundColor: '#fffdf9' }}>
                     <p className="text-sm font-semibold" style={{ color: '#1B2B5B' }}>
                       Imagem gerada com sucesso!

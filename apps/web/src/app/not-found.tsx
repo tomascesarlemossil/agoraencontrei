@@ -3,8 +3,9 @@ import Link from 'next/link'
 import { Home, Search, MessageCircle, MapPin } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'Página não encontrada | Imobiliária Lemos',
-  description: 'A página que você procura não foi encontrada. Volte para a página inicial ou explore nossos imóveis.',
+  title: 'Página não encontrada | AgoraEncontrei — Imobiliária Lemos',
+  description: 'A página que você procura não foi encontrada. Volte para a página inicial ou explore nossos 1.000+ imóveis em Franca e região.',
+  robots: { index: false, follow: true },
 }
 
 export default function NotFound() {

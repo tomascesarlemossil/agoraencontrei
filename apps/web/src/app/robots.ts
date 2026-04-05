@@ -5,8 +5,24 @@ const WEB_URL = process.env.NEXT_PUBLIC_WEB_URL ?? 'https://www.agoraencontrei.c
 export default function robots(): MetadataRoute.Robots {
   return {
     rules: [
-      { userAgent: '*', allow: '/', disallow: ['/dashboard/', '/api/'] },
-      { userAgent: 'Googlebot', allow: '/', disallow: ['/dashboard/'] },
+      {
+        userAgent: '*',
+        allow: '/',
+        disallow: [
+          '/dashboard/',
+          '/api/',
+          '/login',
+          '/portal/',
+          '/servicos/2via-boleto',
+          '/servicos/extrato-proprietario',
+          '/_next/',
+        ],
+      },
+      {
+        userAgent: 'Googlebot',
+        allow: '/',
+        disallow: ['/dashboard/', '/api/', '/login', '/portal/'],
+      },
     ],
     sitemap: `${WEB_URL}/sitemap.xml`,
     host: WEB_URL,

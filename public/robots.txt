@@ -5,9 +5,17 @@ Allow: /
 Disallow: /dashboard/
 Disallow: /login
 Disallow: /api/
+Disallow: /_next/
+
+# Specific Googlebot rules
+User-agent: Googlebot
+Allow: /
+Disallow: /dashboard/
+Disallow: /api/
 
 # Crawl delay
 Crawl-delay: 1
 
-# Sitemap
-Sitemap: https://www.imobiliarialemos.com.br/sitemap.xml
+# Host & Sitemap
+Host: https://www.agoraencontrei.com.br
+Sitemap: https://www.agoraencontrei.com.br/sitemap.xml

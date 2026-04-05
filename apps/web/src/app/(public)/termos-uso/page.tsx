@@ -1,9 +1,9 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Termos de Uso | AgoraEncontrei - Imobiliaria Lemos',
+  title: 'Termos de Uso | AgoraEncontrei — Imobiliária Lemos',
   description:
-    'Termos de Uso do site AgoraEncontrei, plataforma da Imobiliaria Lemos em Franca/SP. Condicoes de acesso e utilizacao do site.',
+    'Termos de Uso do site AgoraEncontrei, plataforma da Imobiliária Lemos em Franca/SP. Condições de acesso e utilização do site.',
 }
 
 export default function TermosUsoPage() {

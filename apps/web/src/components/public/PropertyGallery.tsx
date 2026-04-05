@@ -110,7 +110,7 @@ function Lightbox({
             className="object-contain"
             sizes="100vw"
             priority
-            unoptimized
+            quality={85}
           />
         </div>
 
@@ -192,7 +192,7 @@ export function PropertyGallery({
             className="object-cover hover:scale-[1.02] transition-transform duration-500"
             sizes="(max-width: 1024px) 100vw, 66vw"
             priority
-            unoptimized
+            quality={85}
           />
 
           {/* Badges */}
@@ -253,7 +253,7 @@ export function PropertyGallery({
                   fill
                   className="object-cover group-hover:scale-105 transition-transform duration-300"
                   sizes="25vw"
-                  unoptimized
+                  quality={85}
                 />
                 {/* Last thumbnail — show remaining count */}
                 {i === 3 && remaining > 0 && (

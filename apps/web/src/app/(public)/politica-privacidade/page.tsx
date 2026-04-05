@@ -1,9 +1,9 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Politica de Privacidade | AgoraEncontrei - Imobiliaria Lemos',
+  title: 'Política de Privacidade | AgoraEncontrei — Imobiliária Lemos',
   description:
-    'Politica de Privacidade da Imobiliaria Lemos (AgoraEncontrei). Saiba como coletamos, usamos e protegemos seus dados pessoais conforme a LGPD.',
+    'Política de Privacidade da Imobiliária Lemos (AgoraEncontrei). Saiba como coletamos, usamos e protegemos seus dados pessoais conforme a LGPD (Lei 13.709/2018).',
 }
 
 export default function PoliticaPrivacidadePage() {

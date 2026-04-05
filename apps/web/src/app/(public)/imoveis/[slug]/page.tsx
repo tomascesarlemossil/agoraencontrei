@@ -19,7 +19,7 @@ import { PropertyMap } from '@/components/public/PropertyMap'
 import { SimilarProperties } from '@/components/public/SimilarProperties'
 import { AIVisualPublicButton } from './AIVisualPublicButton'
 
-export const revalidate = 300
+export const revalidate = 60
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.agoraencontrei.com.br'
@@ -170,7 +170,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
       images: images.map(url => ({ url, width: 1200, height: 630, alt: p.title })),
       type: 'website',
       url: `${SITE_URL}/imoveis/${p.slug}`,
-      siteName: 'Imobiliária Lemos — AgoraEncontrei',
+      siteName: 'AgoraEncontrei — Imobiliária Lemos',
       locale: 'pt_BR',
     },
     twitter: {
@@ -378,15 +378,26 @@ export default async function PropertyDetailPage({ params }: { params: { slug: s
   const youtubeId = getYouTubeId(p.videoUrl)
 
   const jsonLd = buildJsonLd(p, SITE_URL)
+  const breadcrumbJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Início', item: SITE_URL },
+      { '@type': 'ListItem', position: 2, name: 'Imóveis', item: `${SITE_URL}/imoveis` },
+      ...(p.city ? [{ '@type': 'ListItem', position: 3, name: p.city, item: `${SITE_URL}/imoveis?cidade=${encodeURIComponent(p.city)}` }] : []),
+      { '@type': 'ListItem', position: p.city ? 4 : 3, name: p.title?.slice(0, 60) || (TYPE_LABEL[p.type] ?? p.type) },
+    ],
+  }
 
   return (
     <div style={{ backgroundColor: '#f5f3ef' }} className="min-h-screen">
       {/* JSON-LD Structured Data — client component to avoid React 18 script hoisting hydration mismatch */}
       <JsonLdScript data={jsonLd} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
 
       {/* ── Breadcrumb ─────────────────────────────────────── */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-4 pb-2">
-        <nav className="flex items-center gap-1.5 text-sm text-gray-500 flex-wrap">
+        <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-sm text-gray-500 flex-wrap">
           <Link href="/" className="hover:text-gray-600 transition-colors">Início</Link>
           <ChevronRight className="w-3.5 h-3.5 flex-shrink-0" />
           <Link href="/imoveis" className="hover:text-gray-600 transition-colors">Imóveis</Link>
@@ -930,7 +941,7 @@ function BrokerCard({ broker, whatsappNum, whatsappMsg, visitMsg, p, condoName }
           {/* Avatar */}
           {broker?.avatarUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={broker.avatarUrl} alt={broker.name}
+            <img src={broker.avatarUrl} alt={broker.name} loading="lazy"
               className="h-16 w-16 rounded-2xl object-cover flex-shrink-0 shadow-md"
               style={{ border: '2.5px solid #C9A84C' }} />
           ) : (

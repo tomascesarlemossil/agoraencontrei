@@ -1,6 +1,11 @@
+import type { Metadata } from 'next'
 import { Sidebar } from '@/components/dashboard/sidebar'
 import { AuthGuard } from '@/components/dashboard/guard'
 import { SSEProvider } from '@/components/dashboard/SSEProvider'
+
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+}
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (

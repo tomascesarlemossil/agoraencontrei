@@ -75,6 +75,8 @@ export function PropertyFiltersForm({ initialValues }: Props) {
       onSubmit={handleSubmit}
       className="rounded-2xl p-5 mb-6 border bg-white"
       style={{ borderColor: '#e8e4dc' }}
+      role="search"
+      aria-label="Filtrar imóveis"
     >
       {/* Main row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
@@ -85,6 +87,7 @@ export function PropertyFiltersForm({ initialValues }: Props) {
             value={searchValue}
             onChange={e => setSearchValue(e.target.value)}
             placeholder="Buscar bairro, cidade, código..."
+            aria-label="Buscar imóveis por bairro, cidade ou código"
             className="w-full pl-9 pr-9 py-2.5 text-sm rounded-xl border focus:outline-none focus:ring-2 focus:ring-[#1B2B5B] transition-all text-gray-800 placeholder:text-gray-500"
             style={{ borderColor: '#e0dbd0' }}
           />
@@ -100,7 +103,8 @@ export function PropertyFiltersForm({ initialValues }: Props) {
         <select
           name="purpose"
           defaultValue={initialValues.purpose ?? ''}
-          className="px-3 py-2.5 text-sm rounded-xl border focus:outline-none appearance-none text-gray-800"
+          aria-label="Finalidade do imóvel"
+          className="px-3 py-2.5 text-sm rounded-xl border focus:outline-none focus:ring-2 focus:ring-[#1B2B5B] appearance-none text-gray-800"
           style={{ borderColor: '#e0dbd0' }}
         >
           {PURPOSE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
@@ -108,7 +112,8 @@ export function PropertyFiltersForm({ initialValues }: Props) {
         <select
           name="type"
           defaultValue={initialValues.type ?? ''}
-          className="px-3 py-2.5 text-sm rounded-xl border focus:outline-none appearance-none text-gray-800"
+          aria-label="Tipo de imóvel"
+          className="px-3 py-2.5 text-sm rounded-xl border focus:outline-none focus:ring-2 focus:ring-[#1B2B5B] appearance-none text-gray-800"
           style={{ borderColor: '#e0dbd0' }}
         >
           {TYPE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
@@ -116,7 +121,8 @@ export function PropertyFiltersForm({ initialValues }: Props) {
         <select
           name="sort"
           defaultValue={initialValues.sort ?? 'createdAt_desc'}
-          className="px-3 py-2.5 text-sm rounded-xl border focus:outline-none appearance-none text-gray-800"
+          aria-label="Ordenar resultados"
+          className="px-3 py-2.5 text-sm rounded-xl border focus:outline-none focus:ring-2 focus:ring-[#1B2B5B] appearance-none text-gray-800"
           style={{ borderColor: '#e0dbd0' }}
         >
           {SORT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
@@ -128,9 +134,11 @@ export function PropertyFiltersForm({ initialValues }: Props) {
           type="button"
           onClick={() => setShowAdvanced(v => !v)}
           className="flex items-center gap-1.5 text-xs font-medium transition-colors"
-          style={{ color: showAdvanced ? '#1B2B5B' : '#9ca3af' }}
+          style={{ color: showAdvanced ? '#1B2B5B' : '#6b7280' }}
+          aria-expanded={showAdvanced}
+          aria-controls="advanced-filters"
         >
-          <SlidersHorizontal className="w-3.5 h-3.5" />
+          <SlidersHorizontal className="w-3.5 h-3.5" aria-hidden="true" />
           {showAdvanced ? 'Menos filtros' : 'Mais filtros'}
         </button>
         <div className="flex-1" />
@@ -155,9 +163,9 @@ export function PropertyFiltersForm({ initialValues }: Props) {
       </div>
 
       {showAdvanced && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mt-4 pt-4 border-t" style={{ borderColor: '#e8e4dc' }}>
+        <div id="advanced-filters" className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mt-4 pt-4 border-t" style={{ borderColor: '#e8e4dc' }}>
           <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1.5">Preço mínimo (R$)</label>
+            <label className="block text-xs font-medium text-gray-600 mb-1.5">Preço mínimo (R$)</label>
             <input
               name="minPrice"
               type="number"
@@ -168,7 +176,7 @@ export function PropertyFiltersForm({ initialValues }: Props) {
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1.5">Preço máximo (R$)</label>
+            <label className="block text-xs font-medium text-gray-600 mb-1.5">Preço máximo (R$)</label>
             <input
               name="maxPrice"
               type="number"
@@ -179,7 +187,7 @@ export function PropertyFiltersForm({ initialValues }: Props) {
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1.5">Quartos mín.</label>
+            <label className="block text-xs font-medium text-gray-600 mb-1.5">Quartos mín.</label>
             <div className="flex gap-1">
               {BEDROOM_OPTIONS.map(b => (
                 <label key={b} className="flex-1 cursor-pointer">
@@ -199,7 +207,7 @@ export function PropertyFiltersForm({ initialValues }: Props) {
             </div>
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1.5">Cidade</label>
+            <label className="block text-xs font-medium text-gray-600 mb-1.5">Cidade</label>
             <input
               name="city"
               defaultValue={initialValues.city}
@@ -209,7 +217,7 @@ export function PropertyFiltersForm({ initialValues }: Props) {
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1.5">Bairro</label>
+            <label className="block text-xs font-medium text-gray-600 mb-1.5">Bairro</label>
             <input
               name="neighborhood"
               defaultValue={initialValues.neighborhood}
@@ -219,7 +227,7 @@ export function PropertyFiltersForm({ initialValues }: Props) {
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1.5">Área mín. (m²)</label>
+            <label className="block text-xs font-medium text-gray-600 mb-1.5">Área mín. (m²)</label>
             <input
               name="minArea"
               type="number"
@@ -230,7 +238,7 @@ export function PropertyFiltersForm({ initialValues }: Props) {
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1.5">Área máx. (m²)</label>
+            <label className="block text-xs font-medium text-gray-600 mb-1.5">Área máx. (m²)</label>
             <input
               name="maxArea"
               type="number"

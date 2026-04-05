@@ -8,34 +8,34 @@ import { SmartQuiz } from './SmartQuiz'
 import { PresentationSection } from './PresentationSection'
 
 export const metadata: Metadata = {
-  title: 'Imobiliária Lemos — Franca/SP | Comprar, Alugar e Avaliar Imóveis',
-  description: 'Há mais de 20 anos conectando pessoas aos melhores imóveis de Franca e região. Compra, venda, locação e avaliação. CRECI 279051. Casas, apartamentos, terrenos e imóveis comerciais.',
-  keywords: ['imobiliária franca', 'imóveis franca sp', 'alugar casa franca', 'comprar apartamento franca', 'imobiliária lemos', 'locação franca', 'venda imóveis franca', 'CRECI 279051'],
+  title: 'AgoraEncontrei — Marketplace Imobiliário de Franca/SP | Imobiliária Lemos',
+  description: 'Encontre seu imóvel ideal em Franca e região. 1.000+ imóveis com busca por IA e mapa interativo. Casas, apartamentos, terrenos e imóveis comerciais. Marketplace criado pela Imobiliária Lemos — 22+ anos de tradição. CRECI 279051.',
+  keywords: ['agoraencontrei', 'marketplace imobiliário', 'imobiliária franca', 'imóveis franca sp', 'alugar casa franca', 'comprar apartamento franca', 'imobiliária lemos', 'locação franca', 'venda imóveis franca', 'CRECI 279051', 'busca imóvel IA', 'mapa imóveis franca', 'anunciar imóvel grátis'],
   openGraph: {
-    title: 'Imobiliária Lemos — Franca/SP',
-    description: 'Há mais de 20 anos conectando pessoas aos melhores imóveis de Franca e região.',
+    title: 'AgoraEncontrei — Marketplace Imobiliário de Franca/SP',
+    description: 'Há mais de 22 anos conectando pessoas aos melhores imóveis de Franca e região. Marketplace criado pela Imobiliária Lemos.',
     type: 'website',
     locale: 'pt_BR',
-    siteName: 'Imobiliária Lemos',
-    images: [{ url: '/og-image.jpg', width: 1200, height: 630, alt: 'Imobiliária Lemos — Franca/SP' }],
+    siteName: 'AgoraEncontrei — Imobiliária Lemos',
+    images: [{ url: '/og-image.jpg', width: 1200, height: 630, alt: 'AgoraEncontrei — Marketplace Imobiliário de Franca/SP' }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Imobiliária Lemos — Franca/SP',
+    title: 'AgoraEncontrei — Marketplace Imobiliário de Franca/SP',
     description: 'Imóveis de qualidade em Franca e região. CRECI 279051.',
   },
   robots: { index: true, follow: true },
   alternates: { canonical: 'https://www.agoraencontrei.com.br' },
 }
 
-export const revalidate = 300
+export const revalidate = 60
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 
 async function fetchFeaturedProperties() {
   try {
     const res = await fetch(`${API_URL}/api/v1/public/properties?limit=8&sortBy=createdAt`, {
-      next: { revalidate: 300 },
+      next: { revalidate: 60 },
     })
     if (!res.ok) return []
     const data = await res.json()
@@ -48,7 +48,7 @@ async function fetchFeaturedProperties() {
 async function fetchStats() {
   try {
     const res = await fetch(`${API_URL}/api/v1/public/properties?limit=1`, {
-      next: { revalidate: 300 },
+      next: { revalidate: 60 },
     })
     if (!res.ok) return { total: 0 }
     const data = await res.json()
@@ -61,7 +61,7 @@ async function fetchStats() {
 async function fetchTeam() {
   try {
     const res = await fetch(`${API_URL}/api/v1/public/team`, {
-      next: { revalidate: 300 },
+      next: { revalidate: 60 },
     })
     if (!res.ok) return []
     const data = await res.json()

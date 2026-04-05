@@ -231,15 +231,23 @@ export function Navbar() {
             onClick={() => setMenuOpen(v => !v)}
             className="md:hidden p-2 text-white hover:bg-white/10 rounded-lg transition-colors"
             aria-label={menuOpen ? 'Fechar menu' : 'Abrir menu'}
+            aria-expanded={menuOpen}
+            aria-controls="mobile-menu"
           >
-            {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            {menuOpen ? <X className="w-5 h-5" aria-hidden="true" /> : <Menu className="w-5 h-5" aria-hidden="true" />}
           </button>
         </div>
       </div>
 
       {/* Mobile menu */}
       {menuOpen && (
-        <div style={{ backgroundColor: '#152347' }} className="md:hidden border-t border-white/10 px-4 py-3 space-y-1">
+        <nav
+          id="mobile-menu"
+          role="navigation"
+          aria-label="Menu mobile"
+          style={{ backgroundColor: '#152347' }}
+          className="md:hidden border-t border-white/10 px-4 py-3 space-y-1"
+        >
           {NAV_LINKS.map(link => (
             <Link
               key={link.href}
@@ -290,7 +298,7 @@ export function Navbar() {
           >
             Falar com corretor
           </a>
-        </div>
+        </nav>
       )}
     </header>
   )
