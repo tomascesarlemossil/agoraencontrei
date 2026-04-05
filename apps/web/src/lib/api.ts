@@ -242,7 +242,7 @@ export const usersApi = {
   create: (token: string, body: { name: string; email: string; password: string; role: string; phone?: string; creciNumber?: string }) =>
     request<User>('/api/v1/users', { method: 'POST', token, body: JSON.stringify(body) }),
 
-  update: (token: string, id: string, body: { name?: string; phone?: string; bio?: string; creciNumber?: string; avatarUrl?: string }) =>
+  update: (token: string, id: string, body: { name?: string; email?: string; phone?: string; bio?: string; creciNumber?: string; avatarUrl?: string; role?: string }) =>
     request<User>(`/api/v1/users/${id}`, { method: 'PATCH', token, body: JSON.stringify(body) }),
 
   delete: (token: string, id: string) =>

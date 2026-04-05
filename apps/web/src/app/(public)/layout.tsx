@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { Phone, MapPin, Instagram, Facebook, Youtube } from 'lucide-react'
 import { Navbar } from '@/components/public/Navbar'
 import { FloatingChatbot } from '@/components/chat/FloatingChatbot'
+import { SystemThemeInjector } from '@/components/public/SystemThemeInjector'
 
 export const metadata: Metadata = {
   title: {
@@ -40,9 +41,10 @@ const FOOTER_SERVICOS = [
 
 export default function PublicLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#f8f6f1' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--site-background-color, #f8f6f1)' }}>
+      <SystemThemeInjector />
       {/* Top info bar */}
-      <div style={{ backgroundColor: '#1B2B5B' }} className="hidden lg:block">
+      <div style={{ backgroundColor: 'var(--site-primary-color, #1B2B5B)' }} className="hidden lg:block">
         <div className="max-w-7xl mx-auto px-6 h-9 flex items-center justify-between text-xs text-white/70">
           <div className="flex items-center gap-6">
             <a href="tel:1637230045" className="flex items-center gap-1.5 hover:text-white transition-colors">
@@ -79,7 +81,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
       <FloatingChatbot />
 
       {/* Footer */}
-      <footer style={{ backgroundColor: '#1B2B5B' }} className="mt-20 pt-14 pb-8">
+      <footer style={{ backgroundColor: 'var(--site-primary-color, #1B2B5B)' }} className="mt-20 pt-14 pb-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-10 mb-10">
             {/* Brand */}
@@ -87,13 +89,13 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
               <div className="flex items-center gap-3 mb-4">
                 <div
                   className="h-10 w-10 rounded-lg flex items-center justify-center text-white font-bold"
-                  style={{ backgroundColor: '#C9A84C' }}
+                  style={{ backgroundColor: 'var(--site-accent-color, #C9A84C)' }}
                 >
                   IL
                 </div>
                 <div>
                   <p className="font-bold text-white text-sm" style={{ fontFamily: 'Georgia, serif' }}>IMOBILIÁRIA</p>
-                  <p className="font-bold text-sm" style={{ color: '#C9A84C', fontFamily: 'Georgia, serif' }}>LEMOS</p>
+                  <p className="font-bold text-sm" style={{ color: 'var(--site-accent-color, #C9A84C)', fontFamily: 'Georgia, serif' }}>LEMOS</p>
                 </div>
               </div>
               <p className="text-white/50 text-xs leading-relaxed">
@@ -159,7 +161,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
 
             {/* Imóveis */}
             <div>
-              <p className="text-sm font-semibold mb-4 tracking-wide uppercase" style={{ color: '#C9A84C' }}>Imóveis</p>
+              <p className="text-sm font-semibold mb-4 tracking-wide uppercase" style={{ color: 'var(--site-accent-color, #C9A84C)' }}>Imóveis</p>
               <ul className="space-y-2.5">
                 {FOOTER_IMOVEIS.map(l => (
                   <li key={l.href}>
@@ -171,7 +173,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
 
             {/* Serviços */}
             <div>
-              <p className="text-sm font-semibold mb-4 tracking-wide uppercase" style={{ color: '#C9A84C' }}>Serviços</p>
+              <p className="text-sm font-semibold mb-4 tracking-wide uppercase" style={{ color: 'var(--site-accent-color, #C9A84C)' }}>Serviços</p>
               <ul className="space-y-2.5">
                 {FOOTER_SERVICOS.map(l => (
                   <li key={l.href}>
@@ -180,11 +182,11 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
                 ))}
               </ul>
               {/* Área de Acesso */}
-              <p className="text-sm font-semibold mt-6 mb-3 tracking-wide uppercase" style={{ color: '#C9A84C' }}>Área de Acesso</p>
+              <p className="text-sm font-semibold mt-6 mb-3 tracking-wide uppercase" style={{ color: 'var(--site-accent-color, #C9A84C)' }}>Área de Acesso</p>
               <ul className="space-y-2.5">
                 <li>
                   <Link href="/dashboard" className="flex items-center gap-2 text-white/50 text-sm hover:text-white transition-colors group">
-                    <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ backgroundColor: '#C9A84C' }} />
+                    <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ backgroundColor: 'var(--site-accent-color, #C9A84C)' }} />
                     Painel Administrativo
                   </Link>
                 </li>
@@ -205,7 +207,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
 
             {/* Contato */}
             <div>
-              <p className="text-sm font-semibold mb-4 tracking-wide uppercase" style={{ color: '#C9A84C' }}>Contato</p>
+              <p className="text-sm font-semibold mb-4 tracking-wide uppercase" style={{ color: 'var(--site-accent-color, #C9A84C)' }}>Contato</p>
               <ul className="space-y-3 text-sm">
                 <li>
                   <p className="text-white/40 text-xs uppercase tracking-wider mb-0.5">Fixo</p>
@@ -218,7 +220,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
                 <li>
                   <p className="text-white/40 text-xs uppercase tracking-wider mb-0.5">WhatsApp</p>
                   <a href="https://wa.me/5516981010004" target="_blank" rel="noreferrer"
-                    className="hover:opacity-80 transition-opacity" style={{ color: '#C9A84C' }}>
+                    className="hover:opacity-80 transition-opacity" style={{ color: 'var(--site-accent-color, #C9A84C)' }}>
                     (16) 98101-0004
                   </a>
                 </li>
@@ -230,7 +232,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
                     target="_blank"
                     rel="noreferrer"
                     className="text-xs mt-1 inline-block hover:opacity-80 transition-opacity"
-                    style={{ color: '#C9A84C' }}
+                    style={{ color: 'var(--site-accent-color, #C9A84C)' }}
                   >
                     www.imobiliarialemos.com.br
                   </a>

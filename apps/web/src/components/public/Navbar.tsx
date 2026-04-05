@@ -79,7 +79,7 @@ export function Navbar() {
     <header
       className="sticky top-0 z-50 transition-all duration-300"
       style={{
-        backgroundColor: scrolled ? 'rgba(27, 43, 91, 0.97)' : '#1B2B5B',
+        backgroundColor: 'var(--site-primary-color, #1B2B5B)',
         backdropFilter: scrolled ? 'blur(12px)' : 'none',
         boxShadow: scrolled ? '0 2px 24px rgba(27,43,91,0.3)' : 'none',
       }}
@@ -99,7 +99,7 @@ export function Navbar() {
             <p className="font-bold text-white text-sm leading-none tracking-wide" style={{ fontFamily: 'Georgia, serif' }}>
               IMOBILIÁRIA
             </p>
-            <p className="font-bold text-sm leading-none tracking-widest" style={{ color: '#C9A84C', fontFamily: 'Georgia, serif' }}>
+            <p className="font-bold text-sm leading-none tracking-widest" style={{ color: 'var(--site-accent-color, #C9A84C)', fontFamily: 'Georgia, serif' }}>
               LEMOS
             </p>
           </div>
@@ -208,7 +208,7 @@ export function Navbar() {
             target="_blank"
             rel="noreferrer"
             className="hidden sm:flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg transition-all hover:brightness-110"
-            style={{ backgroundColor: '#C9A84C', color: '#1B2B5B' }}
+            style={{ backgroundColor: 'var(--site-accent-color, #C9A84C)', color: 'var(--site-primary-color, #1B2B5B)' }}
           >
             Falar com corretor
           </a>
@@ -270,7 +270,7 @@ export function Navbar() {
             target="_blank"
             rel="noreferrer"
             className="block mt-2 px-3 py-2.5 text-sm font-semibold text-center rounded-lg"
-            style={{ backgroundColor: '#C9A84C', color: '#1B2B5B' }}
+            style={{ backgroundColor: 'var(--site-accent-color, #C9A84C)', color: 'var(--site-primary-color, #1B2B5B)' }}
           >
             Falar com corretor
           </a>

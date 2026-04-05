@@ -46,6 +46,17 @@ const EQUIPE = {
       bio: 'Fundadora da Imobiliária Lemos, com mais de 20 anos de experiência no mercado imobiliário de Franca/SP.',
     },
     {
+      id: 'nilton',
+      name: 'Nilton Lemos',
+      role: 'Co-Fundador · Gestão, Obras, Investimentos e Reformas',
+      creci: '',
+      phone: '5516999654949',
+      email: 'nilton@imobiliarialemos.com.br',
+      photo: '/corretores/nilton-lemos.jpg',  // foto real
+      specialties: ['Gestão', 'Obras', 'Investimentos', 'Reformas'],
+      bio: 'Co-fundador da Imobiliária Lemos, responsável pela gestão de obras, investimentos e reformas.',
+    },
+    {
       id: 'naira',
       name: 'Naira Cristina Lemos',
       role: 'Diretoria',
@@ -66,17 +77,6 @@ const EQUIPE = {
       photo: '/corretores/nadia-lemos.jpg',  // foto real
       specialties: ['Imóveis Comerciais', 'Compra e Venda', 'Avaliação'],
       bio: 'Especialista em imóveis comerciais e negociações diferenciadas. Comprometida com os melhores resultados.',
-    },
-    {
-      id: 'nilton',
-      name: 'Nilton Lemos',
-      role: 'Diretoria',
-      creci: '',
-      phone: '5516999654949',
-      email: 'nilton@imobiliarialemos.com.br',
-      photo: '/corretores/nilton-lemos.jpg',  // foto real
-      specialties: ['Gestão', 'Administração de Imóveis'],
-      bio: 'Membro da diretoria responsável pela gestão e administração de imóveis da Imobiliária Lemos.',
     },
     {
       id: 'tomas',
@@ -181,9 +181,9 @@ function SecaoEquipe({ titulo, badge, cor, membros }: {
           {titulo}
         </h2>
       </div>
-      <div className={`grid gap-6 ${
+      <div className={`grid gap-3 sm:gap-6 ${
         membros.length === 1
-          ? 'grid-cols-1 max-w-xs mx-auto'
+          ? 'grid-cols-2 sm:grid-cols-1 max-w-xs mx-auto'
           : membros.length <= 3
           ? 'grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 max-w-3xl mx-auto'
           : 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5'
