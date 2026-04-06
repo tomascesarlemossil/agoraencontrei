@@ -10,7 +10,19 @@ import { PresentationSection } from './PresentationSection'
 export const metadata: Metadata = {
   title: 'AgoraEncontrei — Marketplace Imobiliário de Franca/SP | Imobiliária Lemos',
   description: 'Encontre seu imóvel ideal em Franca e região. 1.000+ imóveis com busca por IA e mapa interativo. Casas, apartamentos, terrenos e imóveis comerciais. Marketplace criado pela Imobiliária Lemos — 22+ anos de tradição. CRECI 279051.',
-  keywords: ['agoraencontrei', 'marketplace imobiliário', 'imobiliária franca', 'imóveis franca sp', 'alugar casa franca', 'comprar apartamento franca', 'imobiliária lemos', 'locação franca', 'venda imóveis franca', 'CRECI 279051', 'busca imóvel IA', 'mapa imóveis franca', 'anunciar imóvel grátis'],
+  keywords: [
+    'agoraencontrei', 'marketplace imobiliário', 'imobiliária franca', 'imóveis franca sp',
+    'alugar casa franca', 'comprar apartamento franca', 'imobiliária lemos', 'locação franca',
+    'venda imóveis franca', 'CRECI 279051', 'busca imóvel IA', 'mapa imóveis franca',
+    'anunciar imóvel grátis', 'casas para alugar franca sp', 'apartamentos para alugar franca sp',
+    'casas à venda franca sp', 'apartamentos à venda franca sp', 'terrenos franca sp',
+    'imóveis comerciais franca sp', 'chácaras franca sp', 'loteamentos franca sp',
+    'imóveis jardim california franca', 'imóveis jardim europa franca', 'imóveis centro franca',
+    'imóveis vila lemos franca', 'imóveis jardim paulista franca', 'imóveis jardim america franca',
+    'aluguel casa franca sp', 'aluguel apartamento franca sp', 'comprar casa franca sp',
+    'imobiliária franca sp creci', 'corretor de imóveis franca sp', 'avaliação imóvel franca',
+    'financiamento imóvel franca', 'imóvel franca são paulo', 'melhor imobiliária franca',
+  ],
   openGraph: {
     title: 'AgoraEncontrei — Marketplace Imobiliário de Franca/SP',
     description: 'Há mais de 22 anos conectando pessoas aos melhores imóveis de Franca e região. Marketplace criado pela Imobiliária Lemos.',
@@ -102,11 +114,70 @@ const CATEGORIES = [
   { label: 'Lançamentos', isFeatured: true, icon: '🚀', count: null },
 ]
 
+// Schema.org LocalBusiness + RealEstateAgent para SEO local
+const LOCAL_BUSINESS_SCHEMA = {
+  '@context': 'https://schema.org',
+  '@type': ['LocalBusiness', 'RealEstateAgent'],
+  '@id': 'https://www.agoraencontrei.com.br/#organization',
+  name: 'Imobili\u00e1ria Lemos \u2014 AgoraEncontrei',
+  alternateName: ['Imobili\u00e1ria Lemos', 'AgoraEncontrei', 'Lemos Im\u00f3veis Franca'],
+  description: 'Imobili\u00e1ria com mais de 22 anos de tradi\u00e7\u00e3o em Franca/SP. Especializada em compra, venda e loca\u00e7\u00e3o de im\u00f3veis residenciais e comerciais. CRECI 279051.',
+  url: 'https://www.agoraencontrei.com.br',
+  logo: 'https://www.agoraencontrei.com.br/logo-lemos.png',
+  image: 'https://www.agoraencontrei.com.br/og-image.jpg',
+  telephone: '+55-16-3722-0000',
+  email: 'contato@agoraencontrei.com.br',
+  address: {
+    '@type': 'PostalAddress',
+    streetAddress: 'Rua Major Claudiano, 1500',
+    addressLocality: 'Franca',
+    addressRegion: 'SP',
+    postalCode: '14400-690',
+    addressCountry: 'BR',
+  },
+  geo: {
+    '@type': 'GeoCoordinates',
+    latitude: -20.5386,
+    longitude: -47.4006,
+  },
+  openingHoursSpecification: [
+    { '@type': 'OpeningHoursSpecification', dayOfWeek: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'], opens: '08:00', closes: '18:00' },
+    { '@type': 'OpeningHoursSpecification', dayOfWeek: 'Saturday', opens: '08:00', closes: '12:00' },
+  ],
+  priceRange: '$$',
+  areaServed: [
+    { '@type': 'City', name: 'Franca', containedInPlace: { '@type': 'State', name: 'S\u00e3o Paulo' } },
+    { '@type': 'City', name: 'Ribeir\u00e3o Preto', containedInPlace: { '@type': 'State', name: 'S\u00e3o Paulo' } },
+    { '@type': 'City', name: 'Cristais Paulista', containedInPlace: { '@type': 'State', name: 'S\u00e3o Paulo' } },
+    { '@type': 'City', name: 'Patroc\u00ednio Paulista', containedInPlace: { '@type': 'State', name: 'S\u00e3o Paulo' } },
+  ],
+  sameAs: [
+    'https://www.instagram.com/imobiliarialemos',
+    'https://www.instagram.com/tomaslemosbr',
+    'https://www.youtube.com/@imobiliarialemos',
+    'http://www.imobiliarialemos.com.br',
+  ],
+  hasOfferCatalog: {
+    '@type': 'OfferCatalog',
+    name: 'Im\u00f3veis para Venda e Loca\u00e7\u00e3o em Franca/SP',
+    itemListElement: [
+      { '@type': 'Offer', itemOffered: { '@type': 'Product', name: 'Casas para Alugar em Franca SP' } },
+      { '@type': 'Offer', itemOffered: { '@type': 'Product', name: 'Apartamentos para Alugar em Franca SP' } },
+      { '@type': 'Offer', itemOffered: { '@type': 'Product', name: 'Casas \u00e0 Venda em Franca SP' } },
+      { '@type': 'Offer', itemOffered: { '@type': 'Product', name: 'Apartamentos \u00e0 Venda em Franca SP' } },
+      { '@type': 'Offer', itemOffered: { '@type': 'Product', name: 'Terrenos em Franca SP' } },
+      { '@type': 'Offer', itemOffered: { '@type': 'Product', name: 'Im\u00f3veis Comerciais em Franca SP' } },
+    ],
+  },
+}
+
 export default async function HomePage() {
   const [featured, stats, siteSettings, team] = await Promise.all([fetchFeaturedProperties(), fetchStats(), fetchSiteSettings(), fetchTeam()])
 
   return (
     <>
+      {/* Schema.org LocalBusiness para SEO local */}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(LOCAL_BUSINESS_SCHEMA) }} />
       {/* ── HERO ──────────────────────────────────────────────────────── */}
       <section
         className="relative min-h-[85vh] flex items-center justify-center overflow-hidden"
