@@ -126,6 +126,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${WEB_URL}/servicos/2via-boleto`,              lastModified: now, changeFrequency: 'monthly', priority: 0.5 },
     { url: `${WEB_URL}/servicos/extrato-proprietario`,     lastModified: now, changeFrequency: 'monthly', priority: 0.5 },
     { url: `${WEB_URL}/servicos/fichas-cadastrais`,        lastModified: now, changeFrequency: 'monthly', priority: 0.5 },
+    // Novas páginas de serviços SEO
+    { url: `${WEB_URL}/servicos/fotos-imoveis`,            lastModified: now, changeFrequency: 'monthly', priority: 0.75 },
+    { url: `${WEB_URL}/servicos/edicao-fotos`,             lastModified: now, changeFrequency: 'monthly', priority: 0.75 },
+    { url: `${WEB_URL}/servicos/video-imoveis`,            lastModified: now, changeFrequency: 'monthly', priority: 0.75 },
+    { url: `${WEB_URL}/servicos/avaliacao-imoveis`,        lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
+    { url: `${WEB_URL}/servicos/leilao-imoveis`,           lastModified: now, changeFrequency: 'monthly', priority: 0.75 },
+    { url: `${WEB_URL}/servicos/investimento-imobiliario`, lastModified: now, changeFrequency: 'monthly', priority: 0.75 },
+    { url: `${WEB_URL}/servicos/reforma-imoveis`,          lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
+    { url: `${WEB_URL}/servicos/engenharia-construcao`,    lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
+    // Página índice de bairros
+    { url: `${WEB_URL}/bairros/franca`,                    lastModified: now, changeFrequency: 'weekly',  priority: 0.85 },
     { url: `${WEB_URL}/politica-privacidade`,              lastModified: now, changeFrequency: 'yearly',  priority: 0.3 },
     { url: `${WEB_URL}/termos-uso`,                        lastModified: now, changeFrequency: 'yearly',  priority: 0.3 },
   ]

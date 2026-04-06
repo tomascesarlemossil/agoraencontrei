@@ -44,6 +44,8 @@ const LeadCaptureBody = z.object({
   utmSource:  z.string().optional(),
   utmMedium:  z.string().optional(),
   utmCampaign: z.string().optional(),
+  // Fotos enviadas pelo cliente no formulário de anúncio
+  photoUrls:  z.array(z.string()).max(50).optional(),
 })
 
 // ── Location privacy helper ─────────────────────────────────────────────────
@@ -539,6 +541,10 @@ export default async function publicRoutes(app: FastifyInstance) {
         utmCampaign: body.utmCampaign,
         contactId:   contact.id,
         status:      'NEW',
+        // Armazenar fotos enviadas pelo cliente no metadata
+        ...(body.photoUrls && body.photoUrls.length > 0 && {
+          metadata: { photoUrls: body.photoUrls, photoCount: body.photoUrls.length },
+        }),
         ...(body.propertyId && {
           properties: {
             create: { propertyId: body.propertyId },
@@ -1088,6 +1094,102 @@ export default async function publicRoutes(app: FastifyInstance) {
     } catch (err) {
       app.log.error({ err }, '[voice-search] Unexpected error')
       return reply.status(500).send({ error: 'INTERNAL_ERROR', message: 'Erro ao processar áudio' })
+    }
+  })
+
+  // POST /api/v1/public/upload-photo — upload de foto pública (sem autenticação)
+  // Usado pelo formulário de anúncio de imóvel pelo cliente
+  app.post('/upload-photo', async (req, reply) => {
+    try {
+      const data = await req.file()
+      if (!data) return reply.status(400).send({ error: 'NO_FILE' })
+
+      const chunks: Buffer[] = []
+      for await (const chunk of data.file) {
+        chunks.push(chunk)
+      }
+      const buffer = Buffer.concat(chunks)
+      const mimetype = data.mimetype || 'application/octet-stream'
+
+      // Se S3 estiver configurado, usar S3
+      const { s3Service } = await import('../../services/s3.service.js')
+      if (s3Service.isConfigured()) {
+        const { nanoid } = await import('nanoid')
+        const key = `public-leads/${nanoid()}/${data.filename}`
+        const url = await s3Service.upload(key, buffer, mimetype)
+        return reply.send({ url, size: buffer.length, contentType: mimetype })
+      }
+
+      // Fallback: base64 data URL
+      const base64 = buffer.toString('base64')
+      const dataUrl = `data:${mimetype};base64,${base64}`
+      return reply.send({ url: dataUrl, size: buffer.length, contentType: mimetype, inline: true })
+    } catch (err) {
+      app.log.error({ err }, '[public/upload-photo] Error')
+      return reply.status(500).send({ error: 'UPLOAD_FAILED' })
+    }
+  })
+
+  // POST /api/v1/public/photo-edit-checkout — cria cobrança Asaas para edição de fotos (R$10)
+  app.post('/photo-edit-checkout', async (req, reply) => {
+    try {
+      const body = req.body as { name?: string; email?: string; phone?: string; cpf?: string }
+      const { name, email, phone, cpf } = body
+      if (!name || !phone) return reply.status(400).send({ error: 'MISSING_FIELDS' })
+      const { findOrCreateCustomer, createCharge, getPixQrCode } = await import('../../services/asaas.service.js')
+      const customer = await findOrCreateCustomer({
+        name,
+        email: email ?? `${phone.replace(/\D/g, '')}@noemail.com`,
+        phone,
+        cpfCnpj: cpf,
+      })
+      const dueDate = new Date()
+      dueDate.setDate(dueDate.getDate() + 1)
+      const charge = await createCharge({
+        customer: customer.id,
+        billingType: 'PIX',
+        value: 10.00,
+        dueDate: dueDate.toISOString().split('T')[0],
+        description: 'Serviço de Edição de Fotos — até 20 fotos | Imobiliária Lemos',
+        externalReference: `photo-edit-${Date.now()}`,
+      })
+      let pixQrCode: string | null = null
+      let pixCopyCola: string | null = null
+      try {
+        const pix = await getPixQrCode(charge.id)
+        pixQrCode = (pix as any)?.encodedImage ?? null
+        pixCopyCola = (pix as any)?.payload ?? null
+      } catch { /* ignore */ }
+      return reply.send({
+        chargeId: charge.id,
+        value: charge.value,
+        status: charge.status,
+        invoiceUrl: (charge as any).invoiceUrl ?? null,
+        bankSlipUrl: (charge as any).bankSlipUrl ?? null,
+        pixQrCode,
+        pixCopyCola,
+        dueDate: (charge as any).dueDate ?? null,
+      })
+    } catch (err) {
+      app.log.error({ err }, '[public/photo-edit-checkout] Error')
+      return reply.status(500).send({ error: 'CHECKOUT_FAILED', message: String(err) })
+    }
+  })
+
+  // GET /api/v1/public/photo-edit-status/:chargeId — verifica status do pagamento
+  app.get('/photo-edit-status/:chargeId', async (req, reply) => {
+    try {
+      const { chargeId } = req.params as { chargeId: string }
+      const { getCharge } = await import('../../services/asaas.service.js')
+      const charge = await getCharge(chargeId)
+      return reply.send({
+        chargeId: (charge as any).id,
+        status: (charge as any).status,
+        paid: ['RECEIVED', 'CONFIRMED'].includes((charge as any).status),
+      })
+    } catch (err) {
+      app.log.error({ err }, '[public/photo-edit-status] Error')
+      return reply.status(500).send({ error: 'STATUS_CHECK_FAILED' })
     }
   })
 

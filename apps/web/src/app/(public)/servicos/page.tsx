@@ -1,11 +1,12 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { FileText, Building, CreditCard, BarChart3, Calculator, ClipboardList, Home, Phone, Mail, MapPin, ExternalLink } from 'lucide-react'
+import { FileText, Building, CreditCard, BarChart3, Calculator, ClipboardList, Home, Phone, Mail, MapPin, ExternalLink, Camera, Video, Plane, Gavel, TrendingUp, Image, Wrench, HardHat } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'Nossos Serviços | AgoraEncontrei — Imobiliária Lemos — Franca/SP',
-  description: 'Conheça todos os serviços da Imobiliária Lemos: 2ª via de boleto, extrato do proprietário, fichas cadastrais, financiamento, avaliação e muito mais. CRECI 279051.',
-  keywords: '2 via boleto aluguel franca, extrato proprietário imóvel, ficha cadastral locação, financiamento imobiliário franca, imobiliária lemos serviços, agoraencontrei serviços',
+  title: 'Serviços Imobiliários em Franca/SP — Fotos, Vídeo, Drone, Avaliação | Imobiliária Lemos',
+  description: 'Serviços completos para imóveis em Franca/SP: fotografia profissional, vídeo, drone, avaliação gratuita, edição de fotos, reforma, engenharia, leilão e investimento. Imobiliária Lemos — CRECI 279051.',
+  keywords: 'serviços imobiliários franca sp, fotografia imóveis franca, vídeo imóveis franca, drone imóveis franca, avaliação imóvel franca, reforma imóvel franca, engenharia civil franca, leilão imóveis franca, investimento imobiliário franca, edição fotos imóveis franca, fotos profissionais imóveis franca, videomaker franca sp, drone franca sp, 2 via boleto aluguel franca, extrato proprietário imóvel, ficha cadastral locação, financiamento imobiliário franca',
+  alternates: { canonical: 'https://www.agoraencontrei.com.br/servicos' },
   openGraph: {
     title: 'Nossos Serviços | AgoraEncontrei — Imobiliária Lemos',
     description: 'Serviços completos: 2ª via de boleto, extrato do proprietário, fichas cadastrais, financiamento e avaliação de imóveis em Franca/SP.',
@@ -71,6 +72,62 @@ const SERVICES = [
     description: 'Quer vender ou alugar seu imóvel? Cadastre gratuitamente e alcance milhares de compradores e locatários em Franca e região.',
     href: '/anunciar',
     color: '#dc2626',
+  },
+  {
+    icon: Camera,
+    title: 'Fotografia de Imóveis',
+    description: 'Fotos profissionais que valorizam seu imóvel e aceleram a venda. Edição, tratamento e entrega em até 24 horas.',
+    href: '/servicos/fotos-imoveis',
+    color: '#7c3aed',
+  },
+  {
+    icon: Image,
+    title: 'Edição de Fotos Online',
+    description: 'Edite até 20 fotos do seu imóvel com filtros profissionais por apenas R$10,00. Rápido, fácil e online.',
+    href: '/servicos/edicao-fotos',
+    color: '#C9A84C',
+  },
+  {
+    icon: Video,
+    title: 'Vídeo para Imóveis',
+    description: 'Tour virtual, vídeo de apresentação e vídeo marketing para redes sociais e portais imobiliários.',
+    href: '/servicos/video-imoveis',
+    color: '#1B2B5B',
+  },
+  {
+    icon: Plane,
+    title: 'Drone e Filmagem Aérea',
+    description: 'Filmagem aérea com drone para imóveis residenciais, comerciais, rurais e loteamentos em Franca/SP.',
+    href: '/servicos/video-imoveis',
+    color: '#0ea5e9',
+  },
+  {
+    icon: Gavel,
+    title: 'Leilão de Imóveis',
+    description: 'Assessoria para arrematação em leilões judiciais e extrajudiciais. Imóveis abaixo do valor de mercado.',
+    href: '/servicos/leilao-imoveis',
+    color: '#dc2626',
+  },
+  {
+    icon: TrendingUp,
+    title: 'Investimento Imobiliário',
+    description: 'Invista em imóveis em Franca/SP com segurança. Renda passiva, valorização e assessoria especializada.',
+    href: '/servicos/investimento-imobiliario',
+    color: '#16a34a',
+  },
+  {
+    icon: Wrench,
+    title: 'Reforma de Imóveis',
+    description: 'Reforma residencial e comercial em Franca/SP. Compre e reforme com nossa assessoria completa.',
+    href: '/servicos/reforma-imoveis',
+    color: '#f59e0b',
+  },
+  {
+    icon: HardHat,
+    title: 'Engenharia e Construção',
+    description: 'Projetos de engenharia civil, construção residencial e comercial em Franca/SP.',
+    href: '/servicos/engenharia-construcao',
+    color: '#64748b',
   },
 ]
 

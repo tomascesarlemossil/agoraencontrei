@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { CheckCircle, Loader2, Upload } from 'lucide-react'
+import { useState, useRef } from 'react'
+import { CheckCircle, Loader2, Upload, X, ImageIcon, Camera } from 'lucide-react'
 
 const PROPERTY_TYPES = [
   { value: 'HOUSE', label: 'Casa' },
@@ -25,8 +25,12 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 export function AnunciarForm() {
   const [loading, setLoading] = useState(false)
   const [submitted, setSubmitted] = useState(false)
-  const [photoCount, setPhotoCount] = useState(0)
   const [honeypot, setHoneypot] = useState('')
+  const [photos, setPhotos] = useState<File[]>([])
+  const [photoPreviews, setPhotoPreviews] = useState<string[]>([])
+  const [uploadingPhotos, setUploadingPhotos] = useState(false)
+  const [uploadedPhotoUrls, setUploadedPhotoUrls] = useState<string[]>([])
+  const photoInputRef = useRef<HTMLInputElement>(null)
   const [form, setForm] = useState({
     name: '',
     email: '',
@@ -51,6 +55,40 @@ export function AnunciarForm() {
     setForm(prev => ({ ...prev, [field]: value }))
   }
 
+  function handlePhotoSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? [])
+    if (files.length === 0) return
+    const newPhotos = [...photos, ...files].slice(0, 30) // max 30 fotos
+    setPhotos(newPhotos)
+    // Gerar previews
+    const newPreviews: string[] = []
+    newPhotos.forEach((file, i) => {
+      if (photoPreviews[i]) {
+        newPreviews.push(photoPreviews[i])
+      } else {
+        const reader = new FileReader()
+        reader.onload = (ev) => {
+          setPhotoPreviews(prev => {
+            const updated = [...prev]
+            updated[i] = ev.target?.result as string
+            return updated
+          })
+        }
+        reader.readAsDataURL(file)
+        newPreviews.push('')
+      }
+    })
+    setPhotoPreviews(newPreviews)
+    // Reset input
+    if (photoInputRef.current) photoInputRef.current.value = ''
+  }
+
+  function removePhoto(index: number) {
+    setPhotos(prev => prev.filter((_, i) => i !== index))
+    setPhotoPreviews(prev => prev.filter((_, i) => i !== index))
+    setUploadedPhotoUrls([])
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (honeypot) return // bot detected
@@ -72,10 +110,32 @@ export function AnunciarForm() {
         form.parking ? `Vagas: ${form.parking}` : '',
         form.price ? `Valor pretendido: R$ ${form.price}` : '',
         form.videoUrl ? `Vídeo/tour: ${form.videoUrl}` : '',
-        photoCount > 0 ? `Fotos informadas: ${photoCount}` : '',
+        photos.length > 0 ? `Fotos enviadas: ${photos.length} arquivo(s)` : '',
         form.wantsEvaluation ? `✅ Quer avaliação gratuita` : '',
         form.notes ? `Obs: ${form.notes}` : '',
       ].filter(Boolean).join('\n')
+
+      // Upload das fotos se houver
+      let photoUrls: string[] = uploadedPhotoUrls
+      if (photos.length > 0 && photoUrls.length === 0) {
+        setUploadingPhotos(true)
+        try {
+          const uploadPromises = photos.map(async (file) => {
+            const fd = new FormData()
+            fd.append('file', file)
+            const res = await fetch(`${API_URL}/api/v1/public/upload`, { method: 'POST', body: fd })
+            if (res.ok) {
+              const data = await res.json()
+              return data.url as string
+            }
+            return null
+          })
+          const results = await Promise.all(uploadPromises)
+          photoUrls = results.filter(Boolean) as string[]
+          setUploadedPhotoUrls(photoUrls)
+        } catch { /* ignore upload errors */ }
+        setUploadingPhotos(false)
+      }
 
       await fetch(`${API_URL}/api/v1/public/leads`, {
         method: 'POST',
@@ -86,6 +146,7 @@ export function AnunciarForm() {
           phone: form.phone,
           source: 'WEBSITE',
           notes,
+          photoUrls: photoUrls.length > 0 ? photoUrls : undefined,
         }),
       })
       setSubmitted(true)
@@ -337,36 +398,60 @@ export function AnunciarForm() {
           </div>
         </div>
 
-        {/* Photos notice */}
-        <div
-          className="rounded-xl p-4 border flex items-start gap-3"
-          style={{ borderColor: '#C9A84C30', backgroundColor: 'rgba(201,168,76,0.05)' }}
-        >
-          <Upload className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: '#C9A84C' }} />
-          <div>
+        {/* Photos upload */}
+        <div className="rounded-xl border" style={{ borderColor: '#C9A84C30', backgroundColor: 'rgba(201,168,76,0.03)' }}>
+          <div className="p-4 border-b flex items-center gap-2" style={{ borderColor: '#C9A84C20' }}>
+            <Camera className="w-4 h-4" style={{ color: '#C9A84C' }} />
             <p className="text-sm font-semibold" style={{ color: '#1B2B5B' }}>Fotos do imóvel</p>
-            <p className="text-xs text-gray-500 mt-0.5">
-              Quantas fotos você tem disponíveis para envio?
-            </p>
-            <div className="flex items-center gap-3 mt-2">
-              {[0, 5, 10, 15, 20].map(n => (
-                <button
-                  key={n}
-                  type="button"
-                  onClick={() => setPhotoCount(n)}
-                  className="text-xs px-3 py-1 rounded-full border-2 font-medium transition-all"
-                  style={{
-                    borderColor: photoCount === n ? '#C9A84C' : '#e0dbd0',
-                    backgroundColor: photoCount === n ? 'rgba(201,168,76,0.1)' : 'white',
-                    color: photoCount === n ? '#1B2B5B' : '#6b7280',
-                  }}
-                >
-                  {n === 0 ? 'Nenhuma' : `${n}+`}
-                </button>
-              ))}
-            </div>
-            <p className="text-xs text-gray-500 mt-2">
-              As fotos serão enviadas por WhatsApp após o contato inicial do corretor.
+            <span className="ml-auto text-xs text-gray-500">{photos.length}/30 fotos</span>
+          </div>
+          <div className="p-4">
+            {/* Preview grid */}
+            {photos.length > 0 && (
+              <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 mb-3">
+                {photos.map((file, i) => (
+                  <div key={i} className="relative aspect-square rounded-lg overflow-hidden bg-gray-100 border" style={{ borderColor: '#e0dbd0' }}>
+                    {photoPreviews[i] ? (
+                      <img src={photoPreviews[i]} alt={file.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <ImageIcon className="w-6 h-6 text-gray-400" />
+                      </div>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => removePhoto(i)}
+                      className="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                    <div className="absolute bottom-0 left-0 right-0 bg-black/50 px-1 py-0.5">
+                      <p className="text-white text-[9px] truncate">{file.name}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            {/* Upload button */}
+            <input
+              ref={photoInputRef}
+              type="file"
+              multiple
+              className="hidden"
+              onChange={handlePhotoSelect}
+            />
+            <button
+              type="button"
+              onClick={() => photoInputRef.current?.click()}
+              disabled={photos.length >= 30}
+              className="w-full py-3 rounded-xl border-2 border-dashed text-sm font-medium transition-all hover:border-[#C9A84C] hover:bg-[rgba(201,168,76,0.05)] disabled:opacity-50 flex items-center justify-center gap-2"
+              style={{ borderColor: '#e0dbd0', color: '#6b7280' }}
+            >
+              <Upload className="w-4 h-4" />
+              {photos.length === 0 ? 'Selecionar fotos do imóvel' : 'Adicionar mais fotos'}
+            </button>
+            <p className="text-xs text-gray-400 mt-2 text-center">
+              PNG, JPEG, HEIC, RAW — qualquer formato, sem limite de tamanho. Máximo 30 fotos.
             </p>
           </div>
         </div>

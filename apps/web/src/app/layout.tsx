@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google'
 import { Providers } from '@/components/providers'
 import { ConditionalMetaPixel } from '@/components/ConditionalMetaPixel'
 import { WebVitals } from '@/components/WebVitals'
+import { FRANCA_GEO_KEYWORDS } from '@/data/seo-geo-keywords'
 import './globals.css'
 
 const inter = Inter({ subsets: ['latin'] })
@@ -92,10 +93,68 @@ export const metadata: Metadata = {
     'imóvel pronto para morar franca sp', 'imóvel na planta franca sp',
     'imóvel para investir franca sp', 'imóvel para renda franca sp',
     'imóvel para locação comercial franca sp', 'imóvel para empresa franca sp',
-    // Serviços
+    // Serviços imobiliários
     'avaliação gratuita imóvel franca', 'anunciar imóvel franca sp',
     'vender imóvel franca sp', 'administração de imóveis franca sp',
     'gestão de aluguel franca sp', 'locação de imóveis franca sp',
+    // Fotografia e edição de fotos
+    'fotografia de imóveis franca sp', 'fotos profissionais de imóveis franca',
+    'edição de fotos de imóveis franca', 'edição de imagens imóveis franca sp',
+    'fotos imóveis franca sp', 'imagens profissionais imóveis franca',
+    'tratamento de fotos imóveis', 'edição de fotos franca sp',
+    'edição de imagens franca sp', 'fotografia imobiliária franca',
+    'foto imóvel franca', 'imagens imóveis franca sp',
+    'edição de foto para imóvel', 'filtros para fotos de imóveis',
+    // Vídeo e videomaker
+    'vídeo de imóveis franca sp', 'vídeo profissional imóveis franca',
+    'videomaker imóveis franca sp', 'vídeo para imóvel franca',
+    'vídeos profissionais imóveis franca', 'vídeo imobiliário franca sp',
+    'tour virtual imóvel franca sp', 'vídeo tour imóvel franca',
+    'vídeo marketing imóvel franca', 'vídeo apresentação imóvel franca',
+    'vídeo drone imóvel franca sp', 'vídeo drone franca sp',
+    'videomaker franca sp', 'produção de vídeo franca sp',
+    // Drone e fotografia aérea
+    'drone imóveis franca sp', 'fotos drone franca sp',
+    'fotografia aérea imóveis franca', 'drone franca sp',
+    'fotos de drone franca sp', 'imagens aéreas imóveis franca',
+    'drone imobiliário franca', 'vídeo drone franca',
+    'filmagem drone franca sp', 'foto aérea imóvel franca',
+    // Avaliações imobiliárias
+    'avaliação de imóvel franca sp', 'avaliação imobiliária franca',
+    'avaliação de imóveis franca sp', 'avaliação de propriedade franca',
+    'laudo de avaliação imóvel franca', 'perito avaliador imóveis franca',
+    'valor de mercado imóvel franca', 'preço imóvel franca sp',
+    'quanto vale meu imóvel franca', 'avaliação gratuita imóvel franca sp',
+    'serviço de avaliação imobiliária franca', 'avaliação de terreno franca sp',
+    // Engenharia e construção
+    'engenharia civil franca sp', 'construção de casas franca sp',
+    'construtora franca sp', 'engenheiro civil franca sp',
+    'projeto de construção franca sp', 'obra franca sp',
+    'construção residencial franca sp', 'construção comercial franca sp',
+    'empresa de construção franca sp', 'serviços de engenharia franca',
+    'projeto arquitetônico franca sp', 'arquitetura franca sp',
+    // Reforma
+    'reforma de casas franca sp', 'reforma de imóveis franca sp',
+    'reforma residencial franca sp', 'reforma comercial franca sp',
+    'empresa de reforma franca sp', 'reformar casa franca sp',
+    'reformar imóvel franca sp', 'reforma e construção franca sp',
+    'comprar e reformar imóvel franca', 'imóvel para reformar franca sp',
+    'casa para reformar franca sp', 'reforma e decoração franca sp',
+    // Leilão e arremação
+    'leilão de imóveis franca sp', 'imóvel em leilão franca sp',
+    'arrematação de imóvel franca', 'leilão judicial imóvel franca',
+    'leilão extrajudicial imóvel franca', 'imóvel leilão franca sp',
+    'comprar imóvel leilão franca', 'arremação leilão franca sp',
+    'leilão imóvel barato franca', 'imóvel retomado banco franca sp',
+    // Investimentos imobiliários
+    'investimento imobiliário franca sp', 'investir em imóveis franca sp',
+    'imóvel para investimento franca', 'renda passiva imóveis franca sp',
+    'imóvel para renda franca sp', 'retorno investimento imóvel franca',
+    'imóvel comercial para investir franca', 'fundo imobiliário franca sp',
+    'imóvel como investimento franca sp', 'comprar imóvel para alugar franca',
+    'imóvel rentabilidade franca sp', 'investimento seguro imóvel franca',
+    // Keywords geográficas: todas as ruas, bairros e edifícios de Franca/SP
+    ...FRANCA_GEO_KEYWORDS,
   ].join(', '),
   authors: [{ name: 'Imobiliária Lemos', url: WEB_URL }],
   creator: 'Imobiliária Lemos',
