@@ -1005,13 +1005,20 @@ export default async function publicRoutes(app: FastifyInstance) {
   })
 
   // GET /api/v1/public/map-clusters — neighborhoods with property count + avg coordinates
+  // Supports BBOX filter: swLat, swLng, neLat, neLng (bounding box for viewport)
   app.get('/map-clusters', async (req, reply) => {
     const company = await resolveCompany(app)
     if (!company) return reply.status(503).send({ error: 'SERVICE_UNAVAILABLE' })
 
-    const { purpose, type } = req.query as { purpose?: string; type?: string }
+    const { purpose, type, swLat, swLng, neLat, neLng } = req.query as {
+      purpose?: string; type?: string
+      swLat?: string; swLng?: string; neLat?: string; neLng?: string
+    }
 
-    const cacheKey = `pub:map-clusters:v1:${company.id}:${purpose ?? ''}:${type ?? ''}`
+    // BBOX filter — only apply when all 4 coords are provided
+    const hasBbox = swLat && swLng && neLat && neLng
+    const bboxStr = hasBbox ? `:${swLat},${swLng},${neLat},${neLng}` : ''
+    const cacheKey = `pub:map-clusters:v2:${company.id}:${purpose ?? ''}:${type ?? ''}${bboxStr}`
     const cached = await cacheGet(app.redis, cacheKey)
     if (cached) return reply.send(cached)
 
@@ -1022,6 +1029,11 @@ export default async function publicRoutes(app: FastifyInstance) {
       neighborhood: { not: null },
       ...(purpose && { purpose: purpose.toUpperCase() }),
       ...(type && { type: type.toUpperCase() }),
+      // BBOX spatial filter — only include properties within the viewport
+      ...(hasBbox && {
+        latitude:  { gte: parseFloat(swLat!), lte: parseFloat(neLat!) },
+        longitude: { gte: parseFloat(swLng!), lte: parseFloat(neLng!) },
+      }),
     }
 
     const clusters = await app.prisma.property.groupBy({
@@ -1030,6 +1042,7 @@ export default async function publicRoutes(app: FastifyInstance) {
       _count: { id: true },
       _avg:   { latitude: true, longitude: true },
       orderBy: { _count: { id: 'desc' } },
+      take: 500, // limit to 500 clusters max for performance
     })
 
     const result = clusters.map(c => ({
@@ -1040,7 +1053,8 @@ export default async function publicRoutes(app: FastifyInstance) {
       lat:          c._avg.latitude,
       lng:          c._avg.longitude,
     }))
-    await cacheSet(app.redis, cacheKey, result, 300) // 5 min cache
+
+    await cacheSet(app.redis, cacheKey, result, 120) // 2 min cache (shorter for BBOX)
     return reply.send(result)
   })
 

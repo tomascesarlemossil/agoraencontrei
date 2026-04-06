@@ -56,6 +56,7 @@ import auctionsRoutes from './routes/auctions/index.js'
 import { ScraperScheduler } from './services/scrapers/scheduler.js'
 import { AuctionMonitorService } from './services/auction-monitor.service.js'
 import { auctionsRoute } from './routes/public/auctions.js'
+import auctionsRoutes from './routes/auctions/index.js'
 
 const app = Fastify({
   // No body size limit — accept any file size
@@ -130,6 +131,72 @@ async function runMigrations(prisma: any) {
     ['totalFloors',              'INTEGER'],
     ['showExactLocation',        'BOOLEAN NOT NULL DEFAULT false'],
   ]
+
+  // ── Auction tables migration ─────────────────────────────────────────────
+  const auctionMigrations = [
+    `CREATE TABLE IF NOT EXISTS auctions (
+      id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+      "companyId" TEXT REFERENCES companies(id),
+      "externalId" TEXT,
+      source TEXT NOT NULL DEFAULT 'LEILOEIRO',
+      "sourceUrl" TEXT,
+      "auctioneerName" TEXT,
+      status TEXT NOT NULL DEFAULT 'UPCOMING',
+      modality TEXT NOT NULL DEFAULT 'ONLINE',
+      title TEXT NOT NULL,
+      slug TEXT UNIQUE NOT NULL,
+      description TEXT,
+      "propertyType" TEXT NOT NULL DEFAULT 'HOUSE',
+      category TEXT NOT NULL DEFAULT 'RESIDENTIAL',
+      street TEXT, number TEXT, complement TEXT, neighborhood TEXT,
+      city TEXT, state TEXT, "zipCode" TEXT,
+      latitude DOUBLE PRECISION, longitude DOUBLE PRECISION,
+      "totalArea" DOUBLE PRECISION, "builtArea" DOUBLE PRECISION, "landArea" DOUBLE PRECISION,
+      bedrooms INTEGER NOT NULL DEFAULT 0, bathrooms INTEGER NOT NULL DEFAULT 0, "parkingSpaces" INTEGER NOT NULL DEFAULT 0,
+      "appraisalValue" DECIMAL(14,2), "minimumBid" DECIMAL(14,2),
+      "firstRoundBid" DECIMAL(14,2), "secondRoundBid" DECIMAL(14,2),
+      "currentBid" DECIMAL(14,2), "soldValue" DECIMAL(14,2),
+      "discountPercent" DOUBLE PRECISION,
+      "firstRoundDate" TIMESTAMPTZ, "secondRoundDate" TIMESTAMPTZ,
+      "auctionDate" TIMESTAMPTZ, "auctionEndDate" TIMESTAMPTZ, "visitDate" TIMESTAMPTZ,
+      "processNumber" TEXT, court TEXT, occupation TEXT,
+      "hasDebts" BOOLEAN, "debtDetails" TEXT, "editalUrl" TEXT,
+      "bankName" TEXT, "financingAvailable" BOOLEAN NOT NULL DEFAULT false, "fgtsAllowed" BOOLEAN NOT NULL DEFAULT false,
+      "coverImage" TEXT, images TEXT[] NOT NULL DEFAULT '{}',
+      "opportunityScore" INTEGER, "estimatedROI" DOUBLE PRECISION,
+      "marketPriceEstimate" DECIMAL(14,2), "pricePerM2" DECIMAL(10,2),
+      tags TEXT[] NOT NULL DEFAULT '{}', metadata JSONB NOT NULL DEFAULT '{}',
+      "lastScrapedAt" TIMESTAMPTZ, "scrapedHash" TEXT, "isVerified" BOOLEAN NOT NULL DEFAULT false,
+      views INTEGER NOT NULL DEFAULT 0, favorites INTEGER NOT NULL DEFAULT 0, "alertsSent" INTEGER NOT NULL DEFAULT 0,
+      "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(), "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )`,
+    `CREATE TABLE IF NOT EXISTS scraper_runs (
+      id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+      source TEXT NOT NULL,
+      "sourceUrl" TEXT,
+      status TEXT NOT NULL DEFAULT 'RUNNING',
+      "startedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      "finishedAt" TIMESTAMPTZ,
+      "itemsFound" INTEGER NOT NULL DEFAULT 0,
+      "itemsCreated" INTEGER NOT NULL DEFAULT 0,
+      "itemsUpdated" INTEGER NOT NULL DEFAULT 0,
+      "itemsRemoved" INTEGER NOT NULL DEFAULT 0,
+      "errorMessage" TEXT,
+      metadata JSONB NOT NULL DEFAULT '{}'
+    )`,
+    `CREATE INDEX IF NOT EXISTS auctions_source_idx ON auctions(source)`,
+    `CREATE INDEX IF NOT EXISTS auctions_status_idx ON auctions(status)`,
+    `CREATE INDEX IF NOT EXISTS auctions_city_state_idx ON auctions(city, state)`,
+    `CREATE INDEX IF NOT EXISTS auctions_discount_idx ON auctions("discountPercent")`,
+    `CREATE INDEX IF NOT EXISTS auctions_created_idx ON auctions("createdAt" DESC)`,
+    `CREATE INDEX IF NOT EXISTS scraper_runs_source_idx ON scraper_runs(source)`,
+    `CREATE INDEX IF NOT EXISTS scraper_runs_started_idx ON scraper_runs("startedAt")`,
+  ]
+  for (const sql of auctionMigrations) {
+    try {
+      await prisma.$executeRawUnsafe(sql)
+    } catch { /* already exists */ }
+  }
   for (const [col, type] of columns) {
     try {
       await prisma.$executeRawUnsafe(
@@ -212,6 +279,7 @@ async function bootstrap() {
   await app.register(alertsRoutes,            { prefix: '/api/v1/public/alerts' })
   await app.register(auctionsRoutes,          { prefix: '/api/v1/auctions' })
   await app.register(auctionsRoute,            { prefix: '/api/v1/public' })
+  await app.register(auctionsRoutes,           { prefix: '/api/v1/auctions' })
 
   // ── Scraper Scheduler (robôs 24/7 de leilões) ─────────────────────────
   if (env.NODE_ENV === 'production') {

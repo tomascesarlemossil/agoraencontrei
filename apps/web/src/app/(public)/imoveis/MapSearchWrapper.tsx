@@ -7,6 +7,7 @@ interface Props {
   initialCity?: string
   initialMaxPrice?: string
   initialBedrooms?: string
+  initialClusters?: any[]
 }
 
 export default function MapSearchWrapper(props: Props) {

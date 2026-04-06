@@ -9,6 +9,8 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://oenbzvxcsgyzqjtlovdq.supabase.co'
 const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
 const FRANCA_CENTER: [number, number] = [-20.5394, -47.4008]
+// Default BBOX for Franca/SP region — used for SSR pre-fetch and initial load
+const FRANCA_BBOX = { swLat: -20.65, swLng: -47.52, neLat: -20.40, neLng: -47.28 }
 
 const FAKE_IMAGE_PATTERNS = [
   'send.png', 'telefone.png', 'logotopo.png', 'foto_vazio.png',
@@ -103,6 +105,7 @@ interface Props {
   initialCity?: string
   initialMaxPrice?: string
   initialBedrooms?: string
+  initialClusters?: Cluster[] // SSR pre-fetched clusters for immediate display
 }
 
 // Nominatim cache in module scope
@@ -129,7 +132,7 @@ async function geocodeNeighborhood(neighborhood: string, city: string): Promise<
   return null
 }
 
-export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initialBedrooms }: Props) {
+export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initialBedrooms, initialClusters }: Props) {
   const mapRef = useRef<HTMLDivElement>(null)
   const mapInstance = useRef<any>(null)
   const markersRef = useRef<any[]>([])
@@ -138,7 +141,10 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
   const tempLineRef = useRef<any>(null)
   const tempMarkersRef = useRef<any[]>([])
 
-  const [clusters, setClusters] = useState<(Cluster & { resolvedLat: number; resolvedLng: number })[]>([])
+  const [clusters, setClusters] = useState<(Cluster & { resolvedLat: number; resolvedLng: number })[]>(() => {
+    if (!initialClusters) return []
+    return initialClusters.map(c => ({ ...c, resolvedLat: c.lat ?? 0, resolvedLng: c.lng ?? 0 }))
+  })
   const [auctions, setAuctions] = useState<AuctionPin[]>([])
   const [selectedAuction, setSelectedAuction] = useState<AuctionPin | null>(null)
   const auctionMarkersRef = useRef<any[]>([])
@@ -233,10 +239,16 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
 
   // Load clusters from API
   useEffect(() => {
-    async function loadClusters() {
+    async function loadClusters(bbox?: { swLat: number; swLng: number; neLat: number; neLng: number }) {
       try {
         const params = new URLSearchParams()
         if (initialPurpose) params.set('purpose', initialPurpose)
+        // Use BBOX for targeted loading — default to Franca/SP area
+        const b = bbox ?? FRANCA_BBOX
+        params.set('swLat', b.swLat.toFixed(6))
+        params.set('swLng', b.swLng.toFixed(6))
+        params.set('neLat', b.neLat.toFixed(6))
+        params.set('neLng', b.neLng.toFixed(6))
         const res = await fetch(`${API_URL}/api/v1/public/map-clusters?${params}`)
         if (!res.ok) return
         const data: Cluster[] = await res.json()
@@ -266,9 +278,11 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
         }
       } catch {}
     }
-    loadClusters()
-  }, [initialPurpose])
-
+     // Only fetch if no SSR clusters provided
+    if (!initialClusters || initialClusters.length === 0) {
+      loadClusters()
+    }
+  }, [initialPurpose]) // eslint-disable-line react-hooks/exhaustive-deps
   // Load auction pins — bypass Railway, read directly from Supabase
   useEffect(() => {
     async function loadAuctions() {
