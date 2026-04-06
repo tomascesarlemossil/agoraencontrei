@@ -333,21 +333,7 @@ export default async function HomePage() {
           {/* Search */}
           <HeroSearchForm />
 
-          {/* Quick stats */}
-          <div className="flex flex-wrap justify-center gap-8 mt-12">
-            {[
-              { label: 'Imóveis', value: stats.total > 0 ? stats.total.toLocaleString('pt-BR') + '+' : '900+' },
-              { label: 'Anos de mercado', value: '22+' },
-              { label: 'Famílias atendidas', value: '5.000+' },
-            ].map(stat => (
-              <div key={stat.label} className="text-center">
-                <p className="text-2xl font-bold" style={{ color: 'var(--site-accent-color, #C9A84C)', fontFamily: 'Georgia, serif' }}>
-                  {stat.value}
-                </p>
-                <p className="text-white/40 text-xs mt-0.5">{stat.label}</p>
-              </div>
-            ))}
-          </div>
+
         </div>
 
         {/* Wave */}
@@ -355,6 +341,24 @@ export default async function HomePage() {
           <svg viewBox="0 0 1440 60" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full">
             <path d="M0 60L60 50C120 40 240 20 360 15C480 10 600 20 720 25C840 30 960 30 1080 25C1200 20 1320 10 1380 5L1440 0V60H1380C1320 60 1200 60 1080 60C960 60 840 60 720 60C600 60 480 60 360 60C240 60 120 60 60 60H0Z" fill="var(--site-background-color, #f8f6f1)"/>
           </svg>
+        </div>
+      </section>
+
+      {/* ── QUICK STATS (fora do hero, sem sobreposição) ────────────────────── */}
+      <section className="max-w-3xl mx-auto px-4 sm:px-6 -mt-6 relative z-20 mb-4">
+        <div className="flex flex-wrap justify-center gap-10 py-5 px-8 rounded-2xl bg-white shadow-lg border border-gray-100">
+          {[
+            { label: 'Imóveis', value: stats.total > 0 ? stats.total.toLocaleString('pt-BR') + '+' : '1.011+' },
+            { label: 'Anos de mercado', value: '22+' },
+            { label: 'Famílias atendidas', value: '5.000+' },
+          ].map(stat => (
+            <div key={stat.label} className="text-center">
+              <p className="text-2xl font-bold" style={{ color: 'var(--site-accent-color, #C9A84C)', fontFamily: 'Georgia, serif' }}>
+                {stat.value}
+              </p>
+              <p className="text-gray-500 text-xs mt-0.5">{stat.label}</p>
+            </div>
+          ))}
         </div>
       </section>
 
@@ -680,7 +684,7 @@ export default async function HomePage() {
             {/* Logo */}
             <div className="w-28 h-28 rounded-full overflow-hidden mb-4 shadow-lg border-4" style={{ borderColor: '#C9A84C' }}>
               <Image
-                src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663481419273/dSHpPTGqPSuMnYML.jpg"
+                src="/logo-lemos.png"
                 alt="Imobiliária Lemos"
                 width={112}
                 height={112}
