@@ -6,6 +6,8 @@ import { X, PenLine, Trash2, Search, MapPin, BedDouble, Maximize } from 'lucide-
 // next/image removed — using <img> for external CDN images
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://oenbzvxcsgyzqjtlovdq.supabase.co'
+const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
 const FRANCA_CENTER: [number, number] = [-20.5394, -47.4008]
 
 const FAKE_IMAGE_PATTERNS = [
@@ -44,6 +46,34 @@ interface Property {
   bathrooms: number
 }
 
+interface AuctionPin {
+  id: string
+  slug: string
+  title: string
+  city: string | null
+  state: string | null
+  neighborhood: string | null
+  latitude: number | null
+  longitude: number | null
+  minimumBid: number | null
+  appraisalValue: number | null
+  discountPercent: number | null
+  opportunityScore: number | null
+  propertyType: string
+  source: string
+  status: string
+  totalArea: number | null
+  bedrooms: number
+  occupation: string | null
+  financingAvailable: boolean
+  coverImage: string | null
+}
+
+function sourceLabel(s: string): string {
+  const m: Record<string, string> = { CAIXA: 'Caixa', BANCO_DO_BRASIL: 'BB', BRADESCO: 'Bradesco', ITAU: 'Itaú', SANTANDER: 'Santander', JUDICIAL: 'Judicial', EXTRAJUDICIAL: 'Extrajudicial' }
+  return m[s] || s
+}
+
 // Ray-casting point-in-polygon
 function pointInPolygon(lat: number, lng: number, polygon: [number, number][]): boolean {
   let inside = false
@@ -64,6 +94,7 @@ function fmt(price: number) {
 function purposeLabel(p: string) {
   if (p === 'SALE') return 'Venda'
   if (p === 'RENT') return 'Aluguel'
+  if (p === 'AUCTION') return '🏛️ Leilão'
   return p
 }
 
@@ -108,6 +139,9 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
   const tempMarkersRef = useRef<any[]>([])
 
   const [clusters, setClusters] = useState<(Cluster & { resolvedLat: number; resolvedLng: number })[]>([])
+  const [auctions, setAuctions] = useState<AuctionPin[]>([])
+  const [selectedAuction, setSelectedAuction] = useState<AuctionPin | null>(null)
+  const auctionMarkersRef = useRef<any[]>([])
   const [drawing, setDrawing] = useState(false)
   const [polygon, setPolygon] = useState<[number, number][]>([])
   const [selectedNeighborhoods, setSelectedNeighborhoods] = useState<string[]>([])
@@ -177,6 +211,39 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
     }
     loadClusters()
   }, [initialPurpose])
+
+  // Load auction pins — bypass Railway, read directly from Supabase
+  useEffect(() => {
+    async function loadAuctions() {
+      // Try API first
+      try {
+        const res = await fetch(`${API_URL}/api/v1/auctions/map?state=SP&limit=2000`)
+        if (res.ok) {
+          const data = await res.json()
+          if (data.data?.length > 0) { setAuctions(data.data); return }
+        }
+      } catch {}
+
+      // Fallback: Supabase direct
+      if (!SUPABASE_ANON_KEY) return
+      try {
+        const res = await fetch(
+          `${SUPABASE_URL}/rest/v1/auctions?select=id,slug,title,city,state,neighborhood,latitude,longitude,"minimumBid","appraisalValue","discountPercent","opportunityScore","propertyType",source,status,"totalArea",bedrooms,occupation,"financingAvailable","coverImage"&status=not.in.(CANCELLED,CLOSED)&limit=2000`,
+          {
+            headers: {
+              'apikey': SUPABASE_ANON_KEY,
+              'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+            },
+          }
+        )
+        if (res.ok) {
+          const data = await res.json()
+          setAuctions(data || [])
+        }
+      } catch {}
+    }
+    loadAuctions()
+  }, [])
 
   // Initialize Leaflet map — only after CSS is loaded to avoid broken tiles
   useEffect(() => {
@@ -286,6 +353,113 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
     })
   }, [clusters, isLoaded, selectedNeighborhoods, drawing])
 
+  // Render auction pins (golden) with marker clustering
+  useEffect(() => {
+    if (!isLoaded || !mapInstance.current || auctions.length === 0) return
+
+    import('leaflet').then(async (L) => {
+      // Clean old auction markers
+      auctionMarkersRef.current.forEach(m => { try { m.remove() } catch {} })
+      auctionMarkersRef.current = []
+
+      // Try to use MarkerClusterGroup
+      let clusterGroup: any = null
+      try {
+        const mc = await import('leaflet.markercluster' as any)
+        // Inject cluster CSS
+        if (!document.getElementById('marker-cluster-css')) {
+          const s1 = document.createElement('style')
+          s1.id = 'marker-cluster-css'
+          s1.textContent = `
+            .marker-cluster-auction { background: rgba(201,168,76,0.4); }
+            .marker-cluster-auction div { background: #C9A84C; color: #1B2B5B; font-weight: 700; width: 34px; height: 34px; margin: 3px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; }
+            .marker-cluster-auction-large { background: rgba(201,168,76,0.5); }
+            .marker-cluster-auction-large div { width: 40px; height: 40px; font-size: 13px; }
+          `
+          document.head.appendChild(s1)
+        }
+        clusterGroup = (L as any).markerClusterGroup({
+          maxClusterRadius: 60,
+          iconCreateFunction: (cluster: any) => {
+            const count = cluster.getChildCount()
+            const size = count > 50 ? 'large' : 'small'
+            return L.divIcon({
+              html: `<div>${count}</div>`,
+              className: `marker-cluster-auction${size === 'large' ? ' marker-cluster-auction-large' : ''}`,
+              iconSize: L.point(size === 'large' ? 46 : 40, size === 'large' ? 46 : 40),
+            })
+          },
+          spiderfyOnMaxZoom: true,
+          showCoverageOnHover: false,
+          zoomToBoundsOnClick: true,
+        })
+      } catch {
+        // Fallback: no clustering
+      }
+
+      const auctionIcon = L.divIcon({
+        className: '',
+        html: `<div style="
+          width:32px;height:32px;border-radius:50%;
+          background:linear-gradient(135deg,#C9A84C,#e6c96a);
+          border:3px solid #1B2B5B;
+          display:flex;align-items:center;justify-content:center;
+          font-size:14px;box-shadow:0 2px 8px rgba(0,0,0,0.4);
+          cursor:pointer;
+        ">🏛️</div>`,
+        iconSize: [32, 32],
+        iconAnchor: [16, 16],
+      })
+
+      for (const a of auctions) {
+        if (!a.latitude || !a.longitude) continue
+
+        const discount = a.discountPercent ? `<span style="color:#e53e3e;font-weight:700">-${a.discountPercent}%</span>` : ''
+        const score = a.opportunityScore ? `<span style="color:${a.opportunityScore >= 80 ? '#38a169' : a.opportunityScore >= 60 ? '#d69e2e' : '#e53e3e'};font-weight:700">Score: ${a.opportunityScore}/100</span>` : ''
+        const bid = a.minimumBid ? fmt(Number(a.minimumBid)) : '—'
+        const appr = a.appraisalValue ? fmt(Number(a.appraisalValue)) : ''
+        const roi = a.appraisalValue && a.minimumBid
+          ? `ROI est.: <strong style="color:#38a169">${((Number(a.appraisalValue) - Number(a.minimumBid)) / Number(a.minimumBid) * 100 * 0.7).toFixed(0)}%</strong>`
+          : ''
+
+        const marker = L.marker([a.latitude, a.longitude], { icon: auctionIcon })
+          .bindPopup(`
+            <div style="min-width:220px;max-width:280px;font-family:system-ui">
+              <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#C9A84C;font-weight:700;margin-bottom:4px">
+                🏛️ LEILÃO — ${sourceLabel(a.source)}
+              </div>
+              <p style="font-weight:700;margin:0 0 4px;font-size:13px;color:#1B2B5B">${a.title}</p>
+              <p style="color:#666;margin:0 0 6px;font-size:11px">${a.neighborhood || ''} · ${a.city || ''}/${a.state || ''}</p>
+              ${appr ? `<p style="margin:0;font-size:11px;color:#999;text-decoration:line-through">Avaliação: ${appr}</p>` : ''}
+              <p style="margin:2px 0;font-size:16px;font-weight:800;color:#1B2B5B">Lance: ${bid}</p>
+              <div style="display:flex;gap:8px;margin:6px 0;font-size:11px">${discount} ${score}</div>
+              ${roi ? `<p style="margin:4px 0;font-size:11px">${roi}</p>` : ''}
+              <div style="display:flex;gap:4px;flex-wrap:wrap;margin:4px 0">
+                ${a.financingAvailable ? '<span style="font-size:10px;background:#e6fffa;color:#2d7d6f;padding:1px 6px;border-radius:8px">Financiável</span>' : ''}
+                ${a.occupation === 'DESOCUPADO' ? '<span style="font-size:10px;background:#e6fffa;color:#2d7d6f;padding:1px 6px;border-radius:8px">Desocupado</span>' : ''}
+                ${a.occupation === 'OCUPADO' ? '<span style="font-size:10px;background:#fff5f5;color:#c53030;padding:1px 6px;border-radius:8px">Ocupado</span>' : ''}
+              </div>
+              <a href="/leiloes/${a.slug}" style="display:block;text-align:center;margin-top:8px;padding:6px;background:#1B2B5B;color:white;border-radius:8px;font-size:12px;font-weight:600;text-decoration:none">
+                Ver detalhes + Calculadora ROI →
+              </a>
+            </div>
+          `, { maxWidth: 300 })
+
+        if (clusterGroup) {
+          clusterGroup.addLayer(marker)
+        } else {
+          marker.addTo(mapInstance.current)
+        }
+        auctionMarkersRef.current.push(marker)
+      }
+
+      if (clusterGroup) {
+        mapInstance.current.addLayer(clusterGroup)
+        auctionMarkersRef.current.push(clusterGroup)
+      }
+    })
+  }, [auctions, isLoaded])
+
   // Handle drawing mode map clicks
   useEffect(() => {
     if (!isLoaded || !mapInstance.current) return
@@ -380,6 +554,31 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
         pointInPolygon(c.resolvedLat, c.resolvedLng, pts)
       )
       setSelectedNeighborhoods(inside.map(c => c.neighborhood))
+
+      // Also find auctions inside polygon (instant results)
+      const auctionsInside = auctions.filter(a =>
+        a.latitude && a.longitude &&
+        pointInPolygon(a.latitude, a.longitude, pts)
+      )
+      if (auctionsInside.length > 0) {
+        // Convert auctions to property format for the results panel
+        const auctionProps: Property[] = auctionsInside.map(a => ({
+          id: a.id,
+          slug: `../leiloes/${a.slug}`,
+          title: `🏛️ ${a.title}`,
+          neighborhood: a.neighborhood,
+          city: a.city,
+          coverImage: a.coverImage,
+          price: a.minimumBid ? Number(a.minimumBid) : null,
+          priceRent: null,
+          purpose: 'AUCTION',
+          type: a.propertyType,
+          bedrooms: a.bedrooms || 0,
+          totalArea: a.totalArea,
+          bathrooms: 0,
+        }))
+        setProperties(prev => [...auctionProps, ...prev])
+      }
     })
   }
 
@@ -600,7 +799,7 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
                     )}
                     <span
                       className="absolute top-1.5 left-1.5 text-xs font-bold px-1.5 py-0.5 rounded-full"
-                      style={{ backgroundColor: p.purpose === 'RENT' ? '#1B2B5B' : '#C9A84C', color: p.purpose === 'RENT' ? 'white' : '#1B2B5B' }}
+                      style={{ backgroundColor: p.purpose === 'RENT' ? '#1B2B5B' : p.purpose === 'AUCTION' ? '#C9A84C' : '#C9A84C', color: p.purpose === 'RENT' ? 'white' : '#1B2B5B' }}
                     >
                       {purposeLabel(p.purpose)}
                     </span>
