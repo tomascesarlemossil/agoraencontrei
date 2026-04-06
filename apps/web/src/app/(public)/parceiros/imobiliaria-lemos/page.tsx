@@ -201,13 +201,13 @@ export default async function ImobiliariaLemosPage() {
           <div className="flex flex-col sm:flex-row items-center sm:items-start gap-8">
             {/* Logo */}
             <div className="flex-shrink-0">
-              <div className="w-32 h-32 rounded-full overflow-hidden border-4 shadow-2xl" style={{ borderColor: '#C9A84C' }}>
+              <div className="w-36 h-36 flex items-center justify-center">
                 <Image
-                  src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663481419273/dSHpPTGqPSuMnYML.jpg"
+                  src="/logo-lemos-v2.png"
                   alt="Imobiliária Lemos"
-                  width={128}
-                  height={128}
-                  className="w-full h-full object-cover"
+                  width={144}
+                  height={144}
+                  className="w-full h-full object-contain drop-shadow-2xl"
                   priority
                 />
               </div>

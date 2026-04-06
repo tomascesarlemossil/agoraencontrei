@@ -151,7 +151,7 @@ const WEBSITE_SCHEMA = {
     name: 'Imobiliária Lemos',
     logo: {
       '@type': 'ImageObject',
-      url: 'https://www.agoraencontrei.com.br/logo-lemos.png',
+      url: 'https://www.agoraencontrei.com.br/logo-lemos-v2.png',
       width: 200,
       height: 200,
     },
@@ -239,7 +239,7 @@ const LOCAL_BUSINESS_SCHEMA = {
   alternateName: ['Imobili\u00e1ria Lemos', 'AgoraEncontrei', 'Lemos Im\u00f3veis Franca'],
   description: 'Imobili\u00e1ria com mais de 22 anos de tradi\u00e7\u00e3o em Franca/SP. Especializada em compra, venda e loca\u00e7\u00e3o de im\u00f3veis residenciais e comerciais.',
   url: 'https://www.agoraencontrei.com.br',
-  logo: 'https://www.agoraencontrei.com.br/logo-lemos.png',
+  logo: 'https://www.agoraencontrei.com.br/logo-lemos-v2.png',
   image: 'https://www.agoraencontrei.com.br/og-image.jpg',
   telephone: '+55-16-3722-0000',
   email: 'contato@agoraencontrei.com.br',
@@ -684,7 +684,7 @@ export default async function HomePage() {
             {/* Logo */}
             <div className="w-32 h-32 mb-4">
               <Image
-                src="/logo-lemos.png"
+                src="/logo-lemos-v2.png"
                 alt="Imobiliária Lemos"
                 width={128}
                 height={128}

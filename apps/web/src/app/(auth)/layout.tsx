@@ -12,19 +12,18 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         <div className="text-center mb-8">
           <div className="flex items-center justify-center mb-4">
             <Image
-              src="/logo-lemos.png"
-              alt="Imobiliária Lemos"
-              width={80}
-              height={80}
-              className="rounded-full object-cover shadow-2xl"
-              style={{ boxShadow: '0 0 0 3px #C9A84C, 0 8px 32px rgba(201,168,76,0.3)' }}
+              src="/logo-ae-v2.png"
+              alt="AgoraEncontrei"
+              width={88}
+              height={88}
+              className="object-contain drop-shadow-2xl"
               priority
             />
           </div>
-          <h1 className="text-2xl font-bold text-white" style={{ fontFamily: 'Georgia, serif' }}>
-            IMOBILIÁRIA <span style={{ color: '#C9A84C' }}>LEMOS</span>
+          <h1 className="text-2xl font-bold">
+            <span style={{ color: '#1a5c2a', fontWeight: 800 }}>Agora</span><span style={{ color: '#d1d5db', fontWeight: 800 }}>Encontrei</span>
           </h1>
-          <p className="text-white/50 text-sm mt-1">Sistema de Gestão Imobiliária</p>
+          <p className="text-white/50 text-sm mt-1">Marketplace Imobiliário</p>
         </div>
         {children}
       </div>

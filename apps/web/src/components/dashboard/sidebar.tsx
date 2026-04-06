@@ -115,7 +115,7 @@ function NavContent({ onClose }: { onClose?: () => void }) {
       {/* Logo */}
       <div className="flex items-center gap-2 px-4 py-4 border-b border-white/10">
         <Image
-          src="/logo-lemos.png"
+          src="/logo-lemos-v2.png"
           alt="Imobiliária Lemos"
           width={40}
           height={40}

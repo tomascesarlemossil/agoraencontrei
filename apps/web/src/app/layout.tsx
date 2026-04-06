@@ -277,7 +277,7 @@ const jsonLdBusiness = {
     { '@type': 'City', name: 'Itirapuã', containedInPlace: { '@type': 'State', name: 'São Paulo' } },
   ],
   hasMap: 'https://maps.google.com/?q=Imobiliária+Lemos+Franca+SP',
-  logo: `${WEB_URL}/logo-lemos.png`,
+  logo: `${WEB_URL}/logo-lemos-v2.png`,
   image: `${WEB_URL}/og-image.jpg`,
   sameAs: [
     'https://www.instagram.com/imobiliarialemos',

@@ -89,7 +89,7 @@ export function Navbar() {
         {/* Logo AgoraEncontrei */}
         <Link href="/" className="flex items-center gap-2.5 group" aria-label="AgoraEncontrei — Marketplace Imobiliário">
           <Image
-            src="/logo.png"
+            src="/logo-ae-v2.png"
             alt="AgoraEncontrei Marketplace"
             width={48}
             height={48}
