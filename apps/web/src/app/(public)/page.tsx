@@ -123,6 +123,108 @@ const CATEGORIES = [
   { label: 'Lançamentos', isFeatured: true, icon: '🚀', count: null },
 ]
 
+// Schema.org WebSite com SearchAction (sitelinks search box)
+const WEBSITE_SCHEMA = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  '@id': 'https://www.agoraencontrei.com.br/#website',
+  name: 'AgoraEncontrei — Imobiliária Lemos',
+  url: 'https://www.agoraencontrei.com.br',
+  description: 'Encontre imóveis à venda e para alugar em Franca/SP e região. Imobiliária Lemos — CRECI 279051.',
+  inLanguage: 'pt-BR',
+  potentialAction: {
+    '@type': 'SearchAction',
+    target: {
+      '@type': 'EntryPoint',
+      urlTemplate: 'https://www.agoraencontrei.com.br/imoveis?q={search_term_string}',
+    },
+    'query-input': 'required name=search_term_string',
+  },
+  publisher: {
+    '@type': 'Organization',
+    '@id': 'https://www.agoraencontrei.com.br/#organization',
+    name: 'Imobiliária Lemos',
+    logo: {
+      '@type': 'ImageObject',
+      url: 'https://www.agoraencontrei.com.br/logo-lemos.png',
+      width: 200,
+      height: 200,
+    },
+  },
+}
+
+// Schema.org FAQPage para rich snippets no Google
+const FAQ_SCHEMA = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: [
+    {
+      '@type': 'Question',
+      name: 'Como comprar um imóvel em Franca SP?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'Para comprar um imóvel em Franca/SP, entre em contato com a Imobiliária Lemos (CRECI 279051). Temos mais de 1.000 imóveis disponíveis — casas, apartamentos, terrenos e imóveis comerciais. Oferecemos financiamento facilitado pela Caixa Econômica Federal e outros bancos. Ligue (16) 3722-0000 ou acesse agoraencontrei.com.br.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'Qual o preço médio de casas à venda em Franca SP?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'O preço médio de casas à venda em Franca/SP varia de R$ 150.000 (casas populares em bairros periféricos) a R$ 2.000.000 (casas de alto padrão em condomínios fechados como Polo Club e Jardim Europa). Consulte nosso portfólio completo em agoraencontrei.com.br/casas-a-venda-franca-sp.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'Quais são os melhores bairros para morar em Franca SP?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'Os bairros mais valorizados de Franca/SP são: Jardim Europa, Jardim Califórnia, Polo Club, Jardim América, Jardim Paulista, Centro, Jardim Redentor e Jardim Universitário. Para famílias, os condomínios fechados como Villaggio di Firenze e Portal de Minas são muito procurados. Veja imóveis por bairro em agoraencontrei.com.br/bairros/franca.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'Como alugar um imóvel em Franca SP?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'Para alugar um imóvel em Franca/SP com a Imobiliária Lemos, basta acessar agoraencontrei.com.br/casas-para-alugar-franca-sp ou ligar (16) 3722-0000. Exigimos fiador, seguro-fiança ou depósito caução. O processo é rápido e seguro, com contrato digital.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'A Imobiliária Lemos faz avaliação de imóveis em Franca SP?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'Sim! A Imobiliária Lemos realiza avaliações de imóveis em Franca/SP e região. Nossa equipe de corretores credenciados pelo CRECI avalia seu imóvel gratuitamente para venda ou locação. Acesse agoraencontrei.com.br/avaliacao ou ligue (16) 3722-0000.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'Quais documentos preciso para comprar um imóvel em Franca SP?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'Para comprar um imóvel em Franca/SP você precisará de: RG e CPF, comprovante de renda (últimos 3 meses), comprovante de residência, certidão de nascimento ou casamento, e declaração de IR. Para financiamento pela Caixa, também é necessário extrato do FGTS. Nossa equipe orienta todo o processo.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'Tem imóveis de leilão em Franca SP?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'Sim! A Imobiliária Lemos assessora na compra de imóveis em leilão em Franca/SP. Temos parceria com leiloeiros credenciados e auxiliamos em todo o processo de arrematação, desde a análise jurídica até a transferência do imóvel. Saiba mais em agoraencontrei.com.br/leilao-imoveis-franca-sp.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'Como anunciar meu imóvel em Franca SP?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'Para anunciar seu imóvel em Franca/SP com a Imobiliária Lemos, acesse agoraencontrei.com.br/anunciar e preencha o formulário com os dados do imóvel e fotos. Nossa equipe entrará em contato em até 24 horas para avaliação e publicação. O serviço é gratuito para proprietários.',
+      },
+    },
+  ],
+}
+
 // Schema.org LocalBusiness + RealEstateAgent para SEO local
 const LOCAL_BUSINESS_SCHEMA = {
   '@context': 'https://schema.org',
@@ -185,6 +287,10 @@ export default async function HomePage() {
 
   return (
     <>
+      {/* Schema.org WebSite com SearchAction */}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(WEBSITE_SCHEMA) }} />
+      {/* Schema.org FAQPage para rich snippets */}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(FAQ_SCHEMA) }} />
       {/* Schema.org LocalBusiness para SEO local */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(LOCAL_BUSINESS_SCHEMA) }} />
       {/* ── HERO ──────────────────────────────────────────────────────── */}
