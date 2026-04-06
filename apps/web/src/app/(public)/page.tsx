@@ -1,10 +1,10 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import Image from 'next/image'
-import { BedDouble, Bath, Maximize, ArrowRight, Star } from 'lucide-react'
+import { BedDouble, Bath, Maximize, ArrowRight, Star, Sparkles } from 'lucide-react'
 import { HeroSearchForm } from './HeroSearchForm'
 import { HeroBackground } from './HeroBackground'
-import { SmartQuiz } from './SmartQuiz'
+import { SmartQuizButton, SmartQuizModal } from './SmartQuiz'
 import { PresentationSection } from './PresentationSection'
 
 export const metadata: Metadata = {
@@ -691,56 +691,67 @@ export default async function HomePage() {
         </section>
       )}
 
-      {/* ── 6. BUSCA INTELIGENTE COM IA (Smart Quiz) ─────────────────────── */}
-      <SmartQuiz />
+      {/* ── 6 & 7. SMART QUIZ + CTA AVALIAÇÃO (lado a lado) ────────────── */}
+      <section style={{ backgroundColor: '#f0ede6' }} className="py-14">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 rounded-3xl overflow-hidden shadow-xl border border-gray-200/60">
 
-      {/* ── 7. CTA AVALIAÇÃO ─────────────────────────────────────────────── */}
-      <section style={{ backgroundColor: 'var(--site-background-color, #f8f6f1)' }} className="py-16">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 text-center">
-          <h2 className="text-2xl font-bold mb-3" style={{ color: 'var(--site-primary-color, #1B2B5B)', fontFamily: 'Georgia, serif' }}>
-            Quer saber quanto vale seu imóvel?
-          </h2>
-          <p className="text-gray-500 text-sm mb-8 max-w-lg mx-auto">
-            Solicite uma avaliação gratuita com nossa equipe especializada. Resposta em até 24 horas.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Link
-              href="/avaliacao"
-              className="px-8 py-3 rounded-xl text-sm font-bold transition-all hover:brightness-110"
-              style={{ backgroundColor: 'var(--site-accent-color, #C9A84C)', color: 'var(--site-primary-color, #1B2B5B)' }}
-            >
-              Solicitar avaliação gratuita
-            </Link>
-            <a
-              href="https://wa.me/5516981010004?text=Olá! Gostaria de uma avaliação gratuita do meu imóvel."
-              target="_blank"
-              rel="noreferrer"
-              className="px-8 py-3 rounded-xl text-sm font-bold border-2 transition-all hover:bg-[#1B2B5B] hover:text-white"
-              style={{ borderColor: 'var(--site-primary-color, #1B2B5B)', color: 'var(--site-primary-color, #1B2B5B)' }}
-            >
-              Falar pelo WhatsApp
-            </a>
+            {/* Coluna esquerda — Smart Quiz */}
+            <div className="bg-[#f0ede6] px-8 py-10 flex flex-col justify-center">
+              <div
+                className="inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-bold mb-5 w-fit"
+                style={{ backgroundColor: 'rgba(201,168,76,0.2)', color: '#C9A84C' }}
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                Busca Inteligente com IA
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-bold mb-3" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>
+                Não sabe por onde começar?
+              </h2>
+              <p className="text-gray-500 text-sm mb-8 max-w-sm leading-relaxed">
+                Responda 5 perguntas rápidas e nossa IA encontra os imóveis perfeitos para o seu perfil — em menos de 2 minutos.
+              </p>
+              <SmartQuizButton />
+              <p className="text-gray-400 text-xs mt-3">Gratuito · 2 minutos · Sem compromisso</p>
+            </div>
+
+            {/* Divisor vertical */}
+            <div className="hidden lg:block absolute" style={{ display: 'none' }} />
+
+            {/* Coluna direita — CTA Avaliação */}
+            <div className="bg-white px-8 py-10 flex flex-col justify-center border-t lg:border-t-0 lg:border-l border-gray-200">
+              <h2 className="text-2xl sm:text-3xl font-bold mb-3" style={{ color: 'var(--site-primary-color, #1B2B5B)', fontFamily: 'Georgia, serif' }}>
+                Quer saber quanto vale seu imóvel?
+              </h2>
+              <p className="text-gray-500 text-sm mb-8 max-w-sm leading-relaxed">
+                Solicite uma avaliação gratuita com nossa equipe especializada. Resposta em até 24 horas.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Link
+                  href="/avaliacao"
+                  className="px-7 py-3 rounded-xl text-sm font-bold transition-all hover:brightness-110 text-center"
+                  style={{ backgroundColor: 'var(--site-accent-color, #C9A84C)', color: 'var(--site-primary-color, #1B2B5B)' }}
+                >
+                  Solicitar avaliação gratuita
+                </Link>
+                <a
+                  href="https://wa.me/5516981010004?text=Olá! Gostaria de uma avaliação gratuita do meu imóvel."
+                  target="_blank"
+                  rel="noreferrer"
+                  className="px-7 py-3 rounded-xl text-sm font-bold border-2 transition-all hover:bg-[#1B2B5B] hover:text-white text-center"
+                  style={{ borderColor: 'var(--site-primary-color, #1B2B5B)', color: 'var(--site-primary-color, #1B2B5B)' }}
+                >
+                  Falar pelo WhatsApp
+                </a>
+              </div>
+            </div>
+
           </div>
         </div>
       </section>
+      <SmartQuizModal />
 
-      {/* ── 8. QUICK STATS ───────────────────────────────────────────────── */}
-      <section className="max-w-3xl mx-auto px-4 sm:px-6 py-8">
-        <div className="flex flex-wrap justify-center gap-10 py-5 px-8 rounded-2xl bg-white shadow-lg border border-gray-100">
-          {[
-            { label: 'Imóveis', value: stats.total > 0 ? stats.total.toLocaleString('pt-BR') + '+' : '1.011+' },
-            { label: 'Anos de mercado', value: '22+' },
-            { label: 'Famílias atendidas', value: '5.000+' },
-          ].map(stat => (
-            <div key={stat.label} className="text-center">
-              <p className="text-2xl font-bold" style={{ color: 'var(--site-accent-color, #C9A84C)', fontFamily: 'Georgia, serif' }}>
-                {stat.value}
-              </p>
-              <p className="text-gray-500 text-xs mt-0.5">{stat.label}</p>
-            </div>
-          ))}
-        </div>
-      </section>
+
 
       {/* ── 9. VÍDEO DE APRESENTAÇÃO ─────────────────────────────────────── */}
       {(siteSettings.presentationVideoUrl || siteSettings.presentationBannerUrl) && (
@@ -762,8 +773,23 @@ export default async function HomePage() {
         />
       )}
 
-      {/* ── 10. REDES SOCIAIS ─────────────────────────────────────────────── */}
+      {/* ── 9. REDES SOCIAIS + QUICK STATS ──────────────────────────────── */}
       <section className="max-w-4xl mx-auto px-4 sm:px-6 py-10">
+        {/* Quick Stats */}
+        <div className="flex flex-wrap justify-center gap-10 py-5 px-8 rounded-2xl bg-white shadow-lg border border-gray-100 mb-10">
+          {[
+            { label: 'Imóveis', value: stats.total > 0 ? stats.total.toLocaleString('pt-BR') + '+' : '1.011+' },
+            { label: 'Anos de mercado', value: '22+' },
+            { label: 'Famílias atendidas', value: '5.000+' },
+          ].map(stat => (
+            <div key={stat.label} className="text-center">
+              <p className="text-2xl font-bold" style={{ color: 'var(--site-accent-color, #C9A84C)', fontFamily: 'Georgia, serif' }}>
+                {stat.value}
+              </p>
+              <p className="text-gray-500 text-xs mt-0.5">{stat.label}</p>
+            </div>
+          ))}
+        </div>
         <div className="text-center mb-6">
           <h2 className="text-xl font-bold" style={{ color: 'var(--site-primary-color, #1B2B5B)', fontFamily: 'Georgia, serif' }}>Siga-nos nas Redes Sociais</h2>
           <p className="text-gray-500 text-sm mt-1">Acompanhe os melhores imóveis, dicas e novidades</p>

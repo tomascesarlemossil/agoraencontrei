@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, createContext, useContext } from 'react'
 import { useRouter } from 'next/navigation'
 import { ChevronLeft, Sparkles, CheckCircle2, Loader2, X } from 'lucide-react'
 
@@ -107,6 +107,28 @@ function getTransitionMessage(step: number, answer: Answer): string {
     5: 'Quase lá! Só me passa seus dados para personalizar completamente.',
   }
   return msgs[step] ?? 'Ótimo!'
+}
+
+// ── Context para compartilhar estado entre SmartQuizButton e SmartQuizModal ─
+interface SmartQuizCtx { open: () => void }
+const SmartQuizContext = createContext<SmartQuizCtx>({ open: () => {} })
+
+// ── Hook para abrir o quiz de qualquer lugar ────────────────────────────────
+export function useSmartQuiz() { return useContext(SmartQuizContext) }
+
+// ── Botão isolado (usado na coluna esquerda do layout lado a lado) ──────────
+export function SmartQuizButton() {
+  const { open } = useSmartQuiz()
+  return (
+    <button
+      onClick={open}
+      className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl text-sm font-bold transition-all hover:scale-105 hover:shadow-lg active:scale-100 w-fit"
+      style={{ background: 'linear-gradient(135deg, #1B2B5B, #2d4a99)', color: 'white' }}
+    >
+      <Sparkles className="w-4 h-4" />
+      Iniciar Quiz Inteligente
+    </button>
+  )
 }
 
 // ── Main component ─────────────────────────────────────────────────────────
@@ -233,35 +255,7 @@ export function SmartQuiz() {
   }, [isOpen])
 
   return (
-    <>
-      {/* ── Trigger banner ──────────────────────────────────────────── */}
-      <section style={{ backgroundColor: '#f0ede6' }} className="py-14">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 text-center">
-          <div
-            className="inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-bold mb-5"
-            style={{ backgroundColor: 'rgba(201,168,76,0.2)', color: '#C9A84C' }}
-          >
-            <Sparkles className="w-3.5 h-3.5" />
-            Busca Inteligente com IA
-          </div>
-          <h2 className="text-2xl sm:text-3xl font-bold mb-3" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>
-            Não sabe por onde começar?
-          </h2>
-          <p className="text-gray-500 text-sm mb-8 max-w-lg mx-auto leading-relaxed">
-            Responda 5 perguntas rápidas e nossa IA encontra os imóveis perfeitos para o seu perfil — em menos de 2 minutos.
-          </p>
-          <button
-            onClick={open}
-            className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl text-sm font-bold transition-all hover:scale-105 hover:shadow-lg active:scale-100"
-            style={{ background: 'linear-gradient(135deg, #1B2B5B, #2d4a99)', color: 'white' }}
-          >
-            <Sparkles className="w-4 h-4" />
-            Iniciar Quiz Inteligente
-          </button>
-          <p className="text-gray-500 text-xs mt-3">Gratuito · 2 minutos · Sem compromisso</p>
-        </div>
-      </section>
-
+    <SmartQuizContext.Provider value={{ open }}>
       {/* ── Modal overlay ───────────────────────────────────────────── */}
       {isOpen && (
         <div
@@ -465,6 +459,11 @@ export function SmartQuiz() {
           </div>
         </div>
       )}
-    </>
+    </SmartQuizContext.Provider>
   )
+}
+
+// ── SmartQuizModal: wrapper que provê o contexto + modal (usado na página) ──────
+export function SmartQuizModal() {
+  return <SmartQuiz />
 }
