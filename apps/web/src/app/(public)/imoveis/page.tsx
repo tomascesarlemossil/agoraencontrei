@@ -164,6 +164,22 @@ export default async function ImoveisPage({ searchParams }: { searchParams: Sear
   const isMapView = searchParams.view === 'map'
   const { data: properties, meta } = isMapView ? { data: [], meta: { total: 0, page: 1, totalPages: 1 } } : await fetchProperties(searchParams)
 
+  // SSR pre-fetch clusters for Franca/SP BBOX — eliminates map loading delay
+  let initialClusters: any[] = []
+  if (isMapView) {
+    try {
+      const clusterParams = new URLSearchParams({
+        swLat: '-20.65', swLng: '-47.52', neLat: '-20.40', neLng: '-47.28',
+      })
+      if (searchParams.purpose) clusterParams.set('purpose', searchParams.purpose)
+      const clusterRes = await fetch(
+        `${API_URL}/api/v1/public/map-clusters?${clusterParams}`,
+        { next: { revalidate: 120 } }
+      )
+      if (clusterRes.ok) initialClusters = await clusterRes.json()
+    } catch {}
+  }
+
   // If no results, try to find closest alternatives
   const hasActiveSearch = !!(searchParams.search || searchParams.type || searchParams.city ||
     searchParams.neighborhood || searchParams.maxPrice || searchParams.bedrooms)
@@ -302,6 +318,7 @@ export default async function ImoveisPage({ searchParams }: { searchParams: Sear
           initialCity={searchParams.city}
           initialMaxPrice={searchParams.maxPrice}
           initialBedrooms={searchParams.bedrooms}
+          initialClusters={initialClusters}
         />
       ) : properties.length === 0 ? (
         <div className="text-center py-12">
