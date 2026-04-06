@@ -556,7 +556,7 @@ export default function SettingsPage() {
                         {logoUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
                         {logoFile ? logoFile.name : 'Carregar logo'}
                       </label>
-                      <input id="logo-upload" type="file" accept="image/*" className="hidden" onChange={handleLogoChange} />
+                      <input id="logo-upload" type="file" className="hidden" onChange={handleLogoChange} />
                       {empresa.logoUrl && !logoFile && (
                         <p className="text-xs text-white/40 truncate max-w-xs">{empresa.logoUrl}</p>
                       )}
@@ -620,7 +620,6 @@ export default function SettingsPage() {
                     <input
                       id={`icon-upload-${u.id}`}
                       type="file"
-                      accept="image/*"
                       className="hidden"
                       onChange={async (e) => {
                         const file = e.target.files?.[0]
@@ -699,7 +698,6 @@ export default function SettingsPage() {
                     <input
                       id="edit-user-avatar-upload"
                       type="file"
-                      accept="image/*"
                       className="hidden"
                       onChange={(e) => {
                         const file = e.target.files?.[0]
@@ -810,7 +808,6 @@ export default function SettingsPage() {
                   <input
                     id="avatar-upload"
                     type="file"
-                    accept="image/*"
                     className="hidden"
                     onChange={handleAvatarChange}
                   />
@@ -943,7 +940,6 @@ export default function SettingsPage() {
                 <input
                   id="hero-video-upload"
                   type="file"
-                  accept="video/mp4,video/webm,video/*"
                   className="hidden"
                   onChange={async (e) => {
                     const file = e.target.files?.[0]

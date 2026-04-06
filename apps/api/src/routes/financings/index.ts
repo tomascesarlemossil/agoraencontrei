@@ -12,7 +12,7 @@ const FinancingBody = z.object({
   term:           z.number().int().min(1).max(420).optional(), // up to 35 years in months
   rate:           z.number().min(0).max(99).optional(),        // annual rate %
   notes:          z.string().max(2000).optional(),
-  simulatorLink:  z.string().url().optional(),
+  simulatorLink:  z.string().optional(), // accepts any URL format
   clientName:     z.string().max(100).optional(),
   clientPhone:    z.string().max(20).optional(),
   clientEmail:    z.string().email().optional(),

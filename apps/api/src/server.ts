@@ -53,6 +53,8 @@ import financeAutomationRoutes from './routes/finance/automation.js'
 import alertsRoutes from './routes/alerts/index.js'
 
 const app = Fastify({
+  // No body size limit — accept any file size
+  bodyLimit: Infinity,
   logger: {
     level: env.LOG_LEVEL,
     ...(env.NODE_ENV === 'development' && {
@@ -142,7 +144,8 @@ async function bootstrap() {
   await runMigrations(app.prisma).catch(e => app.log.warn('Migration warning:', e.message))
   await app.register(redisPlugin)
   await app.register(automationPlugin)
-  await app.register(multipart, { limits: { fileSize: 50 * 1024 * 1024 } }) // 50MB
+  // No file size limit — accept any file type and size
+  await app.register(multipart, { limits: { fileSize: Infinity } })
 
   // ── Swagger (development only) ──────────────────────────────────────────
   if (env.NODE_ENV !== 'production') {

@@ -525,7 +525,7 @@ export default function PropertyDetailPage() {
               className="flex items-center gap-1.5 text-xs text-white/50 hover:text-white transition-colors px-2 py-1 rounded-lg hover:bg-white/10 disabled:opacity-40">
               <Upload className="h-3.5 w-3.5" /> {uploadingImages ? 'Enviando...' : 'Fotos'}
             </button>
-            <input ref={fileInputRef} type="file" accept="image/*,.heic,.heif" multiple className="hidden"
+            <input ref={fileInputRef} type="file" multiple className="hidden"
               onChange={(e) => handleFileUpload(e.target.files)} />
             <button onClick={() => videoInputRef.current?.click()} disabled={uploadingVideos}
               className="flex items-center gap-1.5 text-xs text-blue-400 hover:text-blue-300 transition-colors px-2 py-1 rounded-lg hover:bg-blue-400/10 border border-blue-400/20 disabled:opacity-40">

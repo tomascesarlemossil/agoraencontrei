@@ -10,7 +10,7 @@ import { env } from '../../utils/env.js' // used in /config and /stats routes
 const CreateJobBody = z.object({
   tipo:       z.enum(['render', 'staging', 'enhance_batch']),
   propertyId: z.string().cuid(),
-  inputUrl:   z.string().url(),
+  inputUrl:   z.string(), // accepts URLs, data URLs, relative paths
   style:      z.string().optional(),
   // render: 'modern' | 'classic' | 'minimalist'
   // staging: 'sala' | 'quarto' | 'cozinha'

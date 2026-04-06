@@ -584,9 +584,9 @@ export default function DocumentosPage() {
               )}
 
               {/* Hidden file inputs */}
-              <input ref={cameraInputRef} type="file" accept="image/*" capture="environment"
+              <input ref={cameraInputRef} type="file" capture="environment"
                 multiple onChange={handleImageUpload} className="hidden" />
-              <input ref={galleryInputRef} type="file" accept="image/*,.pdf"
+              <input ref={galleryInputRef} type="file"
                 multiple onChange={handleImageUpload} className="hidden" />
 
               {/* Action row */}

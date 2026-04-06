@@ -2,13 +2,11 @@ import type { FastifyInstance } from 'fastify'
 import { nanoid } from 'nanoid'
 import { s3Service } from '../../services/s3.service.js'
 
-// Max size for base64 inline storage: 2MB
-const MAX_INLINE_SIZE = 2 * 1024 * 1024
-
 export default async function uploadRoutes(app: FastifyInstance) {
   app.addHook('preHandler', app.authenticate)
 
   // POST /api/v1/upload — upload file to S3 or fallback to base64 inline
+  // Accepts ANY file type and ANY size — no restrictions
   app.post('/', {
     schema: { tags: ['upload'] },
   }, async (req, reply) => {
@@ -21,26 +19,22 @@ export default async function uploadRoutes(app: FastifyInstance) {
     }
     const buffer = Buffer.concat(chunks)
 
-    // If S3 is configured, use it
+    // Determine a safe mimetype — fallback to octet-stream if unknown
+    const mimetype = data.mimetype || 'application/octet-stream'
+
+    // If S3 is configured, use it (no size limit)
     if (s3Service.isConfigured()) {
       const key = `${req.user.cid}/${nanoid()}/${data.filename}`
-      const url = await s3Service.upload(key, buffer, data.mimetype)
-      return reply.send({ url, key, size: buffer.length, contentType: data.mimetype })
+      const url = await s3Service.upload(key, buffer, mimetype)
+      return reply.send({ url, key, size: buffer.length, contentType: mimetype })
     }
 
-    // Fallback: store as base64 data URL (for avatars and small images)
-    if (buffer.length > MAX_INLINE_SIZE) {
-      return reply.status(413).send({
-        error: 'FILE_TOO_LARGE',
-        message: 'Arquivo muito grande. Máximo 2MB para armazenamento inline. Configure S3 para arquivos maiores.',
-      })
-    }
-
+    // Fallback: store as base64 data URL — no size limit enforced
     const base64 = buffer.toString('base64')
-    const dataUrl = `data:${data.mimetype};base64,${base64}`
+    const dataUrl = `data:${mimetype};base64,${base64}`
     const key = `inline/${req.user.cid}/${nanoid()}`
 
-    return reply.send({ url: dataUrl, key, size: buffer.length, contentType: data.mimetype, inline: true })
+    return reply.send({ url: dataUrl, key, size: buffer.length, contentType: mimetype, inline: true })
   })
 
   // POST /api/v1/upload/presign — get presigned URL for direct browser upload
@@ -49,11 +43,11 @@ export default async function uploadRoutes(app: FastifyInstance) {
   }, async (req, reply) => {
     if (!s3Service.isConfigured()) {
       // Return a flag indicating client should use the regular upload endpoint
-      return reply.status(200).send({ 
-        uploadUrl: null, 
-        key: null, 
+      return reply.status(200).send({
+        uploadUrl: null,
+        key: null,
         useDirectUpload: true,
-        message: 'S3 not configured, use POST /upload instead'
+        message: 'S3 not configured, use POST /upload instead',
       })
     }
 

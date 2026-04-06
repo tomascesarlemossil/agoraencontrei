@@ -35,7 +35,7 @@ export default async function photoEditorRoutes(app: FastifyInstance) {
   app.post('/preview', async (req, reply) => {
     try {
       const body = z.object({
-        image_url: z.string().url(),
+        image_url: z.string(), // accepts URLs, data URLs, relative paths
         filter_id: z.string(),
         apply_logo: z.boolean().default(true),
         logo_position: z.enum(['bottom-right', 'bottom-left', 'top-right', 'top-left', 'center']).default('bottom-right'),
@@ -98,7 +98,7 @@ export default async function photoEditorRoutes(app: FastifyInstance) {
   app.post('/process', async (req, reply) => {
     try {
       const body = z.object({
-        image_url: z.string().url(),
+        image_url: z.string(), // accepts URLs, data URLs, relative paths
         filter_id: z.string(),
         apply_logo: z.boolean().default(true),
         logo_position: z.enum(['bottom-right', 'bottom-left', 'top-right', 'top-left', 'center']).default('bottom-right'),
@@ -119,7 +119,7 @@ export default async function photoEditorRoutes(app: FastifyInstance) {
   app.post('/process/batch', async (req, reply) => {
     try {
       const body = z.object({
-        image_urls: z.array(z.string().url()).min(1).max(50),
+        image_urls: z.array(z.string()).min(1).max(50), // accepts URLs, data URLs, relative paths
         filter_id: z.string(),
         apply_logo: z.boolean().default(true),
         logo_position: z.enum(['bottom-right', 'bottom-left', 'top-right', 'top-left', 'center']).default('bottom-right'),

@@ -625,7 +625,6 @@ Use estilos CSS inline para impressão A4. Inclua espaço para assinaturas ao fi
             <input
               type="file"
               multiple
-              accept="image/*,.pdf"
               className="sr-only"
               onChange={e => setFiles(Array.from(e.target.files ?? []))}
             />

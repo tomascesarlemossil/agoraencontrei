@@ -7,7 +7,7 @@ const UpdateUserBody = z.object({
   phone: z.string().optional(),
   bio: z.string().max(500).optional(),
   creciNumber: z.string().optional(),
-  avatarUrl: z.string().url().optional(),
+  avatarUrl: z.string().optional(), // accepts URLs, data URLs, relative paths
 })
 
 const CreateUserBody = z.object({
@@ -134,7 +134,7 @@ export default async function usersRoutes(app: FastifyInstance) {
       phone:           z.string().optional(),
       email:           z.string().email().optional(),
       website:         z.string().optional(),
-      logoUrl:         z.string().url().optional().or(z.literal('')),
+      logoUrl:         z.string().optional().or(z.literal('')), // accepts URLs, data URLs, relative paths
       address:         z.string().optional(),
       city:            z.string().optional(),
       state:           z.string().max(2).optional(),
@@ -249,7 +249,7 @@ export default async function usersRoutes(app: FastifyInstance) {
         phone: z.string().optional(),
         email: z.string().email().optional(),
         website: z.string().optional(),
-        logoUrl: z.string().url().optional().or(z.literal('')),
+        logoUrl: z.string().optional().or(z.literal('')), // accepts URLs, data URLs, relative paths
         address: z.string().optional(),
         city: z.string().optional(),
         state: z.string().max(2).optional(),

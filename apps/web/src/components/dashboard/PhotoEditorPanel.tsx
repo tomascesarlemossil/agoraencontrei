@@ -412,7 +412,6 @@ export function PhotoEditorPanel({ propertyId, photos, onPhotosUpdated, onClose 
                   <input
                     ref={dngInputRef}
                     type="file"
-                    accept=".dng"
                     className="hidden"
                     onChange={e => e.target.files?.[0] && handleImportDng(e.target.files[0])}
                   />
