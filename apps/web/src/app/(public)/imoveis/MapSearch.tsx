@@ -373,16 +373,43 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
     }
   }, [])
 
+  // Optimistic toggle: show/hide sale layer instantly (no re-render)
+  const saleLayerGroupRef = useRef<any>(null)
+  useEffect(() => {
+    if (!mapInstance.current || !saleLayerGroupRef.current) return
+    if (showSaleLayer) {
+      if (!mapInstance.current.hasLayer(saleLayerGroupRef.current)) {
+        mapInstance.current.addLayer(saleLayerGroupRef.current)
+      }
+    } else {
+      mapInstance.current.removeLayer(saleLayerGroupRef.current)
+    }
+  }, [showSaleLayer])
+
+  // Optimistic toggle: show/hide auction layer instantly (no re-render)
+  useEffect(() => {
+    if (!mapInstance.current || !auctionClusterRef.current) return
+    if (showAuctionLayer) {
+      if (!mapInstance.current.hasLayer(auctionClusterRef.current)) {
+        mapInstance.current.addLayer(auctionClusterRef.current)
+      }
+    } else {
+      mapInstance.current.removeLayer(auctionClusterRef.current)
+    }
+  }, [showAuctionLayer])
+
   // Render cluster markers on map (blue — conventional properties)
   useEffect(() => {
     if (!isLoaded || !mapInstance.current) return
 
     import('leaflet').then(L => {
-      // Remove old markers
-      markersRef.current.forEach(m => { try { m.remove() } catch {} })
+      // Remove old layer group
+      if (saleLayerGroupRef.current) {
+        try { mapInstance.current.removeLayer(saleLayerGroupRef.current) } catch {}
+      }
       markersRef.current = []
 
-      if (!showSaleLayer) return // Layer toggled off
+      const layerGroup = L.layerGroup()
 
       clusters.forEach(c => {
         if (!c.resolvedLat || !c.resolvedLng) return
@@ -407,7 +434,7 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
         })
 
         const marker = L.marker([c.resolvedLat, c.resolvedLng], { icon })
-          .addTo(mapInstance.current)
+          .addTo(layerGroup)
           .bindPopup(`
             <div style="min-width:160px">
               <p style="font-weight:700;margin:0 0 4px">${c.neighborhood}</p>
@@ -423,8 +450,12 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
 
         markersRef.current.push(marker)
       })
+
+      // Store layer group and add to map if toggle is on
+      saleLayerGroupRef.current = layerGroup
+      if (showSaleLayer) layerGroup.addTo(mapInstance.current)
     })
-  }, [clusters, isLoaded, selectedNeighborhoods, drawing, showSaleLayer])
+  }, [clusters, isLoaded, selectedNeighborhoods, drawing])
 
   // Render auction pins (golden) with marker clustering
   useEffect(() => {
@@ -436,7 +467,7 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
       auctionClusterRef.current = null
     }
 
-    if (!isLoaded || !mapInstance.current || filteredAuctions.length === 0 || !showAuctionLayer) return
+    if (!isLoaded || !mapInstance.current || filteredAuctions.length === 0) return
 
     import('leaflet').then(async (L) => {
 
@@ -533,11 +564,11 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
       }
 
       if (clusterGroup) {
-        mapInstance.current.addLayer(clusterGroup)
         auctionClusterRef.current = clusterGroup
+        if (showAuctionLayer) mapInstance.current.addLayer(clusterGroup)
       }
     })
-  }, [filteredAuctions, isLoaded, showAuctionLayer])
+  }, [filteredAuctions, isLoaded])
 
   // Handle drawing mode map clicks
   useEffect(() => {
@@ -1044,24 +1075,27 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
               )}
             </div>
 
-            {/* CTAs */}
-            <div className="space-y-2">
-              <a
-                href={`/leiloes/${selectedAuction.slug}`}
-                className="block w-full text-center px-4 py-3 rounded-xl font-bold text-sm text-white"
-                style={{ backgroundColor: '#1B2B5B' }}
-              >
-                Ver Detalhes + Edital Completo →
-              </a>
-              <a
-                href={`https://wa.me/5516981010004?text=Olá! Vi o leilão "${selectedAuction.title}" no AgoraEncontrei e gostaria de assessoria jurídica.`}
-                target="_blank" rel="noopener noreferrer"
-                className="block w-full text-center px-4 py-3 rounded-xl font-bold text-sm"
-                style={{ backgroundColor: '#25D366', color: 'white' }}
-              >
-                Pedir Assessoria Jurídica
-              </a>
-            </div>
+            {/* Spacer for sticky CTAs */}
+            <div className="h-28 sm:h-0" />
+          </div>
+
+          {/* CTAs — sticky bottom for mobile thumb reach */}
+          <div className="sticky bottom-0 bg-white border-t p-3 space-y-2 shadow-[0_-4px_12px_rgba(0,0,0,0.1)]">
+            <a
+              href={`/leiloes/${selectedAuction.slug}`}
+              className="block w-full text-center px-4 py-3 rounded-xl font-bold text-sm text-white active:scale-[0.98] transition-transform"
+              style={{ backgroundColor: '#1B2B5B' }}
+            >
+              Ver Detalhes + Edital Completo →
+            </a>
+            <a
+              href={`https://wa.me/5516981010004?text=Olá! Vi o leilão "${selectedAuction.title}" no AgoraEncontrei e gostaria de assessoria jurídica.`}
+              target="_blank" rel="noopener noreferrer"
+              className="block w-full text-center px-4 py-3.5 rounded-xl font-bold text-sm active:scale-[0.98] transition-transform"
+              style={{ backgroundColor: '#25D366', color: 'white' }}
+            >
+              📲 Pedir Assessoria Jurídica
+            </a>
           </div>
         </div>
       )}
