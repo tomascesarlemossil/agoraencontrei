@@ -58,6 +58,7 @@ import { specialistPaymentRoutes } from './routes/specialists/payments.js'
 import { ScraperScheduler } from './services/scrapers/scheduler.js'
 import { AuctionMonitorService } from './services/auction-monitor.service.js'
 import { auctionsRoute } from './routes/public/auctions.js'
+import { freeListingRoutes } from './routes/public/free-listing.js'
 import { partnerRegisterRoute } from './routes/public/partner-register.js'
 import { partnerAnalyticsRoute } from './routes/public/partner-analytics.js'
 import { territoryRoute } from './routes/public/territory.js'
@@ -336,6 +337,7 @@ async function bootstrap() {
   await app.register(alertsRoutes,            { prefix: '/api/v1/public/alerts' })
   await app.register(auctionsRoutes,          { prefix: '/api/v1/auctions' })
   await app.register(auctionsRoute,            { prefix: '/api/v1/public' })
+  await app.register(freeListingRoutes,        { prefix: '/api/v1/public' })
   await app.register(specialistsRoutes,        { prefix: '/api/v1/specialists' })
   await app.register(specialistPaymentRoutes,  { prefix: '/api/v1/specialists/payments' })
 
