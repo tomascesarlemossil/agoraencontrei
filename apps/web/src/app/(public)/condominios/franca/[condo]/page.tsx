@@ -2,8 +2,9 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import Image from 'next/image'
 import { notFound } from 'next/navigation'
-import { ArrowRight, MapPin, Home, MessageCircle, Phone, Star } from 'lucide-react'
+import { ArrowRight, MapPin, Home, MessageCircle, Phone, Star, Building, TrendingUp } from 'lucide-react'
 import { getCondoName } from '@/data/seo-condo-slugs'
+import CondoIntelligence from './CondoIntelligence'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 
@@ -16,21 +17,24 @@ interface Props {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const condoName = getCondoName(params.condo)
   return {
-    title: `Imóveis no ${condoName}, Franca/SP | Imobiliária Lemos`,
-    description: `Casas à venda e para alugar no ${condoName} em Franca/SP. Imobiliária Lemos — 22 anos de tradição. Encontre o imóvel ideal no ${condoName} com atendimento personalizado.`,
+    title: `Apartamentos no ${condoName} em Franca — Valor do m², Leilões e Vendas | AgoraEncontrei`,
+    description: `Confira a tabela de preços atualizada do ${condoName} em Franca/SP. Valor do m², unidades disponíveis, leilões com desconto e profissionais de reforma recomendados.`,
     keywords: [
-      `imóveis ${condoName.toLowerCase()} franca sp`,
-      `casas ${condoName.toLowerCase()} franca`,
-      `comprar casa ${condoName.toLowerCase()} franca sp`,
+      `${condoName.toLowerCase()} franca sp`,
+      `apartamento ${condoName.toLowerCase()} franca`,
+      `valor m2 ${condoName.toLowerCase()} franca`,
+      `leilão ${condoName.toLowerCase()} franca`,
+      `reforma ${condoName.toLowerCase()} franca`,
+      `comprar ${condoName.toLowerCase()} franca sp`,
       `alugar ${condoName.toLowerCase()} franca sp`,
-      `imobiliária lemos ${condoName.toLowerCase()}`,
+      `arquiteto ${condoName.toLowerCase()} franca`,
     ],
     openGraph: {
-      title: `Imóveis no ${condoName}, Franca/SP | Imobiliária Lemos`,
-      description: `Encontre casas, apartamentos e terrenos no ${condoName} em Franca/SP com a Imobiliária Lemos.`,
+      title: `${condoName} em Franca — Preços, Leilões e Vendas | AgoraEncontrei`,
+      description: `Guia completo do ${condoName}: valor do m², imóveis à venda, leilões com desconto e profissionais recomendados.`,
       type: 'website',
       locale: 'pt_BR',
-      siteName: 'AgoraEncontrei — Imobiliária Lemos',
+      siteName: 'AgoraEncontrei',
     },
     alternates: { canonical: `https://www.agoraencontrei.com.br/condominios/franca/${params.condo}` },
     robots: { index: true, follow: true },
@@ -63,26 +67,50 @@ export default async function CondoPage({ params }: Props) {
   const properties = result.data ?? []
   const total = result.meta?.total ?? 0
 
-  const SCHEMA = {
-    '@context': 'https://schema.org',
-    '@type': 'SearchResultsPage',
-    name: `Imóveis no ${condoName}, Franca/SP`,
-    description: `Imóveis disponíveis no ${condoName} em Franca, São Paulo. Imobiliária Lemos.`,
-    url: `https://www.agoraencontrei.com.br/condominios/franca/${params.condo}`,
-    provider: {
+  const SCHEMA = [
+    {
+      '@context': 'https://schema.org',
+      '@type': 'ApartmentComplex',
+      name: condoName,
+      address: {
+        '@type': 'PostalAddress',
+        addressLocality: 'Franca',
+        addressRegion: 'SP',
+        addressCountry: 'BR',
+      },
+      url: `https://www.agoraencontrei.com.br/condominios/franca/${params.condo}`,
+      numberOfAvailableAccommodation: total,
+    },
+    {
+      '@context': 'https://schema.org',
       '@type': 'RealEstateAgent',
-      name: 'Imobiliária Lemos',
+      name: 'AgoraEncontrei — Imobiliária Lemos',
       url: 'https://www.agoraencontrei.com.br',
       telephone: '+55-16-3723-0045',
       address: { '@type': 'PostalAddress', addressLocality: 'Franca', addressRegion: 'SP', addressCountry: 'BR' },
+      areaServed: { '@type': 'City', name: 'Franca' },
+      hasOfferCatalog: {
+        '@type': 'OfferCatalog',
+        name: `Imóveis no ${condoName}`,
+        itemListElement: properties.slice(0, 5).map((p: any, i: number) => ({
+          '@type': 'Offer',
+          position: i + 1,
+          name: p.title,
+          price: Number(p.price || p.priceRent || 0),
+          priceCurrency: 'BRL',
+          url: `https://www.agoraencontrei.com.br/imoveis/${p.slug}`,
+        })),
+      },
     },
-  }
+  ]
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(SCHEMA) }} />
+      {SCHEMA.map((s, i) => (
+        <script key={i} type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(s) }} />
+      ))}
 
-      {/* HERO */}
+      {/* HERO — Template Elite */}
       <section className="bg-gradient-to-br from-[#1B2B5B] to-[#0f1c3a] text-white py-14 px-4">
         <div className="max-w-5xl mx-auto">
           <nav className="text-xs text-blue-200 mb-4 flex items-center gap-1.5 flex-wrap">
@@ -92,21 +120,38 @@ export default async function CondoPage({ params }: Props) {
             <span>/</span>
             <Link href="/imoveis?city=Franca" className="hover:text-white">Franca</Link>
             <span>/</span>
+            <Link href="/condominios/franca" className="hover:text-white">Condomínios</Link>
+            <span>/</span>
             <span className="text-white">{condoName}</span>
           </nav>
-          <h1 className="text-3xl sm:text-4xl font-bold mb-3" style={{ fontFamily: 'Georgia, serif' }}>
-            Imóveis no{' '}
-            <span style={{ color: '#C9A84C' }}>{condoName}</span>
-            <br /><span className="text-xl font-normal text-white/70">Franca/SP</span>
-          </h1>
+
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: 'rgba(201,168,76,0.2)' }}>
+              <Building className="w-6 h-6 text-[#C9A84C]" />
+            </div>
+            <div>
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold" style={{ fontFamily: 'Georgia, serif' }}>
+                Apartamentos no{' '}
+                <span style={{ color: '#C9A84C' }}>{condoName}</span>
+              </h1>
+              <p className="text-white/50 text-sm">Franca/SP — Valor do m², Leilões e Vendas</p>
+            </div>
+          </div>
+
           <p className="text-white/70 text-base mb-5 max-w-2xl">
-            {total > 0 ? `${total} imóveis disponíveis` : 'Imóveis disponíveis'} no {condoName}
+            Confira a tabela de preços atualizada, unidades disponíveis e profissionais de reforma recomendados para este edifício.
+            {total > 0 && ` ${total} imóveis ativos no marketplace.`}
           </p>
+
           <div className="flex flex-wrap gap-3">
             <Link href={`/imoveis?city=Franca&neighborhood=${encodeURIComponent(condoName)}`}
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm"
               style={{ background: '#C9A84C', color: '#1B2B5B' }}>
-              <Home className="w-4 h-4" /> Ver Imóveis
+              <Home className="w-4 h-4" /> Ver Imóveis à Venda
+            </Link>
+            <Link href={`/leiloes?search=${encodeURIComponent(condoName)}`}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm bg-white/10 text-white border border-white/20 hover:bg-white/20">
+              🏛️ Ver Leilões neste Edifício
             </Link>
             <a href={`https://wa.me/5516981010004?text=Olá! Quero um imóvel no ${condoName} em Franca/SP.`}
               target="_blank" rel="noreferrer"
@@ -180,6 +225,11 @@ export default async function CondoPage({ params }: Props) {
             </Link>
           </div>
         )}
+      </section>
+
+      {/* Painel de Inteligência + Leilões + Profissionais */}
+      <section className="max-w-6xl mx-auto px-4 py-8">
+        <CondoIntelligence condoName={condoName} condoSlug={params.condo} properties={properties} />
       </section>
 
       {/* FAQ SEO */}
