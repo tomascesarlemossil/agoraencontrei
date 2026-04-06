@@ -232,8 +232,10 @@ export default function TermosUsoPage() {
                 Em caso de duvidas sobre estes Termos de Uso, entre em contato:
               </p>
               <p className="text-gray-600 mt-2">
-                <strong style={{ color: '#1B2B5B' }}>Imobiliaria Lemos</strong> — CNPJ
-                10.962.301/0001-50
+                <strong style={{ color: '#1B2B5B' }}>Imobiliária Lemos</strong> — CNPJ 10.962.301/0001-50
+              </p>
+              <p className="text-gray-600 text-sm">
+                Rua Simão Caleiro, 2383 — Vila França — Franca/SP — CEP 14401-155
               </p>
               <a
                 href="mailto:tomas@agoraencontrei.com.br"
