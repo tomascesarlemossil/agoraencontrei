@@ -128,15 +128,18 @@ function activeFilterCount(f: Filters) {
 }
 
 export default function PropertiesPage() {
-  const { accessToken } = useAuthStore()
+  const { accessToken, user } = useAuthStore()
   const queryClient = useQueryClient()
   const [page, setPage] = useState(1)
   const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS)
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list')
   const [togglingId, setTogglingId] = useState<string | null>(null)
 
+  // Somente ADMIN e SUPER_ADMIN podem marcar imóveis como destaque da página inicial
+  const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN'
+
   const toggleFeatured = useCallback(async (id: string, current: boolean) => {
-    if (!accessToken) return
+    if (!accessToken || !isAdmin) return
     setTogglingId(id)
     try {
       await propertiesApi.update(accessToken, id, { isFeatured: !current })
@@ -144,7 +147,7 @@ export default function PropertiesPage() {
     } catch { /* ignore */ } finally {
       setTogglingId(null)
     }
-  }, [accessToken, queryClient])
+  }, [accessToken, queryClient, isAdmin])
 
   // Load company users for captador filter
   const { data: usersData } = useQuery({
@@ -584,7 +587,7 @@ export default function PropertiesPage() {
                   selectMode={selectMode}
                   selected={selectedIds.has(p.id)}
                   onSelect={() => toggleSelect(p.id)}
-                  onToggleFeatured={() => toggleFeatured(p.id, p.isFeatured)}
+                  onToggleFeatured={isAdmin ? () => toggleFeatured(p.id, p.isFeatured) : undefined}
                   isTogglingFeatured={togglingId === p.id}
                 />
               ))}

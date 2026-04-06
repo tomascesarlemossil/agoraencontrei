@@ -513,6 +513,10 @@ export default async function propertiesRoutes(app: FastifyInstance) {
     if (req.user.role === 'BROKER' && existing.userId !== req.user.sub) {
       return reply.status(403).send({ error: 'FORBIDDEN' })
     }
+    // Only ADMIN and SUPER_ADMIN can set isFeatured (homepage highlights)
+    if (body.isFeatured !== undefined && !['ADMIN', 'SUPER_ADMIN'].includes(req.user.role)) {
+      delete (body as any).isFeatured
+    }
 
     // Auto-geocode when address fields change and lat/lng are missing
     let geoUpdate: { latitude?: number; longitude?: number } = {}

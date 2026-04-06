@@ -205,7 +205,9 @@ export default function PropertyDetailPage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
   const qc = useQueryClient()
-  const { getValidToken } = useAuth()
+  const { getValidToken, user } = useAuth()
+  // Somente ADMIN e SUPER_ADMIN podem marcar imóveis como destaque da página inicial
+  const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN'
   const [editing, setEditing] = useState(false)
   const [activeTab, setActiveTab] = useState('cadastro')
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
@@ -776,9 +778,11 @@ export default function PropertyDetailPage() {
                   <Controller name="valueUnderConsultation" control={control} render={({ field }) => (
                     <CheckField label="Valor Sob Consulta" checked={field.value} onChange={field.onChange} />
                   )} />
-                  <Controller name="isFeatured" control={control} render={({ field }) => (
-                    <CheckField label="Imóvel em Destaque" checked={field.value} onChange={field.onChange} />
-                  )} />
+                  {isAdmin && (
+                    <Controller name="isFeatured" control={control} render={({ field }) => (
+                      <CheckField label="★ Destaque na Página Inicial (somente admin)" checked={field.value} onChange={field.onChange} />
+                    )} />
+                  )}
                 </div>
               </Section>
 
@@ -984,9 +988,11 @@ export default function PropertyDetailPage() {
             <div className="space-y-4">
               <Section title="Opções de Publicação">
                 <div className="flex flex-wrap gap-6">
-                  <Controller name="isFeatured" control={control} render={({ field }) => (
-                    <CheckField label="Imóvel em Destaque" checked={field.value} onChange={field.onChange} />
-                  )} />
+                  {isAdmin && (
+                    <Controller name="isFeatured" control={control} render={({ field }) => (
+                      <CheckField label="★ Destaque na Página Inicial (somente admin)" checked={field.value} onChange={field.onChange} />
+                    )} />
+                  )}
                   <Controller name="isPremium" control={control} render={({ field }) => (
                     <CheckField label="Premium" checked={field.value} onChange={field.onChange} />
                   )} />

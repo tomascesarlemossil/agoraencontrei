@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Search, BedDouble, Bath, Car, Maximize, ArrowRight, Star, Shield, Clock, TrendingUp } from 'lucide-react'
+import { BedDouble, Bath, Maximize, ArrowRight, Star } from 'lucide-react'
 import { HeroSearchForm } from './HeroSearchForm'
 import { HeroBackground } from './HeroBackground'
 import { SmartQuiz } from './SmartQuiz'
@@ -46,7 +46,6 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 
 async function fetchFeaturedProperties() {
   try {
-    // First try the dedicated /featured endpoint (isFeatured=true)
     const resFeatured = await fetch(`${API_URL}/api/v1/public/featured`, {
       next: { revalidate: 60 },
     })
@@ -54,7 +53,6 @@ async function fetchFeaturedProperties() {
       const featured = await resFeatured.json()
       if (Array.isArray(featured) && featured.length > 0) return featured
     }
-    // Fallback: most recent active properties
     const res = await fetch(`${API_URL}/api/v1/public/properties?limit=8&sortBy=createdAt`, {
       next: { revalidate: 60 },
     })
@@ -79,19 +77,6 @@ async function fetchStats() {
   }
 }
 
-async function fetchTeam() {
-  try {
-    const res = await fetch(`${API_URL}/api/v1/public/team`, {
-      next: { revalidate: 60 },
-    })
-    if (!res.ok) return []
-    const data = await res.json()
-    return Array.isArray(data) ? data : []
-  } catch {
-    return []
-  }
-}
-
 async function fetchSiteSettings() {
   try {
     const res = await fetch(`${API_URL}/api/v1/public/site-settings`, {
@@ -99,7 +84,6 @@ async function fetchSiteSettings() {
     })
     if (!res.ok) return { heroVideoUrl: null, heroVideoType: 'image' }
     const data = await res.json()
-    // Se não há vídeo configurado, usar imagem de fundo
     if (!data.heroVideoUrl) {
       return { ...data, heroVideoType: 'image' }
     }
@@ -117,18 +101,101 @@ function formatPrice(p: any) {
   return 'Consulte'
 }
 
+// ── Ícones SVG profissionais para cada categoria ──────────────────────────────
+const CategoryIcons: Record<string, React.ReactNode> = {
+  APARTMENT: (
+    <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-8 h-8">
+      <rect x="8" y="6" width="32" height="36" rx="2" stroke="currentColor" strokeWidth="2.5" fill="none"/>
+      <rect x="14" y="12" width="6" height="6" rx="1" fill="currentColor" opacity="0.7"/>
+      <rect x="28" y="12" width="6" height="6" rx="1" fill="currentColor" opacity="0.7"/>
+      <rect x="14" y="24" width="6" height="6" rx="1" fill="currentColor" opacity="0.7"/>
+      <rect x="28" y="24" width="6" height="6" rx="1" fill="currentColor" opacity="0.7"/>
+      <rect x="19" y="34" width="10" height="8" rx="1" fill="currentColor" opacity="0.5"/>
+      <line x1="24" y1="6" x2="24" y2="42" stroke="currentColor" strokeWidth="1.5" opacity="0.3"/>
+    </svg>
+  ),
+  HOUSE: (
+    <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-8 h-8">
+      <path d="M6 22L24 6L42 22" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M10 18V40C10 41.1 10.9 42 12 42H20V32H28V42H36C37.1 42 38 41.1 38 40V18" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+      <rect x="20" y="26" width="8" height="6" rx="1" fill="currentColor" opacity="0.5"/>
+      <rect x="14" y="24" width="5" height="5" rx="1" fill="currentColor" opacity="0.4"/>
+      <rect x="29" y="24" width="5" height="5" rx="1" fill="currentColor" opacity="0.4"/>
+    </svg>
+  ),
+  LAND: (
+    <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-8 h-8">
+      <rect x="6" y="10" width="36" height="28" rx="2" stroke="currentColor" strokeWidth="2.5" fill="none"/>
+      <line x1="6" y1="24" x2="42" y2="24" stroke="currentColor" strokeWidth="1.5" strokeDasharray="3 3" opacity="0.5"/>
+      <line x1="24" y1="10" x2="24" y2="38" stroke="currentColor" strokeWidth="1.5" strokeDasharray="3 3" opacity="0.5"/>
+      <circle cx="6" cy="10" r="2.5" fill="currentColor"/>
+      <circle cx="42" cy="10" r="2.5" fill="currentColor"/>
+      <circle cx="6" cy="38" r="2.5" fill="currentColor"/>
+      <circle cx="42" cy="38" r="2.5" fill="currentColor"/>
+      <path d="M14 32L20 22L26 28L32 20L38 30" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" opacity="0.6"/>
+    </svg>
+  ),
+  STORE: (
+    <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-8 h-8">
+      <path d="M6 18H42L38 8H10L6 18Z" stroke="currentColor" strokeWidth="2.5" strokeLinejoin="round" fill="none"/>
+      <path d="M6 18V40H42V18" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" fill="none"/>
+      <path d="M6 18C6 21.3 8.7 24 12 24C15.3 24 18 21.3 18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+      <path d="M18 18C18 21.3 20.7 24 24 24C27.3 24 30 21.3 30 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+      <path d="M30 18C30 21.3 32.7 24 36 24C39.3 24 42 21.3 42 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+      <rect x="18" y="30" width="12" height="10" rx="1" fill="currentColor" opacity="0.5"/>
+    </svg>
+  ),
+  FARM: (
+    <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-8 h-8">
+      <path d="M4 38C8 38 12 34 16 34C20 34 22 38 26 38C30 38 32 34 36 34C40 34 42 38 44 38" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/>
+      <path d="M24 8C24 8 14 16 14 24C14 28.4 18.7 32 24 32C29.3 32 34 28.4 34 24C34 16 24 8 24 8Z" stroke="currentColor" strokeWidth="2.5" fill="none"/>
+      <line x1="24" y1="8" x2="24" y2="32" stroke="currentColor" strokeWidth="1.5" opacity="0.4"/>
+      <path d="M14 20C17 18 21 19 24 22" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" opacity="0.5"/>
+      <path d="M34 20C31 18 27 19 24 22" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" opacity="0.5"/>
+    </svg>
+  ),
+  PENTHOUSE: (
+    <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-8 h-8">
+      <rect x="8" y="14" width="32" height="28" rx="2" stroke="currentColor" strokeWidth="2.5" fill="none"/>
+      <path d="M14 14V8L24 4L34 8V14" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+      <rect x="14" y="20" width="8" height="7" rx="1" fill="currentColor" opacity="0.5"/>
+      <rect x="26" y="20" width="8" height="7" rx="1" fill="currentColor" opacity="0.5"/>
+      <rect x="19" y="33" width="10" height="9" rx="1" fill="currentColor" opacity="0.4"/>
+      <path d="M20 4L24 2L28 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" opacity="0.6"/>
+    </svg>
+  ),
+  WAREHOUSE: (
+    <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-8 h-8">
+      <path d="M4 20L24 8L44 20V42H4V20Z" stroke="currentColor" strokeWidth="2.5" strokeLinejoin="round" fill="none"/>
+      <line x1="4" y1="20" x2="44" y2="20" stroke="currentColor" strokeWidth="1.5" opacity="0.4"/>
+      <rect x="16" y="28" width="16" height="14" rx="1" fill="currentColor" opacity="0.4"/>
+      <line x1="24" y1="28" x2="24" y2="42" stroke="currentColor" strokeWidth="1.5" opacity="0.5"/>
+      <rect x="8" y="24" width="7" height="7" rx="1" fill="currentColor" opacity="0.35"/>
+      <rect x="33" y="24" width="7" height="7" rx="1" fill="currentColor" opacity="0.35"/>
+    </svg>
+  ),
+  LAUNCH: (
+    <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-8 h-8">
+      <path d="M24 4C24 4 34 10 34 22C34 28.6 29.5 34 24 36C18.5 34 14 28.6 14 22C14 10 24 4 24 4Z" stroke="currentColor" strokeWidth="2.5" fill="none"/>
+      <path d="M16 30L10 38L18 36L20 44L24 36" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" opacity="0.6"/>
+      <path d="M32 30L38 38L30 36L28 44L24 36" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" opacity="0.6"/>
+      <circle cx="24" cy="22" r="4" fill="currentColor" opacity="0.6"/>
+    </svg>
+  ),
+}
+
 const CATEGORIES = [
-  { label: 'Apartamentos', type: 'APARTMENT', icon: '🏢', count: null },
-  { label: 'Casas', type: 'HOUSE', icon: '🏡', count: null },
-  { label: 'Terrenos', type: 'LAND', icon: '📐', count: null },
-  { label: 'Comercial', type: 'STORE', icon: '🏪', count: null },
-  { label: 'Chácaras', type: 'FARM', icon: '🌿', count: null },
-  { label: 'Coberturas', type: 'PENTHOUSE', icon: '✨', count: null },
-  { label: 'Galpões', type: 'WAREHOUSE', icon: '🏭', count: null },
-  { label: 'Lançamentos', isFeatured: true, icon: '🚀', count: null },
+  { label: 'Apartamentos', type: 'APARTMENT', iconKey: 'APARTMENT' },
+  { label: 'Casas', type: 'HOUSE', iconKey: 'HOUSE' },
+  { label: 'Terrenos', type: 'LAND', iconKey: 'LAND' },
+  { label: 'Comercial', type: 'STORE', iconKey: 'STORE' },
+  { label: 'Chácaras', type: 'FARM', iconKey: 'FARM' },
+  { label: 'Coberturas', type: 'PENTHOUSE', iconKey: 'PENTHOUSE' },
+  { label: 'Galpões', type: 'WAREHOUSE', iconKey: 'WAREHOUSE' },
+  { label: 'Lançamentos', isFeatured: true, iconKey: 'LAUNCH' },
 ]
 
-// Schema.org WebSite com SearchAction (sitelinks search box)
+// Schema.org WebSite com SearchAction
 const WEBSITE_SCHEMA = {
   '@context': 'https://schema.org',
   '@type': 'WebSite',
@@ -158,7 +225,6 @@ const WEBSITE_SCHEMA = {
   },
 }
 
-// Schema.org FAQPage para rich snippets no Google
 const FAQ_SCHEMA = {
   '@context': 'https://schema.org',
   '@type': 'FAQPage',
@@ -168,7 +234,7 @@ const FAQ_SCHEMA = {
       name: 'Como comprar um imóvel em Franca SP?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'Para comprar um imóvel em Franca/SP, entre em contato com a Imobiliária Lemos (). Temos mais de 1.000 imóveis disponíveis — casas, apartamentos, terrenos e imóveis comerciais. Oferecemos financiamento facilitado pela Caixa Econômica Federal e outros bancos. Ligue (16) 3722-0000 ou acesse agoraencontrei.com.br.',
+        text: 'Para comprar um imóvel em Franca/SP, entre em contato com a Imobiliária Lemos. Temos mais de 1.000 imóveis disponíveis — casas, apartamentos, terrenos e imóveis comerciais. Oferecemos financiamento facilitado pela Caixa Econômica Federal e outros bancos. Ligue (16) 3722-0000 ou acesse agoraencontrei.com.br.',
       },
     },
     {
@@ -184,7 +250,7 @@ const FAQ_SCHEMA = {
       name: 'Quais são os melhores bairros para morar em Franca SP?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'Os bairros mais valorizados de Franca/SP são: Jardim Europa, Jardim Califórnia, Polo Club, Jardim América, Jardim Paulista, Centro, Jardim Redentor e Jardim Universitário. Para famílias, os condomínios fechados como Villaggio di Firenze e Portal de Minas são muito procurados. Veja imóveis por bairro em agoraencontrei.com.br/bairros/franca.',
+        text: 'Os bairros mais valorizados de Franca/SP são: Jardim Europa, Jardim Califórnia, Polo Club, Jardim América, Jardim Paulista, Centro, Jardim Redentor e Jardim Universitário. Para famílias, os condomínios fechados como Villaggio di Firenze e Portal de Minas são muito procurados.',
       },
     },
     {
@@ -200,23 +266,7 @@ const FAQ_SCHEMA = {
       name: 'A Imobiliária Lemos faz avaliação de imóveis em Franca SP?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'Sim! A Imobiliária Lemos realiza avaliações de imóveis em Franca/SP e região. Nossa equipe de corretores credenciados pelo CRECI avalia seu imóvel gratuitamente para venda ou locação. Acesse agoraencontrei.com.br/avaliacao ou ligue (16) 3722-0000.',
-      },
-    },
-    {
-      '@type': 'Question',
-      name: 'Quais documentos preciso para comprar um imóvel em Franca SP?',
-      acceptedAnswer: {
-        '@type': 'Answer',
-        text: 'Para comprar um imóvel em Franca/SP você precisará de: RG e CPF, comprovante de renda (últimos 3 meses), comprovante de residência, certidão de nascimento ou casamento, e declaração de IR. Para financiamento pela Caixa, também é necessário extrato do FGTS. Nossa equipe orienta todo o processo.',
-      },
-    },
-    {
-      '@type': 'Question',
-      name: 'Tem imóveis de leilão em Franca SP?',
-      acceptedAnswer: {
-        '@type': 'Answer',
-        text: 'Sim! A Imobiliária Lemos assessora na compra de imóveis em leilão em Franca/SP. Temos parceria com leiloeiros credenciados e auxiliamos em todo o processo de arrematação, desde a análise jurídica até a transferência do imóvel. Saiba mais em agoraencontrei.com.br/leilao-imoveis-franca-sp.',
+        text: 'Sim! A Imobiliária Lemos realiza avaliações de imóveis em Franca/SP e região gratuitamente para venda ou locação. Acesse agoraencontrei.com.br/avaliacao ou ligue (16) 3722-0000.',
       },
     },
     {
@@ -224,93 +274,81 @@ const FAQ_SCHEMA = {
       name: 'Como anunciar meu imóvel em Franca SP?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'Para anunciar seu imóvel em Franca/SP com a Imobiliária Lemos, acesse agoraencontrei.com.br/anunciar e preencha o formulário com os dados do imóvel e fotos. Nossa equipe entrará em contato em até 24 horas para avaliação e publicação. O serviço é gratuito para proprietários.',
+        text: 'Para anunciar seu imóvel em Franca/SP com a Imobiliária Lemos, acesse agoraencontrei.com.br/anunciar e preencha o formulário. Nossa equipe entrará em contato em até 24 horas. O serviço é gratuito para proprietários.',
       },
     },
   ],
 }
 
-// Schema.org LocalBusiness + RealEstateAgent para SEO local
 const LOCAL_BUSINESS_SCHEMA = {
   '@context': 'https://schema.org',
   '@type': ['LocalBusiness', 'RealEstateAgent'],
   '@id': 'https://www.agoraencontrei.com.br/#organization',
-  name: 'Imobili\u00e1ria Lemos \u2014 AgoraEncontrei',
-  alternateName: ['Imobili\u00e1ria Lemos', 'AgoraEncontrei', 'Lemos Im\u00f3veis Franca'],
-  description: 'Imobili\u00e1ria com mais de 22 anos de tradi\u00e7\u00e3o em Franca/SP. Especializada em compra, venda e loca\u00e7\u00e3o de im\u00f3veis residenciais e comerciais.',
+  name: 'Imobiliária Lemos — AgoraEncontrei',
+  alternateName: ['Imobiliária Lemos', 'AgoraEncontrei', 'Lemos Imóveis Franca'],
+  description: 'Imobiliária com mais de 22 anos de tradição em Franca/SP. Especializada em compra, venda e locação de imóveis residenciais e comerciais.',
   url: 'https://www.agoraencontrei.com.br',
-  logo: 'https://www.agoraencontrei.com.br/logo-lemos-v2.png',
-  image: 'https://www.agoraencontrei.com.br/og-image.jpg',
-  telephone: '+55-16-3722-0000',
-  email: 'contato@agoraencontrei.com.br',
+  telephone: '+55-16-99311-6199',
+  email: 'contato@imobiliarialemos.com.br',
+  foundingDate: '2002',
   address: {
     '@type': 'PostalAddress',
-    streetAddress: 'Rua Major Claudiano, 1500',
+    streetAddress: 'Rua Prudente de Moraes, 1266',
     addressLocality: 'Franca',
     addressRegion: 'SP',
-    postalCode: '14400-690',
+    postalCode: '14400-340',
     addressCountry: 'BR',
   },
-  geo: {
-    '@type': 'GeoCoordinates',
-    latitude: -20.5386,
-    longitude: -47.4006,
-  },
+  geo: { '@type': 'GeoCoordinates', latitude: -20.5386, longitude: -47.4008 },
   openingHoursSpecification: [
     { '@type': 'OpeningHoursSpecification', dayOfWeek: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'], opens: '08:00', closes: '18:00' },
-    { '@type': 'OpeningHoursSpecification', dayOfWeek: 'Saturday', opens: '08:00', closes: '12:00' },
+    { '@type': 'OpeningHoursSpecification', dayOfWeek: ['Saturday'], opens: '08:00', closes: '12:00' },
   ],
-  priceRange: '$$',
+  priceRange: 'R$ 150.000 - R$ 5.000.000',
   areaServed: [
-    { '@type': 'City', name: 'Franca', containedInPlace: { '@type': 'State', name: 'S\u00e3o Paulo' } },
-    { '@type': 'City', name: 'Ribeir\u00e3o Preto', containedInPlace: { '@type': 'State', name: 'S\u00e3o Paulo' } },
-    { '@type': 'City', name: 'Cristais Paulista', containedInPlace: { '@type': 'State', name: 'S\u00e3o Paulo' } },
-    { '@type': 'City', name: 'Patroc\u00ednio Paulista', containedInPlace: { '@type': 'State', name: 'S\u00e3o Paulo' } },
+    { '@type': 'City', name: 'Franca', containedInPlace: { '@type': 'State', name: 'São Paulo' } },
+    { '@type': 'City', name: 'Ribeirão Preto', containedInPlace: { '@type': 'State', name: 'São Paulo' } },
+    { '@type': 'City', name: 'Batatais', containedInPlace: { '@type': 'State', name: 'São Paulo' } },
+    { '@type': 'City', name: 'Restinga', containedInPlace: { '@type': 'State', name: 'São Paulo' } },
+    { '@type': 'City', name: 'Cristais Paulista', containedInPlace: { '@type': 'State', name: 'São Paulo' } },
+    { '@type': 'City', name: 'Itirapuã', containedInPlace: { '@type': 'State', name: 'São Paulo' } },
   ],
+  hasMap: 'https://maps.google.com/?q=Imobiliária+Lemos+Franca+SP',
+  logo: 'https://www.agoraencontrei.com.br/logo-lemos-v2.png',
+  image: 'https://www.agoraencontrei.com.br/og-image.jpg',
   sameAs: [
     'https://www.instagram.com/imobiliarialemos',
     'https://www.instagram.com/tomaslemosbr',
     'https://www.youtube.com/@imobiliarialemos',
     'http://www.imobiliarialemos.com.br',
   ],
-  hasOfferCatalog: {
-    '@type': 'OfferCatalog',
-    name: 'Im\u00f3veis para Venda e Loca\u00e7\u00e3o em Franca/SP',
-    itemListElement: [
-      { '@type': 'Offer', itemOffered: { '@type': 'Product', name: 'Casas para Alugar em Franca SP' } },
-      { '@type': 'Offer', itemOffered: { '@type': 'Product', name: 'Apartamentos para Alugar em Franca SP' } },
-      { '@type': 'Offer', itemOffered: { '@type': 'Product', name: 'Casas \u00e0 Venda em Franca SP' } },
-      { '@type': 'Offer', itemOffered: { '@type': 'Product', name: 'Apartamentos \u00e0 Venda em Franca SP' } },
-      { '@type': 'Offer', itemOffered: { '@type': 'Product', name: 'Terrenos em Franca SP' } },
-      { '@type': 'Offer', itemOffered: { '@type': 'Product', name: 'Im\u00f3veis Comerciais em Franca SP' } },
-    ],
-  },
 }
 
 export default async function HomePage() {
-  const [featured, stats, siteSettings, team] = await Promise.all([fetchFeaturedProperties(), fetchStats(), fetchSiteSettings(), fetchTeam()])
+  const [featured, stats, siteSettings] = await Promise.all([
+    fetchFeaturedProperties(),
+    fetchStats(),
+    fetchSiteSettings(),
+  ])
 
   return (
     <>
-      {/* Schema.org WebSite com SearchAction */}
+      {/* Schema.org */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(WEBSITE_SCHEMA) }} />
-      {/* Schema.org FAQPage para rich snippets */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(FAQ_SCHEMA) }} />
-      {/* Schema.org LocalBusiness para SEO local */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(LOCAL_BUSINESS_SCHEMA) }} />
-      {/* ── HERO ──────────────────────────────────────────────────────── */}
+
+      {/* ── 1. HERO ──────────────────────────────────────────────────────── */}
       <section
         className="relative min-h-[85vh] flex items-center justify-center overflow-hidden"
         style={{ background: '#0f1c3a' }}
       >
-        {/* Video background (configurable via Settings) */}
         <HeroBackground videoUrl={siteSettings.heroVideoUrl} videoType={siteSettings.heroVideoType} />
 
         <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 text-center pt-8 pb-16">
-          {/* Badge */}
           <div
             className="inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-semibold mb-6"
-            style={{ backgroundColor: 'rgba(201, 168, 76, 0.15)', color: 'var(--site-accent-color, #C9A84C)', border: '1px solid rgba(201,168,76,0.3)' }}
+            style={{ backgroundColor: 'rgba(201,168,76,0.15)', color: 'var(--site-accent-color, #C9A84C)', border: '1px solid rgba(201,168,76,0.3)' }}
           >
             <Star className="w-3 h-3 fill-current" />
             Mais de 20 anos de tradição em Franca/SP
@@ -330,10 +368,7 @@ export default async function HomePage() {
               : 'Compra, venda e locação de imóveis em Franca e região'}
           </p>
 
-          {/* Search */}
           <HeroSearchForm />
-
-
         </div>
 
         {/* Wave */}
@@ -344,58 +379,229 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ── QUICK STATS (fora do hero, sem sobreposição) ────────────────────── */}
-      <section className="max-w-3xl mx-auto px-4 sm:px-6 -mt-6 relative z-20 mb-4">
-        <div className="flex flex-wrap justify-center gap-10 py-5 px-8 rounded-2xl bg-white shadow-lg border border-gray-100">
-          {[
-            { label: 'Imóveis', value: stats.total > 0 ? stats.total.toLocaleString('pt-BR') + '+' : '1.011+' },
-            { label: 'Anos de mercado', value: '22+' },
-            { label: 'Famílias atendidas', value: '5.000+' },
-          ].map(stat => (
-            <div key={stat.label} className="text-center">
-              <p className="text-2xl font-bold" style={{ color: 'var(--site-accent-color, #C9A84C)', fontFamily: 'Georgia, serif' }}>
-                {stat.value}
-              </p>
-              <p className="text-gray-500 text-xs mt-0.5">{stat.label}</p>
-            </div>
-          ))}
-        </div>
-      </section>
+      {/* ── 2. MARKETPLACE (logo após o hero/busca) ──────────────────────── */}
+      <section style={{ backgroundColor: 'var(--site-primary-color, #1B2B5B)' }} className="py-20">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6">
+          <div className="text-center mb-12">
+            <p
+              className="text-[11px] font-semibold uppercase tracking-[0.2em] mb-3"
+              style={{ color: 'var(--site-accent-color, #C9A84C)' }}
+            >
+              Criado pela Imobiliária Lemos, referência desde 2002
+            </p>
+            <h2
+              className="text-2xl sm:text-3xl font-bold text-white leading-snug"
+              style={{ fontFamily: 'Georgia, serif' }}
+            >
+              O Marketplace Imobiliário de{' '}
+              <span style={{ color: 'var(--site-accent-color, #C9A84C)' }}>Franca e Região</span>
+            </h2>
+            <p className="text-white/50 text-sm mt-4 max-w-2xl mx-auto leading-relaxed">
+              O AgoraEncontrei é a plataforma mais avançada para compra, venda e locação de imóveis
+              em Franca/SP e região. Aberto para corretores, proprietários e investidores
+              anunciarem com tecnologia de ponta.
+            </p>
+          </div>
 
-      {/* ── CATEGORIES ──────────────────────────────────────────────── */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-16">
-        <div className="text-center mb-10">
-          <h2 className="text-2xl font-bold" style={{ color: 'var(--site-primary-color, #1B2B5B)', fontFamily: 'Georgia, serif' }}>
-            O que você procura?
-          </h2>
-          <p className="text-gray-500 text-sm mt-1">Selecione o tipo de imóvel e explore as opções</p>
-        </div>
-
-        <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-9 gap-3">
-          {CATEGORIES.map(cat => {
-            const href = cat.type
-              ? `/imoveis?type=${cat.type}`
-              : `/imoveis?isFeatured=true`
-            return (
-              <Link
-                key={cat.label}
-                href={href}
-                className="group flex flex-col items-center gap-2 p-3 rounded-2xl bg-white border border-gray-100 hover:border-transparent hover:shadow-md transition-all text-center"
-                style={{ '--hover-border': '#C9A84C' } as any}
+          {/* Feature cards */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
+            {[
+              {
+                label: 'Busca com IA',
+                desc: 'Encontre imóveis por conversa inteligente',
+                icon: (
+                  <svg viewBox="0 0 32 32" fill="none" className="w-7 h-7 mx-auto mb-3" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="16" cy="16" r="12" stroke="#C9A84C" strokeWidth="2"/>
+                    <path d="M10 16C10 12.7 12.7 10 16 10C19.3 10 22 12.7 22 16" stroke="#C9A84C" strokeWidth="2" strokeLinecap="round"/>
+                    <circle cx="16" cy="16" r="3" fill="#C9A84C" opacity="0.7"/>
+                    <path d="M16 6V4M16 28V26M6 16H4M28 16H26" stroke="#C9A84C" strokeWidth="1.5" strokeLinecap="round" opacity="0.5"/>
+                  </svg>
+                ),
+              },
+              {
+                label: 'Mapa Interativo',
+                desc: 'Navegue por bairros e regiões no mapa',
+                icon: (
+                  <svg viewBox="0 0 32 32" fill="none" className="w-7 h-7 mx-auto mb-3" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M16 4C11.6 4 8 7.6 8 12C8 18 16 28 16 28C16 28 24 18 24 12C24 7.6 20.4 4 16 4Z" stroke="#C9A84C" strokeWidth="2" fill="none"/>
+                    <circle cx="16" cy="12" r="3" fill="#C9A84C" opacity="0.7"/>
+                  </svg>
+                ),
+              },
+              {
+                label: '1000+ Imóveis',
+                desc: 'O maior acervo imobiliário da região',
+                icon: (
+                  <svg viewBox="0 0 32 32" fill="none" className="w-7 h-7 mx-auto mb-3" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="4" y="14" width="10" height="14" rx="1" stroke="#C9A84C" strokeWidth="2" fill="none"/>
+                    <rect x="11" y="8" width="10" height="20" rx="1" stroke="#C9A84C" strokeWidth="2" fill="none"/>
+                    <rect x="18" y="11" width="10" height="17" rx="1" stroke="#C9A84C" strokeWidth="2" fill="none"/>
+                    <line x1="7" y1="20" x2="11" y2="20" stroke="#C9A84C" strokeWidth="1.5" opacity="0.5"/>
+                    <line x1="14" y1="14" x2="18" y2="14" stroke="#C9A84C" strokeWidth="1.5" opacity="0.5"/>
+                  </svg>
+                ),
+              },
+              {
+                label: 'Anúncio Gratuito',
+                desc: 'Cadastre seu imóvel sem custo inicial',
+                icon: (
+                  <svg viewBox="0 0 32 32" fill="none" className="w-7 h-7 mx-auto mb-3" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="16" cy="16" r="12" stroke="#C9A84C" strokeWidth="2"/>
+                    <path d="M11 16L14.5 19.5L21 12.5" stroke="#C9A84C" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                ),
+              },
+            ].map(feat => (
+              <div
+                key={feat.label}
+                className="rounded-2xl p-5 text-center transition-all hover:scale-105"
+                style={{ backgroundColor: 'rgba(255,255,255,0.06)', border: '1px solid rgba(201,168,76,0.15)' }}
               >
-                <span className="text-2xl group-hover:scale-110 transition-transform">{cat.icon}</span>
-                <span className="text-xs font-medium text-gray-700 group-hover:text-[#1B2B5B] leading-tight">
-                  {cat.label}
-                </span>
-              </Link>
-            )
-          })}
+                {feat.icon}
+                <p className="text-white font-semibold text-sm mb-1" style={{ fontFamily: 'Georgia, serif' }}>
+                  {feat.label}
+                </p>
+                <p className="text-white/40 text-xs leading-relaxed">{feat.desc}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Link
+              href="/anunciar"
+              className="px-8 py-3.5 rounded-xl text-sm font-bold transition-all hover:brightness-110 text-center"
+              style={{ backgroundColor: 'var(--site-accent-color, #C9A84C)', color: 'var(--site-primary-color, #1B2B5B)' }}
+            >
+              Anuncie seu Imóvel
+            </Link>
+            <Link
+              href="/contato"
+              className="px-8 py-3.5 rounded-xl text-sm font-bold text-center transition-all hover:bg-white/10"
+              style={{ border: '1px solid rgba(201,168,76,0.4)', color: 'var(--site-accent-color, #C9A84C)' }}
+            >
+              Seja um Corretor Parceiro
+            </Link>
+          </div>
         </div>
       </section>
 
-      {/* ── FEATURED PROPERTIES ────────────────────────────────────── */}
+      {/* ── 3. PARCEIROS OFICIAIS ─────────────────────────────────────────── */}
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 py-16">
+        <div className="text-center mb-10">
+          <p className="text-sm font-semibold uppercase tracking-widest mb-2" style={{ color: 'var(--site-accent-color, #C9A84C)' }}>
+            Marketplace Imobiliário
+          </p>
+          <h2 className="text-2xl font-bold" style={{ color: 'var(--site-primary-color, #1B2B5B)', fontFamily: 'Georgia, serif' }}>
+            Nossas Imobiliárias Parceiras
+          </h2>
+          <p className="text-gray-500 text-sm mt-1">Imobiliárias e profissionais parceiros anunciando no marketplace</p>
+        </div>
+
+        <div className="flex flex-wrap justify-center gap-6">
+          {/* Card Imobiliária Lemos */}
+          <Link
+            href="/parceiros/imobiliaria-lemos"
+            className="group bg-white rounded-2xl p-8 border hover:shadow-xl transition-all duration-300 flex flex-col items-center text-center w-full max-w-xs cursor-pointer hover:-translate-y-1"
+            style={{ borderColor: '#C9A84C', borderWidth: 2 }}
+          >
+            <span className="inline-block text-xs font-bold px-3 py-1 rounded-full mb-4" style={{ backgroundColor: 'rgba(201,168,76,0.15)', color: '#C9A84C' }}>
+              1º Parceiro Oficial
+            </span>
+            <div className="w-32 h-32 mb-4">
+              <Image
+                src="/logo-lemos-v2.png"
+                alt="Imobiliária Lemos"
+                width={128}
+                height={128}
+                className="w-full h-full object-contain drop-shadow-xl"
+              />
+            </div>
+            <h3 className="text-xl font-bold mb-1" style={{ color: 'var(--site-primary-color, #1B2B5B)', fontFamily: 'Georgia, serif' }}>Imobiliária Lemos</h3>
+            <p className="text-xs text-gray-500 mb-1">Franca — SP</p>
+            <p className="text-xs font-semibold mb-4" style={{ color: '#C9A84C' }}>Desde 2002 · +22 anos de tradição</p>
+            <p className="text-xs text-gray-500 leading-relaxed mb-5">
+              Referência no mercado imobiliário de Franca e região. Especializada em compra, venda e locação de imóveis residenciais e comerciais.
+            </p>
+            <span
+              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold transition-all group-hover:brightness-110"
+              style={{ backgroundColor: 'var(--site-primary-color, #1B2B5B)', color: 'white' }}
+            >
+              Ver equipe e imóveis <ArrowRight className="w-3.5 h-3.5" />
+            </span>
+          </Link>
+
+          {/* Card Seja um Parceiro */}
+          <a
+            href="https://wa.me/5516981010004?text=Olá! Gostaria de ser um parceiro do AgoraEncontrei e anunciar meus imóveis."
+            target="_blank"
+            rel="noreferrer"
+            className="group bg-white rounded-2xl p-8 border border-dashed flex flex-col items-center text-center w-full max-w-xs cursor-pointer hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+            style={{ borderColor: '#C9A84C' }}
+          >
+            <div className="w-28 h-28 rounded-full flex items-center justify-center mb-4 border-4 border-dashed" style={{ borderColor: '#C9A84C', backgroundColor: 'rgba(201,168,76,0.08)' }}>
+              <span className="text-5xl font-bold" style={{ color: '#C9A84C' }}>+</span>
+            </div>
+            <h3 className="text-xl font-bold mb-1" style={{ color: 'var(--site-primary-color, #1B2B5B)', fontFamily: 'Georgia, serif' }}>Seja um Parceiro</h3>
+            <p className="text-xs text-gray-500 mb-4">Sua imobiliária aqui</p>
+            <p className="text-xs text-gray-500 leading-relaxed mb-5">
+              Anuncie seus imóveis no maior marketplace imobiliário de Franca. Tecnologia de ponta, sem custo inicial.
+            </p>
+            <span
+              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold transition-all group-hover:brightness-110"
+              style={{ backgroundColor: '#C9A84C', color: '#1B2B5B' }}
+            >
+              Entrar em contato <ArrowRight className="w-3.5 h-3.5" />
+            </span>
+          </a>
+        </div>
+
+        <div className="text-center mt-6">
+          <Link href="/parceiros" className="inline-flex items-center gap-2 text-sm font-semibold hover:gap-3 transition-all" style={{ color: 'var(--site-accent-color, #C9A84C)' }}>
+            Ver todos os parceiros <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
+      </section>
+
+      {/* ── 4. CATEGORIAS (tipos de imóvel com ícones SVG profissionais) ──── */}
+      <section style={{ backgroundColor: 'var(--site-background-color, #f8f6f1)' }} className="py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          <div className="text-center mb-10">
+            <h2 className="text-2xl font-bold" style={{ color: 'var(--site-primary-color, #1B2B5B)', fontFamily: 'Georgia, serif' }}>
+              O que você procura?
+            </h2>
+            <p className="text-gray-500 text-sm mt-1">Selecione o tipo de imóvel e explore as opções</p>
+          </div>
+
+          <div className="grid grid-cols-4 sm:grid-cols-4 lg:grid-cols-8 gap-3">
+            {CATEGORIES.map(cat => {
+              const href = cat.type ? `/imoveis?type=${cat.type}` : `/imoveis?isFeatured=true`
+              return (
+                <Link
+                  key={cat.label}
+                  href={href}
+                  className="group flex flex-col items-center gap-3 p-4 rounded-2xl bg-white border border-gray-100 hover:border-[#C9A84C] hover:shadow-lg transition-all duration-200 text-center"
+                >
+                  <div
+                    className="w-14 h-14 rounded-xl flex items-center justify-center transition-all duration-200 group-hover:scale-110"
+                    style={{ backgroundColor: 'rgba(27,43,91,0.06)', color: '#1B2B5B' }}
+                  >
+                    <div className="group-hover:text-[#C9A84C] transition-colors duration-200" style={{ color: 'var(--site-primary-color, #1B2B5B)' }}>
+                      {CategoryIcons[cat.iconKey]}
+                    </div>
+                  </div>
+                  <span className="text-xs font-semibold text-gray-700 group-hover:text-[#1B2B5B] leading-tight transition-colors">
+                    {cat.label}
+                  </span>
+                </Link>
+              )
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* ── 5. IMÓVEIS EM DESTAQUE (somente admin pode selecionar) ────────── */}
       {featured.length > 0 && (
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 pb-16">
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 py-16">
           <div className="flex items-center justify-between mb-8">
             <div>
               <h2 className="text-2xl font-bold" style={{ color: 'var(--site-primary-color, #1B2B5B)', fontFamily: 'Georgia, serif' }}>
@@ -419,7 +625,6 @@ export default async function HomePage() {
                 href={`/imoveis/${p.slug}`}
                 className="group bg-white rounded-2xl overflow-hidden border border-gray-100 hover:shadow-xl hover:border-transparent transition-all duration-300"
               >
-                {/* Image */}
                 <div className="relative h-44 overflow-hidden bg-gray-100">
                   {p.coverImage && !p.coverImage.includes('telefone.png') && !p.coverImage.includes('whatsapp') ? (
                     <Image
@@ -437,7 +642,6 @@ export default async function HomePage() {
                       </svg>
                     </div>
                   )}
-                  {/* Purpose badge */}
                   <div className="absolute top-2 left-2">
                     <span
                       className="text-xs font-bold px-2 py-0.5 rounded-full"
@@ -451,7 +655,6 @@ export default async function HomePage() {
                   </div>
                 </div>
 
-                {/* Content */}
                 <div className="p-4">
                   <p className="font-semibold text-gray-900 text-sm line-clamp-2 leading-snug group-hover:text-[#1B2B5B] transition-colors">
                     {p.title}
@@ -461,8 +664,6 @@ export default async function HomePage() {
                       {[p.neighborhood, p.city].filter(Boolean).join(' · ')}
                     </p>
                   )}
-
-                  {/* Stats */}
                   <div className="flex items-center gap-3 mt-2.5 text-xs text-gray-500">
                     {p.bedrooms > 0 && (
                       <span className="flex items-center gap-1">
@@ -480,8 +681,6 @@ export default async function HomePage() {
                       </span>
                     )}
                   </div>
-
-                  {/* Price */}
                   <p className="text-base font-bold mt-3" style={{ color: 'var(--site-primary-color, #1B2B5B)' }}>
                     {formatPrice(p)}
                   </p>
@@ -492,7 +691,58 @@ export default async function HomePage() {
         </section>
       )}
 
-       {/* ── VÍDEO DE APRESENTAÇÃO ────────────────────────────── */}
+      {/* ── 6. BUSCA INTELIGENTE COM IA (Smart Quiz) ─────────────────────── */}
+      <SmartQuiz />
+
+      {/* ── 7. CTA AVALIAÇÃO ─────────────────────────────────────────────── */}
+      <section style={{ backgroundColor: 'var(--site-background-color, #f8f6f1)' }} className="py-16">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 text-center">
+          <h2 className="text-2xl font-bold mb-3" style={{ color: 'var(--site-primary-color, #1B2B5B)', fontFamily: 'Georgia, serif' }}>
+            Quer saber quanto vale seu imóvel?
+          </h2>
+          <p className="text-gray-500 text-sm mb-8 max-w-lg mx-auto">
+            Solicite uma avaliação gratuita com nossa equipe especializada. Resposta em até 24 horas.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Link
+              href="/avaliacao"
+              className="px-8 py-3 rounded-xl text-sm font-bold transition-all hover:brightness-110"
+              style={{ backgroundColor: 'var(--site-accent-color, #C9A84C)', color: 'var(--site-primary-color, #1B2B5B)' }}
+            >
+              Solicitar avaliação gratuita
+            </Link>
+            <a
+              href="https://wa.me/5516981010004?text=Olá! Gostaria de uma avaliação gratuita do meu imóvel."
+              target="_blank"
+              rel="noreferrer"
+              className="px-8 py-3 rounded-xl text-sm font-bold border-2 transition-all hover:bg-[#1B2B5B] hover:text-white"
+              style={{ borderColor: 'var(--site-primary-color, #1B2B5B)', color: 'var(--site-primary-color, #1B2B5B)' }}
+            >
+              Falar pelo WhatsApp
+            </a>
+          </div>
+        </div>
+      </section>
+
+      {/* ── 8. QUICK STATS ───────────────────────────────────────────────── */}
+      <section className="max-w-3xl mx-auto px-4 sm:px-6 py-8">
+        <div className="flex flex-wrap justify-center gap-10 py-5 px-8 rounded-2xl bg-white shadow-lg border border-gray-100">
+          {[
+            { label: 'Imóveis', value: stats.total > 0 ? stats.total.toLocaleString('pt-BR') + '+' : '1.011+' },
+            { label: 'Anos de mercado', value: '22+' },
+            { label: 'Famílias atendidas', value: '5.000+' },
+          ].map(stat => (
+            <div key={stat.label} className="text-center">
+              <p className="text-2xl font-bold" style={{ color: 'var(--site-accent-color, #C9A84C)', fontFamily: 'Georgia, serif' }}>
+                {stat.value}
+              </p>
+              <p className="text-gray-500 text-xs mt-0.5">{stat.label}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── 9. VÍDEO DE APRESENTAÇÃO ─────────────────────────────────────── */}
       {(siteSettings.presentationVideoUrl || siteSettings.presentationBannerUrl) && (
         <PresentationSection
           videoUrl={siteSettings.presentationVideoUrl ?? null}
@@ -502,7 +752,6 @@ export default async function HomePage() {
           subtitle={siteSettings.presentationSubtitle ?? null}
         />
       )}
-      {/* Vídeo padrão de apresentação — exibido se não houver config no banco */}
       {!siteSettings.presentationVideoUrl && !siteSettings.presentationBannerUrl && (
         <PresentationSection
           videoUrl="https://files.manuscdn.com/user_upload_by_module/session_file/310519663481419273/MbhJNDOYKAGxseOh.mp4"
@@ -513,7 +762,7 @@ export default async function HomePage() {
         />
       )}
 
-      {/* ── SOCIAL MEDIA ──────────────────────────────────────────── */}
+      {/* ── 10. REDES SOCIAIS ─────────────────────────────────────────────── */}
       <section className="max-w-4xl mx-auto px-4 sm:px-6 py-10">
         <div className="text-center mb-6">
           <h2 className="text-xl font-bold" style={{ color: 'var(--site-primary-color, #1B2B5B)', fontFamily: 'Georgia, serif' }}>Siga-nos nas Redes Sociais</h2>
@@ -559,183 +808,6 @@ export default async function HomePage() {
             </svg>
             Canal no YouTube
           </a>
-        </div>
-      </section>
-
-      {/* ── SMART QUIZ ──────────────────────────────────────────────── */}
-      <SmartQuiz />
-
-      {/* WHY LEMOS section removed — replaced by Marketplace section */}
-
-      {/* ── CTA AVALIAÇÃO ───────────────────────────────────────────── */}
-      <section style={{ backgroundColor: 'var(--site-background-color, #f8f6f1)' }} className="py-16">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 text-center">
-          <h2 className="text-2xl font-bold mb-3" style={{ color: 'var(--site-primary-color, #1B2B5B)', fontFamily: 'Georgia, serif' }}>
-            Quer saber quanto vale seu imóvel?
-          </h2>
-          <p className="text-gray-500 text-sm mb-8 max-w-lg mx-auto">
-            Solicite uma avaliação gratuita com nossa equipe especializada. Resposta em até 24 horas.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Link
-              href="/avaliacao"
-              className="px-8 py-3 rounded-xl text-sm font-bold transition-all hover:brightness-110"
-              style={{ backgroundColor: 'var(--site-accent-color, #C9A84C)', color: 'var(--site-primary-color, #1B2B5B)' }}
-            >
-              Solicitar avaliação gratuita
-            </Link>
-            <a
-              href="https://wa.me/5516981010004?text=Olá! Gostaria de uma avaliação gratuita do meu imóvel."
-              target="_blank"
-              rel="noreferrer"
-              className="px-8 py-3 rounded-xl text-sm font-bold border-2 transition-all hover:bg-[#1B2B5B] hover:text-white"
-              style={{ borderColor: 'var(--site-primary-color, #1B2B5B)', color: 'var(--site-primary-color, #1B2B5B)' }}
-            >
-              Falar pelo WhatsApp
-            </a>
-          </div>
-        </div>
-      </section>
-
-      {/* ── MARKETPLACE ───────────────────────────────────────────── */}
-      <section style={{ backgroundColor: 'var(--site-primary-color, #1B2B5B)' }} className="py-20">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6">
-          <div className="text-center mb-12">
-            <p
-              className="text-[11px] font-semibold uppercase tracking-[0.2em] mb-3"
-              style={{ color: 'var(--site-accent-color, #C9A84C)' }}
-            >
-              Criado pela Imobiliária Lemos, referência desde 2002
-            </p>
-            <h2
-              className="text-2xl sm:text-3xl font-bold text-white leading-snug"
-              style={{ fontFamily: 'Georgia, serif' }}
-            >
-              O Marketplace Imobiliário de{' '}
-              <span style={{ color: 'var(--site-accent-color, #C9A84C)' }}>Franca e Região</span>
-            </h2>
-            <p className="text-white/50 text-sm mt-4 max-w-2xl mx-auto leading-relaxed">
-              O AgoraEncontrei é a plataforma mais avançada para compra, venda e locação de imóveis
-              em Franca/SP e região. Aberto para corretores, proprietários e investidores
-              anunciarem com tecnologia de ponta.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
-            {[
-              { label: 'Busca com IA', desc: 'Encontre imóveis por conversa inteligente' },
-              { label: 'Mapa Interativo', desc: 'Navegue por bairros e regiões no mapa' },
-              { label: '1000+ Imóveis', desc: 'O maior acervo imobiliário da região' },
-              { label: 'Anúncio Gratuito', desc: 'Cadastre seu imóvel sem custo inicial' },
-            ].map(feat => (
-              <div
-                key={feat.label}
-                className="rounded-xl p-5 text-center"
-                style={{ backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.06)' }}
-              >
-                <p className="text-white font-semibold text-sm mb-1" style={{ fontFamily: 'Georgia, serif' }}>
-                  {feat.label}
-                </p>
-                <p className="text-white/40 text-xs leading-relaxed">{feat.desc}</p>
-              </div>
-            ))}
-          </div>
-
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Link
-              href="/anunciar"
-              className="px-8 py-3 rounded-xl text-sm font-bold transition-all hover:brightness-110 text-center"
-              style={{ backgroundColor: 'var(--site-accent-color, #C9A84C)', color: 'var(--site-primary-color, #1B2B5B)' }}
-            >
-              Anuncie seu Imóvel
-            </Link>
-            <Link
-              href="/contato"
-              className="px-8 py-3 rounded-xl text-sm font-bold text-center transition-all hover:bg-white/10"
-              style={{ border: '1px solid rgba(201,168,76,0.4)', color: 'var(--site-accent-color, #C9A84C)' }}
-            >
-              Seja um Corretor Parceiro
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* ── PARCEIROS OFICIAIS ──────────────────────────────────────── */}
-      <section className="max-w-6xl mx-auto px-4 sm:px-6 pb-16">
-        <div className="text-center mb-8">
-          <p className="text-sm font-semibold uppercase tracking-widest mb-2" style={{ color: 'var(--site-accent-color, #C9A84C)' }}>Marketplace Imobiliário</p>
-          <h2 className="text-2xl font-bold" style={{ color: 'var(--site-primary-color, #1B2B5B)', fontFamily: 'Georgia, serif' }}>
-            Nossas Imobiliárias Parceiras
-          </h2>
-          <p className="text-gray-500 text-sm mt-1">Imobiliárias e profissionais parceiros anunciando no marketplace</p>
-        </div>
-
-        <div className="flex flex-wrap justify-center gap-6">
-          {/* Card Imobiliária Lemos */}
-          <Link
-            href="/parceiros/imobiliaria-lemos"
-            className="group bg-white rounded-2xl p-8 border hover:shadow-xl transition-all duration-300 flex flex-col items-center text-center w-full max-w-xs cursor-pointer hover:-translate-y-1"
-            style={{ borderColor: '#C9A84C', borderWidth: 2 }}
-          >
-            {/* Badge */}
-            <span className="inline-block text-xs font-bold px-3 py-1 rounded-full mb-4" style={{ backgroundColor: 'rgba(201,168,76,0.15)', color: '#C9A84C' }}>
-              1º Parceiro Oficial
-            </span>
-            {/* Logo */}
-            <div className="w-32 h-32 mb-4">
-              <Image
-                src="/logo-lemos-v2.png"
-                alt="Imobiliária Lemos"
-                width={128}
-                height={128}
-                className="w-full h-full object-contain drop-shadow-xl"
-              />
-            </div>
-            {/* Nome */}
-            <h3 className="text-xl font-bold mb-1" style={{ color: 'var(--site-primary-color, #1B2B5B)', fontFamily: 'Georgia, serif' }}>Imobiliária Lemos</h3>
-            <p className="text-xs text-gray-500 mb-1">Franca — SP</p>
-            <p className="text-xs font-semibold mb-4" style={{ color: '#C9A84C' }}>Desde 2002 · +22 anos de tradição</p>
-            <p className="text-xs text-gray-500 leading-relaxed mb-5">
-              Referência no mercado imobiliário de Franca e região. Especializada em compra, venda e locação de imóveis residenciais e comerciais.
-            </p>
-            {/* CTA */}
-            <span
-              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold transition-all group-hover:brightness-110"
-              style={{ backgroundColor: 'var(--site-primary-color, #1B2B5B)', color: 'white' }}
-            >
-              Ver equipe e imóveis <ArrowRight className="w-3.5 h-3.5" />
-            </span>
-          </Link>
-
-          {/* Card "Seja um Parceiro" */}
-          <a
-            href="https://wa.me/5516981010004?text=Olá! Gostaria de ser um parceiro do AgoraEncontrei e anunciar meus imóveis."
-            target="_blank"
-            rel="noreferrer"
-            className="group bg-white rounded-2xl p-8 border border-dashed flex flex-col items-center text-center w-full max-w-xs cursor-pointer hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
-            style={{ borderColor: '#C9A84C' }}
-          >
-            <div className="w-28 h-28 rounded-full flex items-center justify-center mb-4 border-4 border-dashed" style={{ borderColor: '#C9A84C', backgroundColor: 'rgba(201,168,76,0.08)' }}>
-              <span className="text-5xl font-bold" style={{ color: '#C9A84C' }}>+</span>
-            </div>
-            <h3 className="text-xl font-bold mb-1" style={{ color: 'var(--site-primary-color, #1B2B5B)', fontFamily: 'Georgia, serif' }}>Seja um Parceiro</h3>
-            <p className="text-xs text-gray-500 mb-4">Sua imobiliária aqui</p>
-            <p className="text-xs text-gray-500 leading-relaxed mb-5">
-              Anuncie seus imóveis no maior marketplace imobiliário de Franca. Tecnologia de ponta, sem custo inicial.
-            </p>
-            <span
-              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold transition-all group-hover:brightness-110"
-              style={{ backgroundColor: '#C9A84C', color: '#1B2B5B' }}
-            >
-              Entrar em contato <ArrowRight className="w-3.5 h-3.5" />
-            </span>
-          </a>
-        </div>
-
-        <div className="text-center mt-6">
-          <Link href="/parceiros" className="inline-flex items-center gap-2 text-sm font-semibold hover:gap-3 transition-all" style={{ color: 'var(--site-accent-color, #C9A84C)' }}>
-            Ver todos os parceiros <ArrowRight className="w-4 h-4" />
-          </Link>
         </div>
       </section>
     </>
