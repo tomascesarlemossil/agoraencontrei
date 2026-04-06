@@ -65,6 +65,11 @@ const nextConfig = {
         source: '/api/v1/:path*',
         destination: `${apiUrl}/api/v1/:path*`,
       },
+      {
+        // Proxy para o health check da API Railway (keep-alive)
+        source: '/health',
+        destination: `${apiUrl}/health`,
+      },
     ]
   },
   async headers() {
