@@ -131,8 +131,7 @@ export default async function CondoPage({ params }: Props) {
                 className="bg-white rounded-2xl overflow-hidden border hover:shadow-lg transition-shadow">
                 <div className="relative h-44 bg-gray-100">
                   {hasValidImage ? (
-                    <Image src={p.coverImage} alt={p.title ?? condoName} fill className="object-cover" loading="lazy"
-                      onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />
+                    <Image src={p.coverImage} alt={p.title ?? condoName} fill className="object-cover" loading="lazy" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#1B2B5B] to-[#0f1c3a]">
                       <Home className="w-10 h-10 text-white/30" />
