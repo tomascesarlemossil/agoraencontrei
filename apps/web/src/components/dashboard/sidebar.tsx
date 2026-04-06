@@ -44,6 +44,7 @@ import {
   DollarSign,
   FolderOpen,
   Gavel,
+  Crown,
 } from 'lucide-react'
 import { useNotifications } from '@/stores/notifications.store'
 import { UserAvatar } from '@/components/ui/UserAvatar'
@@ -68,6 +69,7 @@ const midNavItems = [
   { href: '/dashboard/crm/renovacoes',      icon: AlertTriangle,    label: 'Renovações',    highlight: false },
   { href: '/dashboard/blog',                icon: BookOpen,         label: 'Blog',          highlight: false },
   { href: '/dashboard/leiloes',              icon: Gavel,            label: 'Leilões 🔥',     highlight: true  },
+  { href: '/dashboard/parceiros',            icon: Crown,            label: 'Parceiros 💎',    highlight: true  },
 ]
 
 const corretorNavItem = { href: '/dashboard/corretor', icon: BriefcaseBusiness, label: 'Meu Painel', highlight: false }

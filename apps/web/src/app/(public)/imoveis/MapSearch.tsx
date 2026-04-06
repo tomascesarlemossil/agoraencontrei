@@ -232,26 +232,21 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
       })
     : auctions
 
-  // Inject Leaflet CSS before map init to avoid broken tiles
-  // Uses dynamic import to bundle CSS locally (no CDN dependency)
+  // Inject Leaflet CSS — uses CDN directly for reliability (bundled CSS import fails in some Next.js builds)
   useEffect(() => {
-    if (!document.getElementById('leaflet-css')) {
-      // Try to import CSS from npm package first (bundled, no CDN)
-      import('leaflet/dist/leaflet.css' as any)
-        .then(() => setIsCssLoaded(true))
-        .catch(() => {
-          // Fallback to CDN if bundled import fails
-          const link = document.createElement('link')
-          link.id = 'leaflet-css'
-          link.rel = 'stylesheet'
-          link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'
-          document.head.insertBefore(link, document.head.firstChild)
-          link.onload = () => setIsCssLoaded(true)
-          link.onerror = () => setIsCssLoaded(true)
-        })
-    } else {
+    if (document.getElementById('leaflet-css')) {
       setIsCssLoaded(true)
+      return
     }
+    const link = document.createElement('link')
+    link.id = 'leaflet-css'
+    link.rel = 'stylesheet'
+    link.crossOrigin = 'anonymous'
+    link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'
+    document.head.insertBefore(link, document.head.firstChild)
+    link.onload = () => setIsCssLoaded(true)
+    // If CDN fails, still try to initialize (tiles may look broken but map works)
+    link.onerror = () => setIsCssLoaded(true)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Load clusters from API
@@ -396,7 +391,7 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
         mapInstance.current = null
       }
     }
-  }, [])
+  }, [isCssLoaded]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Optimistic toggle: show/hide sale layer instantly (no re-render)
   const saleLayerGroupRef = useRef<any>(null)
@@ -826,15 +821,26 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
     <div className="relative rounded-2xl overflow-hidden border border-gray-200 shadow-xl" style={{ height: 580 }}>
       {/* Map container — Leaflet CSS injected via useEffect to avoid hydration mismatch */}
       {mapError ? (
-        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-gray-50 gap-3">
-          <MapPin className="w-10 h-10 text-gray-400" />
-          <p className="text-sm text-gray-500 text-center max-w-xs px-4">{mapError}</p>
-          <button
-            onClick={() => { setMapError(null); mapInstance.current = null; }}
-            className="px-4 py-2 rounded-lg text-sm font-medium bg-[#1B2B5B] text-white hover:opacity-90"
-          >
-            Tentar novamente
-          </button>
+        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-gray-50 gap-4">
+          <MapPin className="w-12 h-12 text-gray-300" />
+          <div className="text-center">
+            <p className="text-base font-semibold text-gray-700 mb-1">Mapa indisponível</p>
+            <p className="text-sm text-gray-500 max-w-xs px-4">{mapError}</p>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <button
+              onClick={() => { setMapError(null); mapInstance.current = null; }}
+              className="px-5 py-2.5 rounded-xl text-sm font-semibold bg-[#1B2B5B] text-white hover:opacity-90 transition-opacity"
+            >
+              Tentar novamente
+            </button>
+            <a
+              href="/imoveis"
+              className="px-5 py-2.5 rounded-xl text-sm font-semibold border-2 border-[#1B2B5B] text-[#1B2B5B] hover:bg-blue-50 transition-colors text-center"
+            >
+              Ver listagem de imóveis
+            </a>
+          </div>
         </div>
       ) : null}
       <div ref={mapRef} className="absolute inset-0 z-0" />
