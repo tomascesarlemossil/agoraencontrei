@@ -142,6 +142,12 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
   const [auctions, setAuctions] = useState<AuctionPin[]>([])
   const [selectedAuction, setSelectedAuction] = useState<AuctionPin | null>(null)
   const auctionMarkersRef = useRef<any[]>([])
+  const auctionClusterRef = useRef<any>(null)
+
+  // Layer toggles
+  const [showSaleLayer, setShowSaleLayer] = useState(true)
+  const [showAuctionLayer, setShowAuctionLayer] = useState(true)
+
   const [drawing, setDrawing] = useState(false)
   const [polygon, setPolygon] = useState<[number, number][]>([])
   const [selectedNeighborhoods, setSelectedNeighborhoods] = useState<string[]>([])
@@ -302,14 +308,16 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
     }
   }, [])
 
-  // Render cluster markers on map
+  // Render cluster markers on map (blue — conventional properties)
   useEffect(() => {
     if (!isLoaded || !mapInstance.current) return
 
     import('leaflet').then(L => {
       // Remove old markers
-      markersRef.current.forEach(m => m.remove())
+      markersRef.current.forEach(m => { try { m.remove() } catch {} })
       markersRef.current = []
+
+      if (!showSaleLayer) return // Layer toggled off
 
       clusters.forEach(c => {
         if (!c.resolvedLat || !c.resolvedLng) return
@@ -351,16 +359,21 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
         markersRef.current.push(marker)
       })
     })
-  }, [clusters, isLoaded, selectedNeighborhoods, drawing])
+  }, [clusters, isLoaded, selectedNeighborhoods, drawing, showSaleLayer])
 
   // Render auction pins (golden) with marker clustering
   useEffect(() => {
-    if (!isLoaded || !mapInstance.current || auctions.length === 0) return
+    // Clean old auction markers/cluster
+    auctionMarkersRef.current.forEach(m => { try { m.remove() } catch {} })
+    auctionMarkersRef.current = []
+    if (auctionClusterRef.current) {
+      try { mapInstance.current?.removeLayer(auctionClusterRef.current) } catch {}
+      auctionClusterRef.current = null
+    }
+
+    if (!isLoaded || !mapInstance.current || auctions.length === 0 || !showAuctionLayer) return
 
     import('leaflet').then(async (L) => {
-      // Clean old auction markers
-      auctionMarkersRef.current.forEach(m => { try { m.remove() } catch {} })
-      auctionMarkersRef.current = []
 
       // Try to use MarkerClusterGroup
       let clusterGroup: any = null
@@ -423,6 +436,7 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
           : ''
 
         const marker = L.marker([a.latitude, a.longitude], { icon: auctionIcon })
+          .on('click', () => setSelectedAuction(a))
           .bindPopup(`
             <div style="min-width:220px;max-width:280px;font-family:system-ui">
               <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#C9A84C;font-weight:700;margin-bottom:4px">
@@ -455,10 +469,10 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
 
       if (clusterGroup) {
         mapInstance.current.addLayer(clusterGroup)
-        auctionMarkersRef.current.push(clusterGroup)
+        auctionClusterRef.current = clusterGroup
       }
     })
-  }, [auctions, isLoaded])
+  }, [auctions, isLoaded, showAuctionLayer])
 
   // Handle drawing mode map clicks
   useEffect(() => {
@@ -723,16 +737,182 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
           )}
         </div>
 
-        {/* Hint */}
-        {!drawing && polygon.length === 0 && (
-          <div
-            className="ml-auto px-3 py-2 rounded-xl text-xs font-medium shadow"
-            style={{ backgroundColor: 'rgba(255,255,255,0.9)', color: '#666' }}
+        {/* Layer Toggles */}
+        <div className="ml-auto flex items-center gap-1.5 pointer-events-auto">
+          <button
+            onClick={() => setShowSaleLayer(v => !v)}
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold shadow-lg transition-all ${
+              showSaleLayer
+                ? 'bg-[#1B2B5B] text-white'
+                : 'bg-white/90 text-gray-400 border border-gray-200'
+            }`}
           >
-            Clique em um bairro para ver imóveis
-          </div>
-        )}
+            <span className={`w-2.5 h-2.5 rounded-full ${showSaleLayer ? 'bg-blue-400' : 'bg-gray-300'}`} />
+            🏠 Venda
+          </button>
+          <button
+            onClick={() => setShowAuctionLayer(v => !v)}
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold shadow-lg transition-all ${
+              showAuctionLayer
+                ? 'text-[#1B2B5B]'
+                : 'bg-white/90 text-gray-400 border border-gray-200'
+            }`}
+            style={showAuctionLayer ? { background: 'linear-gradient(135deg, #C9A84C, #e6c96a)' } : {}}
+          >
+            <span className={`w-2.5 h-2.5 rounded-full ${showAuctionLayer ? 'bg-yellow-600' : 'bg-gray-300'}`} />
+            🔨 Leilão
+            {auctions.length > 0 && showAuctionLayer && (
+              <span className="ml-0.5 bg-[#1B2B5B] text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">{auctions.length}</span>
+            )}
+          </button>
+        </div>
       </div>
+
+      {/* Auction Detail Card — shown when a golden pin is clicked */}
+      {selectedAuction && (
+        <div className="absolute top-0 right-0 bottom-0 z-20 w-80 bg-white shadow-2xl border-l overflow-y-auto">
+          {/* Header */}
+          <div className="sticky top-0 z-10 px-4 py-3 border-b" style={{ background: 'linear-gradient(135deg, #C9A84C, #e6c96a)' }}>
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-[#1B2B5B] uppercase tracking-wide">🏛️ Leilão — {sourceLabel(selectedAuction.source)}</span>
+              <button onClick={() => setSelectedAuction(null)} className="w-6 h-6 flex items-center justify-center rounded-full bg-[#1B2B5B]/20 text-[#1B2B5B] hover:bg-[#1B2B5B]/30">
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+
+          <div className="p-4 space-y-4">
+            {/* Title */}
+            <div>
+              <h3 className="font-bold text-gray-800 text-sm leading-tight">{selectedAuction.title}</h3>
+              <p className="text-xs text-gray-500 mt-1 flex items-center gap-1">
+                <MapPin className="w-3 h-3" />
+                {selectedAuction.neighborhood && `${selectedAuction.neighborhood}, `}{selectedAuction.city}/{selectedAuction.state}
+              </p>
+            </div>
+
+            {/* Valores */}
+            <div className="bg-gray-50 rounded-xl p-3 space-y-2">
+              {selectedAuction.appraisalValue && (
+                <div className="flex justify-between text-xs">
+                  <span className="text-gray-500">Avaliação</span>
+                  <span className="line-through text-gray-400">{fmt(Number(selectedAuction.appraisalValue))}</span>
+                </div>
+              )}
+              <div className="flex justify-between">
+                <span className="text-sm text-gray-700 font-medium">Lance Mínimo</span>
+                <span className="text-lg font-bold" style={{ color: '#1B2B5B' }}>{selectedAuction.minimumBid ? fmt(Number(selectedAuction.minimumBid)) : '—'}</span>
+              </div>
+              {selectedAuction.discountPercent && (
+                <div className="flex justify-between text-xs">
+                  <span className="text-gray-500">Desconto</span>
+                  <span className="font-bold text-red-600">-{selectedAuction.discountPercent}%</span>
+                </div>
+              )}
+            </div>
+
+            {/* Cálculo de ROI */}
+            {selectedAuction.minimumBid && (
+              <div className="rounded-xl p-3 space-y-2" style={{ backgroundColor: '#f0f7ff' }}>
+                <h4 className="text-xs font-bold text-[#1B2B5B] uppercase tracking-wide">📊 Cálculo de ROI</h4>
+                {(() => {
+                  const bid = Number(selectedAuction.minimumBid)
+                  const appr = selectedAuction.appraisalValue ? Number(selectedAuction.appraisalValue) : bid * 1.5
+                  const itbi = bid * 0.03
+                  const registry = bid * 0.015
+                  const lawyer = bid * 0.05
+                  const eviction = selectedAuction.occupation === 'OCUPADO' ? Math.max(bid * 0.02, 5000) : 0
+                  const totalCost = itbi + registry + lawyer + eviction
+                  const totalInvestment = bid + totalCost
+                  const profit = appr - totalInvestment
+                  const roi = (profit / totalInvestment * 100)
+                  return (
+                    <div className="space-y-1.5 text-xs">
+                      <div className="flex justify-between"><span className="text-gray-600">ITBI (3%)</span><span>{fmt(itbi)}</span></div>
+                      <div className="flex justify-between"><span className="text-gray-600">Registro</span><span>{fmt(registry)}</span></div>
+                      <div className="flex justify-between"><span className="text-gray-600">Advogado</span><span>{fmt(lawyer)}</span></div>
+                      {eviction > 0 && <div className="flex justify-between"><span className="text-gray-600">Desocupação</span><span>{fmt(eviction)}</span></div>}
+                      <div className="flex justify-between border-t pt-1.5 font-semibold"><span>Investimento Total</span><span>{fmt(totalInvestment)}</span></div>
+                      <div className="flex justify-between font-bold text-sm">
+                        <span>Lucro Potencial</span>
+                        <span className={profit > 0 ? 'text-green-600' : 'text-red-600'}>{fmt(profit)}</span>
+                      </div>
+                      <div className="flex justify-between font-bold text-sm">
+                        <span>ROI</span>
+                        <span className={roi > 0 ? 'text-green-600' : 'text-red-600'}>{roi.toFixed(1)}%</span>
+                      </div>
+                    </div>
+                  )
+                })()}
+              </div>
+            )}
+
+            {/* Score de Oportunidade */}
+            {selectedAuction.opportunityScore && (
+              <div className="flex items-center justify-between bg-gray-50 rounded-xl p-3">
+                <div>
+                  <div className="text-xs text-gray-500">Score de Oportunidade</div>
+                  <div className={`text-xl font-bold ${
+                    selectedAuction.opportunityScore >= 80 ? 'text-green-600' :
+                    selectedAuction.opportunityScore >= 60 ? 'text-yellow-600' : 'text-red-500'
+                  }`}>
+                    {selectedAuction.opportunityScore}/100
+                  </div>
+                </div>
+                <div className={`px-3 py-1 rounded-full text-xs font-bold ${
+                  selectedAuction.opportunityScore >= 80 ? 'bg-green-100 text-green-700' :
+                  selectedAuction.opportunityScore >= 60 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'
+                }`}>
+                  {selectedAuction.opportunityScore >= 80 ? 'Ótima' : selectedAuction.opportunityScore >= 60 ? 'Boa' : 'Risco'}
+                </div>
+              </div>
+            )}
+
+            {/* Risco Jurídico */}
+            <div className="rounded-xl p-3 space-y-2" style={{ backgroundColor: '#fffbeb' }}>
+              <h4 className="text-xs font-bold text-yellow-800 uppercase tracking-wide">⚖️ Risco Jurídico</h4>
+              <div className="space-y-1.5 text-xs">
+                <div className="flex items-center gap-2">
+                  <span className={`w-2 h-2 rounded-full ${selectedAuction.occupation === 'DESOCUPADO' ? 'bg-green-500' : selectedAuction.occupation === 'OCUPADO' ? 'bg-red-500' : 'bg-gray-400'}`} />
+                  <span className="text-gray-700">Ocupação: <strong>{selectedAuction.occupation === 'DESOCUPADO' ? 'Desocupado ✓' : selectedAuction.occupation === 'OCUPADO' ? 'Ocupado — risco de ação de despejo' : 'Não informado'}</strong></span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className={`w-2 h-2 rounded-full ${selectedAuction.financingAvailable ? 'bg-green-500' : 'bg-gray-400'}`} />
+                  <span className="text-gray-700">Financiamento: <strong>{selectedAuction.financingAvailable ? 'Aceita ✓' : 'Não aceita'}</strong></span>
+                </div>
+                <p className="text-[10px] text-yellow-700 mt-1 leading-relaxed">
+                  Recomendamos consultar um advogado especializado antes de arrematar. Verifique ônus, dívidas de IPTU/condomínio e processos judiciais pendentes.
+                </p>
+              </div>
+            </div>
+
+            {/* Características */}
+            <div className="flex gap-3 text-xs text-gray-600">
+              {selectedAuction.totalArea && <span className="flex items-center gap-1"><Maximize className="w-3 h-3" />{selectedAuction.totalArea}m²</span>}
+              {selectedAuction.bedrooms > 0 && <span className="flex items-center gap-1"><BedDouble className="w-3 h-3" />{selectedAuction.bedrooms} quartos</span>}
+            </div>
+
+            {/* CTAs */}
+            <div className="space-y-2">
+              <a
+                href={`/leiloes/${selectedAuction.slug}`}
+                className="block w-full text-center px-4 py-3 rounded-xl font-bold text-sm text-white"
+                style={{ backgroundColor: '#1B2B5B' }}
+              >
+                Ver Detalhes + Edital Completo →
+              </a>
+              <a
+                href={`https://wa.me/5516981010004?text=Olá! Vi o leilão "${selectedAuction.title}" no AgoraEncontrei e gostaria de assessoria jurídica.`}
+                target="_blank" rel="noopener noreferrer"
+                className="block w-full text-center px-4 py-3 rounded-xl font-bold text-sm"
+                style={{ backgroundColor: '#25D366', color: 'white' }}
+              >
+                Pedir Assessoria Jurídica
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Results panel - shown when neighborhoods are selected */}
       {selectedNeighborhoods.length > 0 && (
