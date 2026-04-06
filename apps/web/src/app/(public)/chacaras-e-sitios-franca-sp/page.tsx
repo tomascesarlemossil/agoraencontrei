@@ -3,12 +3,12 @@ import Link from 'next/link'
 import { ArrowRight, MapPin, Home, MessageCircle, Phone, Star, Search } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'Chácaras e Sítios em Franca/SP | Imobiliária Lemos Franca/SP — CRECI 279051',
-  description: 'Chácaras e sítios à venda em Franca/SP e região. Propriedades rurais para lazer, moradia e investimento. Imobiliária Lemos — CRECI 279051.',
+  title: 'Chácaras e Sítios em Franca/SP | Imobiliária Lemos Franca/SP',
+  description: 'Chácaras e sítios à venda em Franca/SP e região. Propriedades rurais para lazer, moradia e investimento. Imobiliária Lemos.',
   keywords: ["chácaras franca sp", "sítios franca sp", "chácara à venda franca sp", "sítio à venda franca sp", "propriedade rural franca sp", "chácara lazer franca sp", "fazenda franca sp", "rural franca sp", "chácara zona rural franca", "sítio zona rural franca sp"],
   openGraph: {
     title: 'Chácaras e Sítios em Franca/SP | Imobiliária Lemos Franca/SP',
-    description: 'Chácaras e sítios à venda em Franca/SP e região. Propriedades rurais para lazer, moradia e investimento. Imobiliária Lemos — CRECI 279051.',
+    description: 'Chácaras e sítios à venda em Franca/SP e região. Propriedades rurais para lazer, moradia e investimento. Imobiliária Lemos.',
     type: 'website', locale: 'pt_BR', siteName: 'AgoraEncontrei — Imobiliária Lemos',
   },
   alternates: { canonical: 'https://www.agoraencontrei.com.br/chacaras-e-sitios-franca-sp' },
@@ -20,7 +20,7 @@ const SCHEMA = {
   '@type': 'LocalBusiness',
   '@id': 'https://www.agoraencontrei.com.br/chacaras-e-sitios-franca-sp',
   name: 'Imobiliária Lemos — Chácaras e Sítios em Franca/SP',
-  description: 'Chácaras e sítios à venda em Franca/SP e região. Propriedades rurais para lazer, moradia e investimento. Imobiliária Lemos — CRECI 279051.',
+  description: 'Chácaras e sítios à venda em Franca/SP e região. Propriedades rurais para lazer, moradia e investimento. Imobiliária Lemos.',
   url: 'https://www.agoraencontrei.com.br/chacaras-e-sitios-franca-sp',
   telephone: '+55-16-3723-0045',
   address: {
@@ -41,7 +41,7 @@ export default function TemaPage() {
       <section className="bg-gradient-to-br from-[#1B2B5B] to-[#0f1c3a] text-white py-16 px-4">
         <div className="max-w-5xl mx-auto text-center">
           <div className="inline-flex items-center gap-2 bg-white/10 rounded-full px-4 py-1.5 text-xs font-semibold mb-4" style={{ color: '#C9A84C' }}>
-            <MapPin className="w-3.5 h-3.5" /> Franca/SP · Imobiliária Lemos · CRECI 279051
+            <MapPin className="w-3.5 h-3.5" /> Franca/SP · Imobiliária Lemos
           </div>
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 leading-tight" style={{ fontFamily: 'Georgia, serif' }}>
             Chácaras e Sítios
@@ -117,7 +117,7 @@ em Franca/SP
           <h2 className="text-2xl font-bold text-white mb-2" style={{ fontFamily: 'Georgia, serif' }}>
             Imobiliária Lemos — Franca/SP
           </h2>
-          <p className="text-white/70 mb-5">CRECI 279051 · 22 anos de tradição · Atendimento personalizado</p>
+          <p className="text-white/70 mb-5">22 anos de tradição · Atendimento personalizado</p>
           <div className="flex flex-wrap justify-center gap-3">
             <a href="https://wa.me/5516981010004" target="_blank" rel="noreferrer"
               className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm bg-[#25D366] text-white">

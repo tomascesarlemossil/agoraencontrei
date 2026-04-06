@@ -6,7 +6,7 @@ import { ArrowRight, MapPin, Building2, Star, Phone, MessageCircle } from 'lucid
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 
 export const metadata: Metadata = {
-  title: 'Apartamentos para Alugar em Franca SP | Imobiliária Lemos — CRECI 279051',
+  title: 'Apartamentos para Alugar em Franca SP | Imobiliária Lemos',
   description: 'Encontre apartamentos para alugar em Franca/SP com a Imobiliária Lemos. Kitinetes, studios, apartamentos com 1, 2 e 3 quartos. Próximos à UNESP, centro e principais bairros. CRECI 279051.',
   keywords: [
     'apartamentos para alugar franca sp', 'apartamento para alugar franca', 'aluguel apartamento franca sp',
@@ -34,7 +34,7 @@ const SCHEMA = {
   '@context': 'https://schema.org',
   '@type': 'SearchResultsPage',
   name: 'Apartamentos para Alugar em Franca SP',
-  description: 'Listagem de apartamentos disponíveis para aluguel em Franca, São Paulo. Imobiliária Lemos — CRECI 279051.',
+  description: 'Listagem de apartamentos disponíveis para aluguel em Franca, São Paulo. Imobiliária Lemos.',
   url: 'https://www.agoraencontrei.com.br/apartamentos-para-alugar-franca-sp',
   provider: { '@type': 'RealEstateAgent', name: 'Imobiliária Lemos', url: 'https://www.agoraencontrei.com.br' },
 }

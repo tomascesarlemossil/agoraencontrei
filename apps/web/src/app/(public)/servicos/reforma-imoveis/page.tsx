@@ -4,7 +4,7 @@ import { Wrench, CheckCircle, Phone, MessageCircle, ArrowRight, Home, Paintbrush
 
 export const metadata: Metadata = {
   title: 'Reforma de Imóveis em Franca/SP — Compre e Reforme | Imobiliária Lemos',
-  description: 'Reforma residencial e comercial em Franca/SP. Compre e reforme com nossa assessoria completa. Orçamento gratuito, mão de obra qualificada e materiais de qualidade. Imobiliária Lemos — CRECI 279051.',
+  description: 'Reforma residencial e comercial em Franca/SP. Compre e reforme com nossa assessoria completa. Orçamento gratuito, mão de obra qualificada e materiais de qualidade. Imobiliária Lemos.',
   keywords: 'reforma imóveis franca sp, reforma residencial franca, reforma comercial franca, comprar e reformar imóvel franca, reforma casa franca sp, reforma apartamento franca, construção civil franca, mão de obra franca sp, orçamento reforma franca',
   alternates: { canonical: 'https://www.agoraencontrei.com.br/servicos/reforma-imoveis' },
   openGraph: {

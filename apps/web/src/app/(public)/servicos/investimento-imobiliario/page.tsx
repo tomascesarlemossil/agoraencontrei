@@ -4,7 +4,7 @@ import { TrendingUp, CheckCircle2, Phone, DollarSign, Shield, BarChart3 } from '
 
 export const metadata: Metadata = {
   title: 'Investimento Imobiliário em Franca/SP — Renda Passiva | Imobiliária Lemos',
-  description: 'Invista em imóveis em Franca/SP com segurança e rentabilidade. Imóveis para renda passiva, comprar para alugar, imóveis comerciais e loteamentos. Imobiliária Lemos — CRECI 279051.',
+  description: 'Invista em imóveis em Franca/SP com segurança e rentabilidade. Imóveis para renda passiva, comprar para alugar, imóveis comerciais e loteamentos. Imobiliária Lemos.',
   keywords: [
     'investimento imobiliário franca sp', 'investir em imóveis franca sp',
     'imóvel para investimento franca', 'renda passiva imóveis franca sp',

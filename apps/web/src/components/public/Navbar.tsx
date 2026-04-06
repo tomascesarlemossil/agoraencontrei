@@ -3,14 +3,14 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { useEffect, useRef, useState } from 'react'
-import { Menu, X, ChevronDown, LayoutDashboard, UserCheck, Users, CreditCard, BarChart3, ClipboardList, Home, Calculator, Building, Wrench } from 'lucide-react'
+import { Menu, X, ChevronDown, LayoutDashboard, UserCheck, Users, CreditCard, BarChart3, ClipboardList, Home, Calculator, Building, Wrench, Handshake } from 'lucide-react'
 
 const NAV_LINKS = [
   { href: '/imoveis?purpose=SALE', label: 'Comprar' },
   { href: '/imoveis?purpose=RENT', label: 'Alugar' },
   { href: '/imoveis', label: 'Todos os Imóveis' },
   { href: '/avaliacao', label: 'Avaliação Gratuita' },
-  { href: '/corretores', label: 'Corretores' },
+  { href: '/parceiros', label: 'Parceiros' },
   { href: '/blog', label: 'Blog' },
 ]
 
@@ -22,6 +22,7 @@ const SERVICOS_MENU = [
   { href: '/financiamentos', icon: <Calculator className="w-4 h-4" />, label: 'Financiamentos', desc: 'Simule e financie seu imóvel', color: '#2563eb' },
   { href: '/servicos/fichas-cadastrais', icon: <ClipboardList className="w-4 h-4" />, label: 'Fichas Cadastrais', desc: 'Propostas e cadastros online', color: '#16a34a' },
   { href: '/financiamentos#simulador', icon: <Home className="w-4 h-4" />, label: 'Simule seu Financiamento', desc: 'Calcule parcelas e taxas', color: '#2563eb' },
+  { href: '/parceiros', icon: <Handshake className="w-4 h-4" />, label: 'Seja um Parceiro', desc: 'Anuncie seus imóveis no marketplace', color: '#C9A84C' },
 ]
 
 const ACCESS_AREAS = [
@@ -85,35 +86,25 @@ export function Navbar() {
       }}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-        {/* Logo */}
-        <Link href="/" className="flex items-center gap-2 group">
+        {/* Logo AgoraEncontrei */}
+        <Link href="/" className="flex items-center gap-2.5 group" aria-label="AgoraEncontrei — Marketplace Imobiliário">
           <Image
-            src="/logo-lemos.png"
-            alt="Imobiliária Lemos"
+            src="/logo.png"
+            alt="AgoraEncontrei Marketplace"
             width={44}
             height={44}
             className="rounded-full flex-shrink-0 object-cover"
             priority
           />
-          <div>
-            <p className="font-bold text-white text-sm leading-none tracking-wide" style={{ fontFamily: 'Georgia, serif' }}>
-              IMOBILIÁRIA
-            </p>
-            <p className="font-bold text-sm leading-none tracking-widest" style={{ color: 'var(--site-accent-color, #C9A84C)', fontFamily: 'Georgia, serif' }}>
-              LEMOS
-            </p>
+          <div className="flex flex-col leading-none">
+            <span className="font-bold text-base tracking-tight" style={{ color: '#ffffff', fontFamily: 'Georgia, serif' }}>
+              <span style={{ color: '#9ca3af', fontWeight: 400 }}>Agora</span>
+              <span style={{ color: '#16a34a', fontWeight: 700 }}>Encontrei</span>
+            </span>
+            <span className="text-[10px] font-medium tracking-widest uppercase" style={{ color: 'var(--site-accent-color, #C9A84C)', letterSpacing: '0.12em' }}>
+              Marketplace
+            </span>
           </div>
-          <span
-            className="hidden lg:inline-flex items-center px-2 py-0.5 rounded text-[9px] font-semibold uppercase tracking-wider ml-1 self-start mt-0.5"
-            style={{
-              color: 'var(--site-accent-color, #C9A84C)',
-              backgroundColor: 'rgba(201,168,76,0.12)',
-              border: '1px solid rgba(201,168,76,0.25)',
-              letterSpacing: '0.08em',
-            }}
-          >
-            Marketplace
-          </span>
         </Link>
 
         {/* Desktop nav */}

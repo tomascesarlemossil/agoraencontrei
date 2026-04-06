@@ -7,15 +7,15 @@ import { SkipNav } from '@/components/SkipNav'
 
 export const metadata: Metadata = {
   title: {
-    template: '%s | Imobiliária Lemos',
-    default: 'Imobiliária Lemos — Franca/SP',
+    template: '%s | AgoraEncontrei Marketplace',
+    default: 'AgoraEncontrei — Marketplace Imobiliário de Franca/SP',
   },
-  description: 'Encontre o imóvel dos seus sonhos em Franca e região. Compra, venda e locação. CRECI 279051.',
+  description: 'AgoraEncontrei é o marketplace imobiliário de Franca e região. Compra, venda e locação de imóveis com a Imobiliária Lemos e parceiros. Criado pela Imobiliária Lemos, referência desde 2002.',
   metadataBase: new URL('https://www.agoraencontrei.com.br'),
-  keywords: 'imóveis franca, casas franca, apartamentos franca, terrenos franca, imobiliária franca, comprar imóvel franca, alugar imóvel franca, financiamento imobiliário, leilão imóvel, CRECI 279051, imobiliária lemos, aluguel franca sp, investimento imóvel franca',
-  authors: [{ name: 'Imobiliária Lemos', url: 'https://www.agoraencontrei.com.br' }],
-  creator: 'Imobiliária Lemos',
-  publisher: 'Imobiliária Lemos',
+  keywords: 'imóveis franca, casas franca, apartamentos franca, terrenos franca, imobiliária franca, comprar imóvel franca, alugar imóvel franca, financiamento imobiliário, leilão imóvel, imobiliária lemos, aluguel franca sp, investimento imóvel franca, marketplace imobiliário franca, agoraencontrei',
+  authors: [{ name: 'AgoraEncontrei Marketplace', url: 'https://www.agoraencontrei.com.br' }],
+  creator: 'AgoraEncontrei — Imobiliária Lemos',
+  publisher: 'AgoraEncontrei Marketplace',
   robots: { index: true, follow: true, googleBot: { index: true, follow: true } },
 }
 
@@ -31,7 +31,8 @@ const FOOTER_IMOVEIS = [
 const FOOTER_SERVICOS = [
   { href: '/servicos', label: 'Nossos Serviços' },
   { href: '/avaliacao', label: 'Avaliação Gratuita' },
-  { href: '/corretores', label: 'Nossa Equipe' },
+  { href: '/parceiros', label: 'Parceiros' },
+  { href: '/corretores', label: 'Nossa Equipe (Lemos)' },
   { href: '/servicos/2via-boleto', label: '2ª Via de Boleto' },
   { href: '/servicos/extrato-proprietario', label: 'Extrato do Proprietário' },
   { href: '/servicos/fichas-cadastrais', label: 'Fichas Cadastrais' },
@@ -57,7 +58,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
             </span>
           </div>
           <div className="flex items-center gap-4">
-            <span className="text-white/50">CRECI 279051</span>
+            <span className="text-white/50">Marketplace Imobiliário · Franca/SP</span>
             <a href="https://www.instagram.com/imobiliarialemos" target="_blank" rel="noreferrer" className="flex items-center gap-1 hover:text-white transition-colors" aria-label="Instagram da Imobiliária Lemos (@imobiliarialemos)">
               <Instagram className="w-3.5 h-3.5" aria-hidden="true" />
             </a>
@@ -87,21 +88,28 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
             {/* Brand */}
             <div>
               <div className="flex items-center gap-3 mb-4">
-                <div
-                  className="h-10 w-10 rounded-lg flex items-center justify-center text-white font-bold"
-                  style={{ backgroundColor: '#C9A84C' }}
-                >
-                  IL
-                </div>
-                <div>
-                  <p className="font-bold text-white text-sm" style={{ fontFamily: 'Georgia, serif' }}>IMOBILIÁRIA</p>
-                  <p className="font-bold text-sm" style={{ color: '#C9A84C', fontFamily: 'Georgia, serif' }}>LEMOS</p>
+                <img
+                  src="/logo.png"
+                  alt="AgoraEncontrei Marketplace"
+                  width={44}
+                  height={44}
+                  className="rounded-full flex-shrink-0 object-cover"
+                  loading="lazy"
+                />
+                <div className="flex flex-col leading-none">
+                  <span className="font-bold text-base" style={{ fontFamily: 'Georgia, serif' }}>
+                    <span style={{ color: '#9ca3af', fontWeight: 400 }}>Agora</span>
+                    <span style={{ color: '#16a34a', fontWeight: 700 }}>Encontrei</span>
+                  </span>
+                  <span className="text-[10px] font-medium tracking-widest uppercase" style={{ color: '#C9A84C', letterSpacing: '0.12em' }}>Marketplace</span>
                 </div>
               </div>
               <p className="text-white/50 text-xs leading-relaxed">
-                Desde 2002 conectando pessoas aos melhores imóveis de Franca e região.
+                O Marketplace Imobiliário de Franca e Região.
               </p>
-              <p className="text-white/40 text-xs mt-2">CRECI PF: 279051</p>
+              <p className="text-white/40 text-xs mt-1">
+                Criado pela <span className="text-white/60 font-medium">Imobiliária Lemos</span>, referência desde 2002.
+              </p>
 
               {/* Social media */}
               <div className="mt-5">
@@ -243,9 +251,9 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
 
           <div className="border-t border-white/10 pt-6 flex flex-col sm:flex-row justify-between items-center gap-3">
             <p className="text-white/50 text-xs">
-              © {new Date().getFullYear()} Imobiliária Lemos. Todos os direitos reservados.
+              © {new Date().getFullYear()} AgoraEncontrei Marketplace. Todos os direitos reservados.
             </p>
-            <p className="text-white/50 text-xs">Fundada em 2002 · CRECI 279051</p>
+            <p className="text-white/50 text-xs">Criado pela Imobiliária Lemos · Fundada em 2002</p>
           </div>
         </div>
       </footer>

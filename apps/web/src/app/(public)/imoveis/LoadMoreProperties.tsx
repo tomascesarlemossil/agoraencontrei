@@ -103,6 +103,7 @@ function PropertyCardCarousel({ images, coverImage, title, isFeatured, purpose, 
           src={currentImage}
           alt={title}
           loading="lazy"
+          decoding="async"
           className="w-full h-full object-cover transition-all duration-500"
           style={{ transform: isHovered && !hasMultiple ? 'scale(1.05)' : 'scale(1)' }}
         />

@@ -1,14 +1,27 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  // Compressão gzip/brotli automática
+  compress: true,
   experimental: {
     scrollRestoration: true,
-    optimizePackageImports: ['lucide-react', 'recharts'],
+    optimizePackageImports: [
+      'lucide-react',
+      'recharts',
+      '@radix-ui/react-dialog',
+      '@radix-ui/react-dropdown-menu',
+      '@radix-ui/react-select',
+      '@radix-ui/react-tabs',
+    ],
+    optimisticClientCache: true,
   },
   images: {
     formats: ['image/avif', 'image/webp'],
-    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048],
+    // Mobile-first: reduzido de 2048 para 1920
+    deviceSizes: [390, 640, 750, 828, 1080, 1200, 1920],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+    // Cache de imagens por 1 ano no servidor
+    minimumCacheTTL: 31536000,
     remotePatterns: [
       { protocol: 'https', hostname: 'cdnuso.com' },
       { protocol: 'https', hostname: 'cdn2.uso.com.br' },
@@ -17,6 +30,33 @@ const nextConfig = {
       { protocol: 'https', hostname: 'agoraencontrei-media.s3.us-east-1.amazonaws.com' },
       { protocol: 'https', hostname: 'lh3.googleusercontent.com' },
     ],
+  },
+  // Otimização de bundle: separar vendor chunks
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      config.optimization = {
+        ...config.optimization,
+        splitChunks: {
+          ...config.optimization.splitChunks,
+          cacheGroups: {
+            ...config.optimization.splitChunks?.cacheGroups,
+            leaflet: {
+              test: /[\\/]node_modules[\\/](leaflet)[\\/]/,
+              name: 'leaflet',
+              chunks: 'async',
+              priority: 20,
+            },
+            recharts: {
+              test: /[\\/]node_modules[\\/](recharts|d3-.*)[\\/]/,
+              name: 'recharts',
+              chunks: 'async',
+              priority: 15,
+            },
+          },
+        },
+      }
+    }
+    return config
   },
   async rewrites() {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://agoraencontrei-api-production.up.railway.app'
@@ -66,7 +106,7 @@ const nextConfig = {
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "font-src 'self' https://fonts.gstatic.com",
               "img-src 'self' data: blob: https: http:",
-              "connect-src 'self' https://api.agoraencontrei.com.br https://*.railway.app https://www.google-analytics.com https://analytics.google.com https://www.facebook.com https://maps.googleapis.com wss:",
+              "connect-src 'self' https://api.agoraencontrei.com.br https://*.railway.app https://www.google-analytics.com https://analytics.google.com https://www.facebook.com https://maps.googleapis.com https://nominatim.openstreetmap.org wss:",
               "frame-src 'self' https://www.youtube.com https://www.google.com https://maps.google.com",
               "media-src 'self' https: blob:",
               "object-src 'none'",
@@ -88,6 +128,13 @@ const nextConfig = {
         source: '/_next/static/(.*)',
         headers: [
           { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
+        ],
+      },
+      // Cache para API pública via proxy (CDN edge cache)
+      {
+        source: '/api/v1/public/(featured|site-settings|team|cities|stats|map-clusters)(.*)',
+        headers: [
+          { key: 'Cache-Control', value: 'public, s-maxage=300, stale-while-revalidate=600' },
         ],
       },
     ]

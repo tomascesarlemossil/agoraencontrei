@@ -68,7 +68,7 @@ export async function generateMetadata({ params }: { params: { cidade: string; b
   const bairroName = slugToName(params.bairro)
 
   const title = `Imóveis no ${bairroName}, ${cityName}/${estado} | Imobiliária Lemos`
-  const description = `Casas à venda e apartamentos para alugar no ${bairroName}, ${cityName}/${estado}. Imobiliária Lemos — CRECI 279051. Encontre o imóvel ideal no seu bairro.`
+  const description = `Casas à venda e apartamentos para alugar no ${bairroName}, ${cityName}/${estado}. Imobiliária Lemos. Encontre o imóvel ideal no seu bairro.`
 
   return {
     title,

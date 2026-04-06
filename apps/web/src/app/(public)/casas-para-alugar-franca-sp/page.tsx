@@ -7,7 +7,7 @@ import { ArrowRight, MapPin, Home, Star, Phone, MessageCircle } from 'lucide-rea
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 
 export const metadata: Metadata = {
-  title: 'Casas para Alugar em Franca SP | Imobiliária Lemos — CRECI 279051',
+  title: 'Casas para Alugar em Franca SP | Imobiliária Lemos',
   description: 'Encontre casas para alugar em Franca/SP com a Imobiliária Lemos. Mais de 22 anos no mercado. Casas com 2, 3 e 4 quartos em todos os bairros de Franca. Aluguel rápido e seguro. CRECI 279051.',
   keywords: [
     'casas para alugar franca sp', 'casa para alugar franca', 'aluguel de casas franca sp',
@@ -36,7 +36,7 @@ const SCHEMA = {
   '@context': 'https://schema.org',
   '@type': 'SearchResultsPage',
   name: 'Casas para Alugar em Franca SP',
-  description: 'Listagem de casas disponíveis para aluguel em Franca, São Paulo. Imobiliária Lemos — CRECI 279051.',
+  description: 'Listagem de casas disponíveis para aluguel em Franca, São Paulo. Imobiliária Lemos.',
   url: 'https://www.agoraencontrei.com.br/casas-para-alugar-franca-sp',
   provider: {
     '@type': 'RealEstateAgent',

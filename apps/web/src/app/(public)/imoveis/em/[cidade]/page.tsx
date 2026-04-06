@@ -412,7 +412,7 @@ export async function generateMetadata({ params }: { params: { cidade: string } 
   const desc = cidade?.descricao ?? `cidade do interior`
 
   const title = `Imóveis em ${cityName}/${estado} | Casas e Apartamentos | Imobiliária Lemos`
-  const description = `Encontre casas à venda, apartamentos para alugar e terrenos em ${cityName}/${estado}, ${desc}. Imobiliária Lemos — CRECI 279051. Atendimento especializado na região.`
+  const description = `Encontre casas à venda, apartamentos para alugar e terrenos em ${cityName}/${estado}, ${desc}. Imobiliária Lemos. Atendimento especializado na região.`
 
   // Keywords enriquecidas para Franca
   const keywordsBase = `imóveis ${cityName.toLowerCase()}, casas à venda ${cityName.toLowerCase()}, apartamentos ${cityName.toLowerCase()}, terrenos ${cityName.toLowerCase()}, imóveis ${cityName.toLowerCase()} ${estado.toLowerCase()}, comprar casa ${cityName.toLowerCase()}, alugar apartamento ${cityName.toLowerCase()}, imobiliária ${cityName.toLowerCase()}`

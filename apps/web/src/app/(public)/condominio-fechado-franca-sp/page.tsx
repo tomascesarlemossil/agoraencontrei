@@ -3,12 +3,12 @@ import Link from 'next/link'
 import { ArrowRight, MapPin, Home, MessageCircle, Phone, Star, Search } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'Condomínio Fechado em Franca/SP | Imobiliária Lemos Franca/SP — CRECI 279051',
-  description: 'Condomínios fechados em Franca/SP: casas e terrenos em condomínios com segurança 24h. Villa Toscana, Residencial Amazonas, Samello Woods e muito mais. Imobiliária Lemos — CRECI 279051.',
+  title: 'Condomínio Fechado em Franca/SP | Imobiliária Lemos Franca/SP',
+  description: 'Condomínios fechados em Franca/SP: casas e terrenos em condomínios com segurança 24h. Villa Toscana, Residencial Amazonas, Samello Woods e muito mais. Imobiliária Lemos.',
   keywords: ["condomínio fechado franca sp", "casa condomínio franca sp", "condomínio franca sp", "villa toscana franca sp", "residencial amazonas franca sp", "samello woods franca sp", "condomínio segurança franca sp", "lote condomínio franca sp", "condomínio alto padrão franca sp", "condomínio residencial franca sp"],
   openGraph: {
     title: 'Condomínio Fechado em Franca/SP | Imobiliária Lemos Franca/SP',
-    description: 'Condomínios fechados em Franca/SP: casas e terrenos em condomínios com segurança 24h. Villa Toscana, Residencial Amazonas, Samello Woods e muito mais. Imobiliária Lemos — CRECI 279051.',
+    description: 'Condomínios fechados em Franca/SP: casas e terrenos em condomínios com segurança 24h. Villa Toscana, Residencial Amazonas, Samello Woods e muito mais. Imobiliária Lemos.',
     type: 'website', locale: 'pt_BR', siteName: 'AgoraEncontrei — Imobiliária Lemos',
   },
   alternates: { canonical: 'https://www.agoraencontrei.com.br/condominio-fechado-franca-sp' },
@@ -20,7 +20,7 @@ const SCHEMA = {
   '@type': 'LocalBusiness',
   '@id': 'https://www.agoraencontrei.com.br/condominio-fechado-franca-sp',
   name: 'Imobiliária Lemos — Condomínio Fechado em Franca/SP',
-  description: 'Condomínios fechados em Franca/SP: casas e terrenos em condomínios com segurança 24h. Villa Toscana, Residencial Amazonas, Samello Woods e muito mais. Imobiliária Lemos — CRECI 279051.',
+  description: 'Condomínios fechados em Franca/SP: casas e terrenos em condomínios com segurança 24h. Villa Toscana, Residencial Amazonas, Samello Woods e muito mais. Imobiliária Lemos.',
   url: 'https://www.agoraencontrei.com.br/condominio-fechado-franca-sp',
   telephone: '+55-16-3723-0045',
   address: {
@@ -41,7 +41,7 @@ export default function TemaPage() {
       <section className="bg-gradient-to-br from-[#1B2B5B] to-[#0f1c3a] text-white py-16 px-4">
         <div className="max-w-5xl mx-auto text-center">
           <div className="inline-flex items-center gap-2 bg-white/10 rounded-full px-4 py-1.5 text-xs font-semibold mb-4" style={{ color: '#C9A84C' }}>
-            <MapPin className="w-3.5 h-3.5" /> Franca/SP · Imobiliária Lemos · CRECI 279051
+            <MapPin className="w-3.5 h-3.5" /> Franca/SP · Imobiliária Lemos
           </div>
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 leading-tight" style={{ fontFamily: 'Georgia, serif' }}>
             Condomínio Fechado
@@ -117,7 +117,7 @@ em Franca/SP
           <h2 className="text-2xl font-bold text-white mb-2" style={{ fontFamily: 'Georgia, serif' }}>
             Imobiliária Lemos — Franca/SP
           </h2>
-          <p className="text-white/70 mb-5">CRECI 279051 · 22 anos de tradição · Atendimento personalizado</p>
+          <p className="text-white/70 mb-5">22 anos de tradição · Atendimento personalizado</p>
           <div className="flex flex-wrap justify-center gap-3">
             <a href="https://wa.me/5516981010004" target="_blank" rel="noreferrer"
               className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm bg-[#25D366] text-white">

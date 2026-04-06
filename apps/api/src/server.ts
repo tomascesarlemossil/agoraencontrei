@@ -14,6 +14,7 @@ import swaggerPlugin from './plugins/swagger.js'
 import redisPlugin from './plugins/redis.js'
 import automationPlugin from './plugins/automation.js'
 import multipart from '@fastify/multipart'
+import compress from '@fastify/compress'
 
 // ── Routes ─────────────────────────────────────────────────────────────────
 import healthRoutes from './routes/health.js'
@@ -146,6 +147,12 @@ async function bootstrap() {
   await app.register(automationPlugin)
   // No file size limit — accept any file type and size
   await app.register(multipart, { limits: { fileSize: Infinity } })
+  // Compressão gzip/brotli automática para todas as respostas
+  await app.register(compress, {
+    global: true,
+    encodings: ['br', 'gzip', 'deflate'],
+    threshold: 1024, // Só comprimir respostas > 1KB
+  })
 
   // ── Swagger (development only) ──────────────────────────────────────────
   if (env.NODE_ENV !== 'production') {

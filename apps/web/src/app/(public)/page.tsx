@@ -13,7 +13,7 @@ export const metadata: Metadata = {
   keywords: [
     'agoraencontrei', 'marketplace imobiliário', 'imobiliária franca', 'imóveis franca sp',
     'alugar casa franca', 'comprar apartamento franca', 'imobiliária lemos', 'locação franca',
-    'venda imóveis franca', 'CRECI 279051', 'busca imóvel IA', 'mapa imóveis franca',
+    'venda imóveis franca', 'busca imóvel IA', 'mapa imóveis franca',
     'anunciar imóvel grátis', 'casas para alugar franca sp', 'apartamentos para alugar franca sp',
     'casas à venda franca sp', 'apartamentos à venda franca sp', 'terrenos franca sp',
     'imóveis comerciais franca sp', 'chácaras franca sp', 'loteamentos franca sp',
@@ -130,7 +130,7 @@ const WEBSITE_SCHEMA = {
   '@id': 'https://www.agoraencontrei.com.br/#website',
   name: 'AgoraEncontrei — Imobiliária Lemos',
   url: 'https://www.agoraencontrei.com.br',
-  description: 'Encontre imóveis à venda e para alugar em Franca/SP e região. Imobiliária Lemos — CRECI 279051.',
+  description: 'Encontre imóveis à venda e para alugar em Franca/SP e região. Imobiliária Lemos.',
   inLanguage: 'pt-BR',
   potentialAction: {
     '@type': 'SearchAction',
@@ -553,57 +553,7 @@ export default async function HomePage() {
       {/* ── SMART QUIZ ──────────────────────────────────────────────── */}
       <SmartQuiz />
 
-      {/* ── WHY LEMOS ───────────────────────────────────────────────── */}
-      <section style={{ backgroundColor: 'var(--site-primary-color, #1B2B5B)' }} className="py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="text-center mb-12">
-            <h2 className="text-2xl font-bold text-white" style={{ fontFamily: 'Georgia, serif' }}>
-              Por que escolher a <span style={{ color: 'var(--site-accent-color, #C9A84C)' }}>Imobiliária Lemos?</span>
-            </h2>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[
-              {
-                icon: <Shield className="w-6 h-6" />,
-                title: 'Tradição desde 2002',
-                desc: 'Mais de 20 anos de experiência e confiança no mercado imobiliário de Franca e região.',
-              },
-              {
-                icon: <TrendingUp className="w-6 h-6" />,
-                title: 'Avaliação precisa',
-                desc: 'Avaliação gratuita com base em dados reais de mercado e expertise local.',
-              },
-              {
-                icon: <Clock className="w-6 h-6" />,
-                title: 'Agilidade',
-                desc: 'Processo transparente e rápido do início à escritura, sem burocracia desnecessária.',
-              },
-              {
-                icon: <Star className="w-6 h-6 fill-current" />,
-                title: 'Atendimento personalizado',
-                desc: 'Corretores especializados dedicados a entender e realizar o seu sonho.',
-              },
-            ].map(item => (
-              <div
-                key={item.title}
-                className="rounded-2xl p-6 text-center"
-                style={{ backgroundColor: 'rgba(255,255,255,0.06)' }}
-              >
-                <div
-                  className="inline-flex items-center justify-center w-12 h-12 rounded-xl mb-4"
-                  style={{ backgroundColor: 'rgba(201,168,76,0.15)', color: 'var(--site-accent-color, #C9A84C)' }}
-                >
-                  {item.icon}
-                </div>
-                <p className="text-white font-semibold text-sm mb-2" style={{ fontFamily: 'Georgia, serif' }}>
-                  {item.title}
-                </p>
-                <p className="text-white/50 text-xs leading-relaxed">{item.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* WHY LEMOS section removed — replaced by Marketplace section */}
 
       {/* ── CTA AVALIAÇÃO ───────────────────────────────────────────── */}
       <section style={{ backgroundColor: 'var(--site-background-color, #f8f6f1)' }} className="py-16">
@@ -702,11 +652,11 @@ export default async function HomePage() {
       {team.length > 0 && (
         <section className="max-w-6xl mx-auto px-4 sm:px-6 pb-16">
           <div className="text-center mb-8">
-            <p className="text-sm font-semibold uppercase tracking-widest mb-2" style={{ color: 'var(--site-accent-color, #C9A84C)' }}>Imobiliaria Lemos</p>
+            <p className="text-sm font-semibold uppercase tracking-widest mb-2" style={{ color: 'var(--site-accent-color, #C9A84C)' }}>Imobiliária Lemos — 1º Parceiro Oficial</p>
             <h2 className="text-2xl font-bold" style={{ color: 'var(--site-primary-color, #1B2B5B)', fontFamily: 'Georgia, serif' }}>
-              Nossa Equipe de Corretores
+              Nossas Imobiliárias / Corretores Parceiros
             </h2>
-            <p className="text-gray-500 text-sm mt-1">Profissionais especializados prontos para te atender</p>
+            <p className="text-gray-500 text-sm mt-1">Profissionais e imobiliárias parceiras anunciando no marketplace</p>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -756,9 +706,12 @@ export default async function HomePage() {
             })}
           </div>
 
-          <div className="text-center mt-6">
-            <Link href="/corretores" className="inline-flex items-center gap-2 text-sm font-semibold hover:gap-3 transition-all" style={{ color: 'var(--site-accent-color, #C9A84C)' }}>
-              Ver toda a equipe <ArrowRight className="w-4 h-4" />
+          <div className="text-center mt-6 flex flex-col sm:flex-row gap-3 justify-center">
+            <Link href="/parceiros" className="inline-flex items-center gap-2 text-sm font-semibold hover:gap-3 transition-all" style={{ color: 'var(--site-accent-color, #C9A84C)' }}>
+              Ver todos os parceiros <ArrowRight className="w-4 h-4" />
+            </Link>
+            <Link href="/corretores" className="inline-flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-gray-700 transition-all">
+              Equipe Imobiliária Lemos <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
         </section>

@@ -4,7 +4,7 @@ import { MapPin, Home, Search, Building2, ArrowRight } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'Todos os Bairros e Ruas de Franca/SP | Imóveis | Imobiliária Lemos',
-  description: 'Índice completo de todos os bairros, ruas, loteamentos e condomínios de Franca/SP. Encontre imóveis em qualquer localização de Franca com a Imobiliária Lemos — CRECI 279051.',
+  description: 'Índice completo de todos os bairros, ruas, loteamentos e condomínios de Franca/SP. Encontre imóveis em qualquer localização de Franca com a Imobiliária Lemos.',
   keywords: [
     'bairros franca sp', 'ruas franca sp', 'loteamentos franca sp',
     'condomínios franca sp', 'imóveis franca sp', 'imobiliária lemos franca',

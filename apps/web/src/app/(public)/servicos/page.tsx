@@ -4,7 +4,7 @@ import { FileText, Building, CreditCard, BarChart3, Calculator, ClipboardList, H
 
 export const metadata: Metadata = {
   title: 'Serviços Imobiliários em Franca/SP — Fotos, Vídeo, Drone, Avaliação | Imobiliária Lemos',
-  description: 'Serviços completos para imóveis em Franca/SP: fotografia profissional, vídeo, drone, avaliação gratuita, edição de fotos, reforma, engenharia, leilão e investimento. Imobiliária Lemos — CRECI 279051.',
+  description: 'Serviços completos para imóveis em Franca/SP: fotografia profissional, vídeo, drone, avaliação gratuita, edição de fotos, reforma, engenharia, leilão e investimento. Imobiliária Lemos.',
   keywords: 'serviços imobiliários franca sp, fotografia imóveis franca, vídeo imóveis franca, drone imóveis franca, avaliação imóvel franca, reforma imóvel franca, engenharia civil franca, leilão imóveis franca, investimento imobiliário franca, edição fotos imóveis franca, fotos profissionais imóveis franca, videomaker franca sp, drone franca sp, 2 via boleto aluguel franca, extrato proprietário imóvel, ficha cadastral locação, financiamento imobiliário franca',
   alternates: { canonical: 'https://www.agoraencontrei.com.br/servicos' },
   openGraph: {

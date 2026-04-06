@@ -6,7 +6,12 @@ import { WebVitals } from '@/components/WebVitals'
 import { FRANCA_GEO_KEYWORDS } from '@/data/seo-geo-keywords'
 import './globals.css'
 
-const inter = Inter({ subsets: ['latin'] })
+const inter = Inter({
+  subsets: ['latin'],
+  display: 'swap',
+  preload: true,
+  variable: '--font-inter',
+})
 
 const META_PIXEL_ID = '932688306232065'
 const WEB_URL = 'https://www.agoraencontrei.com.br'
@@ -21,8 +26,7 @@ export const metadata: Metadata = {
   keywords: [
     // Marca dupla — AgoraEncontrei + Imobiliária Lemos
     'agoraencontrei', 'agora encontrei imóveis', 'agora encontrei imobiliária',
-    'imobiliária lemos', 'imobiliária lemos franca', 'lemos imóveis', 'CRECI 279051',
-    'agoraencontrei imobiliária lemos', 'agoraencontrei franca sp',
+    'imobiliária lemos', 'imobiliária lemos franca', 'lemos imóveis', 'agoraencontrei imobiliária lemos', 'agoraencontrei franca sp',
     // Cidade principal — intenções de compra e aluguel
     'imóveis franca sp', 'casas à venda franca sp', 'apartamentos para alugar franca sp',
     'imobiliária franca sp', 'comprar casa franca sp', 'alugar apartamento franca sp',
@@ -331,6 +335,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="pt-BR" suppressHydrationWarning className="dark">
       <head>
+        {/* ── Preconnect para recursos externos críticos (melhora LCP/FCP) ── */}
+        <link rel="preconnect" href="https://agoraencontrei-api-production.up.railway.app" />
+        <link rel="preconnect" href="https://agoraencontrei-media.s3.us-east-1.amazonaws.com" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://tile.openstreetmap.org" />
+        <link rel="dns-prefetch" href="https://unpkg.com" />
+        <link rel="dns-prefetch" href="https://nominatim.openstreetmap.org" />
+        <link rel="dns-prefetch" href="https://cdnuso.com" />
+        <link rel="dns-prefetch" href="https://cdn2.uso.com.br" />
         {/* ── Favicon explícito para compatibilidade máxima ── */}
         <link rel="icon" href="/favicon.ico" sizes="any" />
         <link rel="icon" href="/icons/icon-32.png" type="image/png" sizes="32x32" />

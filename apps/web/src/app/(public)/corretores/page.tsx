@@ -298,7 +298,7 @@ export default async function CorretoresPage() {
               </Link>
             </div>
             <div className="mt-8 text-sm" style={{ color: 'rgba(255,255,255,0.6)' }}>
-              <p>Rua João Ramalho, 1060 — Centro, Franca/SP · CRECI 279051</p>
+              <p>Rua João Ramalho, 1060 — Centro, Franca/SP</p>
               <p className="mt-1">
                 <a href="tel:1637230045" className="hover:text-white transition-colors">(16) 3723-0045</a>
                 {' · '}

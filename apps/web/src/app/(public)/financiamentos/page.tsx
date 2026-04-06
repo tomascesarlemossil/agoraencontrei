@@ -5,7 +5,7 @@ import { BankLogo } from './BankLogo'
 
 export const metadata: Metadata = {
   title: 'Financiamento Imobiliário em Franca/SP | AgoraEncontrei',
-  description: 'Simule e financie seu imóvel com os melhores bancos. Caixa, Bradesco, Itaú, Santander, BB, Inter, SICOOB, Sicredi e BEXT. AgoraEncontrei — Imobiliária Lemos — CRECI 279051.',
+  description: 'Simule e financie seu imóvel com os melhores bancos. Caixa, Bradesco, Itaú, Santander, BB, Inter, SICOOB, Sicredi e BEXT. AgoraEncontrei — Imobiliária Lemos.',
   keywords: 'financiamento imobiliário franca, simulador financiamento franca, caixa econômica federal franca, financiar casa franca sp, crédito imobiliário franca, agoraencontrei financiamento',
   openGraph: {
     title: 'Financiamento Imobiliário | AgoraEncontrei — Imobiliária Lemos',

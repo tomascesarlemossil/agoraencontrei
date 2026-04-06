@@ -49,7 +49,7 @@ export default function AnunciarPage() {
       {/* Hero */}
       <div className="py-14 px-4 text-center" style={{ background: 'linear-gradient(135deg, #1B2B5B 0%, #2d4a8a 100%)' }}>
         <p className="text-sm font-semibold uppercase tracking-widest mb-3" style={{ color: '#C9A84C' }}>
-          Imobiliária Lemos — CRECI 279051
+          Imobiliária Lemos
         </p>
         <h1 className="text-3xl sm:text-4xl font-bold text-white mb-4" style={{ fontFamily: 'Georgia, serif' }}>
           Anuncie seu Imóvel
@@ -118,7 +118,7 @@ export default function AnunciarPage() {
               style={{ background: 'linear-gradient(135deg, #1B2B5B 0%, #2d4a8a 100%)' }}
             >
               <p className="text-sm font-bold mb-1" style={{ fontFamily: 'Georgia, serif' }}>Imobiliária Lemos</p>
-              <p className="text-white/60 text-xs mb-4">Franca/SP — CRECI 279051</p>
+              <p className="text-white/60 text-xs mb-4">Franca/SP</p>
               <div className="space-y-2">
                 <a href="tel:1637230045" className="flex items-center gap-2 text-sm text-white/80 hover:text-white transition-colors">
                   <Phone className="w-4 h-4" /> (16) 3723-0045

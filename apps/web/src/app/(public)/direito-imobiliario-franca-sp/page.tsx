@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { ArrowRight, MapPin, Home, MessageCircle, Phone, Star, Search } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'Direito Imobiliário em Franca/SP | Imobiliária Lemos Franca/SP — CRECI 279051',
+  title: 'Direito Imobiliário em Franca/SP | Imobiliária Lemos Franca/SP',
   description: 'Direito imobiliário em Franca/SP: contratos, escrituras, inventários, usucapião e regularização de imóveis. Imobiliária Lemos com assessoria jurídica especializada. CRECI 279051.',
   keywords: ["direito imobiliário franca sp", "advogado imobiliário franca sp", "escritura imóvel franca sp", "contrato compra venda imóvel franca", "usucapião franca sp", "regularização imóvel franca", "inventário imóvel franca sp", "cartório franca sp imóvel", "registro imóvel franca sp", "distrato contrato imóvel franca"],
   openGraph: {
@@ -41,7 +41,7 @@ export default function TemaPage() {
       <section className="bg-gradient-to-br from-[#1B2B5B] to-[#0f1c3a] text-white py-16 px-4">
         <div className="max-w-5xl mx-auto text-center">
           <div className="inline-flex items-center gap-2 bg-white/10 rounded-full px-4 py-1.5 text-xs font-semibold mb-4" style={{ color: '#C9A84C' }}>
-            <MapPin className="w-3.5 h-3.5" /> Franca/SP · Imobiliária Lemos · CRECI 279051
+            <MapPin className="w-3.5 h-3.5" /> Franca/SP · Imobiliária Lemos
           </div>
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 leading-tight" style={{ fontFamily: 'Georgia, serif' }}>
             Direito Imobiliário
@@ -117,7 +117,7 @@ em Franca/SP
           <h2 className="text-2xl font-bold text-white mb-2" style={{ fontFamily: 'Georgia, serif' }}>
             Imobiliária Lemos — Franca/SP
           </h2>
-          <p className="text-white/70 mb-5">CRECI 279051 · 22 anos de tradição · Atendimento personalizado</p>
+          <p className="text-white/70 mb-5">22 anos de tradição · Atendimento personalizado</p>
           <div className="flex flex-wrap justify-center gap-3">
             <a href="https://wa.me/5516981010004" target="_blank" rel="noreferrer"
               className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm bg-[#25D366] text-white">

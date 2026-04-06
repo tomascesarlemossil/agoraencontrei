@@ -4,7 +4,7 @@ import { Camera, Star, CheckCircle2, Phone, ArrowRight, Image, Zap } from 'lucid
 
 export const metadata: Metadata = {
   title: 'Fotografia Profissional de Imóveis em Franca/SP | Imobiliária Lemos',
-  description: 'Fotografia profissional de imóveis em Franca/SP. Fotos de alta qualidade, edição profissional, tratamento de imagens e entrega rápida. Venda seu imóvel mais rápido com fotos profissionais. Imobiliária Lemos — CRECI 279051.',
+  description: 'Fotografia profissional de imóveis em Franca/SP. Fotos de alta qualidade, edição profissional, tratamento de imagens e entrega rápida. Venda seu imóvel mais rápido com fotos profissionais. Imobiliária Lemos.',
   keywords: [
     'fotografia de imóveis franca sp', 'fotos profissionais imóveis franca',
     'fotógrafo de imóveis franca sp', 'fotografia imobiliária franca',

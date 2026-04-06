@@ -4,7 +4,7 @@ import { Video, Plane, Star, CheckCircle2, Phone, Film } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'Vídeo e Drone para Imóveis em Franca/SP | Imobiliária Lemos',
-  description: 'Vídeos profissionais e filmagem com drone para imóveis em Franca/SP. Tour virtual, vídeo de apresentação, filmagem aérea com drone. Videomaker especializado em imóveis. Imobiliária Lemos — CRECI 279051.',
+  description: 'Vídeos profissionais e filmagem com drone para imóveis em Franca/SP. Tour virtual, vídeo de apresentação, filmagem aérea com drone. Videomaker especializado em imóveis. Imobiliária Lemos.',
   keywords: [
     'vídeo de imóveis franca sp', 'drone imóveis franca sp', 'videomaker imóveis franca',
     'filmagem drone franca sp', 'vídeo profissional imóveis franca', 'tour virtual imóvel franca',

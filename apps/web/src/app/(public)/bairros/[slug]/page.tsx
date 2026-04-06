@@ -22,7 +22,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const name = neighborhood.name
   const title = `Imóveis em ${name} — Franca/SP | Imobiliária Lemos`
-  const description = `Encontre casas à venda, apartamentos para alugar e terrenos em ${name}, Franca/SP. Imobiliária Lemos — CRECI 279051. Mais de 20 anos de experiência no mercado imobiliário de Franca e região.`
+  const description = `Encontre casas à venda, apartamentos para alugar e terrenos em ${name}, Franca/SP. Imobiliária Lemos. Mais de 20 anos de experiência no mercado imobiliário de Franca e região.`
 
   return {
     title,
@@ -99,7 +99,7 @@ export default function NeighborhoodPage({ params }: Props) {
                 </h1>
                 <p className="text-white/70 text-lg max-w-2xl">
                   Encontre casas à venda, apartamentos para alugar, terrenos e imóveis comerciais
-                  em {name}, Franca/SP. Imobiliária Lemos — CRECI 279051.
+                  em {name}, Franca/SP. Imobiliária Lemos.
                 </p>
               </div>
             </div>
@@ -192,7 +192,7 @@ export default function NeighborhoodPage({ params }: Props) {
                   <span className="text-white font-bold">Imobiliária Lemos</span>
                 </div>
                 <p className="text-white/60 text-sm mb-4">
-                  CRECI 279051 · Franca/SP · Mais de 20 anos de experiência
+                  Franca/SP · Mais de 20 anos de experiência
                 </p>
                 <a
                   href="https://wa.me/5516981010004"

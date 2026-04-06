@@ -4,7 +4,7 @@ import { AvaliacaoForm } from './AvaliacaoForm'
 
 export const metadata: Metadata = {
   title: 'Avaliação Gratuita de Imóvel | AgoraEncontrei — Franca e Região',
-  description: 'Solicite a avaliação gratuita do seu imóvel em Franca e região. Laudo profissional com base em dados reais de mercado. AgoraEncontrei — Imobiliária Lemos — CRECI 279051.',
+  description: 'Solicite a avaliação gratuita do seu imóvel em Franca e região. Laudo profissional com base em dados reais de mercado. AgoraEncontrei — Imobiliária Lemos.',
   keywords: 'avaliação imóvel gratuita, avaliação imóvel franca, laudo imobiliário, quanto vale meu imóvel, avaliação casa franca sp',
   openGraph: {
     title: 'Avaliação Gratuita de Imóvel | AgoraEncontrei',
@@ -181,7 +181,7 @@ export default function AvaliacaoPage() {
                 </div>
                 <div className="flex items-center gap-2 mt-4 pt-4 border-t border-white/10">
                   <MapPin className="w-3.5 h-3.5 text-white/40" />
-                  <p className="text-white/40 text-xs">Franca — SP · CRECI 279051</p>
+                  <p className="text-white/40 text-xs">Franca — SP</p>
                 </div>
               </div>
             </div>

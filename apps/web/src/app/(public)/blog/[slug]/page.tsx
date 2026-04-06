@@ -147,7 +147,7 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
           </div>
           <div>
             <p className="font-semibold text-sm text-gray-800">{post.authorName}</p>
-            <p className="text-xs text-gray-500">Imobiliária Lemos — CRECI 279051</p>
+            <p className="text-xs text-gray-500">Imobiliária Lemos</p>
           </div>
         </div>
 

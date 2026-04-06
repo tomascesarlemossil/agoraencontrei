@@ -4,7 +4,7 @@ import { Gavel, CheckCircle2, Phone, AlertTriangle, TrendingDown, Shield } from 
 
 export const metadata: Metadata = {
   title: 'Leilão de Imóveis em Franca/SP — Arrematação | Imobiliária Lemos',
-  description: 'Imóveis em leilão em Franca/SP. Arrematação judicial e extrajudicial, imóveis retomados por banco, oportunidades de compra abaixo do mercado. Imobiliária Lemos — CRECI 279051.',
+  description: 'Imóveis em leilão em Franca/SP. Arrematação judicial e extrajudicial, imóveis retomados por banco, oportunidades de compra abaixo do mercado. Imobiliária Lemos.',
   keywords: [
     'leilão de imóveis franca sp', 'imóvel em leilão franca sp', 'arrematação imóvel franca',
     'leilão judicial imóvel franca', 'leilão extrajudicial imóvel franca', 'imóvel leilão franca',

@@ -78,7 +78,7 @@ export default function AvaliacaoImoveisPage() {
                 </h1>
                 <p className="text-white/70 text-lg max-w-2xl">
                   Saiba quanto vale seu imóvel com uma avaliação profissional e gratuita.
-                  Mais de 20 anos de experiência no mercado imobiliário de Franca — CRECI 279051.
+                  Mais de 20 anos de experiência no mercado imobiliário de Franca.
                 </p>
               </div>
             </div>

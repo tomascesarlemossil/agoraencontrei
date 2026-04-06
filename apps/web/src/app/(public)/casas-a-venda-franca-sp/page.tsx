@@ -6,7 +6,7 @@ import { ArrowRight, MapPin, Home, Star, Phone, MessageCircle, TrendingUp } from
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 
 export const metadata: Metadata = {
-  title: 'Casas à Venda em Franca SP | Imobiliária Lemos — CRECI 279051',
+  title: 'Casas à Venda em Franca SP | Imobiliária Lemos',
   description: 'Compre sua casa em Franca/SP com a Imobiliária Lemos. Mais de 300 casas à venda em todos os bairros. Casas com 2, 3 e 4 quartos, condomínios fechados e sobrados. Financiamento facilitado. CRECI 279051.',
   keywords: [
     'casas à venda franca sp', 'casa à venda franca', 'comprar casa franca sp',
@@ -36,7 +36,7 @@ const SCHEMA = {
   '@context': 'https://schema.org',
   '@type': 'SearchResultsPage',
   name: 'Casas à Venda em Franca SP',
-  description: 'Listagem de casas disponíveis para venda em Franca, São Paulo. Imobiliária Lemos — CRECI 279051.',
+  description: 'Listagem de casas disponíveis para venda em Franca, São Paulo. Imobiliária Lemos.',
   url: 'https://www.agoraencontrei.com.br/casas-a-venda-franca-sp',
   provider: {
     '@type': 'RealEstateAgent',

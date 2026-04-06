@@ -4,7 +4,7 @@ import { HardHat, MessageCircle, ArrowRight, Building2, FileText, Ruler, ShieldC
 
 export const metadata: Metadata = {
   title: 'Engenharia e Construção em Franca/SP | Imobiliária Lemos',
-  description: 'Projetos de engenharia civil, construção residencial e comercial em Franca/SP. Assessoria completa: projetos, laudos, ART e execução de obras. Imobiliária Lemos — CRECI 279051.',
+  description: 'Projetos de engenharia civil, construção residencial e comercial em Franca/SP. Assessoria completa: projetos, laudos, ART e execução de obras. Imobiliária Lemos.',
   keywords: 'engenharia civil franca sp, construção residencial franca, construção comercial franca, projeto engenharia franca, laudo técnico franca, ART franca sp, construção imóvel franca, engenheiro franca sp, obra franca sp',
   alternates: { canonical: 'https://www.agoraencontrei.com.br/servicos/engenharia-construcao' },
   openGraph: {

@@ -5,7 +5,7 @@ import { MapPin, Home, Search, ArrowRight, Building2 } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'Bairros de Franca/SP — Imóveis por Bairro | Imobiliária Lemos',
-  description: 'Encontre imóveis à venda e para alugar em todos os bairros de Franca/SP. Casas, apartamentos, terrenos e imóveis comerciais em mais de 300 bairros. Imobiliária Lemos — CRECI 279051.',
+  description: 'Encontre imóveis à venda e para alugar em todos os bairros de Franca/SP. Casas, apartamentos, terrenos e imóveis comerciais em mais de 300 bairros. Imobiliária Lemos.',
   keywords: [
     'bairros franca sp', 'imóveis por bairro franca sp', 'bairros de franca sp',
     'imóveis franca bairros', 'casas por bairro franca', 'apartamentos por bairro franca',
@@ -81,7 +81,7 @@ export default function FrancaNeighborhoodsPage() {
                 </h1>
                 <p className="text-white/70 text-lg max-w-3xl">
                   Explore imóveis à venda e para alugar em todos os {sorted.length} bairros de Franca/SP.
-                  A Imobiliária Lemos atua em toda a cidade há mais de 20 anos — CRECI 279051.
+                  A Imobiliária Lemos atua em toda a cidade há mais de 20 anos.
                 </p>
               </div>
             </div>

@@ -6,7 +6,7 @@ import { ArrowRight, MapPin, Building2, MessageCircle } from 'lucide-react'
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 
 export const metadata: Metadata = {
-  title: 'Apartamentos à Venda em Franca SP | Imobiliária Lemos — CRECI 279051',
+  title: 'Apartamentos à Venda em Franca SP | Imobiliária Lemos',
   description: 'Compre seu apartamento em Franca/SP com a Imobiliária Lemos. Mais de 200 apartamentos à venda: studios, 1, 2 e 3 quartos. Lançamentos e usados. Financiamento facilitado. CRECI 279051.',
   keywords: [
     'apartamentos à venda franca sp', 'apartamento à venda franca', 'comprar apartamento franca sp',
@@ -18,7 +18,7 @@ export const metadata: Metadata = {
   ],
   openGraph: {
     title: 'Apartamentos à Venda em Franca SP | Imobiliária Lemos',
-    description: 'Encontre o apartamento ideal em Franca/SP. Lançamentos, usados, financiamento facilitado. Imobiliária Lemos — CRECI 279051.',
+    description: 'Encontre o apartamento ideal em Franca/SP. Lançamentos, usados, financiamento facilitado. Imobiliária Lemos.',
     type: 'website',
     locale: 'pt_BR',
     siteName: 'AgoraEncontrei — Imobiliária Lemos',

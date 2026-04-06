@@ -55,7 +55,7 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
             </div>
             <div>
               <p className="text-white font-semibold text-xs" style={{ fontFamily: 'Georgia, serif' }}>Imobiliária Lemos</p>
-              <p className="text-white/40 text-[10px]">AgoraEncontrei · 2026 por Tomás · Imobiliária Lemos por Noêmia, 2002 · CRECI 279051</p>
+              <p className="text-white/40 text-[10px]">AgoraEncontrei · 2026 por Tomás · Imobiliária Lemos por Noêmia, 2002</p>
             </div>
           </div>
           <div className="flex flex-col sm:flex-row items-center gap-3 text-center">

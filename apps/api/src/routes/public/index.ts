@@ -151,30 +151,67 @@ const PUBLIC_PROPERTY_SELECT = {
   },
 } as const
 
+// ── In-memory company cache (avoids DB hit on every request) ──────────────────
+let _companyCached: any = null
+let _companyCachedAt = 0
+const COMPANY_CACHE_TTL = 60_000 // 60 seconds in-memory
+
 async function resolveCompany(app: FastifyInstance) {
-  const companyId = env.PUBLIC_COMPANY_ID ?? undefined
-
-  if (companyId) {
-    return app.prisma.company.findUnique({ where: { id: companyId } })
+  const now = Date.now()
+  if (_companyCached && (now - _companyCachedAt) < COMPANY_CACHE_TTL) {
+    return _companyCached
   }
+  const companyId = env.PUBLIC_COMPANY_ID ?? undefined
+  const company = companyId
+    ? await app.prisma.company.findUnique({ where: { id: companyId } })
+    : await app.prisma.company.findFirst({ where: { isActive: true } })
+  if (company) {
+    _companyCached = company
+    _companyCachedAt = now
+  }
+  return company
+}
 
-  return app.prisma.company.findFirst({ where: { isActive: true } })
+// ── In-memory fallback cache (when Redis is unavailable) ──────────────────────
+const _memCache = new Map<string, { value: unknown; expiresAt: number }>()
+
+function memCacheGet(key: string): unknown | null {
+  const entry = _memCache.get(key)
+  if (!entry) return null
+  if (Date.now() > entry.expiresAt) { _memCache.delete(key); return null }
+  return entry.value
+}
+
+function memCacheSet(key: string, value: unknown, ttlSeconds: number): void {
+  _memCache.set(key, { value, expiresAt: Date.now() + ttlSeconds * 1000 })
+  // Prevent unbounded growth
+  if (_memCache.size > 500) {
+    const oldest = [..._memCache.entries()].sort((a, b) => a[1].expiresAt - b[1].expiresAt)[0]
+    if (oldest) _memCache.delete(oldest[0])
+  }
 }
 
 // ── Redis cache helpers ────────────────────────────────────────────────────────
-const CACHE_TTL = 300 // 5 minutes
+const CACHE_TTL = 600 // 10 minutes (increased from 5)
 
 async function cacheGet(redis: FastifyInstance['redis'], key: string): Promise<unknown | null> {
-  if (!redis) return null
-  try {
-    const raw = await redis.get(key)
-    return raw ? JSON.parse(raw) : null
-  } catch { return null }
+  // Try Redis first, fall back to in-memory cache
+  if (redis) {
+    try {
+      const raw = await redis.get(key)
+      if (raw) return JSON.parse(raw)
+    } catch { /* fall through to mem cache */ }
+  }
+  return memCacheGet(key)
 }
 
-async function cacheSet(redis: FastifyInstance['redis'], key: string, value: unknown): Promise<void> {
-  if (!redis) return
-  try { await redis.setex(key, CACHE_TTL, JSON.stringify(value)) } catch { /* ignore */ }
+async function cacheSet(redis: FastifyInstance['redis'], key: string, value: unknown, ttl = CACHE_TTL): Promise<void> {
+  // Write to Redis if available
+  if (redis) {
+    try { await redis.setex(key, ttl, JSON.stringify(value)) } catch { /* ignore */ }
+  }
+  // Always write to in-memory cache as fallback
+  memCacheSet(key, value, ttl)
 }
 
 export default async function publicRoutes(app: FastifyInstance) {
@@ -467,6 +504,10 @@ export default async function publicRoutes(app: FastifyInstance) {
     const company = await resolveCompany(app)
     if (!company) return reply.status(503).send({ error: 'SERVICE_UNAVAILABLE' })
 
+    const cacheKey = `pub:featured:v1:${company.id}`
+    const cached = await cacheGet(app.redis, cacheKey)
+    if (cached) return reply.send(cached)
+
     const items = await app.prisma.property.findMany({
       where:   { companyId: company.id, status: 'ACTIVE', authorizedPublish: true, isFeatured: true },
       select:  PUBLIC_PROPERTY_SELECT,
@@ -474,7 +515,9 @@ export default async function publicRoutes(app: FastifyInstance) {
       take:    8,
     })
 
-    return reply.send(items.map(applyLocationPrivacy))
+    const result = items.map(applyLocationPrivacy)
+    await cacheSet(app.redis, cacheKey, result, 300) // 5 min cache
+    return reply.send(result)
   })
 
   // GET /api/v1/public/cities — list of cities with property counts
@@ -752,6 +795,10 @@ export default async function publicRoutes(app: FastifyInstance) {
     const company = await resolveCompany(app)
     if (!company) return reply.status(503).send({ error: 'SERVICE_UNAVAILABLE' })
 
+    const cacheKey = `pub:site-settings:v1:${company.id}`
+    const cached = await cacheGet(app.redis, cacheKey)
+    if (cached) return reply.send(cached)
+
     const settings     = (company.settings as any) ?? {}
     const systemConfig = settings.systemConfig ?? {}
     const siteConfig   = systemConfig.site   ?? {}
@@ -854,7 +901,9 @@ export default async function publicRoutes(app: FastifyInstance) {
       presentationBannerLink: siteConfig.presentationBannerLink ?? null,
       presentationTitle:      siteConfig.presentationTitle      ?? null,
       presentationSubtitle:   siteConfig.presentationSubtitle   ?? null,
-    })
+    }
+    await cacheSet(app.redis, cacheKey, siteSettingsResult, 600) // 10 min cache
+    return reply.send(siteSettingsResult)
   })
 
   // POST /api/v1/public/avaliacao — estimativa de valor de imóvel em tempo real
@@ -962,6 +1011,10 @@ export default async function publicRoutes(app: FastifyInstance) {
 
     const { purpose, type } = req.query as { purpose?: string; type?: string }
 
+    const cacheKey = `pub:map-clusters:v1:${company.id}:${purpose ?? ''}:${type ?? ''}`
+    const cached = await cacheGet(app.redis, cacheKey)
+    if (cached) return reply.send(cached)
+
     const where: any = {
       companyId: company.id,
       status: 'ACTIVE',
@@ -979,14 +1032,16 @@ export default async function publicRoutes(app: FastifyInstance) {
       orderBy: { _count: { id: 'desc' } },
     })
 
-    return reply.send(clusters.map(c => ({
+    const result = clusters.map(c => ({
       neighborhood: c.neighborhood,
       city:         c.city,
       state:        c.state,
       count:        c._count.id,
       lat:          c._avg.latitude,
       lng:          c._avg.longitude,
-    })))
+    }))
+    await cacheSet(app.redis, cacheKey, result, 300) // 5 min cache
+    return reply.send(result)
   })
 
   // POST /api/v1/public/visits — schedule a visit (public, no auth)
@@ -1198,6 +1253,11 @@ export default async function publicRoutes(app: FastifyInstance) {
     try {
       const company = await resolveCompany(app)
       if (!company) return reply.send([])
+
+      const cacheKey = `pub:team:v1:${company.id}`
+      const cached = await cacheGet(app.redis, cacheKey)
+      if (cached) return reply.send(cached)
+
       const users = await app.prisma.user.findMany({
         where: {
           companyId: company.id,
@@ -1214,6 +1274,7 @@ export default async function publicRoutes(app: FastifyInstance) {
         },
         orderBy: { createdAt: 'asc' },
       })
+      await cacheSet(app.redis, cacheKey, users, 600) // 10 min cache
       return reply.send(users)
     } catch (err) {
       app.log.error({ err }, '[team] Error fetching team')

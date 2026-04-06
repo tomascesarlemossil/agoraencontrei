@@ -499,6 +499,11 @@ model Property {
   @@index([companyId, status, authorizedPublish, type])
   @@index([companyId, status, authorizedPublish, isFeatured])
   @@index([companyId, status, authorizedPublish, createdAt(sort: Desc)])
+  // Map/cluster queries — neighborhood groupBy
+  @@index([companyId, status, authorizedPublish, neighborhood])
+  // Price range queries
+  @@index([companyId, status, authorizedPublish, price(sort: Asc)])
+  @@index([companyId, status, authorizedPublish, priceRent(sort: Asc)])
   @@map("properties")
 }
 
