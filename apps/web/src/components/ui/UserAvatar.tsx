@@ -51,6 +51,9 @@ export function UserAvatar({ name, avatarUrl, size = 'sm', className, showRing =
   const initials = getInitials(displayName)
   const [from, to] = getGradient(displayName)
 
+  // Detect data URL (base64) — Next.js Image doesn't support them
+  const isDataUrl = avatarUrl?.startsWith('data:')
+
   return (
     <div
       className={cn(
@@ -61,13 +64,22 @@ export function UserAvatar({ name, avatarUrl, size = 'sm', className, showRing =
       )}
     >
       {avatarUrl ? (
-        <Image
-          src={avatarUrl}
-          alt={displayName}
-          fill
-          sizes="80px"
-          className="object-cover"
-        />
+        isDataUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={avatarUrl}
+            alt={displayName}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <Image
+            src={avatarUrl}
+            alt={displayName}
+            fill
+            sizes="80px"
+            className="object-cover"
+          />
+        )
       ) : (
         <div
           className="w-full h-full flex items-center justify-center"
