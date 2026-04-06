@@ -15,7 +15,9 @@
     "db:seed": "pnpm --filter @agoraencontrei/database seed",
     "db:studio": "pnpm --filter @agoraencontrei/database studio",
     "lint": "pnpm --parallel --filter './apps/*' lint",
-    "typecheck": "pnpm --parallel --filter './apps/*' typecheck"
+    "typecheck": "pnpm --parallel --filter './apps/*' typecheck",
+    "scrape:caixa": "npx tsx scripts/scrape-caixa.ts",
+    "scrape:all": "npx tsx scripts/scrape-caixa.ts"
   },
   "engines": {
     "node": ">=20.0.0",

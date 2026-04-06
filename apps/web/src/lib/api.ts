@@ -1256,3 +1256,52 @@ export const financeAutomationApi = {
   relatorioMensal: (token: string, month?: string) =>
     request<any>(`/api/v1/finance/automation/relatorio-mensal${month ? `?month=${month}` : ''}`, { token }),
 }
+
+// ── Auctions API (Leilões) ────────────────────────────────────────────────────
+export const auctionsApi = {
+  list: (params?: {
+    page?: number; limit?: number; city?: string; state?: string;
+    source?: string; status?: string; propertyType?: string;
+    minPrice?: number; maxPrice?: number; minDiscount?: number;
+    minScore?: number; bedrooms?: number; search?: string;
+    sortBy?: string; sortOrder?: string;
+  }) =>
+    request<{ data: any[]; pagination: { page: number; limit: number; total: number; totalPages: number } }>(
+      `/api/v1/auctions?${toQS(params)}`
+    ),
+
+  getBySlug: (slug: string) =>
+    request<any>(`/api/v1/auctions/${slug}`),
+
+  stats: () =>
+    request<any>('/api/v1/auctions/stats'),
+
+  map: (params?: { city?: string; state?: string; source?: string; propertyType?: string }) =>
+    request<{ data: any[]; total: number }>(`/api/v1/auctions/map?${toQS(params)}`),
+
+  calculate: (data: {
+    bidValue: number; appraisalValue?: number; city?: string; state?: string;
+    propertyType?: string; totalArea?: number; needsReform?: boolean;
+    reformEstimate?: number; isOccupied?: boolean; monthlyRentEstimate?: number;
+  }) =>
+    request<any>('/api/v1/auctions/calculate', { method: 'POST', body: JSON.stringify(data) }),
+
+  analysis: (idOrSlug: string) =>
+    request<any>(`/api/v1/auctions/${idOrSlug}/analysis`),
+
+  createAlert: (data: {
+    email?: string; phone?: string; city?: string; state?: string;
+    propertyType?: string; minDiscount?: number; maxPrice?: number;
+    minScore?: number; source?: string; keywords?: string[]; frequency?: string;
+  }) =>
+    request<any>('/api/v1/auctions/alerts', { method: 'POST', body: JSON.stringify(data) }),
+
+  cancelAlert: (token: string) =>
+    request<any>(`/api/v1/auctions/alerts/${token}`, { method: 'DELETE' }),
+
+  sources: () =>
+    request<any>('/api/v1/auctions/sources'),
+
+  scraperStatus: () =>
+    request<any>('/api/v1/auctions/scraper-status'),
+}

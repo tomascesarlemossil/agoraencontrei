@@ -805,7 +805,7 @@ export default async function publicRoutes(app: FastifyInstance) {
     const seoConfig    = systemConfig.seo    ?? {}
     const designConfig = systemConfig.design ?? {}
 
-    return reply.send({
+    const siteSettingsResult = {
       // ── Legado (compatibilidade) ──────────────────────────────────────
       heroVideoUrl:  settings.heroVideoUrl  ?? siteConfig.heroVideoUrl  ?? null,
       heroVideoType: settings.heroVideoType ?? siteConfig.heroVideoType ?? 'youtube',
@@ -1196,7 +1196,7 @@ export default async function publicRoutes(app: FastifyInstance) {
         name,
         email: email ?? `${phone.replace(/\D/g, '')}@noemail.com`,
         phone,
-        cpfCnpj: cpf,
+        cpfCnpj: cpf || '',
       })
       const dueDate = new Date()
       dueDate.setDate(dueDate.getDate() + 1)
