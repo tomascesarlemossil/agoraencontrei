@@ -47,6 +47,37 @@ export async function partnerAnalyticsRoute(app: FastifyInstance) {
         ).catch(() => {})
       }
 
+      // Disparar evento de conversão para Facebook/Google Ads (retargeting)
+      if (data.event === 'whatsapp_click') {
+        // Facebook Conversions API (server-side)
+        const fbPixelId = process.env.FB_PIXEL_ID || '932688306232065'
+        const fbAccessToken = process.env.FB_CONVERSIONS_TOKEN
+        if (fbAccessToken) {
+          fetch(`https://graph.facebook.com/v18.0/${fbPixelId}/events`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              data: [{
+                event_name: 'Lead',
+                event_time: Math.floor(Date.now() / 1000),
+                action_source: 'website',
+                user_data: {
+                  client_ip_address: ip,
+                  client_user_agent: ua,
+                },
+                custom_data: {
+                  content_category: 'partner_contact',
+                  content_name: data.partnerId,
+                  value: 50, // valor estimado do lead
+                  currency: 'BRL',
+                },
+              }],
+              access_token: fbAccessToken,
+            }),
+          }).catch(() => {})
+        }
+      }
+
       return reply.status(201).send({ ok: true })
     } catch (err: any) {
       return reply.status(500).send({ error: 'TRACKING_ERROR' })

@@ -58,6 +58,7 @@ import { AuctionMonitorService } from './services/auction-monitor.service.js'
 import { auctionsRoute } from './routes/public/auctions.js'
 import { partnerRegisterRoute } from './routes/public/partner-register.js'
 import { partnerAnalyticsRoute } from './routes/public/partner-analytics.js'
+import { territoryRoute } from './routes/public/territory.js'
 
 const app = Fastify({
   // No body size limit — accept any file size
@@ -282,6 +283,7 @@ async function bootstrap() {
   await app.register(auctionsRoute,            { prefix: '/api/v1/public' })
   await app.register(partnerRegisterRoute,     { prefix: '/api/v1/public' })
   await app.register(partnerAnalyticsRoute,    { prefix: '/api/v1/public' })
+  await app.register(territoryRoute,           { prefix: '/api/v1' })
 
   // ── Scraper Scheduler (robôs 24/7 de leilões) ─────────────────────────
   if (env.NODE_ENV === 'production') {

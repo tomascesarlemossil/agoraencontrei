@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Eye, MessageCircle, Phone, Building, TrendingUp, Users, DollarSign, BarChart3, Star, Crown, Clock, ArrowRight } from 'lucide-react'
+import { Eye, MessageCircle, Phone, Building, TrendingUp, Users, DollarSign, BarChart3, Star, Crown, Clock, ArrowRight, Shield } from 'lucide-react'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? ''
 
@@ -30,6 +30,7 @@ export default function MeuPainelPage() {
   const [stats, setStats] = useState<PartnerStats | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [territories, setTerritories] = useState<{ totalClaimed: number; totalProtected: number; territories: any[] }>({ totalClaimed: 0, totalProtected: 0, territories: [] })
 
   const loadStats = async () => {
     if (!partnerId && !email) return
@@ -40,7 +41,15 @@ export default function MeuPainelPage() {
       const id = partnerId || email
       const res = await fetch(`${API_URL}/api/v1/public/partner-stats/${encodeURIComponent(id)}`)
       if (res.ok) {
-        setStats(await res.json())
+        const data = await res.json()
+        setStats(data)
+        // Load territories
+        if (data.partner?.id || partnerId) {
+          fetch(`${API_URL}/api/v1/territory/my/${data.partner?.id || partnerId}`)
+            .then(r => r.ok ? r.json() : null)
+            .then(t => { if (t) setTerritories(t.summary ? { ...t.summary, territories: t.territories } : t) })
+            .catch(() => {})
+        }
       } else {
         setError('Parceiro não encontrado. Verifique seu ID ou email.')
       }
@@ -186,6 +195,37 @@ export default function MeuPainelPage() {
               Um lead de arquitetura no Google Ads custa em média R$ 50-80. Você está pagando
               <strong> {((m.costPerLead || 0) / 65 * 100).toFixed(0)}% do preço do Google Ads</strong>.
             </p>
+          </div>
+        )}
+
+        {/* Territory Shield */}
+        {territories.totalClaimed > 0 && (
+          <div className="bg-gradient-to-r from-emerald-600 to-green-700 rounded-xl p-6 text-white">
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 rounded-2xl bg-white/20 flex items-center justify-center">
+                <Shield className="w-8 h-8 text-white" />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold flex items-center gap-2">
+                  Território Protegido
+                  <span className="px-2 py-0.5 bg-white/20 rounded-full text-sm">{territories.totalProtected} exclusivos</span>
+                </h3>
+                <p className="text-white/80 text-sm mt-1">
+                  Seu perfil tem prioridade em <strong>{territories.totalClaimed} locais</strong>.
+                  {territories.totalProtected > 0 && ` ${territories.totalProtected} com exclusividade total.`}
+                </p>
+              </div>
+            </div>
+            {territories.territories && territories.territories.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-4">
+                {territories.territories.slice(0, 12).map((t: any, i: number) => (
+                  <span key={i} className="px-3 py-1 bg-white/15 rounded-full text-xs font-medium flex items-center gap-1">
+                    {t.isExclusive ? '🔒' : '📍'} {t.buildingName || t.neighborhood || t.city}
+                    <span className="text-white/50 ml-1">P{t.priorityScore}</span>
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
