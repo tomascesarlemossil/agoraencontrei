@@ -129,6 +129,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Hub regional
   cidades.push({ url: `${WEB_URL}/imoveis-regiao-franca-sp`, lastModified: now, changeFrequency: 'daily' as const, priority: 0.9 })
 
+  // ── Capitais (alta prioridade) ────────────────────────────────────────────
+  const capitais = [
+    'sao-paulo-sp', 'belo-horizonte-mg', 'curitiba-pr', 'goiania-go', 'brasilia-df',
+  ].map(c => ({
+    url: `${WEB_URL}/imoveis-${c}`, lastModified: now, changeFrequency: 'daily' as const, priority: 0.95,
+  }))
+
   // ── Bairros de Franca ────────────────────────────────────────────────────
   const bairros = BAIRROS_FRANCA.map(b => ({
     url: `${WEB_URL}/bairros/franca/${b}`, lastModified: now, changeFrequency: 'weekly' as const, priority: 0.8,
@@ -204,6 +211,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...core,
     ...landings,
     ...servicos,
+    ...capitais,
     ...cidades,
     ...bairros,
     ...condominios,
