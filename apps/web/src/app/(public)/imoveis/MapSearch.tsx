@@ -154,6 +154,13 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
   const [showSaleLayer, setShowSaleLayer] = useState(true)
   const [showAuctionLayer, setShowAuctionLayer] = useState(true)
 
+  // ROI filter slider
+  const [minROI, setMinROI] = useState(0) // 0 = sem filtro
+
+  // Neighborhood comparison data for selected auction
+  const [neighbors, setNeighbors] = useState<{ title: string; price: number; area: number; priceM2: number; neighborhood: string }[]>([])
+  const [loadingNeighbors, setLoadingNeighbors] = useState(false)
+
   const [drawing, setDrawing] = useState(false)
   const [polygon, setPolygon] = useState<[number, number][]>([])
   const [selectedNeighborhoods, setSelectedNeighborhoods] = useState<string[]>([])
@@ -163,6 +170,50 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
   const [isCssLoaded, setIsCssLoaded] = useState(false)
   const [mapError, setMapError] = useState<string | null>(null)
   const router = useRouter()
+
+  // Load neighborhood comparison when auction is selected
+  useEffect(() => {
+    if (!selectedAuction?.city) { setNeighbors([]); return }
+    setLoadingNeighbors(true)
+    const params = new URLSearchParams({
+      city: selectedAuction.city,
+      limit: '10',
+      sortBy: 'price',
+      sortOrder: 'asc',
+    })
+    if (selectedAuction.neighborhood) params.set('neighborhood', selectedAuction.neighborhood)
+
+    fetch(`${API_URL}/api/v1/public/properties?${params}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (!data?.data) { setNeighbors([]); return }
+        const items = (data.data as any[])
+          .filter((p: any) => p.price && p.totalArea && p.totalArea > 0)
+          .map((p: any) => ({
+            title: p.title,
+            price: Number(p.price),
+            area: p.totalArea,
+            priceM2: Number(p.price) / p.totalArea,
+            neighborhood: p.neighborhood || '',
+          }))
+        setNeighbors(items)
+      })
+      .catch(() => setNeighbors([]))
+      .finally(() => setLoadingNeighbors(false))
+  }, [selectedAuction?.id])
+
+  // Filter auctions by ROI slider
+  const filteredAuctions = minROI > 0
+    ? auctions.filter(a => {
+        if (!a.minimumBid || !a.appraisalValue) return false
+        const bid = Number(a.minimumBid)
+        const appr = Number(a.appraisalValue)
+        const costs = bid * 0.095 + (a.occupation === 'OCUPADO' ? Math.max(bid * 0.02, 5000) : 0)
+        const profit = appr - bid - costs
+        const roi = (profit / (bid + costs)) * 100
+        return roi >= minROI
+      })
+    : auctions
 
   // Inject Leaflet CSS before map init to avoid broken tiles
   // Uses dynamic import to bundle CSS locally (no CDN dependency)
@@ -322,16 +373,43 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
     }
   }, [])
 
+  // Optimistic toggle: show/hide sale layer instantly (no re-render)
+  const saleLayerGroupRef = useRef<any>(null)
+  useEffect(() => {
+    if (!mapInstance.current || !saleLayerGroupRef.current) return
+    if (showSaleLayer) {
+      if (!mapInstance.current.hasLayer(saleLayerGroupRef.current)) {
+        mapInstance.current.addLayer(saleLayerGroupRef.current)
+      }
+    } else {
+      mapInstance.current.removeLayer(saleLayerGroupRef.current)
+    }
+  }, [showSaleLayer])
+
+  // Optimistic toggle: show/hide auction layer instantly (no re-render)
+  useEffect(() => {
+    if (!mapInstance.current || !auctionClusterRef.current) return
+    if (showAuctionLayer) {
+      if (!mapInstance.current.hasLayer(auctionClusterRef.current)) {
+        mapInstance.current.addLayer(auctionClusterRef.current)
+      }
+    } else {
+      mapInstance.current.removeLayer(auctionClusterRef.current)
+    }
+  }, [showAuctionLayer])
+
   // Render cluster markers on map (blue — conventional properties)
   useEffect(() => {
     if (!isLoaded || !mapInstance.current) return
 
     import('leaflet').then(L => {
-      // Remove old markers
-      markersRef.current.forEach(m => { try { m.remove() } catch {} })
+      // Remove old layer group
+      if (saleLayerGroupRef.current) {
+        try { mapInstance.current.removeLayer(saleLayerGroupRef.current) } catch {}
+      }
       markersRef.current = []
 
-      if (!showSaleLayer) return // Layer toggled off
+      const layerGroup = L.layerGroup()
 
       clusters.forEach(c => {
         if (!c.resolvedLat || !c.resolvedLng) return
@@ -356,7 +434,7 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
         })
 
         const marker = L.marker([c.resolvedLat, c.resolvedLng], { icon })
-          .addTo(mapInstance.current)
+          .addTo(layerGroup)
           .bindPopup(`
             <div style="min-width:160px">
               <p style="font-weight:700;margin:0 0 4px">${c.neighborhood}</p>
@@ -372,8 +450,12 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
 
         markersRef.current.push(marker)
       })
+
+      // Store layer group and add to map if toggle is on
+      saleLayerGroupRef.current = layerGroup
+      if (showSaleLayer) layerGroup.addTo(mapInstance.current)
     })
-  }, [clusters, isLoaded, selectedNeighborhoods, drawing, showSaleLayer])
+  }, [clusters, isLoaded, selectedNeighborhoods, drawing])
 
   // Render auction pins (golden) with marker clustering
   useEffect(() => {
@@ -385,7 +467,7 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
       auctionClusterRef.current = null
     }
 
-    if (!isLoaded || !mapInstance.current || auctions.length === 0 || !showAuctionLayer) return
+    if (!isLoaded || !mapInstance.current || filteredAuctions.length === 0) return
 
     import('leaflet').then(async (L) => {
 
@@ -438,7 +520,7 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
         iconAnchor: [16, 16],
       })
 
-      for (const a of auctions) {
+      for (const a of filteredAuctions) {
         if (!a.latitude || !a.longitude) continue
 
         const discount = a.discountPercent ? `<span style="color:#e53e3e;font-weight:700">-${a.discountPercent}%</span>` : ''
@@ -482,11 +564,11 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
       }
 
       if (clusterGroup) {
-        mapInstance.current.addLayer(clusterGroup)
         auctionClusterRef.current = clusterGroup
+        if (showAuctionLayer) mapInstance.current.addLayer(clusterGroup)
       }
     })
-  }, [auctions, isLoaded, showAuctionLayer])
+  }, [filteredAuctions, isLoaded])
 
   // Handle drawing mode map clicks
   useEffect(() => {
@@ -751,6 +833,28 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
           )}
         </div>
 
+        {/* ROI Slider */}
+        {showAuctionLayer && (
+          <div className="pointer-events-auto flex items-center gap-2 bg-white/95 backdrop-blur px-3 py-2 rounded-xl shadow-lg">
+            <span className="text-[10px] font-semibold text-gray-500 whitespace-nowrap">ROI mín.</span>
+            <input
+              type="range"
+              min={0} max={80} step={5}
+              value={minROI}
+              onChange={e => setMinROI(Number(e.target.value))}
+              className="w-20 h-1.5 accent-[#C9A84C] cursor-pointer"
+            />
+            <span className="text-xs font-bold min-w-[36px] text-right" style={{ color: minROI > 0 ? '#C9A84C' : '#999' }}>
+              {minROI > 0 ? `${minROI}%` : 'Todos'}
+            </span>
+            {minROI > 0 && (
+              <span className="text-[10px] text-gray-400">
+                ({filteredAuctions.length}/{auctions.length})
+              </span>
+            )}
+          </div>
+        )}
+
         {/* Layer Toggles */}
         <div className="ml-auto flex items-center gap-1.5 pointer-events-auto">
           <button
@@ -906,24 +1010,92 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
               {selectedAuction.bedrooms > 0 && <span className="flex items-center gap-1"><BedDouble className="w-3 h-3" />{selectedAuction.bedrooms} quartos</span>}
             </div>
 
-            {/* CTAs */}
-            <div className="space-y-2">
-              <a
-                href={`/leiloes/${selectedAuction.slug}`}
-                className="block w-full text-center px-4 py-3 rounded-xl font-bold text-sm text-white"
-                style={{ backgroundColor: '#1B2B5B' }}
-              >
-                Ver Detalhes + Edital Completo →
-              </a>
-              <a
-                href={`https://wa.me/5516981010004?text=Olá! Vi o leilão "${selectedAuction.title}" no AgoraEncontrei e gostaria de assessoria jurídica.`}
-                target="_blank" rel="noopener noreferrer"
-                className="block w-full text-center px-4 py-3 rounded-xl font-bold text-sm"
-                style={{ backgroundColor: '#25D366', color: 'white' }}
-              >
-                Pedir Assessoria Jurídica
-              </a>
+            {/* Comparador Visual de Vizinhança */}
+            <div className="rounded-xl p-3 space-y-2 border border-blue-100" style={{ backgroundColor: '#f7faff' }}>
+              <h4 className="text-xs font-bold text-blue-800 uppercase tracking-wide">🏘️ Vizinhos no Mercado</h4>
+              {loadingNeighbors ? (
+                <div className="flex items-center justify-center py-3">
+                  <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                </div>
+              ) : neighbors.length === 0 ? (
+                <p className="text-[10px] text-gray-400">Nenhum imóvel convencional encontrado neste bairro para comparação.</p>
+              ) : (
+                <>
+                  {/* Preço/m² comparison */}
+                  {(() => {
+                    const avgM2 = neighbors.reduce((a, n) => a + n.priceM2, 0) / neighbors.length
+                    const auctionM2 = selectedAuction.minimumBid && selectedAuction.totalArea && selectedAuction.totalArea > 0
+                      ? Number(selectedAuction.minimumBid) / selectedAuction.totalArea
+                      : null
+                    const saving = auctionM2 && avgM2 ? ((avgM2 - auctionM2) / avgM2 * 100) : null
+                    return (
+                      <div className="grid grid-cols-2 gap-2 mb-2">
+                        <div className="bg-white rounded-lg p-2 text-center border">
+                          <div className="text-[10px] text-gray-500">Leilão /m²</div>
+                          <div className="text-sm font-bold" style={{ color: '#C9A84C' }}>
+                            {auctionM2 ? fmt(auctionM2) : '—'}
+                          </div>
+                        </div>
+                        <div className="bg-white rounded-lg p-2 text-center border">
+                          <div className="text-[10px] text-gray-500">Mercado /m²</div>
+                          <div className="text-sm font-bold text-blue-700">
+                            {fmt(avgM2)}
+                          </div>
+                        </div>
+                        {saving && saving > 0 && (
+                          <div className="col-span-2 bg-green-50 rounded-lg p-1.5 text-center">
+                            <span className="text-xs font-bold text-green-700">
+                              Economia de {saving.toFixed(0)}% vs mercado convencional
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })()}
+
+                  {/* Lista de vizinhos */}
+                  <div className="space-y-1 max-h-28 overflow-y-auto">
+                    {neighbors.slice(0, 5).map((n, i) => (
+                      <div key={i} className="flex items-center justify-between text-[11px] border-b border-gray-100 pb-1">
+                        <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                          <span className="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0" />
+                          <span className="truncate text-gray-600">{n.title}</span>
+                        </div>
+                        <div className="text-right flex-shrink-0 ml-2">
+                          <span className="font-semibold text-gray-800">{fmt(n.price)}</span>
+                          <span className="text-gray-400 ml-1">{fmt(n.priceM2)}/m²</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-[10px] text-blue-600 text-center">
+                    {neighbors.length} imóveis à venda no mesmo bairro
+                  </p>
+                </>
+              )}
             </div>
+
+            {/* Spacer for sticky CTAs */}
+            <div className="h-28 sm:h-0" />
+          </div>
+
+          {/* CTAs — sticky bottom for mobile thumb reach */}
+          <div className="sticky bottom-0 bg-white border-t p-3 space-y-2 shadow-[0_-4px_12px_rgba(0,0,0,0.1)]">
+            <a
+              href={`/leiloes/${selectedAuction.slug}`}
+              className="block w-full text-center px-4 py-3 rounded-xl font-bold text-sm text-white active:scale-[0.98] transition-transform"
+              style={{ backgroundColor: '#1B2B5B' }}
+            >
+              Ver Detalhes + Edital Completo →
+            </a>
+            <a
+              href={`https://wa.me/5516981010004?text=Olá! Vi o leilão "${selectedAuction.title}" no AgoraEncontrei e gostaria de assessoria jurídica.`}
+              target="_blank" rel="noopener noreferrer"
+              className="block w-full text-center px-4 py-3.5 rounded-xl font-bold text-sm active:scale-[0.98] transition-transform"
+              style={{ backgroundColor: '#25D366', color: 'white' }}
+            >
+              📲 Pedir Assessoria Jurídica
+            </a>
           </div>
         </div>
       )}

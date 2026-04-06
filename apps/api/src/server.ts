@@ -54,8 +54,8 @@ import financeAutomationRoutes from './routes/finance/automation.js'
 import alertsRoutes from './routes/alerts/index.js'
 import auctionsRoutes from './routes/auctions/index.js'
 import { ScraperScheduler } from './services/scrapers/scheduler.js'
+import { AuctionMonitorService } from './services/auction-monitor.service.js'
 import { auctionsRoute } from './routes/public/auctions.js'
-import auctionsRoutes from './routes/auctions/index.js'
 
 const app = Fastify({
   // No body size limit — accept any file size
@@ -278,13 +278,17 @@ async function bootstrap() {
   await app.register(alertsRoutes,            { prefix: '/api/v1/public/alerts' })
   await app.register(auctionsRoutes,          { prefix: '/api/v1/auctions' })
   await app.register(auctionsRoute,            { prefix: '/api/v1/public' })
-  await app.register(auctionsRoutes,           { prefix: '/api/v1/auctions' })
 
   // ── Scraper Scheduler (robôs 24/7 de leilões) ─────────────────────────
   if (env.NODE_ENV === 'production') {
     const scheduler = new ScraperScheduler(app.prisma)
     scheduler.start()
     app.addHook('onClose', () => scheduler.stop())
+
+    // Monitor de Lances 24/7 — detecta expirados, mudanças de preço, suspensos
+    const monitor = new AuctionMonitorService(app.prisma)
+    monitor.start()
+    app.addHook('onClose', () => monitor.stop())
   }
 
   // ── 404 Handler ─────────────────────────────────────────────────────────
