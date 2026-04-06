@@ -3,11 +3,12 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { useEffect, useRef, useState } from 'react'
-import { Menu, X, ChevronDown, LayoutDashboard, UserCheck, Users, CreditCard, BarChart3, ClipboardList, Home, Calculator, Building, Wrench, Handshake } from 'lucide-react'
+import { Menu, X, ChevronDown, LayoutDashboard, UserCheck, Users, CreditCard, BarChart3, ClipboardList, Home, Calculator, Building, Wrench, Handshake, Gavel } from 'lucide-react'
 
 const NAV_LINKS = [
   { href: '/imoveis?purpose=SALE', label: 'Comprar' },
   { href: '/imoveis?purpose=RENT', label: 'Alugar' },
+  { href: '/leiloes', label: '🏛️ Leilões' },
   { href: '/imoveis', label: 'Todos os Imóveis' },
   { href: '/avaliacao', label: 'Avaliação Gratuita' },
   { href: '/parceiros', label: 'Parceiros' },

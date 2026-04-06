@@ -312,6 +312,32 @@ async function bootstrap() {
         : 'ANTHROPIC_API_KEY não configurada. Acesse Railway → Settings → Variables para ativar.',
     })
   })
+
+  // POST /api/v1/admin/reset-role — Reset user role (protegido por JWT_SECRET)
+  app.post('/api/v1/admin/reset-role', async (req, reply) => {
+    const body = req.body as any
+    const secret = body?.secret
+    if (secret !== env.JWT_SECRET) {
+      return reply.status(403).send({ error: 'Forbidden' })
+    }
+    const email = body?.email || 'tomas@agoraencontrei.com.br'
+    const role = body?.role || 'SUPER_ADMIN'
+    try {
+      const user = await app.prisma.user.findUnique({ where: { email } })
+      if (!user) {
+        // List all users
+        const all = await app.prisma.user.findMany({ select: { email: true, name: true, role: true, status: true }, take: 20 })
+        return reply.status(404).send({ error: 'User not found', users: all })
+      }
+      await app.prisma.user.update({
+        where: { email },
+        data: { role: role as any, status: 'ACTIVE', emailVerifiedAt: new Date() },
+      })
+      return reply.send({ ok: true, message: `${user.name} atualizado para ${role} + ACTIVE`, previousRole: user.role })
+    } catch (err: any) {
+      return reply.status(500).send({ error: err.message })
+    }
+  })
   await app.register(agentsRoutes,    { prefix: '/api/v1/agents' })
   await app.register(uploadRoutes,      { prefix: '/api/v1/upload' })
   await app.register(automationsRoutes, { prefix: '/api/v1/automations' })
