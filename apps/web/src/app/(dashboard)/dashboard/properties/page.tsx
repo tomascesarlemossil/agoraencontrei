@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useState, useCallback } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import { useAuthStore } from '@/stores/auth.store'
@@ -13,7 +13,7 @@ import { formatCurrency } from '@/lib/utils'
 import {
   Plus, Search, Building2, MapPin, BedDouble, Bath, Car, Eye,
   ChevronLeft, ChevronRight, SlidersHorizontal, X, Filter, Instagram, Loader2, CheckSquare, Square, User,
-  LayoutList, Map,
+  LayoutList, Map, Star,
 } from 'lucide-react'
 
 const AdminPropertyMap = dynamic(() => import('./AdminPropertyMap'), {
@@ -129,9 +129,22 @@ function activeFilterCount(f: Filters) {
 
 export default function PropertiesPage() {
   const { accessToken } = useAuthStore()
+  const queryClient = useQueryClient()
   const [page, setPage] = useState(1)
   const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS)
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list')
+  const [togglingId, setTogglingId] = useState<string | null>(null)
+
+  const toggleFeatured = useCallback(async (id: string, current: boolean) => {
+    if (!accessToken) return
+    setTogglingId(id)
+    try {
+      await propertiesApi.update(accessToken, id, { isFeatured: !current })
+      queryClient.invalidateQueries({ queryKey: ['properties'] })
+    } catch { /* ignore */ } finally {
+      setTogglingId(null)
+    }
+  }, [accessToken, queryClient])
 
   // Load company users for captador filter
   const { data: usersData } = useQuery({
@@ -571,6 +584,8 @@ export default function PropertiesPage() {
                   selectMode={selectMode}
                   selected={selectedIds.has(p.id)}
                   onSelect={() => toggleSelect(p.id)}
+                  onToggleFeatured={() => toggleFeatured(p.id, p.isFeatured)}
+                  isTogglingFeatured={togglingId === p.id}
                 />
               ))}
             </div>
@@ -614,11 +629,15 @@ function PropertyCard({
   selectMode = false,
   selected = false,
   onSelect,
+  onToggleFeatured,
+  isTogglingFeatured = false,
 }: {
   property: PropertySummary
   selectMode?: boolean
   selected?: boolean
   onSelect?: () => void
+  onToggleFeatured?: () => void
+  isTogglingFeatured?: boolean
 }) {
   const rawImage = p.coverImage ?? p.images?.[0]
   const coverImage = isRealImage(rawImage) ? rawImage : null
@@ -686,6 +705,24 @@ function PropertyCard({
               </span>
             )}
           </div>
+          {/* Toggle destaque */}
+          {!selectMode && onToggleFeatured && (
+            <button
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); onToggleFeatured() }}
+              disabled={isTogglingFeatured}
+              title={p.isFeatured ? 'Remover do destaque' : 'Colocar em destaque'}
+              className={`absolute top-2 right-2 p-1.5 rounded-full transition-all shadow-md ${
+                p.isFeatured
+                  ? 'bg-yellow-400 text-yellow-900 hover:bg-yellow-300'
+                  : 'bg-black/40 text-white/70 hover:bg-yellow-400 hover:text-yellow-900'
+              }`}
+            >
+              {isTogglingFeatured
+                ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                : <Star className={`h-3.5 w-3.5 ${p.isFeatured ? 'fill-current' : ''}`} />
+              }
+            </button>
+          )}
           {/* Views */}
           <div className="absolute bottom-2 right-2 flex items-center gap-1 bg-black/50 rounded-full px-2 py-0.5">
             <Eye className="h-3 w-3 text-white" />

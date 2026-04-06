@@ -46,6 +46,15 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 
 async function fetchFeaturedProperties() {
   try {
+    // First try the dedicated /featured endpoint (isFeatured=true)
+    const resFeatured = await fetch(`${API_URL}/api/v1/public/featured`, {
+      next: { revalidate: 60 },
+    })
+    if (resFeatured.ok) {
+      const featured = await resFeatured.json()
+      if (Array.isArray(featured) && featured.length > 0) return featured
+    }
+    // Fallback: most recent active properties
     const res = await fetch(`${API_URL}/api/v1/public/properties?limit=8&sortBy=createdAt`, {
       next: { revalidate: 60 },
     })
@@ -277,7 +286,7 @@ export default async function HomePage() {
               <h2 className="text-2xl font-bold" style={{ color: 'var(--site-primary-color, #1B2B5B)', fontFamily: 'Georgia, serif' }}>
                 Imóveis em Destaque
               </h2>
-              <p className="text-gray-500 text-sm mt-0.5">Recém cadastrados — os mais novos do portfólio</p>
+              <p className="text-gray-500 text-sm mt-0.5">Imóveis selecionados pela nossa equipe para você</p>
             </div>
             <Link
               href="/imoveis"

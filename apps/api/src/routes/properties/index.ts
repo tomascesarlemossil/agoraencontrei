@@ -120,6 +120,8 @@ const CreatePropertyBody = z.object({
   // Additional property fields
   totalFloors:  z.number().int().min(0).optional(),
   isPremium:    z.boolean().optional(),
+  isFeatured:   z.boolean().optional(),
+  featuredUntil: z.string().optional(), // ISO date string
   // Portal publication toggles (stored in portalDescriptions JSON)
   portalDescriptions: z.record(z.unknown()).optional(),
   // SEO slug override
