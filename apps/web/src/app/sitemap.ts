@@ -11,6 +11,88 @@ const CIDADES = [
   'capitolio', 'cassia', 'ibiraci', 'capetinga', 'sacramento', 'restinga',
 ]
 
+// Landing pages de tipo + finalidade (alta prioridade)
+const LANDING_PAGES = [
+  '/casas-para-alugar-franca-sp',
+  '/casas-a-venda-franca-sp',
+  '/apartamentos-para-alugar-franca-sp',
+  '/apartamentos-a-venda-franca-sp',
+  '/terrenos-a-venda-franca-sp',
+  '/imoveis-comerciais-franca-sp',
+  '/chacaras-franca-sp',
+  '/galpoes-franca-sp',
+  '/imoveis-franca-sp',
+  '/aluguel-imoveis-franca-sp',
+  '/venda-imoveis-franca-sp',
+  '/leilao-imoveis-franca-sp',
+  '/reforma-imoveis-franca-sp',
+  '/engenharia-franca-sp',
+  '/arquitetura-franca-sp',
+  '/financiamento-imovel-franca-sp',
+  '/avaliacao-imovel-franca-sp',
+]
+
+// Bairros de Franca/SP (gerados estaticamente)
+const BAIRROS_FRANCA = [
+  'jardim-america','jardim-paulista','centro','jardim-botanico','jardim-california',
+  'jardim-redentor','jardim-floresta','jardim-universitario','jardim-nova-franca',
+  'jardim-sao-jose','jardim-sao-paulo','jardim-sao-pedro','jardim-sao-sebastiao',
+  'jardim-sao-francisco','jardim-sao-joao','jardim-santa-rita','jardim-santa-rosa',
+  'jardim-santa-lucia','jardim-santa-maria','jardim-santa-helena','jardim-santa-clara',
+  'jardim-santa-barbara','jardim-santa-ana','jardim-santa-alice','jardim-santa-angela',
+  'jardim-consolacao','jardim-eldorado','jardim-ipiranga','jardim-italia',
+  'jardim-aeroporto','jardim-alvorada','jardim-aurora','jardim-bela-vista',
+  'jardim-boa-esperanca','jardim-boa-vista','jardim-brasil','jardim-campestre',
+  'jardim-canaa','jardim-carvalho','jardim-castelo','jardim-caxambu',
+  'jardim-cerejeiras','jardim-coleginho','jardim-copacabana','jardim-das-acaias',
+  'jardim-das-flores','jardim-das-oliveiras','jardim-das-rosas','jardim-das-violetas',
+  'jardim-diamante','jardim-dos-pinheiros','jardim-dos-ipes','jardim-esplanada',
+  'jardim-europa','jardim-formosa','jardim-fortaleza','jardim-girassol',
+  'jardim-gloria','jardim-guanabara','jardim-imperial','jardim-independencia',
+  'jardim-ipanema','jardim-jaragua','jardim-jequitiba','jardim-lagoa',
+  'jardim-leblon','jardim-leonor','jardim-liberdade','jardim-lourdes',
+  'jardim-maravilha','jardim-marcia','jardim-maristela','jardim-marrocos',
+  'jardim-minas-gerais','jardim-modelo','jardim-monte-alto','jardim-monte-belo',
+  'jardim-monte-verde','jardim-morumbi','jardim-nossa-senhora-aparecida',
+  'jardim-nova-esperanca','jardim-novo-horizonte','jardim-olimpia','jardim-oriente',
+  'jardim-panorama','jardim-paraiso','jardim-paris','jardim-parque',
+  'jardim-paulistano','jardim-paz','jardim-pedras','jardim-pereira',
+  'jardim-petrópolis','jardim-piemonte','jardim-planalto','jardim-primavera',
+  'jardim-progresso','jardim-providencia','jardim-real','jardim-recanto',
+  'jardim-recreio','jardim-residencial','jardim-rio-branco','jardim-riviera',
+  'jardim-rosario','jardim-sao-bento','jardim-sao-carlos','jardim-sao-cristovao',
+  'jardim-sao-domingos','jardim-sao-geraldo','jardim-sao-jorge','jardim-sao-lucas',
+  'jardim-sao-luiz','jardim-sao-marcos','jardim-sao-mateus','jardim-sao-miguel',
+  'jardim-sao-rafael','jardim-sao-roque','jardim-sao-vicente','jardim-saude',
+  'jardim-serrano','jardim-sete-de-setembro','jardim-sol-nascente','jardim-sumare',
+  'jardim-taquaral','jardim-tiradentes','jardim-tropical','jardim-tupi',
+  'jardim-urano','jardim-vale-verde','jardim-verde','jardim-vila-nova',
+  'jardim-vista-alegre','jardim-vitoria','jardim-vivaldi','jardim-zanetti',
+  'vila-aparecida','vila-brasil','vila-carvalho','vila-castelo-branco',
+  'vila-conceicao','vila-cristina','vila-dos-lavradores','vila-esperanca',
+  'vila-formosa','vila-industrial','vila-ipiranga','vila-jardim',
+  'vila-jose-bonifacio','vila-lemos','vila-maria','vila-mariana',
+  'vila-nova','vila-operaria','vila-paulista','vila-progresso',
+  'vila-real','vila-recreio','vila-santa-cruz','vila-santa-luzia',
+  'vila-sao-bento','vila-sao-geraldo','vila-sao-jose','vila-sao-pedro',
+  'vila-sao-sebastiao','vila-saude','vila-verde','parque-das-arvores',
+  'parque-das-nacoes','parque-industrial','parque-sao-joao','residencial-america',
+  'residencial-bela-vista','residencial-brasil','residencial-das-flores',
+  'residencial-dos-pinheiros','residencial-esplanada','residencial-europa',
+  'residencial-ipanema','residencial-itamaraty','residencial-monte-verde',
+  'residencial-nova-franca','residencial-paraiso','residencial-paris',
+  'residencial-primavera','residencial-recanto','residencial-rio-verde',
+  'residencial-sao-paulo','residencial-serrano','residencial-solar',
+  'residencial-taquaral','residencial-verde','residencial-vitoria',
+  'condominio-alto-da-boa-vista','condominio-das-flores','condominio-das-palmeiras',
+  'condominio-do-lago','condominio-esplanada','condominio-monte-verde',
+  'condominio-parque-das-arvores','condominio-portal-do-sol','condominio-primavera',
+  'condominio-recanto-verde','condominio-residencial-das-flores',
+  'condominio-solar-das-acaias','condominio-vale-verde','condominio-verde-vale',
+  'bairro-alto','bairro-brasil','bairro-industrial','bairro-novo',
+  'bairro-paulista','bairro-sao-jose','bairro-sao-pedro','bairro-sao-sebastiao',
+]
+
 function cityToSlug(city: string): string {
   return city
     .toLowerCase()
@@ -29,6 +111,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: WEB_URL,                                         lastModified: now, changeFrequency: 'daily',   priority: 1.0 },
     { url: `${WEB_URL}/imoveis`,                           lastModified: now, changeFrequency: 'hourly',  priority: 0.95 },
     { url: `${WEB_URL}/blog`,                              lastModified: now, changeFrequency: 'daily',   priority: 0.8 },
+    { url: `${WEB_URL}/bairros`,                           lastModified: now, changeFrequency: 'weekly',  priority: 0.85 },
     { url: `${WEB_URL}/corretores`,                        lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
     { url: `${WEB_URL}/sobre`,                             lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
     { url: `${WEB_URL}/avaliacao`,                         lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
@@ -47,12 +130,28 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${WEB_URL}/termos-uso`,                        lastModified: now, changeFrequency: 'yearly',  priority: 0.3 },
   ]
 
+  // Landing pages de tipo + finalidade (alta prioridade SEO)
+  const landingPages: MetadataRoute.Sitemap = LANDING_PAGES.map(path => ({
+    url: `${WEB_URL}${path}`,
+    lastModified: now,
+    changeFrequency: 'daily' as const,
+    priority: 0.9,
+  }))
+
   // Páginas de cidades
   const cityPages: MetadataRoute.Sitemap = CIDADES.map(cidade => ({
     url: `${WEB_URL}/imoveis/em/${cidade}`,
     lastModified: now,
     changeFrequency: 'daily' as const,
     priority: 0.85,
+  }))
+
+  // Páginas de bairros estáticos de Franca/SP
+  const bairrosPages: MetadataRoute.Sitemap = BAIRROS_FRANCA.map(slug => ({
+    url: `${WEB_URL}/bairros/franca/${slug}`,
+    lastModified: now,
+    changeFrequency: 'weekly' as const,
+    priority: 0.8,
   }))
 
   // Páginas de imóveis individuais
@@ -72,7 +171,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
   } catch { /* ignore */ }
 
-  // Páginas de bairros (busca bairros únicos do banco)
+  // Páginas de bairros dinâmicos (busca bairros únicos do banco)
   let neighborhoodPages: MetadataRoute.Sitemap = []
   try {
     const res = await fetch(`${API_URL}/api/v1/public/properties?limit=500&city=Franca&status=ACTIVE`, {
@@ -110,7 +209,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   return [
     ...staticPages,
+    ...landingPages,
     ...cityPages,
+    ...bairrosPages,
     ...neighborhoodPages,
     ...propertyPages,
     ...blogPages,
