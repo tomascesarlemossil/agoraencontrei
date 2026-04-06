@@ -71,6 +71,21 @@ interface AuctionPin {
   coverImage: string | null
 }
 
+interface OwnerDirectPin {
+  id: string
+  slug: string
+  title: string
+  price: number | null
+  neighborhood: string | null
+  city: string | null
+  lat: number | null
+  lng: number | null
+  type: string
+  bedrooms: number
+  totalArea: number | null
+  isFeatured: boolean
+  isOwnerDirect: true
+}
 function sourceLabel(s: string): string {
   const m: Record<string, string> = { CAIXA: 'Caixa', BANCO_DO_BRASIL: 'BB', BRADESCO: 'Bradesco', ITAU: 'Itaú', SANTANDER: 'Santander', JUDICIAL: 'Judicial', EXTRAJUDICIAL: 'Extrajudicial' }
   return m[s] || s
@@ -149,6 +164,8 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
   const [selectedAuction, setSelectedAuction] = useState<AuctionPin | null>(null)
   const auctionMarkersRef = useRef<any[]>([])
   const auctionClusterRef = useRef<any>(null)
+  const [ownerDirectPins, setOwnerDirectPins] = useState<OwnerDirectPin[]>([])
+  const ownerDirectMarkersRef = useRef<any[]>([])
 
   // Layer toggles
   const [showSaleLayer, setShowSaleLayer] = useState(true)
@@ -283,6 +300,14 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
       loadClusters()
     }
   }, [initialPurpose]) // eslint-disable-line react-hooks/exhaustive-deps
+  // Load owner-direct (green pins) properties from free-listing endpoint
+  useEffect(() => {
+    fetch(`${API_URL}/api/v1/public/free-listing/map-pins`)
+      .then(r => r.ok ? r.json() : [])
+      .then((data: OwnerDirectPin[]) => setOwnerDirectPins(Array.isArray(data) ? data : []))
+      .catch(() => {})
+  }, [])
+
   // Load auction pins — bypass Railway, read directly from Supabase
   useEffect(() => {
     async function loadAuctions() {
@@ -569,6 +594,30 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
       }
     })
   }, [filteredAuctions, isLoaded])
+
+  // Render owner-direct green pins
+  useEffect(() => {
+    if (!isLoaded || !mapInstance.current) return
+    import('leaflet').then(L => {
+      ownerDirectMarkersRef.current.forEach(m => { try { m.remove() } catch {} })
+      ownerDirectMarkersRef.current = []
+      if (ownerDirectPins.length === 0) return
+      const greenIcon = (L as any).divIcon({
+        className: '',
+        html: '<div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#22c55e,#16a34a);border:3px solid #fff;display:flex;align-items:center;justify-content:center;font-size:15px;box-shadow:0 2px 10px rgba(34,197,94,0.5);cursor:pointer;">&#127968;</div>',
+        iconSize: [34, 34],
+        iconAnchor: [17, 17],
+      })
+      for (const p of ownerDirectPins) {
+        if (!p.lat || !p.lng) continue
+        const priceStr = p.price ? fmt(p.price) : 'Consulte'
+        const marker = (L as any).marker([p.lat, p.lng], { icon: greenIcon })
+          .bindPopup(`<div style="min-width:200px;max-width:260px;font-family:system-ui"><div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#16a34a;font-weight:700;margin-bottom:4px">VENDA DIRETA - Proprietario</div><p style="font-weight:700;margin:0 0 4px;font-size:13px;color:#1B2B5B">${p.title}</p><p style="color:#666;margin:0 0 6px;font-size:11px">${p.neighborhood || ''} - ${p.city || ''}</p><p style="margin:2px 0;font-size:16px;font-weight:800;color:#1B2B5B">${priceStr}</p><div style="margin:6px 0"><span style="font-size:10px;background:#dcfce7;color:#16a34a;padding:2px 8px;border-radius:8px;font-weight:600">Sem comissao</span></div><a href="/imoveis/${p.slug}" style="display:block;text-align:center;margin-top:8px;padding:6px;background:#16a34a;color:white;border-radius:8px;font-size:12px;font-weight:600;text-decoration:none">Ver imovel</a></div>`, { maxWidth: 280 })
+        marker.addTo(mapInstance.current)
+        ownerDirectMarkersRef.current.push(marker)
+      }
+    })
+  }, [ownerDirectPins, isLoaded])
 
   // Handle drawing mode map clicks
   useEffect(() => {
