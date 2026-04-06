@@ -97,10 +97,15 @@ async function fetchSiteSettings() {
     const res = await fetch(`${API_URL}/api/v1/public/site-settings`, {
       next: { revalidate: 60 },
     })
-    if (!res.ok) return { heroVideoUrl: null, heroVideoType: 'youtube' }
-    return res.json()
+    if (!res.ok) return { heroVideoUrl: null, heroVideoType: 'image' }
+    const data = await res.json()
+    // Se não há vídeo configurado, usar imagem de fundo
+    if (!data.heroVideoUrl) {
+      return { ...data, heroVideoType: 'image' }
+    }
+    return data
   } catch {
-    return { heroVideoUrl: null, heroVideoType: 'youtube' }
+    return { heroVideoUrl: null, heroVideoType: 'image' }
   }
 }
 
@@ -651,74 +656,84 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ── NOSSA EQUIPE ────────────────────────────────────────────── */}
-      {team.length > 0 && (
-        <section className="max-w-6xl mx-auto px-4 sm:px-6 pb-16">
-          <div className="text-center mb-8">
-            <p className="text-sm font-semibold uppercase tracking-widest mb-2" style={{ color: 'var(--site-accent-color, #C9A84C)' }}>Imobiliária Lemos — 1º Parceiro Oficial</p>
-            <h2 className="text-2xl font-bold" style={{ color: 'var(--site-primary-color, #1B2B5B)', fontFamily: 'Georgia, serif' }}>
-              Nossas Imobiliárias / Corretores Parceiros
-            </h2>
-            <p className="text-gray-500 text-sm mt-1">Profissionais e imobiliárias parceiras anunciando no marketplace</p>
-          </div>
+      {/* ── PARCEIROS OFICIAIS ──────────────────────────────────────── */}
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 pb-16">
+        <div className="text-center mb-8">
+          <p className="text-sm font-semibold uppercase tracking-widest mb-2" style={{ color: 'var(--site-accent-color, #C9A84C)' }}>Marketplace Imobiliário</p>
+          <h2 className="text-2xl font-bold" style={{ color: 'var(--site-primary-color, #1B2B5B)', fontFamily: 'Georgia, serif' }}>
+            Nossas Imobiliárias Parceiras
+          </h2>
+          <p className="text-gray-500 text-sm mt-1">Imobiliárias e profissionais parceiros anunciando no marketplace</p>
+        </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            {team.slice(0, 8).map((member: any) => {
-              const initial = (member.name ?? '?').charAt(0).toUpperCase()
-              const displayRole = member.role === 'ADMIN' ? 'Diretor(a)' : member.role === 'BROKER' ? 'Corretor(a) de Imoveis' : 'Equipe'
-              return (
-                <div key={member.id} className="bg-white rounded-2xl p-5 border text-center hover:shadow-lg transition-all" style={{ borderColor: '#e8e4dc' }}>
-                  {/* Avatar */}
-                  {member.avatarUrl ? (
-                    <div className="w-16 h-16 rounded-full mx-auto mb-3 overflow-hidden shadow-md">
-                      <Image
-                        src={member.avatarUrl}
-                        alt={member.name ?? ''}
-                        width={64}
-                        height={64}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  ) : (
-                    <div className="w-16 h-16 rounded-full mx-auto mb-3 flex items-center justify-center text-2xl font-bold text-white shadow-md"
-                      style={{ background: 'linear-gradient(135deg, #1B2B5B, #4a6fa8)' }}>
-                      {initial}
-                    </div>
-                  )}
-                  <p className="font-bold text-sm leading-snug" style={{ color: 'var(--site-primary-color, #1B2B5B)', fontFamily: 'Georgia, serif' }}>{member.name}</p>
-                  <p className="text-xs text-gray-500 mt-0.5">{displayRole}</p>
-                  {member.creciNumber && member.creciNumber !== '279051' && (
-                    <p className="text-xs font-semibold mt-1" style={{ color: 'var(--site-accent-color, #C9A84C)' }}>CRECI {member.creciNumber}</p>
-                  )}
-                  {member.phone && (
-                    <a
-                      href={`https://wa.me/${member.phone.replace(/\D/g, '')}?text=Olá, ${(member.name ?? '').split(' ')[0]}! Vim pelo site e gostaria de informações.`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="flex items-center justify-center gap-1.5 w-full mt-3 py-2 rounded-xl text-xs font-bold transition-all hover:brightness-110"
-                      style={{ background: 'linear-gradient(135deg, #25D366, #128C7E)', color: 'white' }}
-                    >
-                      <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
-                      </svg>
-                      WhatsApp
-                    </a>
-                  )}
-                </div>
-              )
-            })}
-          </div>
+        <div className="flex flex-wrap justify-center gap-6">
+          {/* Card Imobiliária Lemos */}
+          <Link
+            href="/parceiros/imobiliaria-lemos"
+            className="group bg-white rounded-2xl p-8 border hover:shadow-xl transition-all duration-300 flex flex-col items-center text-center w-full max-w-xs cursor-pointer hover:-translate-y-1"
+            style={{ borderColor: '#C9A84C', borderWidth: 2 }}
+          >
+            {/* Badge */}
+            <span className="inline-block text-xs font-bold px-3 py-1 rounded-full mb-4" style={{ backgroundColor: 'rgba(201,168,76,0.15)', color: '#C9A84C' }}>
+              1º Parceiro Oficial
+            </span>
+            {/* Logo */}
+            <div className="w-28 h-28 rounded-full overflow-hidden mb-4 shadow-lg border-4" style={{ borderColor: '#C9A84C' }}>
+              <Image
+                src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663481419273/dSHpPTGqPSuMnYML.jpg"
+                alt="Imobiliária Lemos"
+                width={112}
+                height={112}
+                className="w-full h-full object-cover"
+              />
+            </div>
+            {/* Nome */}
+            <h3 className="text-xl font-bold mb-1" style={{ color: 'var(--site-primary-color, #1B2B5B)', fontFamily: 'Georgia, serif' }}>Imobiliária Lemos</h3>
+            <p className="text-xs text-gray-500 mb-1">Franca — SP</p>
+            <p className="text-xs font-semibold mb-4" style={{ color: '#C9A84C' }}>Desde 2002 · +22 anos de tradição</p>
+            <p className="text-xs text-gray-500 leading-relaxed mb-5">
+              Referência no mercado imobiliário de Franca e região. Especializada em compra, venda e locação de imóveis residenciais e comerciais.
+            </p>
+            {/* CTA */}
+            <span
+              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold transition-all group-hover:brightness-110"
+              style={{ backgroundColor: 'var(--site-primary-color, #1B2B5B)', color: 'white' }}
+            >
+              Ver equipe e imóveis <ArrowRight className="w-3.5 h-3.5" />
+            </span>
+          </Link>
 
-          <div className="text-center mt-6 flex flex-col sm:flex-row gap-3 justify-center">
-            <Link href="/parceiros" className="inline-flex items-center gap-2 text-sm font-semibold hover:gap-3 transition-all" style={{ color: 'var(--site-accent-color, #C9A84C)' }}>
-              Ver todos os parceiros <ArrowRight className="w-4 h-4" />
-            </Link>
-            <Link href="/corretores" className="inline-flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-gray-700 transition-all">
-              Equipe Imobiliária Lemos <ArrowRight className="w-4 h-4" />
-            </Link>
-          </div>
-        </section>
-      )}
+          {/* Card "Seja um Parceiro" */}
+          <a
+            href="https://wa.me/5516981010004?text=Olá! Gostaria de ser um parceiro do AgoraEncontrei e anunciar meus imóveis."
+            target="_blank"
+            rel="noreferrer"
+            className="group bg-white rounded-2xl p-8 border border-dashed flex flex-col items-center text-center w-full max-w-xs cursor-pointer hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+            style={{ borderColor: '#C9A84C' }}
+          >
+            <div className="w-28 h-28 rounded-full flex items-center justify-center mb-4 border-4 border-dashed" style={{ borderColor: '#C9A84C', backgroundColor: 'rgba(201,168,76,0.08)' }}>
+              <span className="text-5xl font-bold" style={{ color: '#C9A84C' }}>+</span>
+            </div>
+            <h3 className="text-xl font-bold mb-1" style={{ color: 'var(--site-primary-color, #1B2B5B)', fontFamily: 'Georgia, serif' }}>Seja um Parceiro</h3>
+            <p className="text-xs text-gray-500 mb-4">Sua imobiliária aqui</p>
+            <p className="text-xs text-gray-500 leading-relaxed mb-5">
+              Anuncie seus imóveis no maior marketplace imobiliário de Franca. Tecnologia de ponta, sem custo inicial.
+            </p>
+            <span
+              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold transition-all group-hover:brightness-110"
+              style={{ backgroundColor: '#C9A84C', color: '#1B2B5B' }}
+            >
+              Entrar em contato <ArrowRight className="w-3.5 h-3.5" />
+            </span>
+          </a>
+        </div>
+
+        <div className="text-center mt-6">
+          <Link href="/parceiros" className="inline-flex items-center gap-2 text-sm font-semibold hover:gap-3 transition-all" style={{ color: 'var(--site-accent-color, #C9A84C)' }}>
+            Ver todos os parceiros <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
+      </section>
     </>
   )
 }

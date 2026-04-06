@@ -91,17 +91,17 @@ export function Navbar() {
           <Image
             src="/logo.png"
             alt="AgoraEncontrei Marketplace"
-            width={44}
-            height={44}
-            className="rounded-full flex-shrink-0 object-cover"
+            width={48}
+            height={48}
+            className="flex-shrink-0"
+            style={{ borderRadius: '50%' }}
             priority
           />
           <div className="flex flex-col leading-none">
-            <span className="font-bold text-base tracking-tight" style={{ color: '#ffffff', fontFamily: 'Georgia, serif' }}>
-              <span style={{ color: '#9ca3af', fontWeight: 400 }}>Agora</span>
-              <span style={{ color: '#16a34a', fontWeight: 700 }}>Encontrei</span>
+            <span className="text-base tracking-tight" style={{ fontFamily: 'Arial, Helvetica, sans-serif', letterSpacing: '-0.01em' }}>
+              <span style={{ color: '#9ca3af', fontWeight: 400 }}>Agora</span><span style={{ color: '#16a34a', fontWeight: 700 }}>Encontrei</span>
             </span>
-            <span className="text-[10px] font-medium tracking-widest uppercase" style={{ color: 'var(--site-accent-color, #C9A84C)', letterSpacing: '0.12em' }}>
+            <span className="text-[9px] font-medium tracking-widest uppercase" style={{ color: 'var(--site-accent-color, #C9A84C)', letterSpacing: '0.15em' }}>
               Marketplace
             </span>
           </div>
