@@ -132,12 +132,24 @@ export default async function RuaPage({ params }: Props) {
                 {total} imóvel{total !== 1 ? 's' : ''} na {streetName}
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {properties.map((p: any) => (
+                {properties.map((p: any) => {
+                  const hasValidImage = p.coverImage &&
+                    !p.coverImage.includes('telefone.png') &&
+                    !p.coverImage.includes('whatsapp') &&
+                    !p.coverImage.includes('placeholder')
+                  return (
                   <Link key={p.id} href={`/imoveis/${p.slug}`}
                     className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow overflow-hidden border border-gray-100">
-                    {p.coverImage && (
+                    {hasValidImage ? (
                       <div className="aspect-video overflow-hidden">
                         <img src={p.coverImage} alt={p.title} className="w-full h-full object-cover hover:scale-105 transition-transform duration-300" />
+                      </div>
+                    ) : (
+                      <div className="aspect-video bg-gradient-to-br from-[#1B2B5B] to-[#0f1c3a] flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="w-12 h-12 text-white/30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                          <polyline points="9 22 9 12 15 12 15 22" />
+                        </svg>
                       </div>
                     )}
                     <div className="p-4">
@@ -156,7 +168,8 @@ export default async function RuaPage({ params }: Props) {
                       </div>
                     </div>
                   </Link>
-                ))}
+                  )
+                })}
               </div>
               {total > 12 && (
                 <div className="text-center mt-8">

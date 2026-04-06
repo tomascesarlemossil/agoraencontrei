@@ -412,7 +412,7 @@ export default async function HomePage() {
               >
                 {/* Image */}
                 <div className="relative h-44 overflow-hidden bg-gray-100">
-                  {p.coverImage ? (
+                  {p.coverImage && !p.coverImage.includes('telefone.png') && !p.coverImage.includes('whatsapp') ? (
                     <Image
                       src={p.coverImage}
                       alt={p.title}
@@ -421,8 +421,11 @@ export default async function HomePage() {
                       sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                     />
                   ) : (
-                    <div className="h-full flex items-center justify-center text-4xl" style={{ background: 'linear-gradient(135deg, #1B2B5B15, #C9A84C15)' }}>
-                      🏠
+                    <div className="h-full flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #1B2B5B, #0f1c3a)' }}>
+                      <svg xmlns="http://www.w3.org/2000/svg" className="w-12 h-12 text-white/30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                        <polyline points="9 22 9 12 15 12 15 22" />
+                      </svg>
                     </div>
                   )}
                   {/* Purpose badge */}

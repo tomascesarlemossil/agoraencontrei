@@ -121,15 +121,21 @@ export default async function CondoPage({ params }: Props) {
       <section className="max-w-6xl mx-auto px-4 py-10">
         {properties.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {properties.map((p: any) => (
+            {properties.map((p: any) => {
+              const hasValidImage = p.coverImage &&
+                !p.coverImage.includes('telefone.png') &&
+                !p.coverImage.includes('whatsapp') &&
+                !p.coverImage.includes('placeholder')
+              return (
               <Link key={p.id} href={`/imoveis/${p.slug}`}
                 className="bg-white rounded-2xl overflow-hidden border hover:shadow-lg transition-shadow">
                 <div className="relative h-44 bg-gray-100">
-                  {p.coverImage ? (
-                    <Image src={p.coverImage} alt={p.title ?? condoName} fill className="object-cover" loading="lazy" />
+                  {hasValidImage ? (
+                    <Image src={p.coverImage} alt={p.title ?? condoName} fill className="object-cover" loading="lazy"
+                      onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <Home className="w-10 h-10 text-gray-300" />
+                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#1B2B5B] to-[#0f1c3a]">
+                      <Home className="w-10 h-10 text-white/30" />
                     </div>
                   )}
                 </div>
@@ -146,7 +152,8 @@ export default async function CondoPage({ params }: Props) {
                   </div>
                 </div>
               </Link>
-            ))}
+              )
+            })}
           </div>
         ) : (
           <div className="text-center py-12 bg-white rounded-2xl border">
