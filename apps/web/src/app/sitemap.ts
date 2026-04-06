@@ -98,7 +98,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${WEB_URL}/profissionais/franca`, lastModified: now, changeFrequency: 'weekly', priority: 0.9 },
     { url: `${WEB_URL}/parceiros/cadastro`, lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
     { url: `${WEB_URL}/parceiros/membro-fundador`, lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
-    { url: `${WEB_URL}/meu-painel`, lastModified: now, changeFrequency: 'daily', priority: 0.6 },
+    { url: `${WEB_URL}/anunciar-imovel`, lastModified: now, changeFrequency: 'monthly', priority: 0.85 },
+    { url: `${WEB_URL}/custo-de-vida/franca-sp`, lastModified: now, changeFrequency: 'weekly', priority: 0.85 },
+    { url: `${WEB_URL}/custo-de-vida/ribeirao-preto-sp`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
+    { url: `${WEB_URL}/custo-de-vida/campinas-sp`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
+    { url: `${WEB_URL}/custo-de-vida/sao-paulo-sp`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
     { url: `${WEB_URL}/blog`, lastModified: now, changeFrequency: 'daily', priority: 0.8 },
     { url: `${WEB_URL}/bairros/franca`, lastModified: now, changeFrequency: 'weekly', priority: 0.9 },
     { url: `${WEB_URL}/avaliacao`, lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
@@ -133,6 +137,22 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // ── Condomínios ──────────────────────────────────────────────────────────
   const condominios = CONDOMINIOS.map(c => ({
     url: `${WEB_URL}/condominios/franca/${c}`, lastModified: now, changeFrequency: 'weekly' as const, priority: 0.85,
+  }))
+
+  // ── POIs (Pontos de Interesse) ──────────────────────────────────────────
+  const poiSlugs = [
+    'uni-franca', 'unesp-franca', 'shopping-franca', 'shopping-boulevard',
+    'santa-casa-franca', 'hospital-regional', 'sesi-franca', 'senai-franca',
+    'etec-franca', 'atacadao-franca', 'assai-franca', 'upa-franca',
+    'shopping-ribeirao', 'usp-ribeirao', 'hospital-clinicas-rp',
+    'shopping-ibirapuera', 'usp-sao-paulo', 'hospital-einstein',
+    'unicamp', 'shopping-galleria',
+  ]
+  const pois = poiSlugs.map(slug => ({
+    url: `${WEB_URL}/imoveis/perto-de/${slug}`,
+    lastModified: now,
+    changeFrequency: 'weekly' as const,
+    priority: 0.8,
   }))
 
   // ── Leilões (dinâmicos da API) ────────────────────────────────────────────
@@ -187,6 +207,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...cidades,
     ...bairros,
     ...condominios,
+    ...pois,
     ...leiloes,
     ...imoveis,
     ...blog,
