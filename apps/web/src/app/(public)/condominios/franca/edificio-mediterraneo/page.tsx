@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no Edifício Mediterrâneo, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no Edifício Mediterrâneo em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no Edifício Mediterrâneo com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no Edifício Mediterrâneo em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no Edifício Mediterrâneo com atendimento personalizado.',
   keywords: [
     'imóveis edifício mediterrâneo franca sp', 'casas edifício mediterrâneo franca', 'apartamentos edifício mediterrâneo franca',
     'comprar casa edifício mediterrâneo franca sp', 'alugar edifício mediterrâneo franca sp',

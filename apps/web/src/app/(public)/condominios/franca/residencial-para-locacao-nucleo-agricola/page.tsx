@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no residencial para Locação Núcleo Agrícola, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no residencial para Locação Núcleo Agrícola em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no residencial para Locação Núcleo Agrícola com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no residencial para Locação Núcleo Agrícola em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no residencial para Locação Núcleo Agrícola com atendimento personalizado.',
   keywords: [
     'imóveis residencial para locação núcleo agrícola franca sp', 'casas residencial para locação núcleo agrícola franca', 'apartamentos residencial para locação núcleo agrícola franca',
     'comprar casa residencial para locação núcleo agrícola franca sp', 'alugar residencial para locação núcleo agrícola franca sp',

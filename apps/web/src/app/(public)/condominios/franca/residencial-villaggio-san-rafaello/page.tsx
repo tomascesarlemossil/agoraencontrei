@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no RESIDENCIAL VILLAGGIO SAN RAFAELLO, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no RESIDENCIAL VILLAGGIO SAN RAFAELLO em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no RESIDENCIAL VILLAGGIO SAN RAFAELLO com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no RESIDENCIAL VILLAGGIO SAN RAFAELLO em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no RESIDENCIAL VILLAGGIO SAN RAFAELLO com atendimento personalizado.',
   keywords: [
     'imóveis residencial villaggio san rafaello franca sp', 'casas residencial villaggio san rafaello franca', 'apartamentos residencial villaggio san rafaello franca',
     'comprar casa residencial villaggio san rafaello franca sp', 'alugar residencial villaggio san rafaello franca sp',

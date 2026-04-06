@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no Residencial Olivito   Casa de Alto, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no Residencial Olivito   Casa de Alto em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no Residencial Olivito   Casa de Alto com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no Residencial Olivito   Casa de Alto em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no Residencial Olivito   Casa de Alto com atendimento personalizado.',
   keywords: [
     'imóveis residencial olivito   casa de alto franca sp', 'casas residencial olivito   casa de alto franca', 'apartamentos residencial olivito   casa de alto franca',
     'comprar casa residencial olivito   casa de alto franca sp', 'alugar residencial olivito   casa de alto franca sp',

@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no RESIDENCIAL DIVIDIDO, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no RESIDENCIAL DIVIDIDO em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no RESIDENCIAL DIVIDIDO com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no RESIDENCIAL DIVIDIDO em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no RESIDENCIAL DIVIDIDO com atendimento personalizado.',
   keywords: [
     'imóveis residencial dividido franca sp', 'casas residencial dividido franca', 'apartamentos residencial dividido franca',
     'comprar casa residencial dividido franca sp', 'alugar residencial dividido franca sp',

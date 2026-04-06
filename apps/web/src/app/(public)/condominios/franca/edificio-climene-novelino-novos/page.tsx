@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no EDIFÍCIO CLIMENE NOVELINO NOVOS, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no EDIFÍCIO CLIMENE NOVELINO NOVOS em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no EDIFÍCIO CLIMENE NOVELINO NOVOS com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no EDIFÍCIO CLIMENE NOVELINO NOVOS em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no EDIFÍCIO CLIMENE NOVELINO NOVOS com atendimento personalizado.',
   keywords: [
     'imóveis edifício climene novelino novos franca sp', 'casas edifício climene novelino novos franca', 'apartamentos edifício climene novelino novos franca',
     'comprar casa edifício climene novelino novos franca sp', 'alugar edifício climene novelino novos franca sp',

@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no EDIFÍCIO COSMOPOLITAN, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no EDIFÍCIO COSMOPOLITAN em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no EDIFÍCIO COSMOPOLITAN com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no EDIFÍCIO COSMOPOLITAN em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no EDIFÍCIO COSMOPOLITAN com atendimento personalizado.',
   keywords: [
     'imóveis edifício cosmopolitan franca sp', 'casas edifício cosmopolitan franca', 'apartamentos edifício cosmopolitan franca',
     'comprar casa edifício cosmopolitan franca sp', 'alugar edifício cosmopolitan franca sp',

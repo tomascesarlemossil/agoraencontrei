@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no PARQUE UNIVERSITARIO  Metragem 12x33m², Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no PARQUE UNIVERSITARIO  Metragem 12x33m² em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no PARQUE UNIVERSITARIO  Metragem 12x33m² com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no PARQUE UNIVERSITARIO  Metragem 12x33m² em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no PARQUE UNIVERSITARIO  Metragem 12x33m² com atendimento personalizado.',
   keywords: [
     'imóveis parque universitario  metragem 12x33m² franca sp', 'casas parque universitario  metragem 12x33m² franca', 'apartamentos parque universitario  metragem 12x33m² franca',
     'comprar casa parque universitario  metragem 12x33m² franca sp', 'alugar parque universitario  metragem 12x33m² franca sp',

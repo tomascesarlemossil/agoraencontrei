@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no EDIFÍCIO ELEGANCE, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no EDIFÍCIO ELEGANCE em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no EDIFÍCIO ELEGANCE com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no EDIFÍCIO ELEGANCE em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no EDIFÍCIO ELEGANCE com atendimento personalizado.',
   keywords: [
     'imóveis edifício elegance franca sp', 'casas edifício elegance franca', 'apartamentos edifício elegance franca',
     'comprar casa edifício elegance franca sp', 'alugar edifício elegance franca sp',

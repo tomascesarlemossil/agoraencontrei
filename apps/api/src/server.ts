@@ -237,6 +237,21 @@ async function bootstrap() {
   logEnvWarnings({ warn: (msg) => app.log.warn(msg) })
 }
 
+// ── Keep-Alive: evitar hibernação no Railway ──────────────────────────────
+// Faz um ping interno a cada 4 minutos para manter o servidor ativo
+if (process.env.NODE_ENV === 'production') {
+  const KEEP_ALIVE_INTERVAL = 4 * 60 * 1000 // 4 minutos
+  const selfUrl = `http://0.0.0.0:${process.env.PORT ?? 3100}/health`
+  setInterval(async () => {
+    try {
+      const http = await import('http')
+      http.get(selfUrl, (res) => {
+        res.resume() // consume response
+      }).on('error', () => {}) // silenciar erros
+    } catch {}
+  }, KEEP_ALIVE_INTERVAL)
+}
+
 // Graceful shutdown
 const signals = ['SIGINT', 'SIGTERM'] as const
 for (const signal of signals) {

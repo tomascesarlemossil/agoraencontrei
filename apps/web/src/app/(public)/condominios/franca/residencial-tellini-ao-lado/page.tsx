@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no RESIDENCIAL TELLINI AO LADO, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no RESIDENCIAL TELLINI AO LADO em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no RESIDENCIAL TELLINI AO LADO com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no RESIDENCIAL TELLINI AO LADO em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no RESIDENCIAL TELLINI AO LADO com atendimento personalizado.',
   keywords: [
     'imóveis residencial tellini ao lado franca sp', 'casas residencial tellini ao lado franca', 'apartamentos residencial tellini ao lado franca',
     'comprar casa residencial tellini ao lado franca sp', 'alugar residencial tellini ao lado franca sp',

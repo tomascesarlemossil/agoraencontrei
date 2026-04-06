@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no RESIDENCIAL JOVITA DE MELO, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no RESIDENCIAL JOVITA DE MELO em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no RESIDENCIAL JOVITA DE MELO com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no RESIDENCIAL JOVITA DE MELO em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no RESIDENCIAL JOVITA DE MELO com atendimento personalizado.',
   keywords: [
     'imóveis residencial jovita de melo franca sp', 'casas residencial jovita de melo franca', 'apartamentos residencial jovita de melo franca',
     'comprar casa residencial jovita de melo franca sp', 'alugar residencial jovita de melo franca sp',

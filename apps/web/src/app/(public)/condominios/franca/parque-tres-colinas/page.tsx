@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no PARQUE TRES COLINAS, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no PARQUE TRES COLINAS em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no PARQUE TRES COLINAS com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no PARQUE TRES COLINAS em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no PARQUE TRES COLINAS com atendimento personalizado.',
   keywords: [
     'imóveis parque tres colinas franca sp', 'casas parque tres colinas franca', 'apartamentos parque tres colinas franca',
     'comprar casa parque tres colinas franca sp', 'alugar parque tres colinas franca sp',

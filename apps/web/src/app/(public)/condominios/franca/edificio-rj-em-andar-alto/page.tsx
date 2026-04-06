@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no EDIFÍCIO RJ EM ANDAR ALTO, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no EDIFÍCIO RJ EM ANDAR ALTO em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no EDIFÍCIO RJ EM ANDAR ALTO com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no EDIFÍCIO RJ EM ANDAR ALTO em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no EDIFÍCIO RJ EM ANDAR ALTO com atendimento personalizado.',
   keywords: [
     'imóveis edifício rj em andar alto franca sp', 'casas edifício rj em andar alto franca', 'apartamentos edifício rj em andar alto franca',
     'comprar casa edifício rj em andar alto franca sp', 'alugar edifício rj em andar alto franca sp',

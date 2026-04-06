@@ -8,7 +8,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 
 export const metadata: Metadata = {
   title: 'Casas para Alugar em Franca SP | Imobiliária Lemos',
-  description: 'Encontre casas para alugar em Franca/SP com a Imobiliária Lemos. Mais de 22 anos no mercado. Casas com 2, 3 e 4 quartos em todos os bairros de Franca. Aluguel rápido e seguro. CRECI 279051.',
+  description: 'Encontre casas para alugar em Franca/SP com a Imobiliária Lemos. Mais de 22 anos no mercado. Casas com 2, 3 e 4 quartos em todos os bairros de Franca. Aluguel rápido e seguro..',
   keywords: [
     'casas para alugar franca sp', 'casa para alugar franca', 'aluguel de casas franca sp',
     'alugar casa franca sp', 'casas aluguel franca', 'casa aluguel franca sp',

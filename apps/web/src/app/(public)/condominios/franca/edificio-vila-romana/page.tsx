@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no Edifício Vila Romana, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no Edifício Vila Romana em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no Edifício Vila Romana com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no Edifício Vila Romana em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no Edifício Vila Romana com atendimento personalizado.',
   keywords: [
     'imóveis edifício vila romana franca sp', 'casas edifício vila romana franca', 'apartamentos edifício vila romana franca',
     'comprar casa edifício vila romana franca sp', 'alugar edifício vila romana franca sp',

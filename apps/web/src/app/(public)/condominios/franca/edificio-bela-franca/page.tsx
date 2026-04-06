@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no Edifício Bela Franca, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no Edifício Bela Franca em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no Edifício Bela Franca com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no Edifício Bela Franca em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no Edifício Bela Franca com atendimento personalizado.',
   keywords: [
     'imóveis edifício bela franca franca sp', 'casas edifício bela franca franca', 'apartamentos edifício bela franca franca',
     'comprar casa edifício bela franca franca sp', 'alugar edifício bela franca franca sp',

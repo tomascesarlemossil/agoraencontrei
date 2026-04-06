@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no Residencial Colina doo Espraiado, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no Residencial Colina doo Espraiado em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no Residencial Colina doo Espraiado com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no Residencial Colina doo Espraiado em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no Residencial Colina doo Espraiado com atendimento personalizado.',
   keywords: [
     'imóveis residencial colina doo espraiado franca sp', 'casas residencial colina doo espraiado franca', 'apartamentos residencial colina doo espraiado franca',
     'comprar casa residencial colina doo espraiado franca sp', 'alugar residencial colina doo espraiado franca sp',

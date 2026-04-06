@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no condomínio PORTO DOS SONHOS com, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no condomínio PORTO DOS SONHOS com em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no condomínio PORTO DOS SONHOS com com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no condomínio PORTO DOS SONHOS com em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no condomínio PORTO DOS SONHOS com com atendimento personalizado.',
   keywords: [
     'imóveis condomínio porto dos sonhos com franca sp', 'casas condomínio porto dos sonhos com franca', 'apartamentos condomínio porto dos sonhos com franca',
     'comprar casa condomínio porto dos sonhos com franca sp', 'alugar condomínio porto dos sonhos com franca sp',

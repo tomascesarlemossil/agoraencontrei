@@ -4,11 +4,11 @@ import { ArrowRight, MapPin, Home, MessageCircle, Phone, Star, Search } from 'lu
 
 export const metadata: Metadata = {
   title: 'Financiamento Imobiliário em Franca/SP | Imobiliária Lemos Franca/SP',
-  description: 'Financiamento imobiliário em Franca/SP: Caixa Econômica, FGTS, Minha Casa Minha Vida, SBPE. Imobiliária Lemos assessora você em todo o processo. CRECI 279051.',
+  description: 'Financiamento imobiliário em Franca/SP: Caixa Econômica, FGTS, Minha Casa Minha Vida, SBPE. Imobiliária Lemos assessora você em todo o processo..',
   keywords: ["financiamento imóvel franca sp", "financiamento imobiliário franca", "caixa econômica franca sp", "minha casa minha vida franca sp", "FGTS imóvel franca sp", "financiamento casa franca", "crédito imobiliário franca sp", "simulação financiamento franca", "banco imóvel franca sp", "financiar apartamento franca sp"],
   openGraph: {
     title: 'Financiamento Imobiliário em Franca/SP | Imobiliária Lemos Franca/SP',
-    description: 'Financiamento imobiliário em Franca/SP: Caixa Econômica, FGTS, Minha Casa Minha Vida, SBPE. Imobiliária Lemos assessora você em todo o processo. CRECI 279051.',
+    description: 'Financiamento imobiliário em Franca/SP: Caixa Econômica, FGTS, Minha Casa Minha Vida, SBPE. Imobiliária Lemos assessora você em todo o processo..',
     type: 'website', locale: 'pt_BR', siteName: 'AgoraEncontrei — Imobiliária Lemos',
   },
   alternates: { canonical: 'https://www.agoraencontrei.com.br/financiamento-imovel-franca-sp' },
@@ -20,7 +20,7 @@ const SCHEMA = {
   '@type': 'LocalBusiness',
   '@id': 'https://www.agoraencontrei.com.br/financiamento-imovel-franca-sp',
   name: 'Imobiliária Lemos — Financiamento Imobiliário em Franca/SP',
-  description: 'Financiamento imobiliário em Franca/SP: Caixa Econômica, FGTS, Minha Casa Minha Vida, SBPE. Imobiliária Lemos assessora você em todo o processo. CRECI 279051.',
+  description: 'Financiamento imobiliário em Franca/SP: Caixa Econômica, FGTS, Minha Casa Minha Vida, SBPE. Imobiliária Lemos assessora você em todo o processo..',
   url: 'https://www.agoraencontrei.com.br/financiamento-imovel-franca-sp',
   telephone: '+55-16-3723-0045',
   address: {

@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no RESIDENCIAL GAIA  Lote com 455, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no RESIDENCIAL GAIA  Lote com 455 em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no RESIDENCIAL GAIA  Lote com 455 com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no RESIDENCIAL GAIA  Lote com 455 em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no RESIDENCIAL GAIA  Lote com 455 com atendimento personalizado.',
   keywords: [
     'imóveis residencial gaia  lote com 455 franca sp', 'casas residencial gaia  lote com 455 franca', 'apartamentos residencial gaia  lote com 455 franca',
     'comprar casa residencial gaia  lote com 455 franca sp', 'alugar residencial gaia  lote com 455 franca sp',

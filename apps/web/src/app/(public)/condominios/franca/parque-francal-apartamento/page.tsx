@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no PARQUE FRANCAL  Apartamento, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no PARQUE FRANCAL  Apartamento em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no PARQUE FRANCAL  Apartamento com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no PARQUE FRANCAL  Apartamento em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no PARQUE FRANCAL  Apartamento com atendimento personalizado.',
   keywords: [
     'imóveis parque francal  apartamento franca sp', 'casas parque francal  apartamento franca', 'apartamentos parque francal  apartamento franca',
     'comprar casa parque francal  apartamento franca sp', 'alugar parque francal  apartamento franca sp',

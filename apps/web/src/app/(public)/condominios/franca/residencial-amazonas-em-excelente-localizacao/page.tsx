@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no RESIDENCIAL AMAZONAS EM EXCELENTE LOCALIZAÇÃO, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no RESIDENCIAL AMAZONAS EM EXCELENTE LOCALIZAÇÃO em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no RESIDENCIAL AMAZONAS EM EXCELENTE LOCALIZAÇÃO com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no RESIDENCIAL AMAZONAS EM EXCELENTE LOCALIZAÇÃO em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no RESIDENCIAL AMAZONAS EM EXCELENTE LOCALIZAÇÃO com atendimento personalizado.',
   keywords: [
     'imóveis residencial amazonas em excelente localização franca sp', 'casas residencial amazonas em excelente localização franca', 'apartamentos residencial amazonas em excelente localização franca',
     'comprar casa residencial amazonas em excelente localização franca sp', 'alugar residencial amazonas em excelente localização franca sp',

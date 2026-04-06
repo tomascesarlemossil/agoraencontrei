@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no PARQUE DOS PINHAIS PRÓXIMO, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no PARQUE DOS PINHAIS PRÓXIMO em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no PARQUE DOS PINHAIS PRÓXIMO com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no PARQUE DOS PINHAIS PRÓXIMO em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no PARQUE DOS PINHAIS PRÓXIMO com atendimento personalizado.',
   keywords: [
     'imóveis parque dos pinhais próximo franca sp', 'casas parque dos pinhais próximo franca', 'apartamentos parque dos pinhais próximo franca',
     'comprar casa parque dos pinhais próximo franca sp', 'alugar parque dos pinhais próximo franca sp',

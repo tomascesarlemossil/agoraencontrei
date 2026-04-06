@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no CONDOMÍNIO COLLIS RESIDENCE, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no CONDOMÍNIO COLLIS RESIDENCE em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no CONDOMÍNIO COLLIS RESIDENCE com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no CONDOMÍNIO COLLIS RESIDENCE em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no CONDOMÍNIO COLLIS RESIDENCE com atendimento personalizado.',
   keywords: [
     'imóveis condomínio collis residence franca sp', 'casas condomínio collis residence franca', 'apartamentos condomínio collis residence franca',
     'comprar casa condomínio collis residence franca sp', 'alugar condomínio collis residence franca sp',

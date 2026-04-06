@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no PARQUE VICENTE LEPORACE I, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no PARQUE VICENTE LEPORACE I em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no PARQUE VICENTE LEPORACE I com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no PARQUE VICENTE LEPORACE I em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no PARQUE VICENTE LEPORACE I com atendimento personalizado.',
   keywords: [
     'imóveis parque vicente leporace i franca sp', 'casas parque vicente leporace i franca', 'apartamentos parque vicente leporace i franca',
     'comprar casa parque vicente leporace i franca sp', 'alugar parque vicente leporace i franca sp',

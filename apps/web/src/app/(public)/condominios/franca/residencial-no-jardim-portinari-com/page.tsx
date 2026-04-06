@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no RESIDENCIAL NO JARDIM PORTINARI COM, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no RESIDENCIAL NO JARDIM PORTINARI COM em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no RESIDENCIAL NO JARDIM PORTINARI COM com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no RESIDENCIAL NO JARDIM PORTINARI COM em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no RESIDENCIAL NO JARDIM PORTINARI COM com atendimento personalizado.',
   keywords: [
     'imóveis residencial no jardim portinari com franca sp', 'casas residencial no jardim portinari com franca', 'apartamentos residencial no jardim portinari com franca',
     'comprar casa residencial no jardim portinari com franca sp', 'alugar residencial no jardim portinari com franca sp',

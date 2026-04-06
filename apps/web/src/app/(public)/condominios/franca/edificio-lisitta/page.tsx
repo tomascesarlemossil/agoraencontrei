@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no Edifício Lisitta, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no Edifício Lisitta em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no Edifício Lisitta com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no Edifício Lisitta em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no Edifício Lisitta com atendimento personalizado.',
   keywords: [
     'imóveis edifício lisitta franca sp', 'casas edifício lisitta franca', 'apartamentos edifício lisitta franca',
     'comprar casa edifício lisitta franca sp', 'alugar edifício lisitta franca sp',

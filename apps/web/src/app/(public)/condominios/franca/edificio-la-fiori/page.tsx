@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no EDIFÍCIO LA FIORI, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no EDIFÍCIO LA FIORI em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no EDIFÍCIO LA FIORI com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no EDIFÍCIO LA FIORI em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no EDIFÍCIO LA FIORI com atendimento personalizado.',
   keywords: [
     'imóveis edifício la fiori franca sp', 'casas edifício la fiori franca', 'apartamentos edifício la fiori franca',
     'comprar casa edifício la fiori franca sp', 'alugar edifício la fiori franca sp',

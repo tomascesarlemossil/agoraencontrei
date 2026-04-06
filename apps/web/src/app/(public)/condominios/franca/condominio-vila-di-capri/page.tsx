@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no CONDOMÍNIO VILA DI CAPRI, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no CONDOMÍNIO VILA DI CAPRI em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no CONDOMÍNIO VILA DI CAPRI com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no CONDOMÍNIO VILA DI CAPRI em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no CONDOMÍNIO VILA DI CAPRI com atendimento personalizado.',
   keywords: [
     'imóveis condomínio vila di capri franca sp', 'casas condomínio vila di capri franca', 'apartamentos condomínio vila di capri franca',
     'comprar casa condomínio vila di capri franca sp', 'alugar condomínio vila di capri franca sp',

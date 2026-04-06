@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no Residencial Villa da mata, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no Residencial Villa da mata em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no Residencial Villa da mata com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no Residencial Villa da mata em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no Residencial Villa da mata com atendimento personalizado.',
   keywords: [
     'imóveis residencial villa da mata franca sp', 'casas residencial villa da mata franca', 'apartamentos residencial villa da mata franca',
     'comprar casa residencial villa da mata franca sp', 'alugar residencial villa da mata franca sp',

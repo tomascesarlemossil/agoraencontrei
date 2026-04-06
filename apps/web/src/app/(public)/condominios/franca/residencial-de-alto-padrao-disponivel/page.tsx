@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no RESIDENCIAL DE ALTO PADRÃO DISPONIVEL, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no RESIDENCIAL DE ALTO PADRÃO DISPONIVEL em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no RESIDENCIAL DE ALTO PADRÃO DISPONIVEL com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no RESIDENCIAL DE ALTO PADRÃO DISPONIVEL em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no RESIDENCIAL DE ALTO PADRÃO DISPONIVEL com atendimento personalizado.',
   keywords: [
     'imóveis residencial de alto padrão disponivel franca sp', 'casas residencial de alto padrão disponivel franca', 'apartamentos residencial de alto padrão disponivel franca',
     'comprar casa residencial de alto padrão disponivel franca sp', 'alugar residencial de alto padrão disponivel franca sp',

@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no CONDOMÍNIO OLIVITO, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no CONDOMÍNIO OLIVITO em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no CONDOMÍNIO OLIVITO com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no CONDOMÍNIO OLIVITO em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no CONDOMÍNIO OLIVITO com atendimento personalizado.',
   keywords: [
     'imóveis condomínio olivito franca sp', 'casas condomínio olivito franca', 'apartamentos condomínio olivito franca',
     'comprar casa condomínio olivito franca sp', 'alugar condomínio olivito franca sp',

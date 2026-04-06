@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no Residencial Meireles  Espaços gourmet  Piscina, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no Residencial Meireles  Espaços gourmet  Piscina em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no Residencial Meireles  Espaços gourmet  Piscina com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no Residencial Meireles  Espaços gourmet  Piscina em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no Residencial Meireles  Espaços gourmet  Piscina com atendimento personalizado.',
   keywords: [
     'imóveis residencial meireles  espaços gourmet  piscina franca sp', 'casas residencial meireles  espaços gourmet  piscina franca', 'apartamentos residencial meireles  espaços gourmet  piscina franca',
     'comprar casa residencial meireles  espaços gourmet  piscina franca sp', 'alugar residencial meireles  espaços gourmet  piscina franca sp',

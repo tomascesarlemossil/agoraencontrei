@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no residencial com aproximadamente, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no residencial com aproximadamente em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no residencial com aproximadamente com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no residencial com aproximadamente em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no residencial com aproximadamente com atendimento personalizado.',
   keywords: [
     'imóveis residencial com aproximadamente franca sp', 'casas residencial com aproximadamente franca', 'apartamentos residencial com aproximadamente franca',
     'comprar casa residencial com aproximadamente franca sp', 'alugar residencial com aproximadamente franca sp',

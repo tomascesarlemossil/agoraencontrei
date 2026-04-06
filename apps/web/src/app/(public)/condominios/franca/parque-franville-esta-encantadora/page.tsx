@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no Parque Franville  Esta encantadora, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no Parque Franville  Esta encantadora em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no Parque Franville  Esta encantadora com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no Parque Franville  Esta encantadora em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no Parque Franville  Esta encantadora com atendimento personalizado.',
   keywords: [
     'imóveis parque franville  esta encantadora franca sp', 'casas parque franville  esta encantadora franca', 'apartamentos parque franville  esta encantadora franca',
     'comprar casa parque franville  esta encantadora franca sp', 'alugar parque franville  esta encantadora franca sp',

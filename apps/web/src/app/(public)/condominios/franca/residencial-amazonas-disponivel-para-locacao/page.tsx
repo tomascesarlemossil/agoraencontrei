@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no RESIDENCIAL AMAZONAS DISPONIVEL PARA LOCAÇÃO, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no RESIDENCIAL AMAZONAS DISPONIVEL PARA LOCAÇÃO em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no RESIDENCIAL AMAZONAS DISPONIVEL PARA LOCAÇÃO com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no RESIDENCIAL AMAZONAS DISPONIVEL PARA LOCAÇÃO em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no RESIDENCIAL AMAZONAS DISPONIVEL PARA LOCAÇÃO com atendimento personalizado.',
   keywords: [
     'imóveis residencial amazonas disponivel para locação franca sp', 'casas residencial amazonas disponivel para locação franca', 'apartamentos residencial amazonas disponivel para locação franca',
     'comprar casa residencial amazonas disponivel para locação franca sp', 'alugar residencial amazonas disponivel para locação franca sp',

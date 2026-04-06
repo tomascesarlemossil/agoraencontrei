@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no PARQUE PROGESSO PRÓXIMO A, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no PARQUE PROGESSO PRÓXIMO A em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no PARQUE PROGESSO PRÓXIMO A com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no PARQUE PROGESSO PRÓXIMO A em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no PARQUE PROGESSO PRÓXIMO A com atendimento personalizado.',
   keywords: [
     'imóveis parque progesso próximo a franca sp', 'casas parque progesso próximo a franca', 'apartamentos parque progesso próximo a franca',
     'comprar casa parque progesso próximo a franca sp', 'alugar parque progesso próximo a franca sp',

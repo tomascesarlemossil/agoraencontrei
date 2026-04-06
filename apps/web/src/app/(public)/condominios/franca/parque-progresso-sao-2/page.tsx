@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no PARQUE PROGRESSO  São 2, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no PARQUE PROGRESSO  São 2 em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no PARQUE PROGRESSO  São 2 com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no PARQUE PROGRESSO  São 2 em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no PARQUE PROGRESSO  São 2 com atendimento personalizado.',
   keywords: [
     'imóveis parque progresso  são 2 franca sp', 'casas parque progresso  são 2 franca', 'apartamentos parque progresso  são 2 franca',
     'comprar casa parque progresso  são 2 franca sp', 'alugar parque progresso  são 2 franca sp',

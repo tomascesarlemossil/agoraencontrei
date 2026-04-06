@@ -4,11 +4,11 @@ import { ArrowRight, MapPin, Home, MessageCircle, Phone, Star, Search } from 'lu
 
 export const metadata: Metadata = {
   title: 'Avaliação de Imóveis em Franca/SP | Imobiliária Lemos Franca/SP',
-  description: 'Avaliação gratuita de imóveis em Franca/SP pela Imobiliária Lemos. Saiba o valor real do seu imóvel para vender, alugar ou financiar. CRECI 279051.',
+  description: 'Avaliação gratuita de imóveis em Franca/SP pela Imobiliária Lemos. Saiba o valor real do seu imóvel para vender, alugar ou financiar..',
   keywords: ["avaliação imóvel franca sp", "avaliar imóvel franca sp", "valor imóvel franca sp", "quanto vale meu imóvel franca", "avaliação gratuita imóvel franca", "preço imóvel franca sp", "avaliação imobiliária franca", "laudo avaliação imóvel franca sp", "perito avaliador franca sp", "avaliação casa franca sp"],
   openGraph: {
     title: 'Avaliação de Imóveis em Franca/SP | Imobiliária Lemos Franca/SP',
-    description: 'Avaliação gratuita de imóveis em Franca/SP pela Imobiliária Lemos. Saiba o valor real do seu imóvel para vender, alugar ou financiar. CRECI 279051.',
+    description: 'Avaliação gratuita de imóveis em Franca/SP pela Imobiliária Lemos. Saiba o valor real do seu imóvel para vender, alugar ou financiar..',
     type: 'website', locale: 'pt_BR', siteName: 'AgoraEncontrei — Imobiliária Lemos',
   },
   alternates: { canonical: 'https://www.agoraencontrei.com.br/avaliacao-imoveis-franca-sp' },
@@ -20,7 +20,7 @@ const SCHEMA = {
   '@type': 'LocalBusiness',
   '@id': 'https://www.agoraencontrei.com.br/avaliacao-imoveis-franca-sp',
   name: 'Imobiliária Lemos — Avaliação de Imóveis em Franca/SP',
-  description: 'Avaliação gratuita de imóveis em Franca/SP pela Imobiliária Lemos. Saiba o valor real do seu imóvel para vender, alugar ou financiar. CRECI 279051.',
+  description: 'Avaliação gratuita de imóveis em Franca/SP pela Imobiliária Lemos. Saiba o valor real do seu imóvel para vender, alugar ou financiar..',
   url: 'https://www.agoraencontrei.com.br/avaliacao-imoveis-franca-sp',
   telephone: '+55-16-3723-0045',
   address: {

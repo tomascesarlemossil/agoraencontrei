@@ -4,11 +4,11 @@ import { ArrowRight, MapPin, Home, MessageCircle, Phone, Star, Search } from 'lu
 
 export const metadata: Metadata = {
   title: 'Decoração de Interiores em Franca/SP | Imobiliária Lemos Franca/SP',
-  description: 'Decoração de interiores em Franca/SP: designers, móveis planejados, iluminação e acabamentos. Imobiliária Lemos conecta você ao melhor do mercado imobiliário de Franca. CRECI 279051.',
+  description: 'Decoração de interiores em Franca/SP: designers, móveis planejados, iluminação e acabamentos. Imobiliária Lemos conecta você ao melhor do mercado imobiliário de Franca..',
   keywords: ["decoração interiores franca sp", "designer interiores franca sp", "móveis planejados franca sp", "decoração residencial franca", "decoração apartamento franca sp", "iluminação residencial franca", "acabamentos imóvel franca sp", "decoração casa franca sp", "home staging franca sp", "decoração comercial franca sp"],
   openGraph: {
     title: 'Decoração de Interiores em Franca/SP | Imobiliária Lemos Franca/SP',
-    description: 'Decoração de interiores em Franca/SP: designers, móveis planejados, iluminação e acabamentos. Imobiliária Lemos conecta você ao melhor do mercado imobiliário de Franca. CRECI 279051.',
+    description: 'Decoração de interiores em Franca/SP: designers, móveis planejados, iluminação e acabamentos. Imobiliária Lemos conecta você ao melhor do mercado imobiliário de Franca..',
     type: 'website', locale: 'pt_BR', siteName: 'AgoraEncontrei — Imobiliária Lemos',
   },
   alternates: { canonical: 'https://www.agoraencontrei.com.br/decoracao-de-interiores-franca-sp' },
@@ -20,7 +20,7 @@ const SCHEMA = {
   '@type': 'LocalBusiness',
   '@id': 'https://www.agoraencontrei.com.br/decoracao-de-interiores-franca-sp',
   name: 'Imobiliária Lemos — Decoração de Interiores em Franca/SP',
-  description: 'Decoração de interiores em Franca/SP: designers, móveis planejados, iluminação e acabamentos. Imobiliária Lemos conecta você ao melhor do mercado imobiliário de Franca. CRECI 279051.',
+  description: 'Decoração de interiores em Franca/SP: designers, móveis planejados, iluminação e acabamentos. Imobiliária Lemos conecta você ao melhor do mercado imobiliário de Franca..',
   url: 'https://www.agoraencontrei.com.br/decoracao-de-interiores-franca-sp',
   telephone: '+55-16-3723-0045',
   address: {

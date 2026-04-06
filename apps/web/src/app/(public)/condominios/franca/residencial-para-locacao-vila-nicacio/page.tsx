@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no residencial para Locação Vila Nicácio, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no residencial para Locação Vila Nicácio em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no residencial para Locação Vila Nicácio com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no residencial para Locação Vila Nicácio em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no residencial para Locação Vila Nicácio com atendimento personalizado.',
   keywords: [
     'imóveis residencial para locação vila nicácio franca sp', 'casas residencial para locação vila nicácio franca', 'apartamentos residencial para locação vila nicácio franca',
     'comprar casa residencial para locação vila nicácio franca sp', 'alugar residencial para locação vila nicácio franca sp',

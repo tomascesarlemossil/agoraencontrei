@@ -4,11 +4,11 @@ import { ArrowRight, MapPin, Home, MessageCircle, Phone, Star, Search } from 'lu
 
 export const metadata: Metadata = {
   title: 'Terrenos à Venda em Franca/SP | Imobiliária Lemos Franca/SP',
-  description: 'Encontre terrenos à venda em Franca/SP com a Imobiliária Lemos. Lotes residenciais, comerciais e industriais em todos os bairros. Financiamento disponível. CRECI 279051.',
+  description: 'Encontre terrenos à venda em Franca/SP com a Imobiliária Lemos. Lotes residenciais, comerciais e industriais em todos os bairros. Financiamento disponível..',
   keywords: ["terrenos à venda franca sp", "terreno à venda franca", "comprar terreno franca sp", "lote franca sp", "loteamento franca sp", "terreno residencial franca sp", "terreno comercial franca sp", "terreno industrial franca sp", "lote barato franca sp", "terreno condomínio franca sp"],
   openGraph: {
     title: 'Terrenos à Venda em Franca/SP | Imobiliária Lemos Franca/SP',
-    description: 'Encontre terrenos à venda em Franca/SP com a Imobiliária Lemos. Lotes residenciais, comerciais e industriais em todos os bairros. Financiamento disponível. CRECI 279051.',
+    description: 'Encontre terrenos à venda em Franca/SP com a Imobiliária Lemos. Lotes residenciais, comerciais e industriais em todos os bairros. Financiamento disponível..',
     type: 'website', locale: 'pt_BR', siteName: 'AgoraEncontrei — Imobiliária Lemos',
   },
   alternates: { canonical: 'https://www.agoraencontrei.com.br/terrenos-a-venda-franca-sp' },
@@ -20,7 +20,7 @@ const SCHEMA = {
   '@type': 'LocalBusiness',
   '@id': 'https://www.agoraencontrei.com.br/terrenos-a-venda-franca-sp',
   name: 'Imobiliária Lemos — Terrenos à Venda em Franca/SP',
-  description: 'Encontre terrenos à venda em Franca/SP com a Imobiliária Lemos. Lotes residenciais, comerciais e industriais em todos os bairros. Financiamento disponível. CRECI 279051.',
+  description: 'Encontre terrenos à venda em Franca/SP com a Imobiliária Lemos. Lotes residenciais, comerciais e industriais em todos os bairros. Financiamento disponível..',
   url: 'https://www.agoraencontrei.com.br/terrenos-a-venda-franca-sp',
   telephone: '+55-16-3723-0045',
   address: {

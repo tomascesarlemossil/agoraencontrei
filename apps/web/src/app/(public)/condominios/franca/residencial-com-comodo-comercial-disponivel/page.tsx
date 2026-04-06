@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no RESIDENCIAL COM COMODO COMERCIAL  DISPONÍVEL, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no RESIDENCIAL COM COMODO COMERCIAL  DISPONÍVEL em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no RESIDENCIAL COM COMODO COMERCIAL  DISPONÍVEL com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no RESIDENCIAL COM COMODO COMERCIAL  DISPONÍVEL em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no RESIDENCIAL COM COMODO COMERCIAL  DISPONÍVEL com atendimento personalizado.',
   keywords: [
     'imóveis residencial com comodo comercial  disponível franca sp', 'casas residencial com comodo comercial  disponível franca', 'apartamentos residencial com comodo comercial  disponível franca',
     'comprar casa residencial com comodo comercial  disponível franca sp', 'alugar residencial com comodo comercial  disponível franca sp',

@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no CONDOMÍNIO VILLAGE RESIDENCE NO NOÊMIA, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no CONDOMÍNIO VILLAGE RESIDENCE NO NOÊMIA em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no CONDOMÍNIO VILLAGE RESIDENCE NO NOÊMIA com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no CONDOMÍNIO VILLAGE RESIDENCE NO NOÊMIA em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no CONDOMÍNIO VILLAGE RESIDENCE NO NOÊMIA com atendimento personalizado.',
   keywords: [
     'imóveis condomínio village residence no noêmia franca sp', 'casas condomínio village residence no noêmia franca', 'apartamentos condomínio village residence no noêmia franca',
     'comprar casa condomínio village residence no noêmia franca sp', 'alugar condomínio village residence no noêmia franca sp',

@@ -3,7 +3,7 @@ import type { Metadata } from 'next'
 export const metadata: Metadata = {
   title: 'Contato',
   description:
-    'Entre em contato com a Imobiliária Lemos em Franca/SP. Fale conosco por telefone, WhatsApp ou formulário online. Atendimento de segunda a sábado. CRECI 279051.',
+    'Entre em contato com a Imobiliária Lemos em Franca/SP. Fale conosco por telefone, WhatsApp ou formulário online. Atendimento de segunda a sábado..',
   keywords: 'contato imobiliária lemos, imobiliária franca telefone, whatsapp imobiliária franca, falar com corretor franca',
   openGraph: {
     title: 'Contato | AgoraEncontrei — Imobiliária Lemos',

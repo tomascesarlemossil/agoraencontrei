@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no residencial para Locação Centro, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no residencial para Locação Centro em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no residencial para Locação Centro com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no residencial para Locação Centro em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no residencial para Locação Centro com atendimento personalizado.',
   keywords: [
     'imóveis residencial para locação centro franca sp', 'casas residencial para locação centro franca', 'apartamentos residencial para locação centro franca',
     'comprar casa residencial para locação centro franca sp', 'alugar residencial para locação centro franca sp',

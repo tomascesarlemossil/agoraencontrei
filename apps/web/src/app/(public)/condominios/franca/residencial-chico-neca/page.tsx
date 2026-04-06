@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no RESIDENCIAL CHICO NECA, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no RESIDENCIAL CHICO NECA em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no RESIDENCIAL CHICO NECA com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no RESIDENCIAL CHICO NECA em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no RESIDENCIAL CHICO NECA com atendimento personalizado.',
   keywords: [
     'imóveis residencial chico neca franca sp', 'casas residencial chico neca franca', 'apartamentos residencial chico neca franca',
     'comprar casa residencial chico neca franca sp', 'alugar residencial chico neca franca sp',

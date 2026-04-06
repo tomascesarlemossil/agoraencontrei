@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no RESIDENCIAL NATAL III, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no RESIDENCIAL NATAL III em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no RESIDENCIAL NATAL III com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no RESIDENCIAL NATAL III em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no RESIDENCIAL NATAL III com atendimento personalizado.',
   keywords: [
     'imóveis residencial natal iii franca sp', 'casas residencial natal iii franca', 'apartamentos residencial natal iii franca',
     'comprar casa residencial natal iii franca sp', 'alugar residencial natal iii franca sp',

@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no RESIDENCIAL NO BAIRRO SÃO JOSÉ, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no RESIDENCIAL NO BAIRRO SÃO JOSÉ em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no RESIDENCIAL NO BAIRRO SÃO JOSÉ com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no RESIDENCIAL NO BAIRRO SÃO JOSÉ em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no RESIDENCIAL NO BAIRRO SÃO JOSÉ com atendimento personalizado.',
   keywords: [
     'imóveis residencial no bairro são josé franca sp', 'casas residencial no bairro são josé franca', 'apartamentos residencial no bairro são josé franca',
     'comprar casa residencial no bairro são josé franca sp', 'alugar residencial no bairro são josé franca sp',

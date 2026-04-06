@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no Residencial Monaco, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no Residencial Monaco em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no Residencial Monaco com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no Residencial Monaco em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no Residencial Monaco com atendimento personalizado.',
   keywords: [
     'imóveis residencial monaco franca sp', 'casas residencial monaco franca', 'apartamentos residencial monaco franca',
     'comprar casa residencial monaco franca sp', 'alugar residencial monaco franca sp',

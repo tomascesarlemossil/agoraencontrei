@@ -5,13 +5,13 @@ import { Users, Home, Award, Shield, Eye, Heart, Building2, ChevronRight } from 
 export const metadata: Metadata = {
   title: 'Sobre Nós | AgoraEncontrei — Imobiliária Lemos — Franca/SP',
   description:
-    'Conheça o AgoraEncontrei, marketplace imobiliário fundado em 2026 por Tomás Lemos, através da Imobiliária Lemos — criada por Noêmia em 2002 em Franca/SP. Mais de 22 anos de experiência, 1.000+ imóveis administrados e equipe de 10+ profissionais. CRECI 279051.',
+    'Conheça o AgoraEncontrei, marketplace imobiliário fundado em 2026 por Tomás Lemos, através da Imobiliária Lemos — criada por Noêmia em 2002 em Franca/SP. Mais de 22 anos de experiência, 1.000+ imóveis administrados e equipe de 10+ profissionais..',
   keywords: [
     'AgoraEncontrei',
     'Imobiliária Lemos',
     'sobre nós',
     'Franca SP',
-    'CRECI 279051',
+    '',
     'Noêmia Pires Lemos',
     'Tomás Lemos',
     'marketplace imobiliário',
@@ -178,7 +178,7 @@ export default function SobrePage() {
                     Noêmia Pires Lemos
                   </p>
                   <p className="text-sm" style={{ color: '#C9A84C' }}>
-                    Diretora Fundadora · CRECI 279051-F
+                    Diretora Fundadora ·-F
                   </p>
                 </div>
               </div>

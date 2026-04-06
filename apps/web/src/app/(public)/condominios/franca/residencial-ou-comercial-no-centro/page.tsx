@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no RESIDENCIAL OU COMERCIAL NO CENTRO, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no RESIDENCIAL OU COMERCIAL NO CENTRO em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no RESIDENCIAL OU COMERCIAL NO CENTRO com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no RESIDENCIAL OU COMERCIAL NO CENTRO em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no RESIDENCIAL OU COMERCIAL NO CENTRO com atendimento personalizado.',
   keywords: [
     'imóveis residencial ou comercial no centro franca sp', 'casas residencial ou comercial no centro franca', 'apartamentos residencial ou comercial no centro franca',
     'comprar casa residencial ou comercial no centro franca sp', 'alugar residencial ou comercial no centro franca sp',

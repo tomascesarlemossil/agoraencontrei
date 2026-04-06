@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no RESIDENCIAL JOSÉ DE CARLOS, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no RESIDENCIAL JOSÉ DE CARLOS em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no RESIDENCIAL JOSÉ DE CARLOS com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no RESIDENCIAL JOSÉ DE CARLOS em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no RESIDENCIAL JOSÉ DE CARLOS com atendimento personalizado.',
   keywords: [
     'imóveis residencial josé de carlos franca sp', 'casas residencial josé de carlos franca', 'apartamentos residencial josé de carlos franca',
     'comprar casa residencial josé de carlos franca sp', 'alugar residencial josé de carlos franca sp',

@@ -6,7 +6,7 @@ import { LoadMoreProperties } from './LoadMoreProperties'
 
 export const metadata: Metadata = {
   title: 'Imóveis à Venda e Aluguel em Franca/SP',
-  description: 'Encontre casas à venda, apartamentos para alugar, terrenos e imóveis comerciais em Franca/SP e região. AgoraEncontrei — Imobiliária Lemos. CRECI 279051. 1.000+ imóveis com busca por IA e mapa interativo.',
+  description: 'Encontre casas à venda, apartamentos para alugar, terrenos e imóveis comerciais em Franca/SP e região. AgoraEncontrei — Imobiliária Lemos.. 1.000+ imóveis com busca por IA e mapa interativo.',
   keywords: 'imóveis franca sp, casas à venda franca sp, apartamentos para alugar franca sp, comprar casa franca sp, alugar apartamento franca sp, terrenos à venda franca sp, imóveis comerciais franca sp, casas franca bairros, apartamentos franca bairros, imóvel franca creci, imobiliária franca sp, agoraencontrei imóveis, marketplace imobiliário franca, busca imóvel IA, casas baratas franca sp, apartamentos baratos franca sp, imóveis novos franca sp, casas 3 quartos franca sp, condomínio franca sp, sobrado franca sp, terreno loteamento franca sp, sala comercial franca sp',
   openGraph: {
     title: 'Imóveis à Venda e Aluguel em Franca/SP | AgoraEncontrei',

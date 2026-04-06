@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no RESIDENCIAL ANA DOROTHÉIA MOBILIADO, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no RESIDENCIAL ANA DOROTHÉIA MOBILIADO em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no RESIDENCIAL ANA DOROTHÉIA MOBILIADO com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no RESIDENCIAL ANA DOROTHÉIA MOBILIADO em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no RESIDENCIAL ANA DOROTHÉIA MOBILIADO com atendimento personalizado.',
   keywords: [
     'imóveis residencial ana dorothéia mobiliado franca sp', 'casas residencial ana dorothéia mobiliado franca', 'apartamentos residencial ana dorothéia mobiliado franca',
     'comprar casa residencial ana dorothéia mobiliado franca sp', 'alugar residencial ana dorothéia mobiliado franca sp',

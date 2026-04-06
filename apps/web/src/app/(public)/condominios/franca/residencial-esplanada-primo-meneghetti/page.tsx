@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no Residencial Esplanada Primo Meneghetti, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no Residencial Esplanada Primo Meneghetti em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no Residencial Esplanada Primo Meneghetti com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no Residencial Esplanada Primo Meneghetti em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no Residencial Esplanada Primo Meneghetti com atendimento personalizado.',
   keywords: [
     'imóveis residencial esplanada primo meneghetti franca sp', 'casas residencial esplanada primo meneghetti franca', 'apartamentos residencial esplanada primo meneghetti franca',
     'comprar casa residencial esplanada primo meneghetti franca sp', 'alugar residencial esplanada primo meneghetti franca sp',

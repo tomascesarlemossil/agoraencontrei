@@ -131,7 +131,7 @@ export default async function BairroPage({ params }: { params: { cidade: string;
         name: `A Imobiliária Lemos atende o bairro ${bairroName}?`,
         acceptedAnswer: {
           '@type': 'Answer',
-          text: `Sim! A Imobiliária Lemos atende todo o ${bairroName} e demais bairros de ${cityName}/${estado}. Somos credenciados pelo CRECI 279051.`,
+          text: `Sim! A Imobiliária Lemos atende todo o ${bairroName} e demais bairros de ${cityName}/${estado}. Somos credenciados pelo.`,
         },
       },
     ],
@@ -236,7 +236,7 @@ export default async function BairroPage({ params }: { params: { cidade: string;
                 </h3>
                 <p className="text-gray-600 text-sm">
                   Sim! Atendemos todo o {bairroName} e demais bairros de {cityName}/{estado}.
-                  Somos credenciados pelo <strong>CRECI 279051</strong> e atuamos na região há décadas.
+                  Somos credenciados pelo <strong></strong> e atuamos na região há décadas.
                 </p>
               </div>
             </div>

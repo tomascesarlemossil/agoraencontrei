@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no EDIFÍCIO JARDIM ALTO DA COLINA, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no EDIFÍCIO JARDIM ALTO DA COLINA em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no EDIFÍCIO JARDIM ALTO DA COLINA com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no EDIFÍCIO JARDIM ALTO DA COLINA em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no EDIFÍCIO JARDIM ALTO DA COLINA com atendimento personalizado.',
   keywords: [
     'imóveis edifício jardim alto da colina franca sp', 'casas edifício jardim alto da colina franca', 'apartamentos edifício jardim alto da colina franca',
     'comprar casa edifício jardim alto da colina franca sp', 'alugar edifício jardim alto da colina franca sp',

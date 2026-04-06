@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no VILLAGE SANTA GOERGINA, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no VILLAGE SANTA GOERGINA em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no VILLAGE SANTA GOERGINA com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no VILLAGE SANTA GOERGINA em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no VILLAGE SANTA GOERGINA com atendimento personalizado.',
   keywords: [
     'imóveis village santa goergina franca sp', 'casas village santa goergina franca', 'apartamentos village santa goergina franca',
     'comprar casa village santa goergina franca sp', 'alugar village santa goergina franca sp',

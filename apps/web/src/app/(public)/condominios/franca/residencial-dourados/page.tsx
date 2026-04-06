@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no Residencial Dourados, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no Residencial Dourados em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no Residencial Dourados com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no Residencial Dourados em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no Residencial Dourados com atendimento personalizado.',
   keywords: [
     'imóveis residencial dourados franca sp', 'casas residencial dourados franca', 'apartamentos residencial dourados franca',
     'comprar casa residencial dourados franca sp', 'alugar residencial dourados franca sp',

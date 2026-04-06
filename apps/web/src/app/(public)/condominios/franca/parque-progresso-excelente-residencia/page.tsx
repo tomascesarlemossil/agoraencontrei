@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no PARQUE PROGRESSO   Excelente residência, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no PARQUE PROGRESSO   Excelente residência em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no PARQUE PROGRESSO   Excelente residência com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no PARQUE PROGRESSO   Excelente residência em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no PARQUE PROGRESSO   Excelente residência com atendimento personalizado.',
   keywords: [
     'imóveis parque progresso   excelente residência franca sp', 'casas parque progresso   excelente residência franca', 'apartamentos parque progresso   excelente residência franca',
     'comprar casa parque progresso   excelente residência franca sp', 'alugar parque progresso   excelente residência franca sp',

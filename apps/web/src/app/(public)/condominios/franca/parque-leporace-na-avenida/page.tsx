@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no PARQUE LEPORACE NA AVENIDA, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no PARQUE LEPORACE NA AVENIDA em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no PARQUE LEPORACE NA AVENIDA com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no PARQUE LEPORACE NA AVENIDA em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no PARQUE LEPORACE NA AVENIDA com atendimento personalizado.',
   keywords: [
     'imóveis parque leporace na avenida franca sp', 'casas parque leporace na avenida franca', 'apartamentos parque leporace na avenida franca',
     'comprar casa parque leporace na avenida franca sp', 'alugar parque leporace na avenida franca sp',

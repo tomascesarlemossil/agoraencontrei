@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no RESIDENCIAL FLAMBOYANT, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no RESIDENCIAL FLAMBOYANT em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no RESIDENCIAL FLAMBOYANT com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no RESIDENCIAL FLAMBOYANT em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no RESIDENCIAL FLAMBOYANT com atendimento personalizado.',
   keywords: [
     'imóveis residencial flamboyant franca sp', 'casas residencial flamboyant franca', 'apartamentos residencial flamboyant franca',
     'comprar casa residencial flamboyant franca sp', 'alugar residencial flamboyant franca sp',

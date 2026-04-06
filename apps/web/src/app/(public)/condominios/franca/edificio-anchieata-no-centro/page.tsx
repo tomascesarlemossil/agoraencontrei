@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no EDIFÍCIO ANCHIEATA NO CENTRO, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no EDIFÍCIO ANCHIEATA NO CENTRO em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no EDIFÍCIO ANCHIEATA NO CENTRO com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no EDIFÍCIO ANCHIEATA NO CENTRO em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no EDIFÍCIO ANCHIEATA NO CENTRO com atendimento personalizado.',
   keywords: [
     'imóveis edifício anchieata no centro franca sp', 'casas edifício anchieata no centro franca', 'apartamentos edifício anchieata no centro franca',
     'comprar casa edifício anchieata no centro franca sp', 'alugar edifício anchieata no centro franca sp',

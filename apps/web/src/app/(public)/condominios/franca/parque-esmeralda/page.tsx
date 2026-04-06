@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no PARQUE ESMERALDA, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no PARQUE ESMERALDA em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no PARQUE ESMERALDA com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no PARQUE ESMERALDA em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no PARQUE ESMERALDA com atendimento personalizado.',
   keywords: [
     'imóveis parque esmeralda franca sp', 'casas parque esmeralda franca', 'apartamentos parque esmeralda franca',
     'comprar casa parque esmeralda franca sp', 'alugar parque esmeralda franca sp',

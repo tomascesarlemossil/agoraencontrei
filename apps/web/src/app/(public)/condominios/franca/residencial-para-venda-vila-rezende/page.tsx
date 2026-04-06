@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no residencial para Venda Vila Rezende, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no residencial para Venda Vila Rezende em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no residencial para Venda Vila Rezende com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no residencial para Venda Vila Rezende em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no residencial para Venda Vila Rezende com atendimento personalizado.',
   keywords: [
     'imóveis residencial para venda vila rezende franca sp', 'casas residencial para venda vila rezende franca', 'apartamentos residencial para venda vila rezende franca',
     'comprar casa residencial para venda vila rezende franca sp', 'alugar residencial para venda vila rezende franca sp',

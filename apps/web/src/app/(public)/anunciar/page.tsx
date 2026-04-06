@@ -4,7 +4,7 @@ import { AnunciarForm } from './AnunciarForm'
 
 export const metadata: Metadata = {
   title: 'Anuncie seu Imóvel Grátis em Franca/SP | AgoraEncontrei',
-  description: 'Cadastre seu imóvel para venda ou locação no AgoraEncontrei — marketplace da Imobiliária Lemos. Anúncio gratuito, ampla divulgação e CRECI 279051.',
+  description: 'Cadastre seu imóvel para venda ou locação no AgoraEncontrei — marketplace da Imobiliária Lemos. Anúncio gratuito, ampla divulgação e.',
   keywords: 'anunciar imóvel grátis, anunciar imóvel franca, cadastrar imóvel franca sp, vender casa franca, alugar imóvel franca, agoraencontrei anunciar, marketplace imobiliário franca',
   openGraph: {
     title: 'Anuncie seu Imóvel Grátis | AgoraEncontrei — Imobiliária Lemos',

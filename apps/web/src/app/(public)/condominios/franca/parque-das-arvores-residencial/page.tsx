@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no PARQUE DAS ARVORES RESIDENCIAL, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no PARQUE DAS ARVORES RESIDENCIAL em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no PARQUE DAS ARVORES RESIDENCIAL com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no PARQUE DAS ARVORES RESIDENCIAL em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no PARQUE DAS ARVORES RESIDENCIAL com atendimento personalizado.',
   keywords: [
     'imóveis parque das arvores residencial franca sp', 'casas parque das arvores residencial franca', 'apartamentos parque das arvores residencial franca',
     'comprar casa parque das arvores residencial franca sp', 'alugar parque das arvores residencial franca sp',

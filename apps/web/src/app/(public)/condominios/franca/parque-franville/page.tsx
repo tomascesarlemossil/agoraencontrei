@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no PARQUE FRANVILLE, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no PARQUE FRANVILLE em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no PARQUE FRANVILLE com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no PARQUE FRANVILLE em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no PARQUE FRANVILLE com atendimento personalizado.',
   keywords: [
     'imóveis parque franville franca sp', 'casas parque franville franca', 'apartamentos parque franville franca',
     'comprar casa parque franville franca sp', 'alugar parque franville franca sp',

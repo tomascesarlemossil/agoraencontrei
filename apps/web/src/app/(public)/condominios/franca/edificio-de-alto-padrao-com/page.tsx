@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no Edifício de alto padrão com, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no Edifício de alto padrão com em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no Edifício de alto padrão com com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no Edifício de alto padrão com em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no Edifício de alto padrão com com atendimento personalizado.',
   keywords: [
     'imóveis edifício de alto padrão com franca sp', 'casas edifício de alto padrão com franca', 'apartamentos edifício de alto padrão com franca',
     'comprar casa edifício de alto padrão com franca sp', 'alugar edifício de alto padrão com franca sp',

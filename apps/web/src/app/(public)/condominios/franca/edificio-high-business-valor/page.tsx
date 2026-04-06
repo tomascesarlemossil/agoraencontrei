@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no EDIFÍCIO HIGH BUSINESS  Valor, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no EDIFÍCIO HIGH BUSINESS  Valor em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no EDIFÍCIO HIGH BUSINESS  Valor com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no EDIFÍCIO HIGH BUSINESS  Valor em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no EDIFÍCIO HIGH BUSINESS  Valor com atendimento personalizado.',
   keywords: [
     'imóveis edifício high business  valor franca sp', 'casas edifício high business  valor franca', 'apartamentos edifício high business  valor franca',
     'comprar casa edifício high business  valor franca sp', 'alugar edifício high business  valor franca sp',

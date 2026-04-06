@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no residencial para Venda Jardim Tres, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no residencial para Venda Jardim Tres em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no residencial para Venda Jardim Tres com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no residencial para Venda Jardim Tres em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no residencial para Venda Jardim Tres com atendimento personalizado.',
   keywords: [
     'imóveis residencial para venda jardim tres franca sp', 'casas residencial para venda jardim tres franca', 'apartamentos residencial para venda jardim tres franca',
     'comprar casa residencial para venda jardim tres franca sp', 'alugar residencial para venda jardim tres franca sp',

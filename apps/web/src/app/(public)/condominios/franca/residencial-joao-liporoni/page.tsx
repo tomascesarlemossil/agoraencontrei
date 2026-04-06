@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no RESIDENCIAL JOÃO LIPORONI, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no RESIDENCIAL JOÃO LIPORONI em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no RESIDENCIAL JOÃO LIPORONI com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no RESIDENCIAL JOÃO LIPORONI em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no RESIDENCIAL JOÃO LIPORONI com atendimento personalizado.',
   keywords: [
     'imóveis residencial joão liporoni franca sp', 'casas residencial joão liporoni franca', 'apartamentos residencial joão liporoni franca',
     'comprar casa residencial joão liporoni franca sp', 'alugar residencial joão liporoni franca sp',

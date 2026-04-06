@@ -7,7 +7,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 
 export const metadata: Metadata = {
   title: 'Apartamentos para Alugar em Franca SP | Imobiliária Lemos',
-  description: 'Encontre apartamentos para alugar em Franca/SP com a Imobiliária Lemos. Kitinetes, studios, apartamentos com 1, 2 e 3 quartos. Próximos à UNESP, centro e principais bairros. CRECI 279051.',
+  description: 'Encontre apartamentos para alugar em Franca/SP com a Imobiliária Lemos. Kitinetes, studios, apartamentos com 1, 2 e 3 quartos. Próximos à UNESP, centro e principais bairros..',
   keywords: [
     'apartamentos para alugar franca sp', 'apartamento para alugar franca', 'aluguel apartamento franca sp',
     'alugar apartamento franca sp', 'apartamentos aluguel franca', 'apartamento aluguel franca sp',

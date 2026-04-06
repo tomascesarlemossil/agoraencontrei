@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no PARQUE MOEMA   excelente apartamento, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no PARQUE MOEMA   excelente apartamento em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no PARQUE MOEMA   excelente apartamento com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no PARQUE MOEMA   excelente apartamento em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no PARQUE MOEMA   excelente apartamento com atendimento personalizado.',
   keywords: [
     'imóveis parque moema   excelente apartamento franca sp', 'casas parque moema   excelente apartamento franca', 'apartamentos parque moema   excelente apartamento franca',
     'comprar casa parque moema   excelente apartamento franca sp', 'alugar parque moema   excelente apartamento franca sp',

@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no condomínio 324m2 de terreno 178m2, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no condomínio 324m2 de terreno 178m2 em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no condomínio 324m2 de terreno 178m2 com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no condomínio 324m2 de terreno 178m2 em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no condomínio 324m2 de terreno 178m2 com atendimento personalizado.',
   keywords: [
     'imóveis condomínio 324m2 de terreno 178m2 franca sp', 'casas condomínio 324m2 de terreno 178m2 franca', 'apartamentos condomínio 324m2 de terreno 178m2 franca',
     'comprar casa condomínio 324m2 de terreno 178m2 franca sp', 'alugar condomínio 324m2 de terreno 178m2 franca sp',

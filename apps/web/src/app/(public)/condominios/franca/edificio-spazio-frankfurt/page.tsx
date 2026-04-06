@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no EDIFÍCIO SPAZIO FRANKFURT, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no EDIFÍCIO SPAZIO FRANKFURT em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no EDIFÍCIO SPAZIO FRANKFURT com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no EDIFÍCIO SPAZIO FRANKFURT em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no EDIFÍCIO SPAZIO FRANKFURT com atendimento personalizado.',
   keywords: [
     'imóveis edifício spazio frankfurt franca sp', 'casas edifício spazio frankfurt franca', 'apartamentos edifício spazio frankfurt franca',
     'comprar casa edifício spazio frankfurt franca sp', 'alugar edifício spazio frankfurt franca sp',

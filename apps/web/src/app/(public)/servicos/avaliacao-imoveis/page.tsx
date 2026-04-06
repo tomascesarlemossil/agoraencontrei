@@ -4,7 +4,7 @@ import { BarChart3, CheckCircle2, Phone, Star, Shield, TrendingUp } from 'lucide
 
 export const metadata: Metadata = {
   title: 'Avaliação de Imóveis em Franca/SP — Gratuita | Imobiliária Lemos',
-  description: 'Avaliação gratuita de imóveis em Franca/SP. Saiba quanto vale sua casa, apartamento, terreno ou imóvel comercial. Laudo de avaliação imobiliária com CRECI 279051. Imobiliária Lemos — mais de 20 anos de experiência.',
+  description: 'Avaliação gratuita de imóveis em Franca/SP. Saiba quanto vale sua casa, apartamento, terreno ou imóvel comercial. Laudo de avaliação imobiliária com. Imobiliária Lemos — mais de 20 anos de experiência.',
   keywords: [
     'avaliação de imóvel franca sp', 'avaliação imobiliária franca', 'avaliar imóvel franca sp',
     'quanto vale meu imóvel franca', 'laudo de avaliação imóvel franca', 'avaliação gratuita imóvel franca',
@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   alternates: { canonical: 'https://www.agoraencontrei.com.br/servicos/avaliacao-imoveis' },
   openGraph: {
     title: 'Avaliação Gratuita de Imóveis em Franca/SP',
-    description: 'Saiba quanto vale seu imóvel gratuitamente. Avaliação profissional com CRECI 279051.',
+    description: 'Saiba quanto vale seu imóvel gratuitamente. Avaliação profissional com.',
     url: 'https://www.agoraencontrei.com.br/servicos/avaliacao-imoveis',
     siteName: 'AgoraEncontrei | Imobiliária Lemos',
     locale: 'pt_BR',

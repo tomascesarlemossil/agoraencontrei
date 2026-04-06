@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no EDIFÍCIO TAHITI, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no EDIFÍCIO TAHITI em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no EDIFÍCIO TAHITI com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no EDIFÍCIO TAHITI em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no EDIFÍCIO TAHITI com atendimento personalizado.',
   keywords: [
     'imóveis edifício tahiti franca sp', 'casas edifício tahiti franca', 'apartamentos edifício tahiti franca',
     'comprar casa edifício tahiti franca sp', 'alugar edifício tahiti franca sp',

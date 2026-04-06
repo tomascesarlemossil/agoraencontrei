@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no Residencial Tellini  Quadra 07, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no Residencial Tellini  Quadra 07 em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no Residencial Tellini  Quadra 07 com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no Residencial Tellini  Quadra 07 em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no Residencial Tellini  Quadra 07 com atendimento personalizado.',
   keywords: [
     'imóveis residencial tellini  quadra 07 franca sp', 'casas residencial tellini  quadra 07 franca', 'apartamentos residencial tellini  quadra 07 franca',
     'comprar casa residencial tellini  quadra 07 franca sp', 'alugar residencial tellini  quadra 07 franca sp',

@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no RESIDENCIAL GAIA, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no RESIDENCIAL GAIA em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no RESIDENCIAL GAIA com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no RESIDENCIAL GAIA em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no RESIDENCIAL GAIA com atendimento personalizado.',
   keywords: [
     'imóveis residencial gaia franca sp', 'casas residencial gaia franca', 'apartamentos residencial gaia franca',
     'comprar casa residencial gaia franca sp', 'alugar residencial gaia franca sp',

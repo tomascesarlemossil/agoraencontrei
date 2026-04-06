@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no EDIFÍCIO VILLAGIO DI VERONA, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no EDIFÍCIO VILLAGIO DI VERONA em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no EDIFÍCIO VILLAGIO DI VERONA com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no EDIFÍCIO VILLAGIO DI VERONA em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no EDIFÍCIO VILLAGIO DI VERONA com atendimento personalizado.',
   keywords: [
     'imóveis edifício villagio di verona franca sp', 'casas edifício villagio di verona franca', 'apartamentos edifício villagio di verona franca',
     'comprar casa edifício villagio di verona franca sp', 'alugar edifício villagio di verona franca sp',

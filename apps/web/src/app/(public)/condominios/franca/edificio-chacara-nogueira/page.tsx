@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no Edifício Chácara Nogueira, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no Edifício Chácara Nogueira em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no Edifício Chácara Nogueira com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no Edifício Chácara Nogueira em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no Edifício Chácara Nogueira com atendimento personalizado.',
   keywords: [
     'imóveis edifício chácara nogueira franca sp', 'casas edifício chácara nogueira franca', 'apartamentos edifício chácara nogueira franca',
     'comprar casa edifício chácara nogueira franca sp', 'alugar edifício chácara nogueira franca sp',

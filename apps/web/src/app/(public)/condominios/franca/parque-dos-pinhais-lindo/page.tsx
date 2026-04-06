@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no PARQUE DOS PINHAIS  Lindo, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no PARQUE DOS PINHAIS  Lindo em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no PARQUE DOS PINHAIS  Lindo com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no PARQUE DOS PINHAIS  Lindo em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no PARQUE DOS PINHAIS  Lindo com atendimento personalizado.',
   keywords: [
     'imóveis parque dos pinhais  lindo franca sp', 'casas parque dos pinhais  lindo franca', 'apartamentos parque dos pinhais  lindo franca',
     'comprar casa parque dos pinhais  lindo franca sp', 'alugar parque dos pinhais  lindo franca sp',

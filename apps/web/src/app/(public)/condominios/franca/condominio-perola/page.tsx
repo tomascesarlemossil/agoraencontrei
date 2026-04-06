@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no Condomínio Pérola, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no Condomínio Pérola em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no Condomínio Pérola com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no Condomínio Pérola em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no Condomínio Pérola com atendimento personalizado.',
   keywords: [
     'imóveis condomínio pérola franca sp', 'casas condomínio pérola franca', 'apartamentos condomínio pérola franca',
     'comprar casa condomínio pérola franca sp', 'alugar condomínio pérola franca sp',

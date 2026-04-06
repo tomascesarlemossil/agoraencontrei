@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no parque Moema  250 metros, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no parque Moema  250 metros em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no parque Moema  250 metros com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no parque Moema  250 metros em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no parque Moema  250 metros com atendimento personalizado.',
   keywords: [
     'imóveis parque moema  250 metros franca sp', 'casas parque moema  250 metros franca', 'apartamentos parque moema  250 metros franca',
     'comprar casa parque moema  250 metros franca sp', 'alugar parque moema  250 metros franca sp',

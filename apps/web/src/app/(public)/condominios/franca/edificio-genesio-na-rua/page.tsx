@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no EDIFÍCIO GENÉSIO NA RUA, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no EDIFÍCIO GENÉSIO NA RUA em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no EDIFÍCIO GENÉSIO NA RUA com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no EDIFÍCIO GENÉSIO NA RUA em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no EDIFÍCIO GENÉSIO NA RUA com atendimento personalizado.',
   keywords: [
     'imóveis edifício genésio na rua franca sp', 'casas edifício genésio na rua franca', 'apartamentos edifício genésio na rua franca',
     'comprar casa edifício genésio na rua franca sp', 'alugar edifício genésio na rua franca sp',

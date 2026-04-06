@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no EDIFÍCIO RJ HIGH LIVING, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no EDIFÍCIO RJ HIGH LIVING em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no EDIFÍCIO RJ HIGH LIVING com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no EDIFÍCIO RJ HIGH LIVING em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no EDIFÍCIO RJ HIGH LIVING com atendimento personalizado.',
   keywords: [
     'imóveis edifício rj high living franca sp', 'casas edifício rj high living franca', 'apartamentos edifício rj high living franca',
     'comprar casa edifício rj high living franca sp', 'alugar edifício rj high living franca sp',

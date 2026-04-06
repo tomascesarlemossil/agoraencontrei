@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no RESIDENCIAL SAO JERONIMO, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no RESIDENCIAL SAO JERONIMO em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no RESIDENCIAL SAO JERONIMO com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no RESIDENCIAL SAO JERONIMO em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no RESIDENCIAL SAO JERONIMO com atendimento personalizado.',
   keywords: [
     'imóveis residencial sao jeronimo franca sp', 'casas residencial sao jeronimo franca', 'apartamentos residencial sao jeronimo franca',
     'comprar casa residencial sao jeronimo franca sp', 'alugar residencial sao jeronimo franca sp',

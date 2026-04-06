@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no EDIFÍCIO BOULEVARD, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no EDIFÍCIO BOULEVARD em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no EDIFÍCIO BOULEVARD com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no EDIFÍCIO BOULEVARD em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no EDIFÍCIO BOULEVARD com atendimento personalizado.',
   keywords: [
     'imóveis edifício boulevard franca sp', 'casas edifício boulevard franca', 'apartamentos edifício boulevard franca',
     'comprar casa edifício boulevard franca sp', 'alugar edifício boulevard franca sp',

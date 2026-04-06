@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no condomínio Franca Garden para Locação, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no condomínio Franca Garden para Locação em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no condomínio Franca Garden para Locação com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no condomínio Franca Garden para Locação em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no condomínio Franca Garden para Locação com atendimento personalizado.',
   keywords: [
     'imóveis condomínio franca garden para locação franca sp', 'casas condomínio franca garden para locação franca', 'apartamentos condomínio franca garden para locação franca',
     'comprar casa condomínio franca garden para locação franca sp', 'alugar condomínio franca garden para locação franca sp',

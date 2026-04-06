@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no RESIDENCIAL ANNA TERRA, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no RESIDENCIAL ANNA TERRA em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no RESIDENCIAL ANNA TERRA com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no RESIDENCIAL ANNA TERRA em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no RESIDENCIAL ANNA TERRA com atendimento personalizado.',
   keywords: [
     'imóveis residencial anna terra franca sp', 'casas residencial anna terra franca', 'apartamentos residencial anna terra franca',
     'comprar casa residencial anna terra franca sp', 'alugar residencial anna terra franca sp',

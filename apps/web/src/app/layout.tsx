@@ -22,7 +22,7 @@ export const metadata: Metadata = {
     default: 'AgoraEncontrei | Imobiliária Lemos — Franca/SP | Comprar, Alugar e Avaliar Imóveis',
     template: '%s | Imobiliária Lemos — Franca/SP',
   },
-  description: 'AgoraEncontrei — Imobiliária Lemos em Franca/SP há mais de 20 anos. Encontre casas à venda, apartamentos para alugar, terrenos e imóveis comerciais. Residencial Amazonas, Villa Piemonte, Centro e todos os bairros. CRECI 279051.',
+  description: 'AgoraEncontrei — Imobiliária Lemos em Franca/SP há mais de 20 anos. Encontre casas à venda, apartamentos para alugar, terrenos e imóveis comerciais. Residencial Amazonas, Villa Piemonte, Centro e todos os bairros..',
   keywords: [
     // Marca dupla — AgoraEncontrei + Imobiliária Lemos
     'agoraencontrei', 'agora encontrei imóveis', 'agora encontrei imobiliária',
@@ -206,7 +206,7 @@ export const metadata: Metadata = {
     type: 'website',
     url: WEB_URL,
     title: 'AgoraEncontrei | Imobiliária Lemos — Franca/SP | Comprar, Alugar e Avaliar Imóveis',
-    description: 'AgoraEncontrei — Imobiliária Lemos em Franca/SP há mais de 20 anos. Casas à venda, apartamentos para alugar, terrenos e imóveis comerciais em todos os bairros de Franca. CRECI 279051.',
+    description: 'AgoraEncontrei — Imobiliária Lemos em Franca/SP há mais de 20 anos. Casas à venda, apartamentos para alugar, terrenos e imóveis comerciais em todos os bairros de Franca..',
     images: [
       {
         url: `${WEB_URL}/og-image.jpg`,
@@ -223,7 +223,7 @@ export const metadata: Metadata = {
     site: '@imobiliarialemos',
     creator: '@imobiliarialemos',
     title: 'AgoraEncontrei | Imobiliária Lemos — Franca/SP',
-    description: 'Imobiliária em Franca/SP há mais de 20 anos. Casas, apartamentos, terrenos e imóveis comerciais. CRECI 279051.',
+    description: 'Imobiliária em Franca/SP há mais de 20 anos. Casas, apartamentos, terrenos e imóveis comerciais..',
     images: [`${WEB_URL}/og-image.jpg`],
   },
   // ── Verificação Google / Facebook ─────────────────────────────────────────
@@ -308,7 +308,7 @@ const jsonLdBusiness = {
     bestRating: '5',
     worstRating: '1',
   },
-  award: 'CRECI 279051 — Conselho Regional de Corretores de Imóveis de São Paulo',
+  award: ' — Conselho Regional de Corretores de Imóveis de São Paulo',
 }
 
 // ── JSON-LD: WebSite com SearchAction (Google Sitelinks Searchbox) ────────────

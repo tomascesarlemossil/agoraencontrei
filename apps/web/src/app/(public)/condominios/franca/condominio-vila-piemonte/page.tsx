@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no Condomínio Vila Piemonte, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no Condomínio Vila Piemonte em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no Condomínio Vila Piemonte com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no Condomínio Vila Piemonte em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no Condomínio Vila Piemonte com atendimento personalizado.',
   keywords: [
     'imóveis condomínio vila piemonte franca sp', 'casas condomínio vila piemonte franca', 'apartamentos condomínio vila piemonte franca',
     'comprar casa condomínio vila piemonte franca sp', 'alugar condomínio vila piemonte franca sp',

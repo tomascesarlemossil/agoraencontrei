@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no RESIDENCIAL PARAÍSO UMA RUA ATRÁS, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no RESIDENCIAL PARAÍSO UMA RUA ATRÁS em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no RESIDENCIAL PARAÍSO UMA RUA ATRÁS com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no RESIDENCIAL PARAÍSO UMA RUA ATRÁS em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no RESIDENCIAL PARAÍSO UMA RUA ATRÁS com atendimento personalizado.',
   keywords: [
     'imóveis residencial paraíso uma rua atrás franca sp', 'casas residencial paraíso uma rua atrás franca', 'apartamentos residencial paraíso uma rua atrás franca',
     'comprar casa residencial paraíso uma rua atrás franca sp', 'alugar residencial paraíso uma rua atrás franca sp',

@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no RESIDENCIAL PALERMO  São, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no RESIDENCIAL PALERMO  São em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no RESIDENCIAL PALERMO  São com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no RESIDENCIAL PALERMO  São em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no RESIDENCIAL PALERMO  São com atendimento personalizado.',
   keywords: [
     'imóveis residencial palermo  são franca sp', 'casas residencial palermo  são franca', 'apartamentos residencial palermo  são franca',
     'comprar casa residencial palermo  são franca sp', 'alugar residencial palermo  são franca sp',

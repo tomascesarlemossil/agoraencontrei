@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no condomínio Antônio de Pádua  54m2, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no condomínio Antônio de Pádua  54m2 em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no condomínio Antônio de Pádua  54m2 com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no condomínio Antônio de Pádua  54m2 em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no condomínio Antônio de Pádua  54m2 com atendimento personalizado.',
   keywords: [
     'imóveis condomínio antônio de pádua  54m2 franca sp', 'casas condomínio antônio de pádua  54m2 franca', 'apartamentos condomínio antônio de pádua  54m2 franca',
     'comprar casa condomínio antônio de pádua  54m2 franca sp', 'alugar condomínio antônio de pádua  54m2 franca sp',

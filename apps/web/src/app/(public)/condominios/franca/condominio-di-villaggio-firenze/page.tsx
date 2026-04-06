@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no CONDOMÍNIO DI VILLAGGIO FIRENZE, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no CONDOMÍNIO DI VILLAGGIO FIRENZE em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no CONDOMÍNIO DI VILLAGGIO FIRENZE com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no CONDOMÍNIO DI VILLAGGIO FIRENZE em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no CONDOMÍNIO DI VILLAGGIO FIRENZE com atendimento personalizado.',
   keywords: [
     'imóveis condomínio di villaggio firenze franca sp', 'casas condomínio di villaggio firenze franca', 'apartamentos condomínio di villaggio firenze franca',
     'comprar casa condomínio di villaggio firenze franca sp', 'alugar condomínio di villaggio firenze franca sp',

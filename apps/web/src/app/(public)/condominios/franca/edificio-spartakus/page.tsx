@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no EDIFÍCIO SPARTAKUS, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no EDIFÍCIO SPARTAKUS em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no EDIFÍCIO SPARTAKUS com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no EDIFÍCIO SPARTAKUS em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no EDIFÍCIO SPARTAKUS com atendimento personalizado.',
   keywords: [
     'imóveis edifício spartakus franca sp', 'casas edifício spartakus franca', 'apartamentos edifício spartakus franca',
     'comprar casa edifício spartakus franca sp', 'alugar edifício spartakus franca sp',

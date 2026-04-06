@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no EDIFÍCIO DUBLIN, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no EDIFÍCIO DUBLIN em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no EDIFÍCIO DUBLIN com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no EDIFÍCIO DUBLIN em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no EDIFÍCIO DUBLIN com atendimento personalizado.',
   keywords: [
     'imóveis edifício dublin franca sp', 'casas edifício dublin franca', 'apartamentos edifício dublin franca',
     'comprar casa edifício dublin franca sp', 'alugar edifício dublin franca sp',

@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no EDIFÍCIO DEODORO  Ótimo apartamento disponível, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no EDIFÍCIO DEODORO  Ótimo apartamento disponível em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no EDIFÍCIO DEODORO  Ótimo apartamento disponível com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no EDIFÍCIO DEODORO  Ótimo apartamento disponível em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no EDIFÍCIO DEODORO  Ótimo apartamento disponível com atendimento personalizado.',
   keywords: [
     'imóveis edifício deodoro  ótimo apartamento disponível franca sp', 'casas edifício deodoro  ótimo apartamento disponível franca', 'apartamentos edifício deodoro  ótimo apartamento disponível franca',
     'comprar casa edifício deodoro  ótimo apartamento disponível franca sp', 'alugar edifício deodoro  ótimo apartamento disponível franca sp',

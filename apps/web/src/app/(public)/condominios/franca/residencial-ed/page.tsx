@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no RESIDENCIAL ED, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no RESIDENCIAL ED em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no RESIDENCIAL ED com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no RESIDENCIAL ED em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no RESIDENCIAL ED com atendimento personalizado.',
   keywords: [
     'imóveis residencial ed franca sp', 'casas residencial ed franca', 'apartamentos residencial ed franca',
     'comprar casa residencial ed franca sp', 'alugar residencial ed franca sp',

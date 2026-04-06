@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no RESIDENCIAL SAO VICENTE, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no RESIDENCIAL SAO VICENTE em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no RESIDENCIAL SAO VICENTE com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no RESIDENCIAL SAO VICENTE em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no RESIDENCIAL SAO VICENTE com atendimento personalizado.',
   keywords: [
     'imóveis residencial sao vicente franca sp', 'casas residencial sao vicente franca', 'apartamentos residencial sao vicente franca',
     'comprar casa residencial sao vicente franca sp', 'alugar residencial sao vicente franca sp',

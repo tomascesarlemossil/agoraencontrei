@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no residencial a venda no Bairro, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no residencial a venda no Bairro em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no residencial a venda no Bairro com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no residencial a venda no Bairro em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no residencial a venda no Bairro com atendimento personalizado.',
   keywords: [
     'imóveis residencial a venda no bairro franca sp', 'casas residencial a venda no bairro franca', 'apartamentos residencial a venda no bairro franca',
     'comprar casa residencial a venda no bairro franca sp', 'alugar residencial a venda no bairro franca sp',

@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no CONDOMÍNIO VILLAGE SANTA GEORGINA  Excelente, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no CONDOMÍNIO VILLAGE SANTA GEORGINA  Excelente em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no CONDOMÍNIO VILLAGE SANTA GEORGINA  Excelente com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no CONDOMÍNIO VILLAGE SANTA GEORGINA  Excelente em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no CONDOMÍNIO VILLAGE SANTA GEORGINA  Excelente com atendimento personalizado.',
   keywords: [
     'imóveis condomínio village santa georgina  excelente franca sp', 'casas condomínio village santa georgina  excelente franca', 'apartamentos condomínio village santa georgina  excelente franca',
     'comprar casa condomínio village santa georgina  excelente franca sp', 'alugar condomínio village santa georgina  excelente franca sp',

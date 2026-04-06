@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no RESIDENCIAL SAFRA, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no RESIDENCIAL SAFRA em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no RESIDENCIAL SAFRA com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no RESIDENCIAL SAFRA em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no RESIDENCIAL SAFRA com atendimento personalizado.',
   keywords: [
     'imóveis residencial safra franca sp', 'casas residencial safra franca', 'apartamentos residencial safra franca',
     'comprar casa residencial safra franca sp', 'alugar residencial safra franca sp',

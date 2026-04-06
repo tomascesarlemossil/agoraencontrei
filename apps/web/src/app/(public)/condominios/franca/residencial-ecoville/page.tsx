@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no RESIDENCIAL ECOVILLE, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no RESIDENCIAL ECOVILLE em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no RESIDENCIAL ECOVILLE com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no RESIDENCIAL ECOVILLE em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no RESIDENCIAL ECOVILLE com atendimento personalizado.',
   keywords: [
     'imóveis residencial ecoville franca sp', 'casas residencial ecoville franca', 'apartamentos residencial ecoville franca',
     'comprar casa residencial ecoville franca sp', 'alugar residencial ecoville franca sp',

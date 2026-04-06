@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no RESIDENCIAL PERES ELIAS, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no RESIDENCIAL PERES ELIAS em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no RESIDENCIAL PERES ELIAS com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no RESIDENCIAL PERES ELIAS em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no RESIDENCIAL PERES ELIAS com atendimento personalizado.',
   keywords: [
     'imóveis residencial peres elias franca sp', 'casas residencial peres elias franca', 'apartamentos residencial peres elias franca',
     'comprar casa residencial peres elias franca sp', 'alugar residencial peres elias franca sp',

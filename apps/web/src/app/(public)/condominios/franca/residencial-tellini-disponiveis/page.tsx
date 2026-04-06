@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no RESIDENCIAL TELLINI DISPONIVEIS, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no RESIDENCIAL TELLINI DISPONIVEIS em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no RESIDENCIAL TELLINI DISPONIVEIS com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no RESIDENCIAL TELLINI DISPONIVEIS em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no RESIDENCIAL TELLINI DISPONIVEIS com atendimento personalizado.',
   keywords: [
     'imóveis residencial tellini disponiveis franca sp', 'casas residencial tellini disponiveis franca', 'apartamentos residencial tellini disponiveis franca',
     'comprar casa residencial tellini disponiveis franca sp', 'alugar residencial tellini disponiveis franca sp',

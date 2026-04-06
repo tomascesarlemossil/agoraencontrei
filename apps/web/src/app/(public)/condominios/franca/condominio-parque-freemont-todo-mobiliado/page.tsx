@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no Condomínio Parque Freemont todo mobiliado, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no Condomínio Parque Freemont todo mobiliado em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no Condomínio Parque Freemont todo mobiliado com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no Condomínio Parque Freemont todo mobiliado em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no Condomínio Parque Freemont todo mobiliado com atendimento personalizado.',
   keywords: [
     'imóveis condomínio parque freemont todo mobiliado franca sp', 'casas condomínio parque freemont todo mobiliado franca', 'apartamentos condomínio parque freemont todo mobiliado franca',
     'comprar casa condomínio parque freemont todo mobiliado franca sp', 'alugar condomínio parque freemont todo mobiliado franca sp',

@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no EDIFÍCIO MONTREUX NO BAIRRO CIDADE, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no EDIFÍCIO MONTREUX NO BAIRRO CIDADE em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no EDIFÍCIO MONTREUX NO BAIRRO CIDADE com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no EDIFÍCIO MONTREUX NO BAIRRO CIDADE em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no EDIFÍCIO MONTREUX NO BAIRRO CIDADE com atendimento personalizado.',
   keywords: [
     'imóveis edifício montreux no bairro cidade franca sp', 'casas edifício montreux no bairro cidade franca', 'apartamentos edifício montreux no bairro cidade franca',
     'comprar casa edifício montreux no bairro cidade franca sp', 'alugar edifício montreux no bairro cidade franca sp',

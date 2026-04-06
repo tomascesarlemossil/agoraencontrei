@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no CONDOMÍNIO FECHADO, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no CONDOMÍNIO FECHADO em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no CONDOMÍNIO FECHADO com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no CONDOMÍNIO FECHADO em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no CONDOMÍNIO FECHADO com atendimento personalizado.',
   keywords: [
     'imóveis condomínio fechado franca sp', 'casas condomínio fechado franca', 'apartamentos condomínio fechado franca',
     'comprar casa condomínio fechado franca sp', 'alugar condomínio fechado franca sp',

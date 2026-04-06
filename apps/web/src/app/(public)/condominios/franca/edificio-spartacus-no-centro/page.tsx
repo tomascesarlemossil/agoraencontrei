@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no EDIFÍCIO SPARTACUS NO CENTRO, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no EDIFÍCIO SPARTACUS NO CENTRO em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no EDIFÍCIO SPARTACUS NO CENTRO com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no EDIFÍCIO SPARTACUS NO CENTRO em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no EDIFÍCIO SPARTACUS NO CENTRO com atendimento personalizado.',
   keywords: [
     'imóveis edifício spartacus no centro franca sp', 'casas edifício spartacus no centro franca', 'apartamentos edifício spartacus no centro franca',
     'comprar casa edifício spartacus no centro franca sp', 'alugar edifício spartacus no centro franca sp',

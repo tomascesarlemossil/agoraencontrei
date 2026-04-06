@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no CONDOMÍNIO PIEMONTE, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no CONDOMÍNIO PIEMONTE em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no CONDOMÍNIO PIEMONTE com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no CONDOMÍNIO PIEMONTE em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no CONDOMÍNIO PIEMONTE com atendimento personalizado.',
   keywords: [
     'imóveis condomínio piemonte franca sp', 'casas condomínio piemonte franca', 'apartamentos condomínio piemonte franca',
     'comprar casa condomínio piemonte franca sp', 'alugar condomínio piemonte franca sp',

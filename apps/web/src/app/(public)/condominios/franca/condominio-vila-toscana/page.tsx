@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no Condomínio Vila Toscana, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no Condomínio Vila Toscana em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no Condomínio Vila Toscana com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no Condomínio Vila Toscana em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no Condomínio Vila Toscana com atendimento personalizado.',
   keywords: [
     'imóveis condomínio vila toscana franca sp', 'casas condomínio vila toscana franca', 'apartamentos condomínio vila toscana franca',
     'comprar casa condomínio vila toscana franca sp', 'alugar condomínio vila toscana franca sp',

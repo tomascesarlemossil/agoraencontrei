@@ -7,7 +7,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 
 export const metadata: Metadata = {
   title: 'Casas à Venda em Franca SP | Imobiliária Lemos',
-  description: 'Compre sua casa em Franca/SP com a Imobiliária Lemos. Mais de 300 casas à venda em todos os bairros. Casas com 2, 3 e 4 quartos, condomínios fechados e sobrados. Financiamento facilitado. CRECI 279051.',
+  description: 'Compre sua casa em Franca/SP com a Imobiliária Lemos. Mais de 300 casas à venda em todos os bairros. Casas com 2, 3 e 4 quartos, condomínios fechados e sobrados. Financiamento facilitado..',
   keywords: [
     'casas à venda franca sp', 'casa à venda franca', 'comprar casa franca sp',
     'venda de casas franca sp', 'casas venda franca', 'casa venda franca sp',

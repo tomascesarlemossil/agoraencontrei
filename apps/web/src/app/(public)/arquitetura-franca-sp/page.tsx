@@ -4,11 +4,11 @@ import { ArrowRight, MapPin, Home, MessageCircle, Phone, Star, Search } from 'lu
 
 export const metadata: Metadata = {
   title: 'Arquitetura e Design de Interiores em Franca/SP | Imobiliária Lemos Franca/SP',
-  description: 'Arquitetura residencial e comercial em Franca/SP. Projetos de design de interiores, decoração e reforma. Imobiliária Lemos conecta você aos melhores arquitetos de Franca. CRECI 279051.',
+  description: 'Arquitetura residencial e comercial em Franca/SP. Projetos de design de interiores, decoração e reforma. Imobiliária Lemos conecta você aos melhores arquitetos de Franca..',
   keywords: ["arquitetura franca sp", "arquiteto franca sp", "design de interiores franca sp", "projeto arquitetônico franca", "decoração franca sp", "arquiteto residencial franca", "projeto casa franca sp", "CAU franca sp", "arquitetura residencial franca", "interiores franca sp"],
   openGraph: {
     title: 'Arquitetura e Design de Interiores em Franca/SP | Imobiliária Lemos Franca/SP',
-    description: 'Arquitetura residencial e comercial em Franca/SP. Projetos de design de interiores, decoração e reforma. Imobiliária Lemos conecta você aos melhores arquitetos de Franca. CRECI 279051.',
+    description: 'Arquitetura residencial e comercial em Franca/SP. Projetos de design de interiores, decoração e reforma. Imobiliária Lemos conecta você aos melhores arquitetos de Franca..',
     type: 'website', locale: 'pt_BR', siteName: 'AgoraEncontrei — Imobiliária Lemos',
   },
   alternates: { canonical: 'https://www.agoraencontrei.com.br/arquitetura-franca-sp' },
@@ -20,7 +20,7 @@ const SCHEMA = {
   '@type': 'LocalBusiness',
   '@id': 'https://www.agoraencontrei.com.br/arquitetura-franca-sp',
   name: 'Imobiliária Lemos — Arquitetura e Design de Interiores em Franca/SP',
-  description: 'Arquitetura residencial e comercial em Franca/SP. Projetos de design de interiores, decoração e reforma. Imobiliária Lemos conecta você aos melhores arquitetos de Franca. CRECI 279051.',
+  description: 'Arquitetura residencial e comercial em Franca/SP. Projetos de design de interiores, decoração e reforma. Imobiliária Lemos conecta você aos melhores arquitetos de Franca..',
   url: 'https://www.agoraencontrei.com.br/arquitetura-franca-sp',
   telephone: '+55-16-3723-0045',
   address: {

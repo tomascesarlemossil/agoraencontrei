@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no RESIDENCIAL TOPÁZIO, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no RESIDENCIAL TOPÁZIO em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no RESIDENCIAL TOPÁZIO com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no RESIDENCIAL TOPÁZIO em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no RESIDENCIAL TOPÁZIO com atendimento personalizado.',
   keywords: [
     'imóveis residencial topázio franca sp', 'casas residencial topázio franca', 'apartamentos residencial topázio franca',
     'comprar casa residencial topázio franca sp', 'alugar residencial topázio franca sp',

@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no Residencial MONTREUX SWISS  LOCAL, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no Residencial MONTREUX SWISS  LOCAL em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no Residencial MONTREUX SWISS  LOCAL com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no Residencial MONTREUX SWISS  LOCAL em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no Residencial MONTREUX SWISS  LOCAL com atendimento personalizado.',
   keywords: [
     'imóveis residencial montreux swiss  local franca sp', 'casas residencial montreux swiss  local franca', 'apartamentos residencial montreux swiss  local franca',
     'comprar casa residencial montreux swiss  local franca sp', 'alugar residencial montreux swiss  local franca sp',

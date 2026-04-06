@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no RESIDENCIAL RJ HIGH LIVING, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no RESIDENCIAL RJ HIGH LIVING em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no RESIDENCIAL RJ HIGH LIVING com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no RESIDENCIAL RJ HIGH LIVING em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no RESIDENCIAL RJ HIGH LIVING com atendimento personalizado.',
   keywords: [
     'imóveis residencial rj high living franca sp', 'casas residencial rj high living franca', 'apartamentos residencial rj high living franca',
     'comprar casa residencial rj high living franca sp', 'alugar residencial rj high living franca sp',

@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no RESIDENCIAL PARAISO  Localizada na Rua, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no RESIDENCIAL PARAISO  Localizada na Rua em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no RESIDENCIAL PARAISO  Localizada na Rua com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no RESIDENCIAL PARAISO  Localizada na Rua em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no RESIDENCIAL PARAISO  Localizada na Rua com atendimento personalizado.',
   keywords: [
     'imóveis residencial paraiso  localizada na rua franca sp', 'casas residencial paraiso  localizada na rua franca', 'apartamentos residencial paraiso  localizada na rua franca',
     'comprar casa residencial paraiso  localizada na rua franca sp', 'alugar residencial paraiso  localizada na rua franca sp',

@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no RESIDENCIAL VILLA D, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no RESIDENCIAL VILLA D em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no RESIDENCIAL VILLA D com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no RESIDENCIAL VILLA D em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no RESIDENCIAL VILLA D com atendimento personalizado.',
   keywords: [
     'imóveis residencial villa d franca sp', 'casas residencial villa d franca', 'apartamentos residencial villa d franca',
     'comprar casa residencial villa d franca sp', 'alugar residencial villa d franca sp',

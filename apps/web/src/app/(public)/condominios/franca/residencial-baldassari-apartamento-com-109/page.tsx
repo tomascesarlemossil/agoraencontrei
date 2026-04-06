@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no RESIDENCIAL BALDASSARI   Apartamento com 109, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no RESIDENCIAL BALDASSARI   Apartamento com 109 em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no RESIDENCIAL BALDASSARI   Apartamento com 109 com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no RESIDENCIAL BALDASSARI   Apartamento com 109 em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no RESIDENCIAL BALDASSARI   Apartamento com 109 com atendimento personalizado.',
   keywords: [
     'imóveis residencial baldassari   apartamento com 109 franca sp', 'casas residencial baldassari   apartamento com 109 franca', 'apartamentos residencial baldassari   apartamento com 109 franca',
     'comprar casa residencial baldassari   apartamento com 109 franca sp', 'alugar residencial baldassari   apartamento com 109 franca sp',

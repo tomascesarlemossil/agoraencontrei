@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no RESIDENCIAL AMAZONAS   Rua paralela a, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no RESIDENCIAL AMAZONAS   Rua paralela a em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no RESIDENCIAL AMAZONAS   Rua paralela a com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no RESIDENCIAL AMAZONAS   Rua paralela a em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no RESIDENCIAL AMAZONAS   Rua paralela a com atendimento personalizado.',
   keywords: [
     'imóveis residencial amazonas   rua paralela a franca sp', 'casas residencial amazonas   rua paralela a franca', 'apartamentos residencial amazonas   rua paralela a franca',
     'comprar casa residencial amazonas   rua paralela a franca sp', 'alugar residencial amazonas   rua paralela a franca sp',

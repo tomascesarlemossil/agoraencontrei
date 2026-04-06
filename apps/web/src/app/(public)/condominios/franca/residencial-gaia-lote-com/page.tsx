@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no RESIDENCIAL GAIA  Lote com, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no RESIDENCIAL GAIA  Lote com em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no RESIDENCIAL GAIA  Lote com com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no RESIDENCIAL GAIA  Lote com em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no RESIDENCIAL GAIA  Lote com com atendimento personalizado.',
   keywords: [
     'imóveis residencial gaia  lote com franca sp', 'casas residencial gaia  lote com franca', 'apartamentos residencial gaia  lote com franca',
     'comprar casa residencial gaia  lote com franca sp', 'alugar residencial gaia  lote com franca sp',

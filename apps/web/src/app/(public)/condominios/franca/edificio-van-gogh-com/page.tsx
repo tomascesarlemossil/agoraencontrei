@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no EDIFÍCIO VAN GOGH COM, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no EDIFÍCIO VAN GOGH COM em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no EDIFÍCIO VAN GOGH COM com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no EDIFÍCIO VAN GOGH COM em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no EDIFÍCIO VAN GOGH COM com atendimento personalizado.',
   keywords: [
     'imóveis edifício van gogh com franca sp', 'casas edifício van gogh com franca', 'apartamentos edifício van gogh com franca',
     'comprar casa edifício van gogh com franca sp', 'alugar edifício van gogh com franca sp',

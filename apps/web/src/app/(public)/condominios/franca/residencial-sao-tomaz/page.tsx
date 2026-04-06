@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no RESIDENCIAL SÃO TOMAZ, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no RESIDENCIAL SÃO TOMAZ em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no RESIDENCIAL SÃO TOMAZ com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no RESIDENCIAL SÃO TOMAZ em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no RESIDENCIAL SÃO TOMAZ com atendimento personalizado.',
   keywords: [
     'imóveis residencial são tomaz franca sp', 'casas residencial são tomaz franca', 'apartamentos residencial são tomaz franca',
     'comprar casa residencial são tomaz franca sp', 'alugar residencial são tomaz franca sp',

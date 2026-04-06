@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no RESIDENCIAL TOPÁZIO NA AVENIDA JAIME, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no RESIDENCIAL TOPÁZIO NA AVENIDA JAIME em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no RESIDENCIAL TOPÁZIO NA AVENIDA JAIME com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no RESIDENCIAL TOPÁZIO NA AVENIDA JAIME em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no RESIDENCIAL TOPÁZIO NA AVENIDA JAIME com atendimento personalizado.',
   keywords: [
     'imóveis residencial topázio na avenida jaime franca sp', 'casas residencial topázio na avenida jaime franca', 'apartamentos residencial topázio na avenida jaime franca',
     'comprar casa residencial topázio na avenida jaime franca sp', 'alugar residencial topázio na avenida jaime franca sp',

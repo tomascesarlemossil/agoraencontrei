@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no residencial que pode ser, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no residencial que pode ser em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no residencial que pode ser com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no residencial que pode ser em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no residencial que pode ser com atendimento personalizado.',
   keywords: [
     'imóveis residencial que pode ser franca sp', 'casas residencial que pode ser franca', 'apartamentos residencial que pode ser franca',
     'comprar casa residencial que pode ser franca sp', 'alugar residencial que pode ser franca sp',

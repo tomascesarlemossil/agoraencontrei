@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no residencial de esq, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no residencial de esq em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no residencial de esq com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no residencial de esq em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no residencial de esq com atendimento personalizado.',
   keywords: [
     'imóveis residencial de esq franca sp', 'casas residencial de esq franca', 'apartamentos residencial de esq franca',
     'comprar casa residencial de esq franca sp', 'alugar residencial de esq franca sp',

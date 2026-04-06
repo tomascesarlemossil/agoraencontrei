@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no CONDOMÍNIO GAIA, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no CONDOMÍNIO GAIA em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no CONDOMÍNIO GAIA com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no CONDOMÍNIO GAIA em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no CONDOMÍNIO GAIA com atendimento personalizado.',
   keywords: [
     'imóveis condomínio gaia franca sp', 'casas condomínio gaia franca', 'apartamentos condomínio gaia franca',
     'comprar casa condomínio gaia franca sp', 'alugar condomínio gaia franca sp',

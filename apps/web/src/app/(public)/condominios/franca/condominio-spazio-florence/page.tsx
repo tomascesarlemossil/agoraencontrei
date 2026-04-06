@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no CONDOMÍNIO SPAZIO FLORENCE, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no CONDOMÍNIO SPAZIO FLORENCE em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no CONDOMÍNIO SPAZIO FLORENCE com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no CONDOMÍNIO SPAZIO FLORENCE em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no CONDOMÍNIO SPAZIO FLORENCE com atendimento personalizado.',
   keywords: [
     'imóveis condomínio spazio florence franca sp', 'casas condomínio spazio florence franca', 'apartamentos condomínio spazio florence franca',
     'comprar casa condomínio spazio florence franca sp', 'alugar condomínio spazio florence franca sp',

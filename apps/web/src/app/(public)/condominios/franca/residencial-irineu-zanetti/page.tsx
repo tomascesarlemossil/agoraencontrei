@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no Residencial Irineu Zanetti, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no Residencial Irineu Zanetti em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no Residencial Irineu Zanetti com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no Residencial Irineu Zanetti em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no Residencial Irineu Zanetti com atendimento personalizado.',
   keywords: [
     'imóveis residencial irineu zanetti franca sp', 'casas residencial irineu zanetti franca', 'apartamentos residencial irineu zanetti franca',
     'comprar casa residencial irineu zanetti franca sp', 'alugar residencial irineu zanetti franca sp',

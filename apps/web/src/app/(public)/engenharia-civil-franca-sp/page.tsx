@@ -4,11 +4,11 @@ import { ArrowRight, MapPin, Home, MessageCircle, Phone, Star, Search } from 'lu
 
 export const metadata: Metadata = {
   title: 'Engenharia Civil em Franca/SP | Imobiliária Lemos Franca/SP',
-  description: 'Serviços de engenharia civil em Franca/SP: laudos, avaliações, projetos e obras. Imobiliária Lemos conecta você aos melhores engenheiros de Franca. CRECI 279051.',
+  description: 'Serviços de engenharia civil em Franca/SP: laudos, avaliações, projetos e obras. Imobiliária Lemos conecta você aos melhores engenheiros de Franca..',
   keywords: ["engenharia civil franca sp", "engenheiro civil franca sp", "laudo técnico imóvel franca", "avaliação imóvel engenheiro franca", "projeto estrutural franca sp", "vistoria imóvel franca sp", "CREA franca sp", "engenheiro franca sp", "laudo engenheiro franca", "perícia imóvel franca sp"],
   openGraph: {
     title: 'Engenharia Civil em Franca/SP | Imobiliária Lemos Franca/SP',
-    description: 'Serviços de engenharia civil em Franca/SP: laudos, avaliações, projetos e obras. Imobiliária Lemos conecta você aos melhores engenheiros de Franca. CRECI 279051.',
+    description: 'Serviços de engenharia civil em Franca/SP: laudos, avaliações, projetos e obras. Imobiliária Lemos conecta você aos melhores engenheiros de Franca..',
     type: 'website', locale: 'pt_BR', siteName: 'AgoraEncontrei — Imobiliária Lemos',
   },
   alternates: { canonical: 'https://www.agoraencontrei.com.br/engenharia-civil-franca-sp' },
@@ -20,7 +20,7 @@ const SCHEMA = {
   '@type': 'LocalBusiness',
   '@id': 'https://www.agoraencontrei.com.br/engenharia-civil-franca-sp',
   name: 'Imobiliária Lemos — Engenharia Civil em Franca/SP',
-  description: 'Serviços de engenharia civil em Franca/SP: laudos, avaliações, projetos e obras. Imobiliária Lemos conecta você aos melhores engenheiros de Franca. CRECI 279051.',
+  description: 'Serviços de engenharia civil em Franca/SP: laudos, avaliações, projetos e obras. Imobiliária Lemos conecta você aos melhores engenheiros de Franca..',
   url: 'https://www.agoraencontrei.com.br/engenharia-civil-franca-sp',
   telephone: '+55-16-3723-0045',
   address: {

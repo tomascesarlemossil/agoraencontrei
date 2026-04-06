@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no CONDOMÍNIO RESIDENCIAL DOM BOSCO, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no CONDOMÍNIO RESIDENCIAL DOM BOSCO em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no CONDOMÍNIO RESIDENCIAL DOM BOSCO com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no CONDOMÍNIO RESIDENCIAL DOM BOSCO em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no CONDOMÍNIO RESIDENCIAL DOM BOSCO com atendimento personalizado.',
   keywords: [
     'imóveis condomínio residencial dom bosco franca sp', 'casas condomínio residencial dom bosco franca', 'apartamentos condomínio residencial dom bosco franca',
     'comprar casa condomínio residencial dom bosco franca sp', 'alugar condomínio residencial dom bosco franca sp',

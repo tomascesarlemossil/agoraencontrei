@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no Edifício Franca do Imperador Excelente, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no Edifício Franca do Imperador Excelente em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no Edifício Franca do Imperador Excelente com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no Edifício Franca do Imperador Excelente em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no Edifício Franca do Imperador Excelente com atendimento personalizado.',
   keywords: [
     'imóveis edifício franca do imperador excelente franca sp', 'casas edifício franca do imperador excelente franca', 'apartamentos edifício franca do imperador excelente franca',
     'comprar casa edifício franca do imperador excelente franca sp', 'alugar edifício franca do imperador excelente franca sp',

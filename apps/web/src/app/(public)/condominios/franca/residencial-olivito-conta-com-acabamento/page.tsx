@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no Residencial Olivito   Conta com Acabamento, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no Residencial Olivito   Conta com Acabamento em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no Residencial Olivito   Conta com Acabamento com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no Residencial Olivito   Conta com Acabamento em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no Residencial Olivito   Conta com Acabamento com atendimento personalizado.',
   keywords: [
     'imóveis residencial olivito   conta com acabamento franca sp', 'casas residencial olivito   conta com acabamento franca', 'apartamentos residencial olivito   conta com acabamento franca',
     'comprar casa residencial olivito   conta com acabamento franca sp', 'alugar residencial olivito   conta com acabamento franca sp',

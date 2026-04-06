@@ -9,7 +9,7 @@ import { PresentationSection } from './PresentationSection'
 
 export const metadata: Metadata = {
   title: 'AgoraEncontrei — Marketplace Imobiliário de Franca/SP | Imobiliária Lemos',
-  description: 'Encontre seu imóvel ideal em Franca e região. 1.000+ imóveis com busca por IA e mapa interativo. Casas, apartamentos, terrenos e imóveis comerciais. Marketplace criado pela Imobiliária Lemos — 22+ anos de tradição. CRECI 279051.',
+  description: 'Encontre seu imóvel ideal em Franca e região. 1.000+ imóveis com busca por IA e mapa interativo. Casas, apartamentos, terrenos e imóveis comerciais. Marketplace criado pela Imobiliária Lemos — 22+ anos de tradição.',
   keywords: [
     'agoraencontrei', 'marketplace imobiliário', 'imobiliária franca', 'imóveis franca sp',
     'alugar casa franca', 'comprar apartamento franca', 'imobiliária lemos', 'locação franca',
@@ -34,7 +34,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'AgoraEncontrei — Marketplace Imobiliário de Franca/SP',
-    description: 'Imóveis de qualidade em Franca e região. CRECI 279051.',
+    description: 'Imóveis de qualidade em Franca e região. Imobiliária Lemos, referência desde 2002.',
   },
   robots: { index: true, follow: true },
   alternates: { canonical: 'https://www.agoraencontrei.com.br' },
@@ -163,7 +163,7 @@ const FAQ_SCHEMA = {
       name: 'Como comprar um imóvel em Franca SP?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'Para comprar um imóvel em Franca/SP, entre em contato com a Imobiliária Lemos (CRECI 279051). Temos mais de 1.000 imóveis disponíveis — casas, apartamentos, terrenos e imóveis comerciais. Oferecemos financiamento facilitado pela Caixa Econômica Federal e outros bancos. Ligue (16) 3722-0000 ou acesse agoraencontrei.com.br.',
+        text: 'Para comprar um imóvel em Franca/SP, entre em contato com a Imobiliária Lemos (). Temos mais de 1.000 imóveis disponíveis — casas, apartamentos, terrenos e imóveis comerciais. Oferecemos financiamento facilitado pela Caixa Econômica Federal e outros bancos. Ligue (16) 3722-0000 ou acesse agoraencontrei.com.br.',
       },
     },
     {
@@ -232,7 +232,7 @@ const LOCAL_BUSINESS_SCHEMA = {
   '@id': 'https://www.agoraencontrei.com.br/#organization',
   name: 'Imobili\u00e1ria Lemos \u2014 AgoraEncontrei',
   alternateName: ['Imobili\u00e1ria Lemos', 'AgoraEncontrei', 'Lemos Im\u00f3veis Franca'],
-  description: 'Imobili\u00e1ria com mais de 22 anos de tradi\u00e7\u00e3o em Franca/SP. Especializada em compra, venda e loca\u00e7\u00e3o de im\u00f3veis residenciais e comerciais. CRECI 279051.',
+  description: 'Imobili\u00e1ria com mais de 22 anos de tradi\u00e7\u00e3o em Franca/SP. Especializada em compra, venda e loca\u00e7\u00e3o de im\u00f3veis residenciais e comerciais.',
   url: 'https://www.agoraencontrei.com.br',
   logo: 'https://www.agoraencontrei.com.br/logo-lemos.png',
   image: 'https://www.agoraencontrei.com.br/og-image.jpg',
@@ -684,7 +684,7 @@ export default async function HomePage() {
                   )}
                   <p className="font-bold text-sm leading-snug" style={{ color: 'var(--site-primary-color, #1B2B5B)', fontFamily: 'Georgia, serif' }}>{member.name}</p>
                   <p className="text-xs text-gray-500 mt-0.5">{displayRole}</p>
-                  {member.creciNumber && (
+                  {member.creciNumber && member.creciNumber !== '279051' && (
                     <p className="text-xs font-semibold mt-1" style={{ color: 'var(--site-accent-color, #C9A84C)' }}>CRECI {member.creciNumber}</p>
                   )}
                   {member.phone && (

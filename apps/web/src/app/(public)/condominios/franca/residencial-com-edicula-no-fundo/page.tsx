@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no residencial com edicula no fundo, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no residencial com edicula no fundo em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no residencial com edicula no fundo com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no residencial com edicula no fundo em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no residencial com edicula no fundo com atendimento personalizado.',
   keywords: [
     'imóveis residencial com edicula no fundo franca sp', 'casas residencial com edicula no fundo franca', 'apartamentos residencial com edicula no fundo franca',
     'comprar casa residencial com edicula no fundo franca sp', 'alugar residencial com edicula no fundo franca sp',

@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no EDIFÍCIO ALPHA11, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no EDIFÍCIO ALPHA11 em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no EDIFÍCIO ALPHA11 com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no EDIFÍCIO ALPHA11 em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no EDIFÍCIO ALPHA11 com atendimento personalizado.',
   keywords: [
     'imóveis edifício alpha11 franca sp', 'casas edifício alpha11 franca', 'apartamentos edifício alpha11 franca',
     'comprar casa edifício alpha11 franca sp', 'alugar edifício alpha11 franca sp',

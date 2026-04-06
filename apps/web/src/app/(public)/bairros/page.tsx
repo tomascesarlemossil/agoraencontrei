@@ -179,7 +179,7 @@ export default function BairrosIndexPage() {
             <Building2 className="w-12 h-12 text-yellow-400 mx-auto mb-4" />
             <h2 className="text-2xl font-bold mb-3">Imobiliária Lemos — Franca/SP</h2>
             <p className="text-blue-100 mb-6 max-w-xl mx-auto">
-              22 anos de tradição em Franca/SP. CRECI 279051. Especialistas em imóveis
+              22 anos de tradição em Franca/SP.. Especialistas em imóveis
               em todos os bairros e ruas de Franca e região.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">

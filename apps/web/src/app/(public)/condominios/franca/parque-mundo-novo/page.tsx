@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no PARQUE MUNDO NOVO, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no PARQUE MUNDO NOVO em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no PARQUE MUNDO NOVO com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no PARQUE MUNDO NOVO em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no PARQUE MUNDO NOVO com atendimento personalizado.',
   keywords: [
     'imóveis parque mundo novo franca sp', 'casas parque mundo novo franca', 'apartamentos parque mundo novo franca',
     'comprar casa parque mundo novo franca sp', 'alugar parque mundo novo franca sp',

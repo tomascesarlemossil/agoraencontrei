@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no edifício Santorini no bairro Vila, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no edifício Santorini no bairro Vila em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no edifício Santorini no bairro Vila com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no edifício Santorini no bairro Vila em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no edifício Santorini no bairro Vila com atendimento personalizado.',
   keywords: [
     'imóveis edifício santorini no bairro vila franca sp', 'casas edifício santorini no bairro vila franca', 'apartamentos edifício santorini no bairro vila franca',
     'comprar casa edifício santorini no bairro vila franca sp', 'alugar edifício santorini no bairro vila franca sp',

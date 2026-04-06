@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no EDIFÍCIO SOLAR DOS NOBRES, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no EDIFÍCIO SOLAR DOS NOBRES em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no EDIFÍCIO SOLAR DOS NOBRES com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no EDIFÍCIO SOLAR DOS NOBRES em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no EDIFÍCIO SOLAR DOS NOBRES com atendimento personalizado.',
   keywords: [
     'imóveis edifício solar dos nobres franca sp', 'casas edifício solar dos nobres franca', 'apartamentos edifício solar dos nobres franca',
     'comprar casa edifício solar dos nobres franca sp', 'alugar edifício solar dos nobres franca sp',

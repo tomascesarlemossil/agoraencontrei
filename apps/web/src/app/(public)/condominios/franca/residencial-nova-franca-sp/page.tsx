@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no RESIDENCIAL NOVA FRANCA SP, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no RESIDENCIAL NOVA FRANCA SP em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no RESIDENCIAL NOVA FRANCA SP com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no RESIDENCIAL NOVA FRANCA SP em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no RESIDENCIAL NOVA FRANCA SP com atendimento personalizado.',
   keywords: [
     'imóveis residencial nova franca sp franca sp', 'casas residencial nova franca sp franca', 'apartamentos residencial nova franca sp franca',
     'comprar casa residencial nova franca sp franca sp', 'alugar residencial nova franca sp franca sp',

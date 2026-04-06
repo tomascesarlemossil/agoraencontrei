@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no EDIFÍCIO RENAISSANCE, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no EDIFÍCIO RENAISSANCE em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no EDIFÍCIO RENAISSANCE com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no EDIFÍCIO RENAISSANCE em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no EDIFÍCIO RENAISSANCE com atendimento personalizado.',
   keywords: [
     'imóveis edifício renaissance franca sp', 'casas edifício renaissance franca', 'apartamentos edifício renaissance franca',
     'comprar casa edifício renaissance franca sp', 'alugar edifício renaissance franca sp',

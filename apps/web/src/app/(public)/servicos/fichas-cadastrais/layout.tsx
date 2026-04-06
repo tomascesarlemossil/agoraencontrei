@@ -3,7 +3,7 @@ import type { Metadata } from 'next'
 export const metadata: Metadata = {
   title: 'Fichas Cadastrais',
   description:
-    'Preencha sua ficha cadastral online para locação de imóveis. Processo rápido e seguro com a Imobiliária Lemos em Franca/SP. CRECI 279051.',
+    'Preencha sua ficha cadastral online para locação de imóveis. Processo rápido e seguro com a Imobiliária Lemos em Franca/SP..',
   keywords: 'ficha cadastral locação, cadastro locação imóvel, ficha cadastral imobiliária franca, proposta aluguel',
   openGraph: {
     title: 'Fichas Cadastrais | AgoraEncontrei — Imobiliária Lemos',

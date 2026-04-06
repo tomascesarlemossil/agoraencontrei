@@ -4,11 +4,11 @@ import { ArrowRight, MapPin, Home, MessageCircle, Phone, Star, Search } from 'lu
 
 export const metadata: Metadata = {
   title: 'Construção Civil em Franca/SP | Imobiliária Lemos Franca/SP',
-  description: 'Construção civil em Franca/SP: construtoras, empreiteiras, materiais de construção e projetos. Imobiliária Lemos conecta você ao mercado imobiliário de Franca. CRECI 279051.',
+  description: 'Construção civil em Franca/SP: construtoras, empreiteiras, materiais de construção e projetos. Imobiliária Lemos conecta você ao mercado imobiliário de Franca..',
   keywords: ["construção civil franca sp", "construtora franca sp", "empreiteira franca sp", "construir casa franca sp", "obra franca sp", "materiais construção franca sp", "pedreiro franca sp", "mão de obra franca sp", "construção residencial franca", "nova construção franca sp"],
   openGraph: {
     title: 'Construção Civil em Franca/SP | Imobiliária Lemos Franca/SP',
-    description: 'Construção civil em Franca/SP: construtoras, empreiteiras, materiais de construção e projetos. Imobiliária Lemos conecta você ao mercado imobiliário de Franca. CRECI 279051.',
+    description: 'Construção civil em Franca/SP: construtoras, empreiteiras, materiais de construção e projetos. Imobiliária Lemos conecta você ao mercado imobiliário de Franca..',
     type: 'website', locale: 'pt_BR', siteName: 'AgoraEncontrei — Imobiliária Lemos',
   },
   alternates: { canonical: 'https://www.agoraencontrei.com.br/construcao-civil-franca-sp' },
@@ -20,7 +20,7 @@ const SCHEMA = {
   '@type': 'LocalBusiness',
   '@id': 'https://www.agoraencontrei.com.br/construcao-civil-franca-sp',
   name: 'Imobiliária Lemos — Construção Civil em Franca/SP',
-  description: 'Construção civil em Franca/SP: construtoras, empreiteiras, materiais de construção e projetos. Imobiliária Lemos conecta você ao mercado imobiliário de Franca. CRECI 279051.',
+  description: 'Construção civil em Franca/SP: construtoras, empreiteiras, materiais de construção e projetos. Imobiliária Lemos conecta você ao mercado imobiliário de Franca..',
   url: 'https://www.agoraencontrei.com.br/construcao-civil-franca-sp',
   telephone: '+55-16-3723-0045',
   address: {

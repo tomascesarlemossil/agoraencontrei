@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no RESIDENCIAL PALERMO  São 3 unidades, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no RESIDENCIAL PALERMO  São 3 unidades em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no RESIDENCIAL PALERMO  São 3 unidades com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no RESIDENCIAL PALERMO  São 3 unidades em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no RESIDENCIAL PALERMO  São 3 unidades com atendimento personalizado.',
   keywords: [
     'imóveis residencial palermo  são 3 unidades franca sp', 'casas residencial palermo  são 3 unidades franca', 'apartamentos residencial palermo  são 3 unidades franca',
     'comprar casa residencial palermo  são 3 unidades franca sp', 'alugar residencial palermo  são 3 unidades franca sp',

@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no RESIDENCIAL MAISON DE MONET  Localizada, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no RESIDENCIAL MAISON DE MONET  Localizada em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no RESIDENCIAL MAISON DE MONET  Localizada com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no RESIDENCIAL MAISON DE MONET  Localizada em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no RESIDENCIAL MAISON DE MONET  Localizada com atendimento personalizado.',
   keywords: [
     'imóveis residencial maison de monet  localizada franca sp', 'casas residencial maison de monet  localizada franca', 'apartamentos residencial maison de monet  localizada franca',
     'comprar casa residencial maison de monet  localizada franca sp', 'alugar residencial maison de monet  localizada franca sp',

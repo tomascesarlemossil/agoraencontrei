@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no Residencial TELLINI  Medindo, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no Residencial TELLINI  Medindo em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no Residencial TELLINI  Medindo com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no Residencial TELLINI  Medindo em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no Residencial TELLINI  Medindo com atendimento personalizado.',
   keywords: [
     'imóveis residencial tellini  medindo franca sp', 'casas residencial tellini  medindo franca', 'apartamentos residencial tellini  medindo franca',
     'comprar casa residencial tellini  medindo franca sp', 'alugar residencial tellini  medindo franca sp',

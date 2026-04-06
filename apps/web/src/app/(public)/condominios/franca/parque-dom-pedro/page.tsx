@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no PARQUE DOM PEDRO, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no PARQUE DOM PEDRO em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no PARQUE DOM PEDRO com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no PARQUE DOM PEDRO em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no PARQUE DOM PEDRO com atendimento personalizado.',
   keywords: [
     'imóveis parque dom pedro franca sp', 'casas parque dom pedro franca', 'apartamentos parque dom pedro franca',
     'comprar casa parque dom pedro franca sp', 'alugar parque dom pedro franca sp',

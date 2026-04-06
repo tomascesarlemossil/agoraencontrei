@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no Edifício Atlântico Sul pronto para, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no Edifício Atlântico Sul pronto para em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no Edifício Atlântico Sul pronto para com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no Edifício Atlântico Sul pronto para em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no Edifício Atlântico Sul pronto para com atendimento personalizado.',
   keywords: [
     'imóveis edifício atlântico sul pronto para franca sp', 'casas edifício atlântico sul pronto para franca', 'apartamentos edifício atlântico sul pronto para franca',
     'comprar casa edifício atlântico sul pronto para franca sp', 'alugar edifício atlântico sul pronto para franca sp',

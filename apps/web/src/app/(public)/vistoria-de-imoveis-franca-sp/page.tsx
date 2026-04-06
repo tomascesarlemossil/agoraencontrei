@@ -4,11 +4,11 @@ import { ArrowRight, MapPin, Home, MessageCircle, Phone, Star, Search } from 'lu
 
 export const metadata: Metadata = {
   title: 'Vistoria de Imóveis em Franca/SP | Imobiliária Lemos Franca/SP',
-  description: 'Vistoria de imóveis em Franca/SP: laudos técnicos, vistorias de entrada e saída, inspeção predial. Imobiliária Lemos — segurança em cada transação. CRECI 279051.',
+  description: 'Vistoria de imóveis em Franca/SP: laudos técnicos, vistorias de entrada e saída, inspeção predial. Imobiliária Lemos — segurança em cada transação..',
   keywords: ["vistoria imóvel franca sp", "laudo vistoria franca sp", "vistoria locação franca sp", "inspeção imóvel franca sp", "vistoria entrada saída franca", "laudo técnico imóvel franca", "vistoria predial franca sp", "engenheiro vistoria franca sp", "vistoria apartamento franca sp", "vistoria casa franca sp"],
   openGraph: {
     title: 'Vistoria de Imóveis em Franca/SP | Imobiliária Lemos Franca/SP',
-    description: 'Vistoria de imóveis em Franca/SP: laudos técnicos, vistorias de entrada e saída, inspeção predial. Imobiliária Lemos — segurança em cada transação. CRECI 279051.',
+    description: 'Vistoria de imóveis em Franca/SP: laudos técnicos, vistorias de entrada e saída, inspeção predial. Imobiliária Lemos — segurança em cada transação..',
     type: 'website', locale: 'pt_BR', siteName: 'AgoraEncontrei — Imobiliária Lemos',
   },
   alternates: { canonical: 'https://www.agoraencontrei.com.br/vistoria-de-imoveis-franca-sp' },
@@ -20,7 +20,7 @@ const SCHEMA = {
   '@type': 'LocalBusiness',
   '@id': 'https://www.agoraencontrei.com.br/vistoria-de-imoveis-franca-sp',
   name: 'Imobiliária Lemos — Vistoria de Imóveis em Franca/SP',
-  description: 'Vistoria de imóveis em Franca/SP: laudos técnicos, vistorias de entrada e saída, inspeção predial. Imobiliária Lemos — segurança em cada transação. CRECI 279051.',
+  description: 'Vistoria de imóveis em Franca/SP: laudos técnicos, vistorias de entrada e saída, inspeção predial. Imobiliária Lemos — segurança em cada transação..',
   url: 'https://www.agoraencontrei.com.br/vistoria-de-imoveis-franca-sp',
   telephone: '+55-16-3723-0045',
   address: {

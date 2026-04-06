@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no RESIDENCIAL ANA DOROTHEIA, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no RESIDENCIAL ANA DOROTHEIA em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no RESIDENCIAL ANA DOROTHEIA com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no RESIDENCIAL ANA DOROTHEIA em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no RESIDENCIAL ANA DOROTHEIA com atendimento personalizado.',
   keywords: [
     'imóveis residencial ana dorotheia franca sp', 'casas residencial ana dorotheia franca', 'apartamentos residencial ana dorotheia franca',
     'comprar casa residencial ana dorotheia franca sp', 'alugar residencial ana dorotheia franca sp',

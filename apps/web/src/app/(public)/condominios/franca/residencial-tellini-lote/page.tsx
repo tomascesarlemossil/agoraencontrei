@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no residencial TELLINI   Lote, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no residencial TELLINI   Lote em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no residencial TELLINI   Lote com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no residencial TELLINI   Lote em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no residencial TELLINI   Lote com atendimento personalizado.',
   keywords: [
     'imóveis residencial tellini   lote franca sp', 'casas residencial tellini   lote franca', 'apartamentos residencial tellini   lote franca',
     'comprar casa residencial tellini   lote franca sp', 'alugar residencial tellini   lote franca sp',

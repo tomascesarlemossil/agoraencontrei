@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no residencial para Venda São Joaquim, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no residencial para Venda São Joaquim em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no residencial para Venda São Joaquim com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no residencial para Venda São Joaquim em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no residencial para Venda São Joaquim com atendimento personalizado.',
   keywords: [
     'imóveis residencial para venda são joaquim franca sp', 'casas residencial para venda são joaquim franca', 'apartamentos residencial para venda são joaquim franca',
     'comprar casa residencial para venda são joaquim franca sp', 'alugar residencial para venda são joaquim franca sp',

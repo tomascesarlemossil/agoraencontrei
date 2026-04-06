@@ -22,7 +22,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       .replace(/\b\w/g, l => l.toUpperCase())
     return {
       title: `Imóveis na ${derivedName}, Franca/SP | Imobiliária Lemos`,
-      description: `Casas, apartamentos e terrenos na ${derivedName} em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051.`,
+      description: `Casas, apartamentos e terrenos na ${derivedName} em Franca/SP. Imobiliária Lemos — 22 anos de tradição..`,
       alternates: { canonical: `https://www.agoraencontrei.com.br/ruas/franca/${params.slug}` },
       robots: { index: true, follow: true },
     }
@@ -32,7 +32,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   return {
     title: `Imóveis na ${streetName}, Franca/SP | Imobiliária Lemos`,
-    description: `Casas, apartamentos e terrenos na ${streetName} em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051.`,
+    description: `Casas, apartamentos e terrenos na ${streetName} em Franca/SP. Imobiliária Lemos — 22 anos de tradição..`,
     keywords: keywords.join(', '),
     openGraph: {
       title: `Imóveis na ${streetName}, Franca/SP | Imobiliária Lemos`,
@@ -204,7 +204,7 @@ export default async function RuaPage({ params }: Props) {
                 com fácil acesso a comércios, escolas, hospitais e transporte público.
               </p>
               <p>
-                A <strong>Imobiliária Lemos</strong>, com mais de 22 anos de atuação em Franca/SP e CRECI 279051,
+                A <strong>Imobiliária Lemos</strong>, com mais de 22 anos de atuação em Franca/SP e,
                 é especialista em imóveis na {streetName} e região. Nossa equipe de corretores conhece
                 profundamente cada rua e bairro de Franca, garantindo o melhor atendimento na busca pelo
                 seu imóvel ideal.
@@ -223,7 +223,7 @@ export default async function RuaPage({ params }: Props) {
               </div>
               <div className="bg-blue-50 rounded-lg p-4 text-center">
                 <Building2 className="w-8 h-8 text-blue-600 mx-auto mb-2" />
-                <p className="font-semibold text-gray-800">CRECI 279051</p>
+                <p className="font-semibold text-gray-800"></p>
                 <p className="text-sm text-gray-600">Corretores certificados</p>
               </div>
               <div className="bg-blue-50 rounded-lg p-4 text-center">

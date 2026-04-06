@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no RESIDENCIAL ZANETTI  Conta com, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no RESIDENCIAL ZANETTI  Conta com em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no RESIDENCIAL ZANETTI  Conta com com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no RESIDENCIAL ZANETTI  Conta com em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no RESIDENCIAL ZANETTI  Conta com com atendimento personalizado.',
   keywords: [
     'imóveis residencial zanetti  conta com franca sp', 'casas residencial zanetti  conta com franca', 'apartamentos residencial zanetti  conta com franca',
     'comprar casa residencial zanetti  conta com franca sp', 'alugar residencial zanetti  conta com franca sp',

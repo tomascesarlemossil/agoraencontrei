@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no PARQUE DAS ACÁCIAS, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no PARQUE DAS ACÁCIAS em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no PARQUE DAS ACÁCIAS com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no PARQUE DAS ACÁCIAS em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no PARQUE DAS ACÁCIAS com atendimento personalizado.',
   keywords: [
     'imóveis parque das acácias franca sp', 'casas parque das acácias franca', 'apartamentos parque das acácias franca',
     'comprar casa parque das acácias franca sp', 'alugar parque das acácias franca sp',

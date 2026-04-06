@@ -7,7 +7,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 
 export const metadata: Metadata = {
   title: 'Apartamentos à Venda em Franca SP | Imobiliária Lemos',
-  description: 'Compre seu apartamento em Franca/SP com a Imobiliária Lemos. Mais de 200 apartamentos à venda: studios, 1, 2 e 3 quartos. Lançamentos e usados. Financiamento facilitado. CRECI 279051.',
+  description: 'Compre seu apartamento em Franca/SP com a Imobiliária Lemos. Mais de 200 apartamentos à venda: studios, 1, 2 e 3 quartos. Lançamentos e usados. Financiamento facilitado..',
   keywords: [
     'apartamentos à venda franca sp', 'apartamento à venda franca', 'comprar apartamento franca sp',
     'venda apartamento franca sp', 'apartamento venda franca', 'comprar apartamento franca',

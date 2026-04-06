@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no condomínio Dona Sabina, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no condomínio Dona Sabina em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no condomínio Dona Sabina com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no condomínio Dona Sabina em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no condomínio Dona Sabina com atendimento personalizado.',
   keywords: [
     'imóveis condomínio dona sabina franca sp', 'casas condomínio dona sabina franca', 'apartamentos condomínio dona sabina franca',
     'comprar casa condomínio dona sabina franca sp', 'alugar condomínio dona sabina franca sp',

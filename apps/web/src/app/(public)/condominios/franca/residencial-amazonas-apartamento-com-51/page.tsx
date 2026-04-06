@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no RESIDENCIAL AMAZONAS  Apartamento com 51, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no RESIDENCIAL AMAZONAS  Apartamento com 51 em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no RESIDENCIAL AMAZONAS  Apartamento com 51 com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no RESIDENCIAL AMAZONAS  Apartamento com 51 em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no RESIDENCIAL AMAZONAS  Apartamento com 51 com atendimento personalizado.',
   keywords: [
     'imóveis residencial amazonas  apartamento com 51 franca sp', 'casas residencial amazonas  apartamento com 51 franca', 'apartamentos residencial amazonas  apartamento com 51 franca',
     'comprar casa residencial amazonas  apartamento com 51 franca sp', 'alugar residencial amazonas  apartamento com 51 franca sp',

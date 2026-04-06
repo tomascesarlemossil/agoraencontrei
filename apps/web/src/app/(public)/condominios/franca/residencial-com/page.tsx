@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no residencial com, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no residencial com em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no residencial com com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no residencial com em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no residencial com com atendimento personalizado.',
   keywords: [
     'imóveis residencial com franca sp', 'casas residencial com franca', 'apartamentos residencial com franca',
     'comprar casa residencial com franca sp', 'alugar residencial com franca sp',

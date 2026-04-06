@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no CONDOMÍNIO INCLUSO NO VALOR, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no CONDOMÍNIO INCLUSO NO VALOR em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no CONDOMÍNIO INCLUSO NO VALOR com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no CONDOMÍNIO INCLUSO NO VALOR em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no CONDOMÍNIO INCLUSO NO VALOR com atendimento personalizado.',
   keywords: [
     'imóveis condomínio incluso no valor franca sp', 'casas condomínio incluso no valor franca', 'apartamentos condomínio incluso no valor franca',
     'comprar casa condomínio incluso no valor franca sp', 'alugar condomínio incluso no valor franca sp',

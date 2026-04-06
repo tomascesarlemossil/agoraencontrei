@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no Edifício Ibiza, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no Edifício Ibiza em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no Edifício Ibiza com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no Edifício Ibiza em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no Edifício Ibiza com atendimento personalizado.',
   keywords: [
     'imóveis edifício ibiza franca sp', 'casas edifício ibiza franca', 'apartamentos edifício ibiza franca',
     'comprar casa edifício ibiza franca sp', 'alugar edifício ibiza franca sp',

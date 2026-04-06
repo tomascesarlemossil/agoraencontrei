@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no RESIDENCIAL MEIRELLES, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no RESIDENCIAL MEIRELLES em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no RESIDENCIAL MEIRELLES com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no RESIDENCIAL MEIRELLES em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no RESIDENCIAL MEIRELLES com atendimento personalizado.',
   keywords: [
     'imóveis residencial meirelles franca sp', 'casas residencial meirelles franca', 'apartamentos residencial meirelles franca',
     'comprar casa residencial meirelles franca sp', 'alugar residencial meirelles franca sp',

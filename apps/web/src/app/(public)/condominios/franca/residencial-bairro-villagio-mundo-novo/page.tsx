@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no RESIDENCIAL  Bairro Villagio Mundo Novo, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no RESIDENCIAL  Bairro Villagio Mundo Novo em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no RESIDENCIAL  Bairro Villagio Mundo Novo com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no RESIDENCIAL  Bairro Villagio Mundo Novo em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no RESIDENCIAL  Bairro Villagio Mundo Novo com atendimento personalizado.',
   keywords: [
     'imóveis residencial  bairro villagio mundo novo franca sp', 'casas residencial  bairro villagio mundo novo franca', 'apartamentos residencial  bairro villagio mundo novo franca',
     'comprar casa residencial  bairro villagio mundo novo franca sp', 'alugar residencial  bairro villagio mundo novo franca sp',

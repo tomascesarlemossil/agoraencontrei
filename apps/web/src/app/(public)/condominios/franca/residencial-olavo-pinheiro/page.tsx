@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no RESIDENCIAL OLAVO PINHEIRO, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no RESIDENCIAL OLAVO PINHEIRO em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no RESIDENCIAL OLAVO PINHEIRO com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no RESIDENCIAL OLAVO PINHEIRO em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no RESIDENCIAL OLAVO PINHEIRO com atendimento personalizado.',
   keywords: [
     'imóveis residencial olavo pinheiro franca sp', 'casas residencial olavo pinheiro franca', 'apartamentos residencial olavo pinheiro franca',
     'comprar casa residencial olavo pinheiro franca sp', 'alugar residencial olavo pinheiro franca sp',

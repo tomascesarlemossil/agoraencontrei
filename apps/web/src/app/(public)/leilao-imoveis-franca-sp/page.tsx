@@ -4,11 +4,11 @@ import { ArrowRight, MapPin, Home, MessageCircle, Phone, Star, Search } from 'lu
 
 export const metadata: Metadata = {
   title: 'Leilão de Imóveis em Franca/SP | Imobiliária Lemos Franca/SP',
-  description: 'Encontre imóveis em leilão em Franca/SP com a Imobiliária Lemos. Casas, apartamentos e terrenos abaixo do valor de mercado. Assessoria jurídica completa. CRECI 279051.',
+  description: 'Encontre imóveis em leilão em Franca/SP com a Imobiliária Lemos. Casas, apartamentos e terrenos abaixo do valor de mercado. Assessoria jurídica completa..',
   keywords: ["leilão imóveis franca sp", "leilão de casas franca", "imóvel leilão franca sp", "leilão judicial franca", "leilão extrajudicial franca sp", "comprar imóvel leilão franca", "leilão caixa franca sp", "imóveis leiloados franca", "arremate imóvel franca sp", "leilão banco franca sp"],
   openGraph: {
     title: 'Leilão de Imóveis em Franca/SP | Imobiliária Lemos Franca/SP',
-    description: 'Encontre imóveis em leilão em Franca/SP com a Imobiliária Lemos. Casas, apartamentos e terrenos abaixo do valor de mercado. Assessoria jurídica completa. CRECI 279051.',
+    description: 'Encontre imóveis em leilão em Franca/SP com a Imobiliária Lemos. Casas, apartamentos e terrenos abaixo do valor de mercado. Assessoria jurídica completa..',
     type: 'website', locale: 'pt_BR', siteName: 'AgoraEncontrei — Imobiliária Lemos',
   },
   alternates: { canonical: 'https://www.agoraencontrei.com.br/leilao-imoveis-franca-sp' },
@@ -20,7 +20,7 @@ const SCHEMA = {
   '@type': 'LocalBusiness',
   '@id': 'https://www.agoraencontrei.com.br/leilao-imoveis-franca-sp',
   name: 'Imobiliária Lemos — Leilão de Imóveis em Franca/SP',
-  description: 'Encontre imóveis em leilão em Franca/SP com a Imobiliária Lemos. Casas, apartamentos e terrenos abaixo do valor de mercado. Assessoria jurídica completa. CRECI 279051.',
+  description: 'Encontre imóveis em leilão em Franca/SP com a Imobiliária Lemos. Casas, apartamentos e terrenos abaixo do valor de mercado. Assessoria jurídica completa..',
   url: 'https://www.agoraencontrei.com.br/leilao-imoveis-franca-sp',
   telephone: '+55-16-3723-0045',
   address: {

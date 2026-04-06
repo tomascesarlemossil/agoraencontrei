@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no Condomínio Fechado com 3 suítes, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no Condomínio Fechado com 3 suítes em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no Condomínio Fechado com 3 suítes com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no Condomínio Fechado com 3 suítes em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no Condomínio Fechado com 3 suítes com atendimento personalizado.',
   keywords: [
     'imóveis condomínio fechado com 3 suítes franca sp', 'casas condomínio fechado com 3 suítes franca', 'apartamentos condomínio fechado com 3 suítes franca',
     'comprar casa condomínio fechado com 3 suítes franca sp', 'alugar condomínio fechado com 3 suítes franca sp',

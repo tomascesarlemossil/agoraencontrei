@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no Residencial Amazonas   Três dormitórios amplos, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no Residencial Amazonas   Três dormitórios amplos em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no Residencial Amazonas   Três dormitórios amplos com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no Residencial Amazonas   Três dormitórios amplos em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no Residencial Amazonas   Três dormitórios amplos com atendimento personalizado.',
   keywords: [
     'imóveis residencial amazonas   três dormitórios amplos franca sp', 'casas residencial amazonas   três dormitórios amplos franca', 'apartamentos residencial amazonas   três dormitórios amplos franca',
     'comprar casa residencial amazonas   três dormitórios amplos franca sp', 'alugar residencial amazonas   três dormitórios amplos franca sp',

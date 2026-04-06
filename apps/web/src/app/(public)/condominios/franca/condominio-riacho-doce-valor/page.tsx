@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no Condomínio Riacho Doce   Valor, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no Condomínio Riacho Doce   Valor em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no Condomínio Riacho Doce   Valor com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no Condomínio Riacho Doce   Valor em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no Condomínio Riacho Doce   Valor com atendimento personalizado.',
   keywords: [
     'imóveis condomínio riacho doce   valor franca sp', 'casas condomínio riacho doce   valor franca', 'apartamentos condomínio riacho doce   valor franca',
     'comprar casa condomínio riacho doce   valor franca sp', 'alugar condomínio riacho doce   valor franca sp',

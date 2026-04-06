@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no CONDOMÍNIO  VILA MONTE VERDE, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no CONDOMÍNIO  VILA MONTE VERDE em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no CONDOMÍNIO  VILA MONTE VERDE com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no CONDOMÍNIO  VILA MONTE VERDE em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no CONDOMÍNIO  VILA MONTE VERDE com atendimento personalizado.',
   keywords: [
     'imóveis condomínio  vila monte verde franca sp', 'casas condomínio  vila monte verde franca', 'apartamentos condomínio  vila monte verde franca',
     'comprar casa condomínio  vila monte verde franca sp', 'alugar condomínio  vila monte verde franca sp',

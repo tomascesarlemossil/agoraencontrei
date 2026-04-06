@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no Edifício Monet, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no Edifício Monet em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no Edifício Monet com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no Edifício Monet em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no Edifício Monet com atendimento personalizado.',
   keywords: [
     'imóveis edifício monet franca sp', 'casas edifício monet franca', 'apartamentos edifício monet franca',
     'comprar casa edifício monet franca sp', 'alugar edifício monet franca sp',

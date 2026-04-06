@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no RESIDENCIAL NOSSO LAR, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no RESIDENCIAL NOSSO LAR em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no RESIDENCIAL NOSSO LAR com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no RESIDENCIAL NOSSO LAR em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no RESIDENCIAL NOSSO LAR com atendimento personalizado.',
   keywords: [
     'imóveis residencial nosso lar franca sp', 'casas residencial nosso lar franca', 'apartamentos residencial nosso lar franca',
     'comprar casa residencial nosso lar franca sp', 'alugar residencial nosso lar franca sp',

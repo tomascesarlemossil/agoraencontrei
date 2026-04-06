@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no Residencial paralela, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no Residencial paralela em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no Residencial paralela com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no Residencial paralela em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no Residencial paralela com atendimento personalizado.',
   keywords: [
     'imóveis residencial paralela franca sp', 'casas residencial paralela franca', 'apartamentos residencial paralela franca',
     'comprar casa residencial paralela franca sp', 'alugar residencial paralela franca sp',

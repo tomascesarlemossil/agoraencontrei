@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no RESIDENCIAL VILLA, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no RESIDENCIAL VILLA em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no RESIDENCIAL VILLA com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no RESIDENCIAL VILLA em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no RESIDENCIAL VILLA com atendimento personalizado.',
   keywords: [
     'imóveis residencial villa franca sp', 'casas residencial villa franca', 'apartamentos residencial villa franca',
     'comprar casa residencial villa franca sp', 'alugar residencial villa franca sp',

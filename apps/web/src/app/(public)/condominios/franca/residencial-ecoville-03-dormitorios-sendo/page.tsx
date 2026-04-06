@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no RESIDENCIAL ECOVILLE  03 DORMITÓRIOS SENDO, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no RESIDENCIAL ECOVILLE  03 DORMITÓRIOS SENDO em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no RESIDENCIAL ECOVILLE  03 DORMITÓRIOS SENDO com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no RESIDENCIAL ECOVILLE  03 DORMITÓRIOS SENDO em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no RESIDENCIAL ECOVILLE  03 DORMITÓRIOS SENDO com atendimento personalizado.',
   keywords: [
     'imóveis residencial ecoville  03 dormitórios sendo franca sp', 'casas residencial ecoville  03 dormitórios sendo franca', 'apartamentos residencial ecoville  03 dormitórios sendo franca',
     'comprar casa residencial ecoville  03 dormitórios sendo franca sp', 'alugar residencial ecoville  03 dormitórios sendo franca sp',

@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no EDIFÍCIO SPAZIO FLORIAN   Apartamento contendo, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no EDIFÍCIO SPAZIO FLORIAN   Apartamento contendo em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no EDIFÍCIO SPAZIO FLORIAN   Apartamento contendo com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no EDIFÍCIO SPAZIO FLORIAN   Apartamento contendo em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no EDIFÍCIO SPAZIO FLORIAN   Apartamento contendo com atendimento personalizado.',
   keywords: [
     'imóveis edifício spazio florian   apartamento contendo franca sp', 'casas edifício spazio florian   apartamento contendo franca', 'apartamentos edifício spazio florian   apartamento contendo franca',
     'comprar casa edifício spazio florian   apartamento contendo franca sp', 'alugar edifício spazio florian   apartamento contendo franca sp',

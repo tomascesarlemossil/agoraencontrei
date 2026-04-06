@@ -22,7 +22,7 @@ async function fetchTeamFromDB(): Promise<Record<string, { creci?: string; avata
 
 export const metadata: Metadata = {
   title: 'Nossa Equipe | AgoraEncontrei — Imobiliária Lemos — Franca/SP',
-  description: 'Conheça a equipe da Imobiliária Lemos em Franca/SP. Diretoria, corretores e administrativo especializados em compra, venda e locação de imóveis. CRECI 279051.',
+  description: 'Conheça a equipe da Imobiliária Lemos em Franca/SP. Diretoria, corretores e administrativo especializados em compra, venda e locação de imóveis.',
   keywords: ['corretores Franca SP', 'Imobiliária Lemos equipe', 'CRECI Franca', 'corretor de imóveis Franca', 'AgoraEncontrei equipe'],
 }
 

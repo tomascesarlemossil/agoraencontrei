@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no Edifício Spazio Florian   Sendo, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no Edifício Spazio Florian   Sendo em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no Edifício Spazio Florian   Sendo com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no Edifício Spazio Florian   Sendo em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no Edifício Spazio Florian   Sendo com atendimento personalizado.',
   keywords: [
     'imóveis edifício spazio florian   sendo franca sp', 'casas edifício spazio florian   sendo franca', 'apartamentos edifício spazio florian   sendo franca',
     'comprar casa edifício spazio florian   sendo franca sp', 'alugar edifício spazio florian   sendo franca sp',

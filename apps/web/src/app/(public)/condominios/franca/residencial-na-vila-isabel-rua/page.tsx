@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no RESIDENCIAL NA VILA ISABEL RUA, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no RESIDENCIAL NA VILA ISABEL RUA em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no RESIDENCIAL NA VILA ISABEL RUA com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no RESIDENCIAL NA VILA ISABEL RUA em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no RESIDENCIAL NA VILA ISABEL RUA com atendimento personalizado.',
   keywords: [
     'imóveis residencial na vila isabel rua franca sp', 'casas residencial na vila isabel rua franca', 'apartamentos residencial na vila isabel rua franca',
     'comprar casa residencial na vila isabel rua franca sp', 'alugar residencial na vila isabel rua franca sp',

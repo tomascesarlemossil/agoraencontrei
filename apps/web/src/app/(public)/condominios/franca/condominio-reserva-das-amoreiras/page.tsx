@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no Condomínio Reserva das Amoreiras, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no Condomínio Reserva das Amoreiras em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no Condomínio Reserva das Amoreiras com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no Condomínio Reserva das Amoreiras em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no Condomínio Reserva das Amoreiras com atendimento personalizado.',
   keywords: [
     'imóveis condomínio reserva das amoreiras franca sp', 'casas condomínio reserva das amoreiras franca', 'apartamentos condomínio reserva das amoreiras franca',
     'comprar casa condomínio reserva das amoreiras franca sp', 'alugar condomínio reserva das amoreiras franca sp',

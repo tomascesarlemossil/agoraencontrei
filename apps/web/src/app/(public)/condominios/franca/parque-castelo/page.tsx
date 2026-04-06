@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no PARQUE CASTELO, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no PARQUE CASTELO em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no PARQUE CASTELO com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no PARQUE CASTELO em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no PARQUE CASTELO com atendimento personalizado.',
   keywords: [
     'imóveis parque castelo franca sp', 'casas parque castelo franca', 'apartamentos parque castelo franca',
     'comprar casa parque castelo franca sp', 'alugar parque castelo franca sp',

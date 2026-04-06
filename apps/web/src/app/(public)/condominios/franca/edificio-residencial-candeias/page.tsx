@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no Edifício Residencial Candeias, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no Edifício Residencial Candeias em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no Edifício Residencial Candeias com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no Edifício Residencial Candeias em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no Edifício Residencial Candeias com atendimento personalizado.',
   keywords: [
     'imóveis edifício residencial candeias franca sp', 'casas edifício residencial candeias franca', 'apartamentos edifício residencial candeias franca',
     'comprar casa edifício residencial candeias franca sp', 'alugar edifício residencial candeias franca sp',

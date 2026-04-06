@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no Village São Vicente, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no Village São Vicente em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no Village São Vicente com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no Village São Vicente em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no Village São Vicente com atendimento personalizado.',
   keywords: [
     'imóveis village são vicente franca sp', 'casas village são vicente franca', 'apartamentos village são vicente franca',
     'comprar casa village são vicente franca sp', 'alugar village são vicente franca sp',

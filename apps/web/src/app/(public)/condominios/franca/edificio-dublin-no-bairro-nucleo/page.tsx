@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no EDIFÍCIO DUBLIN NO BAIRRO NÚCLEO, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no EDIFÍCIO DUBLIN NO BAIRRO NÚCLEO em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no EDIFÍCIO DUBLIN NO BAIRRO NÚCLEO com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no EDIFÍCIO DUBLIN NO BAIRRO NÚCLEO em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no EDIFÍCIO DUBLIN NO BAIRRO NÚCLEO com atendimento personalizado.',
   keywords: [
     'imóveis edifício dublin no bairro núcleo franca sp', 'casas edifício dublin no bairro núcleo franca', 'apartamentos edifício dublin no bairro núcleo franca',
     'comprar casa edifício dublin no bairro núcleo franca sp', 'alugar edifício dublin no bairro núcleo franca sp',

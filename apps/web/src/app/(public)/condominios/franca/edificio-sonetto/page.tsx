@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no EDIFÍCIO SONETTO, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no EDIFÍCIO SONETTO em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no EDIFÍCIO SONETTO com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no EDIFÍCIO SONETTO em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no EDIFÍCIO SONETTO com atendimento personalizado.',
   keywords: [
     'imóveis edifício sonetto franca sp', 'casas edifício sonetto franca', 'apartamentos edifício sonetto franca',
     'comprar casa edifício sonetto franca sp', 'alugar edifício sonetto franca sp',

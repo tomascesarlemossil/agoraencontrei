@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no RESIDENCIAL LORENA, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no RESIDENCIAL LORENA em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no RESIDENCIAL LORENA com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no RESIDENCIAL LORENA em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no RESIDENCIAL LORENA com atendimento personalizado.',
   keywords: [
     'imóveis residencial lorena franca sp', 'casas residencial lorena franca', 'apartamentos residencial lorena franca',
     'comprar casa residencial lorena franca sp', 'alugar residencial lorena franca sp',

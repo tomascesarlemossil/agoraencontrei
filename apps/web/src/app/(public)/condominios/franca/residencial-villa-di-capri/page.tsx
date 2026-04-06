@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no Residencial Villa di Capri, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no Residencial Villa di Capri em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no Residencial Villa di Capri com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no Residencial Villa di Capri em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no Residencial Villa di Capri com atendimento personalizado.',
   keywords: [
     'imóveis residencial villa di capri franca sp', 'casas residencial villa di capri franca', 'apartamentos residencial villa di capri franca',
     'comprar casa residencial villa di capri franca sp', 'alugar residencial villa di capri franca sp',

@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no residencial amazonas moderno em fino, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no residencial amazonas moderno em fino em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no residencial amazonas moderno em fino com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no residencial amazonas moderno em fino em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no residencial amazonas moderno em fino com atendimento personalizado.',
   keywords: [
     'imóveis residencial amazonas moderno em fino franca sp', 'casas residencial amazonas moderno em fino franca', 'apartamentos residencial amazonas moderno em fino franca',
     'comprar casa residencial amazonas moderno em fino franca sp', 'alugar residencial amazonas moderno em fino franca sp',

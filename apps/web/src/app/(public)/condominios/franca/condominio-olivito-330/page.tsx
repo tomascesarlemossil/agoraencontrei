@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no Condomínio Olivito   330, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no Condomínio Olivito   330 em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no Condomínio Olivito   330 com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no Condomínio Olivito   330 em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no Condomínio Olivito   330 com atendimento personalizado.',
   keywords: [
     'imóveis condomínio olivito   330 franca sp', 'casas condomínio olivito   330 franca', 'apartamentos condomínio olivito   330 franca',
     'comprar casa condomínio olivito   330 franca sp', 'alugar condomínio olivito   330 franca sp',

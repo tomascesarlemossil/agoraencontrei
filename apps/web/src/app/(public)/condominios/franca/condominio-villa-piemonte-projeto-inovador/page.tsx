@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no Condomínio Villa Piemonte  Projeto inovador, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no Condomínio Villa Piemonte  Projeto inovador em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no Condomínio Villa Piemonte  Projeto inovador com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no Condomínio Villa Piemonte  Projeto inovador em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no Condomínio Villa Piemonte  Projeto inovador com atendimento personalizado.',
   keywords: [
     'imóveis condomínio villa piemonte  projeto inovador franca sp', 'casas condomínio villa piemonte  projeto inovador franca', 'apartamentos condomínio villa piemonte  projeto inovador franca',
     'comprar casa condomínio villa piemonte  projeto inovador franca sp', 'alugar condomínio villa piemonte  projeto inovador franca sp',

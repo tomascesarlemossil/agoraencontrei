@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no PARQUE SANTA HILDA, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no PARQUE SANTA HILDA em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no PARQUE SANTA HILDA com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no PARQUE SANTA HILDA em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no PARQUE SANTA HILDA com atendimento personalizado.',
   keywords: [
     'imóveis parque santa hilda franca sp', 'casas parque santa hilda franca', 'apartamentos parque santa hilda franca',
     'comprar casa parque santa hilda franca sp', 'alugar parque santa hilda franca sp',

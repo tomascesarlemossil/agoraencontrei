@@ -4,11 +4,11 @@ import { ArrowRight, MapPin, Home, MessageCircle, Phone, Star, Search } from 'lu
 
 export const metadata: Metadata = {
   title: 'Imóveis Comerciais em Franca/SP | Imobiliária Lemos Franca/SP',
-  description: 'Imóveis comerciais em Franca/SP: salas, lojas, galpões, prédios e terrenos comerciais. Imobiliária Lemos — especialista em imóveis comerciais. CRECI 279051.',
+  description: 'Imóveis comerciais em Franca/SP: salas, lojas, galpões, prédios e terrenos comerciais. Imobiliária Lemos — especialista em imóveis comerciais..',
   keywords: ["imóveis comerciais franca sp", "sala comercial franca sp", "loja para alugar franca sp", "galpão franca sp", "prédio comercial franca sp", "ponto comercial franca sp", "sala para alugar franca sp", "escritório franca sp", "imóvel comercial franca", "aluguel comercial franca sp"],
   openGraph: {
     title: 'Imóveis Comerciais em Franca/SP | Imobiliária Lemos Franca/SP',
-    description: 'Imóveis comerciais em Franca/SP: salas, lojas, galpões, prédios e terrenos comerciais. Imobiliária Lemos — especialista em imóveis comerciais. CRECI 279051.',
+    description: 'Imóveis comerciais em Franca/SP: salas, lojas, galpões, prédios e terrenos comerciais. Imobiliária Lemos — especialista em imóveis comerciais..',
     type: 'website', locale: 'pt_BR', siteName: 'AgoraEncontrei — Imobiliária Lemos',
   },
   alternates: { canonical: 'https://www.agoraencontrei.com.br/imoveis-comerciais-franca-sp' },
@@ -20,7 +20,7 @@ const SCHEMA = {
   '@type': 'LocalBusiness',
   '@id': 'https://www.agoraencontrei.com.br/imoveis-comerciais-franca-sp',
   name: 'Imobiliária Lemos — Imóveis Comerciais em Franca/SP',
-  description: 'Imóveis comerciais em Franca/SP: salas, lojas, galpões, prédios e terrenos comerciais. Imobiliária Lemos — especialista em imóveis comerciais. CRECI 279051.',
+  description: 'Imóveis comerciais em Franca/SP: salas, lojas, galpões, prédios e terrenos comerciais. Imobiliária Lemos — especialista em imóveis comerciais..',
   url: 'https://www.agoraencontrei.com.br/imoveis-comerciais-franca-sp',
   telephone: '+55-16-3723-0045',
   address: {

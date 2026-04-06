@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no residencial para Venda Parque Universitário, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no residencial para Venda Parque Universitário em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no residencial para Venda Parque Universitário com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no residencial para Venda Parque Universitário em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no residencial para Venda Parque Universitário com atendimento personalizado.',
   keywords: [
     'imóveis residencial para venda parque universitário franca sp', 'casas residencial para venda parque universitário franca', 'apartamentos residencial para venda parque universitário franca',
     'comprar casa residencial para venda parque universitário franca sp', 'alugar residencial para venda parque universitário franca sp',

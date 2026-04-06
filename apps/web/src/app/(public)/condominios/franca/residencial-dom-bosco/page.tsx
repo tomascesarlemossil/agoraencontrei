@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no RESIDENCIAL DOM BOSCO, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no RESIDENCIAL DOM BOSCO em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no RESIDENCIAL DOM BOSCO com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no RESIDENCIAL DOM BOSCO em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no RESIDENCIAL DOM BOSCO com atendimento personalizado.',
   keywords: [
     'imóveis residencial dom bosco franca sp', 'casas residencial dom bosco franca', 'apartamentos residencial dom bosco franca',
     'comprar casa residencial dom bosco franca sp', 'alugar residencial dom bosco franca sp',

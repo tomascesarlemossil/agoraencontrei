@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no residencial para Venda Residencial Olivito, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no residencial para Venda Residencial Olivito em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no residencial para Venda Residencial Olivito com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no residencial para Venda Residencial Olivito em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no residencial para Venda Residencial Olivito com atendimento personalizado.',
   keywords: [
     'imóveis residencial para venda residencial olivito franca sp', 'casas residencial para venda residencial olivito franca', 'apartamentos residencial para venda residencial olivito franca',
     'comprar casa residencial para venda residencial olivito franca sp', 'alugar residencial para venda residencial olivito franca sp',

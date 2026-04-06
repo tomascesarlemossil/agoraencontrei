@@ -4,11 +4,11 @@ import { ArrowRight, MapPin, Home, MessageCircle, Phone, Star, Search } from 'lu
 
 export const metadata: Metadata = {
   title: 'Investimento Imobiliário em Franca/SP | Imobiliária Lemos Franca/SP',
-  description: 'Invista em imóveis em Franca/SP com a Imobiliária Lemos. Rentabilidade, valorização e segurança. Casas, apartamentos, terrenos e comerciais para investidores. CRECI 279051.',
+  description: 'Invista em imóveis em Franca/SP com a Imobiliária Lemos. Rentabilidade, valorização e segurança. Casas, apartamentos, terrenos e comerciais para investidores..',
   keywords: ["investimento imobiliário franca sp", "investir em imóveis franca sp", "rentabilidade imóvel franca sp", "comprar para alugar franca sp", "imóvel investimento franca", "valorização imóvel franca sp", "renda passiva imóvel franca sp", "flipping imóvel franca sp", "imóvel renda franca sp", "investidor imobiliário franca sp"],
   openGraph: {
     title: 'Investimento Imobiliário em Franca/SP | Imobiliária Lemos Franca/SP',
-    description: 'Invista em imóveis em Franca/SP com a Imobiliária Lemos. Rentabilidade, valorização e segurança. Casas, apartamentos, terrenos e comerciais para investidores. CRECI 279051.',
+    description: 'Invista em imóveis em Franca/SP com a Imobiliária Lemos. Rentabilidade, valorização e segurança. Casas, apartamentos, terrenos e comerciais para investidores..',
     type: 'website', locale: 'pt_BR', siteName: 'AgoraEncontrei — Imobiliária Lemos',
   },
   alternates: { canonical: 'https://www.agoraencontrei.com.br/investimento-imobiliario-franca-sp' },
@@ -20,7 +20,7 @@ const SCHEMA = {
   '@type': 'LocalBusiness',
   '@id': 'https://www.agoraencontrei.com.br/investimento-imobiliario-franca-sp',
   name: 'Imobiliária Lemos — Investimento Imobiliário em Franca/SP',
-  description: 'Invista em imóveis em Franca/SP com a Imobiliária Lemos. Rentabilidade, valorização e segurança. Casas, apartamentos, terrenos e comerciais para investidores. CRECI 279051.',
+  description: 'Invista em imóveis em Franca/SP com a Imobiliária Lemos. Rentabilidade, valorização e segurança. Casas, apartamentos, terrenos e comerciais para investidores..',
   url: 'https://www.agoraencontrei.com.br/investimento-imobiliario-franca-sp',
   telephone: '+55-16-3723-0045',
   address: {

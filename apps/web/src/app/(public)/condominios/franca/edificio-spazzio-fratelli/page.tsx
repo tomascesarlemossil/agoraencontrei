@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no EDIFÍCIO SPAZZIO FRATELLI, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no EDIFÍCIO SPAZZIO FRATELLI em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no EDIFÍCIO SPAZZIO FRATELLI com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no EDIFÍCIO SPAZZIO FRATELLI em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no EDIFÍCIO SPAZZIO FRATELLI com atendimento personalizado.',
   keywords: [
     'imóveis edifício spazzio fratelli franca sp', 'casas edifício spazzio fratelli franca', 'apartamentos edifício spazzio fratelli franca',
     'comprar casa edifício spazzio fratelli franca sp', 'alugar edifício spazzio fratelli franca sp',

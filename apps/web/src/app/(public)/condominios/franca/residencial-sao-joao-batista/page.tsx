@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no RESIDENCIAL SÃO JOÃO BATISTA, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no RESIDENCIAL SÃO JOÃO BATISTA em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no RESIDENCIAL SÃO JOÃO BATISTA com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no RESIDENCIAL SÃO JOÃO BATISTA em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no RESIDENCIAL SÃO JOÃO BATISTA com atendimento personalizado.',
   keywords: [
     'imóveis residencial são joão batista franca sp', 'casas residencial são joão batista franca', 'apartamentos residencial são joão batista franca',
     'comprar casa residencial são joão batista franca sp', 'alugar residencial são joão batista franca sp',

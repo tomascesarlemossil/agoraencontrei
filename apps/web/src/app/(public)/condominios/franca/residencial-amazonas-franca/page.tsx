@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no RESIDENCIAL AMAZONAS FRANCA, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no RESIDENCIAL AMAZONAS FRANCA em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no RESIDENCIAL AMAZONAS FRANCA com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no RESIDENCIAL AMAZONAS FRANCA em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no RESIDENCIAL AMAZONAS FRANCA com atendimento personalizado.',
   keywords: [
     'imóveis residencial amazonas franca franca sp', 'casas residencial amazonas franca franca', 'apartamentos residencial amazonas franca franca',
     'comprar casa residencial amazonas franca franca sp', 'alugar residencial amazonas franca franca sp',

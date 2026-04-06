@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no PARQUE DO HORTO, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no PARQUE DO HORTO em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no PARQUE DO HORTO com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no PARQUE DO HORTO em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no PARQUE DO HORTO com atendimento personalizado.',
   keywords: [
     'imóveis parque do horto franca sp', 'casas parque do horto franca', 'apartamentos parque do horto franca',
     'comprar casa parque do horto franca sp', 'alugar parque do horto franca sp',

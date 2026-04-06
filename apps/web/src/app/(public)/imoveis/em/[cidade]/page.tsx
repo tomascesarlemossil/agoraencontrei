@@ -694,7 +694,7 @@ export default async function CidadePage({ params }: { params: { cidade: string 
               )}
               <p>
                 Entre em contato com nossa equipe pelo telefone <strong>(16) 3723-0045</strong> ou visite nossa
-                sede em Franca/SP. Somos credenciados pelo CRECI 279051.
+                sede em Franca/SP. Somos credenciados pelo.
               </p>
             </div>
           </section>

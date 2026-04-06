@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no RESIDENCIAL EM LOCALIZAÇÃO PRIVILEGIADA NA, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no RESIDENCIAL EM LOCALIZAÇÃO PRIVILEGIADA NA em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no RESIDENCIAL EM LOCALIZAÇÃO PRIVILEGIADA NA com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no RESIDENCIAL EM LOCALIZAÇÃO PRIVILEGIADA NA em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no RESIDENCIAL EM LOCALIZAÇÃO PRIVILEGIADA NA com atendimento personalizado.',
   keywords: [
     'imóveis residencial em localização privilegiada na franca sp', 'casas residencial em localização privilegiada na franca', 'apartamentos residencial em localização privilegiada na franca',
     'comprar casa residencial em localização privilegiada na franca sp', 'alugar residencial em localização privilegiada na franca sp',

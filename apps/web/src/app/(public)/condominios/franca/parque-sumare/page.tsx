@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no PARQUE SUMARÉ, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no PARQUE SUMARÉ em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no PARQUE SUMARÉ com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no PARQUE SUMARÉ em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no PARQUE SUMARÉ com atendimento personalizado.',
   keywords: [
     'imóveis parque sumaré franca sp', 'casas parque sumaré franca', 'apartamentos parque sumaré franca',
     'comprar casa parque sumaré franca sp', 'alugar parque sumaré franca sp',

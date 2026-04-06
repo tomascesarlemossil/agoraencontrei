@@ -20,7 +20,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   return {
     title: `Imóveis no ${neighborhoodName}, Franca/SP | Imobiliária Lemos`,
-    description: `Casas à venda e para alugar no ${neighborhoodName} em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no ${neighborhoodName} com atendimento personalizado.`,
+    description: `Casas à venda e para alugar no ${neighborhoodName} em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no ${neighborhoodName} com atendimento personalizado.`,
     keywords: keywords.join(', '),
     openGraph: {
       title: `Imóveis no ${neighborhoodName}, Franca/SP | Imobiliária Lemos`,

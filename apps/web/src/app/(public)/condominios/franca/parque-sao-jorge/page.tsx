@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no PARQUE SAO JORGE, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no PARQUE SAO JORGE em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no PARQUE SAO JORGE com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no PARQUE SAO JORGE em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no PARQUE SAO JORGE com atendimento personalizado.',
   keywords: [
     'imóveis parque sao jorge franca sp', 'casas parque sao jorge franca', 'apartamentos parque sao jorge franca',
     'comprar casa parque sao jorge franca sp', 'alugar parque sao jorge franca sp',

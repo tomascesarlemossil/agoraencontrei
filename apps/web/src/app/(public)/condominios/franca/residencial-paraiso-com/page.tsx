@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no Residencial Paraiso com, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no Residencial Paraiso com em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no Residencial Paraiso com com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no Residencial Paraiso com em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no Residencial Paraiso com com atendimento personalizado.',
   keywords: [
     'imóveis residencial paraiso com franca sp', 'casas residencial paraiso com franca', 'apartamentos residencial paraiso com franca',
     'comprar casa residencial paraiso com franca sp', 'alugar residencial paraiso com franca sp',

@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no Residencial Olivito  Imóvel térreo, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no Residencial Olivito  Imóvel térreo em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no Residencial Olivito  Imóvel térreo com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no Residencial Olivito  Imóvel térreo em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no Residencial Olivito  Imóvel térreo com atendimento personalizado.',
   keywords: [
     'imóveis residencial olivito  imóvel térreo franca sp', 'casas residencial olivito  imóvel térreo franca', 'apartamentos residencial olivito  imóvel térreo franca',
     'comprar casa residencial olivito  imóvel térreo franca sp', 'alugar residencial olivito  imóvel térreo franca sp',

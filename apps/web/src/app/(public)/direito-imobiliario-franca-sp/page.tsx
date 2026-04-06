@@ -4,11 +4,11 @@ import { ArrowRight, MapPin, Home, MessageCircle, Phone, Star, Search } from 'lu
 
 export const metadata: Metadata = {
   title: 'Direito Imobiliário em Franca/SP | Imobiliária Lemos Franca/SP',
-  description: 'Direito imobiliário em Franca/SP: contratos, escrituras, inventários, usucapião e regularização de imóveis. Imobiliária Lemos com assessoria jurídica especializada. CRECI 279051.',
+  description: 'Direito imobiliário em Franca/SP: contratos, escrituras, inventários, usucapião e regularização de imóveis. Imobiliária Lemos com assessoria jurídica especializada..',
   keywords: ["direito imobiliário franca sp", "advogado imobiliário franca sp", "escritura imóvel franca sp", "contrato compra venda imóvel franca", "usucapião franca sp", "regularização imóvel franca", "inventário imóvel franca sp", "cartório franca sp imóvel", "registro imóvel franca sp", "distrato contrato imóvel franca"],
   openGraph: {
     title: 'Direito Imobiliário em Franca/SP | Imobiliária Lemos Franca/SP',
-    description: 'Direito imobiliário em Franca/SP: contratos, escrituras, inventários, usucapião e regularização de imóveis. Imobiliária Lemos com assessoria jurídica especializada. CRECI 279051.',
+    description: 'Direito imobiliário em Franca/SP: contratos, escrituras, inventários, usucapião e regularização de imóveis. Imobiliária Lemos com assessoria jurídica especializada..',
     type: 'website', locale: 'pt_BR', siteName: 'AgoraEncontrei — Imobiliária Lemos',
   },
   alternates: { canonical: 'https://www.agoraencontrei.com.br/direito-imobiliario-franca-sp' },
@@ -20,7 +20,7 @@ const SCHEMA = {
   '@type': 'LocalBusiness',
   '@id': 'https://www.agoraencontrei.com.br/direito-imobiliario-franca-sp',
   name: 'Imobiliária Lemos — Direito Imobiliário em Franca/SP',
-  description: 'Direito imobiliário em Franca/SP: contratos, escrituras, inventários, usucapião e regularização de imóveis. Imobiliária Lemos com assessoria jurídica especializada. CRECI 279051.',
+  description: 'Direito imobiliário em Franca/SP: contratos, escrituras, inventários, usucapião e regularização de imóveis. Imobiliária Lemos com assessoria jurídica especializada..',
   url: 'https://www.agoraencontrei.com.br/direito-imobiliario-franca-sp',
   telephone: '+55-16-3723-0045',
   address: {

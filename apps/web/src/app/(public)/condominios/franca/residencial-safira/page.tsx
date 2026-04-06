@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no RESIDENCIAL SAFIRA, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no RESIDENCIAL SAFIRA em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no RESIDENCIAL SAFIRA com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no RESIDENCIAL SAFIRA em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no RESIDENCIAL SAFIRA com atendimento personalizado.',
   keywords: [
     'imóveis residencial safira franca sp', 'casas residencial safira franca', 'apartamentos residencial safira franca',
     'comprar casa residencial safira franca sp', 'alugar residencial safira franca sp',

@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no RESIDENCIAL PARQUE FREMONT, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no RESIDENCIAL PARQUE FREMONT em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no RESIDENCIAL PARQUE FREMONT com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no RESIDENCIAL PARQUE FREMONT em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no RESIDENCIAL PARQUE FREMONT com atendimento personalizado.',
   keywords: [
     'imóveis residencial parque fremont franca sp', 'casas residencial parque fremont franca', 'apartamentos residencial parque fremont franca',
     'comprar casa residencial parque fremont franca sp', 'alugar residencial parque fremont franca sp',

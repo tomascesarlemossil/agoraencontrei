@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no RESIDENCIAL DE ESQUINA, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no RESIDENCIAL DE ESQUINA em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no RESIDENCIAL DE ESQUINA com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no RESIDENCIAL DE ESQUINA em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no RESIDENCIAL DE ESQUINA com atendimento personalizado.',
   keywords: [
     'imóveis residencial de esquina franca sp', 'casas residencial de esquina franca', 'apartamentos residencial de esquina franca',
     'comprar casa residencial de esquina franca sp', 'alugar residencial de esquina franca sp',

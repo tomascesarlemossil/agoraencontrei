@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no CONDOMÍNIO SPAZIO FRATELLI, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no CONDOMÍNIO SPAZIO FRATELLI em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no CONDOMÍNIO SPAZIO FRATELLI com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no CONDOMÍNIO SPAZIO FRATELLI em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no CONDOMÍNIO SPAZIO FRATELLI com atendimento personalizado.',
   keywords: [
     'imóveis condomínio spazio fratelli franca sp', 'casas condomínio spazio fratelli franca', 'apartamentos condomínio spazio fratelli franca',
     'comprar casa condomínio spazio fratelli franca sp', 'alugar condomínio spazio fratelli franca sp',

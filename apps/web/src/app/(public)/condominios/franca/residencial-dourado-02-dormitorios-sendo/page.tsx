@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no RESIDENCIAL DOURADO   02 DORMITÓRIOS SENDO, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no RESIDENCIAL DOURADO   02 DORMITÓRIOS SENDO em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no RESIDENCIAL DOURADO   02 DORMITÓRIOS SENDO com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no RESIDENCIAL DOURADO   02 DORMITÓRIOS SENDO em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no RESIDENCIAL DOURADO   02 DORMITÓRIOS SENDO com atendimento personalizado.',
   keywords: [
     'imóveis residencial dourado   02 dormitórios sendo franca sp', 'casas residencial dourado   02 dormitórios sendo franca', 'apartamentos residencial dourado   02 dormitórios sendo franca',
     'comprar casa residencial dourado   02 dormitórios sendo franca sp', 'alugar residencial dourado   02 dormitórios sendo franca sp',

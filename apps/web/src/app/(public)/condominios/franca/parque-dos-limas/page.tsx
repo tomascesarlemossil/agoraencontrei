@@ -8,7 +8,7 @@ export const revalidate = 600
 
 export const metadata: Metadata = {
   title: 'Imóveis no PARQUE DOS LIMAS, Franca/SP | Imobiliária Lemos',
-  description: 'Casas à venda e para alugar no PARQUE DOS LIMAS em Franca/SP. Imobiliária Lemos — 22 anos de tradição. CRECI 279051. Encontre o imóvel ideal no PARQUE DOS LIMAS com atendimento personalizado.',
+  description: 'Casas à venda e para alugar no PARQUE DOS LIMAS em Franca/SP. Imobiliária Lemos — 22 anos de tradição.. Encontre o imóvel ideal no PARQUE DOS LIMAS com atendimento personalizado.',
   keywords: [
     'imóveis parque dos limas franca sp', 'casas parque dos limas franca', 'apartamentos parque dos limas franca',
     'comprar casa parque dos limas franca sp', 'alugar parque dos limas franca sp',
