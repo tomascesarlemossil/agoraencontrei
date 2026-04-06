@@ -4,6 +4,7 @@ import Image from 'next/image'
 import { notFound } from 'next/navigation'
 import { ArrowRight, MapPin, Home, MessageCircle, Phone, Star, Building2, User, ExternalLink, ChevronDown } from 'lucide-react'
 import { getCondoName } from '@/data/seo-condo-slugs'
+import CondoIntelligence from './CondoIntelligence'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 
@@ -24,9 +25,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title,
     description,
     keywords: [
-      `imóveis ${condoName.toLowerCase()} franca sp`,
-      `casas ${condoName.toLowerCase()} franca`,
-      `comprar casa ${condoName.toLowerCase()} franca sp`,
+      `${condoName.toLowerCase()} franca sp`,
+      `apartamento ${condoName.toLowerCase()} franca`,
+      `valor m2 ${condoName.toLowerCase()} franca`,
+      `leilão ${condoName.toLowerCase()} franca`,
+      `reforma ${condoName.toLowerCase()} franca`,
+      `comprar ${condoName.toLowerCase()} franca sp`,
       `alugar ${condoName.toLowerCase()} franca sp`,
       `arquiteto ${condoName.toLowerCase()} franca`,
       `engenheiro ${condoName.toLowerCase()} franca`,
@@ -193,7 +197,7 @@ export default async function CondoPage({ params }: Props) {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
 
-      {/* HERO */}
+      {/* HERO — Template Elite */}
       <section className="bg-gradient-to-br from-[#1B2B5B] to-[#0f1c3a] text-white py-14 px-4">
         <div className="max-w-5xl mx-auto">
           <nav className="text-xs text-blue-200 mb-4 flex items-center gap-1.5 flex-wrap">
@@ -202,6 +206,8 @@ export default async function CondoPage({ params }: Props) {
             <Link href="/imoveis" className="hover:text-white">Imóveis</Link>
             <span>/</span>
             <Link href="/imoveis?city=Franca" className="hover:text-white">Franca</Link>
+            <span>/</span>
+            <Link href="/condominios/franca" className="hover:text-white">Condomínios</Link>
             <span>/</span>
             <span className="text-white">{condoName}</span>
           </nav>
@@ -223,7 +229,11 @@ export default async function CondoPage({ params }: Props) {
             <Link href={`/imoveis?city=Franca&neighborhood=${encodeURIComponent(condoName)}`}
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm"
               style={{ background: '#C9A84C', color: '#1B2B5B' }}>
-              <Home className="w-4 h-4" /> Ver Imóveis
+              <Home className="w-4 h-4" /> Ver Imóveis à Venda
+            </Link>
+            <Link href={`/leiloes?search=${encodeURIComponent(condoName)}`}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm bg-white/10 text-white border border-white/20 hover:bg-white/20">
+              🏛️ Ver Leilões neste Edifício
             </Link>
             <a href={`https://wa.me/5516981010004?text=Olá! Quero um imóvel no ${condoName} em Franca/SP.`}
               target="_blank" rel="noreferrer"
