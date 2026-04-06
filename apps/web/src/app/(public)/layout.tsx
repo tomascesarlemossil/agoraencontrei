@@ -234,7 +234,12 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
                 </li>
                 <li className="pt-1">
                   <p className="text-white/40 text-xs uppercase tracking-wider mb-0.5">Endereço</p>
-                  <p className="text-white/60 text-sm">Franca — SP</p>
+                  <p className="text-white/60 text-sm leading-relaxed">
+                    Rua Simão Caleiro, 2383<br />
+                    Vila França — Franca/SP<br />
+                    CEP 14401-155
+                  </p>
+                  <p className="text-white/40 text-xs mt-1">CNPJ: 10.962.301/0001-50</p>
                   <a
                     href="https://www.imobiliarialemos.com.br"
                     target="_blank"
@@ -249,11 +254,17 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
             </div>
           </div>
 
-          <div className="border-t border-white/10 pt-6 flex flex-col sm:flex-row justify-between items-center gap-3">
+          <div className="border-t border-white/10 pt-6 flex flex-col sm:flex-row justify-between items-center gap-4">
             <p className="text-white/50 text-xs">
               © {new Date().getFullYear()} AgoraEncontrei Marketplace. Todos os direitos reservados.
             </p>
-            <p className="text-white/50 text-xs">Criado pela Imobiliária Lemos · Fundada em 2002</p>
+            <div className="flex items-center gap-4">
+              <Link href="/termos-uso" className="text-white/40 text-xs hover:text-white/70 transition-colors">Termos de Uso</Link>
+              <span className="text-white/20 text-xs">·</span>
+              <Link href="/politica-privacidade" className="text-white/40 text-xs hover:text-white/70 transition-colors">Política de Privacidade</Link>
+              <span className="text-white/20 text-xs">·</span>
+              <p className="text-white/40 text-xs">Criado pela Imobiliária Lemos · Fundada em 2002</p>
+            </div>
           </div>
         </div>
       </footer>
