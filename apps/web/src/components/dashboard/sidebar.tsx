@@ -370,7 +370,7 @@ export function Sidebar() {
         </button>
         <div className="flex items-center gap-2">
           <Home className="h-5 w-5 text-blue-400" />
-          <span className="text-sm font-bold text-white">AgoraEncontrei</span>
+          <span className="text-sm font-bold"><span style={{ color: '#1a5c2a' }}>Agora</span><span style={{ color: '#d1d5db' }}>Encontrei</span></span>
         </div>
       </div>
 

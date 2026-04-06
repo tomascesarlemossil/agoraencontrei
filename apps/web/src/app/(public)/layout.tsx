@@ -97,11 +97,11 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
                   loading="lazy"
                 />
                 <div className="flex flex-col leading-none">
-                  <span className="font-bold text-base" style={{ fontFamily: 'Georgia, serif' }}>
-                    <span style={{ color: '#9ca3af', fontWeight: 400 }}>Agora</span>
-                    <span style={{ color: '#16a34a', fontWeight: 700 }}>Encontrei</span>
+                  <span className="font-bold text-base" style={{ fontFamily: 'Arial, Helvetica, sans-serif' }}>
+                    <span style={{ color: '#1a5c2a', fontWeight: 700 }}>Agora</span>
+                    <span style={{ color: '#d1d5db', fontWeight: 700 }}>Encontrei</span>
                   </span>
-                  <span className="text-[10px] font-medium tracking-widest uppercase" style={{ color: '#C9A84C', letterSpacing: '0.12em' }}>Marketplace</span>
+                  <span className="text-[10px] font-medium" style={{ color: '#9ca3af', letterSpacing: '0.04em' }}>Marktplace</span>
                 </div>
               </div>
               <p className="text-white/50 text-xs leading-relaxed">

@@ -99,10 +99,10 @@ export function Navbar() {
           />
           <div className="flex flex-col leading-none">
             <span className="text-base tracking-tight" style={{ fontFamily: 'Arial, Helvetica, sans-serif', letterSpacing: '-0.01em' }}>
-              <span style={{ color: '#9ca3af', fontWeight: 400 }}>Agora</span><span style={{ color: '#16a34a', fontWeight: 700 }}>Encontrei</span>
+              <span style={{ color: '#1a5c2a', fontWeight: 700 }}>Agora</span><span style={{ color: '#d1d5db', fontWeight: 700 }}>Encontrei</span>
             </span>
-            <span className="text-[9px] font-medium tracking-widest uppercase" style={{ color: 'var(--site-accent-color, #C9A84C)', letterSpacing: '0.15em' }}>
-              Marketplace
+            <span className="text-[9px] font-medium" style={{ color: '#9ca3af', letterSpacing: '0.04em' }}>
+              Marktplace
             </span>
           </div>
         </Link>
