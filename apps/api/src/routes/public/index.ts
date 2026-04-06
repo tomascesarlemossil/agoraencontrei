@@ -805,7 +805,7 @@ export default async function publicRoutes(app: FastifyInstance) {
     const seoConfig    = systemConfig.seo    ?? {}
     const designConfig = systemConfig.design ?? {}
 
-    return reply.send({
+    const siteSettingsResult = {
       // ── Legado (compatibilidade) ──────────────────────────────────────
       heroVideoUrl:  settings.heroVideoUrl  ?? siteConfig.heroVideoUrl  ?? null,
       heroVideoType: settings.heroVideoType ?? siteConfig.heroVideoType ?? 'youtube',
@@ -1278,6 +1278,112 @@ export default async function publicRoutes(app: FastifyInstance) {
       return reply.send(users)
     } catch (err) {
       app.log.error({ err }, '[team] Error fetching team')
+      return reply.status(500).send({ error: 'INTERNAL_ERROR' })
+    }
+  })
+
+  // ── GET /auctions — Imóveis da Caixa Econômica Federal (leilões e venda direta) ──
+  app.get('/auctions', async (_req, reply) => {
+    try {
+      const cacheKey = 'pub:caixa:auctions:SP:v3'
+      const cached = await cacheGet(app.redis, cacheKey)
+      if (cached) return reply.send(cached)
+
+      const csvUrl = 'https://venda-imoveis.caixa.gov.br/listaweb/Lista_imoveis_SP.csv'
+      const response = await fetch(csvUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+          'Referer': 'https://venda-imoveis.caixa.gov.br/',
+        },
+        signal: AbortSignal.timeout(25000),
+      })
+
+      if (!response.ok) {
+        return reply.status(502).send({ error: 'CAIXA_UNAVAILABLE' })
+      }
+
+      const buffer = await response.arrayBuffer()
+      const decoder = new TextDecoder('latin1')
+      const csvText = decoder.decode(buffer)
+
+      const TARGET_CITIES = [
+        'FRANCA', 'BATATAIS', 'CRISTAIS PAULISTA', 'PATROCINIO PAULISTA',
+        'ITIRAPUA', 'RESTINGA', 'JERIQUARA', 'PEDREGULHO', 'ALTINOPOLIS',
+        'BRODOWSKI', 'NUPORANGA', 'SALES OLIVEIRA', 'CLARAVAL', 'RIFAINA',
+        'IBIRACI', 'CAPETINGA', 'ITAMOGI', 'PASSOS',
+      ]
+
+      const lines = csvText.split('\n').slice(2)
+      const auctions: Array<{
+        id: string; city: string; neighborhood: string; address: string
+        price: number; appraisalValue: number; discount: number
+        financeable: boolean; description: string; saleType: string; link: string
+        propertyType: string; bedrooms: number; totalArea: number
+        privateArea: number; landArea: number; parkingSpots: number
+      }> = []
+
+      for (const line of lines) {
+        if (!line.trim()) continue
+        const cols = line.split(';')
+        if (cols.length < 11) continue
+
+        const cityRaw = (cols[2] ?? '').trim().toUpperCase()
+        if (!TARGET_CITIES.some(c => cityRaw.includes(c))) continue
+
+        const id = (cols[0] ?? '').trim()
+        const city = (cols[2] ?? '').trim()
+        const neighborhood = (cols[3] ?? '').trim()
+        const address = (cols[4] ?? '').trim()
+        const price = parseFloat(((cols[5] ?? '0').replace(/\./g, '').replace(',', '.').trim())) || 0
+        const appraisalValue = parseFloat(((cols[6] ?? '0').replace(/\./g, '').replace(',', '.').trim())) || 0
+        const discount = parseFloat(((cols[7] ?? '0').replace(',', '.').trim())) || 0
+        const financeable = (cols[8] ?? '').trim().toLowerCase() === 'sim'
+        const description = (cols[9] ?? '').trim()
+        const saleType = (cols[10] ?? '').trim()
+        const link = (cols[11] ?? '').trim()
+
+        const d = description.toLowerCase()
+        let propertyType = 'Imóvel'
+        if (d.includes('apartamento')) propertyType = 'Apartamento'
+        else if (d.includes('casa')) propertyType = 'Casa'
+        else if (d.includes('terreno') || d.includes('lote')) propertyType = 'Terreno'
+        else if (d.includes('galpao') || d.includes('galp')) propertyType = 'Galpão'
+        else if (d.includes('predio') || d.includes('pr')) propertyType = 'Prédio'
+        else if (d.includes('sitio') || d.includes('s')) propertyType = 'Sítio'
+        else if (d.includes('fazenda')) propertyType = 'Fazenda'
+        else if (d.includes('chacara') || d.includes('ch')) propertyType = 'Chácara'
+
+        const bedroomsMatch = description.match(/(\d+)\s*qto/i)
+        const bedrooms = bedroomsMatch ? parseInt(bedroomsMatch[1]) : 0
+        const totalAreaMatch = description.match(/([\d,.]+)\s*de\s*área\s*total/i)
+        const totalArea = totalAreaMatch ? parseFloat(totalAreaMatch[1].replace(',', '.')) : 0
+        const privateAreaMatch = description.match(/([\d,.]+)\s*de\s*área\s*privativa/i)
+        const privateArea = privateAreaMatch ? parseFloat(privateAreaMatch[1].replace(',', '.')) : 0
+        const landAreaMatch = description.match(/([\d,.]+)\s*de\s*área\s*do\s*terreno/i)
+        const landArea = landAreaMatch ? parseFloat(landAreaMatch[1].replace(',', '.')) : 0
+        const parkingMatch = description.match(/(\d+)\s*vaga/i)
+        const parkingSpots = parkingMatch ? parseInt(parkingMatch[1]) : 0
+
+        auctions.push({
+          id, city, neighborhood, address,
+          price, appraisalValue, discount, financeable,
+          description, saleType, link, propertyType,
+          bedrooms, totalArea, privateArea, landArea, parkingSpots,
+        })
+      }
+
+      auctions.sort((a, b) => b.discount - a.discount)
+
+      const result = {
+        total: auctions.length,
+        updatedAt: new Date().toISOString(),
+        items: auctions,
+      }
+
+      await cacheSet(app.redis, cacheKey, result, 21600)
+      return reply.send(result)
+    } catch (err) {
+      app.log.error({ err }, '[auctions] Error fetching Caixa auctions')
       return reply.status(500).send({ error: 'INTERNAL_ERROR' })
     }
   })

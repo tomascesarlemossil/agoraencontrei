@@ -52,6 +52,7 @@ import systemConfigRoutes from './routes/system-config/index.js'
 import legalRoutes from './routes/legal/index.js'
 import financeAutomationRoutes from './routes/finance/automation.js'
 import alertsRoutes from './routes/alerts/index.js'
+import { auctionsRoute } from './routes/public/auctions.js'
 
 const app = Fastify({
   // No body size limit — accept any file size
@@ -206,6 +207,7 @@ async function bootstrap() {
   await app.register(legalRoutes,        { prefix: '/api/v1/legal' })
   await app.register(financeAutomationRoutes, { prefix: '/api/v1/finance/automation' })
   await app.register(alertsRoutes,            { prefix: '/api/v1/public/alerts' })
+  await app.register(auctionsRoute,            { prefix: '/api/v1/public' })
 
   // ── 404 Handler ─────────────────────────────────────────────────────────
   app.setNotFoundHandler((_req, reply) => {
