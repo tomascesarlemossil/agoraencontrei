@@ -1,6 +1,7 @@
 import { PrismaClient } from '@prisma/client'
 import { CaixaScraper } from './caixa-scraper.js'
 import { GenericLeiloeiroScraper, LEILOEIROS_CONFIG, BANCOS_CONFIG } from './generic-scraper.js'
+import { AiNewsroomService } from '../ai-newsroom.service.js'
 
 /**
  * Scheduler de Scrapers — roda 24/7, varrendo todas as fontes
@@ -96,6 +97,15 @@ export class ScraperScheduler {
     }
 
     console.log(`[ScraperScheduler] Concluído. ${results.length} fontes processadas.`)
+
+    // IA Newsroom — gerar posts para leilões "joia"
+    try {
+      const newsroom = new AiNewsroomService(this.prisma)
+      const posts = await newsroom.generatePosts()
+      if (posts.created > 0) console.log(`[ScraperScheduler] IA Newsroom: ${posts.created} posts gerados`)
+    } catch (err: any) {
+      console.error('[ScraperScheduler] IA Newsroom erro:', err.message)
+    }
     return results
   }
 
