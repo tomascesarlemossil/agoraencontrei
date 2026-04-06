@@ -682,13 +682,13 @@ export default async function HomePage() {
               1º Parceiro Oficial
             </span>
             {/* Logo */}
-            <div className="w-28 h-28 rounded-full overflow-hidden mb-4 shadow-lg border-4" style={{ borderColor: '#C9A84C' }}>
+            <div className="w-32 h-32 mb-4">
               <Image
                 src="/logo-lemos.png"
                 alt="Imobiliária Lemos"
-                width={112}
-                height={112}
-                className="w-full h-full object-cover"
+                width={128}
+                height={128}
+                className="w-full h-full object-contain drop-shadow-xl"
               />
             </div>
             {/* Nome */}
