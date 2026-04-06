@@ -53,6 +53,8 @@ import legalRoutes from './routes/legal/index.js'
 import financeAutomationRoutes from './routes/finance/automation.js'
 import alertsRoutes from './routes/alerts/index.js'
 import auctionsRoutes from './routes/auctions/index.js'
+import specialistsRoutes from './routes/specialists/index.js'
+import { specialistPaymentRoutes } from './routes/specialists/payments.js'
 import { ScraperScheduler } from './services/scrapers/scheduler.js'
 import { AuctionMonitorService } from './services/auction-monitor.service.js'
 import { auctionsRoute } from './routes/public/auctions.js'
@@ -194,6 +196,59 @@ async function runMigrations(prisma: any) {
     `CREATE INDEX IF NOT EXISTS scraper_runs_source_idx ON scraper_runs(source)`,
     `CREATE INDEX IF NOT EXISTS scraper_runs_started_idx ON scraper_runs("startedAt")`,
   ]
+
+  // ── Specialists migration ────────────────────────────────────────────────
+  const specialistsMigrations = [
+    `CREATE TABLE IF NOT EXISTS specialists (
+      id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+      slug TEXT UNIQUE NOT NULL,
+      name TEXT NOT NULL,
+      email TEXT UNIQUE NOT NULL,
+      phone TEXT, whatsapp TEXT,
+      category TEXT NOT NULL DEFAULT 'OUTRO',
+      bio TEXT, city TEXT NOT NULL DEFAULT 'Franca', state TEXT NOT NULL DEFAULT 'SP',
+      crea TEXT, instagram TEXT, website TEXT, "photoUrl" TEXT,
+      status TEXT NOT NULL DEFAULT 'PENDING',
+      tags TEXT[] NOT NULL DEFAULT '{}',
+      "welcomeEmailSentAt" TIMESTAMPTZ,
+      "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )`,
+    `CREATE TABLE IF NOT EXISTS buildings (
+      id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+      slug TEXT UNIQUE NOT NULL,
+      name TEXT NOT NULL,
+      city TEXT NOT NULL DEFAULT 'Franca', state TEXT NOT NULL DEFAULT 'SP',
+      neighborhood TEXT, address TEXT, floors INTEGER, units INTEGER, "yearBuilt" INTEGER,
+      description TEXT,
+      "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )`,
+    `CREATE TABLE IF NOT EXISTS specialist_buildings (
+      id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+      "specialistId" TEXT NOT NULL REFERENCES specialists(id) ON DELETE CASCADE,
+      "buildingId" TEXT NOT NULL REFERENCES buildings(id) ON DELETE CASCADE,
+      "projectType" TEXT, year INTEGER,
+      "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      UNIQUE("specialistId", "buildingId")
+    )`,
+    `CREATE INDEX IF NOT EXISTS specialists_status_idx ON specialists(status)`,
+    // Campos de pagamento (idempotentes)
+    `ALTER TABLE specialists ADD COLUMN IF NOT EXISTS cpfcnpj TEXT`,
+    `ALTER TABLE specialists ADD COLUMN IF NOT EXISTS plan TEXT NOT NULL DEFAULT 'START'`,
+    `ALTER TABLE specialists ADD COLUMN IF NOT EXISTS "planStatus" TEXT DEFAULT 'FREE'`,
+    `ALTER TABLE specialists ADD COLUMN IF NOT EXISTS "planActivatedAt" TIMESTAMP`,
+    `ALTER TABLE specialists ADD COLUMN IF NOT EXISTS "planExpiresAt" TIMESTAMP`,
+    `ALTER TABLE specialists ADD COLUMN IF NOT EXISTS "asaasCustomerId" TEXT`,
+    `ALTER TABLE specialists ADD COLUMN IF NOT EXISTS "asaasSubscriptionId" TEXT`,
+    `CREATE INDEX IF NOT EXISTS specialists_plan_idx ON specialists(plan)`,
+    `CREATE INDEX IF NOT EXISTS specialists_category_idx ON specialists(category)`,
+    `CREATE INDEX IF NOT EXISTS buildings_city_idx ON buildings(city, state)`,
+  ]
+  for (const sql of specialistsMigrations) {
+    try { await prisma.$executeRawUnsafe(sql) } catch { /* already exists */ }
+  }
+
   for (const sql of auctionMigrations) {
     try {
       await prisma.$executeRawUnsafe(sql)
@@ -281,9 +336,8 @@ async function bootstrap() {
   await app.register(alertsRoutes,            { prefix: '/api/v1/public/alerts' })
   await app.register(auctionsRoutes,          { prefix: '/api/v1/auctions' })
   await app.register(auctionsRoute,            { prefix: '/api/v1/public' })
-  await app.register(partnerRegisterRoute,     { prefix: '/api/v1/public' })
-  await app.register(partnerAnalyticsRoute,    { prefix: '/api/v1/public' })
-  await app.register(territoryRoute,           { prefix: '/api/v1' })
+  await app.register(specialistsRoutes,        { prefix: '/api/v1/specialists' })
+  await app.register(specialistPaymentRoutes,  { prefix: '/api/v1/specialists/payments' })
 
   // ── Scraper Scheduler (robôs 24/7 de leilões) ─────────────────────────
   if (env.NODE_ENV === 'production') {

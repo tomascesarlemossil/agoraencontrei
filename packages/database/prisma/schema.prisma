@@ -1980,3 +1980,106 @@ model ScraperRun {
   @@index([startedAt])
   @@map("scraper_runs")
 }
+
+// ─── ESPECIALISTAS / PARCEIROS PROFISSIONAIS ────────────────────────────────
+
+enum SpecialistCategory {
+  ARQUITETO
+  ENGENHEIRO
+  CORRETOR
+  AVALIADOR
+  DESIGNER_INTERIORES
+  FOTOGRAFO
+  VIDEOMAKER
+  ADVOGADO_IMOBILIARIO
+  DESPACHANTE
+  OUTRO
+}
+
+enum SpecialistStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+}
+
+model Specialist {
+  id                 String             @id @default(cuid())
+  slug               String             @unique
+  name               String
+  email              String             @unique
+  phone              String?
+  whatsapp           String?
+  category           SpecialistCategory
+  bio                String?            @db.Text
+  city               String             @default("Franca")
+  state              String             @default("SP")
+  crea               String?
+  instagram          String?
+  website            String?
+  photoUrl           String?
+  status             SpecialistStatus   @default(PENDING)
+  tags               String[]
+  buildings          SpecialistBuilding[]
+  welcomeEmailSentAt DateTime?
+
+  // Pagamentos Asaas
+  cpfCnpj            String?
+  plan               SpecialistPlan     @default(START)
+  planStatus         String?            @default("FREE")
+  planActivatedAt    DateTime?
+  planExpiresAt      DateTime?
+  asaasCustomerId    String?
+  asaasSubscriptionId String?
+
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  @@index([status])
+  @@index([category])
+  @@index([city, state])
+  @@index([plan])
+  @@map("specialists")
+}
+
+enum SpecialistPlan {
+  START
+  PRIME
+  VIP
+}
+
+model Building {
+  id           String   @id @default(cuid())
+  slug         String   @unique
+  name         String
+  city         String   @default("Franca")
+  state        String   @default("SP")
+  neighborhood String?
+  address      String?
+  floors       Int?
+  units        Int?
+  yearBuilt    Int?
+  description  String?  @db.Text
+  specialists  SpecialistBuilding[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([city, state])
+  @@index([neighborhood])
+  @@map("buildings")
+}
+
+model SpecialistBuilding {
+  id           String     @id @default(cuid())
+  specialist   Specialist @relation(fields: [specialistId], references: [id], onDelete: Cascade)
+  specialistId String
+  building     Building   @relation(fields: [buildingId], references: [id], onDelete: Cascade)
+  buildingId   String
+  projectType  String?
+  year         Int?
+  createdAt    DateTime   @default(now())
+
+  @@unique([specialistId, buildingId])
+  @@index([specialistId])
+  @@index([buildingId])
+  @@map("specialist_buildings")
+}

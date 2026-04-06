@@ -1,329 +1,558 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { CheckCircle, Building, Star, ArrowRight, User, Mail, Phone, Briefcase, MapPin, MessageCircle } from 'lucide-react'
+import Image from 'next/image'
+import {
+  User, Mail, Phone, Building2, Award, MapPin, Instagram,
+  Globe, CheckCircle2, ChevronRight, Loader2, Search, X,
+  Briefcase, Camera, Scale, Wrench, Palette, Video, Star
+} from 'lucide-react'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? ''
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 
-// Edifícios/Condomínios conhecidos em Franca
-const CONDOS_LIST = [
-  'Collis Residence', 'Di Villaggio Firenze', 'Dona Sabina', 'Gaia',
-  'Olivito', 'Parque Freemont', 'Pérola', 'Piemonte', 'Porto dos Sonhos',
-  'Reserva das Amoreiras', 'Residencial Brasil', 'Residencial Dom Bosco',
-  'Residencial Piemonte', 'Residencial Trianon', 'San Pietro', 'Siena',
-  'Siracusa', 'Terra Mater', 'Terra Nova', 'Village Giardinno',
-  'Villagio Di Roma', 'Ville de France', 'Recanto dos Lagos', 'Reserva Real',
-  'Quinta da Boa Vista', 'Villa Toscana', 'Riviera', 'Le Parc',
-  'Jardins de Franca', 'Residencial Zanetti', 'San Conrado',
-  'Village Santa Georgina', 'Village São Vicente', 'Franca Garden',
-  'Residencial Portinari', 'Residencial Bela Vista',
-].sort()
-
-const SPECIALTIES = [
-  { value: 'arquitetura', label: 'Arquitetura e Design' },
-  { value: 'engenharia', label: 'Engenharia Civil' },
-  { value: 'advocacia', label: 'Advocacia Imobiliária' },
-  { value: 'design-interiores', label: 'Design de Interiores' },
-  { value: 'corretagem', label: 'Corretagem de Imóveis' },
-  { value: 'avaliacao', label: 'Avaliação e Perícia' },
-  { value: 'reforma', label: 'Reforma e Construção' },
-  { value: 'fotografia', label: 'Fotografia Imobiliária' },
-  { value: 'financeiro', label: 'Assessoria Financeira' },
-  { value: 'outro', label: 'Outro' },
+const CATEGORIES = [
+  { value: 'ARQUITETO',           label: 'Arquiteto(a)',            icon: Building2,  desc: 'Projetos arquitetônicos e regularização' },
+  { value: 'ENGENHEIRO',          label: 'Engenheiro(a)',           icon: Wrench,     desc: 'Laudos, vistorias e reformas' },
+  { value: 'CORRETOR',            label: 'Corretor(a)',             icon: Briefcase,  desc: 'Compra, venda e locação de imóveis' },
+  { value: 'AVALIADOR',           label: 'Avaliador(a)',            icon: Star,       desc: 'Avaliação de mercado e laudos PTAM' },
+  { value: 'DESIGNER_INTERIORES', label: 'Designer de Interiores',  icon: Palette,    desc: 'Projetos de decoração e interiores' },
+  { value: 'FOTOGRAFO',           label: 'Fotógrafo(a)',            icon: Camera,     desc: 'Fotografia e tour virtual 360°' },
+  { value: 'VIDEOMAKER',          label: 'Videomaker',              icon: Video,      desc: 'Vídeos e drones para imóveis' },
+  { value: 'ADVOGADO_IMOBILIARIO',label: 'Advogado(a) Imobiliário', icon: Scale,      desc: 'Contratos, escrituras e regularização' },
+  { value: 'DESPACHANTE',         label: 'Despachante',             icon: Award,      desc: 'Documentação e cartório' },
+  { value: 'OUTRO',               label: 'Outro',                   icon: User,       desc: 'Outros serviços relacionados a imóveis' },
 ]
 
-function fmt(v: number) {
-  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(v)
+const SPECIALTY_TAGS: Record<string, string[]> = {
+  ARQUITETO:            ['Reforma Pós-Arrematação', 'Regularização de Matrícula', 'Projeto Residencial', 'Projeto Comercial', 'Aprovação de Planta', 'Habite-se'],
+  ENGENHEIRO:           ['Laudo Estrutural', 'Vistoria Cautelar', 'Reforma', 'Regularização', 'AVCB', 'Laudo de Avaliação'],
+  CORRETOR:             ['Compra e Venda', 'Locação', 'Lançamentos', 'Imóveis de Leilão', 'Imóveis Comerciais', 'Financiamento'],
+  AVALIADOR:            ['PTAM', 'Avaliação para Inventário', 'Avaliação para Financiamento', 'Avaliação Judicial', 'Avaliação Comercial'],
+  DESIGNER_INTERIORES:  ['Decoração Residencial', 'Decoração Comercial', 'Home Staging', 'Projeto 3D', 'Marcenaria Planejada'],
+  FOTOGRAFO:            ['Fotografia Imobiliária', 'Tour Virtual 360°', 'Drone', 'Vídeo Institucional', 'Edição Profissional'],
+  VIDEOMAKER:           ['Vídeo Imobiliário', 'Drone', 'Reels para Instagram', 'Tour Virtual', 'Vídeo Institucional'],
+  ADVOGADO_IMOBILIARIO: ['Contratos de Compra e Venda', 'Regularização de Imóveis', 'Usucapião', 'Arrematação em Leilão', 'Inventário', 'Distrato'],
+  DESPACHANTE:          ['Escritura', 'Registro de Imóvel', 'ITBI', 'Certidões', 'Transferência de Propriedade'],
+  OUTRO:                [],
 }
 
-export default function CadastroParceiroPage() {
-  const [step, setStep] = useState(1)
-  const [submitting, setSubmitting] = useState(false)
-  const [success, setSuccess] = useState(false)
+interface Building {
+  id: string
+  slug: string
+  name: string
+  neighborhood?: string
+  city: string
+}
 
-  // Form data
-  const [name, setName] = useState('')
-  const [email, setEmail] = useState('')
-  const [phone, setPhone] = useState('')
-  const [specialty, setSpecialty] = useState('')
-  const [company, setCompany] = useState('')
-  const [creci, setCreci] = useState('')
-  const [bio, setBio] = useState('')
-  const [selectedCondos, setSelectedCondos] = useState<string[]>([])
-  const [acceptTerms, setAcceptTerms] = useState(false)
-  const [wantFounder, setWantFounder] = useState(false)
+type Step = 'category' | 'info' | 'buildings' | 'success'
 
-  const toggleCondo = (condo: string) => {
-    setSelectedCondos(prev =>
-      prev.includes(condo) ? prev.filter(c => c !== condo) : [...prev, condo]
+export default function CadastroParceirosPage() {
+  const [step, setStep] = useState<Step>('category')
+  const [loading, setLoading] = useState(false)
+  const [buildings, setBuildings] = useState<Building[]>([])
+  const [buildingSearch, setBuildingSearch] = useState('')
+  const [selectedBuildings, setSelectedBuildings] = useState<Building[]>([])
+  const [result, setResult] = useState<{ slug: string; profileUrl: string; name: string } | null>(null)
+  const [error, setError] = useState('')
+
+  const [form, setForm] = useState({
+    category: '',
+    name: '',
+    email: '',
+    phone: '',
+    whatsapp: '',
+    bio: '',
+    crea: '',
+    instagram: '',
+    website: '',
+    tags: [] as string[],
+  })
+
+  // Carregar edifícios
+  useEffect(() => {
+    fetch(`${API_URL}/api/v1/specialists/buildings`)
+      .then(r => r.json())
+      .then(d => setBuildings(d.data || []))
+      .catch(() => {})
+  }, [])
+
+  const filteredBuildings = buildings.filter(b =>
+    b.name.toLowerCase().includes(buildingSearch.toLowerCase()) ||
+    (b.neighborhood || '').toLowerCase().includes(buildingSearch.toLowerCase())
+  )
+
+  const toggleBuilding = (b: Building) => {
+    setSelectedBuildings(prev =>
+      prev.find(x => x.id === b.id)
+        ? prev.filter(x => x.id !== b.id)
+        : [...prev, b]
     )
+  }
+
+  const toggleTag = (tag: string) => {
+    setForm(prev => ({
+      ...prev,
+      tags: prev.tags.includes(tag)
+        ? prev.tags.filter(t => t !== tag)
+        : [...prev.tags, tag],
+    }))
   }
 
   const handleSubmit = async () => {
-    if (!name || !email || !phone || !specialty || !acceptTerms) return
-    setSubmitting(true)
-
+    setLoading(true)
+    setError('')
     try {
-      // Submit to API
-      const res = await fetch(`${API_URL}/api/v1/public/partner-register`, {
+      const res = await fetch(`${API_URL}/api/v1/specialists`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name, email, phone, specialty, company, creci, bio,
-          condos: selectedCondos,
-          isFounder: wantFounder,
+          ...form,
+          buildingIds: selectedBuildings.map(b => b.id),
         }),
       })
-
-      if (res.ok || res.status === 404) {
-        // Even if API not ready, show success
-        setSuccess(true)
+      const data = await res.json()
+      if (!res.ok) {
+        setError(data.error || 'Erro ao cadastrar. Tente novamente.')
+        setLoading(false)
+        return
       }
+      setResult(data.data)
+      setStep('success')
     } catch {
-      // Offline mode — show success anyway (data will sync later)
-      setSuccess(true)
+      setError('Erro de conexão. Tente novamente.')
+    } finally {
+      setLoading(false)
     }
-    setSubmitting(false)
   }
 
-  if (success) {
-    return (
-      <div className="min-h-screen bg-[#f8f6f1] flex items-center justify-center px-4">
-        <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md text-center">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-green-100 flex items-center justify-center">
-            <CheckCircle className="w-8 h-8 text-green-600" />
-          </div>
-          <h1 className="text-2xl font-bold text-gray-800 mb-2">Cadastro Realizado!</h1>
-          <p className="text-gray-600 mb-4">
-            Seu perfil será publicado nas páginas dos edifícios selecionados em até 24 horas.
-            {wantFounder && ' Você será redirecionado para a página de adesão ao Plano Membro Fundador.'}
-          </p>
-          <div className="space-y-3">
-            {wantFounder ? (
-              <Link href="/parceiros/membro-fundador"
-                className="block w-full py-3 rounded-xl font-bold text-white text-center"
-                style={{ backgroundColor: '#C9A84C' }}>
-                Aderir ao Plano Membro Fundador — R$ 497/mês
-              </Link>
-            ) : (
-              <Link href="/profissionais/franca"
-                className="block w-full py-3 rounded-xl font-bold text-white text-center"
-                style={{ backgroundColor: '#1B2B5B' }}>
-                Ver meu perfil
-              </Link>
-            )}
-            <Link href="/" className="block text-sm text-gray-500 hover:underline">
-              Voltar à homepage
-            </Link>
-          </div>
-        </div>
-      </div>
-    )
-  }
+  const selectedCategory = CATEGORIES.find(c => c.value === form.category)
 
   return (
-    <div className="min-h-screen bg-[#f8f6f1]">
-      {/* Hero */}
-      <section className="bg-gradient-to-br from-[#1B2B5B] to-[#0f1c3a] text-white py-12 px-4">
-        <div className="max-w-3xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 bg-white/10 rounded-full px-4 py-1.5 text-xs font-semibold mb-3" style={{ color: '#C9A84C' }}>
-            <Star className="w-3.5 h-3.5" /> Programa de Parceiros
+    <div className="min-h-screen bg-gradient-to-b from-[#f8f6f1] to-white">
+      {/* Header */}
+      <header className="bg-[#1B2B5B] py-4 px-6">
+        <div className="max-w-4xl mx-auto flex items-center justify-between">
+          <Link href="/">
+            <Image src="/logo-ae-v2.png" alt="AgoraEncontrei" width={140} height={40} className="h-8 w-auto" />
+          </Link>
+          <Link href="/parceiros" className="text-white/70 hover:text-white text-sm transition-colors">
+            ← Voltar para Parceiros
+          </Link>
+        </div>
+      </header>
+
+      <div className="max-w-3xl mx-auto px-4 py-12">
+        {/* Progress */}
+        {step !== 'success' && (
+          <div className="flex items-center gap-2 mb-10">
+            {(['category', 'info', 'buildings'] as Step[]).map((s, i) => (
+              <div key={s} className="flex items-center gap-2">
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all ${
+                  step === s ? 'bg-[#C9A84C] text-white' :
+                  ['category', 'info', 'buildings'].indexOf(step) > i ? 'bg-[#1B2B5B] text-white' :
+                  'bg-gray-200 text-gray-400'
+                }`}>{i + 1}</div>
+                <span className={`text-sm hidden sm:block ${step === s ? 'text-[#1B2B5B] font-semibold' : 'text-gray-400'}`}>
+                  {s === 'category' ? 'Especialidade' : s === 'info' ? 'Seus Dados' : 'Edifícios'}
+                </span>
+                {i < 2 && <ChevronRight className="w-4 h-4 text-gray-300" />}
+              </div>
+            ))}
           </div>
-          <h1 className="text-3xl sm:text-4xl font-bold mb-3" style={{ fontFamily: 'Georgia, serif' }}>
-            Cadastre-se como Parceiro
-          </h1>
-          <p className="text-white/70 text-lg">
-            Apareça nas páginas dos edifícios onde você trabalha. Receba leads qualificados gratuitamente.
-          </p>
-        </div>
-      </section>
+        )}
 
-      {/* Steps */}
-      <div className="max-w-2xl mx-auto px-4 py-8">
-        <div className="flex items-center justify-center gap-2 mb-8">
-          {[1, 2, 3].map(s => (
-            <div key={s} className="flex items-center gap-2">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-                step >= s ? 'text-white' : 'bg-gray-200 text-gray-500'
-              }`} style={step >= s ? { backgroundColor: '#1B2B5B' } : {}}>
-                {step > s ? '✓' : s}
-              </div>
-              {s < 3 && <div className={`w-12 h-0.5 ${step > s ? 'bg-[#1B2B5B]' : 'bg-gray-200'}`} />}
+        {/* ── STEP 1: Categoria ── */}
+        {step === 'category' && (
+          <div>
+            <div className="mb-8">
+              <h1 className="text-3xl font-bold text-[#1B2B5B] mb-2">Seja um Parceiro Profissional</h1>
+              <p className="text-gray-600 text-lg">
+                Cadastre-se gratuitamente e apareça nas buscas de quem precisa dos seus serviços em Franca e região.
+              </p>
             </div>
-          ))}
-        </div>
 
-        <div className="bg-white rounded-2xl shadow-sm border p-6 sm:p-8">
-          {/* Step 1: Dados Pessoais */}
-          {step === 1 && (
-            <div className="space-y-5">
-              <h2 className="text-xl font-bold text-gray-800">Seus Dados Profissionais</h2>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-gray-700 mb-1 block">Nome completo *</label>
-                  <div className="flex items-center border rounded-xl px-3">
-                    <User className="w-4 h-4 text-gray-400" />
-                    <input type="text" value={name} onChange={e => setName(e.target.value)}
-                      placeholder="Arq. Maria Silva" className="flex-1 py-3 px-2 outline-none text-sm" />
-                  </div>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-700 mb-1 block">Email *</label>
-                  <div className="flex items-center border rounded-xl px-3">
-                    <Mail className="w-4 h-4 text-gray-400" />
-                    <input type="email" value={email} onChange={e => setEmail(e.target.value)}
-                      placeholder="maria@studio.com" className="flex-1 py-3 px-2 outline-none text-sm" />
-                  </div>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-700 mb-1 block">WhatsApp *</label>
-                  <div className="flex items-center border rounded-xl px-3">
-                    <Phone className="w-4 h-4 text-gray-400" />
-                    <input type="tel" value={phone} onChange={e => setPhone(e.target.value)}
-                      placeholder="(16) 99999-0000" className="flex-1 py-3 px-2 outline-none text-sm" />
-                  </div>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-700 mb-1 block">Especialidade *</label>
-                  <select value={specialty} onChange={e => setSpecialty(e.target.value)}
-                    className="w-full border rounded-xl px-3 py-3 text-sm outline-none">
-                    <option value="">Selecione...</option>
-                    {SPECIALTIES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-700 mb-1 block">Empresa/Escritório</label>
-                  <div className="flex items-center border rounded-xl px-3">
-                    <Briefcase className="w-4 h-4 text-gray-400" />
-                    <input type="text" value={company} onChange={e => setCompany(e.target.value)}
-                      placeholder="Studio Arquitetura" className="flex-1 py-3 px-2 outline-none text-sm" />
-                  </div>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-700 mb-1 block">CRECI/CAU/OAB</label>
-                  <input type="text" value={creci} onChange={e => setCreci(e.target.value)}
-                    placeholder="Registro profissional" className="w-full border rounded-xl px-3 py-3 text-sm outline-none" />
-                </div>
-              </div>
-
-              <div>
-                <label className="text-sm font-medium text-gray-700 mb-1 block">Sobre você</label>
-                <textarea value={bio} onChange={e => setBio(e.target.value)} rows={3}
-                  placeholder="Descreva sua experiência e especialidades..."
-                  className="w-full border rounded-xl px-3 py-3 text-sm outline-none resize-none" />
-              </div>
-
-              <button onClick={() => { if (name && email && phone && specialty) setStep(2) }}
-                disabled={!name || !email || !phone || !specialty}
-                className="w-full py-3 rounded-xl font-bold text-white text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                style={{ backgroundColor: '#1B2B5B' }}>
-                Próximo: Selecionar Edifícios <ArrowRight className="w-4 h-4 inline ml-1" />
-              </button>
-            </div>
-          )}
-
-          {/* Step 2: Seleção de Edifícios */}
-          {step === 2 && (
-            <div className="space-y-5">
-              <div>
-                <h2 className="text-xl font-bold text-gray-800">Onde você já trabalhou?</h2>
-                <p className="text-sm text-gray-500 mt-1">
-                  Selecione os edifícios/condomínios onde realizou projetos. Seu perfil aparecerá nessas páginas.
-                </p>
-              </div>
-
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-80 overflow-y-auto border rounded-xl p-3">
-                {CONDOS_LIST.map(condo => (
-                  <button key={condo}
-                    onClick={() => toggleCondo(condo)}
-                    className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-all text-left ${
-                      selectedCondos.includes(condo)
-                        ? 'bg-[#1B2B5B] text-white'
-                        : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
-                    }`}>
-                    <Building className="w-3 h-3 flex-shrink-0" />
-                    <span className="truncate">{condo}</span>
+            <h2 className="text-lg font-semibold text-[#1B2B5B] mb-4">Qual é a sua especialidade?</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {CATEGORIES.map(cat => {
+                const Icon = cat.icon
+                return (
+                  <button
+                    key={cat.value}
+                    onClick={() => { setForm(f => ({ ...f, category: cat.value })); setStep('info') }}
+                    className="flex items-start gap-4 p-4 bg-white rounded-xl border-2 border-gray-100 hover:border-[#C9A84C] hover:shadow-md transition-all text-left group"
+                  >
+                    <div className="w-10 h-10 bg-[#f8f6f1] rounded-lg flex items-center justify-center flex-shrink-0 group-hover:bg-[#C9A84C]/10 transition-colors">
+                      <Icon className="w-5 h-5 text-[#1B2B5B]" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-[#1B2B5B]">{cat.label}</p>
+                      <p className="text-sm text-gray-500 mt-0.5">{cat.desc}</p>
+                    </div>
                   </button>
-                ))}
+                )
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* ── STEP 2: Informações Pessoais ── */}
+        {step === 'info' && (
+          <div>
+            <div className="flex items-center gap-3 mb-8">
+              {selectedCategory && (
+                <div className="w-10 h-10 bg-[#C9A84C]/10 rounded-lg flex items-center justify-center">
+                  <selectedCategory.icon className="w-5 h-5 text-[#C9A84C]" />
+                </div>
+              )}
+              <div>
+                <h1 className="text-2xl font-bold text-[#1B2B5B]">Seus Dados Profissionais</h1>
+                <p className="text-gray-500 text-sm">{selectedCategory?.label} · Franca e Região</p>
+              </div>
+            </div>
+
+            <div className="space-y-5">
+              {/* Nome */}
+              <div>
+                <label className="block text-sm font-semibold text-[#1B2B5B] mb-1.5">Nome completo *</label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input
+                    type="text"
+                    value={form.name}
+                    onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                    placeholder="Seu nome completo"
+                    className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-[#C9A84C] focus:ring-2 focus:ring-[#C9A84C]/20 bg-white"
+                  />
+                </div>
               </div>
 
-              {selectedCondos.length > 0 && (
-                <p className="text-sm text-[#C9A84C] font-semibold">
-                  {selectedCondos.length} edifício(s) selecionado(s)
-                </p>
+              {/* Email */}
+              <div>
+                <label className="block text-sm font-semibold text-[#1B2B5B] mb-1.5">E-mail profissional *</label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input
+                    type="email"
+                    value={form.email}
+                    onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
+                    placeholder="seu@email.com"
+                    className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-[#C9A84C] focus:ring-2 focus:ring-[#C9A84C]/20 bg-white"
+                  />
+                </div>
+                <p className="text-xs text-gray-400 mt-1">Você receberá o link do seu perfil neste e-mail</p>
+              </div>
+
+              {/* Telefone + WhatsApp */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-[#1B2B5B] mb-1.5">Telefone</label>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <input
+                      type="tel"
+                      value={form.phone}
+                      onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
+                      placeholder="(16) 99999-9999"
+                      className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-[#C9A84C] focus:ring-2 focus:ring-[#C9A84C]/20 bg-white"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-[#1B2B5B] mb-1.5">WhatsApp</label>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <input
+                      type="tel"
+                      value={form.whatsapp}
+                      onChange={e => setForm(f => ({ ...f, whatsapp: e.target.value }))}
+                      placeholder="(16) 99999-9999"
+                      className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-[#C9A84C] focus:ring-2 focus:ring-[#C9A84C]/20 bg-white"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* CREA/CAU/CRO */}
+              {['ARQUITETO', 'ENGENHEIRO', 'AVALIADOR', 'CORRETOR', 'ADVOGADO_IMOBILIARIO'].includes(form.category) && (
+                <div>
+                  <label className="block text-sm font-semibold text-[#1B2B5B] mb-1.5">
+                    {form.category === 'CORRETOR' ? 'CRECI' :
+                     form.category === 'ARQUITETO' ? 'CAU' :
+                     form.category === 'ADVOGADO_IMOBILIARIO' ? 'OAB' : 'CREA'} (opcional)
+                  </label>
+                  <div className="relative">
+                    <Award className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <input
+                      type="text"
+                      value={form.crea}
+                      onChange={e => setForm(f => ({ ...f, crea: e.target.value }))}
+                      placeholder="Número do registro profissional"
+                      className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-[#C9A84C] focus:ring-2 focus:ring-[#C9A84C]/20 bg-white"
+                    />
+                  </div>
+                </div>
               )}
 
-              <div className="flex gap-3">
-                <button onClick={() => setStep(1)} className="flex-1 py-3 rounded-xl font-bold text-sm border text-gray-700">
-                  Voltar
-                </button>
-                <button onClick={() => setStep(3)}
-                  className="flex-1 py-3 rounded-xl font-bold text-white text-sm"
-                  style={{ backgroundColor: '#1B2B5B' }}>
-                  Próximo: Finalizar <ArrowRight className="w-4 h-4 inline ml-1" />
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Step 3: Confirmação + Membro Fundador */}
-          {step === 3 && (
-            <div className="space-y-5">
-              <h2 className="text-xl font-bold text-gray-800">Confirmar e Publicar</h2>
-
-              {/* Resumo */}
-              <div className="bg-gray-50 rounded-xl p-4 space-y-2 text-sm">
-                <div className="flex justify-between"><span className="text-gray-500">Nome</span><span className="font-medium">{name}</span></div>
-                <div className="flex justify-between"><span className="text-gray-500">Especialidade</span><span className="font-medium">{SPECIALTIES.find(s => s.value === specialty)?.label}</span></div>
-                <div className="flex justify-between"><span className="text-gray-500">Edifícios</span><span className="font-medium">{selectedCondos.length} selecionados</span></div>
+              {/* Bio */}
+              <div>
+                <label className="block text-sm font-semibold text-[#1B2B5B] mb-1.5">Apresentação profissional</label>
+                <textarea
+                  value={form.bio}
+                  onChange={e => setForm(f => ({ ...f, bio: e.target.value }))}
+                  placeholder="Conte um pouco sobre sua experiência, especialidades e diferenciais..."
+                  rows={4}
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-[#C9A84C] focus:ring-2 focus:ring-[#C9A84C]/20 bg-white resize-none"
+                />
               </div>
 
-              {/* Plano Membro Fundador */}
-              <div className="rounded-xl border-2 p-5 space-y-3" style={{ borderColor: '#C9A84C', backgroundColor: '#fffdf5' }}>
-                <div className="flex items-center gap-2">
-                  <Star className="w-5 h-5 text-[#C9A84C] fill-[#C9A84C]" />
-                  <h3 className="font-bold text-gray-800">Plano Membro Fundador — R$ 497/mês</h3>
+              {/* Instagram + Website */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-[#1B2B5B] mb-1.5">Instagram</label>
+                  <div className="relative">
+                    <Instagram className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <input
+                      type="text"
+                      value={form.instagram}
+                      onChange={e => setForm(f => ({ ...f, instagram: e.target.value }))}
+                      placeholder="@seuperfil"
+                      className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-[#C9A84C] focus:ring-2 focus:ring-[#C9A84C]/20 bg-white"
+                    />
+                  </div>
                 </div>
-                <ul className="space-y-1.5 text-sm text-gray-600">
-                  <li className="flex items-start gap-2"><CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" /> <strong>Priority Placement:</strong> Sua marca no topo das buscas por bairro/condomínio</li>
-                  <li className="flex items-start gap-2"><CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" /> <strong>Leads Qualificados:</strong> Acesso direto a leads de leilões e imóveis de alto ROI</li>
-                  <li className="flex items-start gap-2"><CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" /> <strong>Badge Founder:</strong> Selo exclusivo no perfil (+40% autoridade)</li>
-                  <li className="flex items-start gap-2"><CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" /> <strong>Preço Congelado:</strong> R$ 497/mês vitalício (preço sobe para R$ 997 em breve)</li>
-                </ul>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" checked={wantFounder} onChange={e => setWantFounder(e.target.checked)}
-                    className="w-4 h-4 rounded accent-[#C9A84C]" />
-                  <span className="text-sm font-semibold text-gray-800">Quero ser Membro Fundador</span>
-                </label>
+                <div>
+                  <label className="block text-sm font-semibold text-[#1B2B5B] mb-1.5">Site</label>
+                  <div className="relative">
+                    <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <input
+                      type="url"
+                      value={form.website}
+                      onChange={e => setForm(f => ({ ...f, website: e.target.value }))}
+                      placeholder="https://seusite.com"
+                      className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-[#C9A84C] focus:ring-2 focus:ring-[#C9A84C]/20 bg-white"
+                    />
+                  </div>
+                </div>
               </div>
 
-              {/* Termos */}
-              <label className="flex items-start gap-2 cursor-pointer">
-                <input type="checkbox" checked={acceptTerms} onChange={e => setAcceptTerms(e.target.checked)}
-                  className="w-4 h-4 rounded mt-0.5 accent-[#1B2B5B]" />
-                <span className="text-xs text-gray-500">
-                  Concordo com os <Link href="/termos-uso" className="text-[#C9A84C] underline">Termos de Uso</Link> e
-                  a <Link href="/politica-privacidade" className="text-[#C9A84C] underline">Política de Privacidade</Link> do AgoraEncontrei.
-                  {wantFounder && ' Aceito os termos do Plano Membro Fundador conforme descritos acima.'}
-                </span>
-              </label>
+              {/* Tags de especialidade */}
+              {SPECIALTY_TAGS[form.category]?.length > 0 && (
+                <div>
+                  <label className="block text-sm font-semibold text-[#1B2B5B] mb-2">Áreas de atuação (selecione as que se aplicam)</label>
+                  <div className="flex flex-wrap gap-2">
+                    {SPECIALTY_TAGS[form.category].map(tag => (
+                      <button
+                        key={tag}
+                        type="button"
+                        onClick={() => toggleTag(tag)}
+                        className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-all ${
+                          form.tags.includes(tag)
+                            ? 'bg-[#1B2B5B] text-white border-[#1B2B5B]'
+                            : 'bg-white text-gray-600 border-gray-200 hover:border-[#C9A84C]'
+                        }`}
+                      >
+                        {tag}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
 
-              <div className="flex gap-3">
-                <button onClick={() => setStep(2)} className="flex-1 py-3 rounded-xl font-bold text-sm border text-gray-700">
-                  Voltar
-                </button>
-                <button onClick={handleSubmit}
-                  disabled={!acceptTerms || submitting}
-                  className="flex-1 py-3.5 rounded-xl font-bold text-white text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-[0.98]"
-                  style={{ backgroundColor: wantFounder ? '#C9A84C' : '#1B2B5B' }}>
-                  {submitting ? 'Processando...' : wantFounder ? 'Cadastrar + Aderir ao Plano Fundador' : 'Cadastrar Perfil Gratuito'}
+            <div className="flex gap-3 mt-8">
+              <button
+                onClick={() => setStep('category')}
+                className="px-6 py-3 border border-gray-200 rounded-xl text-gray-600 hover:bg-gray-50 transition-colors"
+              >
+                Voltar
+              </button>
+              <button
+                onClick={() => {
+                  if (!form.name || !form.email) { setError('Preencha nome e e-mail'); return }
+                  setError('')
+                  setStep('buildings')
+                }}
+                className="flex-1 bg-[#1B2B5B] text-white py-3 rounded-xl font-semibold hover:bg-[#162247] transition-colors flex items-center justify-center gap-2"
+              >
+                Continuar <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+            {error && <p className="text-red-500 text-sm mt-3 text-center">{error}</p>}
+          </div>
+        )}
+
+        {/* ── STEP 3: Edifícios ── */}
+        {step === 'buildings' && (
+          <div>
+            <div className="mb-8">
+              <h1 className="text-2xl font-bold text-[#1B2B5B] mb-2">Onde você já trabalhou?</h1>
+              <p className="text-gray-600">
+                Selecione os condomínios e edifícios onde você já prestou serviços. Isso cria links automáticos entre seu perfil e esses imóveis no Google.
+              </p>
+            </div>
+
+            {/* Selecionados */}
+            {selectedBuildings.length > 0 && (
+              <div className="mb-4 p-4 bg-[#1B2B5B]/5 rounded-xl">
+                <p className="text-sm font-semibold text-[#1B2B5B] mb-2">{selectedBuildings.length} selecionado(s):</p>
+                <div className="flex flex-wrap gap-2">
+                  {selectedBuildings.map(b => (
+                    <span key={b.id} className="flex items-center gap-1 bg-[#1B2B5B] text-white text-xs px-3 py-1.5 rounded-full">
+                      {b.name}
+                      <button onClick={() => toggleBuilding(b)}>
+                        <X className="w-3 h-3 ml-1" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Busca */}
+            <div className="relative mb-4">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                type="text"
+                value={buildingSearch}
+                onChange={e => setBuildingSearch(e.target.value)}
+                placeholder="Buscar condomínio ou edifício..."
+                className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-[#C9A84C] focus:ring-2 focus:ring-[#C9A84C]/20 bg-white"
+              />
+            </div>
+
+            {/* Lista */}
+            <div className="max-h-72 overflow-y-auto space-y-2 pr-1">
+              {filteredBuildings.length === 0 && (
+                <p className="text-center text-gray-400 py-8">Nenhum resultado encontrado</p>
+              )}
+              {filteredBuildings.map(b => {
+                const selected = !!selectedBuildings.find(x => x.id === b.id)
+                return (
+                  <button
+                    key={b.id}
+                    onClick={() => toggleBuilding(b)}
+                    className={`w-full flex items-center gap-3 p-3 rounded-xl border-2 transition-all text-left ${
+                      selected
+                        ? 'border-[#C9A84C] bg-[#C9A84C]/5'
+                        : 'border-gray-100 bg-white hover:border-gray-200'
+                    }`}
+                  >
+                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${
+                      selected ? 'border-[#C9A84C] bg-[#C9A84C]' : 'border-gray-300'
+                    }`}>
+                      {selected && <CheckCircle2 className="w-3 h-3 text-white" />}
+                    </div>
+                    <div>
+                      <p className="font-medium text-[#1B2B5B] text-sm">{b.name}</p>
+                      {b.neighborhood && (
+                        <p className="text-xs text-gray-400 flex items-center gap-1 mt-0.5">
+                          <MapPin className="w-3 h-3" /> {b.neighborhood} · {b.city}/SP
+                        </p>
+                      )}
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
+
+            {/* Info SEO */}
+            <div className="mt-4 p-4 bg-blue-50 rounded-xl border border-blue-100">
+              <p className="text-sm text-blue-700 font-medium mb-1">💡 Como isso funciona?</p>
+              <p className="text-xs text-blue-600 leading-relaxed">
+                Ao selecionar um edifício, seu perfil aparecerá automaticamente na página desse condomínio.
+                Quando alguém buscar "arquiteto para reforma no Edifício Prime Franca", o Google encontrará
+                tanto a página do edifício quanto o seu perfil — ambos no AgoraEncontrei.
+              </p>
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => setStep('info')}
+                className="px-6 py-3 border border-gray-200 rounded-xl text-gray-600 hover:bg-gray-50 transition-colors"
+              >
+                Voltar
+              </button>
+              <button
+                onClick={handleSubmit}
+                disabled={loading}
+                className="flex-1 bg-[#C9A84C] text-white py-3 rounded-xl font-semibold hover:bg-[#b8963e] transition-colors flex items-center justify-center gap-2 disabled:opacity-60"
+              >
+                {loading ? (
+                  <><Loader2 className="w-4 h-4 animate-spin" /> Cadastrando...</>
+                ) : (
+                  <><CheckCircle2 className="w-4 h-4" /> Finalizar Cadastro</>
+                )}
+              </button>
+            </div>
+            {error && <p className="text-red-500 text-sm mt-3 text-center">{error}</p>}
+          </div>
+        )}
+
+        {/* ── STEP 4: Sucesso ── */}
+        {step === 'success' && result && (
+          <div className="text-center py-8">
+            <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <CheckCircle2 className="w-10 h-10 text-green-500" />
+            </div>
+            <h1 className="text-3xl font-bold text-[#1B2B5B] mb-3">Cadastro realizado! 🎉</h1>
+            <p className="text-gray-600 text-lg mb-2">
+              Olá, <strong>{result.name}</strong>! Seu perfil foi criado com sucesso.
+            </p>
+            <p className="text-gray-500 mb-8">
+              Nossa equipe irá revisar e aprovar seu perfil em até <strong>24 horas</strong>.
+              Você receberá um e-mail de confirmação com o link do seu perfil.
+            </p>
+
+            {/* Link do perfil */}
+            <div className="bg-[#f8f6f1] rounded-2xl p-6 mb-8 text-left">
+              <p className="text-sm font-semibold text-[#1B2B5B] mb-3 flex items-center gap-2">
+                <Globe className="w-4 h-4" /> Seu link de perfil (disponível após aprovação):
+              </p>
+              <div className="flex items-center gap-2 bg-white rounded-xl p-3 border border-gray-200">
+                <p className="text-[#1B2B5B] text-sm font-mono flex-1 truncate">{result.profileUrl}</p>
+                <button
+                  onClick={() => navigator.clipboard.writeText(result.profileUrl)}
+                  className="text-xs bg-[#1B2B5B] text-white px-3 py-1.5 rounded-lg hover:bg-[#162247] transition-colors flex-shrink-0"
+                >
+                  Copiar
                 </button>
               </div>
             </div>
-          )}
-        </div>
+
+            {/* Próximos passos */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8 text-left">
+              {[
+                { icon: Mail, title: 'Verifique seu e-mail', desc: 'Enviamos um e-mail de boas-vindas com todas as informações.' },
+                { icon: CheckCircle2, title: 'Aguarde a aprovação', desc: 'Nossa equipe revisa todos os perfis em até 24 horas.' },
+                { icon: Star, title: 'Compartilhe seu perfil', desc: 'Após aprovado, compartilhe o link nas suas redes sociais.' },
+              ].map((item, i) => (
+                <div key={i} className="bg-white rounded-xl p-4 border border-gray-100">
+                  <div className="w-8 h-8 bg-[#C9A84C]/10 rounded-lg flex items-center justify-center mb-3">
+                    <item.icon className="w-4 h-4 text-[#C9A84C]" />
+                  </div>
+                  <p className="font-semibold text-[#1B2B5B] text-sm mb-1">{item.title}</p>
+                  <p className="text-xs text-gray-500">{item.desc}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex gap-3 justify-center">
+              <Link
+                href="/parceiros"
+                className="px-6 py-3 border border-gray-200 rounded-xl text-gray-600 hover:bg-gray-50 transition-colors"
+              >
+                Ver Parceiros
+              </Link>
+              <Link
+                href="/"
+                className="px-6 py-3 bg-[#1B2B5B] text-white rounded-xl font-semibold hover:bg-[#162247] transition-colors"
+              >
+                Ir para o Início
+              </Link>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
