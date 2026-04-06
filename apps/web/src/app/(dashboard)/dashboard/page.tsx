@@ -11,6 +11,7 @@ import {
   BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, Legend,
 } from 'recharts'
+import AuctionMonitor from './AuctionMonitor'
 import {
   Building2,
   UserCheck,
@@ -351,6 +352,9 @@ export default function DashboardPage() {
           />
         </Link>
       </div>
+
+      {/* Auction Monitor — flutuante */}
+      <AuctionMonitor />
     </div>
   )
 }

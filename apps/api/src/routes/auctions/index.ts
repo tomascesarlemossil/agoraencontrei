@@ -525,4 +525,130 @@ export default async function auctionsRoutes(app: FastifyInstance) {
 
     return reply.send({ runs })
   })
+
+  // ── GET /auctions/analytics — Dashboard analytics completo ────────────
+  app.get('/analytics', async (_req: FastifyRequest, reply: FastifyReply) => {
+    const [
+      totalBySource,
+      scoreByCity,
+      recentRuns,
+      totalActive,
+      totalValue,
+      topOpportunities,
+    ] = await Promise.all([
+      // 1. Total por fonte
+      app.prisma.auction.groupBy({
+        by: ['source'],
+        _count: { id: true },
+        _avg: { discountPercent: true, opportunityScore: true },
+        where: { status: { notIn: ['CANCELLED', 'CLOSED'] } },
+        orderBy: { _count: { id: 'desc' } },
+      }),
+
+      // 2. Score médio por cidade
+      app.prisma.auction.groupBy({
+        by: ['city', 'state'],
+        _avg: { opportunityScore: true, discountPercent: true },
+        _count: { id: true },
+        _min: { minimumBid: true },
+        where: {
+          city: { not: null },
+          status: { notIn: ['CANCELLED', 'CLOSED'] },
+        },
+        orderBy: { _count: { id: 'desc' } },
+        take: 30,
+      }),
+
+      // 3. Últimos scraper runs (para detectar bloqueios)
+      app.prisma.scraperRun.findMany({
+        orderBy: { startedAt: 'desc' },
+        take: 30,
+        select: {
+          id: true,
+          source: true,
+          sourceUrl: true,
+          status: true,
+          startedAt: true,
+          finishedAt: true,
+          itemsFound: true,
+          itemsCreated: true,
+          itemsUpdated: true,
+          itemsRemoved: true,
+          errorMessage: true,
+        },
+      }),
+
+      // 4. Total de leilões ativos
+      app.prisma.auction.count({
+        where: { status: { notIn: ['CANCELLED', 'CLOSED', 'SOLD'] } },
+      }),
+
+      // 5. Valor total em leilões
+      app.prisma.auction.aggregate({
+        _sum: { minimumBid: true, appraisalValue: true },
+        _avg: { minimumBid: true, discountPercent: true },
+        where: { status: { notIn: ['CANCELLED', 'CLOSED'] } },
+      }),
+
+      // 6. Top oportunidades (maior score)
+      app.prisma.auction.findMany({
+        where: {
+          opportunityScore: { gte: 70 },
+          status: { notIn: ['CANCELLED', 'CLOSED', 'SOLD'] },
+        },
+        select: {
+          id: true,
+          title: true,
+          slug: true,
+          city: true,
+          state: true,
+          source: true,
+          minimumBid: true,
+          appraisalValue: true,
+          discountPercent: true,
+          opportunityScore: true,
+          occupation: true,
+        },
+        orderBy: { opportunityScore: 'desc' },
+        take: 10,
+      }),
+    ])
+
+    // Detectar possíveis bloqueios de IP
+    const blockedSources = recentRuns
+      .filter(r => r.status === 'FAILED' && r.itemsFound === 0)
+      .map(r => ({
+        source: r.source,
+        url: r.sourceUrl,
+        error: r.errorMessage?.substring(0, 200),
+        at: r.startedAt,
+      }))
+
+    return reply.send({
+      summary: {
+        totalActive,
+        totalValueMinBid: totalValue._sum.minimumBid ? Number(totalValue._sum.minimumBid) : 0,
+        totalValueAppraisal: totalValue._sum.appraisalValue ? Number(totalValue._sum.appraisalValue) : 0,
+        avgMinBid: totalValue._avg.minimumBid ? Number(totalValue._avg.minimumBid) : 0,
+        avgDiscount: totalValue._avg.discountPercent ? Number(totalValue._avg.discountPercent) : 0,
+      },
+      bySource: totalBySource.map(s => ({
+        source: s.source,
+        count: s._count.id,
+        avgDiscount: s._avg.discountPercent ? Number(Number(s._avg.discountPercent).toFixed(1)) : 0,
+        avgScore: s._avg.opportunityScore ? Number(Number(s._avg.opportunityScore).toFixed(0)) : 0,
+      })),
+      byCity: scoreByCity.map(c => ({
+        city: c.city,
+        state: c.state,
+        count: c._count.id,
+        avgScore: c._avg.opportunityScore ? Number(Number(c._avg.opportunityScore).toFixed(0)) : 0,
+        avgDiscount: c._avg.discountPercent ? Number(Number(c._avg.discountPercent).toFixed(1)) : 0,
+        cheapest: c._min.minimumBid ? Number(c._min.minimumBid) : 0,
+      })),
+      scraperRuns: recentRuns,
+      blockedSources,
+      topOpportunities,
+    })
+  })
 }
