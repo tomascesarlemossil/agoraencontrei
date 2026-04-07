@@ -42,6 +42,7 @@ interface Auction {
   fgtsAllowed: boolean
   views: number
   favorites: number
+  zapMarketPrice?: number | null
 }
 
 interface CalculatorResult {
@@ -191,6 +192,7 @@ function mapPublicAuction(item: any): Auction {
     fgtsAllowed: Boolean(item.fgtsAllowed),
     views: 0,
     favorites: 0,
+    zapMarketPrice: item.zapMarketPrice || item.marketPrice || null,
   }
 }
 
@@ -393,6 +395,7 @@ export default function LeiloesClient() {
             case 'discountPercent': return auction.discountPercent || 0
             case 'opportunityScore': return auction.opportunityScore || 0
             case 'auctionDate': return auction.auctionDate ? new Date(auction.auctionDate).getTime() : Number.MAX_SAFE_INTEGER
+            case 'zapSpread': return auction.zapMarketPrice && auction.minimumBid ? ((Number(auction.zapMarketPrice) - Number(auction.minimumBid)) / Number(auction.zapMarketPrice)) * 100 : 0
             default: return auction.minimumBid || 0
           }
         }
@@ -619,6 +622,23 @@ export default function LeiloesClient() {
               💎 Pérola {minDiscount === '40' && '✔'}
             </button>
             <button
+              onClick={() => {
+                const next = sortBy === 'zapSpread' ? 'auctionDate' : 'zapSpread'
+                setSortBy(next)
+                if (next === 'zapSpread') setSortOrder('desc')
+                setPage(1)
+              }}
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold transition"
+              style={{
+                backgroundColor: sortBy === 'zapSpread' ? '#1B2B5B' : '#eef2ff',
+                color: sortBy === 'zapSpread' ? '#C9A84C' : '#1B2B5B',
+                border: '1.5px solid #1B2B5B',
+              }}
+              title="Ordenar por maior spread vs preço de mercado ZAP"
+            >
+              <BarChart3 className="w-4 h-4" /> vs ZAP {sortBy === 'zapSpread' && '✔'}
+            </button>
+            <button
               onClick={() => setShowCalc(!showCalc)}
               className="inline-flex items-center gap-1.5 px-3 py-2 bg-gray-100 rounded-lg text-sm hover:bg-gray-200 transition"
             >
@@ -640,6 +660,7 @@ export default function LeiloesClient() {
               <option value="minimumBid">Menor Lance</option>
               <option value="discountPercent">Maior Desconto</option>
               <option value="opportunityScore">Melhor Score</option>
+              <option value="zapSpread">Desconto vs ZAP</option>
               <option value="createdAt">Mais Recentes</option>
             </select>
           </div>
@@ -943,6 +964,16 @@ export default function LeiloesClient() {
                       {auction.appraisalValue && Number(auction.appraisalValue) > 0 && Number(auction.minimumBid) > 0 && (
                         <div className="text-[10px] text-green-600 font-semibold">
                           Economia de {formatCurrency(Number(auction.appraisalValue) - Number(auction.minimumBid))}
+                        </div>
+                      )}
+                      {auction.zapMarketPrice && Number(auction.zapMarketPrice) > 0 && Number(auction.minimumBid) > 0 && auction.totalArea && Number(auction.totalArea) > 0 && (
+                        <div className="flex items-center gap-1.5 mt-1">
+                          <span className="text-[10px] text-green-700 font-medium">
+                            ZAP: {formatCurrency(Math.round(Number(auction.zapMarketPrice) / Number(auction.totalArea)))}/m² vs Leilão: {formatCurrency(Math.round(Number(auction.minimumBid) / Number(auction.totalArea)))}/m²
+                          </span>
+                          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-green-100 text-green-800 font-bold">
+                            -{Math.round(((Number(auction.zapMarketPrice) - Number(auction.minimumBid)) / Number(auction.zapMarketPrice)) * 100)}%
+                          </span>
                         </div>
                       )}
                     </div>
