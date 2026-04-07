@@ -154,35 +154,41 @@ function normalizePublicPropertyType(type: string): string {
 }
 
 function mapPublicAuction(item: any): Auction {
+  // Extract cover image: Apify photos array > coverImageUrl > Caixa CDN fallback
+  const rawId = (item.id || '').replace(/^caixa-/, '')
+  const coverImage = item.photos?.[0]
+    || item.coverImageUrl
+    || (rawId ? `https://venda-imoveis.caixa.gov.br/fotos-imoveis/${rawId}_1.jpg` : null)
+
   return {
     id: `public-${item.id}`,
     title: item.description || `${item.propertyType || 'Imóvel'} em ${item.city}`,
     slug: `public-${item.id}`,
-    source: 'CAIXA',
+    source: item.source || 'CAIXA',
     status: 'OPEN',
     modality: item.saleType || 'VENDA_DIRETA',
     propertyType: normalizePublicPropertyType(item.propertyType || ''),
     city: item.city || null,
-    state: 'SP',
-    neighborhood: item.neighborhood || null,
+    state: item.state || 'SP',
+    neighborhood: item.neighborhood || item.district || null,
     totalArea: item.totalArea || item.privateArea || item.landArea || null,
-    bedrooms: item.bedrooms || 0,
+    bedrooms: item.bedrooms || item.rooms || 0,
     bathrooms: 0,
-    parkingSpaces: item.parkingSpots || 0,
-    appraisalValue: item.appraisalValue || null,
-    minimumBid: item.price || null,
+    parkingSpaces: item.parkingSpots || item.garage || 0,
+    appraisalValue: item.appraisalValue || item.evaluationValue || null,
+    minimumBid: item.price || item.minimumSaleValue1 || null,
     discountPercent: item.discount || null,
-    firstRoundDate: null,
-    secondRoundDate: null,
-    auctionDate: null,
-    coverImage: null,
+    firstRoundDate: item.firstAuctionDate || null,
+    secondRoundDate: item.secondAuctionDate || null,
+    auctionDate: item.auctionDate || item.firstAuctionDate || null,
+    coverImage,
     opportunityScore: item.discount ? Math.min(95, Math.round(item.discount * 1.4)) : null,
     estimatedROI: item.discount || null,
     occupation: null,
-    bankName: 'Caixa Econômica Federal',
-    auctioneerName: null,
-    financingAvailable: Boolean(item.financeable),
-    fgtsAllowed: false,
+    bankName: item.bankName || item.leiloeiro || 'Caixa Econômica Federal',
+    auctioneerName: item.leiloeiro || item.auctioneer || null,
+    financingAvailable: Boolean(item.financeable || item.acceptsFinancing),
+    fgtsAllowed: Boolean(item.fgtsAllowed),
     views: 0,
     favorites: 0,
   }

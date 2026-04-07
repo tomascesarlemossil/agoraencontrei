@@ -1296,109 +1296,164 @@ export default async function publicRoutes(app: FastifyInstance) {
     }
   })
 
-  // ── GET /auctions — Imóveis da Caixa Econômica Federal (leilões e venda direta) ──
-  app.get('/auctions', async (_req, reply) => {
+  // ── GET /auctions — Imóveis da Caixa (Apify enriched → CSV fallback) ──
+  app.get('/auctions', async (req, reply) => {
     try {
-      const cacheKey = 'pub:caixa:auctions:SP:v3'
+      const { state: stateFilter } = req.query as { state?: string }
+      const cacheKey = `pub:caixa:auctions:${stateFilter || 'ALL'}:v4`
       const cached = await cacheGet(app.redis, cacheKey)
       if (cached) return reply.send(cached)
 
-      const csvUrl = 'https://venda-imoveis.caixa.gov.br/listaweb/Lista_imoveis_SP.csv'
-      const response = await fetch(csvUrl, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-          'Referer': 'https://venda-imoveis.caixa.gov.br/',
-        },
-        signal: AbortSignal.timeout(25000),
-      })
+      // Strategy: try Apify last-run data first (free, fast), then CSV fallback
+      let auctions: Array<Record<string, unknown>> = []
+      let source = 'csv'
+      const sources: string[] = []
 
-      if (!response.ok) {
-        return reply.status(502).send({ error: 'CAIXA_UNAVAILABLE' })
+      // 1. Try Apify enriched data (last successful run — no credits consumed)
+      try {
+        const [{ fetchCaixaApifyLastRun }, { fetchSantanderApifyLastRun }] = await Promise.all([
+          import('../../services/apify-caixa.service.js'),
+          import('../../services/apify-santander.service.js'),
+        ])
+
+        const [caixaApify, santanderApify] = await Promise.all([
+          fetchCaixaApifyLastRun(),
+          fetchSantanderApifyLastRun(),
+        ])
+
+        if (caixaApify.length > 0) {
+          auctions.push(...caixaApify.map(item => ({
+            ...item,
+            coverImageUrl: item.photos?.[0] || item.coverImageUrl,
+          })))
+          sources.push('apify-caixa')
+          app.log.info(`[auctions] Apify Caixa: ${caixaApify.length} items`)
+        }
+
+        if (santanderApify.length > 0) {
+          auctions.push(...santanderApify.map(item => ({
+            ...item,
+            coverImageUrl: item.photos?.[0] || item.coverImageUrl,
+          })))
+          sources.push('apify-santander')
+          app.log.info(`[auctions] Apify Santander: ${santanderApify.length} items`)
+        }
+
+        if (auctions.length > 0) source = 'apify'
+      } catch (apifyErr) {
+        app.log.warn({ err: apifyErr }, '[auctions] Apify fallback failed, using CSV')
       }
 
-      const buffer = await response.arrayBuffer()
-      const decoder = new TextDecoder('latin1')
-      const csvText = decoder.decode(buffer)
+      // 2. Fallback to CSV scraper if Apify returned nothing
+      if (auctions.length === 0) {
+        const UFS = stateFilter
+          ? [stateFilter.toUpperCase()]
+          : ['SP', 'MG', 'RJ', 'PR', 'GO', 'MS', 'RS', 'SC', 'BA', 'CE', 'PE', 'DF']
 
-      const TARGET_CITIES = [
-        'FRANCA', 'BATATAIS', 'CRISTAIS PAULISTA', 'PATROCINIO PAULISTA',
-        'ITIRAPUA', 'RESTINGA', 'JERIQUARA', 'PEDREGULHO', 'ALTINOPOLIS',
-        'BRODOWSKI', 'NUPORANGA', 'SALES OLIVEIRA', 'CLARAVAL', 'RIFAINA',
-        'IBIRACI', 'CAPETINGA', 'ITAMOGI', 'PASSOS',
-      ]
+        for (const uf of UFS) {
+          try {
+            const csvUrl = `https://venda-imoveis.caixa.gov.br/listaweb/Lista_imoveis_${uf}.csv`
+            const response = await fetch(csvUrl, {
+              headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                'Referer': 'https://venda-imoveis.caixa.gov.br/',
+              },
+              signal: AbortSignal.timeout(15000),
+            })
+            if (!response.ok) continue
 
-      const lines = csvText.split('\n').slice(2)
-      const auctions: Array<{
-        id: string; city: string; neighborhood: string; address: string
-        price: number; appraisalValue: number; discount: number
-        financeable: boolean; description: string; saleType: string; link: string
-        propertyType: string; bedrooms: number; totalArea: number
-        privateArea: number; landArea: number; parkingSpots: number
-      }> = []
+            const buffer = await response.arrayBuffer()
+            const csvText = new TextDecoder('latin1').decode(buffer)
+            const lines = csvText.split('\n').slice(2)
 
-      for (const line of lines) {
-        if (!line.trim()) continue
-        const cols = line.split(';')
-        if (cols.length < 11) continue
+            for (const line of lines) {
+              if (!line.trim()) continue
+              const cols = line.split(';')
+              if (cols.length < 11) continue
 
-        const cityRaw = (cols[2] ?? '').trim().toUpperCase()
-        if (!TARGET_CITIES.some(c => cityRaw.includes(c))) continue
+              const id = (cols[0] ?? '').trim()
+              if (!id) continue
 
-        const id = (cols[0] ?? '').trim()
-        const city = (cols[2] ?? '').trim()
-        const neighborhood = (cols[3] ?? '').trim()
-        const address = (cols[4] ?? '').trim()
-        const price = parseFloat(((cols[5] ?? '0').replace(/\./g, '').replace(',', '.').trim())) || 0
-        const appraisalValue = parseFloat(((cols[6] ?? '0').replace(/\./g, '').replace(',', '.').trim())) || 0
-        const discount = parseFloat(((cols[7] ?? '0').replace(',', '.').trim())) || 0
-        const financeable = (cols[8] ?? '').trim().toLowerCase() === 'sim'
-        const description = (cols[9] ?? '').trim()
-        const saleType = (cols[10] ?? '').trim()
-        const link = (cols[11] ?? '').trim()
+              const city = (cols[2] ?? '').trim()
+              const neighborhood = (cols[3] ?? '').trim()
+              const address = (cols[4] ?? '').trim()
+              const price = parseFloat(((cols[5] ?? '0').replace(/\./g, '').replace(',', '.').trim())) || 0
+              const appraisalValue = parseFloat(((cols[6] ?? '0').replace(/\./g, '').replace(',', '.').trim())) || 0
+              const discount = parseFloat(((cols[7] ?? '0').replace(',', '.').trim())) || 0
+              const financeable = (cols[8] ?? '').trim().toLowerCase() === 'sim'
+              const description = (cols[9] ?? '').trim()
+              const saleType = (cols[10] ?? '').trim()
+              const link = (cols[11] ?? '').trim()
 
-        const d = description.toLowerCase()
-        let propertyType = 'Imóvel'
-        if (d.includes('apartamento')) propertyType = 'Apartamento'
-        else if (d.includes('casa')) propertyType = 'Casa'
-        else if (d.includes('terreno') || d.includes('lote')) propertyType = 'Terreno'
-        else if (d.includes('galpao') || d.includes('galp')) propertyType = 'Galpão'
-        else if (d.includes('predio') || d.includes('pr')) propertyType = 'Prédio'
-        else if (d.includes('sitio') || d.includes('s')) propertyType = 'Sítio'
-        else if (d.includes('fazenda')) propertyType = 'Fazenda'
-        else if (d.includes('chacara') || d.includes('ch')) propertyType = 'Chácara'
+              const d = description.toLowerCase()
+              let propertyType = 'Imóvel'
+              if (d.includes('apartamento')) propertyType = 'Apartamento'
+              else if (d.includes('casa')) propertyType = 'Casa'
+              else if (d.includes('terreno') || d.includes('lote')) propertyType = 'Terreno'
+              else if (d.includes('galpao') || d.includes('galp')) propertyType = 'Galpão'
 
-        const bedroomsMatch = description.match(/(\d+)\s*qto/i)
-        const bedrooms = bedroomsMatch ? parseInt(bedroomsMatch[1]) : 0
-        const totalAreaMatch = description.match(/([\d,.]+)\s*de\s*área\s*total/i)
-        const totalArea = totalAreaMatch ? parseFloat(totalAreaMatch[1].replace(',', '.')) : 0
-        const privateAreaMatch = description.match(/([\d,.]+)\s*de\s*área\s*privativa/i)
-        const privateArea = privateAreaMatch ? parseFloat(privateAreaMatch[1].replace(',', '.')) : 0
-        const landAreaMatch = description.match(/([\d,.]+)\s*de\s*área\s*do\s*terreno/i)
-        const landArea = landAreaMatch ? parseFloat(landAreaMatch[1].replace(',', '.')) : 0
-        const parkingMatch = description.match(/(\d+)\s*vaga/i)
-        const parkingSpots = parkingMatch ? parseInt(parkingMatch[1]) : 0
+              const bedroomsMatch = description.match(/(\d+)\s*qto/i)
+              const totalAreaMatch = description.match(/([\d,.]+)\s*de\s*área\s*total/i)
+              const privateAreaMatch = description.match(/([\d,.]+)\s*de\s*área\s*privativa/i)
+              const landAreaMatch = description.match(/([\d,.]+)\s*de\s*área\s*do\s*terreno/i)
+              const parkingMatch = description.match(/(\d+)\s*vaga/i)
 
-        auctions.push({
-          id, city, neighborhood, address,
-          price, appraisalValue, discount, financeable,
-          description, saleType, link, propertyType,
-          bedrooms, totalArea, privateArea, landArea, parkingSpots,
-        })
+              auctions.push({
+                id: `caixa-${id}`, source: 'CAIXA', bankName: 'Caixa Econômica Federal',
+                city, state: uf, neighborhood, address,
+                price, appraisalValue, discount, financeable,
+                fgtsAllowed: !!d.match(/fgts/i),
+                description, saleType, link, propertyType,
+                bedrooms: bedroomsMatch ? parseInt(bedroomsMatch[1]) : 0,
+                totalArea: totalAreaMatch ? parseFloat(totalAreaMatch[1].replace(',', '.')) : 0,
+                privateArea: privateAreaMatch ? parseFloat(privateAreaMatch[1].replace(',', '.')) : 0,
+                landArea: landAreaMatch ? parseFloat(landAreaMatch[1].replace(',', '.')) : 0,
+                parkingSpots: parkingMatch ? parseInt(parkingMatch[1]) : 0,
+                coverImageUrl: `https://venda-imoveis.caixa.gov.br/fotos-imoveis/${id}_1.jpg`,
+                auctionDate: null,
+                leiloeiro: 'Caixa Econômica Federal',
+              })
+            }
+          } catch { /* skip failed state */ }
+        }
       }
 
-      auctions.sort((a, b) => b.discount - a.discount)
+      // Filter by state if Apify returned all states
+      if (stateFilter && source === 'apify') {
+        auctions = auctions.filter(a => (a.state as string)?.toUpperCase() === stateFilter.toUpperCase())
+      }
+
+      auctions.sort((a, b) => ((b.discount as number) || 0) - ((a.discount as number) || 0))
 
       const result = {
         total: auctions.length,
         updatedAt: new Date().toISOString(),
+        source,
         items: auctions,
       }
 
-      await cacheSet(app.redis, cacheKey, result, 21600)
+      await cacheSet(app.redis, cacheKey, result, 21600) // 6h cache
       return reply.send(result)
     } catch (err) {
-      app.log.error({ err }, '[auctions] Error fetching Caixa auctions')
+      app.log.error({ err }, '[auctions] Error fetching auctions')
       return reply.status(500).send({ error: 'INTERNAL_ERROR' })
+    }
+  })
+
+  // ── POST /auctions/apify-trigger — Trigger new Apify Caixa scrape ──
+  app.post('/auctions/apify-trigger', async (_req, reply) => {
+    try {
+      const { fetchCaixaViaApify } = await import('../../services/apify-caixa.service.js')
+      const items = await fetchCaixaViaApify()
+      return reply.send({
+        total: items.length,
+        updatedAt: new Date().toISOString(),
+        source: 'apify-fresh',
+        items,
+      })
+    } catch (err) {
+      app.log.error({ err }, '[auctions] Apify trigger failed')
+      return reply.status(500).send({ error: 'APIFY_ERROR' })
     }
   })
 }
