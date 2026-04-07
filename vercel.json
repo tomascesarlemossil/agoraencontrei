@@ -1,5 +1,9 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "nextjs",
+  "installCommand": "pnpm install --no-frozen-lockfile",
+  "buildCommand": "pnpm --filter @agoraencontrei/database generate && cd apps/web && NODE_OPTIONS='--max-old-space-size=7168' next build",
+  "outputDirectory": "apps/web/.next",
   "headers": [
     {
       "source": "/(.*)",
