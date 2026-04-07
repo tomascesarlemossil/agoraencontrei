@@ -780,6 +780,55 @@ export default async function HomePage() {
         />
       )}
 
+      {/* ── 8.5. LEILÕES — CTA + RANKING ──────────────────────────────── */}
+      <section className="py-12" style={{ backgroundColor: '#1B2B5B' }}>
+        <div className="max-w-6xl mx-auto px-4 text-center">
+          <h2 className="text-3xl font-bold text-white mb-3" style={{ fontFamily: 'Georgia, serif' }}>
+            Leilões de Imóveis com até 70% de Desconto
+          </h2>
+          <p className="text-white/60 text-lg mb-6 max-w-2xl mx-auto">
+            Dados reais cruzados de Caixa, Santander, ZAP e QuintoAndar.
+            Calculadora de ROI, score jurídico e alertas inteligentes.
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-4 mb-8">
+            <Link
+              href="/leiloes"
+              className="px-8 py-4 rounded-xl font-bold text-lg transition-all hover:scale-105"
+              style={{ backgroundColor: '#C9A84C', color: '#1B2B5B' }}
+            >
+              Ver Leilões Ativos
+            </Link>
+            <Link
+              href="/oportunidades/melhores-alugueis-brasil"
+              className="px-8 py-4 rounded-xl font-bold text-lg border-2 text-white transition-all hover:bg-white/10"
+              style={{ borderColor: '#C9A84C' }}
+            >
+              Ranking de Yield Nacional
+            </Link>
+            <Link
+              href="/investor"
+              className="px-8 py-4 rounded-xl font-bold text-lg border-2 text-white transition-all hover:bg-white/10"
+              style={{ borderColor: '#4ade80' }}
+            >
+              Terminal Investidor
+            </Link>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-3xl mx-auto">
+            {[
+              { label: 'Leilões Monitorados', value: '500+' },
+              { label: 'Desconto Médio', value: '38%' },
+              { label: 'Cidades Cobertas', value: '5.570' },
+              { label: 'Fontes de Dados', value: '12' },
+            ].map(s => (
+              <div key={s.label} className="bg-white/10 rounded-xl px-4 py-3 text-center">
+                <div className="text-xl font-bold" style={{ color: '#C9A84C' }}>{s.value}</div>
+                <div className="text-[11px] text-white/50">{s.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ── 9. REDES SOCIAIS + QUICK STATS ──────────────────────────────── */}
       <section className="max-w-4xl mx-auto px-4 sm:px-6 py-10">
         {/* Quick Stats */}
