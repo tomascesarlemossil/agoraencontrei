@@ -34,5 +34,10 @@
       "unrs-resolver",
       "msgpackr-extract"
     ]
+  },
+  "pnpm": {
+    "overrides": {
+      "fast-jwt": ">=6.1.0"
+    }
   }
 }

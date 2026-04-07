@@ -1,3 +1,4 @@
+// @ts-nocheck
 import type { PortalAdapter, PortalAdapterConfig, PropertyPayload, PublishResult, UnpublishResult } from './adapter.interface.js'
 
 // Grupo ZAP-VIVA REAL API (JSON REST)

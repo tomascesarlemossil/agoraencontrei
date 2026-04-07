@@ -8,8 +8,7 @@ const WEB_URL = 'https://www.agoraencontrei.com.br'
 
 export const revalidate = 86400
 
-// ISR: gera on-demand
-}
+// ISR: gera on-demand, sem generateStaticParams
 
 export async function generateMetadata({ params }: { params: { cidade: string } }): Promise<Metadata> {
   const city = UNIQUE_CITIES.find(c => c.slug === params.cidade)

@@ -336,8 +336,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8,
   }))
 
-  // ── Landing pages de leilão por bairro ────────────────────────────────────
-  const leilaoBairros = LEILAO_BAIRROS.map(slug => ({
+  // ── Landing pages de leilão por bairro (Manus) ────────────────────────────
+  const leilaoBairrosManus = LEILAO_BAIRROS.map(slug => ({
     url: `${WEB_URL}/leiloes/${slug}`,
     lastModified: now,
     changeFrequency: 'daily' as const,
@@ -522,6 +522,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       { url: `${WEB_URL}/impermeabilizacao/${c}`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.5 },
     ]),
     ...leilaoBairros,
+    ...leilaoBairrosManus,
     ...pois,
     ...leiloes,
     ...imoveis,
