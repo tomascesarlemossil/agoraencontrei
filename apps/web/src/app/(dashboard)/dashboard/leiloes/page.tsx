@@ -280,7 +280,7 @@ export default function LeiloesAdminPage() {
           sub={`Latência ${stats?.robots?.latencyMs ?? 0}ms`}
           trend={!stats?.robots || stats.robots.online === stats.robots.total ? '🟢 Todos operacionais' : '🟡 Verificar logs'}
           icon={Bot}
-          color={stats?.robots.online === stats?.robots.total ? 'green' : 'amber'}
+          color={!stats?.robots || stats.robots.online === stats.robots.total ? 'green' : 'amber'}
         />
       </div>
 
