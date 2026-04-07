@@ -1,5 +1,7 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
+import { Analytics } from '@vercel/analytics/next'
+import { SpeedInsights } from '@vercel/speed-insights/next'
 import { Providers } from '@/components/providers'
 import { ConditionalMetaPixel } from '@/components/ConditionalMetaPixel'
 import { WebVitals } from '@/components/WebVitals'
@@ -379,6 +381,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ConditionalMetaPixel />
         {/* ── Core Web Vitals monitoring ──────────────────────── */}
         <WebVitals />
+        {/* ── Vercel Analytics + Speed Insights ──────────────── */}
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   )
