@@ -3,7 +3,7 @@ import { test, expect, Page } from '@playwright/test';
 const BASE_URL = 'https://agoraencontrei.com.br';
 const DASHBOARD_URL = 'https://agoraencontrei.com.br/dashboard';
 const EMAIL = process.env.E2E_EMAIL || 'tomas@agoraencontrei.com.br';
-const PASSWORD = process.env.E2E_PASSWORD || 'AgoraEncontrei2026!';
+const PASSWORD = process.env.E2E_PASSWORD || 'Lemos2026@';
 
 async function loginIfNeeded(page: Page) {
   await page.goto(DASHBOARD_URL);
@@ -53,7 +53,7 @@ test.describe('AgoraEncontrei — Testes E2E Completos', () => {
     await page.goto(BASE_URL);
     await page.waitForLoadState('networkidle');
     await page.screenshot({ path: 'screenshots/05-mobile-home.png' });
-    const hamburger = page.locator('button[aria-label*="menu"], button[aria-label*="Menu"]').first();
+    const hamburger = page.locator('button[aria-label*="menu"], button[aria-label*="Menu"], button[aria-label*="Abrir"], button[aria-label*="Fechar"]').first();
     await expect(hamburger).toBeVisible({ timeout: 5000 });
     await hamburger.click();
     await page.waitForTimeout(500);

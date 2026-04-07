@@ -38,11 +38,10 @@ function parseSlugs(param: string): { slugA: string; slugB: string } | null {
   return { slugA: parts[0], slugB: parts[1] }
 }
 
-export async function generateMetadata({
-  params,
-}: {
-  params: { 'cidadeA-vs-cidadeB': string }
-}): Promise<Metadata> {
+export async function generateMetadata(
+  props: { params: Promise<{ 'cidadeA-vs-cidadeB': string }> }
+): Promise<Metadata> {
+  const params = await props.params
   const parsed = parseSlugs(params['cidadeA-vs-cidadeB'])
   if (!parsed) return {}
   const cityA = IBGE_CITY_BY_SLUG[parsed.slugA]
@@ -112,11 +111,10 @@ function CompareBar({ label, valueA, valueB, nameA, nameB, format = 'number' }: 
   )
 }
 
-export default function CompareCidadesPage({
-  params,
-}: {
-  params: { 'cidadeA-vs-cidadeB': string }
-}) {
+export default async function CompareCidadesPage(
+  props: { params: Promise<{ 'cidadeA-vs-cidadeB': string }> }
+) {
+  const params = await props.params
   const parsed = parseSlugs(params['cidadeA-vs-cidadeB'])
   if (!parsed) notFound()
 
