@@ -1300,7 +1300,7 @@ export default async function publicRoutes(app: FastifyInstance) {
   app.get('/auctions', async (req, reply) => {
     try {
       const { state: stateFilter } = req.query as { state?: string }
-      const cacheKey = `pub:caixa:auctions:${stateFilter || 'ALL'}:v5`
+      const cacheKey = `pub:caixa:auctions:${stateFilter || 'ALL'}:v6-merge`
       const cached = await cacheGet(app.redis, cacheKey)
       if (cached) return reply.send(cached)
 
