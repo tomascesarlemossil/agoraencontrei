@@ -3,7 +3,7 @@ import LeilaoDetailClient from './LeilaoDetailClient'
 
 type Props = { params: { slug: string } }
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'https://api-production-669c.up.railway.app'
 
 async function getAuction(slug: string) {
   try {
