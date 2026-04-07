@@ -58,6 +58,7 @@ import { specialistPaymentRoutes } from './routes/specialists/payments.js'
 import { ScraperScheduler } from './services/scrapers/scheduler.js'
 import { AuctionMonitorService } from './services/auction-monitor.service.js'
 import { PredatoryProtocol } from './services/predatory/protocol.js'
+import { AutoHealingService } from './services/auto-healing.service.js'
 // Manus auctionsRoute desativada — conflita com publicRoutes no mesmo prefix
 // import { auctionsRoute } from './routes/public/auctions.js'
 import { freeListingRoutes } from './routes/public/free-listing.js'
@@ -414,6 +415,13 @@ async function bootstrap() {
       predatory.start()
       app.addHook('onClose', () => predatory.stop())
     } catch (e: any) { app.log.warn('PredatoryProtocol init skip:', e.message) }
+
+    // Auto-Healing — monitora erros 500 e problemas de pagamento
+    try {
+      const autoHealing = new AutoHealingService()
+      autoHealing.start()
+      app.addHook('onClose', () => autoHealing.stop())
+    } catch (e: any) { app.log.warn('AutoHealing init skip:', e.message) }
   }
 
   // ── 404 Handler ─────────────────────────────────────────────────────────

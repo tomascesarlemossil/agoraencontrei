@@ -1,5 +1,6 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 import { z } from 'zod'
+import { calculateAcquisitionCosts, getStateCosts, validateDocument } from '../../utils/brazil-costs.js'
 
 // ── Schemas de validação ────────────────────────────────────────────────────
 
@@ -54,27 +55,17 @@ const alertSchema = z.object({
 function calculateAuctionFinancials(data: z.infer<typeof calculateSchema>) {
   const { bidValue, appraisalValue, state, needsReform, reformEstimate, isOccupied, totalArea, monthlyRentEstimate } = data
 
-  // ITBI — varia por município (média SP: 3%)
-  const itbiRate = state === 'SP' ? 0.03 : 0.025
-  const itbi = bidValue * itbiRate
+  // Custas reais por estado (ITBI, registro, escritura, advogado, desocupação)
+  const acq = calculateAcquisitionCosts({
+    bidValue,
+    state: state || 'SP',
+    isOccupied: isOccupied || false,
+    needsReform: needsReform || false,
+    reformEstimate,
+  })
 
-  // Registro + escritura (média: 1-2% do valor)
-  const registryRate = 0.015
-  const registry = bidValue * registryRate
-
-  // Honorários advocatícios (5-10% do lance)
-  const lawyerRate = 0.05
-  const lawyer = bidValue * lawyerRate
-
-  // Custos de desocupação (se ocupado)
-  const evictionCost = isOccupied ? Math.max(bidValue * 0.02, 5000) : 0
-
-  // Reforma estimada
-  const reformCost = needsReform ? reformEstimate || (totalArea ? totalArea * 500 : bidValue * 0.1) : 0
-
-  // Custos totais
-  const totalCosts = itbi + registry + lawyer + evictionCost + reformCost
-  const totalInvestment = bidValue + totalCosts
+  const totalCosts = acq.totalCosts
+  const totalInvestment = acq.totalInvestment
 
   // Valor de mercado estimado (avaliação ou multiplicador)
   const marketValue = appraisalValue || bidValue * 1.5
@@ -117,15 +108,17 @@ function calculateAuctionFinancials(data: z.infer<typeof calculateSchema>) {
     appraisalValue: appraisalValue || null,
     marketValueEstimate: Number(marketValue.toFixed(2)),
 
-    // Custos detalhados
+    // Custos detalhados (por estado)
     costs: {
-      itbi: Number(itbi.toFixed(2)),
-      itbiRate: `${(itbiRate * 100).toFixed(1)}%`,
-      registry: Number(registry.toFixed(2)),
-      lawyer: Number(lawyer.toFixed(2)),
-      eviction: Number(evictionCost.toFixed(2)),
-      reform: Number(reformCost.toFixed(2)),
+      itbi: Number(acq.itbi.toFixed(2)),
+      itbiRate: `${(acq.costs.itbiRate * 100).toFixed(1)}%`,
+      registry: Number(acq.registry.toFixed(2)),
+      notary: Number(acq.notary.toFixed(2)),
+      lawyer: Number(acq.lawyer.toFixed(2)),
+      eviction: Number(acq.eviction.toFixed(2)),
+      reform: Number(acq.reform.toFixed(2)),
       totalCosts: Number(totalCosts.toFixed(2)),
+      stateNotes: acq.costs.notes,
     },
 
     // Investimento total
