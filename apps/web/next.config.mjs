@@ -81,6 +81,11 @@ const nextConfig = {
       {
         source: '/(.*)',
         headers: [
+          // ── SEO: Indexação otimizada para 1M+ páginas ───────────────────
+          {
+            key: 'X-Robots-Tag',
+            value: 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
+          },
           // ── Security Headers ──────────────────────────────────────────────
           {
             key: 'X-DNS-Prefetch-Control',
