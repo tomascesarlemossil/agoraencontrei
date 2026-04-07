@@ -1596,4 +1596,137 @@ export default async function publicRoutes(app: FastifyInstance) {
       return reply.status(500).send({ error: 'INTERNAL_ERROR' })
     }
   })
+
+  // ── GET /property-intelligence — Unified 4-layer property intelligence ──
+  app.get('/property-intelligence', async (req, reply) => {
+    try {
+      const { city, state, neighborhood, propertyId } = req.query as {
+        city?: string; state?: string; neighborhood?: string; propertyId?: string
+      }
+      if (!city) return reply.status(400).send({ error: 'city parameter required' })
+
+      const cacheKey = `pub:prop-intel:${city}:${state || 'all'}:${neighborhood || 'all'}:${propertyId || 'none'}`
+      const cached = await cacheGet(app.redis, cacheKey)
+      if (cached) return reply.send(cached)
+
+      // Dynamic imports (same pattern as other endpoints)
+      const [
+        { fetchCaixaApifyLastRun },
+        { getMarketPriceReference },
+        { getRentalPriceReference },
+      ] = await Promise.all([
+        import('../../services/apify-caixa.service.js'),
+        import('../../services/apify-zap.service.js'),
+        import('../../services/apify-quintoandar.service.js'),
+      ])
+
+      // Layer 1 + 2 + 3: Fetch all data sources in parallel
+      const [auctionResult, marketResult, rentalResult] = await Promise.allSettled([
+        fetchCaixaApifyLastRun(),
+        getMarketPriceReference(city, neighborhood, 'sale'),
+        getRentalPriceReference(city, neighborhood),
+      ])
+
+      // ── Layer 1: Inventory (auctions) ──
+      let auctionItems: Array<Record<string, unknown>> = []
+      if (auctionResult.status === 'fulfilled' && auctionResult.value.length > 0) {
+        auctionItems = auctionResult.value
+          .filter((a: any) => {
+            const aCity = ((a as any).city || '') as string
+            const aState = ((a as any).state || '') as string
+            const aNeighborhood = ((a as any).neighborhood || '') as string
+            const cityMatch = aCity.toLowerCase().includes(city.toLowerCase())
+            const stateMatch = !state || aState.toUpperCase() === state.toUpperCase()
+            const neighMatch = !neighborhood || aNeighborhood.toLowerCase().includes(neighborhood.toLowerCase())
+            const idMatch = !propertyId || (a as any).id === propertyId
+            return cityMatch && stateMatch && neighMatch && idMatch
+          })
+          .map((a: any) => ({ ...(a as unknown as Record<string, unknown>) }))
+      }
+
+      // ── Layer 2: Market Validation ──
+      const zapData = marketResult.status === 'fulfilled' ? marketResult.value : null
+      const quintoData = rentalResult.status === 'fulfilled' ? rentalResult.value : null
+
+      const zapPricePerSqm = zapData?.avgPricePerSqm ?? 0
+      const quintoAndarRent = quintoData?.avgRent ?? 0
+      const avgAuctionPrice = auctionItems.length > 0
+        ? auctionItems.reduce((sum, a) => sum + (Number((a as any).price) || 0), 0) / auctionItems.length
+        : 0
+
+      const spreadPercent = zapData && zapData.avgPrice > 0 && avgAuctionPrice > 0
+        ? Math.round(((zapData.avgPrice - avgAuctionPrice) / zapData.avgPrice) * 10000) / 100
+        : 0
+
+      const estimatedProfit = zapData && avgAuctionPrice > 0
+        ? Math.round((zapData.avgPrice || 0) - avgAuctionPrice)
+        : 0
+
+      // ── Layer 3: Trust & Finance ──
+      const bndesRate = 8.5
+      const maxTerm = 360
+      const monthlyRate = bndesRate / 100 / 12
+      const estimatedPayment = avgAuctionPrice > 0
+        ? Math.round((avgAuctionPrice * monthlyRate * Math.pow(1 + monthlyRate, maxTerm)) / (Math.pow(1 + monthlyRate, maxTerm) - 1))
+        : 0
+
+      const yieldAnual = avgAuctionPrice > 0 && quintoAndarRent > 0
+        ? Math.round(((quintoAndarRent * 12) / avgAuctionPrice) * 10000) / 100
+        : 0
+
+      const paybackYears = quintoAndarRent > 0 && avgAuctionPrice > 0
+        ? Math.round((avgAuctionPrice / (quintoAndarRent * 12)) * 10) / 10
+        : 0
+
+      // Risk classification
+      const reasons: string[] = []
+      let riskLevel: 'Verde' | 'Amarelo' | 'Vermelho' = 'Verde'
+
+      if (auctionItems.length === 0) { reasons.push('Nenhum leilão encontrado na região'); riskLevel = 'Vermelho' }
+      if (spreadPercent < 10) { reasons.push('Spread abaixo de 10%'); riskLevel = riskLevel === 'Vermelho' ? 'Vermelho' : 'Amarelo' }
+      if (yieldAnual < 5) { reasons.push('Yield anual abaixo de 5%'); riskLevel = riskLevel === 'Vermelho' ? 'Vermelho' : 'Amarelo' }
+      if (paybackYears > 20) { reasons.push('Payback acima de 20 anos'); riskLevel = riskLevel === 'Vermelho' ? 'Vermelho' : 'Amarelo' }
+      if (!zapData) { reasons.push('Sem dados de mercado (ZAP)'); riskLevel = riskLevel === 'Vermelho' ? 'Vermelho' : 'Amarelo' }
+      if (!quintoData) { reasons.push('Sem dados de aluguel (QuintoAndar)'); riskLevel = riskLevel === 'Vermelho' ? 'Vermelho' : 'Amarelo' }
+      if (reasons.length === 0) reasons.push('Todos os indicadores positivos')
+
+      // ── Layer 4: SEO Content Blocks ──
+      const neighLabel = neighborhood ? ` - ${neighborhood}` : ''
+      const seoTitle = `Imóveis de Leilão em ${city}${neighLabel}: Análise de Mercado e Oportunidades`
+      const seoDescription = `Encontre oportunidades de leilão em ${city}${neighLabel}. ` +
+        `${auctionItems.length} imóveis disponíveis com spread médio de ${spreadPercent}% vs mercado. ` +
+        `Yield anual estimado de ${yieldAnual}%. Análise completa com dados de ZAP e QuintoAndar.`
+
+      const result = {
+        city,
+        state: state || null,
+        neighborhood: neighborhood || null,
+        // Layer 1: Inventory
+        auctions: { total: auctionItems.length, items: auctionItems },
+        // Layer 2: Market Validation
+        marketComparison: {
+          zapPricePerSqm,
+          quintoAndarRent,
+          avgAuctionPrice: Math.round(avgAuctionPrice),
+          spreadPercent,
+          estimatedProfit,
+        },
+        // Layer 3: Trust & Finance
+        financingOptions: { bndesRate, maxTerm, estimatedPayment },
+        riskScore: { level: riskLevel, reasons },
+        yieldAnual,
+        paybackYears,
+        // Layer 4: SEO Content Blocks
+        seoTitle,
+        seoDescription,
+        updatedAt: new Date().toISOString(),
+      }
+
+      await cacheSet(app.redis, cacheKey, result, 3600) // 1h cache
+      return reply.send(result)
+    } catch (err) {
+      app.log.error({ err }, '[property-intelligence] Error')
+      return reply.status(500).send({ error: 'INTERNAL_ERROR' })
+    }
+  })
 }
