@@ -1456,4 +1456,30 @@ export default async function publicRoutes(app: FastifyInstance) {
       return reply.status(500).send({ error: 'APIFY_ERROR' })
     }
   })
+
+  // ── GET /rental-prices — Referência de preços de aluguel (QuintoAndar via Apify) ──
+  app.get('/rental-prices', async (req, reply) => {
+    try {
+      const { city, neighborhood } = req.query as { city?: string; neighborhood?: string }
+      if (!city) return reply.status(400).send({ error: 'city parameter required' })
+
+      const cacheKey = `pub:rental:${city}:${neighborhood || 'all'}`
+      const cached = await cacheGet(app.redis, cacheKey)
+      if (cached) return reply.send(cached)
+
+      const { getRentalPriceReference } = await import('../../services/apify-quintoandar.service.js')
+      const result = await getRentalPriceReference(city, neighborhood)
+
+      if (!result) {
+        return reply.send({ avgRentPerSqm: 0, avgRent: 0, sampleSize: 0, city, neighborhood })
+      }
+
+      const response = { ...result, city, neighborhood }
+      await cacheSet(app.redis, cacheKey, response, 86400) // 24h cache
+      return reply.send(response)
+    } catch (err) {
+      app.log.error({ err }, '[rental-prices] Error')
+      return reply.status(500).send({ error: 'INTERNAL_ERROR' })
+    }
+  })
 }
