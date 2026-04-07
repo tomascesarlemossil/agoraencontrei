@@ -13,8 +13,12 @@ import { BaseScraper, ScrapedAuction } from './base-scraper.js'
  * Isso é 100x mais rápido que raspar HTML e consome zero banda.
  */
 
-const CAIXA_API_URL = 'https://venda-imoveis.caixa.gov.br/sistema/api/pesquisa-imoveis'
+// Endpoints reais da Caixa (ASP clássico, form POST)
+// Descobertos via engenharia reversa do caixa-auction-api
+const CAIXA_CITIES_URL = 'https://venda-imoveis.caixa.gov.br/sistema/carregaListaCidades.asp'
+const CAIXA_SEARCH_URL = 'https://venda-imoveis.caixa.gov.br/sistema/carregaPesquisaImoveis.asp'
 const CAIXA_DETAIL_URL = 'https://venda-imoveis.caixa.gov.br/sistema/detalhe-imovel.asp'
+const CAIXA_API_URL = 'https://venda-imoveis.caixa.gov.br/sistema/api/pesquisa-imoveis' // Backup
 
 // Todos os estados brasileiros
 const ESTADOS = [
@@ -113,84 +117,113 @@ export class CaixaScraper extends BaseScraper {
     return auctions
   }
 
-  // Abordagem 1: API principal com headers stealth
+  // Abordagem 1: Endpoints ASP reais da Caixa (form POST)
+  // Mesmo método usado pelo LeilãoImóvel e caixa-auction-api
   private async fetchViaApi(estado: string): Promise<ScrapedAuction[]> {
-    // Primeiro, obter um cookie de sessão visitando a página principal
-    let sessionCookie = ''
+    const browserHeaders = {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+      'Accept-Language': 'pt-BR,pt;q=0.9',
+      'Origin': 'https://venda-imoveis.caixa.gov.br',
+      'Referer': 'https://venda-imoveis.caixa.gov.br/sistema/busca-imovel.asp',
+    }
+
+    // Passo 1: Obter lista de cidades do estado
     try {
-      const homeRes = await fetch('https://venda-imoveis.caixa.gov.br/sistema/busca-imovel.asp', {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-          'Accept': 'text/html,application/xhtml+xml',
-        },
-        redirect: 'follow',
+      const citiesRes = await fetch(CAIXA_CITIES_URL, {
+        method: 'POST',
+        headers: { ...browserHeaders, 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `cmb_estado=${estado}`,
       })
-      sessionCookie = homeRes.headers.get('set-cookie') || ''
-    } catch {}
 
-    const response = await fetch(CAIXA_API_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-        'Accept': 'application/json, text/plain, */*',
-        'Accept-Language': 'pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',
-        'Accept-Encoding': 'gzip, deflate, br',
-        'Origin': 'https://venda-imoveis.caixa.gov.br',
-        'Referer': 'https://venda-imoveis.caixa.gov.br/sistema/busca-imovel.asp',
-        'Sec-Fetch-Dest': 'empty',
-        'Sec-Fetch-Mode': 'cors',
-        'Sec-Fetch-Site': 'same-origin',
-        'Sec-Ch-Ua': '"Chromium";v="122", "Not(A:Brand";v="24", "Google Chrome";v="122"',
-        'Sec-Ch-Ua-Mobile': '?0',
-        'Sec-Ch-Ua-Platform': '"Windows"',
-        ...(sessionCookie && { 'Cookie': sessionCookie }),
-      },
-      body: JSON.stringify({
-        strEstado: estado,
-        tipoBusca: 'ESTADO',
-      }),
-    })
+      if (!citiesRes.ok) {
+        console.warn(`[CaixaScraper] Cities endpoint retornou ${citiesRes.status} para ${estado}`)
+        return []
+      }
 
-    if (!response.ok) {
-      console.warn(`[CaixaScraper] API retornou ${response.status} para ${estado}, tentando fallback...`)
+      const citiesText = await citiesRes.text()
+
+      // Passo 2: Buscar imóveis do estado inteiro
+      const searchRes = await fetch(CAIXA_SEARCH_URL, {
+        method: 'POST',
+        headers: { ...browserHeaders, 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `cmb_estado=${estado}&cmb_cidade=&cmb_tp_imovel=`,
+      })
+
+      if (!searchRes.ok) {
+        // Tentar o endpoint JSON como fallback
+        return this.fetchViaJsonApi(estado)
+      }
+
+      const searchText = await searchRes.text()
+
+      // Tentar parsear como JSON (a Caixa pode retornar JSON ou HTML)
+      try {
+        const data = JSON.parse(searchText)
+        return this.parseApiResponse(data, estado)
+      } catch {
+        // É HTML — parsear como HTML
+        return this.parseHtmlResponse(searchText, estado)
+      }
+    } catch (err: any) {
+      console.warn(`[CaixaScraper] Form POST falhou para ${estado}: ${err.message}`)
       return []
     }
-
-    return this.parseApiResponse(await response.json(), estado)
   }
 
-  // Abordagem 2: URL alternativa da Caixa (endpoint diferente)
-  private async fetchViaAlternateApi(estado: string): Promise<ScrapedAuction[]> {
-    // Tentar URLs alternativas que a Caixa pode ter
-    const altUrls = [
-      `https://venda-imoveis.caixa.gov.br/sistema/api/consulta.asp?estado=${estado}`,
-      `https://venda-imoveis.caixa.gov.br/sistema/detalhe-imovel.asp?sltEstado=${estado}`,
-    ]
+  // Abordagem 2: API JSON (backup)
+  private async fetchViaJsonApi(estado: string): Promise<ScrapedAuction[]> {
+    try {
+      const response = await fetch(CAIXA_API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+          'Accept': 'application/json',
+          'Origin': 'https://venda-imoveis.caixa.gov.br',
+          'Referer': 'https://venda-imoveis.caixa.gov.br/sistema/busca-imovel.asp',
+        },
+        body: JSON.stringify({ strEstado: estado, tipoBusca: 'ESTADO' }),
+      })
 
-    for (const url of altUrls) {
+      if (!response.ok) return []
+      return this.parseApiResponse(await response.json(), estado)
+    } catch {
+      return []
+    }
+  }
+
+  // Parsear resposta HTML da Caixa
+  private parseHtmlResponse(html: string, estado: string): ScrapedAuction[] {
+    const auctions: ScrapedAuction[] = []
+    // Extrair dados de tabelas ou divs de imóveis
+    const rows = html.match(/<tr[^>]*>[\s\S]*?<\/tr>/gi) || []
+    for (const row of rows) {
       try {
-        const res = await fetch(url, {
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
-            'Accept': 'text/html,application/json,*/*',
-            'Referer': 'https://venda-imoveis.caixa.gov.br/',
-          },
-        })
-        if (res.ok) {
-          const text = await res.text()
-          try {
-            const data = JSON.parse(text)
-            const result = this.parseApiResponse(data, estado)
-            if (result.length > 0) return result
-          } catch {
-            // Não é JSON, pode ser HTML
-          }
+        const getText = (pattern: RegExp) => {
+          const m = row.match(pattern)
+          return m ? m[1].replace(/<[^>]+>/g, '').trim() : undefined
         }
+        const title = getText(/<td[^>]*>([\s\S]*?)<\/td>/i)
+        if (!title || title.length < 5) continue
+
+        auctions.push({
+          externalId: `CAIXA-HTML-${estado}-${auctions.length}`,
+          source: 'CAIXA',
+          auctioneerName: 'Caixa Econômica Federal',
+          title: title.substring(0, 200),
+          state: estado,
+          status: 'OPEN',
+          modality: 'DIRECT_SALE',
+        })
       } catch {}
     }
+    return auctions
+  }
 
-    return []
+  // Abordagem 3 mantida como fallback
+  private async fetchViaAlternateApi(estado: string): Promise<ScrapedAuction[]> {
+    return this.fetchViaJsonApi(estado)
   }
 
   private parseApiResponse(data: any, estado: string): ScrapedAuction[] {
