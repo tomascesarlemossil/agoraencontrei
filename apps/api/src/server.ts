@@ -57,6 +57,7 @@ import specialistsRoutes from './routes/specialists/index.js'
 import { specialistPaymentRoutes } from './routes/specialists/payments.js'
 import { ScraperScheduler } from './services/scrapers/scheduler.js'
 import { AuctionMonitorService } from './services/auction-monitor.service.js'
+import { PredatoryProtocol } from './services/predatory/protocol.js'
 import { auctionsRoute } from './routes/public/auctions.js'
 import { freeListingRoutes } from './routes/public/free-listing.js'
 import { partnerRegisterRoute } from './routes/public/partner-register.js'
@@ -387,10 +388,15 @@ async function bootstrap() {
     scheduler.start()
     app.addHook('onClose', () => scheduler.stop())
 
-    // Monitor de Lances 24/7 — detecta expirados, mudanças de preço, suspensos
+    // Monitor de Lances 24/7
     const monitor = new AuctionMonitorService(app.prisma)
     monitor.start()
     app.addHook('onClose', () => monitor.stop())
+
+    // Protocolo Predatório — benchmark a cada 3h
+    const predatory = new PredatoryProtocol(app.prisma)
+    predatory.start()
+    app.addHook('onClose', () => predatory.stop())
   }
 
   // ── 404 Handler ─────────────────────────────────────────────────────────

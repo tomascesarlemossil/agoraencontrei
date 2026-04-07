@@ -150,6 +150,26 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     url: `${WEB_URL}/condominios/franca/${c}`, lastModified: now, changeFrequency: 'weekly' as const, priority: 0.85,
   }))
 
+  // ── Leilão por Bairro (SEO programático) ────────────────────────────────
+  const leilaoBairroSlugs = [
+    'centro-franca-sp', 'jardim-petraglia-franca-sp', 'city-petropolis-franca-sp',
+    'vila-santa-cruz-franca-sp', 'jardim-paulista-franca-sp', 'jardim-california-franca-sp',
+    'jardim-independencia-franca-sp', 'polo-club-franca-sp', 'jardim-zanetti-franca-sp',
+    'jardim-piemonte-franca-sp', 'jardim-eldorado-franca-sp', 'espraiado-franca-sp',
+    'jardim-luiza-franca-sp', 'residencial-zanetti-franca-sp', 'jardim-francano-franca-sp',
+    'savassi-belo-horizonte-mg', 'pampulha-belo-horizonte-mg',
+    'agua-verde-curitiba-pr', 'santa-felicidade-curitiba-pr',
+    'setor-bueno-goiania-go', 'aguas-claras-brasilia-df',
+    'vila-mariana-sao-paulo-sp', 'tatupe-sao-paulo-sp',
+    'tijuca-rio-de-janeiro-rj', 'campo-grande-rio-de-janeiro-rj',
+  ]
+  const leilaoBairros = leilaoBairroSlugs.map(slug => ({
+    url: `${WEB_URL}/leilao-imoveis/${slug}`,
+    lastModified: now,
+    changeFrequency: 'daily' as const,
+    priority: 0.9,
+  }))
+
   // ── POIs (Pontos de Interesse) ──────────────────────────────────────────
   const poiSlugs = [
     'uni-franca', 'unesp-franca', 'shopping-franca', 'shopping-boulevard',
@@ -219,6 +239,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...cidades,
     ...bairros,
     ...condominios,
+    ...leilaoBairros,
     ...pois,
     ...leiloes,
     ...imoveis,
