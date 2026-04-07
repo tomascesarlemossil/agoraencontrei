@@ -376,9 +376,25 @@ export default function LeiloesClient() {
         maxPrice,
       })
 
-      const sortedItems = [...filteredItems].sort((a, b) => {
-        const orderFactor = sortOrder === 'desc' ? -1 : 1
+      // Prioridade de cidade: Franca primeiro, depois cidades vizinhas, depois o resto
+      const cityPriority = (cityName: string | null): number => {
+        if (!cityName) return 999
+        const c = cityName.toUpperCase()
+        if (c === 'FRANCA') return 0
+        if (['BATATAIS', 'CRISTAIS PAULISTA', 'PATROCINIO PAULISTA', 'PEDREGULHO'].includes(c)) return 1
+        if (['RIBEIRAO PRETO', 'BRODOWSKI', 'ALTINOPOLIS', 'RIFAINA'].includes(c)) return 2
+        if (c.includes('SP') || ['SAO PAULO', 'CAMPINAS', 'SOROCABA'].includes(c)) return 3
+        return 4
+      }
 
+      const sortedItems = [...filteredItems].sort((a, b) => {
+        // Primeiro: prioridade por cidade (Franca primeiro)
+        const priA = cityPriority(a.city)
+        const priB = cityPriority(b.city)
+        if (priA !== priB) return priA - priB
+
+        // Depois: ordenação selecionada pelo usuário
+        const orderFactor = sortOrder === 'desc' ? -1 : 1
         const getComparable = (auction: Auction) => {
           switch (sortBy) {
             case 'minimumBid': return auction.minimumBid || 0
@@ -581,7 +597,8 @@ export default function LeiloesClient() {
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className="inline-flex items-center gap-1.5 px-3 py-2 bg-gray-100 rounded-lg text-sm hover:bg-gray-200 transition"
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold transition"
+              style={{ backgroundColor: '#f3f4f6', color: '#374151', border: '1px solid #d1d5db' }}
             >
               <Filter className="w-4 h-4" /> Filtros
             </button>
@@ -605,14 +622,15 @@ export default function LeiloesClient() {
             </button>
             <button
               onClick={() => setShowCalc(!showCalc)}
-              className="inline-flex items-center gap-1.5 px-3 py-2 bg-gray-100 rounded-lg text-sm hover:bg-gray-200 transition"
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold transition"
+              style={{ backgroundColor: '#1B2B5B', color: '#ffffff' }}
             >
               <Calculator className="w-4 h-4" /> Calculadora
             </button>
             <button
               onClick={() => setShowAlert(!showAlert)}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm text-white transition"
-              style={{ backgroundColor: '#C9A84C' }}
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold transition"
+              style={{ backgroundColor: '#C9A84C', color: '#1B2B5B' }}
             >
               <Bell className="w-4 h-4" /> Alerta
             </button>
