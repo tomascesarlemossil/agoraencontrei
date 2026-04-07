@@ -83,14 +83,27 @@ export function Navbar() {
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
-  // Bloquear scroll do body quando menu mobile está aberto
+  // Bloquear scroll do body completamente quando menu mobile está aberto
   useEffect(() => {
     if (menuOpen) {
       document.body.style.overflow = 'hidden'
+      document.body.style.position = 'fixed'
+      document.body.style.width = '100%'
+      document.body.style.top = `-${window.scrollY}px`
     } else {
+      const scrollY = document.body.style.top
       document.body.style.overflow = ''
+      document.body.style.position = ''
+      document.body.style.width = ''
+      document.body.style.top = ''
+      if (scrollY) window.scrollTo(0, parseInt(scrollY || '0', 10) * -1)
     }
-    return () => { document.body.style.overflow = '' }
+    return () => {
+      document.body.style.overflow = ''
+      document.body.style.position = ''
+      document.body.style.width = ''
+      document.body.style.top = ''
+    }
   }, [menuOpen])
 
   useEffect(() => {
@@ -256,6 +269,16 @@ export function Navbar() {
               Falar com corretor
             </a>
 
+            {/* Botão de leilões mobile (visível ao lado do hambúrguer) */}
+            <Link
+              href="/leiloes"
+              className="md:hidden flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold"
+              style={{ backgroundColor: 'rgba(201,168,76,0.2)', color: '#C9A84C', border: '1px solid rgba(201,168,76,0.4)' }}
+            >
+              <Gavel className="w-3.5 h-3.5" />
+              Leilões
+            </Link>
+
             {/* Botão hambúrguer mobile */}
             <button
               onClick={() => setMenuOpen(v => !v)}
@@ -278,8 +301,9 @@ export function Navbar() {
       {menuOpen && (
         <div
           className="fixed inset-0 z-40 bg-black/60 md:hidden"
-          style={{ backdropFilter: 'blur(2px)' }}
+          style={{ backdropFilter: 'blur(2px)', touchAction: 'none' }}
           onClick={closeMenu}
+          onTouchMove={e => e.preventDefault()}
           aria-hidden="true"
         />
       )}

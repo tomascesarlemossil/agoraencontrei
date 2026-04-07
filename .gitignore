@@ -11,3 +11,5 @@ build/
 .vercel
 data/uniloc/json/
 tsconfig.tsbuildinfo
+apps/api/.env.backup-upload
+*.env.backup*

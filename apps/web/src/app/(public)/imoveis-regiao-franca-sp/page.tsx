@@ -24,10 +24,10 @@ const CIDADES_REGIAO = [
   { nome: 'Altinópolis', slug: 'altinopolis', dist: '80km', href: '/imoveis-altinopolis-sp' },
   { nome: 'Brodowski', slug: 'brodowski', dist: '70km', href: '/imoveis-brodowski-sp' },
   { nome: 'Rifaina', slug: 'rifaina', dist: '55km', href: '/imoveis-rifaina-sp' },
-  { nome: 'Itirapuã', slug: 'itirapua', dist: '40km', href: '/imoveis/em/itirapua' },
-  { nome: 'Restinga', slug: 'restinga', dist: '45km', href: '/imoveis/em/restinga' },
-  { nome: 'Jeriquara', slug: 'jeriquara', dist: '25km', href: '/imoveis/em/jeriquara' },
-  { nome: 'Nuporanga', slug: 'nuporanga', dist: '65km', href: '/imoveis/em/nuporanga' },
+  { nome: 'Itirapuã', slug: 'itirapua', dist: '40km', href: '/imoveis-itirapua-sp' },
+  { nome: 'Restinga', slug: 'restinga', dist: '45km', href: '/imoveis-restinga-sp' },
+  { nome: 'Jeriquara', slug: 'jeriquara', dist: '25km', href: '/imoveis-jeriquara-sp' },
+  { nome: 'Nuporanga', slug: 'nuporanga', dist: '65km', href: '/imoveis-nuporanga-sp' },
 ]
 
 export default function RegiaoFrancaPage() {

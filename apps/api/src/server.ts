@@ -90,28 +90,16 @@ const app = Fastify({
 })
 
 async function runMigrations(prisma: any) {
-  // ── URGENTE: Reset admin Tomás para SUPER_ADMIN ────────────────────────
-  // Usa hash pre-computado para evitar crash de native modules no boot
+  // ── Admin role enforcement ──────────────────────────────────────────────
+  // Ensures admin users have correct role on boot (no password reset in code)
   try {
-    // Hash argon2id pre-computado para 'AgoraEncontrei2026!'
-    // Gerado com: argon2.hash('AgoraEncontrei2026!', { type: 2, memoryCost: 65536 })
-    const precomputedHash = '$argon2id$v=19$m=65536,t=3,p=4$YWdvcmFlbmNvbnRyZWkyMDI2$kJ7vH8mN5R3xQ2wF1pK4tL9yB6sD0uC3eA5iG8nO7fM'
-
-    // Tentar gerar hash fresco primeiro, fallback para pre-computado
-    let newHash = precomputedHash
-    try {
-      const argon2 = await import('argon2')
-      newHash = await argon2.hash('AgoraEncontrei2026!', { type: 2, memoryCost: 65536 })
-    } catch { /* usar pre-computado */ }
-
     for (const email of ['tomas@agoraencontrei.com.br', 'tomascesarlemossilva@gmail.com']) {
       await prisma.$executeRawUnsafe(
-        `UPDATE users SET role = 'SUPER_ADMIN', status = 'ACTIVE', "passwordHash" = $1, "emailVerifiedAt" = NOW() WHERE email = $2`,
-        newHash, email
+        `UPDATE users SET role = 'SUPER_ADMIN', status = 'ACTIVE', "emailVerifiedAt" = COALESCE("emailVerifiedAt", NOW()) WHERE email = $1 AND role != 'SUPER_ADMIN'`,
+        email
       ).catch(() => {})
     }
-    console.log('✅ Admin Tomás resetado para SUPER_ADMIN')
-  } catch (e: any) { console.warn('⚠️ Reset admin skip:', e.message) }
+  } catch { /* skip silently */ }
 
   const columns = [
     ['pricePromo',               'DECIMAL(12,2)'],

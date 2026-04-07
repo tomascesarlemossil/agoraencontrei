@@ -9,8 +9,8 @@ export async function POST(request: NextRequest) {
     const { paths, secret } = body
 
     // Validate secret to prevent unauthorized revalidation
-    const expectedSecret = process.env.REVALIDATION_SECRET || 'agoraencontrei-revalidate-2026'
-    if (secret !== expectedSecret) {
+    const expectedSecret = process.env.REVALIDATION_SECRET
+    if (!expectedSecret || secret !== expectedSecret) {
       return NextResponse.json({ error: 'Invalid secret' }, { status: 401 })
     }
 

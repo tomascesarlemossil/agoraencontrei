@@ -21,6 +21,10 @@ import {
 import { slugify } from '../../utils/slugify.js'
 
 export default async function seoProgramaticoRoutes(app: FastifyInstance) {
+  // ── Security: all write operations require authentication ──────────────
+  // GET routes (pages, sitemap, stats) remain public for SEO crawlers.
+  // POST routes (import, seed, generate, publish) require admin auth.
+
   // ── Migrate: create SEO tables ──────────────────────────────────────────
   const seoMigrations = [
     `CREATE TABLE IF NOT EXISTS seo_estados (
@@ -74,7 +78,7 @@ export default async function seoProgramaticoRoutes(app: FastifyInstance) {
     `CREATE INDEX IF NOT EXISTS idx_seo_paginas_cidade ON seo_paginas(cidade_id)`,
     `CREATE INDEX IF NOT EXISTS idx_seo_paginas_keyword ON seo_paginas(keyword_id)`,
     `CREATE INDEX IF NOT EXISTS idx_seo_keywords_categoria ON seo_keywords(categoria)`,
-    // Colunas extras IBGE para enriquecer o prompt de IA com dados reais
+    // ── Migration: colunas IBGE para seo_cidades (dados reais) ──────────
     `ALTER TABLE seo_cidades ADD COLUMN IF NOT EXISTS populacao_estimada INTEGER`,
     `ALTER TABLE seo_cidades ADD COLUMN IF NOT EXISTS densidade_demografica NUMERIC(10,2)`,
     `ALTER TABLE seo_cidades ADD COLUMN IF NOT EXISTS pib_per_capita NUMERIC(15,2)`,
@@ -93,6 +97,18 @@ export default async function seoProgramaticoRoutes(app: FastifyInstance) {
        area_territorial = 605.679,
        gentilico = 'francano'
      WHERE id_ibge = 3516200`,
+    // ── Migration: colunas para 1M URLs (PR #41) ─────────────────────────
+    `ALTER TABLE seo_paginas ADD COLUMN IF NOT EXISTS conteudo_ai TEXT`,
+    `ALTER TABLE seo_paginas ADD COLUMN IF NOT EXISTS familia_url VARCHAR(100)`,
+    `ALTER TABLE seo_paginas ADD COLUMN IF NOT EXISTS estado_slug VARCHAR(10)`,
+    `ALTER TABLE seo_paginas ADD COLUMN IF NOT EXISTS cidade_slug VARCHAR(100)`,
+    `ALTER TABLE seo_paginas ADD COLUMN IF NOT EXISTS cluster_slug VARCHAR(100)`,
+    `ALTER TABLE seo_paginas ADD COLUMN IF NOT EXISTS modificador_slug VARCHAR(100)`,
+    `ALTER TABLE seo_paginas ADD COLUMN IF NOT EXISTS prioridade SMALLINT DEFAULT 5`,
+    `ALTER TABLE seo_paginas ADD COLUMN IF NOT EXISTS indexar BOOLEAN DEFAULT TRUE`,
+    `CREATE INDEX IF NOT EXISTS idx_seo_paginas_familia ON seo_paginas(familia_url)`,
+    `CREATE INDEX IF NOT EXISTS idx_seo_paginas_estado_slug ON seo_paginas(estado_slug)`,
+    `CREATE INDEX IF NOT EXISTS idx_seo_paginas_prioridade ON seo_paginas(prioridade)`,
   ]
 
   for (const sql of seoMigrations) {
@@ -104,7 +120,7 @@ export default async function seoProgramaticoRoutes(app: FastifyInstance) {
   }
 
   // ── POST /import-ibge ───────────────────────────────────────────────────
-  app.post('/import-ibge', async (_req, reply) => {
+  app.post('/import-ibge', { preHandler: [app.authenticate] }, async (_req, reply) => {
     try {
       const municipios = await fetchMunicipiosIBGE()
       let inserted = 0
@@ -160,7 +176,7 @@ export default async function seoProgramaticoRoutes(app: FastifyInstance) {
   })
 
   // ── POST /keywords/seed ─────────────────────────────────────────────────
-  app.post('/keywords/seed', async (_req, reply) => {
+  app.post('/keywords/seed', { preHandler: [app.authenticate] }, async (_req, reply) => {
     let inserted = 0
 
     for (const [termo, categoria] of SEO_KEYWORDS) {
@@ -182,7 +198,7 @@ export default async function seoProgramaticoRoutes(app: FastifyInstance) {
   })
 
   // ── POST /pages/generate ────────────────────────────────────────────────
-  app.post('/pages/generate', async (req, reply) => {
+  app.post('/pages/generate', { preHandler: [app.authenticate] }, async (req, reply) => {
     const q = req.query as Record<string, string>
     const limitCidades = parseInt(q.limit || '100', 10)
     const estado = q.estado // filtrar por UF (opcional)
@@ -247,7 +263,7 @@ export default async function seoProgramaticoRoutes(app: FastifyInstance) {
   })
 
   // ── POST /pages/publish-ai ──────────────────────────────────────────────
-  app.post('/pages/publish-ai', async (req, reply) => {
+  app.post('/pages/publish-ai', { preHandler: [app.authenticate] }, async (req, reply) => {
     const q = req.query as Record<string, string>
     const limit = parseInt(q.limit || '10', 10)
 
@@ -646,7 +662,7 @@ ${sitemaps
   })
 
   // ── POST /pages/publish-batch (sem IA — publica rascunhos com intro) ──
-  app.post('/pages/publish-batch', async (req, reply) => {
+  app.post('/pages/publish-batch', { preHandler: [app.authenticate] }, async (req, reply) => {
     const q = req.query as Record<string, string>
     const limit = parseInt(q.limit || '1000', 10)
 

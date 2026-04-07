@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import Link from 'next/link'
-import { Search, MapPin, Filter, Calculator, Bell, TrendingUp, ChevronDown, X, ArrowRight, Building, Home, Map as MapIcon, Star, Clock, DollarSign, BarChart3, AlertTriangle } from 'lucide-react'
+import { Search, MapPin, Filter, Calculator, Bell, TrendingUp, ChevronDown, X, ArrowRight, Building, Home, Map as MapIcon, Star, Clock, DollarSign, BarChart3, AlertTriangle, Loader2, CheckCircle, ExternalLink } from 'lucide-react'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'https://api-production-669c.up.railway.app'
 const PUBLIC_AUCTIONS_URL = `${API_URL}/api/v1/public/auctions`
@@ -113,6 +113,28 @@ function typeIcon(type: string): string {
   return icons[type] || '🏠'
 }
 
+// Imagens por tipo de imóvel (Unsplash/genéricas)
+function typeGradient(type: string): string {
+  const gradients: Record<string, string> = {
+    HOUSE: 'from-blue-900/80 to-blue-700/60',
+    APARTMENT: 'from-indigo-900/80 to-indigo-700/60',
+    LAND: 'from-green-900/80 to-green-700/60',
+    FARM: 'from-emerald-900/80 to-emerald-700/60',
+    STORE: 'from-purple-900/80 to-purple-700/60',
+    OFFICE: 'from-slate-900/80 to-slate-700/60',
+    WAREHOUSE: 'from-gray-900/80 to-gray-700/60',
+  }
+  return gradients[type] || 'from-blue-900/80 to-blue-700/60'
+}
+
+function typeLabel(type: string): string {
+  const labels: Record<string, string> = {
+    HOUSE: 'Casa', APARTMENT: 'Apartamento', LAND: 'Terreno', FARM: 'Chácara/Sítio',
+    STORE: 'Loja', OFFICE: 'Sala/Escritório', WAREHOUSE: 'Galpão',
+  }
+  return labels[type] || 'Imóvel'
+}
+
 function normalizePublicPropertyType(type: string): string {
   const map: Record<string, string> = {
     casa: 'HOUSE',
@@ -215,6 +237,72 @@ export default function LeiloesClient() {
   const [sortBy, setSortBy] = useState('auctionDate')
   const [sortOrder, setSortOrder] = useState('asc')
   const [showFilters, setShowFilters] = useState(false)
+
+  // Lead modal
+  const [showLeadModal, setShowLeadModal] = useState(false)
+  const [selectedAuction, setSelectedAuction] = useState<Auction | null>(null)
+  const [leadForm, setLeadForm] = useState({ name: '', cpf: '', phone: '', email: '', investmentRange: '', propertyPreference: '', wantsAssessoria: false })
+  const [leadSubmitting, setLeadSubmitting] = useState(false)
+  const [leadSuccess, setLeadSuccess] = useState(false)
+  const [leadError, setLeadError] = useState('')
+  const externalLinkRef = useRef<string>('')
+
+  function openLeadModal(auction: Auction) {
+    setSelectedAuction(auction)
+    setShowLeadModal(true)
+    setLeadSuccess(false)
+    setLeadError('')
+    // Prepare external link for redirect after form
+    const publicId = auction.id.replace('public-', '')
+    externalLinkRef.current = `https://venda-imoveis.caixa.gov.br/sistema/detalhe-imovel.asp?hdnOrigem=index&hdnTipo=&hdnTermPesworq=${publicId}`
+  }
+
+  async function submitLead(e: React.FormEvent) {
+    e.preventDefault()
+    if (!selectedAuction) return
+    setLeadSubmitting(true)
+    setLeadError('')
+    try {
+      const API = process.env.NEXT_PUBLIC_API_URL ?? 'https://api.agoraencontrei.com.br'
+      const res = await fetch(`${API}/api/v1/public/leads`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: leadForm.name,
+          phone: leadForm.phone,
+          email: leadForm.email || undefined,
+          interest: 'buy',
+          source: 'leilao',
+          message: [
+            `CPF: ${leadForm.cpf}`,
+            `Imóvel: ${selectedAuction.title}`,
+            `Cidade: ${selectedAuction.city}/${selectedAuction.state}`,
+            `Lance mínimo: ${formatCurrency(selectedAuction.minimumBid)}`,
+            `Desconto: ${selectedAuction.discountPercent}%`,
+            `Faixa de investimento: ${leadForm.investmentRange}`,
+            `Tipo preferido: ${leadForm.propertyPreference}`,
+            `Assessoria completa: ${leadForm.wantsAssessoria ? 'SIM' : 'Não'}`,
+          ].join('\n'),
+          utmSource: 'leilao',
+          utmMedium: 'modal',
+          utmCampaign: selectedAuction.source,
+        }),
+      })
+      if (!res.ok) throw new Error('Erro ao enviar')
+      setLeadSuccess(true)
+      // Redirect to external link after 2 seconds
+      setTimeout(() => {
+        if (externalLinkRef.current) {
+          window.open(externalLinkRef.current, '_blank')
+        }
+        setShowLeadModal(false)
+        setLeadForm({ name: '', cpf: '', phone: '', email: '', investmentRange: '', propertyPreference: '', wantsAssessoria: false })
+      }, 2500)
+    } catch {
+      setLeadError('Erro ao enviar. Tente novamente.')
+    }
+    setLeadSubmitting(false)
+  }
 
   // Calculator
   const [showCalc, setShowCalc] = useState(false)
@@ -417,6 +505,7 @@ export default function LeiloesClient() {
   }
 
   return (
+    <>
     <div className="min-h-screen bg-[#f8f6f1]">
       {/* HERO */}
       <section className="bg-gradient-to-br from-[#1B2B5B] to-[#0f1c3a] text-white py-12 px-4">
@@ -768,14 +857,22 @@ export default function LeiloesClient() {
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {auctions.map(auction => (
-                <Link key={auction.id} href={`/leiloes/${auction.slug}`}
-                  className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-200 group">
+                <div key={auction.id} onClick={() => openLeadModal(auction)}
+                  className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-200 group cursor-pointer">
                   {/* Image */}
                   <div className="relative h-48 bg-gray-100">
                     {auction.coverImage ? (
                       <img src={auction.coverImage} alt={auction.title} className="w-full h-full object-cover" />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-5xl">{typeIcon(auction.propertyType)}</div>
+                      <div className={`w-full h-full bg-gradient-to-br ${typeGradient(auction.propertyType)} flex flex-col items-center justify-center`}>
+                        <span className="text-5xl mb-1">{typeIcon(auction.propertyType)}</span>
+                        <span className="text-white/80 text-xs font-semibold">{typeLabel(auction.propertyType)}</span>
+                        {auction.discountPercent && auction.discountPercent > 15 && (
+                          <span className="mt-1 text-white/90 text-xs font-bold bg-red-500/80 px-2 py-0.5 rounded-full">
+                            Até {Math.round(auction.discountPercent)}% OFF
+                          </span>
+                        )}
+                      </div>
                     )}
                     {/* Badges */}
                     <div className="absolute top-2 left-2 flex gap-1.5">
@@ -850,7 +947,7 @@ export default function LeiloesClient() {
                       )}
                     </div>
                   </div>
-                </Link>
+                </div>
               ))}
             </div>
 
@@ -897,5 +994,133 @@ export default function LeiloesClient() {
         </div>
       </section>
     </div>
+
+    {/* ── MODAL DE LEAD DE LEILÃO ─────────────────────────────────────── */}
+    {showLeadModal && selectedAuction && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setShowLeadModal(false)}>
+        <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl" onClick={e => e.stopPropagation()}>
+          {/* Header */}
+          <div className="p-5 border-b flex items-center justify-between" style={{ background: '#1B2B5B' }}>
+            <div>
+              <h3 className="text-white font-bold text-lg">Tenho Interesse</h3>
+              <p className="text-white/60 text-xs mt-0.5">{selectedAuction.title}</p>
+            </div>
+            <button onClick={() => setShowLeadModal(false)} className="text-white/60 hover:text-white p-1">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          {leadSuccess ? (
+            <div className="p-8 text-center">
+              <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
+              <h4 className="text-xl font-bold mb-2" style={{ color: '#1B2B5B' }}>Interesse registrado!</h4>
+              <p className="text-gray-500 text-sm mb-4">
+                Nossa equipe entrará em contato em breve. Redirecionando para o site do leiloeiro...
+              </p>
+              <div className="flex items-center justify-center gap-2 text-sm text-blue-600">
+                <ExternalLink className="w-4 h-4" />
+                Abrindo site externo...
+              </div>
+            </div>
+          ) : (
+            <form onSubmit={submitLead} className="p-5 space-y-4">
+              {/* Info do imóvel */}
+              <div className="bg-gray-50 rounded-xl p-3 text-sm">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-lg">{typeIcon(selectedAuction.propertyType)}</span>
+                  <span className="font-semibold text-gray-800">{typeLabel(selectedAuction.propertyType)} — {selectedAuction.city}/{selectedAuction.state}</span>
+                </div>
+                <div className="flex items-center gap-3 text-xs text-gray-500">
+                  <span className="font-bold text-lg" style={{ color: '#1B2B5B' }}>{formatCurrency(selectedAuction.minimumBid)}</span>
+                  {selectedAuction.discountPercent && (
+                    <span className="bg-red-100 text-red-700 px-1.5 py-0.5 rounded text-xs font-bold">
+                      -{Math.round(selectedAuction.discountPercent)}%
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {leadError && <div className="bg-red-50 text-red-700 text-sm p-2 rounded-lg">{leadError}</div>}
+
+              {/* Dados pessoais */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="col-span-2">
+                  <label className="text-xs font-semibold text-gray-600 mb-1 block">Nome completo *</label>
+                  <input required type="text" value={leadForm.name} onChange={e => setLeadForm(f => ({ ...f, name: e.target.value }))}
+                    className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#1B2B5B]/20 focus:border-[#1B2B5B]" placeholder="Seu nome" />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-gray-600 mb-1 block">CPF *</label>
+                  <input required type="text" value={leadForm.cpf} onChange={e => setLeadForm(f => ({ ...f, cpf: e.target.value }))}
+                    className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#1B2B5B]/20" placeholder="000.000.000-00" maxLength={14} />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-gray-600 mb-1 block">Telefone / WhatsApp *</label>
+                  <input required type="tel" value={leadForm.phone} onChange={e => setLeadForm(f => ({ ...f, phone: e.target.value }))}
+                    className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#1B2B5B]/20" placeholder="(16) 99999-9999" />
+                </div>
+                <div className="col-span-2">
+                  <label className="text-xs font-semibold text-gray-600 mb-1 block">E-mail</label>
+                  <input type="email" value={leadForm.email} onChange={e => setLeadForm(f => ({ ...f, email: e.target.value }))}
+                    className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#1B2B5B]/20" placeholder="seu@email.com" />
+                </div>
+              </div>
+
+              {/* Preferências */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-semibold text-gray-600 mb-1 block">Faixa de investimento</label>
+                  <select value={leadForm.investmentRange} onChange={e => setLeadForm(f => ({ ...f, investmentRange: e.target.value }))}
+                    className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#1B2B5B]/20">
+                    <option value="">Selecione</option>
+                    <option value="ate-100k">Até R$ 100 mil</option>
+                    <option value="100k-200k">R$ 100 a 200 mil</option>
+                    <option value="200k-500k">R$ 200 a 500 mil</option>
+                    <option value="500k-1m">R$ 500 mil a 1 milhão</option>
+                    <option value="acima-1m">Acima de R$ 1 milhão</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-gray-600 mb-1 block">Tipo de imóvel preferido</label>
+                  <select value={leadForm.propertyPreference} onChange={e => setLeadForm(f => ({ ...f, propertyPreference: e.target.value }))}
+                    className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#1B2B5B]/20">
+                    <option value="">Selecione</option>
+                    <option value="casa">Casa</option>
+                    <option value="apartamento">Apartamento</option>
+                    <option value="terreno">Terreno</option>
+                    <option value="comercial">Comercial</option>
+                    <option value="rural">Rural / Chácara</option>
+                    <option value="qualquer">Qualquer tipo</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Assessoria */}
+              <label className="flex items-start gap-3 p-3 bg-amber-50 rounded-xl cursor-pointer border border-amber-200">
+                <input type="checkbox" checked={leadForm.wantsAssessoria} onChange={e => setLeadForm(f => ({ ...f, wantsAssessoria: e.target.checked }))}
+                  className="mt-0.5 rounded border-amber-300 text-amber-600 focus:ring-amber-500" />
+                <div>
+                  <span className="text-sm font-semibold text-amber-800">Desejo assessoria completa na arrematação</span>
+                  <p className="text-xs text-amber-600 mt-0.5">Inclui análise jurídica, documentação, registro e acompanhamento até a entrega das chaves.</p>
+                </div>
+              </label>
+
+              {/* Submit */}
+              <button type="submit" disabled={leadSubmitting}
+                className="w-full py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 text-white transition-all hover:brightness-110 disabled:opacity-60"
+                style={{ background: '#1B2B5B' }}>
+                {leadSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <ExternalLink className="w-4 h-4" />}
+                {leadSubmitting ? 'Enviando...' : 'Registrar interesse e ver no site do leiloeiro'}
+              </button>
+
+              <p className="text-[10px] text-gray-400 text-center">
+                Seus dados serão usados apenas para contato sobre este imóvel. Após o envio, você será redirecionado ao site oficial do leiloeiro.
+              </p>
+            </form>
+          )}
+        </div>
+      </div>
+    )}
+    </>
   )
 }
