@@ -167,6 +167,34 @@ export function HeroSearchForm() {
 
   return (
     <div className="w-full max-w-2xl mx-auto">
+      {/* Botão de Leilões — destaque no topo, bem visível no mobile */}
+      <a
+        href="/leiloes"
+        className="flex sm:inline-flex items-center justify-center gap-2 rounded-full px-5 py-3 mb-5 text-sm font-bold transition-all hover:brightness-110 hover:scale-105 active:scale-95 shadow-lg w-full sm:w-auto"
+        style={{
+          background: 'linear-gradient(135deg, #C9A84C 0%, #e6c96a 50%, #C9A84C 100%)',
+          color: '#1B2B5B',
+          border: '2px solid rgba(255,255,255,0.3)',
+          boxShadow: '0 4px 24px rgba(201,168,76,0.45), 0 2px 8px rgba(0,0,0,0.3)',
+        }}
+      >
+        {/* Ícone de martelo de leilão */}
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 flex-shrink-0" aria-hidden="true">
+          <path d="M14.5 2.5l7 7-10 10-7-7 10-10z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M3 21l4.5-4.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+          <path d="M9 3L3 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+        </svg>
+        <span className="font-extrabold tracking-wide">Ver Imóveis em Leilão</span>
+        <span
+          className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-black"
+          style={{ backgroundColor: 'rgba(27,43,91,0.18)', color: '#1B2B5B' }}
+        >
+          NOVO
+        </span>
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5 flex-shrink-0" aria-hidden="true">
+          <path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      </a>
       {/* Top toggle: Buscar / Anunciar */}
       <div
         className="inline-flex rounded-full p-1 mb-6"
