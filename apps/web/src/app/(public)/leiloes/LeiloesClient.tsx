@@ -250,7 +250,7 @@ function filterFallbackAuctions(items: Auction[], filters: {
       if (!haystack.includes(filters.search.toLowerCase())) return false
     }
 
-    if (filters.city && (auction.city || '').toLowerCase() !== filters.city.toLowerCase()) return false
+    if (filters.city && !(auction.city || '').toLowerCase().includes(filters.city.toLowerCase())) return false
     if (filters.state && (auction.state || '').toLowerCase() !== filters.state.toLowerCase()) return false
     if (filters.source && auction.source !== filters.source) return false
     if (filters.propertyType && auction.propertyType !== filters.propertyType) return false
@@ -272,7 +272,7 @@ export default function LeiloesClient() {
 
   // Filters
   const [search, setSearch] = useState('')
-  const [city, setCity] = useState('')
+  const [city, setCity] = useState('Franca')
   const [state, setState] = useState('')
   const [source, setSource] = useState('')
   const [propertyType, setPropertyType] = useState('')
@@ -744,8 +744,21 @@ export default function LeiloesClient() {
         {showFilters && (
           <div className="border-t bg-gray-50 px-4 py-4">
             <div className="max-w-7xl mx-auto grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-              <input type="text" placeholder="Cidade" value={city} onChange={e => setCity(e.target.value)}
-                className="px-3 py-2 rounded-lg border text-sm" />
+              <select value={city} onChange={e => setCity(e.target.value)} className="px-3 py-2 rounded-lg border text-sm">
+                <option value="">Todas as Cidades</option>
+                <option value="Franca">Franca</option>
+                <option value="Batatais">Batatais</option>
+                <option value="Patrocínio Paulista">Patrocínio Paulista</option>
+                <option value="Cristais Paulista">Cristais Paulista</option>
+                <option value="Restinga">Restinga</option>
+                <option value="Pedregulho">Pedregulho</option>
+                <option value="Rifaina">Rifaina</option>
+                <option value="Altinópolis">Altinópolis</option>
+                <option value="Brodowski">Brodowski</option>
+                <option value="Ribeirão Preto">Ribeirão Preto</option>
+                <option value="São Paulo">São Paulo</option>
+                <option value="Campinas">Campinas</option>
+              </select>
               <select value={state} onChange={e => setState(e.target.value)} className="px-3 py-2 rounded-lg border text-sm">
                 <option value="">Todos os Estados</option>
                 {['SP','RJ','MG','BA','PR','RS','PE','CE','GO','SC','DF','PA','MA','AM','MT','MS','ES','RN','PB','AL','PI','SE','AC','AP','RO','RR','TO'].map(uf => (
@@ -782,7 +795,7 @@ export default function LeiloesClient() {
                 className="px-4 py-2 text-white rounded-lg text-sm font-semibold" style={{ backgroundColor: '#1B2B5B' }}>
                 Aplicar Filtros
               </button>
-              <button onClick={() => { setCity(''); setState(''); setSource(''); setPropertyType(''); setMinDiscount(''); setMaxPrice(''); setSearch('') }}
+              <button onClick={() => { setCity('Franca'); setState(''); setSource(''); setPropertyType(''); setMinDiscount(''); setMaxPrice(''); setSearch('') }}
                 className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm">
                 Limpar
               </button>
