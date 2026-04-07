@@ -389,20 +389,26 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
   } catch {}
 
-  // ── SEO Programático (páginas dinâmicas do banco) ──────────────────────────
+  // ── SEO Programático (páginas dinâmicas do banco — até 50k por sitemap page) ─
   let seoProgramatico: MetadataRoute.Sitemap = []
   try {
+    // Fetch first page of SEO sitemap (50k URLs max per page)
     const res = await fetch(`${API_URL}/api/v1/seo/pages?limit=200&status=publicado`, { next: { revalidate: 3600 } })
     if (res.ok) {
       const data = await res.json()
-      seoProgramatico = (data.data ?? []).map((p: any) => ({
-        url: `${WEB_URL}/s/${p.slug}`,
-        lastModified: new Date(p.published_at ?? now),
-        changeFrequency: 'weekly' as const,
-        priority: 0.7,
-      }))
+      seoProgramatico = (data.data ?? [])
+        .filter((p: any) => p.status === 'publicado')
+        .map((p: any) => ({
+          url: `${WEB_URL}/s/${p.slug}`,
+          lastModified: new Date(p.published_at ?? now),
+          changeFrequency: 'weekly' as const,
+          priority: 0.7,
+        }))
     }
   } catch {}
+  // Note: The full SEO sitemap (651k+ pages) is served directly by the API at
+  // GET /api/v1/seo/sitemap/index.xml and /api/v1/seo/sitemap/pages.xml?page=N
+  // These should be referenced in robots.txt or as <sitemapindex> entries.
 
   return [
     ...core,
