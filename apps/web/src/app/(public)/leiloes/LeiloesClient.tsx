@@ -366,7 +366,10 @@ export default function LeiloesClient() {
         }
       }
 
-      const fallbackRes = await fetch(PUBLIC_AUCTIONS_URL)
+      const fallbackParams = new URLSearchParams()
+      if (state) fallbackParams.set('state', state)
+      const fallbackUrl = `${PUBLIC_AUCTIONS_URL}${fallbackParams.toString() ? '?' + fallbackParams : ''}`
+      const fallbackRes = await fetch(fallbackUrl)
       if (!fallbackRes.ok) throw new Error('Falha ao buscar fallback público de leilões')
 
       const fallbackData = await fallbackRes.json()
@@ -524,9 +527,16 @@ export default function LeiloesClient() {
               Leilões de Imóveis
             </h1>
             <p className="text-white/70 text-lg max-w-2xl mx-auto">
-              Busca unificada em 800+ leiloeiros e bancos. Descontos de até 70%.
-              Calculadora de ROI e alertas inteligentes.
+              Caixa, Santander, BB, Bradesco e 9+ leiloeiros. Descontos de até 70%.
+              Fotos reais, matrícula, edital e calculadora de ROI.
             </p>
+            <div className="flex items-center justify-center gap-3 mt-3 flex-wrap">
+              {['Caixa', 'Santander', 'Banco do Brasil', 'ZAP', 'QuintoAndar'].map(bank => (
+                <span key={bank} className="text-[10px] px-2.5 py-1 rounded-full bg-white/10 text-white/70 font-medium">
+                  {bank}
+                </span>
+              ))}
+            </div>
           </div>
 
           {/* Search Bar */}
@@ -866,38 +876,42 @@ export default function LeiloesClient() {
                 <div key={auction.id} onClick={() => openLeadModal(auction)}
                   className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-200 group cursor-pointer">
                   {/* Image */}
-                  <div className="relative h-48 bg-gray-100">
+                  <div className="relative h-48 bg-gray-100 overflow-hidden">
                     {auction.coverImage ? (
-                      <img src={auction.coverImage} alt={auction.title} className="w-full h-full object-cover" />
+                      <img
+                        src={auction.coverImage}
+                        alt={auction.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; (e.target as HTMLImageElement).parentElement!.classList.add('bg-gradient-to-br', typeGradient(auction.propertyType).split(' ').pop()!) }}
+                      />
                     ) : (
                       <div className={`w-full h-full bg-gradient-to-br ${typeGradient(auction.propertyType)} flex flex-col items-center justify-center`}>
                         <span className="text-5xl mb-1">{typeIcon(auction.propertyType)}</span>
                         <span className="text-white/80 text-xs font-semibold">{typeLabel(auction.propertyType)}</span>
-                        {auction.discountPercent && auction.discountPercent > 15 && (
-                          <span className="mt-1 text-white/90 text-xs font-bold bg-red-500/80 px-2 py-0.5 rounded-full">
-                            Até {Math.round(auction.discountPercent)}% OFF
-                          </span>
-                        )}
                       </div>
                     )}
-                    {/* Badges */}
+                    {/* Top-left: Source badge */}
                     <div className="absolute top-2 left-2 flex gap-1.5">
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${statusColor(auction.status)}`}>
-                        {statusLabel(auction.status)}
-                      </span>
-                      <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
-                        {sourceLabel(auction.source)}
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-white/90 backdrop-blur text-gray-800 shadow-sm">
+                        {auction.bankName || sourceLabel(auction.source)}
                       </span>
                     </div>
-                    {/* Discount badge */}
+                    {/* Top-right: Discount */}
                     {auction.discountPercent && auction.discountPercent > 0 && (
-                      <div className="absolute top-2 right-2 px-2 py-0.5 rounded-full text-xs font-bold bg-red-500 text-white">
-                        -{auction.discountPercent}%
+                      <div className="absolute top-2 right-2 px-2.5 py-1 rounded-lg text-xs font-bold bg-red-500 text-white shadow-lg">
+                        -{Math.round(auction.discountPercent)}%
                       </div>
                     )}
-                    {/* Score */}
-                    {auction.opportunityScore && (
-                      <div className="absolute bottom-2 right-2 bg-white/90 backdrop-blur px-2 py-1 rounded-lg flex items-center gap-1">
+                    {/* Bottom-left: Auction date */}
+                    {(auction.firstRoundDate || auction.auctionDate) && (
+                      <div className="absolute bottom-2 left-2 px-2 py-1 rounded-lg text-[10px] font-semibold bg-black/60 text-white backdrop-blur flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        {formatDate(auction.firstRoundDate || auction.auctionDate)}
+                      </div>
+                    )}
+                    {/* Bottom-right: Score */}
+                    {auction.opportunityScore && auction.opportunityScore > 0 && (
+                      <div className="absolute bottom-2 right-2 bg-white/90 backdrop-blur px-2 py-1 rounded-lg flex items-center gap-1 shadow-sm">
                         <Star className={`w-3.5 h-3.5 ${scoreColor(auction.opportunityScore)}`} />
                         <span className={`text-xs font-bold ${scoreColor(auction.opportunityScore)}`}>{auction.opportunityScore}</span>
                       </div>
@@ -910,46 +924,52 @@ export default function LeiloesClient() {
                       {auction.title}
                     </h3>
                     <div className="flex items-center gap-1 text-xs text-gray-500 mb-3">
-                      <MapPin className="w-3 h-3" />
-                      {auction.neighborhood ? `${auction.neighborhood}, ` : ''}{auction.city || ''}{auction.state ? `/${auction.state}` : ''}
+                      <MapPin className="w-3 h-3 flex-shrink-0" />
+                      <span className="truncate">
+                        {auction.neighborhood ? `${auction.neighborhood}, ` : ''}{auction.city || ''}{auction.state ? `/${auction.state}` : ''}
+                      </span>
                     </div>
 
                     {/* Price */}
-                    <div className="space-y-1">
-                      {auction.appraisalValue && (
+                    <div className="space-y-0.5">
+                      {auction.appraisalValue && Number(auction.appraisalValue) > 0 && (
                         <div className="text-xs text-gray-400 line-through">
                           Avaliação: {formatCurrency(Number(auction.appraisalValue))}
                         </div>
                       )}
                       <div className="text-lg font-bold" style={{ color: '#1B2B5B' }}>
-                        {formatCurrency(Number(auction.minimumBid))}
+                        {Number(auction.minimumBid) > 0 ? formatCurrency(Number(auction.minimumBid)) : 'Consultar valor'}
                       </div>
+                      {auction.appraisalValue && Number(auction.appraisalValue) > 0 && Number(auction.minimumBid) > 0 && (
+                        <div className="text-[10px] text-green-600 font-semibold">
+                          Economia de {formatCurrency(Number(auction.appraisalValue) - Number(auction.minimumBid))}
+                        </div>
+                      )}
                     </div>
 
                     {/* Meta */}
                     <div className="flex items-center gap-3 mt-3 text-xs text-gray-500">
-                      {auction.totalArea && <span>{auction.totalArea}m²</span>}
-                      {auction.bedrooms > 0 && <span>{auction.bedrooms} quartos</span>}
-                      {auction.auctionDate && (
-                        <span className="flex items-center gap-0.5">
-                          <Clock className="w-3 h-3" /> {formatDate(auction.auctionDate)}
-                        </span>
-                      )}
+                      {auction.totalArea && Number(auction.totalArea) > 0 && <span>{auction.totalArea}m²</span>}
+                      {auction.bedrooms > 0 && <span>{auction.bedrooms} qtos</span>}
+                      {auction.parkingSpaces > 0 && <span>{auction.parkingSpaces} vaga{auction.parkingSpaces > 1 ? 's' : ''}</span>}
                     </div>
 
                     {/* Tags */}
                     <div className="flex gap-1 mt-2 flex-wrap">
                       {auction.financingAvailable && (
-                        <span className="text-[10px] px-1.5 py-0.5 bg-green-50 text-green-700 rounded">Financiável</span>
+                        <span className="text-[10px] px-1.5 py-0.5 bg-green-50 text-green-700 rounded font-medium">Financiável</span>
                       )}
                       {auction.fgtsAllowed && (
-                        <span className="text-[10px] px-1.5 py-0.5 bg-blue-50 text-blue-700 rounded">FGTS</span>
+                        <span className="text-[10px] px-1.5 py-0.5 bg-blue-50 text-blue-700 rounded font-medium">FGTS</span>
                       )}
                       {auction.occupation === 'DESOCUPADO' && (
-                        <span className="text-[10px] px-1.5 py-0.5 bg-green-50 text-green-700 rounded">Desocupado</span>
+                        <span className="text-[10px] px-1.5 py-0.5 bg-green-50 text-green-700 rounded font-medium">Desocupado</span>
                       )}
                       {auction.occupation === 'OCUPADO' && (
-                        <span className="text-[10px] px-1.5 py-0.5 bg-red-50 text-red-700 rounded">Ocupado</span>
+                        <span className="text-[10px] px-1.5 py-0.5 bg-red-50 text-red-700 rounded font-medium">Ocupado</span>
+                      )}
+                      {auction.auctioneerName && (
+                        <span className="text-[10px] px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded font-medium">{auction.auctioneerName}</span>
                       )}
                     </div>
                   </div>
