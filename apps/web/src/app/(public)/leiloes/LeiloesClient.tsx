@@ -389,8 +389,9 @@ export default function LeiloesClient() {
       if (minDiscount) params.set('minDiscount', minDiscount)
       if (maxPrice) params.set('maxPrice', maxPrice)
 
+      // SKIP internal API — go straight to public endpoint (Franca-first sort)
       const res = await fetch(`${API_URL}/api/v1/auctions?${params}`)
-      if (res.ok) {
+      if (false && res.ok) {
         const data = await res.json()
         const internalItems = data.data || []
         const internalTotal = data.pagination?.total || 0
