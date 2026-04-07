@@ -174,6 +174,13 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
   // ROI filter slider
   const [minROI, setMinROI] = useState(0) // 0 = sem filtro
 
+  // Filtros de estilo de vida / qualidade
+  const [lifeFilters, setLifeFilters] = useState<{ financing: boolean; vacant: boolean; highDiscount: boolean }>({
+    financing: false,
+    vacant: false,
+    highDiscount: false,
+  })
+
   // Neighborhood comparison data for selected auction
   const [neighbors, setNeighbors] = useState<{ title: string; price: number; area: number; priceM2: number; neighborhood: string }[]>([])
   const [loadingNeighbors, setLoadingNeighbors] = useState(false)
@@ -219,18 +226,29 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
       .finally(() => setLoadingNeighbors(false))
   }, [selectedAuction?.id])
 
-  // Filter auctions by ROI slider
-  const filteredAuctions = minROI > 0
-    ? auctions.filter(a => {
-        if (!a.minimumBid || !a.appraisalValue) return false
-        const bid = Number(a.minimumBid)
-        const appr = Number(a.appraisalValue)
-        const costs = bid * 0.095 + (a.occupation === 'OCUPADO' ? Math.max(bid * 0.02, 5000) : 0)
-        const profit = appr - bid - costs
-        const roi = (profit / (bid + costs)) * 100
-        return roi >= minROI
-      })
-    : auctions
+  // Filter auctions by ROI slider + filtros de estilo de vida
+  const filteredAuctions = auctions.filter(a => {
+    // ROI filter
+    if (minROI > 0) {
+      if (!a.minimumBid || !a.appraisalValue) return false
+      const bid = Number(a.minimumBid)
+      const appr = Number(a.appraisalValue)
+      const costs = bid * 0.095 + (a.occupation === 'OCUPADO' ? Math.max(bid * 0.02, 5000) : 0)
+      const profit = appr - bid - costs
+      const roi = (profit / (bid + costs)) * 100
+      if (roi < minROI) return false
+    }
+    // Filtro: financiamento aceito
+    if (lifeFilters.financing && !a.financingAvailable) return false
+    // Filtro: desocupado
+    if (lifeFilters.vacant && a.occupation !== 'DESOCUPADO') return false
+    // Filtro: Pérola (desconto > 40%)
+    if (lifeFilters.highDiscount) {
+      const disc = a.discountPercent ? Number(a.discountPercent) : 0
+      if (disc < 40) return false
+    }
+    return true
+  })
 
   // Inject Leaflet CSS — uses CDN directly for reliability (bundled CSS import fails in some Next.js builds)
   useEffect(() => {
@@ -910,6 +928,31 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
           </div>
         )}
 
+        {/* Heatmap Toggle + Filtros Estilo de Vida */}
+        {showAuctionLayer && (
+          <div className="pointer-events-auto flex items-center gap-1.5 bg-white/95 backdrop-blur px-2 py-1.5 rounded-xl shadow-lg">
+            <span className="text-[10px] font-semibold text-gray-500 whitespace-nowrap hidden sm:block">Filtros:</span>
+            {([
+              { key: 'financing', label: '\uD83C\uDFE6 Financ.', title: 'Financiamento aceito' },
+              { key: 'vacant', label: '\uD83D\uDFE2 Livre', title: 'Imóvel desocupado' },
+              { key: 'highDiscount', label: '\uD83D\uDC8E Pérola', title: 'Desconto > 40%' },
+            ] as { key: string; label: string; title: string }[]).map(f => (
+              <button
+                key={f.key}
+                title={f.title}
+                onClick={() => setLifeFilters(prev => ({ ...prev, [f.key]: !prev[f.key as keyof typeof prev] }))}
+                className={`px-2 py-1 rounded-lg text-[10px] font-bold transition-all ${
+                  lifeFilters[f.key as keyof typeof lifeFilters]
+                    ? 'bg-[#C9A84C] text-[#1B2B5B] shadow-md'
+                    : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                }`}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+        )}
+
         {/* Layer Toggles */}
         <div className="ml-auto flex items-center gap-1.5 pointer-events-auto">
           <button
@@ -1143,13 +1186,34 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
             >
               Ver Detalhes + Edital Completo →
             </a>
+            {/* Manual do Investidor via WhatsApp — mensagem personalizada com dados do leilão */}
             <a
-              href={`https://wa.me/5516981010004?text=Olá! Vi o leilão "${selectedAuction.title}" no AgoraEncontrei e gostaria de assessoria jurídica.`}
+              href={(() => {
+                const bid = selectedAuction.minimumBid ? fmt(Number(selectedAuction.minimumBid)) : 'a consultar'
+                const appr = selectedAuction.appraisalValue ? fmt(Number(selectedAuction.appraisalValue)) : 'não informado'
+                const disc = selectedAuction.discountPercent ? `${selectedAuction.discountPercent}%` : 'não calculado'
+                const score = selectedAuction.opportunityScore ? `${selectedAuction.opportunityScore}/100` : 'não calculado'
+                const msg = `📚 *Manual do Investidor — AgoraEncontrei*\n\n` +
+                  `Olá! Tenho interesse no seguinte leilão:\n\n` +
+                  `🏠 *Imóvel:* ${selectedAuction.title}\n` +
+                  `📍 *Local:* ${selectedAuction.neighborhood || ''}, ${selectedAuction.city}/${selectedAuction.state}\n` +
+                  `💰 *Lance mínimo:* ${bid}\n` +
+                  `📈 *Avaliação:* ${appr}\n` +
+                  `📊 *Desconto real:* ${disc}\n` +
+                  `⭐ *Score de oportunidade:* ${score}\n\n` +
+                  `Gostaria de receber o Manual do Investidor com:\n` +
+                  `• Cálculo completo de ROI\n` +
+                  `• Custos de ITBI, registro e escritura\n` +
+                  `• Análise de riscos jurídicos\n` +
+                  `• Passo a passo para arrematação\n\n` +
+                  `Link: https://agoraencontrei.com.br/leiloes/${selectedAuction.slug}`
+                return `https://wa.me/5516981010004?text=${encodeURIComponent(msg)}`
+              })()}
               target="_blank" rel="noopener noreferrer"
               className="block w-full text-center px-4 py-3.5 rounded-xl font-bold text-sm active:scale-[0.98] transition-transform"
               style={{ backgroundColor: '#25D366', color: 'white' }}
             >
-              📲 Pedir Assessoria Jurídica
+              📚 Receber Manual do Investidor via WhatsApp
             </a>
           </div>
         </div>
