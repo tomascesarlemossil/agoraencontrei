@@ -175,16 +175,15 @@ export default async function SejaParceiroPage() {
             Seu perfil aparece exatamente quando o cliente mais precisa de você.
           </p>
           <div className="flex flex-wrap justify-center gap-4">
-            <Link href="/parceiros/cadastro"
+            <Link href="/parceiros/planos"
               className="inline-flex items-center gap-2 px-8 py-4 rounded-xl font-bold text-lg"
               style={{ background: '#C9A84C', color: '#1B2B5B' }}>
-              Criar perfil gratuito <ArrowRight className="w-5 h-5" />
+              Ver planos e dashboard <ArrowRight className="w-5 h-5" />
             </Link>
-            <a href="https://wa.me/5516981010004?text=Olá! Quero saber mais sobre ser parceiro do AgoraEncontrei."
-              target="_blank" rel="noreferrer"
-              className="inline-flex items-center gap-2 px-8 py-4 rounded-xl font-bold text-lg bg-[#25D366] text-white">
-              <MessageCircle className="w-5 h-5" /> Falar pelo WhatsApp
-            </a>
+            <Link href="/parceiros/cadastro"
+              className="inline-flex items-center gap-2 px-8 py-4 rounded-xl font-bold text-lg bg-white/10 text-white border border-white/20 hover:bg-white/20 transition-colors">
+              Criar perfil gratuito
+            </Link>
           </div>
 
           {/* Social Proof */}
@@ -250,7 +249,7 @@ export default async function SejaParceiroPage() {
                 className="inline-flex items-center gap-2 bg-red-600 text-white px-6 py-3 rounded-xl font-bold text-sm hover:bg-red-700 transition-colors">
                 Ver leilões ativos <ArrowRight className="w-4 h-4" />
               </Link>
-              <Link href="/parceiros/cadastro"
+              <Link href="/parceiros/planos"
                 className="inline-flex items-center gap-2 bg-white border border-red-200 text-red-600 px-6 py-3 rounded-xl font-bold text-sm hover:bg-red-50 transition-colors">
                 Aparecer para esses clientes
               </Link>
@@ -389,14 +388,18 @@ export default async function SejaParceiroPage() {
             Crie seu perfil em 5 minutos e apareça para quem acabou de comprar um imóvel em Franca/SP.
           </p>
           <div className="flex flex-wrap justify-center gap-4">
-            <Link href="/parceiros/cadastro"
+            <Link href="/parceiros/planos"
               className="inline-flex items-center gap-2 px-8 py-4 rounded-xl font-bold text-lg"
               style={{ background: '#C9A84C', color: '#1B2B5B' }}>
-              Criar meu perfil gratuito <ArrowRight className="w-5 h-5" />
+              Ver planos e dashboard <ArrowRight className="w-5 h-5" />
             </Link>
-            <Link href="/especialistas"
+            <Link href="/parceiros/cadastro"
               className="inline-flex items-center gap-2 px-8 py-4 rounded-xl font-bold text-lg bg-white/10 text-white border border-white/20 hover:bg-white/20 transition-colors">
-              <Building2 className="w-5 h-5" /> Ver especialistas
+              Criar meu perfil gratuito
+            </Link>
+            <Link href="/meu-painel"
+              className="inline-flex items-center gap-2 px-8 py-4 rounded-xl font-bold text-lg bg-white/10 text-white border border-white/20 hover:bg-white/20 transition-colors">
+              <Building2 className="w-5 h-5" /> Já sou parceiro — Acessar painel
             </Link>
           </div>
         </div>
