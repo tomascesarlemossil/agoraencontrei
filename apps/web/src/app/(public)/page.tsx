@@ -340,29 +340,34 @@ export default async function HomePage() {
 
       {/* ── 1. HERO ──────────────────────────────────────────────────────── */}
       <section
-        className="relative min-h-[85vh] flex items-center justify-center overflow-hidden"
-        style={{ background: '#0f1c3a' }}
+        className="relative flex items-center justify-center overflow-hidden"
+        style={{ background: '#0f1c3a', minHeight: 'max(85vh, 600px)' }}
       >
         <HeroBackground videoUrl={siteSettings.heroVideoUrl} videoType={siteSettings.heroVideoType} />
 
-        <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 text-center pt-8 pb-16">
+        <div className="relative z-10 w-full max-w-4xl mx-auto px-4 sm:px-6 text-center pt-6 pb-20 sm:pt-8 sm:pb-16">
+          {/* Badge */}
           <div
-            className="inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-semibold mb-6"
+            className="inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold mb-4 sm:mb-6"
             style={{ backgroundColor: 'rgba(201,168,76,0.15)', color: 'var(--site-accent-color, #C9A84C)', border: '1px solid rgba(201,168,76,0.3)' }}
           >
             <Star className="w-3 h-3 fill-current" />
-            Mais de 20 anos de tradição em Franca/SP
+            <span className="hidden sm:inline">Mais de 20 anos de tradição em Franca/SP</span>
+            <span className="sm:hidden">20+ anos em Franca/SP</span>
           </div>
 
+          {/* Título — responsivo */}
           <h1
-            className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-4 leading-tight"
+            className="text-3xl sm:text-5xl lg:text-6xl font-bold text-white mb-3 sm:mb-4 leading-tight"
             style={{ fontFamily: 'Georgia, serif' }}
           >
             Encontre o imóvel
             <br />
             <span style={{ color: 'var(--site-accent-color, #C9A84C)' }}>dos seus sonhos</span>
           </h1>
-          <p className="text-white/60 text-lg mb-10 max-w-xl mx-auto">
+
+          {/* Subtítulo — menor no mobile */}
+          <p className="text-white/60 text-base sm:text-lg mb-6 sm:mb-10 max-w-xl mx-auto">
             {stats.total > 0
               ? `${stats.total.toLocaleString('pt-BR')} imóveis disponíveis para compra e aluguel`
               : 'Compra, venda e locação de imóveis em Franca e região'}
@@ -627,19 +632,30 @@ export default async function HomePage() {
               >
                 <div className="relative h-44 overflow-hidden bg-gray-100">
                   {p.coverImage && !p.coverImage.includes('telefone.png') && !p.coverImage.includes('whatsapp') ? (
-                    <Image
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
                       src={p.coverImage}
                       alt={p.title}
-                      fill
-                      className="object-cover group-hover:scale-105 transition-transform duration-500"
-                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                      loading="lazy"
+                      decoding="async"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      onError={(e) => {
+                        const el = e.target as HTMLImageElement
+                        el.style.display = 'none'
+                        const parent = el.parentElement
+                        if (parent) {
+                          parent.style.background = 'linear-gradient(135deg, #1B2B5B, #0f1c3a)'
+                          parent.innerHTML = '<div style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px"><svg xmlns=\'http://www.w3.org/2000/svg\' width=\'48\' height=\'48\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'rgba(255,255,255,0.3)\'><path stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'1\' d=\'M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z\'/><polyline points=\'9 22 9 12 15 12 15 22\'/></svg><span style=\'color:rgba(255,255,255,0.3);font-size:11px\'>Foto em breve</span></div>'
+                        }
+                      }}
                     />
                   ) : (
-                    <div className="h-full flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #1B2B5B, #0f1c3a)' }}>
+                    <div className="h-full flex flex-col items-center justify-center gap-2" style={{ background: 'linear-gradient(135deg, #1B2B5B, #0f1c3a)' }}>
                       <svg xmlns="http://www.w3.org/2000/svg" className="w-12 h-12 text-white/30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
                         <polyline points="9 22 9 12 15 12 15 22" />
                       </svg>
+                      <span className="text-white/30 text-xs">Foto em breve</span>
                     </div>
                   )}
                   <div className="absolute top-2 left-2">

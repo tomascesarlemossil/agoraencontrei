@@ -90,6 +90,8 @@ function PropertyCardCarousel({ images, coverImage, title, isFeatured, purpose, 
     if (timerRef.current) clearInterval(timerRef.current)
   }
 
+  const [imgError, setImgError] = useState(false)
+
   return (
     <div
       className="relative h-52 overflow-hidden"
@@ -97,7 +99,7 @@ function PropertyCardCarousel({ images, coverImage, title, isFeatured, purpose, 
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {currentImage ? (
+      {currentImage && !imgError ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
           src={currentImage}
@@ -106,11 +108,25 @@ function PropertyCardCarousel({ images, coverImage, title, isFeatured, purpose, 
           decoding="async"
           className="w-full h-full object-cover transition-all duration-500"
           style={{ transform: isHovered && !hasMultiple ? 'scale(1.05)' : 'scale(1)' }}
+          onError={() => setImgError(true)}
         />
       ) : (
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 opacity-20">
-          <Building2 className="w-10 h-10" style={{ color: '#1B2B5B' }} />
-          <span className="text-xs font-medium text-gray-500">Foto em breve</span>
+        /* Fallback profissional — gradiente com ícone e texto */
+        <div
+          className="absolute inset-0 flex flex-col items-center justify-center gap-3"
+          style={{
+            background: 'linear-gradient(135deg, #1B2B5B 0%, #243d7a 60%, #1a3366 100%)',
+          }}
+        >
+          <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-14 h-14" opacity="0.5">
+            <path d="M8 36L32 12L56 36" stroke="#C9A84C" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M14 30V52C14 53.1 14.9 54 16 54H26V42H38V54H48C49.1 54 50 53.1 50 52V30" stroke="#C9A84C" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+            <rect x="27" y="42" width="10" height="12" rx="1" fill="#C9A84C" opacity="0.3"/>
+          </svg>
+          <div className="text-center px-4">
+            <p className="text-white/70 text-xs font-semibold uppercase tracking-wide">Imóvel</p>
+            <p className="text-white/40 text-[10px] mt-0.5">Foto em breve</p>
+          </div>
         </div>
       )}
 

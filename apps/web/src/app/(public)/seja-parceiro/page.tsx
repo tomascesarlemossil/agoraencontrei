@@ -81,6 +81,7 @@ const PLANS = [
     cta: 'Assinar Prime',
     ctaHref: '/parceiros/cadastro?plan=PRIME',
     ctaStyle: 'bg-[#C9A84C] text-[#1B2B5B] hover:bg-[#b8943d]',
+    ctaCheckout: true,
   },
   {
     id: 'VIP',
@@ -103,6 +104,7 @@ const PLANS = [
     cta: 'Assinar VIP',
     ctaHref: '/parceiros/cadastro?plan=VIP',
     ctaStyle: 'bg-[#1B2B5B] text-white hover:bg-[#162247]',
+    ctaCheckout: true,
   },
 ]
 

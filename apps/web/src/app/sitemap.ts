@@ -79,6 +79,34 @@ const CONDOMINIOS = [
   'condominio-san-conrado', 'condominio-santa-georgina',
 ]
 
+// ── Landing pages de leilão por bairro (SEO predatório vs ZAP) ─────────────
+const LEILAO_BAIRROS = [
+  'leilao-imoveis-centro-franca-sp',
+  'leilao-imoveis-jardim-california-franca-sp',
+  'leilao-imoveis-jardim-europa-franca-sp',
+  'leilao-imoveis-jardim-america-franca-sp',
+  'leilao-imoveis-jardim-paulista-franca-sp',
+  'leilao-imoveis-polo-club-franca-sp',
+  'leilao-imoveis-jardim-panorama-franca-sp',
+  'leilao-imoveis-jardim-redentor-franca-sp',
+  'leilao-imoveis-jardim-sumare-franca-sp',
+  'leilao-imoveis-jardim-independencia-franca-sp',
+  'leilao-imoveis-jardim-petraglia-franca-sp',
+  'leilao-imoveis-jardim-paulistano-franca-sp',
+  'leilao-imoveis-vila-industrial-franca-sp',
+  'leilao-imoveis-boa-vista-franca-sp',
+  'leilao-imoveis-parque-das-nacoes-franca-sp',
+  'leilao-imoveis-residencial-brasil-franca-sp',
+  'leilao-apartamentos-franca-sp',
+  'leilao-casas-franca-sp',
+  'leilao-terrenos-franca-sp',
+  'leilao-imoveis-comerciais-franca-sp',
+  'leilao-imoveis-caixa-franca-sp',
+  'leilao-imoveis-judicial-franca-sp',
+  'arrematacao-imoveis-franca-sp',
+  'imoveis-desconto-leilao-franca-sp',
+]
+
 // ── Serviços ────────────────────────────────────────────────────────────────
 const SERVICOS = [
   '/servicos', '/servicos/avaliacao-imoveis', '/servicos/leilao-imoveis',
@@ -308,6 +336,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8,
   }))
 
+  // ── Landing pages de leilão por bairro ────────────────────────────────────
+  const leilaoBairros = LEILAO_BAIRROS.map(slug => ({
+    url: `${WEB_URL}/leiloes/${slug}`,
+    lastModified: now,
+    changeFrequency: 'daily' as const,
+    priority: 0.92,
+  }))
+
   // ── Leilões (dinâmicos da API) ────────────────────────────────────────────
   let leiloes: MetadataRoute.Sitemap = []
   try {
@@ -356,6 +392,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   return [
     ...core,
     ...landings,
+    ...leilaoBairros,
     ...servicos,
     ...capitais,
     ...cidades,
