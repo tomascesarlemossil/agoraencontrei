@@ -267,6 +267,7 @@ export default function LeiloesClient() {
           setAuctions(internalItems)
           setTotal(internalTotal)
           setTotalPages(data.pagination?.totalPages || 1)
+          setLoading(false)
           return
         }
       }
