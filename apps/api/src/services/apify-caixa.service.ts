@@ -2,19 +2,36 @@
  * Apify Caixa Econômica Federal Scraper Integration
  *
  * Uses the Apify actor "efraimkaov/caixa-economica-federal-imoveis"
- * to get complete auction data including:
- * - Photos array, matrícula PDF, edital PDF
- * - 1st and 2nd auction dates
- * - Payment methods and expense rules
- * - Auctioneer info
- * - Property registration details
+ * Real data structure from API (verified):
+ *   { price, description, image, type, rooms, edital, propertyNumber,
+ *     numberItem, address, garage, url }
+ *
+ * Actor input: { state, city, numberOfPages, isDetailsEnable, sameDomainDelaySecs }
  *
  * Falls back to CSV scraper if Apify is unavailable or token not configured.
  */
 
 import { env } from '../utils/env.js'
 
-interface AuctionItem {
+const APIFY_ACTOR_ID = 'efraimkaov~caixa-economica-federal-imoveis'
+const APIFY_BASE = 'https://api.apify.com/v2'
+
+/** Exact shape returned by the Caixa Apify actor */
+interface ApifyCaixaRawItem {
+  price: number | null
+  description: string | null
+  image: string | null
+  type: string | null
+  rooms: number | null
+  edital: string | null
+  propertyNumber: string | null
+  numberItem: number | null
+  address: string | null
+  garage: number | null
+  url: string | null
+}
+
+export interface CaixaApifyItem {
   id: string
   source: string
   bankName: string
@@ -39,127 +56,93 @@ interface AuctionItem {
   coverImageUrl: string | null
   auctionDate: string | null
   leiloeiro: string | null
+  edital: string | null
+  propertyNumber: string | null
 }
 
-const APIFY_ACTOR_ID = 'efraimkaov~caixa-economica-federal-imoveis'
-const APIFY_BASE = 'https://api.apify.com/v2'
-
-interface ApifyCaixaItem {
-  id?: string
-  propertyNumber?: string
-  city?: string
-  state?: string
-  district?: string
-  address?: string
-  evaluationValue?: number
-  minimumSaleValue1?: number
-  minimumSaleValue2?: number
-  discount?: number
-  acceptsFinancing?: boolean
-  description?: string
-  saleModality?: string
-  link?: string
-  propertyType?: string
-  rooms?: number
-  garage?: number
-  privateArea?: number
-  landArea?: number
-  totalArea?: number
-  registrationNumber?: string
-  realEstateRegistration?: string
-  auctionRecord?: string
-  matriculaUrl?: string
-  paymentMethods?: string
-  expenseRules?: string
-  notice?: string
-  auctioneer?: string
-  firstAuctionDate?: string
-  secondAuctionDate?: string
-  fotos?: string[]
-  office?: string
-}
-
-export type ApifyCaixaEnrichedItem = AuctionItem & {
-  matriculaUrl: string | null
-  paymentMethods: string | null
-  expenseRules: string | null
-  noticeUrl: string | null
-  firstAuctionDate: string | null
-  secondAuctionDate: string | null
-  photos: string[]
-  registrationNumber: string | null
-  realEstateRegistration: string | null
-  auctionRecord: string | null
-  office: string | null
-}
-
-function normalizeApifyItem(item: ApifyCaixaItem, index: number): ApifyCaixaEnrichedItem {
-  const id = item.propertyNumber || item.id || `apify-${index}`
-  const price = item.minimumSaleValue1 || item.minimumSaleValue2 || 0
-  const appraisalValue = item.evaluationValue || 0
-  const discount = item.discount
-    ? item.discount
-    : appraisalValue > 0
-      ? ((appraisalValue - price) / appraisalValue) * 100
-      : 0
-
-  const desc = (item.description || '').toLowerCase()
-  let propertyType = item.propertyType || 'Imóvel'
-  if (!item.propertyType) {
-    if (desc.includes('apartamento')) propertyType = 'Apartamento'
-    else if (desc.includes('casa')) propertyType = 'Casa'
-    else if (desc.includes('terreno') || desc.includes('lote')) propertyType = 'Terreno'
-    else if (desc.includes('galpao') || desc.includes('galp')) propertyType = 'Galpão'
+function extractCityFromDescription(description: string): string {
+  // Format: "SAO PAULO - ITAQUERA | R$ 211.672,99"
+  // or "SAO PAULO - RESIDENCIAL DAS LARANJEIRAS"
+  const parts = description.split(' - ')
+  if (parts.length >= 1) {
+    return parts[0].trim()
   }
+  return ''
+}
 
-  const fgtsMatch = desc.includes('fgts')
-  const photos = item.fotos?.length ? item.fotos : [`https://venda-imoveis.caixa.gov.br/fotos-imoveis/${id}_1.jpg`]
+function extractNeighborhoodFromDescription(description: string): string {
+  // Format: "SAO PAULO - ITAQUERA | R$ 211.672,99"
+  const parts = description.split(' - ')
+  if (parts.length >= 2) {
+    const afterCity = parts.slice(1).join(' - ')
+    // Remove price part after |
+    const beforePrice = afterCity.split('|')[0]
+    return beforePrice.trim()
+  }
+  return ''
+}
+
+function detectPropertyType(address: string, description: string): string {
+  const text = `${address} ${description}`.toLowerCase()
+  if (text.includes('apto') || text.includes('apartamento')) return 'Apartamento'
+  if (text.includes('casa')) return 'Casa'
+  if (text.includes('terreno') || text.includes('lote')) return 'Terreno'
+  if (text.includes('galpao') || text.includes('galpão')) return 'Galpão'
+  if (text.includes('sala') || text.includes('comercial')) return 'Sala Comercial'
+  if (text.includes('loja')) return 'Loja'
+  if (text.includes('prédio') || text.includes('predio')) return 'Prédio'
+  // If address contains "Apto" it's likely an apartment
+  if (address.toLowerCase().includes('apto')) return 'Apartamento'
+  return 'Imóvel'
+}
+
+function normalizeCaixaItem(item: ApifyCaixaRawItem, inputState?: string): CaixaApifyItem {
+  const id = item.propertyNumber || `apify-${item.numberItem || Math.random().toString(36).slice(2)}`
+  const description = item.description || ''
+  const city = extractCityFromDescription(description)
+  const neighborhood = extractNeighborhoodFromDescription(description)
+  const address = item.address || ''
+  const propertyType = item.type || detectPropertyType(address, description)
 
   return {
     id: `caixa-${id}`,
     source: 'CAIXA',
     bankName: 'Caixa Econômica Federal',
-    city: item.city || '',
-    state: item.state || '',
-    neighborhood: item.district || '',
-    address: item.address || '',
-    price,
-    appraisalValue,
-    discount: Math.round(discount * 100) / 100,
-    financeable: !!item.acceptsFinancing,
-    fgtsAllowed: fgtsMatch,
-    description: item.description || `${propertyType} em ${item.city}/${item.state}`,
-    saleType: item.saleModality || 'Venda Direta',
-    link: item.link || `https://venda-imoveis.caixa.gov.br/sistema/detalhe-imovel.asp?hdnimovel=${id}`,
+    city,
+    state: inputState || 'SP',
+    neighborhood,
+    address,
+    price: item.price || 0,
+    appraisalValue: 0, // Not available in basic mode
+    discount: 0,        // Not available in basic mode
+    financeable: false,
+    fgtsAllowed: false,
+    description,
+    saleType: 'Leilão Caixa',
+    link: item.url || `https://venda-imoveis.caixa.gov.br/sistema/detalhe-imovel.asp?hdnimovel=${id.replace(/-/g, '')}`,
     propertyType,
     bedrooms: item.rooms || 0,
-    totalArea: item.totalArea || 0,
-    privateArea: item.privateArea || 0,
-    landArea: item.landArea || 0,
+    totalArea: 0,
+    privateArea: 0,
+    landArea: 0,
     parkingSpots: item.garage || 0,
-    coverImageUrl: photos[0] || null,
-    auctionDate: item.firstAuctionDate || item.secondAuctionDate || null,
-    leiloeiro: item.auctioneer || 'Caixa Econômica Federal',
-    // Enriched fields
-    matriculaUrl: item.matriculaUrl || null,
-    paymentMethods: item.paymentMethods || null,
-    expenseRules: item.expenseRules || null,
-    noticeUrl: item.notice || null,
-    firstAuctionDate: item.firstAuctionDate || null,
-    secondAuctionDate: item.secondAuctionDate || null,
-    photos,
-    registrationNumber: item.registrationNumber || null,
-    realEstateRegistration: item.realEstateRegistration || null,
-    auctionRecord: item.auctionRecord || null,
-    office: item.office || null,
+    coverImageUrl: item.image || null,
+    auctionDate: null,
+    leiloeiro: 'Caixa Econômica Federal',
+    edital: item.edital || null,
+    propertyNumber: item.propertyNumber || null,
   }
 }
 
 /**
  * Run Apify actor synchronously and return dataset items.
- * Uses sync run with a 120s timeout — the actor scrapes Caixa's public listing.
+ * Input: { state, city, numberOfPages, isDetailsEnable, sameDomainDelaySecs }
  */
-export async function fetchCaixaViaApify(states?: string[]): Promise<ApifyCaixaEnrichedItem[]> {
+export async function fetchCaixaViaApify(
+  state?: string,
+  city?: string,
+  numberOfPages?: number
+): Promise<CaixaApifyItem[]> {
   const token = env.APIFY_API_TOKEN
   if (!token) {
     console.warn('[Apify Caixa] APIFY_API_TOKEN not configured, skipping')
@@ -167,10 +150,13 @@ export async function fetchCaixaViaApify(states?: string[]): Promise<ApifyCaixaE
   }
 
   try {
-    // Run actor synchronously — returns dataset items directly
-    const input: Record<string, unknown> = {}
-    if (states?.length) {
-      input.states = states
+    const input = {
+      state: state || 'SP',
+      city: city || '',
+      numberOfPages: numberOfPages || 50,
+      isDetailsEnable: false,
+      sameDomainDelaySecs: 1,
+      proxy: { useApifyProxy: false },
     }
 
     const runUrl = `${APIFY_BASE}/acts/${APIFY_ACTOR_ID}/run-sync-get-dataset-items?token=${token}`
@@ -178,7 +164,7 @@ export async function fetchCaixaViaApify(states?: string[]): Promise<ApifyCaixaE
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(input),
-      signal: AbortSignal.timeout(180_000), // 3 min timeout for full scrape
+      signal: AbortSignal.timeout(300_000), // 5 min timeout
     })
 
     if (!res.ok) {
@@ -187,14 +173,14 @@ export async function fetchCaixaViaApify(states?: string[]): Promise<ApifyCaixaE
       return []
     }
 
-    const rawItems = (await res.json()) as ApifyCaixaItem[]
+    const rawItems = (await res.json()) as ApifyCaixaRawItem[]
     if (!Array.isArray(rawItems)) {
       console.error('[Apify Caixa] Unexpected response format')
       return []
     }
 
-    console.log(`[Apify Caixa] Received ${rawItems.length} items`)
-    return rawItems.map((item, i) => normalizeApifyItem(item, i))
+    console.log(`[Apify Caixa] Received ${rawItems.length} items from ${state || 'SP'}`)
+    return rawItems.map(item => normalizeCaixaItem(item, state))
   } catch (err) {
     console.error('[Apify Caixa] Error:', err)
     return []
@@ -203,9 +189,9 @@ export async function fetchCaixaViaApify(states?: string[]): Promise<ApifyCaixaE
 
 /**
  * Fetch last run dataset items without triggering a new run.
- * Useful for getting cached/recent results without burning Apify credits.
+ * Free — no credits consumed.
  */
-export async function fetchCaixaApifyLastRun(): Promise<ApifyCaixaEnrichedItem[]> {
+export async function fetchCaixaApifyLastRun(): Promise<CaixaApifyItem[]> {
   const token = env.APIFY_API_TOKEN
   if (!token) return []
 
@@ -218,13 +204,41 @@ export async function fetchCaixaApifyLastRun(): Promise<ApifyCaixaEnrichedItem[]
 
     if (!res.ok) return []
 
-    const rawItems = (await res.json()) as ApifyCaixaItem[]
+    const rawItems = (await res.json()) as ApifyCaixaRawItem[]
     if (!Array.isArray(rawItems)) return []
 
     console.log(`[Apify Caixa] Last run: ${rawItems.length} items`)
-    return rawItems.map((item, i) => normalizeApifyItem(item, i))
+    return rawItems.map(item => normalizeCaixaItem(item))
   } catch (err) {
     console.error('[Apify Caixa] Last run fetch error:', err)
+    return []
+  }
+}
+
+/**
+ * Fetch from a specific dataset ID directly.
+ * Useful for accessing specific run results.
+ */
+export async function fetchCaixaFromDataset(datasetId: string): Promise<CaixaApifyItem[]> {
+  const token = env.APIFY_API_TOKEN
+  if (!token) return []
+
+  try {
+    const url = `${APIFY_BASE}/datasets/${datasetId}/items?token=${token}`
+    const res = await fetch(url, {
+      headers: { 'Accept': 'application/json' },
+      signal: AbortSignal.timeout(30_000),
+    })
+
+    if (!res.ok) return []
+
+    const rawItems = (await res.json()) as ApifyCaixaRawItem[]
+    if (!Array.isArray(rawItems)) return []
+
+    console.log(`[Apify Caixa] Dataset ${datasetId}: ${rawItems.length} items`)
+    return rawItems.map(item => normalizeCaixaItem(item))
+  } catch (err) {
+    console.error('[Apify Caixa] Dataset fetch error:', err)
     return []
   }
 }
