@@ -1,0 +1,280 @@
+================================================================================
+       AGORAENCONTREI — ANÁLISE COMPETITIVA & APRESENTAÇÃO DE LANÇAMENTO
+                         Franca/SP | Abril 2026
+================================================================================
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  1. VISÃO GERAL — O QUE É O AGORAENCONTREI
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+O AgoraEncontrei é a primeira Plataforma de Inteligência Imobiliária do Brasil.
+Não é um portal de classificados — é um Terminal de Decisão para investidores.
+
+Diferencial central: Cruzamento de dados de 12+ fontes em tempo real para
+calcular Lucro Estimado, Yield de Aluguel e Score de Risco Jurídico em cada
+imóvel de leilão do país.
+
+URL: https://www.agoraencontrei.com.br
+API: https://api.agoraencontrei.com.br
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  2. COMPARAÇÃO COMPETITIVA — FRANCA/SP E REGIÃO
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+┌─────────────────────┬──────────┬──────────┬──────────┬──────────┬──────────┐
+│ RECURSO             │ AGORA    │ Imob.    │ Casas    │ Portal   │ Imob.    │
+│                     │ ENCONTREI│ Lemos    │ Bahia    │ Franca   │ Locais   │
+├─────────────────────┼──────────┼──────────┼──────────┼──────────┼──────────┤
+│ Imóveis Listados    │ 3.078+   │ ~300     │ ~150     │ ~200     │ ~50-100  │
+│ Leilões Caixa       │ ✅ 3.069 │ ❌       │ ❌       │ ❌       │ ❌       │
+│ Leilões Santander   │ ✅ 9     │ ❌       │ ❌       │ ❌       │ ❌       │
+│ Fotos Reais         │ ✅ Apify │ ✅       │ ✅       │ ✅       │ ✅       │
+│ Comparador ZAP      │ ✅       │ ❌       │ ❌       │ ❌       │ ❌       │
+│ Yield Aluguel       │ ✅       │ ❌       │ ❌       │ ❌       │ ❌       │
+│ Score Jurídico      │ ✅       │ ❌       │ ❌       │ ❌       │ ❌       │
+│ Calculadora ROI     │ ✅       │ ❌       │ ❌       │ ❌       │ ❌       │
+│ Mapa Interativo     │ ✅       │ ❌       │ ❌       │ ✅       │ ❌       │
+│ Busca por IA        │ ✅       │ ❌       │ ❌       │ ❌       │ ❌       │
+│ App/PWA             │ ✅       │ ❌       │ ❌       │ ❌       │ ❌       │
+│ API Pública         │ ✅       │ ❌       │ ❌       │ ❌       │ ❌       │
+│ Terminal Investidor  │ ✅       │ ❌       │ ❌       │ ❌       │ ❌       │
+│ Páginas SEO         │ 700K+   │ ~50      │ ~30      │ ~100     │ ~20      │
+│ Cobertura Nacional  │ ✅ 5.570 │ ❌       │ ❌       │ ❌       │ ❌       │
+│ WhatsApp Bot        │ ✅       │ ✅       │ ❌       │ ❌       │ ❌       │
+│ Alertas Inteligentes│ ✅       │ ❌       │ ❌       │ ❌       │ ❌       │
+│ Dados IBGE          │ ✅       │ ❌       │ ❌       │ ❌       │ ❌       │
+└─────────────────────┴──────────┴──────────┴──────────┴──────────┴──────────┘
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  3. COMPARAÇÃO COM PLATAFORMAS NACIONAIS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+┌─────────────────────┬──────────┬──────────┬──────────┬──────────┬──────────┐
+│ RECURSO             │ AGORA    │ Leilão   │ ZAP      │ Quinto   │ Viva     │
+│                     │ ENCONTREI│ Imóvel   │ Imóveis  │ Andar    │ Real     │
+├─────────────────────┼──────────┼──────────┼──────────┼──────────┼──────────┤
+│ Foco                │ Leilões  │ Leilões  │ Venda/   │ Aluguel  │ Venda/   │
+│                     │ + Mercado│          │ Aluguel  │          │ Aluguel  │
+├─────────────────────┼──────────┼──────────┼──────────┼──────────┼──────────┤
+│ Imóveis Leilão      │ 3.078    │ ~5.000   │ ❌       │ ❌       │ ❌       │
+│ Comparador Preço    │ ✅ 3     │ ❌       │ ❌       │ ❌       │ ❌       │
+│   portais cruzados  │ portais  │          │          │          │          │
+│ Yield Aluguel       │ ✅       │ ❌       │ ❌       │ ❌ (só   │ ❌       │
+│   calculado         │ automáti │          │          │ lista)   │          │
+│ Score Jurídico      │ ✅       │ ❌       │ ❌       │ ❌       │ ❌       │
+│ Lucro Estimado      │ ✅       │ ❌       │ ❌       │ ❌       │ ❌       │
+│   vs Mercado        │          │          │          │          │          │
+│ Financiamento BNDES │ ✅       │ ❌       │ ❌       │ ❌       │ ❌       │
+│ Ranking Yield       │ ✅       │ ❌       │ ❌       │ ❌       │ ❌       │
+│   Nacional          │          │          │          │          │          │
+│ Terminal Dark       │ ✅       │ ❌       │ ❌       │ ❌       │ ❌       │
+│   (Investidor Pro)  │          │          │          │          │          │
+│ Páginas SEO         │ 700K+   │ ~10K     │ ~500K    │ ~200K    │ ~300K    │
+│ Dados IBGE          │ ✅ 5.570│ ❌       │ ❌       │ ❌       │ ❌       │
+│ API Aberta          │ ✅       │ ❌       │ ❌       │ ❌       │ ❌       │
+│ Cobertura Franca    │ 15 imóv │ 41 imóv  │ ~200     │ ~50      │ ~150     │
+│ Preço (investidor)  │ Grátis   │ Grátis   │ Grátis   │ Grátis   │ Grátis   │
+└─────────────────────┴──────────┴──────────┴──────────┴──────────┴──────────┘
+
+VANTAGEM EXCLUSIVA AGORAENCONTREI:
+O único portal que cruza dados de leilão com mercado real (ZAP + QuintoAndar)
+para mostrar o LUCRO ESTIMADO em cada imóvel. Nenhum concorrente faz isso.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  4. NÚMEROS DO LANÇAMENTO (07/Abril/2026)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+INVENTÁRIO LIVE:
+  • 3.078 imóveis de leilão (Caixa + Santander)
+  • 15 imóveis em Franca/SP (até 43,71% de desconto)
+  • 9 imóveis Santander (São Paulo capital, com 16-25 fotos cada)
+  • 50 referências de preço de mercado (ZAP/VivaReal)
+
+INFRAESTRUTURA:
+  • 700.000+ URLs no sitemap (indexação Google ativa)
+  • 495 páginas já indexadas pelo Google (dia 1)
+  • 5.570 cidades brasileiras com dados IBGE
+  • 90+ bairros mapeados (Franca, Ribeirão, SP, Campinas, Goiânia, Curitiba)
+  • 12 fontes de dados integradas via Apify
+
+TECNOLOGIA:
+  • Next.js 15 + Fastify API + Neon PostgreSQL
+  • Vercel (frontend) + Railway (API) + Redis (cache)
+  • ISR com revalidação de 1h para dados frescos
+  • 17 Apify actors configurados (13 succeeded)
+
+ENDPOINTS DA API:
+  • GET /auctions — 3.078 imóveis (Caixa CSV + Santander Apify)
+  • GET /market-prices — Preços ZAP Imóveis por bairro
+  • GET /rental-prices — Aluguéis QuintoAndar por cidade
+  • GET /auction-opportunities — Cross-reference yield + spread
+  • GET /property-intelligence — 4 camadas unificadas
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  5. OPORTUNIDADES REAIS EM FRANCA (TOP 5 — DADOS LIVE)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+┌───┬────────────────────────┬────────────┬──────────┬──────────┬───────────┐
+│ # │ Bairro                 │ Preço      │ Avaliação│ Desconto │ Tipo      │
+├───┼────────────────────────┼────────────┼──────────┼──────────┼───────────┤
+│ 1 │ Jardim Aeroporto IV    │ R$ 102.459 │ R$182.000│ 43,71%  │ Casa      │
+│ 2 │ Jardim Aeroporto III   │ R$ 89.575  │ R$153.000│ 41,46%  │ Apartamento│
+│ 3 │ Parque das Árvores     │ R$ 116.047 │ R$192.000│ 39,56%  │ Casa      │
+│ 4 │ Chácaras São Paulo     │ R$ 122.695 │ R$203.000│ 39,56%  │ Apartamento│
+│ 5 │ Jd. N.S. das Graças    │ R$ 142.037 │ R$235.000│ 39,56%  │ Casa      │
+└───┴────────────────────────┴────────────┴──────────┴──────────┴───────────┘
+
+ECONOMIA MÉDIA: R$ 79.541 por imóvel (Avaliação - Lance)
+YIELD ESTIMADO: 10-12% a.a. (baseado em aluguéis da região)
+PAYBACK: ~8-10 anos pelo aluguel
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  6. FUNCIONALIDADES EXCLUSIVAS (QUE NINGUÉM TEM)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. COMPARADOR DE MERCADO (3 PORTAIS)
+   Cada leilão mostra automaticamente:
+   → Preço no ZAP | Preço no VivaReal | Preço no ImovelWeb
+   → Badge: "38% ABAIXO DO MERCADO"
+   → Lucro Estimado em destaque verde neon
+
+2. TERMÔMETRO DE YIELD NACIONAL
+   Ranking das 10 melhores cidades para investir:
+   → Franca: 10.0% yield anual
+   → Ribeirão Preto: 10.5% yield anual
+   → Goiânia: 10.56% yield anual
+   → Badge "AUTOSSUSTENTÁVEL" quando aluguel cobre parcela BNDES
+
+3. TERMINAL DE INVESTIDOR (MODO DARK)
+   Dashboard estilo Bloomberg/TradingView:
+   → Spread histórico por bairro
+   → Score de risco de desocupação
+   → Yield em tempo real vs SELIC (14,25%)
+
+4. SELO PÉROLA 💎
+   Imóveis com >40% de desconto brilham em verde neon
+   → Franca tem 2 imóveis "Pérola" (43,71% e 41,46%)
+
+5. SCORE DE RISCO JURÍDICO
+   Classificação automática:
+   → Verde: Spread >40% (margem segura)
+   → Amarelo: Spread 20-40% (análise recomendada)
+   → Vermelho: Spread <20% (risco elevado)
+
+6. CALCULADORA ROI vs SELIC
+   Comparação direta: "Este leilão rende 12,8% a.a. vs SELIC 14,25%"
+   → Inclui: ITBI (2%), registro (1%), comissão (5%), reforma (10%)
+
+7. ALERTAS INTELIGENTES
+   WhatsApp automático quando:
+   → Novo leilão em Franca com >40% desconto
+   → Novo imóvel "Pérola" detectado
+   → Mudança de preço em leilão monitorado
+
+8. SEO PROGRAMÁTICO (700K+ PÁGINAS)
+   Cada cidade × bairro × tipo = página única com:
+   → Dados IBGE (população, PIB, IDHM)
+   → Preços de mercado cruzados
+   → FAQs dinâmicas
+   → Schema.org JSON-LD
+   → Links internos circulares
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  7. PÁGINAS DO SITE (ROTAS ATIVAS)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  /                                    → Home (CTA Leilões + Stats)
+  /leiloes                             → Marketplace de Leilões (3.078 imóveis)
+  /investor                            → Terminal Investidor (Dark Mode)
+  /oportunidades/melhores-alugueis-brasil → Ranking Yield Nacional
+  /leilao/sp/franca                    → Página SEO Franca
+  /leilao/sp/ribeirao-preto            → Página SEO Ribeirão
+  /leilao/[estado]/[cidade]            → Template 1M+ páginas (ISR 1h)
+  /sp/franca/bairro/centro             → Páginas de bairro
+  /comparar/franca-vs-ribeirao-preto   → Comparação entre cidades
+  /avaliacao                           → Avaliação de imóveis
+  /blog                                → Blog com conteúdo SEO
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  8. STACK TECNOLÓGICA
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Frontend:  Next.js 15 (App Router) + Tailwind CSS + ISR
+  Backend:   Fastify + Prisma ORM + Zod validation
+  Database:  Neon PostgreSQL (serverless)
+  Cache:     Redis (Upstash)
+  Deploy:    Vercel (frontend) + Railway (API)
+  Scrapers:  Apify (17 actors, 12 fontes)
+  Auth:      Argon2id + JWT + refresh rotation
+  Email:     SMTP branded templates
+  Monitoring:GitHub Issues automáticas via Apify integrations
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  9. CUSTOS OPERACIONAIS MENSAIS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Vercel (frontend)    → $20/mês (Pro)
+  Railway (API)        → $5-10/mês (usage-based)
+  Neon (database)      → $0 (free tier)
+  Apify (scrapers)     → $29/mês (Starter)
+  Redis (Upstash)      → $0 (free tier)
+  Domínio              → ~R$40/ano
+  ─────────────────────────────────────
+  TOTAL ESTIMADO:        ~$55/mês (~R$300/mês)
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  10. ROADMAP — PRÓXIMOS 90 DIAS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  SEMANA 1-2 (Abril):
+  • Agendar scrapers Apify para runs diários automáticos
+  • Expandir QuintoAndar/ZAP para Franca e Ribeirão Preto
+  • Ativar Google Ads com GTAG conversion tracking
+  • Submeter sitemap-index.xml no Google Search Console ✅
+
+  SEMANA 3-4 (Abril):
+  • Implementar OCR de editais via IA (análise automática)
+  • Integrar Google Street View para fallback de fotos
+  • Criar bot WhatsApp para lead nurturing
+  • Ativar Google Meu Negócio com posts automáticos
+
+  MÊS 2 (Maio):
+  • Plano "AgoraEncontrei Pro" para investidores ($29/mês)
+  • PDF Laudo automático por imóvel
+  • Integração com CRECI para verificação de corretores
+  • Expandir para interior de SP (100 cidades)
+
+  MÊS 3 (Junho):
+  • App nativo (React Native)
+  • Parceria com escritórios de advocacia imobiliária
+  • Cobertura nacional completa (27 estados)
+  • Meta: 10.000 leads/mês
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  11. POR QUE O AGORAENCONTREI VENCE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ❌ Concorrentes: "Aqui está uma casa. Quer comprar?"
+  ✅ AgoraEncontrei: "Este imóvel está 43% abaixo do ZAP.
+     Yield de 10.5% a.a. O aluguel estimado de R$1.500/mês
+     cobre a parcela BNDES. Risco jurídico: VERDE.
+     Quer arrematar?"
+
+  Nós não vendemos imóveis.
+  Nós vendemos DECISÕES DE INVESTIMENTO com dados reais.
+
+================================================================================
+  AGORAENCONTREI — O TERMINAL DE DECISÃO DO MERCADO IMOBILIÁRIO BRASILEIRO
+  Criado por Imobiliária Lemos | 22+ anos de tradição em Franca/SP
+  https://www.agoraencontrei.com.br
+================================================================================
