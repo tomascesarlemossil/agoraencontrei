@@ -7,7 +7,10 @@ import { AuthService } from '../../services/auth.service.js'
 const RegisterBody = z.object({
   name: z.string().min(2).max(100),
   email: z.string().email(),
-  password: z.string().min(8).max(128),
+  password: z.string().min(8).max(128)
+    .regex(/[A-Z]/, 'Senha deve conter pelo menos uma letra maiúscula')
+    .regex(/[a-z]/, 'Senha deve conter pelo menos uma letra minúscula')
+    .regex(/[0-9]/, 'Senha deve conter pelo menos um número'),
   phone: z.string().optional(),
   companyName: z.string().min(2).max(100).optional(),
   companyId: z.string().cuid().optional(),
@@ -15,7 +18,7 @@ const RegisterBody = z.object({
 
 const LoginBody = z.object({
   email: z.string().email(),
-  password: z.string().min(1),
+  password: z.string().min(6).max(128),
 })
 
 const RefreshBody = z.object({
@@ -24,7 +27,10 @@ const RefreshBody = z.object({
 
 const ChangePasswordBody = z.object({
   currentPassword: z.string().min(1),
-  newPassword: z.string().min(8).max(128),
+  newPassword: z.string().min(8).max(128)
+    .regex(/[A-Z]/, 'Senha deve conter pelo menos uma letra maiúscula')
+    .regex(/[a-z]/, 'Senha deve conter pelo menos uma letra minúscula')
+    .regex(/[0-9]/, 'Senha deve conter pelo menos um número'),
 })
 
 const GoogleLoginBody = z.object({
@@ -49,7 +55,7 @@ export default async function authRoutes(app: FastifyInstance) {
 
   // POST /api/v1/auth/login
   app.post('/login', {
-    config: { rateLimit: { max: 20, timeWindow: '15 minutes' } },
+    config: { rateLimit: { max: 10, timeWindow: '15 minutes' } },
     schema: { tags: ['auth'], summary: 'Login with email + password' },
   }, async (req, reply) => {
     const parsed = LoginBody.safeParse(req.body)
@@ -186,7 +192,9 @@ export default async function authRoutes(app: FastifyInstance) {
   })
 
   // POST /api/v1/auth/portal-login — Login for portal (proprietários/inquilinos) via CPF + birthdate
-  app.post('/portal-login', async (req, reply) => {
+  app.post('/portal-login', {
+    config: { rateLimit: { max: 10, timeWindow: '15 minutes' } },
+  }, async (req, reply) => {
     const { cpf, birthDate } = req.body as { cpf?: string; birthDate?: string }
 
     if (!cpf || !birthDate) {
@@ -196,17 +204,20 @@ export default async function authRoutes(app: FastifyInstance) {
     // Normalize CPF: remove dots, dashes
     const cpfNorm = cpf.replace(/\D/g, '')
 
-    // Look up client by CPF (document field)
-    const client = await app.prisma.$queryRawUnsafe<any[]>(
-      `SELECT c.id, c.name, c.document, c."birthDate", c.email, c.phone, c.roles,
+    // Validate CPF format (11 digits)
+    if (!/^\d{11}$/.test(cpfNorm)) {
+      return reply.status(400).send({ error: 'INVALID_CPF', message: 'CPF deve ter 11 dígitos' })
+    }
+
+    // Look up client by CPF (document field) — using parameterized query
+    const client = await app.prisma.$queryRaw<any[]>`
+      SELECT c.id, c.name, c.document, c."birthDate", c.email, c.phone, c.roles,
               co."landlordName", co."tenantName", co.id as "contractId", co.status as "contractStatus",
               co."rentValue", co."propertyAddress", co."startDate"
        FROM clients c
        LEFT JOIN contracts co ON (co."tenantId" = c.id OR co."landlordId" = c.id) AND co."isActive" = true
-       WHERE c.document = $1
-       LIMIT 1`,
-      cpfNorm
-    )
+       WHERE c.document = ${cpfNorm}
+       LIMIT 1`
 
     if (!client.length) {
       return reply.status(401).send({ error: 'NOT_FOUND', message: 'CPF não encontrado' })

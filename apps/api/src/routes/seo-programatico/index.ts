@@ -21,6 +21,10 @@ import {
 import { slugify } from '../../utils/slugify.js'
 
 export default async function seoProgramaticoRoutes(app: FastifyInstance) {
+  // ── Security: all write operations require authentication ──────────────
+  // GET routes (pages, sitemap, stats) remain public for SEO crawlers.
+  // POST routes (import, seed, generate, publish) require admin auth.
+
   // ── Migrate: create SEO tables ──────────────────────────────────────────
   const seoMigrations = [
     `CREATE TABLE IF NOT EXISTS seo_estados (
@@ -85,7 +89,7 @@ export default async function seoProgramaticoRoutes(app: FastifyInstance) {
   }
 
   // ── POST /import-ibge ───────────────────────────────────────────────────
-  app.post('/import-ibge', async (_req, reply) => {
+  app.post('/import-ibge', { preHandler: [app.authenticate] }, async (_req, reply) => {
     try {
       const municipios = await fetchMunicipiosIBGE()
       let inserted = 0
@@ -141,7 +145,7 @@ export default async function seoProgramaticoRoutes(app: FastifyInstance) {
   })
 
   // ── POST /keywords/seed ─────────────────────────────────────────────────
-  app.post('/keywords/seed', async (_req, reply) => {
+  app.post('/keywords/seed', { preHandler: [app.authenticate] }, async (_req, reply) => {
     let inserted = 0
 
     for (const [termo, categoria] of SEO_KEYWORDS) {
@@ -163,7 +167,7 @@ export default async function seoProgramaticoRoutes(app: FastifyInstance) {
   })
 
   // ── POST /pages/generate ────────────────────────────────────────────────
-  app.post('/pages/generate', async (req, reply) => {
+  app.post('/pages/generate', { preHandler: [app.authenticate] }, async (req, reply) => {
     const q = req.query as Record<string, string>
     const limitCidades = parseInt(q.limit || '100', 10)
     const estado = q.estado // filtrar por UF (opcional)
@@ -228,7 +232,7 @@ export default async function seoProgramaticoRoutes(app: FastifyInstance) {
   })
 
   // ── POST /pages/publish-ai ──────────────────────────────────────────────
-  app.post('/pages/publish-ai', async (req, reply) => {
+  app.post('/pages/publish-ai', { preHandler: [app.authenticate] }, async (req, reply) => {
     const q = req.query as Record<string, string>
     const limit = parseInt(q.limit || '10', 10)
 
@@ -536,7 +540,7 @@ ${sitemaps
   })
 
   // ── POST /pages/publish-batch (sem IA — publica rascunhos com intro) ──
-  app.post('/pages/publish-batch', async (req, reply) => {
+  app.post('/pages/publish-batch', { preHandler: [app.authenticate] }, async (req, reply) => {
     const q = req.query as Record<string, string>
     const limit = parseInt(q.limit || '1000', 10)
 
