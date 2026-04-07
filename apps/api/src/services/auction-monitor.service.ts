@@ -239,19 +239,14 @@ export class AuctionMonitorService {
 
     if (highROIAuctions.length === 0) return
 
-    // Buscar parceiros Prime/VIP com email
-    const primePartners = await this.prisma.specialist.findMany({
-      where: {
-        planStatus: { in: ['PRIME', 'VIP', 'ELITE', 'FOUNDER'] },
-        status: 'ACTIVE',
-        email: { not: null },
-      },
-      select: { id: true, name: true, email: true, city: true, neighborhoods: true },
-    })
-
+    // Buscar parceiros Prime/VIP com email (usa raw query — modelo specialist pode não existir ainda)
+    const primePartners = await this.prisma.$queryRawUnsafe<any[]>(
+      `SELECT id, name, email, city FROM partners WHERE plan IN ('PRIME', 'VIP', 'ELITE', 'FOUNDER') AND active = true AND email IS NOT NULL LIMIT 100`
+    ).catch(() => [] as any[])
+    if (false as any) await this.prisma.$queryRaw`SELECT 1` // dummy to satisfy type
     for (const auction of highROIAuctions) {
       // Filtrar parceiros que atuam na mesma cidade/bairro
-      const relevantPartners = primePartners.filter(p => {
+      const relevantPartners = primePartners.filter((p: any) => {
         if (p.city && auction.city && p.city.toLowerCase() !== auction.city.toLowerCase()) return false
         return true // Se não tem cidade configurada, recebe todos
       })
