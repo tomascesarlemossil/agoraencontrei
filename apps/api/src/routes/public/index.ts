@@ -1342,11 +1342,12 @@ export default async function publicRoutes(app: FastifyInstance) {
         app.log.warn({ err: apifyErr }, '[auctions] Apify fallback failed, using CSV')
       }
 
-      // 2. ALWAYS fetch CSV data from Caixa (primary source for Franca/SP)
+      // 2. ALWAYS fetch CSV from Caixa — SP first (Franca priority), then others
       {
+        // Only fetch SP + 2 key states to avoid timeout (12 states = too slow)
         const UFS = stateFilter
           ? [stateFilter.toUpperCase()]
-          : ['SP', 'MG', 'RJ', 'PR', 'GO', 'MS', 'RS', 'SC', 'BA', 'CE', 'PE', 'DF']
+          : ['SP', 'MG', 'RJ']
 
         for (const uf of UFS) {
           try {
