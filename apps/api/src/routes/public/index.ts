@@ -901,9 +901,9 @@ export default async function publicRoutes(app: FastifyInstance) {
       presentationBannerLink: siteConfig.presentationBannerLink ?? null,
       presentationTitle:      siteConfig.presentationTitle      ?? null,
       presentationSubtitle:   siteConfig.presentationSubtitle   ?? null,
-    }
-    await cacheSet(app.redis, cacheKey, siteSettingsResult, 600) // 10 min cache
-    return reply.send(siteSettingsResult)
+    };
+    await cacheSet(app.redis, cacheKey, siteSettingsResult, 600); // 10 min cache
+    return reply.send(siteSettingsResult);
   })
 
   // POST /api/v1/public/avaliacao — estimativa de valor de imóvel em tempo real

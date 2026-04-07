@@ -4,7 +4,10 @@ import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { Search, MapPin, Filter, Calculator, Bell, TrendingUp, ChevronDown, X, ArrowRight, Building, Home, Map as MapIcon, Star, Clock, DollarSign, BarChart3, AlertTriangle } from 'lucide-react'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? ''
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'https://api-production-669c.up.railway.app'
+const PUBLIC_AUCTIONS_URL = `${API_URL}/api/v1/public/auctions`
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://oenbzvxcsgyzqjtlovdq.supabase.co'
+const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -110,6 +113,88 @@ function typeIcon(type: string): string {
   return icons[type] || '🏠'
 }
 
+function normalizePublicPropertyType(type: string): string {
+  const map: Record<string, string> = {
+    casa: 'HOUSE',
+    apartamento: 'APARTMENT',
+    terreno: 'LAND',
+    lote: 'LAND',
+    sítio: 'FARM',
+    sitio: 'FARM',
+    fazenda: 'FARM',
+    galpão: 'WAREHOUSE',
+    galpao: 'WAREHOUSE',
+    prédio: 'OFFICE',
+    predio: 'OFFICE',
+  }
+
+  return map[type.toLowerCase()] || 'HOUSE'
+}
+
+function mapPublicAuction(item: any): Auction {
+  return {
+    id: `public-${item.id}`,
+    title: item.description || `${item.propertyType || 'Imóvel'} em ${item.city}`,
+    slug: `public-${item.id}`,
+    source: 'CAIXA',
+    status: 'OPEN',
+    modality: item.saleType || 'VENDA_DIRETA',
+    propertyType: normalizePublicPropertyType(item.propertyType || ''),
+    city: item.city || null,
+    state: 'SP',
+    neighborhood: item.neighborhood || null,
+    totalArea: item.totalArea || item.privateArea || item.landArea || null,
+    bedrooms: item.bedrooms || 0,
+    bathrooms: 0,
+    parkingSpaces: item.parkingSpots || 0,
+    appraisalValue: item.appraisalValue || null,
+    minimumBid: item.price || null,
+    discountPercent: item.discount || null,
+    firstRoundDate: null,
+    secondRoundDate: null,
+    auctionDate: null,
+    coverImage: null,
+    opportunityScore: item.discount ? Math.min(95, Math.round(item.discount * 1.4)) : null,
+    estimatedROI: item.discount || null,
+    occupation: null,
+    bankName: 'Caixa Econômica Federal',
+    auctioneerName: null,
+    financingAvailable: Boolean(item.financeable),
+    fgtsAllowed: false,
+    views: 0,
+    favorites: 0,
+  }
+}
+
+function filterFallbackAuctions(items: Auction[], filters: {
+  search: string
+  city: string
+  state: string
+  source: string
+  propertyType: string
+  minDiscount: string
+  maxPrice: string
+}) {
+  return items.filter((auction) => {
+    if (filters.search) {
+      const haystack = [auction.title, auction.city, auction.neighborhood, auction.auctioneerName]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase()
+      if (!haystack.includes(filters.search.toLowerCase())) return false
+    }
+
+    if (filters.city && (auction.city || '').toLowerCase() !== filters.city.toLowerCase()) return false
+    if (filters.state && (auction.state || '').toLowerCase() !== filters.state.toLowerCase()) return false
+    if (filters.source && auction.source !== filters.source) return false
+    if (filters.propertyType && auction.propertyType !== filters.propertyType) return false
+    if (filters.minDiscount && (auction.discountPercent || 0) < Number(filters.minDiscount)) return false
+    if (filters.maxPrice && (auction.minimumBid || 0) > Number(filters.maxPrice)) return false
+
+    return true
+  })
+}
+
 // ── Component ───────────────────────────────────────────────────────────────
 
 export default function LeiloesClient() {
@@ -175,12 +260,81 @@ export default function LeiloesClient() {
       const res = await fetch(`${API_URL}/api/v1/auctions?${params}`)
       if (res.ok) {
         const data = await res.json()
-        setAuctions(data.data || [])
-        setTotal(data.pagination?.total || 0)
-        setTotalPages(data.pagination?.totalPages || 1)
+        const internalItems = data.data || []
+        const internalTotal = data.pagination?.total || 0
+
+        if (internalItems.length > 0 || internalTotal > 0) {
+          setAuctions(internalItems)
+          setTotal(internalTotal)
+          setTotalPages(data.pagination?.totalPages || 1)
+          return
+        }
       }
+
+      const fallbackRes = await fetch(PUBLIC_AUCTIONS_URL)
+      if (!fallbackRes.ok) throw new Error('Falha ao buscar fallback público de leilões')
+
+      const fallbackData = await fallbackRes.json()
+      const mappedItems = (fallbackData.items || []).map(mapPublicAuction)
+      const filteredItems = filterFallbackAuctions(mappedItems, {
+        search,
+        city,
+        state,
+        source,
+        propertyType,
+        minDiscount,
+        maxPrice,
+      })
+
+      const sortedItems = [...filteredItems].sort((a, b) => {
+        const orderFactor = sortOrder === 'desc' ? -1 : 1
+
+        const getComparable = (auction: Auction) => {
+          switch (sortBy) {
+            case 'minimumBid': return auction.minimumBid || 0
+            case 'discountPercent': return auction.discountPercent || 0
+            case 'opportunityScore': return auction.opportunityScore || 0
+            case 'auctionDate': return auction.auctionDate ? new Date(auction.auctionDate).getTime() : Number.MAX_SAFE_INTEGER
+            default: return auction.minimumBid || 0
+          }
+        }
+
+        const av = getComparable(a)
+        const bv = getComparable(b)
+        if (av < bv) return -1 * orderFactor
+        if (av > bv) return 1 * orderFactor
+        return 0
+      })
+
+      const limit = 20
+      const start = (page - 1) * limit
+      const paginatedItems = sortedItems.slice(start, start + limit)
+
+      setAuctions(paginatedItems)
+      setTotal(sortedItems.length)
+      setTotalPages(Math.max(1, Math.ceil(sortedItems.length / limit)))
     } catch (err) {
-      console.error('Erro ao buscar leilões:', err)
+      console.error('Erro ao buscar leilões, tentando Supabase direto...', err)
+      // Fallback 3: Supabase direto
+      if (SUPABASE_ANON_KEY) {
+        try {
+          const sbUrl = `${SUPABASE_URL}/rest/v1/auctions?select=*&status=not.in.(CANCELLED,CLOSED)&order=opportunityScore.desc&limit=50`
+          const sbRes = await fetch(sbUrl, {
+            headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` },
+          })
+          if (sbRes.ok) {
+            const sbData = await sbRes.json()
+            setAuctions(sbData || [])
+            setTotal(sbData?.length || 0)
+            setTotalPages(1)
+            setLoading(false)
+            return
+          }
+        } catch { /* ignore */ }
+      }
+      setAuctions([])
+      setTotal(0)
+      setTotalPages(1)
     }
     setLoading(false)
   }, [page, search, city, state, source, propertyType, minDiscount, maxPrice, sortBy, sortOrder])
@@ -189,7 +343,29 @@ export default function LeiloesClient() {
 
   useEffect(() => {
     fetch(`${API_URL}/api/v1/auctions/stats`)
-      .then(r => r.ok ? r.json() : null)
+      .then(async (r) => {
+        if (r.ok) return r.json()
+
+        const fallbackRes = await fetch(PUBLIC_AUCTIONS_URL)
+        if (!fallbackRes.ok) return null
+
+        const fallbackData = await fallbackRes.json()
+        const mappedItems = (fallbackData.items || []).map(mapPublicAuction)
+        const bySource = mappedItems.reduce((acc: Record<string, number>, item: Auction) => {
+          acc[item.source] = (acc[item.source] || 0) + 1
+          return acc
+        }, {})
+
+        return {
+          total: mappedItems.length,
+          bySource: Object.entries(bySource).map(([source, count]) => ({ source, count })),
+          byStatus: [{ status: 'OPEN', count: mappedItems.length }],
+          averageDiscount: mappedItems.length
+            ? Number((mappedItems.reduce((sum: number, item: Auction) => sum + (item.discountPercent || 0), 0) / mappedItems.length).toFixed(1))
+            : 0,
+          topCities: [],
+        }
+      })
       .then(setStats)
       .catch(() => {})
   }, [])

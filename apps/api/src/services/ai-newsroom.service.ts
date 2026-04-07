@@ -145,10 +145,10 @@ export class AiNewsroomService {
             slug,
             content,
             excerpt,
-            status: 'PUBLISHED',
-            type: 'ARTICLE',
+            published: true,
             source: 'AI_NEWSROOM',
             publishedAt: new Date(),
+            category: 'investimento',
           },
         })
 

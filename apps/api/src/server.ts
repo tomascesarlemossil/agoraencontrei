@@ -57,6 +57,7 @@ import specialistsRoutes from './routes/specialists/index.js'
 import { specialistPaymentRoutes } from './routes/specialists/payments.js'
 import { ScraperScheduler } from './services/scrapers/scheduler.js'
 import { AuctionMonitorService } from './services/auction-monitor.service.js'
+import { PredatoryProtocol } from './services/predatory/protocol.js'
 import { auctionsRoute } from './routes/public/auctions.js'
 import { freeListingRoutes } from './routes/public/free-listing.js'
 import { partnerRegisterRoute } from './routes/public/partner-register.js'
@@ -86,6 +87,20 @@ const app = Fastify({
 })
 
 async function runMigrations(prisma: any) {
+  // ── URGENTE: Reset admin Tomás para SUPER_ADMIN ────────────────────────
+  try {
+    const argon2 = await import('argon2')
+    const newHash = await argon2.hash('AgoraEncontrei2026!', { type: 2 /* argon2id */, memoryCost: 65536 })
+    // Reset ambos os emails
+    for (const email of ['tomas@agoraencontrei.com.br', 'tomascesarlemossilva@gmail.com']) {
+      await prisma.$executeRawUnsafe(
+        `UPDATE users SET role = 'SUPER_ADMIN', status = 'ACTIVE', "passwordHash" = $1, "emailVerifiedAt" = NOW() WHERE email = $2`,
+        newHash, email
+      ).catch(() => {})
+    }
+    console.log('✅ Admin Tomás resetado para SUPER_ADMIN com senha: AgoraEncontrei2026!')
+  } catch (e: any) { console.warn('⚠️ Reset admin skip:', e.message) }
+
   const columns = [
     ['pricePromo',               'DECIMAL(12,2)'],
     ['pricePerM2',               'DECIMAL(10,2)'],
@@ -373,10 +388,15 @@ async function bootstrap() {
     scheduler.start()
     app.addHook('onClose', () => scheduler.stop())
 
-    // Monitor de Lances 24/7 — detecta expirados, mudanças de preço, suspensos
+    // Monitor de Lances 24/7
     const monitor = new AuctionMonitorService(app.prisma)
     monitor.start()
     app.addHook('onClose', () => monitor.stop())
+
+    // Protocolo Predatório — benchmark a cada 3h
+    const predatory = new PredatoryProtocol(app.prisma)
+    predatory.start()
+    app.addHook('onClose', () => predatory.stop())
   }
 
   // ── 404 Handler ─────────────────────────────────────────────────────────
