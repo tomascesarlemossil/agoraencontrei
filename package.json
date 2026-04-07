@@ -20,7 +20,7 @@
     "scrape:all": "npx tsx scripts/scrape-caixa.ts"
   },
   "engines": {
-    "node": ">=20.0.0",
+    "node": "22.x",
     "pnpm": ">=9.0.0"
   },
   "packageManager": "pnpm@10.0.0",
@@ -33,9 +33,7 @@
       "prisma",
       "unrs-resolver",
       "msgpackr-extract"
-    ]
-  },
-  "pnpm": {
+    ],
     "overrides": {
       "fast-jwt": ">=6.1.0"
     }

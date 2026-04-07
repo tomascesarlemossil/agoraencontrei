@@ -28,8 +28,8 @@ COPY apps/api/package.json ./apps/api/
 # Install dependencies (pnpm.onlyBuiltDependencies in package.json allows build scripts)
 RUN pnpm install --frozen-lockfile
 
-# Cache bust — increment to force rebuild: v5
-ARG CACHE_BUST=5
+# Cache bust — increment to force rebuild: v6
+ARG CACHE_BUST=6
 
 # Copy source
 COPY packages/database ./packages/database
