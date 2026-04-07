@@ -78,6 +78,25 @@ export default async function seoProgramaticoRoutes(app: FastifyInstance) {
     `CREATE INDEX IF NOT EXISTS idx_seo_paginas_cidade ON seo_paginas(cidade_id)`,
     `CREATE INDEX IF NOT EXISTS idx_seo_paginas_keyword ON seo_paginas(keyword_id)`,
     `CREATE INDEX IF NOT EXISTS idx_seo_keywords_categoria ON seo_keywords(categoria)`,
+    // ── Migration: colunas IBGE para seo_cidades (dados reais) ──────────
+    `ALTER TABLE seo_cidades ADD COLUMN IF NOT EXISTS populacao_estimada INTEGER`,
+    `ALTER TABLE seo_cidades ADD COLUMN IF NOT EXISTS densidade_demografica NUMERIC(10,2)`,
+    `ALTER TABLE seo_cidades ADD COLUMN IF NOT EXISTS pib_per_capita NUMERIC(15,2)`,
+    `ALTER TABLE seo_cidades ADD COLUMN IF NOT EXISTS salario_medio_sm NUMERIC(5,2)`,
+    `ALTER TABLE seo_cidades ADD COLUMN IF NOT EXISTS pessoal_ocupado INTEGER`,
+    `ALTER TABLE seo_cidades ADD COLUMN IF NOT EXISTS area_territorial NUMERIC(12,3)`,
+    `ALTER TABLE seo_cidades ADD COLUMN IF NOT EXISTS gentilico VARCHAR(100)`,
+    // Seed Franca/SP com dados reais do IBGE 2022/2025
+    `UPDATE seo_cidades SET
+       populacao = 352536,
+       populacao_estimada = 365494,
+       densidade_demografica = 582.05,
+       pib_per_capita = 40777.87,
+       salario_medio_sm = 2.2,
+       pessoal_ocupado = 126557,
+       area_territorial = 605.679,
+       gentilico = 'francano'
+     WHERE id_ibge = 3516200`,
     // ── Migration: colunas para 1M URLs (PR #41) ─────────────────────────
     `ALTER TABLE seo_paginas ADD COLUMN IF NOT EXISTS conteudo_ai TEXT`,
     `ALTER TABLE seo_paginas ADD COLUMN IF NOT EXISTS familia_url VARCHAR(100)`,
@@ -254,8 +273,20 @@ export default async function seoProgramaticoRoutes(app: FastifyInstance) {
       keyword: string
       cidade: string
       uf: string
+      populacao: number | null
+      populacao_estimada: number | null
+      densidade_demografica: number | null
+      pib_per_capita: number | null
+      salario_medio_sm: number | null
+      pessoal_ocupado: number | null
+      area_territorial: number | null
+      gentilico: string | null
+      id_ibge: number | null
     }[] = await app.prisma.$queryRawUnsafe(
-      `SELECT p.id, p.slug, k.termo AS keyword, c.nome AS cidade, e.sigla AS uf
+      `SELECT p.id, p.slug, k.termo AS keyword, c.nome AS cidade, e.sigla AS uf,
+              c.populacao, c.populacao_estimada, c.densidade_demografica,
+              c.pib_per_capita, c.salario_medio_sm, c.pessoal_ocupado,
+              c.area_territorial, c.gentilico, c.id_ibge
        FROM seo_paginas p
        JOIN seo_keywords k ON k.id = p.keyword_id
        JOIN seo_cidades c ON c.id = p.cidade_id
@@ -271,17 +302,19 @@ export default async function seoProgramaticoRoutes(app: FastifyInstance) {
     }
 
     // Try Anthropic first, then OpenAI
-    let generateContent: ((keyword: string, cidade: string, uf: string) => Promise<string>) | null = null
+    // Aceita contexto IBGE opcional para enriquecer o prompt
+    type GenFn = (keyword: string, cidade: string, uf: string, ctx?: import('../../services/seo-programatico.service.js').CidadeContextoIBGE) => Promise<string>
+    let generateContent: GenFn | null = null
 
     if (process.env.ANTHROPIC_API_KEY) {
       try {
         const { default: Anthropic } = await import('@anthropic-ai/sdk')
         const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
-        generateContent = async (keyword, cidade, uf) => {
+        generateContent = async (keyword, cidade, uf, ctx) => {
           const msg = await client.messages.create({
             model: 'claude-sonnet-4-20250514',
             max_tokens: 2048,
-            messages: [{ role: 'user', content: buildSeoPrompt(keyword, cidade, uf) }],
+            messages: [{ role: 'user', content: buildSeoPrompt(keyword, cidade, uf, ctx) }],
           })
           return (msg.content[0] as { text: string }).text
         }
@@ -294,10 +327,10 @@ export default async function seoProgramaticoRoutes(app: FastifyInstance) {
       try {
         const { default: OpenAI } = await import('openai')
         const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
-        generateContent = async (keyword, cidade, uf) => {
+        generateContent = async (keyword, cidade, uf, ctx) => {
           const response = await client.chat.completions.create({
             model: 'gpt-4o-mini',
-            messages: [{ role: 'user', content: buildSeoPrompt(keyword, cidade, uf) }],
+            messages: [{ role: 'user', content: buildSeoPrompt(keyword, cidade, uf, ctx) }],
             max_tokens: 2048,
           })
           return response.choices[0]?.message?.content || ''
@@ -305,9 +338,7 @@ export default async function seoProgramaticoRoutes(app: FastifyInstance) {
       } catch {
         app.log.warn('OpenAI SDK not available')
       }
-    }
-
-    if (!generateContent) {
+    }   if (!generateContent) {
       return reply.status(400).send({
         ok: false,
         error: 'Nenhuma API de IA configurada. Defina ANTHROPIC_API_KEY ou OPENAI_API_KEY.',
@@ -319,7 +350,20 @@ export default async function seoProgramaticoRoutes(app: FastifyInstance) {
 
     for (const page of pages) {
       try {
-        const conteudo = await generateContent(page.keyword, page.cidade, page.uf)
+        // Montar contexto IBGE com dados reais da cidade
+        const ibgeCtx: import('../../services/seo-programatico.service.js').CidadeContextoIBGE = {
+          populacao: page.populacao ?? undefined,
+          populacaoEstimada: page.populacao_estimada ?? undefined,
+          densidadeDemografica: page.densidade_demografica ?? undefined,
+          pibPerCapita: page.pib_per_capita ?? undefined,
+          salarioMedioSM: page.salario_medio_sm ?? undefined,
+          pessoalOcupado: page.pessoal_ocupado ?? undefined,
+          areaTerritorial: page.area_territorial ?? undefined,
+          gentilico: page.gentilico ?? undefined,
+          idibge: page.id_ibge ?? undefined,
+        }
+        app.log.info(`[SEO-AI] Gerando: ${page.slug} | ${page.cidade}/${page.uf} | pop: ${page.populacao ?? 'N/A'}`)
+        const conteudo = await generateContent(page.keyword, page.cidade, page.uf, ibgeCtx)
 
         await app.prisma.$executeRawUnsafe(
           `UPDATE seo_paginas
@@ -525,6 +569,72 @@ ${sitemaps
     reply.header('Content-Type', 'application/xml')
     reply.header('Cache-Control', 'public, max-age=3600')
     return reply.send(xml)
+  })
+
+  // ── GET /admin/start-generation ─────────────────────────────────────────
+  // Trigger de geração em batch com logs de progresso — sem autenticação (admin only)
+  app.get('/admin/start-generation', async (req, reply) => {
+    const q = req.query as Record<string, string>
+    const batchSize = Math.min(parseInt(q.batch || '50', 10), 200)
+    const maxBatches = parseInt(q.max_batches || '10', 10)
+    const delay = parseInt(q.delay || '2000', 10) // ms entre batches
+
+    // Contar rascunhos pendentes
+    const countResult: { total: number }[] = await app.prisma.$queryRawUnsafe(
+      `SELECT COUNT(*)::int as total FROM seo_paginas WHERE status = 'rascunho'`
+    )
+    const totalPendentes = (countResult as any)[0]?.total || 0
+
+    if (totalPendentes === 0) {
+      return reply.send({ ok: true, message: 'Nenhuma página rascunho pendente.', total_pendentes: 0 })
+    }
+
+    app.log.info(`[SEO-GEN] Iniciando geração: ${totalPendentes} rascunhos | batch=${batchSize} | max_batches=${maxBatches}`)
+
+    // Responde imediatamente e processa em background
+    reply.send({
+      ok: true,
+      message: `Geração iniciada em background. ${totalPendentes} páginas pendentes.`,
+      total_pendentes: totalPendentes,
+      batch_size: batchSize,
+      max_batches: maxBatches,
+      delay_ms: delay,
+      estimated_time_min: Math.ceil((totalPendentes / batchSize) * (delay / 1000) / 60),
+    })
+
+    // Processar em background (sem await)
+    ;(async () => {
+      let totalGeradas = 0
+      let batchCount = 0
+
+      while (batchCount < maxBatches) {
+        try {
+          const apiUrl = process.env.APP_URL || 'http://localhost:3100'
+          const res = await fetch(`${apiUrl}/api/v1/seo/pages/publish-ai?limit=${batchSize}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+          })
+          const data = await res.json() as { ok: boolean; total: number; message?: string }
+
+          if (!data.ok || data.total === 0) {
+            app.log.info(`[SEO-GEN] Concluído! Total geradas: ${totalGeradas}`)
+            break
+          }
+
+          totalGeradas += data.total
+          batchCount++
+          app.log.info(`[SEO-GEN] Batch ${batchCount}/${maxBatches} | +${data.total} páginas | Total: ${totalGeradas}`)
+
+          // Throttle para não sobrecarregar a API de IA
+          await new Promise((resolve) => setTimeout(resolve, delay))
+        } catch (e: any) {
+          app.log.error(`[SEO-GEN] Erro no batch ${batchCount}: ${e.message}`)
+          break
+        }
+      }
+
+      app.log.info(`[SEO-GEN] Finalizado. Total geradas: ${totalGeradas} em ${batchCount} batches.`)
+    })()
   })
 
   // ── GET /stats ──────────────────────────────────────────────────────────
