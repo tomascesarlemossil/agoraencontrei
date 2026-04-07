@@ -28,7 +28,7 @@ export async function partnerRegisterRoute(app: FastifyInstance) {
     try {
       const lead = await app.prisma.lead.create({
         data: {
-          companyId: process.env.PUBLIC_COMPANY_ID || 'cmnb3pnpl0000ldqxlw26surr',
+          companyId: process.env.PUBLIC_COMPANY_ID || (await app.prisma.company.findFirst({ select: { id: true } }))?.id || 'cmnhzieqf0000mx1cqcqgfv4n',
           name: data.name,
           email: data.email,
           phone: data.phone,

@@ -137,7 +137,13 @@ export class AiNewsroomService {
         }
 
         // Criar o blog post
-        const companyId = process.env.PUBLIC_COMPANY_ID || 'cmnb3pnpl0000ldqxlw26surr'
+        // Buscar o primeiro companyId existente no banco
+        let companyId = process.env.PUBLIC_COMPANY_ID || ''
+        if (!companyId) {
+          const companies = await this.prisma.company.findMany({ select: { id: true }, take: 1 })
+          companyId = companies[0]?.id || ''
+        }
+        if (!companyId) { console.warn('[AiNewsroom] Nenhuma empresa encontrada no banco'); return { created: 0, skipped: jewels.length } }
         await this.prisma.blogPost.create({
           data: {
             companyId,
