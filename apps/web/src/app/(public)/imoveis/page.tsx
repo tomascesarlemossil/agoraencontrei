@@ -1,8 +1,8 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import dynamic from 'next/dynamic'
 import { PropertyFiltersForm } from './PropertyFiltersForm'
 import { LoadMoreProperties } from './LoadMoreProperties'
+import MapSearchClient from './MapSearchWrapper'
 
 export const metadata: Metadata = {
   title: 'Imóveis à Venda e Aluguel em Franca/SP',
@@ -21,13 +21,7 @@ export const revalidate = 60
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 
-// Dynamically import map to avoid SSR
-const MapSearchClient = dynamic(() => import('./MapSearchWrapper'), {
-  ssr: false,
-  loading: () => (
-    <div className="rounded-2xl bg-gray-100 animate-pulse" style={{ height: 580 }} />
-  ),
-})
+// Map is loaded via MapSearchWrapper (client component) — no dynamic import needed in server component
 
 interface SearchParams {
   page?: string
