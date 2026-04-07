@@ -1,12 +1,12 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAuthStore } from '@/stores/auth.store'
 import { CheckCircle, XCircle, Loader2 } from 'lucide-react'
 
-export default function VerificarEmailPage() {
+function VerificarEmailContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const setAuth = useAuthStore((s) => s.setAuth)
@@ -104,5 +104,17 @@ export default function VerificarEmailPage() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function VerificarEmailPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin" style={{ color: '#1B2B5B' }} />
+      </div>
+    }>
+      <VerificarEmailContent />
+    </Suspense>
   )
 }
