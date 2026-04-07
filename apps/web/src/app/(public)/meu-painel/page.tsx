@@ -5,7 +5,8 @@ import Link from 'next/link'
 import {
   User, Star, Crown, Zap, CheckCircle, ArrowRight, Building2,
   MessageCircle, TrendingUp, Eye, Edit3, Share2, AlertCircle,
-  ExternalLink, Camera, FileText, MapPin, Award
+  ExternalLink, Camera, FileText, MapPin, Award, Shield, Lock,
+  BarChart2, Phone, MousePointer
 } from 'lucide-react'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
@@ -81,6 +82,9 @@ export default function MeuPainelPage() {
   const [error, setError] = useState('')
   const [upgrading, setUpgrading] = useState(false)
   const [upgradeSuccess, setUpgradeSuccess] = useState(false)
+  const [analytics, setAnalytics] = useState<any>(null)
+  const [territories, setTerritories] = useState<any[]>([])
+  const [loadingAnalytics, setLoadingAnalytics] = useState(false)
 
   // Buscar especialista pelo email (autenticação simples por email)
   const handleEmailSearch = async () => {
@@ -104,6 +108,19 @@ export default function MeuPainelPage() {
       setLoading(false)
     }
   }
+
+  // Carregar analytics e territórios quando specialist carrega
+  useEffect(() => {
+    if (!specialist?.id) return
+    setLoadingAnalytics(true)
+    Promise.all([
+      fetch(`${API_URL}/api/v1/public/partner-stats/${specialist.id}`).then(r => r.ok ? r.json() : null).catch(() => null),
+      fetch(`${API_URL}/api/v1/territory/my/${specialist.id}`).then(r => r.ok ? r.json() : null).catch(() => null),
+    ]).then(([analyticsData, territoryData]) => {
+      if (analyticsData) setAnalytics(analyticsData)
+      if (territoryData?.territories) setTerritories(territoryData.territories)
+    }).finally(() => setLoadingAnalytics(false))
+  }, [specialist?.id])
 
   // Verificar email salvo no localStorage
   useEffect(() => {
@@ -339,6 +356,105 @@ export default function MeuPainelPage() {
                 })}
               </div>
             </div>
+
+            {/* Analytics em tempo real */}
+            {specialist.plan !== 'START' && (
+              <div className="bg-white rounded-2xl border p-6 shadow-sm">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="font-bold text-[#1B2B5B] flex items-center gap-2">
+                    <BarChart2 className="w-5 h-5 text-[#C9A84C]" /> Performance do Mês
+                  </h2>
+                  {loadingAnalytics && <div className="w-4 h-4 border-2 border-[#1B2B5B] border-t-transparent rounded-full animate-spin" />}
+                </div>
+                {analytics ? (
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div className="bg-[#f8faff] rounded-xl p-3 text-center">
+                      <div className="text-2xl font-bold text-[#1B2B5B]">{analytics.monthly?.profileViews ?? 0}</div>
+                      <div className="text-xs text-gray-500 mt-1 flex items-center justify-center gap-1"><Eye className="w-3 h-3" /> Visualizações</div>
+                    </div>
+                    <div className="bg-[#f8faff] rounded-xl p-3 text-center">
+                      <div className="text-2xl font-bold text-green-600">{analytics.monthly?.whatsappClicks ?? 0}</div>
+                      <div className="text-xs text-gray-500 mt-1 flex items-center justify-center gap-1"><MessageCircle className="w-3 h-3" /> WhatsApp</div>
+                    </div>
+                    <div className="bg-[#f8faff] rounded-xl p-3 text-center">
+                      <div className="text-2xl font-bold text-[#C9A84C]">{analytics.monthly?.condoImpressions ?? 0}</div>
+                      <div className="text-xs text-gray-500 mt-1 flex items-center justify-center gap-1"><Building2 className="w-3 h-3" /> Impressões</div>
+                    </div>
+                    <div className="bg-[#f8faff] rounded-xl p-3 text-center">
+                      <div className="text-2xl font-bold text-purple-600">{analytics.monthly?.phoneClicks ?? 0}</div>
+                      <div className="text-xs text-gray-500 mt-1 flex items-center justify-center gap-1"><Phone className="w-3 h-3" /> Ligações</div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-4 text-gray-400 text-sm">
+                    {loadingAnalytics ? 'Carregando métricas...' : 'Nenhum dado disponível ainda'}
+                  </div>
+                )}
+                {analytics?.monthly && (
+                  <div className="mt-3 pt-3 border-t flex items-center justify-between text-xs text-gray-500">
+                    <span>Custo por lead: <strong className="text-[#1B2B5B]">
+                      {analytics.monthly.whatsappClicks > 0
+                        ? `R$ ${((analytics.partner?.planPrice || 0) / analytics.monthly.whatsappClicks).toFixed(0)}`
+                        : '—'}
+                    </strong></span>
+                    <span>Total histórico: <strong className="text-[#1B2B5B]">{analytics.allTime?.totalContacts ?? 0} contatos</strong></span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Sentinela de Território */}
+            {specialist.plan !== 'START' && (
+              <div className="bg-white rounded-2xl border p-6 shadow-sm">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="font-bold text-[#1B2B5B] flex items-center gap-2">
+                    <Shield className="w-5 h-5 text-[#C9A84C]" /> Sentinela de Território
+                  </h2>
+                  <span className="text-xs bg-[#C9A84C]/10 text-[#C9A84C] px-2 py-1 rounded-full font-medium">
+                    {territories.length} território{territories.length !== 1 ? 's' : ''}
+                  </span>
+                </div>
+                {territories.length > 0 ? (
+                  <div className="space-y-2">
+                    {territories.map((t: any) => (
+                      <div key={t.id} className="flex items-center gap-3 p-3 bg-[#f8f6f1] rounded-xl">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                          t.isExclusive ? 'bg-[#C9A84C]/20' : 'bg-gray-100'
+                        }`}>
+                          {t.isExclusive
+                            ? <Shield className="w-4 h-4 text-[#C9A84C]" />
+                            : <MapPin className="w-4 h-4 text-gray-400" />
+                          }
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-[#1B2B5B] truncate">
+                            {t.buildingName || t.neighborhood || t.city}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {t.isExclusive ? '🛡️ Exclusivo' : 'Compartilhado'} · {t.territoryType === 'BUILDING' ? 'Condomínio' : t.territoryType === 'NEIGHBORHOOD' ? 'Bairro' : 'Cidade'}
+                          </p>
+                        </div>
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                          t.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
+                        }`}>{t.status === 'ACTIVE' ? 'Ativo' : 'Pendente'}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-4">
+                    <Shield className="w-10 h-10 mx-auto mb-2 text-gray-200" />
+                    <p className="text-sm text-gray-500 mb-3">Nenhum território reivindicado ainda.</p>
+                    <p className="text-xs text-gray-400 mb-3">Reivindique exclusividade em condomínios e bairros para aparecer em destaque.</p>
+                  </div>
+                )}
+                <div className="mt-3 pt-3 border-t text-center">
+                  <Link href={`/parceiros/editar/${specialist.id}`}
+                    className="text-[#C9A84C] text-sm font-medium hover:underline">
+                    Gerenciar territórios →
+                  </Link>
+                </div>
+              </div>
+            )}
 
             {/* Condomínios vinculados */}
             <div className="bg-white rounded-2xl border p-6 shadow-sm">

@@ -185,9 +185,106 @@ export async function runScheduledJobs(app: FastifyInstance) {
     app.log.error({ err }, '[scheduled] contrato_vencendo_30d failed')
   }
 
-  // ── Daily social media sync — once per day at ~12:00 UTC (09:00 BRT) ────
+  // ── 5. Relatório mensal de performance para parceiros Prime/VIP (dia 1, 09h BRT) ──
   const hour = now.getUTCHours()
   const minute = now.getUTCMinutes()
+  const dayOfMonth = now.getUTCDate()
+
+  if (dayOfMonth === 1 && hour === 12 && minute < 30) {
+    try {
+      const { sendEmail, isEmailConfigured } = await import('./email.service.js')
+      if (isEmailConfigured()) {
+        const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+        const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59)
+        const monthName = lastMonth.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
+
+        const partners = await app.prisma.specialist.findMany({
+          where: {
+            planStatus: { in: ['PRIME', 'VIP', 'ELITE', 'FOUNDER'] },
+            status: 'ACTIVE',
+            email: { not: null },
+          },
+          select: { id: true, name: true, email: true, planStatus: true, slug: true },
+        })
+
+        let sent = 0
+        for (const partner of partners) {
+          if (!partner.email) continue
+          try {
+            const analyticsRows = await app.prisma.$queryRawUnsafe<any[]>(
+              `SELECT
+                COUNT(*) FILTER (WHERE event = 'profile_view') as profile_views,
+                COUNT(*) FILTER (WHERE event = 'whatsapp_click') as whatsapp_clicks,
+                COUNT(*) FILTER (WHERE event = 'phone_click') as phone_clicks,
+                COUNT(*) FILTER (WHERE event = 'condo_impression') as impressions
+               FROM partner_analytics
+               WHERE "partnerId" = $1 AND "createdAt" >= $2 AND "createdAt" <= $3`,
+              partner.id, lastMonth, lastMonthEnd
+            ).catch(() => [{}])
+
+            const s = analyticsRows[0] || {}
+            const profileViews = Number(s.profile_views || 0)
+            const whatsappClicks = Number(s.whatsapp_clicks || 0)
+            const phoneClicks = Number(s.phone_clicks || 0)
+            const impressions = Number(s.impressions || 0)
+            const totalContacts = whatsappClicks + phoneClicks
+            const convRate = impressions > 0 ? ((totalContacts / impressions) * 100).toFixed(1) : '0'
+            const planLabel = partner.planStatus === 'VIP' ? 'VIP 💎' : 'Prime ⭐'
+            const profileUrl = `https://agoraencontrei.com.br/especialistas/${partner.slug}`
+
+            await sendEmail({
+              to: partner.email,
+              subject: `📊 Seu Relatório de ${monthName} — AgoraEncontrei`,
+              html: `
+                <div style="font-family:system-ui,sans-serif;max-width:600px;margin:0 auto;background:#fff">
+                  <div style="background:linear-gradient(135deg,#1B2B5B,#2d4a8a);padding:28px;text-align:center">
+                    <h1 style="color:#C9A84C;margin:0;font-size:20px">📊 Relatório Mensal</h1>
+                    <p style="color:#fff;margin:6px 0 0;font-size:13px">${monthName} — Parceiro ${planLabel}</p>
+                  </div>
+                  <div style="padding:28px">
+                    <p style="color:#555;font-size:15px">Olá, <strong>${partner.name?.split(' ')[0] || 'Parceiro'}</strong>! Aqui estão seus números do mês passado:</p>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:20px 0">
+                      <div style="background:#f8faff;border-radius:10px;padding:16px;text-align:center">
+                        <div style="font-size:28px;font-weight:800;color:#1B2B5B">${profileViews}</div>
+                        <div style="font-size:12px;color:#888;margin-top:4px">👁️ Visualizações do Perfil</div>
+                      </div>
+                      <div style="background:#f8faff;border-radius:10px;padding:16px;text-align:center">
+                        <div style="font-size:28px;font-weight:800;color:#25D366">${whatsappClicks}</div>
+                        <div style="font-size:12px;color:#888;margin-top:4px">📱 Cliques no WhatsApp</div>
+                      </div>
+                      <div style="background:#f8faff;border-radius:10px;padding:16px;text-align:center">
+                        <div style="font-size:28px;font-weight:800;color:#C9A84C">${impressions}</div>
+                        <div style="font-size:12px;color:#888;margin-top:4px">🏗️ Impressões em Cond.</div>
+                      </div>
+                      <div style="background:#f8faff;border-radius:10px;padding:16px;text-align:center">
+                        <div style="font-size:28px;font-weight:800;color:#16a34a">${convRate}%</div>
+                        <div style="font-size:12px;color:#888;margin-top:4px">🎯 Taxa de Conversão</div>
+                      </div>
+                    </div>
+                    ${totalContacts === 0 ? `<div style="background:#fff3cd;border:1px solid #ffc107;border-radius:10px;padding:16px;margin:16px 0"><p style="margin:0;color:#856404;font-size:14px">💡 <strong>Dica:</strong> Você não recebeu contatos este mês. Complete seu perfil com foto, bio e WhatsApp para aparecer no topo das buscas.</p></div>` : ''}
+                    <div style="text-align:center;margin:24px 0">
+                      <a href="${profileUrl}" style="background:linear-gradient(135deg,#C9A84C,#e6c96a);color:#1B2B5B;padding:14px 28px;border-radius:10px;font-weight:700;font-size:14px;text-decoration:none;display:inline-block">Ver Meu Perfil Público →</a>
+                    </div>
+                    <div style="text-align:center">
+                      <a href="https://agoraencontrei.com.br/meu-painel" style="color:#1B2B5B;font-size:13px;text-decoration:underline">Acessar Meu Painel</a>
+                    </div>
+                  </div>
+                  <div style="background:#f5f5f5;padding:16px;text-align:center;font-size:11px;color:#999">
+                    AgoraEncontrei — Relatório automático mensal para parceiros ${planLabel}
+                  </div>
+                </div>`,
+            }).catch(() => {})
+            sent++
+          } catch { /* skip individual errors */ }
+        }
+        app.log.info(`[scheduled] relatorio-mensal-parceiros: enviado para ${sent}/${partners.length} parceiros`)
+      }
+    } catch (err) {
+      app.log.error({ err }, '[scheduled] relatorio-mensal-parceiros failed')
+    }
+  }
+
+  // ── Daily social media sync — once per day at ~12:00 UTC (09:00 BRT) ────
   if (hour === 12 && minute < 30) {
     // YouTube: sync new videos to blog
     try {
