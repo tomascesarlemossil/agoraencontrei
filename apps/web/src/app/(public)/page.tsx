@@ -345,7 +345,7 @@ export default async function HomePage() {
       >
         <HeroBackground videoUrl={siteSettings.heroVideoUrl} videoType={siteSettings.heroVideoType} />
 
-        <div className="relative z-10 w-full max-w-4xl mx-auto px-4 sm:px-6 text-center pt-6 pb-20 sm:pt-8 sm:pb-16">
+        <div className="relative z-10 w-full max-w-4xl mx-auto px-4 sm:px-6 text-center pt-8 pb-24 sm:pt-10 sm:pb-16">
           {/* Badge */}
           <div
             className="inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold mb-4 sm:mb-6"
@@ -358,8 +358,8 @@ export default async function HomePage() {
 
           {/* Título — responsivo */}
           <h1
-            className="text-3xl sm:text-5xl lg:text-6xl font-bold text-white mb-3 sm:mb-4 leading-tight"
-            style={{ fontFamily: 'Georgia, serif' }}
+            className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-3 sm:mb-4 leading-[1.15]"
+            style={{ fontFamily: 'Georgia, serif', textShadow: '0 2px 12px rgba(0,0,0,0.4)' }}
           >
             Encontre o imóvel
             <br />
@@ -367,7 +367,7 @@ export default async function HomePage() {
           </h1>
 
           {/* Subtítulo — menor no mobile */}
-          <p className="text-white/60 text-base sm:text-lg mb-6 sm:mb-10 max-w-xl mx-auto">
+          <p className="text-white/70 text-sm sm:text-lg mb-5 sm:mb-10 max-w-xl mx-auto font-medium">
             {stats.total > 0
               ? `${stats.total.toLocaleString('pt-BR')} imóveis disponíveis para compra e aluguel`
               : 'Compra, venda e locação de imóveis em Franca e região'}
