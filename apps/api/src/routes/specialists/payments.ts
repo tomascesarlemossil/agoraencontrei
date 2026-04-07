@@ -232,6 +232,33 @@ export async function specialistPaymentRoutes(app: FastifyInstance) {
       return reply.send({ received: true })
     } catch (err: any) {
       app.log.error({ err }, 'Erro ao processar webhook Asaas')
+      // Alerta por email ao admin quando o webhook falha
+      try {
+        const { sendEmail, isEmailConfigured } = await import('../../services/email.service.js')
+        if (isEmailConfigured()) {
+          await sendEmail({
+            to: 'tomascesarlemossilva@gmail.com',
+            subject: '🚨 [AgoraEncontrei] Erro no Webhook Asaas — Ação necessária',
+            html: `
+              <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
+                <div style="background:#1B2B5B;padding:20px;border-radius:8px 8px 0 0">
+                  <h2 style="color:#C9A84C;margin:0">🚨 Erro no Webhook Asaas</h2>
+                </div>
+                <div style="background:#fff;padding:20px;border:1px solid #e5e7eb;border-radius:0 0 8px 8px">
+                  <p><strong>Horário:</strong> ${new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}</p>
+                  <p><strong>Evento:</strong> <code>${(event as any)?.event ?? 'desconhecido'}</code></p>
+                  <p><strong>Erro:</strong> ${(err as Error)?.message ?? 'Erro desconhecido'}</p>
+                  <pre style="background:#f3f4f6;padding:12px;border-radius:4px;font-size:11px;overflow:auto;max-height:200px">${(err as Error)?.stack ?? ''}</pre>
+                  <hr style="border:none;border-top:1px solid #e5e7eb;margin:16px 0">
+                  <p style="color:#6b7280;font-size:12px">Alerta automático — AgoraEncontrei Auto-Healing</p>
+                </div>
+              </div>
+            `,
+          })
+        }
+      } catch (_emailErr) {
+        app.log.warn('Falha ao enviar alerta de email do webhook')
+      }
       return reply.status(500).send({ error: 'Erro interno no webhook' })
     }
   })

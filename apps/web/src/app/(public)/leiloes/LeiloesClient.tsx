@@ -318,6 +318,24 @@ export default function LeiloesClient() {
             >
               <Filter className="w-4 h-4" /> Filtros
             </button>
+            {/* Botão Pérola — filtra leilões com >40% de desconto */}
+            <button
+              onClick={() => {
+                const next = minDiscount === '40' ? '' : '40'
+                setMinDiscount(next)
+                if (next) { setSortBy('discountPercent'); setSortOrder('desc') }
+                setPage(1)
+              }}
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold transition"
+              style={{
+                backgroundColor: minDiscount === '40' ? '#C9A84C' : '#fff7e6',
+                color: minDiscount === '40' ? '#1B2B5B' : '#b8943d',
+                border: '1.5px solid #C9A84C',
+              }}
+              title="Leilões com mais de 40% de desconto sobre o valor de avaliação"
+            >
+              💎 Pérola {minDiscount === '40' && '✔'}
+            </button>
             <button
               onClick={() => setShowCalc(!showCalc)}
               className="inline-flex items-center gap-1.5 px-3 py-2 bg-gray-100 rounded-lg text-sm hover:bg-gray-200 transition"
