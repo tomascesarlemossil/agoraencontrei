@@ -164,7 +164,7 @@ function mapPublicAuction(item: any): Auction {
     modality: item.saleType || 'VENDA_DIRETA',
     propertyType: normalizePublicPropertyType(item.propertyType || ''),
     city: item.city || null,
-    state: 'SP',
+    state: item.state || 'SP',
     neighborhood: item.neighborhood || null,
     totalArea: item.totalArea || item.privateArea || item.landArea || null,
     bedrooms: item.bedrooms || 0,

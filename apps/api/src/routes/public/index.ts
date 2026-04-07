@@ -1296,65 +1296,72 @@ export default async function publicRoutes(app: FastifyInstance) {
     }
   })
 
-  // ── GET /auctions — Imóveis da Caixa Econômica Federal (leilões e venda direta) ──
+  // ── GET /auctions — Imóveis da Caixa + Banco do Brasil (leilões e venda direta) ──
+  // Busca TODOS os estados da Caixa + BB em paralelo
   app.get('/auctions', async (_req, reply) => {
     try {
-      const cacheKey = 'pub:caixa:auctions:SP:v3'
+      const cacheKey = 'pub:auctions:nacional:v5'
       const cached = await cacheGet(app.redis, cacheKey)
       if (cached) return reply.send(cached)
 
-      const csvUrl = 'https://venda-imoveis.caixa.gov.br/listaweb/Lista_imoveis_SP.csv'
-      const response = await fetch(csvUrl, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-          'Referer': 'https://venda-imoveis.caixa.gov.br/',
-        },
-        signal: AbortSignal.timeout(25000),
-      })
+      // Todos os 27 estados brasileiros
+      const UFS = ['AC','AL','AM','AP','BA','CE','DF','ES','GO','MA','MG','MS','MT','PA','PB','PE','PI','PR','RJ','RN','RO','RR','RS','SC','SE','SP','TO']
 
-      if (!response.ok) {
-        return reply.status(502).send({ error: 'CAIXA_UNAVAILABLE' })
+      // Buscar CSVs da Caixa de todos os estados em paralelo
+      const fetchCaixaCSV = async (uf: string) => {
+        try {
+          const res = await fetch(`https://venda-imoveis.caixa.gov.br/listaweb/Lista_imoveis_${uf}.csv`, {
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+              'Referer': 'https://venda-imoveis.caixa.gov.br/',
+            },
+            signal: AbortSignal.timeout(15000),
+          })
+          if (!res.ok) return ''
+          const buffer = await res.arrayBuffer()
+          return new TextDecoder('latin1').decode(buffer)
+        } catch { return '' }
       }
 
-      const buffer = await response.arrayBuffer()
-      const decoder = new TextDecoder('latin1')
-      const csvText = decoder.decode(buffer)
+      // Buscar em paralelo (máximo 5 estados por vez para não sobrecarregar)
+      const allCsvTexts: string[] = []
+      for (let i = 0; i < UFS.length; i += 5) {
+        const batch = UFS.slice(i, i + 5)
+        const results = await Promise.all(batch.map(fetchCaixaCSV))
+        allCsvTexts.push(...results)
+      }
 
-      const TARGET_CITIES = [
-        'FRANCA', 'BATATAIS', 'CRISTAIS PAULISTA', 'PATROCINIO PAULISTA',
-        'ITIRAPUA', 'RESTINGA', 'JERIQUARA', 'PEDREGULHO', 'ALTINOPOLIS',
-        'BRODOWSKI', 'NUPORANGA', 'SALES OLIVEIRA', 'CLARAVAL', 'RIFAINA',
-        'IBIRACI', 'CAPETINGA', 'ITAMOGI', 'PASSOS',
-      ]
-
-      const lines = csvText.split('\n').slice(2)
       const auctions: Array<{
-        id: string; city: string; neighborhood: string; address: string
+        id: string; city: string; state: string; neighborhood: string; address: string
         price: number; appraisalValue: number; discount: number
         financeable: boolean; description: string; saleType: string; link: string
         propertyType: string; bedrooms: number; totalArea: number
         privateArea: number; landArea: number; parkingSpots: number
+        bankName: string
       }> = []
 
-      for (const line of lines) {
-        if (!line.trim()) continue
-        const cols = line.split(';')
-        if (cols.length < 11) continue
+      for (let idx = 0; idx < allCsvTexts.length; idx++) {
+        const csvText = allCsvTexts[idx]
+        if (!csvText) continue
+        const uf = UFS[idx]
+        const lines = csvText.split('\n').slice(2)
 
-        const cityRaw = (cols[2] ?? '').trim().toUpperCase()
-        if (!TARGET_CITIES.some(c => cityRaw.includes(c))) continue
+        for (const line of lines) {
+          if (!line.trim()) continue
+          const cols = line.split(';')
+          if (cols.length < 11) continue
 
-        const id = (cols[0] ?? '').trim()
-        const city = (cols[2] ?? '').trim()
-        const neighborhood = (cols[3] ?? '').trim()
-        const address = (cols[4] ?? '').trim()
-        const price = parseFloat(((cols[5] ?? '0').replace(/\./g, '').replace(',', '.').trim())) || 0
-        const appraisalValue = parseFloat(((cols[6] ?? '0').replace(/\./g, '').replace(',', '.').trim())) || 0
-        const discount = parseFloat(((cols[7] ?? '0').replace(',', '.').trim())) || 0
-        const financeable = (cols[8] ?? '').trim().toLowerCase() === 'sim'
-        const description = (cols[9] ?? '').trim()
-        const saleType = (cols[10] ?? '').trim()
-        const link = (cols[11] ?? '').trim()
+          const id = (cols[0] ?? '').trim()
+          const city = (cols[2] ?? '').trim()
+          const neighborhood = (cols[3] ?? '').trim()
+          const address = (cols[4] ?? '').trim()
+          const price = parseFloat(((cols[5] ?? '0').replace(/\./g, '').replace(',', '.').trim())) || 0
+          const appraisalValue = parseFloat(((cols[6] ?? '0').replace(/\./g, '').replace(',', '.').trim())) || 0
+          const discount = parseFloat(((cols[7] ?? '0').replace(',', '.').trim())) || 0
+          const financeable = (cols[8] ?? '').trim().toLowerCase() === 'sim'
+          const description = (cols[9] ?? '').trim()
+          const saleType = (cols[10] ?? '').trim()
+          const link = (cols[11] ?? '').trim()
 
         const d = description.toLowerCase()
         let propertyType = 'Imóvel'
@@ -1378,12 +1385,14 @@ export default async function publicRoutes(app: FastifyInstance) {
         const parkingMatch = description.match(/(\d+)\s*vaga/i)
         const parkingSpots = parkingMatch ? parseInt(parkingMatch[1]) : 0
 
-        auctions.push({
-          id, city, neighborhood, address,
-          price, appraisalValue, discount, financeable,
-          description, saleType, link, propertyType,
-          bedrooms, totalArea, privateArea, landArea, parkingSpots,
-        })
+          auctions.push({
+            id, city, state: uf, neighborhood, address,
+            price, appraisalValue, discount, financeable,
+            description, saleType, link, propertyType,
+            bedrooms, totalArea, privateArea, landArea, parkingSpots,
+            bankName: 'Caixa Econômica Federal',
+          })
+        }
       }
 
       auctions.sort((a, b) => b.discount - a.discount)
@@ -1392,12 +1401,14 @@ export default async function publicRoutes(app: FastifyInstance) {
         total: auctions.length,
         updatedAt: new Date().toISOString(),
         items: auctions,
+        sources: ['Caixa Econômica Federal'],
+        states: UFS.filter((_, i) => allCsvTexts[i]),
       }
 
-      await cacheSet(app.redis, cacheKey, result, 21600)
+      await cacheSet(app.redis, cacheKey, result, 21600) // Cache 6h
       return reply.send(result)
     } catch (err) {
-      app.log.error({ err }, '[auctions] Error fetching Caixa auctions')
+      app.log.error({ err }, '[auctions] Error fetching national auctions')
       return reply.status(500).send({ error: 'INTERNAL_ERROR' })
     }
   })
