@@ -976,10 +976,20 @@ export default function LeiloesClient() {
                         {auction.bankName || sourceLabel(auction.source)}
                       </span>
                     </div>
-                    {/* Top-right: Discount */}
+                    {/* Top-right: Discount — Pérola glow for >40% */}
                     {auction.discountPercent && auction.discountPercent > 0 && (
-                      <div className="absolute top-2 right-2 px-2.5 py-1 rounded-lg text-xs font-bold bg-red-500 text-white shadow-lg">
-                        -{Math.round(auction.discountPercent)}%
+                      <div
+                        className={`absolute top-2 right-2 px-2.5 py-1 rounded-lg text-xs font-bold shadow-lg ${
+                          auction.discountPercent >= 40
+                            ? 'animate-pulse'
+                            : ''
+                        }`}
+                        style={auction.discountPercent >= 40
+                          ? { backgroundColor: '#00C805', color: '#000', boxShadow: '0 0 12px #00C805' }
+                          : { backgroundColor: '#ef4444', color: '#fff' }
+                        }
+                      >
+                        {auction.discountPercent >= 40 ? '💎 ' : '-'}{Math.round(auction.discountPercent)}%
                       </div>
                     )}
                     {/* Bottom-left: Auction date */}
@@ -1111,6 +1121,20 @@ export default function LeiloesClient() {
       </section>
     </div>
 
+    {/* ── STICKY MOBILE CTA ──────────────────────────────────────────── */}
+    <div className="fixed bottom-0 left-0 right-0 z-40 p-3 bg-white/95 backdrop-blur border-t shadow-2xl sm:hidden">
+      <a
+        href="https://wa.me/5516981010004?text=Ol%C3%A1!%20Vi%20os%20leil%C3%B5es%20no%20AgoraEncontrei%20e%20quero%20saber%20mais%20sobre%20as%20oportunidades%20em%20Franca."
+        target="_blank"
+        rel="noreferrer"
+        className="flex items-center justify-center gap-2 w-full py-3.5 rounded-xl font-bold text-base"
+        style={{ backgroundColor: '#25D366', color: '#fff' }}
+      >
+        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.625.846 5.059 2.284 7.034L.789 23.492l4.598-1.47A11.94 11.94 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818c-2.17 0-4.19-.596-5.926-1.632l-.424-.254-2.727.872.873-2.666-.279-.443A9.777 9.777 0 012.182 12c0-5.42 4.398-9.818 9.818-9.818S21.818 6.58 21.818 12s-4.398 9.818-9.818 9.818z"/></svg>
+        Falar com Corretor
+      </a>
+    </div>
+
     {/* ── MODAL DE LEAD DE LEILÃO ─────────────────────────────────────── */}
     {showLeadModal && selectedAuction && (
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setShowLeadModal(false)}>
@@ -1128,14 +1152,17 @@ export default function LeiloesClient() {
 
           {leadSuccess ? (
             <div className="p-8 text-center">
-              <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-              <h4 className="text-xl font-bold mb-2" style={{ color: '#1B2B5B' }}>Interesse registrado!</h4>
+              <CheckCircle className="w-16 h-16 mx-auto mb-4" style={{ color: '#00C805' }} />
+              <h4 className="text-xl font-bold mb-2" style={{ color: '#1B2B5B' }}>Oportunidade Reservada!</h4>
+              <p className="text-gray-700 text-sm font-medium mb-1">
+                Inteligência AgoraEncontrei ativada.
+              </p>
               <p className="text-gray-500 text-sm mb-4">
-                Nossa equipe entrará em contato em breve. Redirecionando para o site do leiloeiro...
+                Sua oportunidade em {selectedAuction?.city || 'Franca'} foi reservada. Entraremos em contato em até 2 horas úteis.
               </p>
               <div className="flex items-center justify-center gap-2 text-sm text-blue-600">
                 <ExternalLink className="w-4 h-4" />
-                Abrindo site externo...
+                Redirecionando para detalhes do leilão...
               </div>
             </div>
           ) : (
