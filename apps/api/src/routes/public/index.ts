@@ -1300,7 +1300,7 @@ export default async function publicRoutes(app: FastifyInstance) {
   app.get('/auctions', async (req, reply) => {
     try {
       const { state: stateFilter } = req.query as { state?: string }
-      const cacheKey = `pub:caixa:auctions:${stateFilter || 'ALL'}:v6-merge`
+      const cacheKey = `pub:caixa:auctions:${stateFilter || 'ALL'}:v7-franca`
       const cached = await cacheGet(app.redis, cacheKey)
       if (cached) return reply.send(cached)
 
@@ -1422,7 +1422,20 @@ export default async function publicRoutes(app: FastifyInstance) {
         auctions = auctions.filter(a => (a.state as string)?.toUpperCase() === stateFilter.toUpperCase())
       }
 
-      auctions.sort((a, b) => ((b.discount as number) || 0) - ((a.discount as number) || 0))
+      // FRANCA-FIRST: geographic priority then discount
+      const geoPriority = (city: string) => {
+        const c = (city || '').toUpperCase()
+        if (c.includes('FRANCA')) return 0
+        if (c.includes('BATATAIS') || c.includes('PATROCINIO') || c.includes('CRISTAIS')) return 1
+        if (c.includes('RIBEIRAO') || c.includes('RIBEIRÃO')) return 2
+        return 5
+      }
+      auctions.sort((a, b) => {
+        const gA = geoPriority(a.city as string)
+        const gB = geoPriority(b.city as string)
+        if (gA !== gB) return gA - gB
+        return ((b.discount as number) || 0) - ((a.discount as number) || 0)
+      })
 
       const result = {
         total: auctions.length,

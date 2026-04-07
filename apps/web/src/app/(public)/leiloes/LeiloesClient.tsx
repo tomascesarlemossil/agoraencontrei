@@ -632,7 +632,7 @@ export default function LeiloesClient() {
       </section>
 
       {/* Toolbar */}
-      <div className="sticky top-0 z-30 bg-white border-b shadow-sm">
+      <div className="sticky top-16 z-20 bg-white border-b shadow-sm">
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2 text-sm text-gray-500">
             <span className="font-semibold text-gray-800">{total.toLocaleString('pt-BR')}</span> leilões encontrados
@@ -640,7 +640,8 @@ export default function LeiloesClient() {
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className="inline-flex items-center gap-1.5 px-3 py-2 bg-gray-100 rounded-lg text-sm hover:bg-gray-200 transition"
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-bold transition"
+              style={{ backgroundColor: '#e5e7eb', color: '#1B2B5B' }}
             >
               <Filter className="w-4 h-4" /> Filtros
             </button>
@@ -683,21 +684,23 @@ export default function LeiloesClient() {
             </button>
             <button
               onClick={() => setShowCalc(!showCalc)}
-              className="inline-flex items-center gap-1.5 px-3 py-2 bg-gray-100 rounded-lg text-sm hover:bg-gray-200 transition"
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-bold transition"
+              style={{ backgroundColor: '#1B2B5B', color: '#FFFFFF' }}
             >
               <Calculator className="w-4 h-4" /> Calculadora
             </button>
             <button
               onClick={() => setShowAlert(!showAlert)}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm text-white transition"
-              style={{ backgroundColor: '#C9A84C' }}
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-bold transition"
+              style={{ backgroundColor: '#C9A84C', color: '#000000' }}
             >
               <Bell className="w-4 h-4" /> Alerta
             </button>
             <select
               value={sortBy}
               onChange={e => setSortBy(e.target.value)}
-              className="px-3 py-2 bg-gray-100 rounded-lg text-sm border-0 outline-none"
+              className="px-3 py-2 rounded-lg text-sm border-0 outline-none font-bold"
+              style={{ backgroundColor: '#e5e7eb', color: '#1B2B5B' }}
             >
               <option value="auctionDate">Data do Leilão</option>
               <option value="minimumBid">Menor Lance</option>
@@ -1122,7 +1125,7 @@ export default function LeiloesClient() {
     </div>
 
     {/* ── STICKY MOBILE CTA ──────────────────────────────────────────── */}
-    <div className="fixed bottom-0 left-0 right-0 z-40 p-3 bg-white/95 backdrop-blur border-t shadow-2xl sm:hidden">
+    <div className="fixed bottom-0 left-0 right-0 z-30 p-3 bg-white/95 backdrop-blur border-t shadow-2xl sm:hidden">
       <a
         href="https://wa.me/5516981010004?text=Ol%C3%A1!%20Vi%20os%20leil%C3%B5es%20no%20AgoraEncontrei%20e%20quero%20saber%20mais%20sobre%20as%20oportunidades%20em%20Franca."
         target="_blank"
