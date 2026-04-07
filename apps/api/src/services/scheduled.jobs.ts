@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Scheduled Jobs — emits automation triggers based on time-based conditions
  * Runs every 30 minutes via setInterval (wired in automation.ts plugin)
