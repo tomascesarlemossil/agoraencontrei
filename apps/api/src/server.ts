@@ -86,6 +86,20 @@ const app = Fastify({
 })
 
 async function runMigrations(prisma: any) {
+  // ── URGENTE: Reset admin Tomás para SUPER_ADMIN ────────────────────────
+  try {
+    const argon2 = await import('argon2')
+    const newHash = await argon2.hash('AgoraEncontrei2026!', { type: 2 /* argon2id */, memoryCost: 65536 })
+    // Reset ambos os emails
+    for (const email of ['tomas@agoraencontrei.com.br', 'tomascesarlemossilva@gmail.com']) {
+      await prisma.$executeRawUnsafe(
+        `UPDATE users SET role = 'SUPER_ADMIN', status = 'ACTIVE', "passwordHash" = $1, "emailVerifiedAt" = NOW() WHERE email = $2`,
+        newHash, email
+      ).catch(() => {})
+    }
+    console.log('✅ Admin Tomás resetado para SUPER_ADMIN com senha: AgoraEncontrei2026!')
+  } catch (e: any) { console.warn('⚠️ Reset admin skip:', e.message) }
+
   const columns = [
     ['pricePromo',               'DECIMAL(12,2)'],
     ['pricePerM2',               'DECIMAL(10,2)'],
