@@ -1300,9 +1300,11 @@ export default async function publicRoutes(app: FastifyInstance) {
   app.get('/auctions', async (req, reply) => {
     try {
       const { state: stateFilter } = req.query as { state?: string }
-      const cacheKey = `pub:auctions:${stateFilter || 'ALL'}:v8`
+      const cacheKey = `pub:auctions:${stateFilter || 'ALL'}:v9-csv-always`
       const cached = await cacheGet(app.redis, cacheKey)
       if (cached) return reply.send(cached)
+
+      app.log.info('[auctions] Cache MISS — fetching fresh data')
 
       // Strategy: try Apify last-run data first (free, fast), then CSV fallback
       let auctions: Array<Record<string, unknown>> = []
@@ -1413,8 +1415,11 @@ export default async function publicRoutes(app: FastifyInstance) {
                 leiloeiro: 'Caixa Econômica Federal',
               })
             }
-          } catch { /* skip failed state */ }
+          } catch (csvErr) {
+            app.log.warn({ err: csvErr, uf }, '[auctions] CSV fetch failed for state')
+          }
         }
+        app.log.info(`[auctions] After CSV: ${auctions.length} total items`)
       }
 
       // Filter by state if Apify returned all states
