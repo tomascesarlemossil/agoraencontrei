@@ -389,6 +389,21 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
   } catch {}
 
+  // ── SEO Programático (páginas dinâmicas do banco) ──────────────────────────
+  let seoProgramatico: MetadataRoute.Sitemap = []
+  try {
+    const res = await fetch(`${API_URL}/api/v1/seo/pages?limit=200&status=publicado`, { next: { revalidate: 3600 } })
+    if (res.ok) {
+      const data = await res.json()
+      seoProgramatico = (data.data ?? []).map((p: any) => ({
+        url: `${WEB_URL}/s/${p.slug}`,
+        lastModified: new Date(p.published_at ?? now),
+        changeFrequency: 'weekly' as const,
+        priority: 0.7,
+      }))
+    }
+  } catch {}
+
   return [
     ...core,
     ...landings,
@@ -527,5 +542,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...leiloes,
     ...imoveis,
     ...blog,
+    ...seoProgramatico,
   ]
 }

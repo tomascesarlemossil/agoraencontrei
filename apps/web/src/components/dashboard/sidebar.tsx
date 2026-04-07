@@ -68,6 +68,7 @@ const midNavItems = [
   { href: '/dashboard/fiscal',              icon: FileText,         label: 'Notas Fiscais', highlight: false },
   { href: '/dashboard/crm/renovacoes',      icon: AlertTriangle,    label: 'Renovações',    highlight: false },
   { href: '/dashboard/blog',                icon: BookOpen,         label: 'Blog',          highlight: false },
+  { href: '/dashboard/seo-programatico',    icon: Globe,            label: 'SEO Motor',     highlight: true  },
   { href: '/dashboard/leiloes',              icon: Gavel,            label: 'Leilões 🔥',     highlight: true  },
   { href: '/dashboard/parceiros',            icon: Crown,            label: 'Parceiros 💎',    highlight: true  },
 ]
