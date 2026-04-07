@@ -1482,4 +1482,27 @@ export default async function publicRoutes(app: FastifyInstance) {
       return reply.status(500).send({ error: 'INTERNAL_ERROR' })
     }
   })
+
+  // ── GET /market-prices — Preços de mercado (ZAP Imóveis via Apify) ──
+  app.get('/market-prices', async (req, reply) => {
+    try {
+      const { city, neighborhood, type } = req.query as { city?: string; neighborhood?: string; type?: 'sale' | 'rent' }
+      if (!city) return reply.status(400).send({ error: 'city parameter required' })
+
+      const cacheKey = `pub:market:${city}:${neighborhood || 'all'}:${type || 'all'}`
+      const cached = await cacheGet(app.redis, cacheKey)
+      if (cached) return reply.send(cached)
+
+      const { getMarketPriceReference } = await import('../../services/apify-zap.service.js')
+      const result = await getMarketPriceReference(city, neighborhood, type)
+
+      const response = result || { avgPricePerSqm: 0, avgPrice: 0, medianPrice: 0, sampleSize: 0, listingType: type || 'all' }
+      const finalResponse = { ...response, city, neighborhood }
+      await cacheSet(app.redis, cacheKey, finalResponse, 86400)
+      return reply.send(finalResponse)
+    } catch (err) {
+      app.log.error({ err }, '[market-prices] Error')
+      return reply.status(500).send({ error: 'INTERNAL_ERROR' })
+    }
+  })
 }
