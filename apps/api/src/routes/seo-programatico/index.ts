@@ -327,7 +327,10 @@ export default async function seoProgramaticoRoutes(app: FastifyInstance) {
     const { slug } = req.params as { slug: string }
 
     const rows: any[] = await app.prisma.$queryRawUnsafe(
-      `SELECT p.*, c.nome AS cidade, e.sigla AS uf, e.nome AS estado_nome,
+      `SELECT p.id::int, p.cidade_id, p.keyword_id, p.slug, p.titulo, p.h1,
+              p.meta_title, p.meta_description, p.intro, p.conteudo, p.faq,
+              p.status, p.views, p.published_at, p.created_at, p.updated_at,
+              c.nome AS cidade, e.sigla AS uf, e.nome AS estado_nome,
               k.termo AS keyword, k.categoria
        FROM seo_paginas p
        JOIN seo_cidades c ON c.id = p.cidade_id
@@ -351,11 +354,11 @@ export default async function seoProgramaticoRoutes(app: FastifyInstance) {
       `SELECT p.slug, p.titulo, p.h1, k.termo AS keyword
        FROM seo_paginas p
        JOIN seo_keywords k ON k.id = p.keyword_id
-       WHERE p.cidade_id = $1 AND p.keyword_id != $2 AND p.status = 'publicado'
+       WHERE p.cidade_id = $1::int AND p.keyword_id != $2::int AND p.status = 'publicado'
        ORDER BY p.views DESC
        LIMIT 6`,
-      rows[0].cidade_id,
-      rows[0].keyword_id
+      Number(rows[0].cidade_id),
+      Number(rows[0].keyword_id)
     )
 
     // Fetch nearby cities pages (same keyword)
@@ -364,14 +367,14 @@ export default async function seoProgramaticoRoutes(app: FastifyInstance) {
        FROM seo_paginas p
        JOIN seo_cidades c ON c.id = p.cidade_id
        JOIN seo_estados e ON e.id = c.estado_id
-       WHERE p.keyword_id = $1
-         AND p.cidade_id != $2
+       WHERE p.keyword_id = $1::int
+         AND p.cidade_id != $2::int
          AND p.status = 'publicado'
          AND e.sigla = $3
        ORDER BY c.populacao DESC NULLS LAST
        LIMIT 6`,
-      rows[0].keyword_id,
-      rows[0].cidade_id,
+      Number(rows[0].keyword_id),
+      Number(rows[0].cidade_id),
       rows[0].uf
     )
 
@@ -392,16 +395,17 @@ export default async function seoProgramaticoRoutes(app: FastifyInstance) {
     const categoria = q.categoria
     const offset = (page - 1) * limit
 
-    let countQuery = `SELECT COUNT(*)::int as total FROM seo_paginas p`
-    let dataQuery = `
-      SELECT p.slug, p.titulo, p.h1, p.meta_description, p.status, p.views,
-             c.nome AS cidade, e.sigla AS uf, k.termo AS keyword, k.categoria,
-             p.published_at, p.created_at
+    const joins = `
       FROM seo_paginas p
       JOIN seo_cidades c ON c.id = p.cidade_id
       JOIN seo_estados e ON e.id = c.estado_id
       JOIN seo_keywords k ON k.id = p.keyword_id
     `
+    let countQuery = `SELECT COUNT(*)::int as total ${joins}`
+    let dataQuery = `
+      SELECT p.id::int, p.slug, p.titulo, p.h1, p.meta_description, p.status, p.views,
+             c.nome AS cidade, e.sigla AS uf, k.termo AS keyword, k.categoria,
+             p.published_at, p.created_at ${joins}`
 
     const conditions: string[] = [`p.status = '${status}'`]
     const params: any[] = []
