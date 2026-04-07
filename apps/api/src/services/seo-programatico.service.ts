@@ -76,25 +76,66 @@ export function buildSeoPageData(keyword: string, cidade: string, uf: string) {
 /**
  * Prompt para IA gerar conteúdo SEO contextualizado.
  * Pode ser usado com Anthropic, OpenAI, ou qualquer LLM.
+ * Aceita dados IBGE opcionais para injetar autoridade real no texto.
  */
-export function buildSeoPrompt(keyword: string, cidade: string, uf: string): string {
-  return `Atue como um especialista em investimentos imobiliários local.
-Crie um conteúdo único, natural e útil para SEO sobre "${keyword}" na cidade de ${cidade} - ${uf}.
+export interface CidadeContextoIBGE {
+  populacao?: number        // ex: 352536
+  populacaoEstimada?: number // ex: 365494
+  densidadeDemografica?: number // ex: 582.05
+  pibPerCapita?: number     // ex: 40777.87
+  salarioMedioSM?: number   // ex: 2.2 (em salários mínimos)
+  pessoalOcupado?: number   // ex: 126557
+  areaTerritorial?: number  // ex: 605.679 km²
+  gentilico?: string        // ex: "francano"
+  idibge?: number           // ex: 3516200
+}
 
-Use termos específicos da região de ${cidade}. Não use introduções clichês como "No mundo de hoje..." ou "Nos últimos anos...".
-Vá direto ao ponto sobre por que investir em ${keyword} em ${cidade} é estrategicamente vantajoso.
+export function buildSeoPrompt(
+  keyword: string,
+  cidade: string,
+  uf: string,
+  contexto?: CidadeContextoIBGE
+): string {
+  // Bloco de dados IBGE para injetar autoridade real
+  const ibgeBlock = contexto ? `
+DADOS REAIS DO IBGE PARA CONTEXTUALIZAR O TEXTO (use esses números no conteúdo):
+- População (Censo 2022): ${contexto.populacao ? contexto.populacao.toLocaleString('pt-BR') : 'não disponível'} habitantes
+${contexto.populacaoEstimada ? `- População estimada (2025): ${contexto.populacaoEstimada.toLocaleString('pt-BR')} habitantes` : ''}
+${contexto.densidadeDemografica ? `- Densidade demográfica: ${contexto.densidadeDemografica.toLocaleString('pt-BR')} hab/km²` : ''}
+${contexto.pibPerCapita ? `- PIB per capita (2023): R$ ${contexto.pibPerCapita.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : ''}
+${contexto.salarioMedioSM ? `- Salário médio dos trabalhadores formais: ${contexto.salarioMedioSM} salários mínimos` : ''}
+${contexto.pessoalOcupado ? `- Pessoal ocupado em postos formais: ${contexto.pessoalOcupado.toLocaleString('pt-BR')} pessoas` : ''}
+${contexto.areaTerritorial ? `- Área territorial: ${contexto.areaTerritorial.toLocaleString('pt-BR')} km²` : ''}
+${contexto.gentilico ? `- Gentílico: ${contexto.gentilico}` : ''}
+Fonte: IBGE Cidades — use esses dados para dar autoridade e especificidade ao texto.
+` : ''
 
-Inclua:
-- Visão geral do mercado imobiliário local de ${cidade}
-- Oportunidades específicas de ${keyword} na região
-- Dicas práticas para quem busca ${keyword} em ${cidade}
-- Benefícios e cuidados ao comprar/investir
-- Bairros recomendados (se aplicável)
-- Conclusão objetiva com call-to-action
+  return `Aja como um redator sênior de portais imobiliários e de leilões.
+Sua tarefa é criar o conteúdo exclusivo da página "${keyword} em ${cidade} - ${uf}" para o portal AgoraEncontrei.${ibgeBlock}
 
-Texto entre 600 e 1000 palavras, evitando repetição e linguagem robótica.
-Use parágrafos curtos e subtítulos em markdown (##).
-NÃO inclua título H1 no início — ele já existe na página.`
+CONTEXTO PARA O TEXTO:
+1. PESQUISA VIRTUAL: Simule uma análise de notícias recentes e tendências de mercado para ${cidade}. Mencione o crescimento da região, novos empreendimentos ou a força do setor de leilões locais.
+2. VALOR REAL: Não seja genérico. Fale sobre a infraestrutura da cidade, bairros valorizados e por que buscar "${keyword}" nesta localidade específica é uma decisão estratégica agora em 2026.
+3. ESTRUTURA OBRIGATÓRIA (HTML limpo, apenas tags de texto):
+
+<h2>Oportunidades de ${keyword} em ${cidade}: Panorama Atual</h2>
+<p>[Texto de introdução focado em desenvolvimento local e dados reais da cidade]</p>
+<h3>Por que investir em ${cidade}?</h3>
+<p>[Destaque sobre valorização, infraestrutura e facilidades da região — use os dados IBGE fornecidos]</p>
+<h3>O Mercado de ${keyword} em ${cidade} - ${uf}</h3>
+<p>[Análise de oportunidades específicas, bairros valorizados, faixa de preço]</p>
+<h3>Dicas Práticas para Quem Busca ${keyword} em ${cidade}</h3>
+<p>[Orientações para comprador/investidor, cuidados, documentação]</p>
+<blockquote>Nota: O mercado de leilões e imóveis em ${uf} está em constante atualização. Fique atento às datas de editais.</blockquote>
+<p>Para conferir a lista completa e atualizada de oportunidades reais agora mesmo, <a href='https://agoraencontrei.com.br'>acesse nossa vitrine principal no marketplace AgoraEncontrei</a>. Lá você filtra por preço, tipo de imóvel e status do leilão em tempo real.</p>
+
+REGRAS CRÍTICAS:
+- Tom informativo, não puramente comercial.
+- Proibido usar frases como "No mundo dinâmico de hoje" ou "Nos últimos anos".
+- Mínimo de 600 palavras.
+- Saída em formato HTML limpo (apenas tags de texto: h2, h3, p, blockquote, a, strong).
+- NÃO inclua título H1 — ele já existe na página.
+- Use os dados IBGE fornecidos para dar credibilidade e especificidade ao texto.`
 }
 
 // ── Keywords Master List ──────────────────────────────────────────────────────
