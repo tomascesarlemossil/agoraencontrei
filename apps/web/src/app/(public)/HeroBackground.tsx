@@ -60,8 +60,8 @@ export function HeroBackground({ videoUrl, videoType }: Props) {
             width: '100%',
             height: '100%',
             objectFit: 'cover',
-            // No mobile, centraliza no centro-superior para mostrar o imóvel
-            objectPosition: isMobile ? 'center 30%' : 'center center',
+            // No mobile: foca no lado direito (onde a mulher está posicionada na imagem)
+            objectPosition: isMobile ? '80% center' : 'center center',
           }}
           loading="eager"
           fetchPriority="high"
@@ -72,7 +72,7 @@ export function HeroBackground({ videoUrl, videoType }: Props) {
             position: 'absolute',
             inset: 0,
             background: isMobile
-              ? 'linear-gradient(180deg, rgba(10,20,45,0.75) 0%, rgba(10,20,45,0.55) 40%, rgba(10,20,45,0.80) 100%)'
+              ? 'linear-gradient(180deg, rgba(10,20,45,0.82) 0%, rgba(10,20,45,0.58) 35%, rgba(10,20,45,0.88) 100%)'
               : 'linear-gradient(135deg, rgba(10,20,45,0.72) 0%, rgba(15,28,58,0.55) 40%, rgba(10,20,45,0.65) 100%)',
           }}
         />
@@ -113,7 +113,7 @@ export function HeroBackground({ videoUrl, videoType }: Props) {
           <img
             src={thumbUrl}
             alt="Imobiliária Lemos"
-            style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 30%' }}
+            style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: '80% center' }}
             onError={(e) => {
               (e.target as HTMLImageElement).src = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`
             }}
@@ -133,7 +133,7 @@ export function HeroBackground({ videoUrl, videoType }: Props) {
           position: 'absolute',
           inset: 0,
           background: isMobile
-            ? 'linear-gradient(180deg, rgba(15,28,58,0.80) 0%, rgba(15,28,58,0.60) 50%, rgba(15,28,58,0.85) 100%)'
+            ? 'linear-gradient(180deg, rgba(15,28,58,0.84) 0%, rgba(15,28,58,0.62) 45%, rgba(15,28,58,0.90) 100%)'
             : 'linear-gradient(135deg, rgba(15,28,58,0.82) 0%, rgba(27,43,91,0.78) 50%, rgba(30,53,104,0.80) 100%)',
         }}
       />

@@ -1,12 +1,14 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
+import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import {
   User, Mail, Phone, Building2, Award, MapPin, Instagram,
   Globe, CheckCircle2, ChevronRight, Loader2, Search, X,
-  Briefcase, Camera, Scale, Wrench, Palette, Video, Star
+  Briefcase, Camera, Scale, Wrench, Palette, Video, Star,
+  Crown, ArrowRight, Sparkles,
 } from 'lucide-react'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
@@ -96,15 +98,19 @@ function validateDocument(value: string): { valid: boolean; type: 'cpf' | 'cnpj'
     : { valid: false, type: 'cnpj', error: 'CNPJ inválido' }
 }
 
-export default function CadastroParceirosPage() {
+function CadastroParceirosContent() {
+  const searchParams = useSearchParams()
+  const router = useRouter()
+  const initialPlan = (searchParams.get('plan') ?? 'START') as 'START' | 'PRIME' | 'VIP'
   const [step, setStep] = useState<Step>('category')
   const [loading, setLoading] = useState(false)
   const [buildings, setBuildings] = useState<Building[]>([])
   const [buildingSearch, setBuildingSearch] = useState('')
   const [selectedBuildings, setSelectedBuildings] = useState<Building[]>([])
-  const [result, setResult] = useState<{ slug: string; profileUrl: string; name: string } | null>(null)
+  const [result, setResult] = useState<{ id: string; slug: string; profileUrl: string; name: string } | null>(null)
   const [error, setError] = useState('')
   const [docError, setDocError] = useState('')
+  const [selectedPlan] = useState<'START' | 'PRIME' | 'VIP'>(initialPlan)
 
   const [form, setForm] = useState({
     category: '',
@@ -170,6 +176,11 @@ export default function CadastroParceirosPage() {
         return
       }
       setResult(data.data)
+      // Se o plano selecionado for pago, redirecionar ao checkout automaticamente
+      if (initialPlan !== 'START' && data.data?.id) {
+        router.push(`/parceiros/checkout?plan=${initialPlan}&specialistId=${data.data.id}`)
+        return
+      }
       setStep('success')
     } catch {
       setError('Erro de conexão. Tente novamente.')
@@ -195,6 +206,19 @@ export default function CadastroParceirosPage() {
       </header>
 
       <div className="max-w-3xl mx-auto px-4 py-12">
+        {/* Badge do plano selecionado */}
+        {selectedPlan !== 'START' && step !== 'success' && (
+          <div className="mb-6 flex items-center gap-3 p-4 rounded-2xl border" style={{ backgroundColor: selectedPlan === 'VIP' ? 'rgba(27,43,91,0.05)' : 'rgba(201,168,76,0.08)', borderColor: selectedPlan === 'VIP' ? 'rgba(27,43,91,0.2)' : 'rgba(201,168,76,0.3)' }}>
+            {selectedPlan === 'VIP'
+              ? <Crown className="w-5 h-5 flex-shrink-0" style={{ color: '#1B2B5B' }} />
+              : <Star className="w-5 h-5 flex-shrink-0" style={{ color: '#C9A84C' }} />
+            }
+            <div>
+              <p className="text-sm font-bold" style={{ color: '#1B2B5B' }}>Plano {selectedPlan} selecionado — R$ {selectedPlan === 'VIP' ? '497' : '197'}/mês</p>
+              <p className="text-xs text-gray-500">Após o cadastro, você será redirecionado ao checkout para ativar seu dashboard privado.</p>
+            </div>
+          </div>
+        )}
         {/* Progress */}
         {step !== 'success' && (
           <div className="flex items-center gap-2 mb-10">
@@ -641,8 +665,20 @@ export default function CadastroParceirosPage() {
               </Link>
             </div>
           </div>
-        )}
+         )}
       </div>
     </div>
+  )
+}
+
+export default function CadastroParceirosPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#f8f6f1' }}>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C9A84C]" />
+      </div>
+    }>
+      <CadastroParceirosContent />
+    </Suspense>
   )
 }

@@ -367,6 +367,14 @@ export default function ParceirosPlanos() {
                     Assinar {plan.name} — R$ {plan.price}/mês
                     <ArrowRight className="w-4 h-4" />
                   </Link>
+                  {plan.id === 'VIP' && (
+                    <Link
+                      href="/parceiros/plano-vip"
+                      className="w-full inline-flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium mt-2 border border-[#1B2B5B]/20 text-[#1B2B5B] hover:bg-[#1B2B5B]/5 transition-all"
+                    >
+                      <Shield className="w-4 h-4" /> Saiba mais sobre o Sentinela Territorial
+                    </Link>
+                  )}
                   <p className="text-center text-xs text-gray-400 mt-3">
                     Pagamento seguro via Asaas · PIX, boleto ou cartão
                   </p>
