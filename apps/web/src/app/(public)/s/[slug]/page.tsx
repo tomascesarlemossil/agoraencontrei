@@ -398,6 +398,38 @@ export default async function SeoPage({
           </div>
         </div>
       </div>
+
+      {/* Floating CTA — barra fixa no rodapé */}
+      <div
+        className="fixed bottom-0 left-0 right-0 z-50 shadow-2xl border-t border-white/10"
+        style={{ backgroundColor: '#1B2B5B' }}
+      >
+        <div className="max-w-4xl mx-auto px-4 py-3 flex flex-col sm:flex-row items-center justify-between gap-2">
+          <p className="text-white text-sm font-medium text-center sm:text-left">
+            🏠 Procurando{' '}
+            <span className="font-bold">{page.keyword}</span>{' '}
+            em {page.cidade}?
+          </p>
+          <div className="flex gap-2 shrink-0">
+            <a
+              href={`https://wa.me/5516981010004?text=${encodeURIComponent(`Ol\u00e1! Quero ver ${page.keyword} em ${page.cidade} - ${page.uf}`)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center px-4 py-2 text-xs font-bold text-white rounded-lg transition-opacity hover:opacity-90"
+              style={{ backgroundColor: '#25D366' }}
+            >
+              WhatsApp
+            </a>
+            <Link
+              href="/"
+              className="inline-flex items-center px-4 py-2 text-xs font-bold rounded-lg transition-opacity hover:opacity-90"
+              style={{ backgroundColor: '#C9A84C', color: '#1B2B5B' }}
+            >
+              Ver Marketplace
+            </Link>
+          </div>
+        </div>
+      </div>
     </>
   )
 }
