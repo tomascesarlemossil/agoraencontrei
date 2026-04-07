@@ -1,0 +1,2085 @@
+// =============================================================================
+// AgoraEncontrei + Lemosbank — Prisma Schema
+// Fase 1: Infraestrutura Base
+// PostgreSQL (Neon)
+// =============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_DATABASE_URL")
+}
+
+// =============================================================================
+// ENUMS
+// =============================================================================
+
+enum UserRole {
+  SUPER_ADMIN
+  ADMIN
+  MANAGER
+  BROKER
+  FINANCIAL
+  LAWYER
+  CLIENT
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  PENDING_VERIFICATION
+  SUSPENDED
+}
+
+enum PropertyType {
+  HOUSE
+  APARTMENT
+  LAND
+  FARM
+  RANCH
+  WAREHOUSE
+  OFFICE
+  STORE
+  STUDIO
+  PENTHOUSE
+  CONDO
+  KITNET
+}
+
+enum PropertyPurpose {
+  SALE
+  RENT
+  BOTH
+  SEASON
+}
+
+enum PropertyStatus {
+  ACTIVE
+  INACTIVE
+  SOLD
+  RENTED
+  PENDING
+  DRAFT
+}
+
+enum PropertyCategory {
+  RESIDENTIAL
+  COMMERCIAL
+  RURAL
+  INDUSTRIAL
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  QUALIFIED
+  VISITING
+  PROPOSAL
+  NEGOTIATING
+  WON
+  LOST
+  ARCHIVED
+}
+
+enum DealStatus {
+  OPEN
+  IN_PROGRESS
+  PROPOSAL
+  CONTRACT
+  CLOSED_WON
+  CLOSED_LOST
+}
+
+enum NegotiationType {
+  SALE
+  RENT
+}
+
+enum ContactType {
+  INDIVIDUAL
+  COMPANY
+}
+
+enum CommissionStatus {
+  PENDING
+  PARTIAL
+  PAID
+  CANCELLED
+}
+
+// =============================================================================
+// CORE: COMPANY (Imobiliária)
+// =============================================================================
+
+model Company {
+  id          String   @id @default(cuid())
+  name        String
+  tradeName   String?
+  cnpj        String?  @unique
+  creci       String?
+  phone       String?
+  email       String?
+  website     String?
+  logoUrl     String?
+  address     String?
+  city        String?
+  state       String?
+  zipCode     String?
+  plan        String   @default("starter")
+  settings    Json     @default("{}")
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  users       User[]
+  properties  Property[]
+  contacts    Contact[]
+  leads       Lead[]
+  deals       Deal[]
+  commissions   Commission[]
+  financings    Financing[]
+  portals       PortalConfig[]
+  conversations Conversation[]
+  agentJobs     AgentJob[]
+  automationRules AutomationRule[]
+  clients         Client[]
+  contracts       Contract[]
+  rentals         Rental[]
+  transactions    Transaction[]
+  financialForecasts FinancialForecast[]
+  invoices        Invoice[]
+  fiscalNotes       FiscalNote[]
+  visualAIJobs      VisualAIJob[]
+  marketingCampaigns MarketingCampaign[]
+  blogPosts         BlogPost[]
+  documents         Document[]
+  legalCases        LegalCase[]
+  auctions          Auction[]
+
+  @@map("companies")
+}
+
+// =============================================================================
+// AUTH: USERS + SESSIONS
+// =============================================================================
+
+model User {
+  id                String      @id @default(cuid())
+  companyId         String
+  company           Company     @relation(fields: [companyId], references: [id])
+  name              String
+  email             String      @unique
+  phone             String?
+  passwordHash      String?
+  avatarUrl         String?
+  role              UserRole    @default(BROKER)
+  status            UserStatus  @default(PENDING_VERIFICATION)
+  creciNumber       String?
+  bio               String?
+  settings          Json        @default("{}")
+  emailVerifiedAt   DateTime?
+  lastLoginAt       DateTime?
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  sessions              Session[]
+  oauthAccounts         OAuthAccount[]
+  properties            Property[]
+  leads                 Lead[]         @relation("BrokerLeads")
+  assignedLeads         Lead[]         @relation("AssignedLeads")
+  deals                 Deal[]
+  commissions           Commission[]
+  financings            Financing[]    @relation("BrokerFinancings")
+  activities            Activity[]
+  refreshTokens         RefreshToken[]
+  assignedConversations Conversation[]
+  visualAIJobs          VisualAIJob[]
+  documents             Document[]
+
+  @@index([companyId])
+  @@index([email])
+  @@map("users")
+}
+
+model Session {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token       String   @unique @default(cuid())
+  ipAddress   String?
+  userAgent   String?
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+  @@index([token])
+  @@map("sessions")
+}
+
+model RefreshToken {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token       String   @unique
+  family      String
+  usedAt      DateTime?
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+  @@index([token])
+  @@map("refresh_tokens")
+}
+
+model OAuthAccount {
+  id               String   @id @default(cuid())
+  userId           String
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  provider         String   // "google" | "facebook"
+  providerUserId   String
+  accessToken      String?
+  refreshToken     String?
+  expiresAt        DateTime?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@unique([provider, providerUserId])
+  @@index([userId])
+  @@map("oauth_accounts")
+}
+
+model EmailVerification {
+  id        String   @id @default(cuid())
+  email     String
+  token     String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([email])
+  @@map("email_verifications")
+}
+
+model PasswordReset {
+  id        String   @id @default(cuid())
+  email     String
+  token     String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([email])
+  @@map("password_resets")
+}
+
+// =============================================================================
+// CONTACTS (Clientes, Proprietários, Inquilinos)
+// =============================================================================
+
+model Contact {
+  id            String      @id @default(cuid())
+  companyId     String
+  company       Company     @relation(fields: [companyId], references: [id])
+  type          ContactType @default(INDIVIDUAL)
+  name          String
+  email         String?
+  phone         String?
+  mobilePhone   String?
+  cpf           String?
+  cnpj          String?
+  rg            String?
+  birthDate     DateTime?
+  address       String?
+  neighborhood  String?
+  city          String?
+  state         String?
+  zipCode       String?
+  notes         String?
+  tags          String[]
+  isOwner       Boolean     @default(false)
+  isTenant      Boolean     @default(false)
+  isGuarantor   Boolean     @default(false)
+  externalId    String?     // Uniloc CODINQ / CODLOC
+  source        String?     // "uniloc", "manual", "portal", "whatsapp"
+  metadata      Json        @default("{}")
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  leads         Lead[]
+  deals         Deal[]
+  financings    Financing[]
+  activities    Activity[]
+  ownedProperties PropertyOwner[]
+  conversations Conversation[]
+
+  @@index([companyId])
+  @@index([email])
+  @@index([cpf])
+  @@index([externalId])
+  @@map("contacts")
+}
+
+// =============================================================================
+// PROPERTIES
+// =============================================================================
+
+model Property {
+  id              String           @id @default(cuid())
+  companyId       String
+  company         Company          @relation(fields: [companyId], references: [id])
+  userId          String
+  user            User             @relation(fields: [userId], references: [id])
+  reference       String?          // ex: LEM-0087
+  externalId      String?          // Univen ID Internet
+  title           String
+  slug            String
+  description     String?
+  type            PropertyType     @default(HOUSE)
+  purpose         PropertyPurpose  @default(SALE)
+  category        PropertyCategory @default(RESIDENTIAL)
+  status          PropertyStatus   @default(ACTIVE)
+
+  // Pricing
+  price           Decimal?         @db.Decimal(12, 2)
+  priceRent       Decimal?         @db.Decimal(12, 2)
+  priceSeason     Decimal?         @db.Decimal(12, 2)
+  priceNegotiable Boolean          @default(false)
+  condoFee        Decimal?         @db.Decimal(10, 2)
+  iptu            Decimal?         @db.Decimal(10, 2)
+
+  // Location
+  zipCode         String?
+  street          String?
+  number          String?
+  complement      String?
+  neighborhood    String?
+  city            String?
+  state           String?
+  country         String           @default("BR")
+  latitude        Float?
+  longitude       Float?
+  showAddress     Boolean          @default(true)
+  condoName       String?
+
+  // Characteristics
+  totalArea       Float?
+  builtArea       Float?
+  landArea        Float?
+  bedrooms        Int              @default(0)
+  suites          Int              @default(0)
+  bathrooms       Int              @default(0)
+  parkingSpaces   Int              @default(0)
+  floor           Int?
+  totalFloors     Int?
+  yearBuilt       Int?
+
+  // Media
+  coverImage      String?
+  images          String[]
+  videoUrl        String?
+  videos          String[]         // uploaded video URLs (mp4, mov, webm)
+  virtualTourUrl  String?
+
+  // Features & amenities
+  features        String[]         // ["pool", "gym", "barbecue", ...]
+
+  // SEO
+  metaTitle       String?
+  metaDescription String?
+  metaKeywords    String[]
+
+  // Portal descriptions (per portal AI-generated)
+  portalDescriptions Json          @default("{}")
+
+  // Analytics
+  views           Int              @default(0)
+  favorites       Int              @default(0)
+  leads           Int              @default(0)
+
+  // Flags
+  isFeatured      Boolean          @default(false)
+  isPremium       Boolean          @default(false)
+  isHighlighted   Boolean          @default(false)
+  featuredUntil   DateTime?
+
+  // Extended pricing
+  pricePromo      Decimal?         @db.Decimal(12, 2)   // Preço promocional
+  pricePerM2      Decimal?         @db.Decimal(10, 2)   // Preço por M²
+  allowExchange   Boolean          @default(false)       // Aceita permuta
+  valueUnderConsultation Boolean   @default(false)       // Valor sob consulta
+
+  // Commercial details
+  currentState    String?          // Desocupado / Ocupado Proprietário / Ocupado Inquilino
+  occupation      String?          // Residencial / Comercial / Misto
+  standard        String?          // SIMPLE / NORMAL / HIGH / LUXURY
+  auxReference    String?          // Referência auxiliar
+
+  // Extended location
+  commercialNeighborhood String?   // Bairro comercial (exibido no site)
+  region          String?          // Região
+  referencePoint  String?          // Ponto de referência
+  closedCondo     Boolean          @default(false)
+  adminCompany    String?          // Administradora
+  constructionCompany String?      // Construtora
+  signOnSite      Boolean          @default(false)       // Placa no local
+
+  // Extended rooms breakdown
+  suitesWithCloset Int             @default(0)
+  demiSuites      Int              @default(0)
+  rooms           Int              @default(0)           // Salas (total)
+  livingRooms     Int              @default(0)           // Sala de estar
+  diningRooms     Int              @default(0)           // Sala de jantar
+  tvRooms         Int              @default(0)           // Salas de TV
+  garagesCovered  Int              @default(0)
+  garagesOpen     Int              @default(0)
+  elevators       Int              @default(0)
+
+  // Extended areas
+  commonArea      Float?           // Área comum
+  ceilingHeight   Float?           // Pé direto
+  landDimensions  String?          // Dimensão terreno (ex: 10x20)
+  landFace        String?          // Face do terreno
+  sunExposure     String?          // Insolamento
+  position        String?          // Posição (frente/fundos/meio)
+
+  // Internal notes (not published)
+  descriptionInternal String?
+
+  // Confidential / documentation
+  cib             String?          // Código Imobiliário Brasileiro
+  iptuRegistration String?         // Cadastro Prefeitura / INCRA
+  cartorioMatricula String?        // Cartório - Nº Matrícula
+  electricityInfo String?          // Eletricidade (concessionária)
+  waterInfo       String?          // Água e Saneamento
+  documentationPending Boolean     @default(false)
+  documentationNotes String?       // Obs. documentação
+  isReserved      Boolean          @default(false)
+  authorizedPublish Boolean        @default(false)       // Autorizado para publicar
+  showExactLocation Boolean        @default(false)       // Exibir localização exata no mapa (padrão: aproximada)
+
+  // Captação
+  captorName      String?          // Nome do captador principal
+  captorCommissionPct Float?       // Comissão do captador (%)
+  exclusivityContract Boolean      @default(false)
+  commercialConditions String?     // Condições comerciais
+  yearLastReformed Int?            // Ano da última reforma
+  keyLocation     String?          // Local das chaves
+
+  // Import metadata
+  importSource    String?          // "univen_xls", "manual", "portal_xml"
+  importedAt      DateTime?
+
+  publishedAt     DateTime?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  owners          PropertyOwner[]
+  portalPublications PortalPublication[]
+  dealProperties  DealProperty[]
+  leadProperties  LeadProperty[]
+  financings      Financing[]
+  activities      Activity[]
+  visualAIJobs    VisualAIJob[]
+  contracts       Contract[]
+  documents       Document[]
+  legalCases      LegalCase[]
+  @@unique([companyId, slug])
+  @@unique([companyId, reference])
+  @@index([companyId])
+  @@index([userId])
+  @@index([status])
+  @@index([type, purpose])
+  @@index([city, neighborhood])
+  @@index([externalId])
+  // Performance indexes for public listing queries (Manus recommendation)
+  @@index([companyId, status, authorizedPublish])
+  @@index([companyId, status, authorizedPublish, type])
+  @@index([companyId, status, authorizedPublish, isFeatured])
+  @@index([companyId, status, authorizedPublish, createdAt(sort: Desc)])
+  // Map/cluster queries — neighborhood groupBy
+  @@index([companyId, status, authorizedPublish, neighborhood])
+  // Price range queries
+  @@index([companyId, status, authorizedPublish, price(sort: Asc)])
+  @@index([companyId, status, authorizedPublish, priceRent(sort: Asc)])
+  @@map("properties")
+}
+
+model PropertyOwner {
+  id          String   @id @default(cuid())
+  propertyId  String
+  property    Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  contactId   String
+  contact     Contact  @relation(fields: [contactId], references: [id])
+  percentage  Decimal  @default(100) @db.Decimal(5, 2)
+  createdAt   DateTime @default(now())
+
+  @@unique([propertyId, contactId])
+  @@map("property_owners")
+}
+
+// =============================================================================
+// PORTALS
+// =============================================================================
+
+model PortalConfig {
+  id          String   @id @default(cuid())
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id])
+  portalId    String   // "olx", "zap", "vivareal", "facebook", ...
+  portalName  String
+  apiKey      String?
+  apiSecret   String?
+  settings    Json     @default("{}")
+  isActive    Boolean  @default(false)
+  isPaid      Boolean  @default(false)
+  lastSyncAt  DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([companyId, portalId])
+  @@map("portal_configs")
+}
+
+model PortalPublication {
+  id           String    @id @default(cuid())
+  propertyId   String
+  property     Property  @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  portalId     String
+  externalId   String?
+  status       String    @default("pending")  // pending, published, failed, removed
+  publishedAt  DateTime?
+  errorMsg     String?
+  description  String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@unique([propertyId, portalId])
+  @@map("portal_publications")
+}
+
+// =============================================================================
+// CRM: LEADS + DEALS
+// =============================================================================
+
+model Lead {
+  id            String     @id @default(cuid())
+  companyId     String
+  company       Company    @relation(fields: [companyId], references: [id])
+  contactId     String?
+  contact       Contact?   @relation(fields: [contactId], references: [id])
+  brokerId      String?    // who captured
+  broker        User?      @relation("BrokerLeads", fields: [brokerId], references: [id])
+  assignedToId  String?    // who is responsible now
+  assignedTo    User?      @relation("AssignedLeads", fields: [assignedToId], references: [id])
+  name          String
+  email         String?
+  phone         String?
+  status        LeadStatus @default(NEW)
+  source        String?    // "whatsapp", "portal", "site", "referral", "manual"
+  interest      String?    // "buy", "rent"
+  budget        Decimal?   @db.Decimal(12, 2)
+  notes         String?
+  score         Int        @default(0)
+  tags          String[]
+  utmSource     String?
+  utmMedium     String?
+  utmCampaign   String?
+  metadata      Json       @default("{}")
+  lastContactAt DateTime?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  properties    LeadProperty[]
+  deals         Deal[]
+  activities    Activity[]
+  conversations Conversation[]
+
+  @@index([companyId])
+  @@index([brokerId])
+  @@index([assignedToId])
+  @@index([status])
+  @@map("leads")
+}
+
+model LeadProperty {
+  id         String   @id @default(cuid())
+  leadId     String
+  lead       Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id])
+  createdAt  DateTime @default(now())
+
+  @@unique([leadId, propertyId])
+  @@map("lead_properties")
+}
+
+model Deal {
+  id            String          @id @default(cuid())
+  companyId     String
+  company       Company         @relation(fields: [companyId], references: [id])
+  leadId        String?
+  lead          Lead?           @relation(fields: [leadId], references: [id])
+  brokerId      String
+  broker        User            @relation(fields: [brokerId], references: [id])
+  contactId     String?
+  contact       Contact?        @relation(fields: [contactId], references: [id])
+  title         String
+  type          NegotiationType @default(SALE)
+  status        DealStatus      @default(OPEN)
+  value         Decimal?        @db.Decimal(12, 2)
+  commission    Decimal?        @db.Decimal(5, 2)
+  notes         String?
+  closedAt      DateTime?
+  expectedCloseAt DateTime?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  properties    DealProperty[]
+  commissions   Commission[]
+  financings    Financing[]
+  activities    Activity[]
+
+  @@index([companyId])
+  @@index([brokerId])
+  @@index([status])
+  @@map("deals")
+}
+
+model DealProperty {
+  id         String   @id @default(cuid())
+  dealId     String
+  deal       Deal     @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id])
+  createdAt  DateTime @default(now())
+
+  @@unique([dealId, propertyId])
+  @@map("deal_properties")
+}
+
+// =============================================================================
+// LEMOSBANK: COMMISSION TRACKING
+// =============================================================================
+
+model Commission {
+  id               String           @id @default(cuid())
+  companyId        String
+  company          Company          @relation(fields: [companyId], references: [id])
+  dealId           String
+  deal             Deal             @relation(fields: [dealId], references: [id])
+  brokerId         String
+  broker           User             @relation(fields: [brokerId], references: [id])
+  dealValue        Decimal          @db.Decimal(12, 2)
+  commissionRate   Decimal          @db.Decimal(5, 2)   // percentage e.g. 6.00
+  grossValue       Decimal          @db.Decimal(12, 2)  // dealValue * commissionRate / 100
+  splitRate        Decimal          @db.Decimal(5, 2)   @default(100) // broker's share %
+  netValue         Decimal          @db.Decimal(12, 2)  // grossValue * splitRate / 100
+  status           CommissionStatus @default(PENDING)
+  paidAmount       Decimal          @db.Decimal(12, 2)  @default(0)
+  paidAt           DateTime?
+  dueAt            DateTime?
+  notes            String?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  @@index([companyId])
+  @@index([brokerId])
+  @@index([dealId])
+  @@index([status])
+  @@map("commissions")
+}
+
+// =============================================================================
+// FINANCIAMENTOS
+// =============================================================================
+
+enum FinancingStage {
+  SIMULACAO
+  ANALISE_CREDITO
+  ANALISE_JURIDICA
+  EMISSAO_CONTRATO
+  REGISTRO_CONTRATO
+  CONCLUIDO
+  CANCELADO
+}
+
+model Financing {
+  id              String         @id @default(cuid())
+  companyId       String
+  company         Company        @relation(fields: [companyId], references: [id])
+  brokerId        String
+  broker          User           @relation("BrokerFinancings", fields: [brokerId], references: [id])
+  contactId       String?
+  contact         Contact?       @relation(fields: [contactId], references: [id])
+  propertyId      String?
+  property        Property?      @relation(fields: [propertyId], references: [id])
+  dealId          String?
+  deal            Deal?          @relation(fields: [dealId], references: [id])
+  stage           FinancingStage @default(SIMULACAO)
+  bank            String?        // Nome do banco
+  propertyValue   Decimal?       @db.Decimal(14, 2)
+  financedValue   Decimal?       @db.Decimal(14, 2)
+  downPayment     Decimal?       @db.Decimal(14, 2)
+  fgtsValue       Decimal?       @db.Decimal(14, 2)
+  monthlyPayment  Decimal?       @db.Decimal(12, 2)
+  term            Int?           // Prazo em meses
+  rate            Decimal?       @db.Decimal(5, 4) // Taxa de juros anual
+  notes           String?
+  simulatorLink   String?        // Link do simulador para o cliente
+  clientName      String?
+  clientPhone     String?
+  clientEmail     String?
+  completedAt     DateTime?
+  cancelledAt     DateTime?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  @@index([companyId])
+  @@index([brokerId])
+  @@index([stage])
+  @@index([createdAt])
+  @@map("financings")
+}
+
+// =============================================================================
+// ACTIVITIES (Timeline unificado)
+// =============================================================================
+
+model Activity {
+  id          String    @id @default(cuid())
+  companyId   String
+  userId      String?
+  user        User?     @relation(fields: [userId], references: [id])
+  contactId   String?
+  contact     Contact?  @relation(fields: [contactId], references: [id])
+  leadId      String?
+  lead        Lead?     @relation(fields: [leadId], references: [id])
+  dealId      String?
+  deal        Deal?     @relation(fields: [dealId], references: [id])
+  propertyId  String?
+  property    Property? @relation(fields: [propertyId], references: [id])
+  type        String    // "note", "call", "email", "visit", "whatsapp", "status_change", "system"
+  title       String
+  description String?
+  metadata    Json      @default("{}")
+  scheduledAt DateTime?
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([companyId])
+  @@index([userId])
+  @@index([contactId])
+  @@index([leadId])
+  @@index([dealId])
+  @@index([propertyId])
+  @@map("activities")
+}
+
+// =============================================================================
+// SYSTEM: API KEYS + AUDIT LOG
+// =============================================================================
+
+model ApiKey {
+  id          String   @id @default(cuid())
+  companyId   String
+  userId      String
+  name        String
+  keyHash     String   @unique
+  prefix      String   // first 8 chars for display
+  scopes      String[]
+  lastUsedAt  DateTime?
+  expiresAt   DateTime?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  @@index([companyId])
+  @@map("api_keys")
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  companyId   String?
+  userId      String?
+  action      String   // "user.login", "property.create", "deal.close", ...
+  resource    String?
+  resourceId  String?
+  ipAddress   String?
+  userAgent   String?
+  payload     Json     @default("{}")
+  createdAt   DateTime @default(now())
+
+  @@index([companyId])
+  @@index([userId])
+  @@index([action])
+  @@map("audit_logs")
+}
+
+// =============================================================================
+// LEMOS.CHAT — WhatsApp Omnichannel
+// =============================================================================
+
+model Conversation {
+  id            String    @id @default(cuid())
+  companyId     String
+  company       Company   @relation(fields: [companyId], references: [id])
+  phone         String                        // E.164 e.g. +5511999999999
+  contactName   String?
+  channel       String    @default("whatsapp") // "whatsapp", "email", "portal"
+  status        String    @default("bot")      // "bot", "open", "assigned", "resolved"
+  assignedToId  String?
+  assignedTo    User?     @relation(fields: [assignedToId], references: [id])
+  leadId        String?
+  lead          Lead?     @relation(fields: [leadId], references: [id])
+  contactId     String?
+  contact       Contact?  @relation(fields: [contactId], references: [id])
+  lastMessage   String?
+  lastMessageAt DateTime?
+  unreadCount   Int       @default(0)
+  botState      Json      @default("{}")       // current qualification flow state
+  metadata      Json      @default("{}")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  messages      Message[]
+
+  @@unique([companyId, phone])
+  @@index([companyId])
+  @@index([status])
+  @@index([assignedToId])
+  @@map("conversations")
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  whatsappId     String?      // WhatsApp message ID for dedup
+  direction      String       // "inbound", "outbound"
+  type           String       // "text", "audio", "image", "document", "template", "interactive"
+  content        String?
+  mediaUrl       String?
+  mediaKey       String?      // S3 key
+  status         String       @default("sent") // "sent", "delivered", "read", "failed"
+  sentBy         String?      // userId if human, "bot" if automated, null if inbound
+  metadata       Json         @default("{}")
+  createdAt      DateTime     @default(now())
+
+  @@index([conversationId])
+  @@index([whatsappId])
+  @@map("messages")
+}
+
+// =============================================================================
+// AI AGENTS
+// =============================================================================
+
+model AgentJob {
+  id          String    @id @default(cuid())
+  companyId   String
+  company     Company   @relation(fields: [companyId], references: [id])
+  type        String    // "pdf_extract", "audio_transcribe", "copywrite", "score_lead"
+  status      String    @default("pending") // "pending", "processing", "done", "failed"
+  input       Json      @default("{}")      // { url, propertyId, ... }
+  output      Json?                         // extracted data / generated text
+  errorMsg    String?
+  propertyId  String?
+  leadId      String?
+  dealId      String?
+  contactId   String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([companyId])
+  @@index([type, status])
+  @@index([propertyId])
+  @@index([leadId])
+  @@map("agent_jobs")
+}
+
+// =============================================================================
+// AUTOMATION ENGINE (Phase 4)
+// =============================================================================
+
+model AutomationRule {
+  id              String    @id @default(cuid())
+  companyId       String
+  company         Company   @relation(fields: [companyId], references: [id])
+  name            String
+  description     String?
+  trigger         String    // lead_created | lead_updated | deal_created | deal_status_changed | whatsapp_message | agent_job_done | schedule
+  conditions      Json      @default("[]")  // ConditionRule[]
+  actions         Json      @default("[]")  // ActionDef[]
+  isActive        Boolean   @default(true)
+  lastTriggeredAt DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  logs            AutomationLog[]
+
+  @@index([companyId])
+  @@index([trigger, isActive])
+  @@map("automation_rules")
+}
+
+model AutomationLog {
+  id          String   @id @default(cuid())
+  ruleId      String
+  rule        AutomationRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+  triggeredBy String
+  payload     Json     @default("{}")
+  status      String   @default("pending") // pending | running | done | failed
+  result      Json?
+  errorMsg    String?
+  createdAt   DateTime @default(now())
+
+  @@index([ruleId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("automation_logs")
+}
+
+// =============================================================================
+// LEMOSBANK: CLIENTES LEGADOS + CONTRATOS + FINANCEIRO
+// Migrado do sistema Visual FoxPro / planilhas XLS
+// =============================================================================
+
+enum ClientRole {
+  TENANT      // Inquilino
+  LANDLORD    // Proprietário
+  GUARANTOR   // Fiador
+  BENEFICIARY // Favorecido
+  SECONDARY   // Secundário
+}
+
+enum ContractStatus {
+  ACTIVE
+  FINISHED
+  CANCELED
+}
+
+enum RentalStatus {
+  PENDING
+  PAID
+  LATE
+}
+
+enum TransactionType {
+  INCOME
+  EXPENSE
+}
+
+model Client {
+  id                  String       @id @default(cuid())
+  companyId           String
+  company             Company      @relation(fields: [companyId], references: [id])
+  legacyId            String?      // row index or código legado
+  name                String
+  document            String?      // CPF ou CNPJ
+  rg                  String?
+  profession          String?
+  birthDate           DateTime?
+  email               String?
+  phone               String?
+  phoneMobile         String?
+  phoneWork           String?
+  address             String?
+  addressComplement   String?
+  neighborhood        String?
+  city                String?
+  state               String?
+  zipCode             String?
+  roles               ClientRole[]
+  notes               String?
+  // ── Dados complementares ─────────────────────────────────────────────────
+  maritalStatus       String?      // solteiro | casado | divorciado | viuvo | uniao_estavel
+  nationality         String?      // Brasileiro, Estrangeiro, etc.
+  spouseName          String?      // Nome do cônjuge
+  spouseDocument      String?      // CPF do cônjuge
+  spouseProfession    String?      // Profissão do cônjuge
+  income              Decimal?     @db.Decimal(12, 2)  // Renda mensal
+  spouseIncome        Decimal?     @db.Decimal(12, 2)  // Renda do cônjuge
+  bankName            String?      // Banco
+  bankBranch          String?      // Agência
+  bankAccount         String?      // Conta corrente
+  bankAccountType     String?      // corrente | poupanca
+  pixKey              String?      // Chave PIX
+  observations        String?      // Observações internas detalhadas
+  // ── Dados Uniloc/Univen complementares ────────────────────────────────────
+  sex                 String?      // M | F | OUTRO
+  education           String?      // fundamental | medio | superior | pos | mestrado | doutorado
+  cargo               String?      // Cargo/função na empresa
+  businessSector      String?      // Ramo de atividade
+  employerName        String?      // Empresa empregadora (para PJ ou PF com vínculo)
+  employerCnpj        String?      // CNPJ da empresa empregadora
+  employerAddress     String?      // Endereço da empresa empregadora
+  employerPhone       String?      // Telefone comercial da empresa empregadora
+  captorName          String?      // Captador/corretor que cadastrou
+  captorId            String?      // FK para User (corretor captador)
+  negotiationTemp     String?      // Termômetro: FRIO | MORNO | QUENTE | FECHADO
+  category            String?      // LANDLORD | TENANT | GUARANTOR | BENEFICIARY | BUYER | SELLER
+  // ── Documentos adicionais ──────────────────────────────────────────────────
+  rgIssuer            String?      // Órgão emissor do RG (SSP, DETRAN, etc.)
+  rgIssueDate         DateTime?    // Data de emissão do RG
+  rgState             String?      // Estado de emissão do RG
+  cnh                 String?      // CNH (Carteira de Motorista)
+  cnhCategory         String?      // Categoria da CNH (A, B, AB, etc.)
+  cnhExpiry           DateTime?    // Validade da CNH
+  passportNumber      String?      // Passaporte
+  passportExpiry      DateTime?    // Validade do passaporte
+  // ── Contato adicional ──────────────────────────────────────────────────────
+  phoneResidential    String?      // Telefone residencial
+  whatsapp            String?      // WhatsApp
+  instagram           String?      // @instagram
+  facebook            String?      // Facebook
+  website             String?      // Site pessoal/empresa
+  // ── Endereço de correspondência (se diferente do residencial) ──────────────
+  mailingAddress      String?      // Endereço de correspondência
+  mailingComplement   String?
+  mailingNeighborhood String?
+  mailingCity         String?
+  mailingState        String?
+  mailingZipCode      String?
+  // ── Dados bancários adicionais ─────────────────────────────────────────────
+  bankAgencyDigit     String?      // Dígito da agência
+  bankAccountDigit    String?      // Dígito da conta
+  bankAccountSecond   String?      // Segunda conta bancária
+  bankAccountSecondType String?    // Tipo da segunda conta
+  // ── Garantia ──────────────────────────────────────────────────────────────
+  guarantorType       String?      // FIADOR | CAUCAO | SEGURO_FIANCA | TITULO_CAPITALIZACAO
+  guarantorValue      Decimal?     @db.Decimal(12, 2)  // Valor da garantia (caução)
+  guarantorInsurance  String?      // Seguradora (seguro fiança)
+  guarantorPolicyNum  String?      // Número da apólice
+  guarantorExpiry     DateTime?    // Vencimento da garantia
+  // ── Preferências de busca (compradores/locatários) ─────────────────────────
+  searchType          String?      // COMPRA | LOCACAO | AMBOS
+  searchPropertyType  String[]     // Tipos de imóvel de interesse
+  searchMinPrice      Decimal?     @db.Decimal(12, 2)
+  searchMaxPrice      Decimal?     @db.Decimal(12, 2)
+  searchMinArea       Float?
+  searchMaxArea       Float?
+  searchBedrooms      Int?
+  searchNeighborhoods String[]     // Bairros de interesse
+  searchCities        String[]     // Cidades de interesse
+  searchNotes         String?      // Observações sobre a busca
+  // ── Controle interno ───────────────────────────────────────────────────────
+  lastContactAt       DateTime?    // Data do último contato
+  nextContactAt       DateTime?    // Data do próximo contato agendado
+  contactChannel      String?      // Canal preferido: WHATSAPP | EMAIL | TELEFONE | PRESENCIAL
+  rating              Int?         // Avaliação interna 1-5
+  tags                String[]     // Tags personalizadas
+  importSource        String?      // uniloc | univen | manual | portal
+  importedAt          DateTime?    // Data da importação
+  isArchived          Boolean      @default(false)  // Arquivo morto
+  archivedAt          DateTime?    // Data de arquivamento
+  archivedReason      String?      // Motivo do arquivamento
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
+
+  contractsAsLandlord  Contract[]        @relation("LandlordContracts")
+  contractsAsTenant    Contract[]        @relation("TenantContracts")
+  contractsAsGuarantor Contract[]        @relation("GuarantorContracts")
+  forecasts            FinancialForecast[]
+  documents            Document[]
+  ownedDocuments       Document[]        @relation("DocumentOwner")
+  legalCases           LegalCase[]
+  @@unique([companyId, document])
+  @@index([companyId])
+  @@index([name])
+  @@index([document])
+  @@map("clients")
+}
+
+model Contract {
+  id                String         @id @default(cuid())
+  companyId         String
+  company           Company        @relation(fields: [companyId], references: [id])
+  legacyId          String?        // c_codcon
+  legacyPropertyCode String?       // c_codimo
+  propertyAddress   String?        // i_endereco
+  iptuCode          String?        // i_num_iptu
+  propertyId        String?        // FK → properties.id (linked after import)
+  property          Property?      @relation(fields: [propertyId], references: [id])
+  landlordId        String?
+  landlord          Client?        @relation("LandlordContracts", fields: [landlordId], references: [id])
+  tenantId          String?
+  tenant            Client?        @relation("TenantContracts", fields: [tenantId], references: [id])
+  guarantorId       String?
+  guarantor         Client?        @relation("GuarantorContracts", fields: [guarantorId], references: [id])
+  landlordName      String?        // locador (desnormalizado p/ histórico)
+  tenantName        String?        // inquilino (desnormalizado)
+  startDate         DateTime?      // c_inicio
+  duration          Int?           // c_contra (meses)
+  rentValue         Decimal?       @db.Decimal(12, 2)  // c_valor
+  initialValue      Decimal?       @db.Decimal(12, 2)  // c_val_ini
+  commission        Decimal?       @db.Decimal(5, 2)   // c_comissao %
+  tenantDueDay      Int?           // c_venc_inq
+  landlordDueDay    Int?           // c_venc_pro
+  penalty           Decimal?       @db.Decimal(5, 2)   // c_multa %
+  adjustmentBase    Decimal?       @db.Decimal(5, 2)   // c_database %
+  adjustmentIndex   String?        // c_reajuste (IGPM, IPCA)
+  adjustmentPercent Decimal?       @db.Decimal(5, 2)   // reaj_perce
+  rescissionDate    DateTime?      // c_rescisao
+  unit              String?        // c_unidade
+  status            ContractStatus @default(ACTIVE)
+  isActive          Boolean        @default(true)
+  contractHtml      String?        @db.Text   // HTML do contrato gerado por IA
+  guaranteeType     String?        // fiador | caucao | seguro | titulo_capitalizacao
+  // ── Dados adicionais do contrato (Uniloc) ──────────────────────────────
+  endDate           DateTime?      // Data de término prevista
+  renewalDate       DateTime?      // Data de renovação
+  renewalCount      Int            @default(0)  // Número de renovações
+  lastAdjustmentDate DateTime?     // Data do último reajuste
+  nextAdjustmentDate DateTime?     // Data do próximo reajuste
+  // Valores adicionais
+  adminFee          Decimal?       @db.Decimal(5, 2)   // Taxa de administração %
+  adminFeeValue     Decimal?       @db.Decimal(12, 2)  // Valor da taxa adm (calculado)
+  insuranceValue    Decimal?       @db.Decimal(12, 2)  // Seguro incêndio
+  insuranceCompany  String?        // Seguradora
+  insurancePolicyNum String?       // Número da apólice de seguro
+  insuranceExpiry   DateTime?      // Vencimento do seguro
+  waterIncluded     Boolean        @default(false)  // Água incluída no aluguel
+  electricIncluded  Boolean        @default(false)  // Luz incluída no aluguel
+  condoIncluded     Boolean        @default(false)  // Condomínio incluído
+  iptuIncluded      Boolean        @default(false)  // IPTU incluído
+  // Vistoria
+  inspectionDate    DateTime?      // Data da vistoria de entrada
+  inspectionNotes   String?        @db.Text  // Observações da vistoria
+  exitInspectionDate DateTime?     // Data da vistoria de saída
+  exitInspectionNotes String?      @db.Text  // Observações da vistoria de saída
+  // Rescisão
+  rescissionReason  String?        // Motivo da rescisão
+  rescissionFine    Decimal?       @db.Decimal(12, 2)  // Multa de rescisão
+  rescissionRefund  Decimal?       @db.Decimal(12, 2)  // Devolução ao inquilino
+  // Reajuste
+  adjustmentMonth   Int?           // Mês do reajuste anual (1-12)
+  // Segundo fiador
+  guarantor2Id      String?        // Segundo fiador
+  guarantor2Name    String?        // Nome do segundo fiador (desnormalizado)
+  // Observações
+  internalNotes     String?        @db.Text  // Observações internas
+  // Boleto / cobrança
+  boletoMessage     String?        // Mensagem no boleto do inquilino
+  boletoInstructions String?       // Instruções do boleto
+  serviceLabel      String?        // Rótulo do serviço no boleto (ex: "Aluguel" ou nome personalizado)
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  rentals           Rental[]
+  invoices          Invoice[]
+  documents         Document[]
+  legalCases        LegalCase[]
+  history           ContractHistory[]
+  @@unique([companyId, legacyId])
+  @@index([companyId])
+  @@index([tenantId])
+  @@index([landlordId])
+  @@index([propertyId])
+  @@index([status])
+  @@map("contracts")
+}
+
+model Rental {
+  id              String       @id @default(cuid())
+  companyId       String
+  company         Company      @relation(fields: [companyId], references: [id])
+  legacyId        String?      // CODALUGUEL
+  contractId      String?
+  contract        Contract?    @relation(fields: [contractId], references: [id])
+  dueDate         DateTime?
+  rentAmount      Decimal?     @db.Decimal(12, 2)  // VLALUGUEL
+  condoAmount     Decimal?     @db.Decimal(12, 2)  // VLCOND
+  waterAmount     Decimal?     @db.Decimal(12, 2)  // VLAGUA
+  electricAmount  Decimal?     @db.Decimal(12, 2)  // VLLUZ
+  taxAmount       Decimal?     @db.Decimal(12, 2)  // VLTAXA
+  penaltyAmount   Decimal?     @db.Decimal(12, 2)  // VLMULTA
+  totalAmount     Decimal?     @db.Decimal(12, 2)
+  paidAmount      Decimal?     @db.Decimal(12, 2)  // VLPAGO
+  paymentDate     DateTime?                         // DTPAGTO
+  repassePaidAt   DateTime?                         // data em que o repasse foi pago ao proprietário
+  status          RentalStatus @default(PENDING)
+  // ── Campos adicionais (Uniloc) ───────────────────────────────────────────────
+  interestAmount  Decimal?     @db.Decimal(12, 2)  // Juros de mora
+  discountAmount  Decimal?     @db.Decimal(12, 2)  // Desconto concedido
+  insuranceAmount Decimal?     @db.Decimal(12, 2)  // Seguro incêndio
+  iptuAmount      Decimal?     @db.Decimal(12, 2)  // IPTU proporcional
+  otherAmount     Decimal?     @db.Decimal(12, 2)  // Outros encargos
+  otherDescription String?                         // Descrição de outros encargos
+  // Boleto
+  boletoId        String?      // ID do boleto gerado (Invoice.id)
+  boletoNumber    String?      // Número do boleto
+  boletoUrl       String?      // URL do boleto PDF
+  boletoPixCode   String?      // Código PIX do boleto
+  boletoEmittedAt DateTime?    // Data de emissão do boleto
+  // Baixa manual
+  receivedBy      String?      // Quem registrou a baixa (userId)
+  receivedByName  String?      // Nome de quem registrou a baixa
+  paymentMethod   String?      // BOLETO | PIX | DINHEIRO | TRANSFERENCIA | CHEQUE | CARTAO
+  paymentBank     String?      // Banco do pagamento
+  paymentRef      String?      // Referência do pagamento (número cheque, TED, etc.)
+  // Estorno
+  reversedAt      DateTime?    // Data do estorno
+  reversedBy      String?      // Quem fez o estorno
+  reversalReason  String?      // Motivo do estorno
+  // Repasse ao proprietário
+  repasValue      Decimal?     @db.Decimal(12, 2)  // Valor líquido do repasse
+  repasMethod     String?      // Método do repasse (TED, PIX, etc.)
+  repasRef        String?      // Referência do repasse
+   // Campos extras de cobrança
+  bankFeeAmount   Decimal?     @db.Decimal(12, 2)  // Taxa bancária
+  adminFeeAmount  Decimal?     @db.Decimal(12, 2)  // Taxa de administração
+  iptuParcela     String?      // Parcela IPTU (ex: "1/10")
+  // Observações
+  notes           String?      // Observações da cobrança
+  internalNotes   String?      // Notas internas
+  competenceMonth Int?         // Mês de competência (1-12)
+  competenceYear  Int?         // Ano de competência
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @default(now()) @updatedAt
+  @@index([companyId])
+  @@index([contractId])
+  @@index([status])
+  @@index([dueDate])
+  @@map("rentals")
+}
+
+model Transaction {
+  id              String          @id @default(cuid())
+  companyId       String
+  company         Company         @relation(fields: [companyId], references: [id])
+  legacyId        String?         // CODCAIXA
+  transactionDate DateTime
+  amount          Decimal         @db.Decimal(12, 2)
+  type            TransactionType
+  description     String?         // HISTORICO
+  category        String?
+  contractId      String?
+  createdAt       DateTime        @default(now())
+
+  @@index([companyId])
+  @@index([transactionDate])
+  @@index([type])
+  @@map("transactions")
+}
+
+model FinancialForecast {
+  id               String    @id @default(cuid())
+  companyId        String
+  company          Company   @relation(fields: [companyId], references: [id])
+  legacyId         String?
+  dueDate          DateTime
+  amount           Decimal   @db.Decimal(12, 2)
+  fee              Decimal?  @db.Decimal(12, 2)
+  tenantName       String?
+  tenantId         String?
+  tenant           Client?   @relation(fields: [tenantId], references: [id])
+  propertyAddress  String?
+  landlordName     String?
+  month            Int
+  year             Int
+  source           String    @default("forecast") // "forecast" | "realized"
+  // Campos extras para importação das planilhas mensais
+  clienteNome      String?
+  proprietarioNome String?
+  endereco         String?
+  valorAluguel     Decimal?  @db.Decimal(12, 2)
+  taxaAdm          Decimal?  @db.Decimal(12, 2)
+  parcela          String?
+  valorRepasse     Decimal?  @db.Decimal(12, 2)
+  numeroBoleto     String?
+  valorIptu        Decimal?  @db.Decimal(12, 2)
+  forecastStatus   String    @default("PREVISTO") // PREVISTO | RECEBIDO | ATRASADO
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@index([companyId])
+  @@index([year, month])
+  @@index([dueDate])
+  @@map("financial_forecasts")
+}
+
+// ── NF-e / Notas Fiscais de Serviço ───────────────────────────────────────
+
+enum FiscalNoteStatus {
+  DRAFT
+  ISSUED
+  SENT
+  RECEIVED
+  CANCELLED
+  ERROR
+}
+
+model FiscalNote {
+  id                   String           @id @default(cuid())
+  companyId            String
+  company              Company          @relation(fields: [companyId], references: [id])
+  landlordId           String?
+  landlordName         String
+  landlordCpf          String
+  landlordEmail        String?
+  landlordPhone        String?
+  landlordAddress      String?
+  propertyId           String?
+  propertyAddress      String?
+  rentalId             String?
+  rentalMonth          Int
+  rentalYear           Int
+  rentalValue          Decimal          @db.Decimal(12, 2)
+  serviceFeePercentage Decimal          @db.Decimal(5, 2)
+  serviceFeeValue      Decimal          @db.Decimal(12, 2)
+  serviceDescription   String           @default("Prestação de serviços de administração e intermediação imobiliária")
+  invoiceNumber        String?
+  invoiceSeries        String?          @default("UN")
+  issueDate            DateTime         @default(now())
+  nfeNumber            String?
+  nfeKey               String?
+  nfeXml               String?          @db.Text
+  // Asaas NFS-e integration
+  asaasNfeId           String?          // ID da NFS-e no Asaas
+  asaasNfeStatus       String?          // Status no Asaas (AUTHORIZED, CANCELLED, ERROR)
+  asaasNfePdfUrl       String?          // URL do PDF da NFS-e
+  status               FiscalNoteStatus @default(DRAFT)
+  createdById          String?
+  createdAt            DateTime         @default(now())
+  updatedAt            DateTime         @updatedAt
+  logs                 FiscalNoteLog[]
+
+  @@unique([rentalId, rentalMonth, rentalYear])
+  @@index([companyId])
+  @@index([landlordId])
+  @@index([status])
+  @@index([rentalMonth, rentalYear])
+  @@map("fiscal_notes")
+}
+
+model FiscalNoteLog {
+  id          String     @id @default(cuid())
+  noteId      String
+  note        FiscalNote @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  action      String
+  oldStatus   String?
+  newStatus   String?
+  details     Json?
+  createdById String?
+  createdAt   DateTime   @default(now())
+
+  @@index([noteId])
+  @@map("fiscal_note_logs")
+}
+
+// ── Asaas Boletos (legado) ─────────────────────────────────────────────────
+
+model Invoice {
+  id              String        @id @default(cuid())
+  companyId       String
+  company         Company       @relation(fields: [companyId], references: [id])
+  legacyId        String?       // U_MOVIME do BOLETOS.DBF
+  contractId      String?
+  contract        Contract?     @relation(fields: [contractId], references: [id])
+  // Legacy fields from BOLETOS.DBF
+  legacyContractCode String?    // U_CODCON
+  legacyTenantCode   String?    // U_CODINQ
+  cedente         String?       // U_CEDENTE (IMOBILIARIA LEMOS)
+  numBoleto       String?       // U_NUMBOL
+  banco           String?       // U_BANCO / U_NBANCO
+  carteira        String?       // U_CARTEIRA
+  codigoBarras    String?       // U_NCODBAR
+  linhaDigitavel  String?       // U_LINHADIG
+  nossoNumero     String?       // U_NOSSONUM
+  issueDate       DateTime?     // U_DATADOC
+  dueDate         DateTime?     // U_VENCTO
+  amount          Decimal?      @db.Decimal(12, 2)  // U_VALOR
+  mensagem        String?       // U_MENSAGEM
+  instrucoes      String?       // U_INSTRUCO
+  // Asaas integration
+  asaasId         String?       // ID retornado pela API Asaas
+  asaasStatus     String?       // PENDING | RECEIVED | CONFIRMED | OVERDUE | REFUNDED
+  asaasBankSlipUrl String?      // URL do boleto gerado pelo Asaas
+  asaasPixCode    String?       // Código PIX Copia e Cola
+  // ── Dados completos de emissão ─────────────────────────────────────────────
+  rentalId        String?       // FK para Rental (cobrança de aluguel)
+  tenantId        String?       // FK para Client (inquilino)
+  tenantName      String?       // Nome do inquilino (desnormalizado)
+  propertyId      String?       // FK para Property
+  propertyAddress String?       // Endereço do imóvel (desnormalizado)
+  competenceMonth Int?          // Mês de competência
+  competenceYear  Int?          // Ano de competência
+  description     String?       // Descrição do boleto
+  // Valores detalhados
+  rentAmount      Decimal?      @db.Decimal(12, 2)  // Valor do aluguel
+  condoAmount     Decimal?      @db.Decimal(12, 2)  // Condomínio
+  waterAmount     Decimal?      @db.Decimal(12, 2)  // Água
+  electricAmount  Decimal?      @db.Decimal(12, 2)  // Luz
+  iptuAmount      Decimal?      @db.Decimal(12, 2)  // IPTU
+  insuranceAmount Decimal?      @db.Decimal(12, 2)  // Seguro incêndio
+  interestAmount  Decimal?      @db.Decimal(12, 2)  // Juros de mora
+  penaltyAmount   Decimal?      @db.Decimal(12, 2)  // Multa
+  discountAmount  Decimal?      @db.Decimal(12, 2)  // Desconto
+  otherAmount     Decimal?      @db.Decimal(12, 2)  // Outros
+  otherDescription String?      // Descrição de outros
+  // Baixa
+  paidAmount      Decimal?      @db.Decimal(12, 2)  // Valor pago
+  paidAt          DateTime?     // Data do pagamento
+  paidBy          String?       // Quem registrou a baixa (userId)
+  paidByName      String?       // Nome de quem registrou
+  paymentMethod   String?       // BOLETO | PIX | DINHEIRO | TRANSFERENCIA | CHEQUE | CARTAO
+  paymentBank     String?       // Banco do pagamento
+  paymentRef      String?       // Referência do pagamento
+  // Estorno
+  reversedAt      DateTime?     // Data do estorno
+  reversedBy      String?       // Quem fez o estorno
+  reversalReason  String?       // Motivo do estorno
+  // Repasse
+  repasValue      Decimal?      @db.Decimal(12, 2)  // Valor líquido do repasse ao proprietário
+  repasAt         DateTime?     // Data do repasse
+  repasMethod     String?       // Método do repasse
+  repasRef        String?       // Referência do repasse
+  // Status interno
+  status          String        @default("PENDING")  // PENDING | EMITTED | PAID | OVERDUE | REVERSED | CANCELLED
+  emittedAt       DateTime?     // Data de emissão do boleto
+  emittedBy       String?       // Quem emitiu
+  notes           String?       // Observações
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([companyId])
+  @@index([contractId])
+  @@index([dueDate])
+  @@index([asaasId])
+  @@index([status])
+  @@index([tenantId])
+  @@map("invoices")
+}
+
+
+// ── IA Visual Jobs ─────────────────────────────────────────────────────────
+
+model VisualAIJob {
+  id          String    @id @default(cuid())
+  companyId   String
+  company     Company   @relation(fields: [companyId], references: [id])
+  propertyId  String
+  property    Property  @relation(fields: [propertyId], references: [id])
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  tipo        String    // render | staging | enhance_batch
+  status      String    @default("PENDING") // PENDING | PROCESSING | DONE | ERROR
+  inputUrl    String
+  outputUrl   String?
+  style       String?
+  errorMsg    String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([companyId])
+  @@index([propertyId])
+  @@index([status])
+  @@map("visual_ai_jobs")
+}
+
+// ── Marketing Campanhas ────────────────────────────────────────────────────
+
+model MarketingCampaign {
+  id            String    @id @default(cuid())
+  companyId     String
+  company       Company   @relation(fields: [companyId], references: [id])
+  nome          String
+  tipo          String    // email | whatsapp
+  segmento      String    // todos_clientes | proprietarios | inquilinos | leads_frios | custom
+  mensagem      String    @db.Text
+  status        String    @default("DRAFT") // DRAFT | SCHEDULED | SENDING | SENT | CANCELLED
+  agendadoPara  DateTime?
+  totalEnviados Int       @default(0)
+  totalAbertos  Int       @default(0)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([companyId])
+  @@index([status])
+  @@map("marketing_campaigns")
+}
+
+// ── Blog Posts ─────────────────────────────────────────────────────────────
+
+model BlogPost {
+  id          String   @id @default(cuid())
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id])
+
+  title       String
+  slug        String
+  excerpt     String?  @db.Text
+  content     String   @db.Text
+  coverImage  String?
+
+  // SEO
+  seoTitle       String?
+  seoDescription String?
+  seoKeywords    String?  // comma-separated
+
+  // Organization
+  category    String?  // imoveis, financiamento, mercado, dicas, noticias, legislacao
+  tags        String?  // comma-separated
+
+  // Source (for auto-imported news)
+  source      String?  // e.g. "CNN Brasil", "Valor Econômico"
+  sourceUrl   String?
+  isAutoImported Boolean @default(false)
+
+  // Status
+  published   Boolean  @default(false)
+  publishedAt DateTime?
+  featured    Boolean  @default(false)
+
+  // Author
+  authorName  String   @default("Equipe Imobiliária Lemos")
+
+  views       Int      @default(0)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([companyId, slug])
+  @@index([companyId, published, publishedAt])
+  @@map("blog_posts")
+}
+
+// =============================================================================
+// DOCUMENTS (Locação: boletos, extratos, reajustes, contratos físicos)
+// =============================================================================
+
+model Document {
+  id           String    @id @default(cuid())
+  companyId    String
+  company      Company   @relation(fields: [companyId], references: [id])
+  contractId   String?
+  contract     Contract? @relation(fields: [contractId], references: [id])
+  propertyId   String?
+  property     Property? @relation(fields: [propertyId], references: [id])
+  clientId     String?   // owner or tenant
+  client       Client?   @relation(fields: [clientId], references: [id])
+  ownerId      String?   // proprietário do imóvel (para boletos/extratos de proprietário)
+  owner        Client?   @relation("DocumentOwner", fields: [ownerId], references: [id])
+  legalCaseId  String?   // vínculo direto ao processo jurídico
+  legalCase    LegalCase? @relation(fields: [legalCaseId], references: [id])
+  uploadedBy   String?   // user id
+  user         User?     @relation(fields: [uploadedBy], references: [id])
+
+  type         String    // BOLETO | EXTRATO | REAJUSTE | FINANCEIRO | CONTRATO | JURIDICO | OUTROS
+  category     String?
+  name         String
+  month        String?   // stored as text (e.g. "04.2026", "MARÇO", or numeric month)
+  year         Int?
+  fileData     Bytes?
+  mimeType     String?
+  fileSize     Int?
+  legacyRef    String?   // original folder/filename ref for matching
+  metadata     Json      @default("{}")
+
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([companyId])
+  @@index([contractId])
+  @@index([propertyId])
+  @@index([clientId])
+  @@index([ownerId])
+  @@index([legalCaseId])
+  @@map("documents")
+}
+
+// ── Módulo Jurídico ───────────────────────────────────────────────────────────
+
+model LegalCase {
+  id            String    @id @default(cuid())
+  companyId     String
+  company       Company   @relation(fields: [companyId], references: [id])
+
+  caseNumber    String?
+  title         String
+  type          String    // DESPEJO | COBRANCA | REVISIONAL | RESCISAO | DANO | OUTROS
+  status        String    @default("ATIVO")
+
+  plaintiffName String?
+  defendantName String?
+  lawyerName    String?
+  lawyerOab     String?
+  lawyerPhone   String?
+  lawyerEmail   String?
+
+  court         String?
+  courtSection  String?
+  courtCity     String?
+
+  openedAt      DateTime?
+  closedAt      DateTime?
+  nextHearingAt DateTime?
+
+  claimedValue  Float?
+  settledValue  Float?
+  courtCosts    Float?
+
+  contractId    String?
+  contract      Contract? @relation(fields: [contractId], references: [id])
+  clientId      String?
+  client        Client?   @relation(fields: [clientId], references: [id])
+  propertyId    String?
+  property      Property? @relation(fields: [propertyId], references: [id])
+
+  observations  String?   @db.Text
+  internalNotes String?   @db.Text
+  priority      String    @default("NORMAL")
+  tags          String[]  @default([])
+  metadata      Json      @default("{}")
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  updates       LegalCaseUpdate[]
+  documents     Document[]
+
+  @@index([companyId])
+  @@index([contractId])
+  @@index([clientId])
+  @@index([propertyId])
+  @@index([status])
+  @@index([type])
+  @@map("legal_cases")
+}
+
+model LegalCaseUpdate {
+  id          String    @id @default(cuid())
+  caseId      String
+  case        LegalCase @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  companyId   String
+
+  date        DateTime  @default(now())
+  description String    @db.Text
+  type        String    @default("ANDAMENTO")
+
+  userId      String?
+  userName    String?
+
+  createdAt   DateTime  @default(now())
+
+  @@index([caseId])
+  @@index([companyId])
+  @@map("legal_case_updates")
+}
+
+// ── Alertas de Imóveis (notificações para interessados) ──────────────────────
+model PropertyAlert {
+  id        String   @id @default(cuid())
+  email     String
+  city      String?
+  type      String?  // HOUSE, APARTMENT, etc.
+  purpose   String?  // SALE, RENT
+  minPrice  Decimal? @db.Decimal(12, 2)
+  maxPrice  Decimal? @db.Decimal(12, 2)
+  bedrooms  Int?
+  token     String?  @unique @default(cuid())  // token para cancelar alerta
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([email])
+  @@index([city])
+  @@map("property_alerts")
+}
+
+// ── Histórico de Contratos (reajustes, renovações, alterações) ───────────────
+model ContractHistory {
+  id          String   @id @default(cuid())
+  companyId   String
+  contractId  String
+  contract    Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  action      String   // REAJUSTE | RENOVACAO | RESCISAO | ALTERACAO | CRIACAO
+  description String?  @db.Text
+  field       String?  // campo alterado
+  oldValue    String?  // valor anterior
+  newValue    String?  // novo valor
+  userId      String?
+  userName    String?
+  metadata    Json     @default("{}")
+  createdAt   DateTime @default(now())
+
+  @@index([contractId])
+  @@index([companyId])
+  @@map("contract_history")
+}
+
+// ======================================================================
+enum AuctionSource {
+  CAIXA
+  BANCO_DO_BRASIL
+  BRADESCO
+  ITAU
+  SANTANDER
+  LEILOEIRO
+  JUDICIAL
+  EXTRAJUDICIAL
+  MANUAL
+}
+
+enum AuctionStatus {
+  UPCOMING       // Próximo
+  OPEN           // Aberto para lances
+  FIRST_ROUND    // 1ª Praça
+  SECOND_ROUND   // 2ª Praça
+  SOLD           // Arrematado
+  DESERTED       // Deserto (sem lances)
+  SUSPENDED      // Suspenso
+  CANCELLED      // Cancelado
+  CLOSED         // Encerrado
+}
+
+enum AuctionModality {
+  ONLINE         // Leilão online
+  PRESENTIAL     // Leilão presencial
+  HYBRID         // Online + presencial
+  DIRECT_SALE    // Venda direta (bancos)
+}
+
+model Auction {
+  id                  String          @id @default(cuid())
+  companyId           String?
+  company             Company?        @relation(fields: [companyId], references: [id])
+
+  // Identificação
+  externalId          String?         // ID da fonte original
+  source              AuctionSource   @default(LEILOEIRO)
+  sourceUrl           String?         // URL original do leilão
+  auctioneerName      String?         // Nome do leiloeiro
+  auctioneerUrl       String?         // Site do leiloeiro
+  auctioneerCnpj      String?
+  auctioneerJucesp    String?         // Registro Junta Comercial
+
+  // Status
+  status              AuctionStatus   @default(UPCOMING)
+  modality            AuctionModality @default(ONLINE)
+
+  // Imóvel
+  title               String
+  slug                String          @unique
+  description         String?         @db.Text
+  propertyType        PropertyType    @default(HOUSE)
+  category            PropertyCategory @default(RESIDENTIAL)
+
+  // Localização
+  street              String?
+  number              String?
+  complement          String?
+  neighborhood        String?
+  city                String?
+  state               String?
+  zipCode             String?
+  latitude            Float?
+  longitude           Float?
+
+  // Áreas
+  totalArea           Float?
+  builtArea           Float?
+  landArea            Float?
+  bedrooms            Int             @default(0)
+  bathrooms           Int             @default(0)
+  parkingSpaces       Int             @default(0)
+
+  // Valores
+  appraisalValue      Decimal?        @db.Decimal(14, 2) // Valor de avaliação
+  minimumBid          Decimal?        @db.Decimal(14, 2) // Lance mínimo
+  firstRoundBid       Decimal?        @db.Decimal(14, 2) // Lance 1ª praça
+  secondRoundBid      Decimal?        @db.Decimal(14, 2) // Lance 2ª praça
+  currentBid          Decimal?        @db.Decimal(14, 2) // Lance atual
+  soldValue           Decimal?        @db.Decimal(14, 2) // Valor arrematado
+  discountPercent     Float?          // % desconto sobre avaliação
+
+  // Custos estimados
+  itbiEstimate        Decimal?        @db.Decimal(12, 2)
+  registryEstimate    Decimal?        @db.Decimal(12, 2)
+  lawyerEstimate      Decimal?        @db.Decimal(12, 2)
+  evictionEstimate    Decimal?        @db.Decimal(12, 2)
+
+  // Datas
+  firstRoundDate      DateTime?
+  secondRoundDate     DateTime?
+  auctionDate         DateTime?       // Data principal do leilão
+  auctionEndDate      DateTime?       // Data fim (online)
+  visitDate           DateTime?
+
+  // Detalhes jurídicos
+  processNumber       String?         // Nº processo judicial
+  court               String?         // Vara/Foro
+  judge               String?
+  registryNumber      String?         // Matrícula
+  registryOffice      String?         // Cartório
+  debtorName          String?
+  creditorName        String?
+  occupation          String?         // OCUPADO | DESOCUPADO | DESCONHECIDO
+  hasDebts            Boolean?        // Dívidas pendentes (IPTU, condomínio)
+  debtDetails         String?         @db.Text
+  restrictions        String?         @db.Text // Ônus, gravames
+  editalUrl           String?         // URL do edital
+
+  // Banco (para leilões de bancos)
+  bankName            String?
+  bankBranch          String?
+  financingAvailable  Boolean         @default(false)
+  fgtsAllowed         Boolean         @default(false)
+
+  // Mídia
+  coverImage          String?
+  images              String[]
+  documentsUrls       String[]        // Links para editais, laudos
+
+  // Score de oportunidade (calculado pela IA)
+  opportunityScore    Int?            // 0-100
+  estimatedROI        Float?          // ROI estimado %
+  marketPriceEstimate Decimal?        @db.Decimal(14, 2)
+  pricePerM2          Decimal?        @db.Decimal(10, 2)
+
+  // Metadata
+  features            String[]
+  tags                String[]        @default([])
+  metadata            Json            @default("{}")
+
+  // Scraper tracking
+  lastScrapedAt       DateTime?
+  scrapedHash         String?         // Hash para detectar mudanças
+  isVerified          Boolean         @default(false)
+
+  // Analytics
+  views               Int             @default(0)
+  favorites           Int             @default(0)
+  alertsSent          Int             @default(0)
+
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+
+  bids                AuctionBid[]
+  alerts              AuctionAlert[]
+  analyses            AuctionAnalysis[]
+
+  @@index([source])
+  @@index([status])
+  @@index([city, state])
+  @@index([propertyType])
+  @@index([auctionDate])
+  @@index([minimumBid])
+  @@index([discountPercent])
+  @@index([opportunityScore])
+  @@index([slug])
+  @@index([externalId, source])
+  @@map("auctions")
+}
+
+model AuctionBid {
+  id          String   @id @default(cuid())
+  auctionId   String
+  auction     Auction  @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+  round       Int      @default(1) // 1ª ou 2ª praça
+  bidValue    Decimal  @db.Decimal(14, 2)
+  bidderName  String?
+  bidderCpf   String?
+  bidDate     DateTime @default(now())
+  isWinning   Boolean  @default(false)
+  metadata    Json     @default("{}")
+
+  @@index([auctionId])
+  @@map("auction_bids")
+}
+
+model AuctionAlert {
+  id            String   @id @default(cuid())
+  email         String?
+  phone         String?  // WhatsApp
+  userId        String?
+
+  // Filtros do alerta
+  city          String?
+  state         String?
+  propertyType  String?
+  minDiscount   Float?   // % mínimo de desconto
+  maxPrice      Decimal? @db.Decimal(14, 2)
+  minScore      Int?     // Score mínimo de oportunidade
+  source        String?  // CAIXA, JUDICIAL, etc
+  keywords      String[] @default([])
+
+  // Controle
+  active        Boolean  @default(true)
+  token         String?  @unique @default(cuid())
+  lastSentAt    DateTime?
+  sentCount     Int      @default(0)
+  frequency     String   @default("DAILY") // INSTANT | DAILY | WEEKLY
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  auctionId     String?
+  auction       Auction? @relation(fields: [auctionId], references: [id])
+
+  @@index([email])
+  @@index([phone])
+  @@index([city])
+  @@index([active])
+  @@map("auction_alerts")
+}
+
+model AuctionAnalysis {
+  id              String   @id @default(cuid())
+  auctionId       String
+  auction         Auction  @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+
+  // Análise financeira
+  totalCost       Decimal? @db.Decimal(14, 2) // Lance + custos
+  marketValue     Decimal? @db.Decimal(14, 2) // Valor estimado mercado
+  potentialProfit Decimal? @db.Decimal(14, 2) // Lucro potencial
+  roiPercent      Float?
+  paybackMonths   Int?     // Meses para recuperar investimento
+
+  // Custos detalhados
+  bidValue        Decimal? @db.Decimal(14, 2)
+  itbiValue       Decimal? @db.Decimal(12, 2)
+  registryValue   Decimal? @db.Decimal(12, 2)
+  lawyerValue     Decimal? @db.Decimal(12, 2)
+  reformValue     Decimal? @db.Decimal(12, 2)
+  evictionValue   Decimal? @db.Decimal(12, 2)
+  otherCosts      Decimal? @db.Decimal(12, 2)
+
+  // Score IA
+  score           Int?     // 0-100
+  riskLevel       String?  // LOW | MEDIUM | HIGH
+  recommendation  String?  @db.Text // Recomendação da IA
+  aiModel         String?  // Modelo usado
+
+  createdAt       DateTime @default(now())
+
+  @@index([auctionId])
+  @@map("auction_analyses")
+}
+
+// Controle dos scrapers — qual fonte foi atualizada quando
+model ScraperRun {
+  id            String   @id @default(cuid())
+  source        String   // CAIXA, LEILOEIRO_xxx, etc
+  sourceUrl     String?
+  status        String   @default("RUNNING") // RUNNING | SUCCESS | FAILED | PARTIAL
+  startedAt     DateTime @default(now())
+  finishedAt    DateTime?
+  itemsFound    Int      @default(0)
+  itemsCreated  Int      @default(0)
+  itemsUpdated  Int      @default(0)
+  itemsRemoved  Int      @default(0)
+  errorMessage  String?  @db.Text
+  metadata      Json     @default("{}")
+
+  @@index([source])
+  @@index([status])
+  @@index([startedAt])
+  @@map("scraper_runs")
+}
+
+// ─── ESPECIALISTAS / PARCEIROS PROFISSIONAIS ────────────────────────────────
+
+enum SpecialistCategory {
+  ARQUITETO
+  ENGENHEIRO
+  CORRETOR
+  AVALIADOR
+  DESIGNER_INTERIORES
+  FOTOGRAFO
+  VIDEOMAKER
+  ADVOGADO_IMOBILIARIO
+  DESPACHANTE
+  OUTRO
+}
+
+enum SpecialistStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+}
+
+model Specialist {
+  id                 String             @id @default(cuid())
+  slug               String             @unique
+  name               String
+  email              String             @unique
+  phone              String?
+  whatsapp           String?
+  category           SpecialistCategory
+  bio                String?            @db.Text
+  city               String             @default("Franca")
+  state              String             @default("SP")
+  crea               String?
+  instagram          String?
+  website            String?
+  photoUrl           String?
+  status             SpecialistStatus   @default(PENDING)
+  tags               String[]
+  buildings          SpecialistBuilding[]
+  welcomeEmailSentAt DateTime?
+
+  // Pagamentos Asaas
+  cpfCnpj            String?
+  plan               SpecialistPlan     @default(START)
+  planStatus         String?            @default("FREE")
+  planActivatedAt    DateTime?
+  planExpiresAt      DateTime?
+  asaasCustomerId    String?
+  asaasSubscriptionId String?
+
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  @@index([status])
+  @@index([category])
+  @@index([city, state])
+  @@index([plan])
+  @@map("specialists")
+}
+
+enum SpecialistPlan {
+  START
+  PRIME
+  VIP
+}
+
+model Building {
+  id           String   @id @default(cuid())
+  slug         String   @unique
+  name         String
+  city         String   @default("Franca")
+  state        String   @default("SP")
+  neighborhood String?
+  address      String?
+  floors       Int?
+  units        Int?
+  yearBuilt    Int?
+  description  String?  @db.Text
+  specialists  SpecialistBuilding[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([city, state])
+  @@index([neighborhood])
+  @@map("buildings")
+}
+
+model SpecialistBuilding {
+  id           String     @id @default(cuid())
+  specialist   Specialist @relation(fields: [specialistId], references: [id], onDelete: Cascade)
+  specialistId String
+  building     Building   @relation(fields: [buildingId], references: [id], onDelete: Cascade)
+  buildingId   String
+  projectType  String?
+  year         Int?
+  createdAt    DateTime   @default(now())
+
+  @@unique([specialistId, buildingId])
+  @@index([specialistId])
+  @@index([buildingId])
+  @@map("specialist_buildings")
+}

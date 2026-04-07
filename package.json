@@ -1,0 +1,43 @@
+{
+  "name": "agoraencontrei",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "pnpm --parallel --filter './apps/*' dev",
+    "build": "pnpm --filter './packages/*' build && pnpm --filter './apps/*' build",
+    "db:generate": "pnpm --filter @agoraencontrei/database generate",
+    "db:migrate": "pnpm --filter @agoraencontrei/database migrate:dev",
+    "db:push": "pnpm --filter @agoraencontrei/database push",
+    "db:seed": "pnpm --filter @agoraencontrei/database seed",
+    "db:studio": "pnpm --filter @agoraencontrei/database studio",
+    "lint": "pnpm --parallel --filter './apps/*' lint",
+    "typecheck": "pnpm --parallel --filter './apps/*' typecheck",
+    "scrape:caixa": "npx tsx scripts/scrape-caixa.ts",
+    "scrape:all": "npx tsx scripts/scrape-caixa.ts"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "packageManager": "pnpm@10.0.0",
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@prisma/client",
+      "@prisma/engines",
+      "argon2",
+      "esbuild",
+      "prisma",
+      "unrs-resolver",
+      "msgpackr-extract"
+    ]
+  },
+  "pnpm": {
+    "overrides": {
+      "fast-jwt": ">=6.1.0"
+    }
+  }
+}

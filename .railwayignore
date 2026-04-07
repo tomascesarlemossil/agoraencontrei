@@ -1,0 +1,11 @@
+node_modules/
+.next/
+.vercel/
+dist/
+build/
+.turbo/
+*.log
+.DS_Store
+apps/web/node_modules/
+apps/web/.next/
+packages/database/node_modules/
