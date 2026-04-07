@@ -78,6 +78,18 @@ export default async function seoProgramaticoRoutes(app: FastifyInstance) {
     `CREATE INDEX IF NOT EXISTS idx_seo_paginas_cidade ON seo_paginas(cidade_id)`,
     `CREATE INDEX IF NOT EXISTS idx_seo_paginas_keyword ON seo_paginas(keyword_id)`,
     `CREATE INDEX IF NOT EXISTS idx_seo_keywords_categoria ON seo_keywords(categoria)`,
+    // ── Migration: colunas para 1M URLs (PR #41) ─────────────────────────
+    `ALTER TABLE seo_paginas ADD COLUMN IF NOT EXISTS conteudo_ai TEXT`,
+    `ALTER TABLE seo_paginas ADD COLUMN IF NOT EXISTS familia_url VARCHAR(100)`,
+    `ALTER TABLE seo_paginas ADD COLUMN IF NOT EXISTS estado_slug VARCHAR(10)`,
+    `ALTER TABLE seo_paginas ADD COLUMN IF NOT EXISTS cidade_slug VARCHAR(100)`,
+    `ALTER TABLE seo_paginas ADD COLUMN IF NOT EXISTS cluster_slug VARCHAR(100)`,
+    `ALTER TABLE seo_paginas ADD COLUMN IF NOT EXISTS modificador_slug VARCHAR(100)`,
+    `ALTER TABLE seo_paginas ADD COLUMN IF NOT EXISTS prioridade SMALLINT DEFAULT 5`,
+    `ALTER TABLE seo_paginas ADD COLUMN IF NOT EXISTS indexar BOOLEAN DEFAULT TRUE`,
+    `CREATE INDEX IF NOT EXISTS idx_seo_paginas_familia ON seo_paginas(familia_url)`,
+    `CREATE INDEX IF NOT EXISTS idx_seo_paginas_estado_slug ON seo_paginas(estado_slug)`,
+    `CREATE INDEX IF NOT EXISTS idx_seo_paginas_prioridade ON seo_paginas(prioridade)`,
   ]
 
   for (const sql of seoMigrations) {

@@ -1,257 +1,335 @@
-import type { Metadata } from 'next'
+/**
+ * Rota: /{estado}/{cidade}/{cluster}
+ * Página de cluster específico (ex: /sp/franca/imoveis-a-venda)
+ * Cobre: money pages, bairros, materiais/acabamentos
+ * ISR: revalidate 86400
+ */
+import { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { MapPin, Home, Search, MessageCircle, ArrowRight } from 'lucide-react'
-import { IBGE_CITIES_MAP, IBGE_CITIES_ARRAY, type IBGECityData } from '@/data/seo-ibge-cities'
-import { CLUSTERS_MAP, ALL_CLUSTERS } from '@/data/seo-clusters'
+import { MapPin, Home, Search, ChevronRight } from 'lucide-react'
+import { IBGE_CITY_BY_SLUG, IBGE_CITIES_152, getIbgeCitySnippet } from '@/data/seo-ibge-cities-expanded'
 
-const WEB_URL = 'https://www.agoraencontrei.com.br'
+const WEB_URL = process.env.NEXT_PUBLIC_WEB_URL || 'https://agoraencontrei.com.br'
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.agoraencontrei.com.br'
 
-export const revalidate = 86400
-
-function findCity(estado: string, cidade: string): IBGECityData | undefined {
-  return IBGE_CITIES_MAP[`${cidade}-${estado}`]
+// Mapeamento de cluster-slug para metadados
+const CLUSTER_META: Record<string, { title: string; h1: string; desc: string; schema: string; icon: string }> = {
+  'imoveis-a-venda':        { title: 'Imóveis à Venda',        h1: 'Imóveis à Venda em {cidade}/{estado}',        desc: 'Casas, apartamentos e terrenos à venda em {cidade}. Compre com segurança no AgoraEncontrei.',   schema: 'ItemList', icon: '🏠' },
+  'imoveis-para-alugar':    { title: 'Imóveis para Alugar',    h1: 'Imóveis para Alugar em {cidade}/{estado}',    desc: 'Alugue casas e apartamentos em {cidade}. Encontre o imóvel ideal no AgoraEncontrei.',            schema: 'ItemList', icon: '🔑' },
+  'casas-a-venda':          { title: 'Casas à Venda',          h1: 'Casas à Venda em {cidade}/{estado}',          desc: 'Casas à venda em {cidade}. Residências, sobrados e casas em condomínio.',                       schema: 'ItemList', icon: '🏡' },
+  'casas-para-alugar':      { title: 'Casas para Alugar',      h1: 'Casas para Alugar em {cidade}/{estado}',      desc: 'Casas para alugar em {cidade}. Encontre a casa ideal para sua família.',                        schema: 'ItemList', icon: '🏡' },
+  'apartamentos-a-venda':   { title: 'Apartamentos à Venda',   h1: 'Apartamentos à Venda em {cidade}/{estado}',   desc: 'Apartamentos à venda em {cidade}. Studios, 1, 2, 3 e 4 quartos.',                               schema: 'ItemList', icon: '🏢' },
+  'apartamentos-para-alugar':{ title: 'Apartamentos para Alugar', h1: 'Apartamentos para Alugar em {cidade}/{estado}', desc: 'Apartamentos para alugar em {cidade}. Encontre o apartamento ideal.',                    schema: 'ItemList', icon: '🏢' },
+  'terrenos-a-venda':       { title: 'Terrenos à Venda',       h1: 'Terrenos à Venda em {cidade}/{estado}',       desc: 'Terrenos e lotes à venda em {cidade}. Terrenos residenciais e comerciais.',                    schema: 'ItemList', icon: '📐' },
+  'lotes-a-venda':          { title: 'Lotes à Venda',          h1: 'Lotes à Venda em {cidade}/{estado}',          desc: 'Lotes à venda em {cidade}. Lotes em condomínio, loteamentos e áreas.',                        schema: 'ItemList', icon: '📐' },
+  'salas-comerciais':       { title: 'Salas Comerciais',       h1: 'Salas Comerciais em {cidade}/{estado}',       desc: 'Salas comerciais para venda e aluguel em {cidade}.',                                           schema: 'ItemList', icon: '🏪' },
+  'galpoes':                { title: 'Galpões',                h1: 'Galpões em {cidade}/{estado}',                desc: 'Galpões industriais e logísticos em {cidade}. Venda e locação.',                               schema: 'ItemList', icon: '🏭' },
+  'lojas-comerciais':       { title: 'Lojas Comerciais',       h1: 'Lojas Comerciais em {cidade}/{estado}',       desc: 'Lojas comerciais para venda e aluguel em {cidade}.',                                           schema: 'ItemList', icon: '🏪' },
+  'condominios-fechados':   { title: 'Condomínios Fechados',   h1: 'Condomínios Fechados em {cidade}/{estado}',   desc: 'Imóveis em condomínios fechados em {cidade}. Segurança e qualidade de vida.',                  schema: 'ItemList', icon: '🏘️' },
+  'lancamentos-imobiliarios':{ title: 'Lançamentos Imobiliários', h1: 'Lançamentos Imobiliários em {cidade}/{estado}', desc: 'Lançamentos imobiliários em {cidade}. Compre na planta com as melhores condições.',       schema: 'ItemList', icon: '✨' },
+  'imoveis-comerciais':     { title: 'Imóveis Comerciais',     h1: 'Imóveis Comerciais em {cidade}/{estado}',     desc: 'Imóveis comerciais em {cidade}. Salas, lojas, galpões e prédios.',                             schema: 'ItemList', icon: '🏢' },
+  'imoveis-para-investir':  { title: 'Imóveis para Investir',  h1: 'Imóveis para Investir em {cidade}/{estado}',  desc: 'Oportunidades de investimento imobiliário em {cidade}. Renda passiva e valorização.',          schema: 'ItemList', icon: '📈' },
+  'chacaras-a-venda':       { title: 'Chácaras à Venda',       h1: 'Chácaras à Venda em {cidade}/{estado}',       desc: 'Chácaras e sítios à venda em {cidade} e região.',                                             schema: 'ItemList', icon: '🌿' },
+  'sitios-a-venda':         { title: 'Sítios à Venda',         h1: 'Sítios à Venda em {cidade}/{estado}',         desc: 'Sítios e fazendas à venda em {cidade} e região.',                                             schema: 'ItemList', icon: '🌾' },
+  'fazendas-a-venda':       { title: 'Fazendas à Venda',       h1: 'Fazendas à Venda em {cidade}/{estado}',       desc: 'Fazendas à venda em {cidade} e região. Agronegócio e pecuária.',                              schema: 'ItemList', icon: '🐄' },
+  'loteamentos':            { title: 'Loteamentos',            h1: 'Loteamentos em {cidade}/{estado}',            desc: 'Loteamentos e parcelamentos de terra em {cidade}.',                                           schema: 'ItemList', icon: '🗺️' },
+  'imoveis-rurais':         { title: 'Imóveis Rurais',         h1: 'Imóveis Rurais em {cidade}/{estado}',         desc: 'Imóveis rurais à venda em {cidade}. Sítios, fazendas e chácaras.',                            schema: 'ItemList', icon: '🌳' },
+  // Bairros
+  'centro':                 { title: 'Imóveis no Centro',      h1: 'Imóveis no Centro de {cidade}/{estado}',      desc: 'Imóveis no centro de {cidade}. Casas e apartamentos bem localizados.',                        schema: 'ItemList', icon: '🏙️' },
+  // Serviços
+  'avaliacao-de-imovel':    { title: 'Avaliação de Imóvel',    h1: 'Avaliação de Imóvel em {cidade}/{estado}',    desc: 'Avaliação profissional de imóveis em {cidade}. Laudos e pareceres técnicos.',                  schema: 'Service',  icon: '📊' },
+  'anunciar-imovel':        { title: 'Anunciar Imóvel',        h1: 'Anunciar Imóvel em {cidade}/{estado}',        desc: 'Anuncie seu imóvel em {cidade} gratuitamente no AgoraEncontrei.',                             schema: 'Service',  icon: '📢' },
 }
 
-function applyTemplate(template: string, city: IBGECityData): string {
-  return template
-    .replace(/\{CIDADE\}/g, city.nome)
-    .replace(/\{UF\}/g, city.estadoSigla)
-    .replace(/\{POPULACAO\}/g, city.populacaoCenso2022.toLocaleString('pt-BR'))
-    .replace(/\{PIB\}/g, city.pibPerCapita?.toLocaleString('pt-BR', { maximumFractionDigits: 0 }) ?? '-')
-    .replace(/\{AREA\}/g, city.areaKm2.toLocaleString('pt-BR', { maximumFractionDigits: 0 }))
-    .replace(/\{PESSOAL_OCUPADO\}/g, city.pessoalOcupado?.toLocaleString('pt-BR') ?? '-')
+function resolveMeta(cluster: string, cityName: string, state: string) {
+  const meta = CLUSTER_META[cluster]
+  if (!meta) return null
+  return {
+    title: meta.title,
+    h1: meta.h1.replace('{cidade}', cityName).replace('{estado}', state),
+    desc: meta.desc.replace(/\{cidade\}/g, cityName).replace(/\{estado\}/g, state),
+    schema: meta.schema,
+    icon: meta.icon,
+  }
 }
 
-// ISR: gera sob demanda
-export function generateStaticParams() {
+export async function generateStaticParams() {
   const params: { estado: string; cidade: string; cluster: string }[] = []
-  for (const city of IBGE_CITIES_ARRAY) {
-    const cidadeSlug = city.nome.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
-    for (const cluster of ALL_CLUSTERS.filter(c => c.group === 'A')) {
-      params.push({
-        estado: city.estadoSigla.toLowerCase(),
-        cidade: cidadeSlug,
-        cluster: cluster.slug,
-      })
+  for (const city of IBGE_CITIES_152) {
+    for (const cluster of Object.keys(CLUSTER_META)) {
+      params.push({ estado: city.stateSlug, cidade: city.slug, cluster })
     }
   }
   return params
 }
 
-export async function generateMetadata({ params }: { params: Promise<{ estado: string; cidade: string; cluster: string }> }): Promise<Metadata> {
-  const { estado, cidade, cluster: clusterSlug } = await params
-  const city = findCity(estado, cidade)
-  const cluster = CLUSTERS_MAP[clusterSlug]
-  if (!city || !cluster) return { title: 'Página não encontrada | AgoraEncontrei' }
+export async function generateMetadata({
+  params,
+}: {
+  params: { estado: string; cidade: string; cluster: string }
+}): Promise<Metadata> {
+  const city = IBGE_CITY_BY_SLUG[params.cidade]
+  if (!city || city.stateSlug !== params.estado) return {}
+  const meta = resolveMeta(params.cluster, city.name, city.state)
+  if (!meta) return {}
 
   return {
-    title: applyTemplate(cluster.titleTemplate, city),
-    description: applyTemplate(cluster.descriptionTemplate, city),
-    keywords: [
-      `${cluster.keyword.toLowerCase()} ${city.nome.toLowerCase()} ${city.estadoSigla.toLowerCase()}`,
-      `${cluster.keyword.toLowerCase()} em ${city.nome.toLowerCase()}`,
-    ],
+    title: `${meta.title} em ${city.name}/${city.state} | AgoraEncontrei`,
+    description: meta.desc,
     openGraph: {
-      title: applyTemplate(cluster.titleTemplate, city),
-      description: applyTemplate(cluster.descriptionTemplate, city),
+      title: `${meta.title} em ${city.name}/${city.state} | AgoraEncontrei`,
+      description: meta.desc,
       type: 'website',
       locale: 'pt_BR',
       siteName: 'AgoraEncontrei',
     },
-    alternates: { canonical: `${WEB_URL}/${estado}/${cidade}/${clusterSlug}` },
-    robots: { index: true, follow: true },
+    alternates: {
+      canonical: `${WEB_URL}/${params.estado}/${params.cidade}/${params.cluster}`,
+    },
   }
 }
 
-export default async function ClusterCidadePage({ params }: { params: Promise<{ estado: string; cidade: string; cluster: string }> }) {
-  const { estado, cidade, cluster: clusterSlug } = await params
-  const city = findCity(estado, cidade)
-  const cluster = CLUSTERS_MAP[clusterSlug]
-  if (!city || !cluster) notFound()
+export const revalidate = 86400
 
-  const relatedClusters = cluster.relatedClusters
-    .map(slug => CLUSTERS_MAP[slug])
-    .filter(Boolean)
+async function fetchProperties(cityName: string, cluster: string) {
+  try {
+    const purposeMap: Record<string, string> = {
+      'imoveis-a-venda': 'SALE', 'casas-a-venda': 'SALE', 'apartamentos-a-venda': 'SALE',
+      'terrenos-a-venda': 'SALE', 'imoveis-para-alugar': 'RENT', 'casas-para-alugar': 'RENT',
+      'apartamentos-para-alugar': 'RENT',
+    }
+    const typeMap: Record<string, string> = {
+      'casas-a-venda': 'HOUSE', 'casas-para-alugar': 'HOUSE',
+      'apartamentos-a-venda': 'APARTMENT', 'apartamentos-para-alugar': 'APARTMENT',
+      'terrenos-a-venda': 'LAND', 'lotes-a-venda': 'LAND',
+    }
+    const purpose = purposeMap[cluster] || 'SALE'
+    const type = typeMap[cluster] || ''
+    const url = `${API_URL}/api/v1/public/properties?city=${encodeURIComponent(cityName)}&purpose=${purpose}${type ? `&type=${type}` : ''}&limit=9`
+    const r = await fetch(url, { next: { revalidate: 3600 } })
+    if (r.ok) { const d = await r.json(); return d.data || [] }
+  } catch {}
+  return []
+}
 
-  const nearbyCities = IBGE_CITIES_ARRAY
-    .filter(c => c.slug !== city.slug && c.estadoSigla === city.estadoSigla)
+export default async function ClusterPage({
+  params,
+}: {
+  params: { estado: string; cidade: string; cluster: string }
+}) {
+  const city = IBGE_CITY_BY_SLUG[params.cidade]
+  if (!city || city.stateSlug !== params.estado) notFound()
+
+  const meta = resolveMeta(params.cluster, city.name, city.state)
+  if (!meta) notFound()
+
+  const properties = await fetchProperties(city.name, params.cluster)
+  const snippet = getIbgeCitySnippet(city)
+  const pop = city.populacao.toLocaleString('pt-BR')
+
+  // Clusters relacionados
+  const related = Object.entries(CLUSTER_META)
+    .filter(([k]) => k !== params.cluster)
     .slice(0, 6)
 
   const schema = {
     '@context': 'https://schema.org',
-    '@type': cluster.schemaType,
-    name: applyTemplate(cluster.h1Template, city),
-    description: applyTemplate(cluster.descriptionTemplate, city),
-    url: `${WEB_URL}/${estado}/${cidade}/${clusterSlug}`,
-    ...(cluster.schemaType === 'SearchResultsPage' ? {} : {
-      areaServed: { '@type': 'City', name: city.nome, addressRegion: city.estadoSigla },
-    }),
+    '@type': meta.schema === 'Service' ? 'Service' : 'ItemList',
+    name: meta.h1,
+    url: `${WEB_URL}/${params.estado}/${params.cidade}/${params.cluster}`,
+    description: meta.desc,
+    areaServed: { '@type': 'City', name: city.name },
+    ...(properties.length > 0 && { numberOfItems: properties.length }),
   }
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+      />
 
-      {/* HERO */}
+      {/* Hero */}
       <section className="bg-gradient-to-br from-[#1B2B5B] to-[#0f1c3a] text-white py-14 px-4">
         <div className="max-w-5xl mx-auto">
           <nav className="text-xs text-blue-200 mb-4 flex items-center gap-1.5 flex-wrap">
             <Link href="/" className="hover:text-white">Início</Link>
-            <span>/</span>
-            <Link href={`/${estado}/${cidade}`} className="hover:text-white">{city.nome}/{city.estadoSigla}</Link>
-            <span>/</span>
-            <span>{cluster.keyword}</span>
+            <ChevronRight className="w-3 h-3" />
+            <Link href={`/${params.estado}/${params.cidade}`} className="hover:text-white">
+              {city.name}/{city.state}
+            </Link>
+            <ChevronRight className="w-3 h-3" />
+            <span>{meta.title}</span>
           </nav>
-
-          <div className="inline-flex items-center gap-2 bg-white/10 rounded-full px-4 py-1.5 text-xs font-semibold mb-4" style={{ color: '#C9A84C' }}>
-            <MapPin className="w-3.5 h-3.5" /> {city.nome}/{city.estadoSigla} · {city.populacaoCenso2022.toLocaleString('pt-BR')} hab.
-          </div>
-
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 leading-tight" style={{ fontFamily: 'Georgia, serif' }}>
-            {applyTemplate(cluster.h1Template, city)}
+          <h1
+            className="text-3xl sm:text-4xl font-bold mb-3"
+            style={{ fontFamily: 'Georgia, serif' }}
+          >
+            <span className="text-2xl mr-2">{meta.icon}</span>
+            {meta.h1}
           </h1>
-
-          <p className="text-white/70 text-lg mb-6 max-w-3xl">
-            {applyTemplate(cluster.descriptionTemplate, city)}
+          <p className="text-white/70 text-lg mb-6">
+            {properties.length > 0
+              ? `${properties.length}+ imóveis disponíveis`
+              : 'Imóveis disponíveis'}{' '}
+            em {city.name}. {pop} habitantes — {snippet}
           </p>
-
           <div className="flex flex-wrap gap-3">
-            <Link href={`/imoveis?city=${encodeURIComponent(city.nome)}`}
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm hover:brightness-110 transition-all"
-              style={{ background: '#C9A84C', color: '#1B2B5B' }}>
-              <Search className="w-4 h-4" /> Ver Ofertas Reais
+            <Link
+              href={`/imoveis?city=${city.name}`}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm"
+              style={{ background: '#C9A84C', color: '#1B2B5B' }}
+            >
+              <Search className="w-4 h-4" /> Ver Todos
             </Link>
-            <a href={`https://wa.me/5516981010004?text=Olá! Interesse em ${cluster.keyword} em ${city.nome}/${city.estadoSigla}.`}
-              target="_blank" rel="noreferrer"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm bg-[#25D366] text-white">
-              <MessageCircle className="w-4 h-4" /> Falar com Especialista
-            </a>
+            <Link
+              href={`/${params.estado}/${params.cidade}`}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm bg-white/10 text-white border border-white/20"
+            >
+              <MapPin className="w-4 h-4" /> {city.name}
+            </Link>
           </div>
         </div>
       </section>
 
-      {/* CONTEÚDO */}
-      <section className="max-w-4xl mx-auto px-4 py-12">
-        <div className="bg-white rounded-2xl p-8 border space-y-6">
-
-          <h2 className="text-xl font-bold" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>
-            Oportunidades de {cluster.keyword} em {city.nome}: Panorama Atual
-          </h2>
-          <p className="text-gray-600 text-sm leading-relaxed">
-            {city.nome}, com <strong>{city.populacaoCenso2022.toLocaleString('pt-BR')} habitantes</strong> (Censo IBGE 2022),
-            é um município estratégico de {city.estado} para quem busca {cluster.keyword.toLowerCase()}.
-            {city.pibPerCapita ? ` Com PIB per capita de R$ ${city.pibPerCapita.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}, ` : ' '}
-            a cidade oferece uma base econômica sólida para investimentos imobiliários.
-            {city.distanciaFrancaKm ? ` Localizada a ${city.distanciaFrancaKm}km de Franca, ` : ' '}
-            {city.nome} se destaca por: {city.destaquesLocais.slice(0, 3).join('; ')}.
-          </p>
-
-          <h3 className="font-semibold text-gray-800 mb-2">Por que investir em {city.nome}?</h3>
-          <p className="text-gray-600 text-sm leading-relaxed">
-            {city.destaquesLocais.join('. ')}.
-            {city.pessoalOcupado ? ` A cidade conta com ${city.pessoalOcupado.toLocaleString('pt-BR')} postos de trabalho formal.` : ''}
-            {city.esgotamentoSanitario ? ` O saneamento básico alcança ${city.esgotamentoSanitario}% dos domicílios.` : ''}
-            {' '}Os bairros mais valorizados para {cluster.keyword.toLowerCase()} são: {city.bairrosValorizados.join(', ')}.
-          </p>
-
-          <blockquote className="border-l-4 pl-4 py-2 bg-amber-50 rounded-r-lg text-sm text-amber-800" style={{ borderColor: '#C9A84C' }}>
-            <strong>Nota:</strong> O mercado de leilões e imóveis em {city.estadoSigla} está em constante atualização. Fique atento às datas de editais.
-          </blockquote>
-
-          {/* Placeholder de ofertas */}
-          <div className="bg-gray-50 rounded-xl p-6 text-center">
-            <p className="text-sm text-gray-600 mb-3">
-              Estamos processando novos editais para <strong>{city.nome}</strong>. Enquanto isso, veja as ofertas globais na Home.
+      <div className="max-w-6xl mx-auto px-4 py-10 space-y-10">
+        {/* Imóveis */}
+        {properties.length > 0 ? (
+          <section>
+            <h2 className="text-xl font-bold text-[#1B2B5B] mb-5">
+              {meta.title} em {city.name}
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              {properties.map((p: any) => (
+                <Link
+                  key={p.id}
+                  href={`/imoveis/${p.slug}`}
+                  className="bg-white rounded-xl border overflow-hidden hover:shadow-lg transition"
+                >
+                  <div className="h-40 bg-gray-100 flex items-center justify-center">
+                    {p.coverImage ? (
+                      <img
+                        src={p.coverImage}
+                        alt={p.title}
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <Home className="w-8 h-8 text-gray-300" />
+                    )}
+                  </div>
+                  <div className="p-4">
+                    <p className="font-bold text-sm text-gray-800 line-clamp-2">{p.title}</p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      <MapPin className="w-3 h-3 inline" /> {p.neighborhood}, {city.name}
+                    </p>
+                    <p className="font-bold text-base mt-2" style={{ color: '#1B2B5B' }}>
+                      {p.price
+                        ? Number(p.price).toLocaleString('pt-BR', {
+                            style: 'currency',
+                            currency: 'BRL',
+                            maximumFractionDigits: 0,
+                          })
+                        : 'Consulte'}
+                    </p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        ) : (
+          <section className="bg-white rounded-2xl border p-8 text-center">
+            <p className="text-4xl mb-4">{meta.icon}</p>
+            <h2 className="text-xl font-bold text-[#1B2B5B] mb-2">{meta.h1}</h2>
+            <p className="text-gray-500 mb-6">
+              Cadastre-se para receber alertas quando novos imóveis forem
+              disponibilizados em {city.name}.
             </p>
-            <Link href="/"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm hover:brightness-110 transition-all"
-              style={{ background: '#1B2B5B', color: 'white' }}>
-              <Search className="w-4 h-4" /> Ver Ofertas no Marketplace
+            <Link
+              href="/alertas"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm"
+              style={{ background: '#C9A84C', color: '#1B2B5B' }}
+            >
+              Criar Alerta Gratuito
             </Link>
-          </div>
+          </section>
+        )}
 
-          {/* CTA obrigatório */}
-          <p className="text-gray-600 text-sm leading-relaxed pt-2 border-t">
-            Para conferir a lista completa e atualizada de oportunidades reais agora mesmo,{' '}
-            <a href="https://agoraencontrei.com.br" className="font-semibold underline" style={{ color: '#1B2B5B' }}>
-              acesse nossa vitrine principal no marketplace AgoraEncontrei
-            </a>.
-            Lá você filtra por preço, tipo de imóvel e status do leilão em tempo real.
-          </p>
-        </div>
-      </section>
-
-      {/* CLUSTERS RELACIONADOS */}
-      {relatedClusters.length > 0 && (
-        <section className="max-w-5xl mx-auto px-4 pb-12">
-          <h2 className="text-xl font-bold mb-5" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>
-            Veja Também em {city.nome}
+        {/* Conteúdo SEO */}
+        <section className="bg-gray-50 rounded-2xl border p-6">
+          <h2 className="text-lg font-bold text-[#1B2B5B] mb-3">
+            {meta.title} em {city.name}/{city.state} — Guia Completo
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {relatedClusters.map((rc) => (
-              <Link key={rc.slug} href={`/${estado}/${cidade}/${rc.slug}`}
-                className="flex items-center justify-between p-4 bg-white rounded-xl border border-gray-100 hover:border-[#C9A84C] hover:shadow-sm transition-all">
-                <span className="font-semibold text-sm text-gray-800">{rc.keyword} em {city.nome}</span>
-                <ArrowRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
+          <div className="prose prose-sm max-w-none text-gray-600 space-y-3">
+            <p>
+              {meta.desc} {city.name} possui{' '}
+              <strong>{pop} habitantes</strong> e PIB per capita de{' '}
+              <strong>
+                {city.pibPerCapita.toLocaleString('pt-BR', {
+                  style: 'currency',
+                  currency: 'BRL',
+                  maximumFractionDigits: 0,
+                })}
+              </strong>
+              , tornando-se um mercado imobiliário dinâmico e em crescimento.
+            </p>
+            <p>
+              O AgoraEncontrei é a plataforma líder em {meta.title.toLowerCase()} em{' '}
+              {city.name}, com imóveis verificados, fotos profissionais e
+              negociação transparente. Utilize nossos filtros avançados para
+              encontrar o imóvel ideal por bairro, preço, metragem e número de
+              quartos.
+            </p>
+          </div>
+        </section>
+
+        {/* Clusters relacionados */}
+        <section>
+          <h2 className="text-lg font-bold text-[#1B2B5B] mb-4">
+            Mais opções em {city.name}
+          </h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {related.map(([k, v]) => (
+              <Link
+                key={k}
+                href={`/${params.estado}/${params.cidade}/${k}`}
+                className="bg-white rounded-xl border p-3 text-center hover:border-[#C9A84C] transition text-sm"
+              >
+                <span className="text-xl">{v.icon}</span>
+                <p className="text-gray-700 mt-1 font-medium">{v.title}</p>
               </Link>
             ))}
           </div>
         </section>
-      )}
+      </div>
 
-      {/* MESMA BUSCA EM OUTRAS CIDADES */}
-      {nearbyCities.length > 0 && (
-        <section className="max-w-5xl mx-auto px-4 pb-12">
-          <h2 className="text-xl font-bold mb-5" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>
-            {cluster.keyword} em Outras Cidades
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {nearbyCities.map((c) => {
-              const cSlug = c.nome.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
-              return (
-                <Link key={c.slug} href={`/${c.estadoSigla.toLowerCase()}/${cSlug}/${clusterSlug}`}
-                  className="flex items-center justify-between p-4 bg-white rounded-xl border border-gray-100 hover:border-[#C9A84C] hover:shadow-sm transition-all">
-                  <div>
-                    <span className="font-semibold text-sm text-gray-800">{c.nome}/{c.estadoSigla}</span>
-                    <span className="block text-xs text-gray-400">{c.populacaoCenso2022.toLocaleString('pt-BR')} hab.</span>
-                  </div>
-                  <ArrowRight className="w-4 h-4 text-gray-400" />
-                </Link>
-              )
-            })}
-          </div>
-        </section>
-      )}
-
-      {/* CTA FINAL */}
-      <section className="py-10 px-4 text-center" style={{ background: 'linear-gradient(135deg, #1B2B5B, #0f1c3a)' }}>
-        <div className="max-w-2xl mx-auto">
-          <h2 className="text-xl font-bold text-white mb-2" style={{ fontFamily: 'Georgia, serif' }}>
-            Marketplace AgoraEncontrei
-          </h2>
-          <p className="text-white/70 mb-5">{cluster.keyword} em {city.nome} e região</p>
-          <div className="flex flex-wrap justify-center gap-3">
-            <a href="https://wa.me/5516981010004" target="_blank" rel="noreferrer"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm bg-[#25D366] text-white">
-              <MessageCircle className="w-4 h-4" /> WhatsApp
+      {/* Floating CTA */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t shadow-lg px-4 py-3">
+        <div className="max-w-2xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+          <p className="text-sm font-medium text-gray-700 text-center sm:text-left">
+            {meta.icon} Procurando <strong>{meta.title}</strong> em{' '}
+            <strong>{city.name}</strong>?
+          </p>
+          <div className="flex gap-2 w-full sm:w-auto">
+            <a
+              href={`https://wa.me/5516999999999?text=Olá! Tenho interesse em ${meta.title.toLowerCase()} em ${city.name}/${city.state}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 sm:flex-none px-4 py-2 rounded-xl font-bold text-sm text-white text-center"
+              style={{ background: '#25D366' }}
+            >
+              WhatsApp
             </a>
-            <Link href="/"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm text-[#1B2B5B]"
-              style={{ background: '#C9A84C' }}>
-              <Home className="w-4 h-4" /> Marketplace
+            <Link
+              href={`/imoveis?city=${city.name}`}
+              className="flex-1 sm:flex-none px-4 py-2 rounded-xl font-bold text-sm text-center"
+              style={{ background: '#C9A84C', color: '#1B2B5B' }}
+            >
+              Ver Marketplace
             </Link>
           </div>
         </div>
-      </section>
-
-      {/* FLOATING CTA (mobile) */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-[#1B2B5B] p-3 text-white text-center font-bold text-sm shadow-2xl sm:hidden">
-        <Link href="/" className="flex items-center justify-center gap-2">
-          <Search className="w-4 h-4" style={{ color: '#C9A84C' }} />
-          {cluster.keyword} em {city.nome}?
-          <span className="underline ml-1" style={{ color: '#C9A84C' }}>VER MARKETPLACE</span>
-        </Link>
       </div>
     </>
   )
