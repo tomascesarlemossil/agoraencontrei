@@ -14,6 +14,8 @@ const WEB_URL = 'https://www.agoraencontrei.com.br'
 // Estimativas de URLs por família
 const CIDADES_TOTAL = 5570 * 22 // 5.570 cidades × 22 clusters
 const COMPARACOES_TOTAL = 499500 // 1.000 cidades top × combinações
+const LEILAO_PAGES_TOTAL = 5570 * 27 // 5.570 cidades × 27 estados
+const BAIRROS_TOTAL = 45000 // Estimativa de bairros com dados
 const URLS_PER_SITEMAP = 50000
 
 export async function GET() {
@@ -36,6 +38,18 @@ export async function GET() {
   const compPages = Math.ceil(COMPARACOES_TOTAL / URLS_PER_SITEMAP)
   for (let i = 0; i < compPages; i++) {
     sitemaps.push(`<sitemap><loc>${WEB_URL}/api/sitemap/comparacoes?page=${i}</loc><lastmod>${now}</lastmod></sitemap>`)
+  }
+
+  // 5. Sitemaps de leilões por cidade (paginados) — /leilao/[estado]/[cidade]
+  const leilaoPages = Math.ceil(LEILAO_PAGES_TOTAL / URLS_PER_SITEMAP)
+  for (let i = 0; i < leilaoPages; i++) {
+    sitemaps.push(`<sitemap><loc>${WEB_URL}/api/sitemap/leiloes?page=${i}</loc><lastmod>${now}</lastmod></sitemap>`)
+  }
+
+  // 6. Sitemaps de bairros (paginados) — /[estado]/[cidade]/bairro/[bairro]
+  const bairroPages = Math.ceil(BAIRROS_TOTAL / URLS_PER_SITEMAP)
+  for (let i = 0; i < bairroPages; i++) {
+    sitemaps.push(`<sitemap><loc>${WEB_URL}/api/sitemap/bairros?page=${i}</loc><lastmod>${now}</lastmod></sitemap>`)
   }
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
