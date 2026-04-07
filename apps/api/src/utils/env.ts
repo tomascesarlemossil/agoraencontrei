@@ -61,6 +61,9 @@ const envSchema = z.object({
   SMTP_PASS: z.string().optional(),
   SMTP_FROM: z.string().email().optional(),
 
+  // Apify — web scraping platform
+  APIFY_API_TOKEN: z.string().optional(),
+
   // Social Media Integration
   INSTAGRAM_TOKEN_LEMOS: z.string().optional(),         // @imobiliarialemos access token
   INSTAGRAM_TOKEN_TOMAS: z.string().optional(),         // @tomaslemosbr access token
@@ -97,6 +100,7 @@ export function logEnvWarnings(logger: { warn: (msg: string) => void }) {
     ['AWS_S3_BUCKET',        'Photo uploads will fail — S3 not configured'],
     ['WHATSAPP_TOKEN',       'WhatsApp notifications and inbox will not work'],
     ['ASAAS_API_KEY',        'Boleto/cobrança via Asaas will not work'],
+    ['APIFY_API_TOKEN',      'Apify scrapers (Caixa, Santander, OLX) will not run'],
   ]
   for (const [key, impact] of warnings) {
     if (!process.env[key]) {

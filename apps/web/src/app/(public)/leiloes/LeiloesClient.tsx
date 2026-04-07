@@ -3,8 +3,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import { Search, MapPin, Filter, Calculator, Bell, TrendingUp, ChevronDown, X, ArrowRight, Building, Home, Map as MapIcon, Star, Clock, DollarSign, BarChart3, AlertTriangle, Loader2, CheckCircle, ExternalLink } from 'lucide-react'
-import { CalculadoraROI } from '@/components/CalculadoraROI'
-import { LegalRiskSeal } from '@/components/LegalRiskSeal'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'https://api-production-669c.up.railway.app'
 const PUBLIC_AUCTIONS_URL = `${API_URL}/api/v1/public/auctions`
@@ -44,6 +42,7 @@ interface Auction {
   fgtsAllowed: boolean
   views: number
   favorites: number
+  zapMarketPrice?: number | null
 }
 
 interface CalculatorResult {
@@ -156,37 +155,44 @@ function normalizePublicPropertyType(type: string): string {
 }
 
 function mapPublicAuction(item: any): Auction {
+  // Extract cover image: Apify photos array > coverImageUrl > Caixa CDN fallback
+  const rawId = (item.id || '').replace(/^caixa-/, '')
+  const coverImage = item.photos?.[0]
+    || item.coverImageUrl
+    || (rawId ? `https://venda-imoveis.caixa.gov.br/fotos-imoveis/${rawId}_1.jpg` : null)
+
   return {
     id: `public-${item.id}`,
     title: item.description || `${item.propertyType || 'Imóvel'} em ${item.city}`,
     slug: `public-${item.id}`,
-    source: 'CAIXA',
+    source: item.source || 'CAIXA',
     status: 'OPEN',
     modality: item.saleType || 'VENDA_DIRETA',
     propertyType: normalizePublicPropertyType(item.propertyType || ''),
     city: item.city || null,
     state: item.state || 'SP',
-    neighborhood: item.neighborhood || null,
+    neighborhood: item.neighborhood || item.district || null,
     totalArea: item.totalArea || item.privateArea || item.landArea || null,
-    bedrooms: item.bedrooms || 0,
+    bedrooms: item.bedrooms || item.rooms || 0,
     bathrooms: 0,
-    parkingSpaces: item.parkingSpots || 0,
-    appraisalValue: item.appraisalValue || null,
-    minimumBid: item.price || null,
+    parkingSpaces: item.parkingSpots || item.garage || 0,
+    appraisalValue: item.appraisalValue || item.evaluationValue || null,
+    minimumBid: item.price || item.minimumSaleValue1 || null,
     discountPercent: item.discount || null,
-    firstRoundDate: null,
-    secondRoundDate: null,
-    auctionDate: null,
-    coverImage: item.id ? `https://venda-imoveis.caixa.gov.br/fotos-imoveis/${item.id}_1.jpg` : null,
+    firstRoundDate: item.firstAuctionDate || null,
+    secondRoundDate: item.secondAuctionDate || null,
+    auctionDate: item.auctionDate || item.firstAuctionDate || null,
+    coverImage,
     opportunityScore: item.discount ? Math.min(95, Math.round(item.discount * 1.4)) : null,
     estimatedROI: item.discount || null,
     occupation: null,
-    bankName: 'Caixa Econômica Federal',
-    auctioneerName: null,
-    financingAvailable: Boolean(item.financeable),
-    fgtsAllowed: false,
+    bankName: item.bankName || item.leiloeiro || 'Caixa Econômica Federal',
+    auctioneerName: item.leiloeiro || item.auctioneer || null,
+    financingAvailable: Boolean(item.financeable || item.acceptsFinancing),
+    fgtsAllowed: Boolean(item.fgtsAllowed),
     views: 0,
     favorites: 0,
+    zapMarketPrice: item.zapMarketPrice || item.marketPrice || null,
   }
 }
 
@@ -230,7 +236,7 @@ export default function LeiloesClient() {
 
   // Filters
   const [search, setSearch] = useState('')
-  const [city, setCity] = useState('FRANCA')
+  const [city, setCity] = useState('')
   const [state, setState] = useState('')
   const [source, setSource] = useState('')
   const [propertyType, setPropertyType] = useState('')
@@ -362,7 +368,10 @@ export default function LeiloesClient() {
         }
       }
 
-      const fallbackRes = await fetch(PUBLIC_AUCTIONS_URL)
+      const fallbackParams = new URLSearchParams()
+      if (state) fallbackParams.set('state', state)
+      const fallbackUrl = `${PUBLIC_AUCTIONS_URL}${fallbackParams.toString() ? '?' + fallbackParams : ''}`
+      const fallbackRes = await fetch(fallbackUrl)
       if (!fallbackRes.ok) throw new Error('Falha ao buscar fallback público de leilões')
 
       const fallbackData = await fallbackRes.json()
@@ -377,31 +386,16 @@ export default function LeiloesClient() {
         maxPrice,
       })
 
-      // Prioridade de cidade: Franca primeiro, depois cidades vizinhas, depois o resto
-      const cityPriority = (cityName: string | null): number => {
-        if (!cityName) return 999
-        const c = cityName.toUpperCase()
-        if (c === 'FRANCA') return 0
-        if (['BATATAIS', 'CRISTAIS PAULISTA', 'PATROCINIO PAULISTA', 'PEDREGULHO'].includes(c)) return 1
-        if (['RIBEIRAO PRETO', 'BRODOWSKI', 'ALTINOPOLIS', 'RIFAINA'].includes(c)) return 2
-        if (c.includes('SP') || ['SAO PAULO', 'CAMPINAS', 'SOROCABA'].includes(c)) return 3
-        return 4
-      }
-
       const sortedItems = [...filteredItems].sort((a, b) => {
-        // Primeiro: prioridade por cidade (Franca primeiro)
-        const priA = cityPriority(a.city)
-        const priB = cityPriority(b.city)
-        if (priA !== priB) return priA - priB
-
-        // Depois: ordenação selecionada pelo usuário
         const orderFactor = sortOrder === 'desc' ? -1 : 1
+
         const getComparable = (auction: Auction) => {
           switch (sortBy) {
             case 'minimumBid': return auction.minimumBid || 0
             case 'discountPercent': return auction.discountPercent || 0
             case 'opportunityScore': return auction.opportunityScore || 0
             case 'auctionDate': return auction.auctionDate ? new Date(auction.auctionDate).getTime() : Number.MAX_SAFE_INTEGER
+            case 'zapSpread': return auction.zapMarketPrice && auction.minimumBid ? ((Number(auction.zapMarketPrice) - Number(auction.minimumBid)) / Number(auction.zapMarketPrice)) * 100 : 0
             default: return auction.minimumBid || 0
           }
         }
@@ -536,9 +530,16 @@ export default function LeiloesClient() {
               Leilões de Imóveis
             </h1>
             <p className="text-white/70 text-lg max-w-2xl mx-auto">
-              Busca unificada em 800+ leiloeiros e bancos. Descontos de até 70%.
-              Calculadora de ROI e alertas inteligentes.
+              Caixa, Santander, BB, Bradesco e 9+ leiloeiros. Descontos de até 70%.
+              Fotos reais, matrícula, edital e calculadora de ROI.
             </p>
+            <div className="flex items-center justify-center gap-3 mt-3 flex-wrap">
+              {['Caixa', 'Santander', 'Banco do Brasil', 'ZAP', 'QuintoAndar'].map(bank => (
+                <span key={bank} className="text-[10px] px-2.5 py-1 rounded-full bg-white/10 text-white/70 font-medium">
+                  {bank}
+                </span>
+              ))}
+            </div>
           </div>
 
           {/* Search Bar */}
@@ -598,8 +599,7 @@ export default function LeiloesClient() {
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold transition"
-              style={{ backgroundColor: '#f3f4f6', color: '#374151', border: '1px solid #d1d5db' }}
+              className="inline-flex items-center gap-1.5 px-3 py-2 bg-gray-100 rounded-lg text-sm hover:bg-gray-200 transition"
             >
               <Filter className="w-4 h-4" /> Filtros
             </button>
@@ -622,16 +622,32 @@ export default function LeiloesClient() {
               💎 Pérola {minDiscount === '40' && '✔'}
             </button>
             <button
-              onClick={() => setShowCalc(!showCalc)}
+              onClick={() => {
+                const next = sortBy === 'zapSpread' ? 'auctionDate' : 'zapSpread'
+                setSortBy(next)
+                if (next === 'zapSpread') setSortOrder('desc')
+                setPage(1)
+              }}
               className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold transition"
-              style={{ backgroundColor: '#1B2B5B', color: '#ffffff' }}
+              style={{
+                backgroundColor: sortBy === 'zapSpread' ? '#1B2B5B' : '#eef2ff',
+                color: sortBy === 'zapSpread' ? '#C9A84C' : '#1B2B5B',
+                border: '1.5px solid #1B2B5B',
+              }}
+              title="Ordenar por maior spread vs preço de mercado ZAP"
+            >
+              <BarChart3 className="w-4 h-4" /> vs ZAP {sortBy === 'zapSpread' && '✔'}
+            </button>
+            <button
+              onClick={() => setShowCalc(!showCalc)}
+              className="inline-flex items-center gap-1.5 px-3 py-2 bg-gray-100 rounded-lg text-sm hover:bg-gray-200 transition"
             >
               <Calculator className="w-4 h-4" /> Calculadora
             </button>
             <button
               onClick={() => setShowAlert(!showAlert)}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold transition"
-              style={{ backgroundColor: '#C9A84C', color: '#1B2B5B' }}
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm text-white transition"
+              style={{ backgroundColor: '#C9A84C' }}
             >
               <Bell className="w-4 h-4" /> Alerta
             </button>
@@ -644,6 +660,7 @@ export default function LeiloesClient() {
               <option value="minimumBid">Menor Lance</option>
               <option value="discountPercent">Maior Desconto</option>
               <option value="opportunityScore">Melhor Score</option>
+              <option value="zapSpread">Desconto vs ZAP</option>
               <option value="createdAt">Mais Recentes</option>
             </select>
           </div>
@@ -880,38 +897,42 @@ export default function LeiloesClient() {
                 <div key={auction.id} onClick={() => openLeadModal(auction)}
                   className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-200 group cursor-pointer">
                   {/* Image */}
-                  <div className="relative h-48 bg-gray-100">
+                  <div className="relative h-48 bg-gray-100 overflow-hidden">
                     {auction.coverImage ? (
-                      <img src={auction.coverImage} alt={auction.title} className="w-full h-full object-cover" />
+                      <img
+                        src={auction.coverImage}
+                        alt={auction.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; (e.target as HTMLImageElement).parentElement!.classList.add('bg-gradient-to-br', typeGradient(auction.propertyType).split(' ').pop()!) }}
+                      />
                     ) : (
                       <div className={`w-full h-full bg-gradient-to-br ${typeGradient(auction.propertyType)} flex flex-col items-center justify-center`}>
                         <span className="text-5xl mb-1">{typeIcon(auction.propertyType)}</span>
                         <span className="text-white/80 text-xs font-semibold">{typeLabel(auction.propertyType)}</span>
-                        {auction.discountPercent && auction.discountPercent > 15 && (
-                          <span className="mt-1 text-white/90 text-xs font-bold bg-red-500/80 px-2 py-0.5 rounded-full">
-                            Até {Math.round(auction.discountPercent)}% OFF
-                          </span>
-                        )}
                       </div>
                     )}
-                    {/* Badges */}
+                    {/* Top-left: Source badge */}
                     <div className="absolute top-2 left-2 flex gap-1.5">
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${statusColor(auction.status)}`}>
-                        {statusLabel(auction.status)}
-                      </span>
-                      <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
-                        {sourceLabel(auction.source)}
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-white/90 backdrop-blur text-gray-800 shadow-sm">
+                        {auction.bankName || sourceLabel(auction.source)}
                       </span>
                     </div>
-                    {/* Discount badge */}
+                    {/* Top-right: Discount */}
                     {auction.discountPercent && auction.discountPercent > 0 && (
-                      <div className="absolute top-2 right-2 px-2 py-0.5 rounded-full text-xs font-bold bg-red-500 text-white">
-                        -{auction.discountPercent}%
+                      <div className="absolute top-2 right-2 px-2.5 py-1 rounded-lg text-xs font-bold bg-red-500 text-white shadow-lg">
+                        -{Math.round(auction.discountPercent)}%
                       </div>
                     )}
-                    {/* Score */}
-                    {auction.opportunityScore && (
-                      <div className="absolute bottom-2 right-2 bg-white/90 backdrop-blur px-2 py-1 rounded-lg flex items-center gap-1">
+                    {/* Bottom-left: Auction date */}
+                    {(auction.firstRoundDate || auction.auctionDate) && (
+                      <div className="absolute bottom-2 left-2 px-2 py-1 rounded-lg text-[10px] font-semibold bg-black/60 text-white backdrop-blur flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        {formatDate(auction.firstRoundDate || auction.auctionDate)}
+                      </div>
+                    )}
+                    {/* Bottom-right: Score */}
+                    {auction.opportunityScore && auction.opportunityScore > 0 && (
+                      <div className="absolute bottom-2 right-2 bg-white/90 backdrop-blur px-2 py-1 rounded-lg flex items-center gap-1 shadow-sm">
                         <Star className={`w-3.5 h-3.5 ${scoreColor(auction.opportunityScore)}`} />
                         <span className={`text-xs font-bold ${scoreColor(auction.opportunityScore)}`}>{auction.opportunityScore}</span>
                       </div>
@@ -924,46 +945,62 @@ export default function LeiloesClient() {
                       {auction.title}
                     </h3>
                     <div className="flex items-center gap-1 text-xs text-gray-500 mb-3">
-                      <MapPin className="w-3 h-3" />
-                      {auction.neighborhood ? `${auction.neighborhood}, ` : ''}{auction.city || ''}{auction.state ? `/${auction.state}` : ''}
+                      <MapPin className="w-3 h-3 flex-shrink-0" />
+                      <span className="truncate">
+                        {auction.neighborhood ? `${auction.neighborhood}, ` : ''}{auction.city || ''}{auction.state ? `/${auction.state}` : ''}
+                      </span>
                     </div>
 
                     {/* Price */}
-                    <div className="space-y-1">
-                      {auction.appraisalValue && (
+                    <div className="space-y-0.5">
+                      {auction.appraisalValue && Number(auction.appraisalValue) > 0 && (
                         <div className="text-xs text-gray-400 line-through">
                           Avaliação: {formatCurrency(Number(auction.appraisalValue))}
                         </div>
                       )}
                       <div className="text-lg font-bold" style={{ color: '#1B2B5B' }}>
-                        {formatCurrency(Number(auction.minimumBid))}
+                        {Number(auction.minimumBid) > 0 ? formatCurrency(Number(auction.minimumBid)) : 'Consultar valor'}
                       </div>
+                      {auction.appraisalValue && Number(auction.appraisalValue) > 0 && Number(auction.minimumBid) > 0 && (
+                        <div className="text-[10px] text-green-600 font-semibold">
+                          Economia de {formatCurrency(Number(auction.appraisalValue) - Number(auction.minimumBid))}
+                        </div>
+                      )}
+                      {auction.zapMarketPrice && Number(auction.zapMarketPrice) > 0 && Number(auction.minimumBid) > 0 && auction.totalArea && Number(auction.totalArea) > 0 && (
+                        <div className="flex items-center gap-1.5 mt-1">
+                          <span className="text-[10px] text-green-700 font-medium">
+                            ZAP: {formatCurrency(Math.round(Number(auction.zapMarketPrice) / Number(auction.totalArea)))}/m² vs Leilão: {formatCurrency(Math.round(Number(auction.minimumBid) / Number(auction.totalArea)))}/m²
+                          </span>
+                          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-green-100 text-green-800 font-bold">
+                            -{Math.round(((Number(auction.zapMarketPrice) - Number(auction.minimumBid)) / Number(auction.zapMarketPrice)) * 100)}%
+                          </span>
+                        </div>
+                      )}
                     </div>
 
                     {/* Meta */}
                     <div className="flex items-center gap-3 mt-3 text-xs text-gray-500">
-                      {auction.totalArea && <span>{auction.totalArea}m²</span>}
-                      {auction.bedrooms > 0 && <span>{auction.bedrooms} quartos</span>}
-                      {auction.auctionDate && (
-                        <span className="flex items-center gap-0.5">
-                          <Clock className="w-3 h-3" /> {formatDate(auction.auctionDate)}
-                        </span>
-                      )}
+                      {auction.totalArea && Number(auction.totalArea) > 0 && <span>{auction.totalArea}m²</span>}
+                      {auction.bedrooms > 0 && <span>{auction.bedrooms} qtos</span>}
+                      {auction.parkingSpaces > 0 && <span>{auction.parkingSpaces} vaga{auction.parkingSpaces > 1 ? 's' : ''}</span>}
                     </div>
 
                     {/* Tags */}
                     <div className="flex gap-1 mt-2 flex-wrap">
                       {auction.financingAvailable && (
-                        <span className="text-[10px] px-1.5 py-0.5 bg-green-50 text-green-700 rounded">Financiável</span>
+                        <span className="text-[10px] px-1.5 py-0.5 bg-green-50 text-green-700 rounded font-medium">Financiável</span>
                       )}
                       {auction.fgtsAllowed && (
-                        <span className="text-[10px] px-1.5 py-0.5 bg-blue-50 text-blue-700 rounded">FGTS</span>
+                        <span className="text-[10px] px-1.5 py-0.5 bg-blue-50 text-blue-700 rounded font-medium">FGTS</span>
                       )}
                       {auction.occupation === 'DESOCUPADO' && (
-                        <span className="text-[10px] px-1.5 py-0.5 bg-green-50 text-green-700 rounded">Desocupado</span>
+                        <span className="text-[10px] px-1.5 py-0.5 bg-green-50 text-green-700 rounded font-medium">Desocupado</span>
                       )}
                       {auction.occupation === 'OCUPADO' && (
-                        <span className="text-[10px] px-1.5 py-0.5 bg-red-50 text-red-700 rounded">Ocupado</span>
+                        <span className="text-[10px] px-1.5 py-0.5 bg-red-50 text-red-700 rounded font-medium">Ocupado</span>
+                      )}
+                      {auction.auctioneerName && (
+                        <span className="text-[10px] px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded font-medium">{auction.auctioneerName}</span>
                       )}
                     </div>
                   </div>
@@ -1059,26 +1096,6 @@ export default function LeiloesClient() {
                   )}
                 </div>
               </div>
-
-              {/* Score de Risco Jurídico */}
-              <LegalRiskSeal leilao={{
-                saleType: selectedAuction.modality,
-                occupation: selectedAuction.occupation,
-                financeable: selectedAuction.financingAvailable,
-                fgtsAllowed: selectedAuction.fgtsAllowed,
-                discountPercent: selectedAuction.discountPercent,
-                description: selectedAuction.title,
-              }} />
-
-              {/* Calculadora ROI */}
-              {selectedAuction.appraisalValue && selectedAuction.minimumBid && selectedAuction.appraisalValue > selectedAuction.minimumBid && (
-                <CalculadoraROI
-                  valorAvaliado={Number(selectedAuction.appraisalValue)}
-                  valorLance={Number(selectedAuction.minimumBid)}
-                  bairro={selectedAuction.neighborhood || undefined}
-                  cidade={`${selectedAuction.city || 'Franca'}/${selectedAuction.state || 'SP'}`}
-                />
-              )}
 
               {leadError && <div className="bg-red-50 text-red-700 text-sm p-2 rounded-lg">{leadError}</div>}
 

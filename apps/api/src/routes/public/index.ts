@@ -1296,119 +1296,305 @@ export default async function publicRoutes(app: FastifyInstance) {
     }
   })
 
-  // ── GET /auctions — Imóveis da Caixa + Banco do Brasil (leilões e venda direta) ──
-  // Busca TODOS os estados da Caixa + BB em paralelo
-  app.get('/auctions', async (_req, reply) => {
+  // ── GET /auctions — Imóveis da Caixa (Apify enriched → CSV fallback) ──
+  app.get('/auctions', async (req, reply) => {
     try {
-      const cacheKey = 'pub:auctions:nacional:v5'
+      const { state: stateFilter } = req.query as { state?: string }
+      const cacheKey = `pub:caixa:auctions:${stateFilter || 'ALL'}:v4`
       const cached = await cacheGet(app.redis, cacheKey)
       if (cached) return reply.send(cached)
 
-      // Todos os 27 estados brasileiros
-      const UFS = ['AC','AL','AM','AP','BA','CE','DF','ES','GO','MA','MG','MS','MT','PA','PB','PE','PI','PR','RJ','RN','RO','RR','RS','SC','SE','SP','TO']
+      // Strategy: try Apify last-run data first (free, fast), then CSV fallback
+      let auctions: Array<Record<string, unknown>> = []
+      let source = 'csv'
+      const sources: string[] = []
 
-      // Buscar CSVs da Caixa de todos os estados em paralelo
-      const fetchCaixaCSV = async (uf: string) => {
-        try {
-          const res = await fetch(`https://venda-imoveis.caixa.gov.br/listaweb/Lista_imoveis_${uf}.csv`, {
-            headers: {
-              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-              'Referer': 'https://venda-imoveis.caixa.gov.br/',
-            },
-            signal: AbortSignal.timeout(15000),
-          })
-          if (!res.ok) return ''
-          const buffer = await res.arrayBuffer()
-          return new TextDecoder('latin1').decode(buffer)
-        } catch { return '' }
+      // 1. Try Apify enriched data (last successful run — no credits consumed)
+      try {
+        const [{ fetchCaixaApifyLastRun }, { fetchSantanderApifyLastRun }] = await Promise.all([
+          import('../../services/apify-caixa.service.js'),
+          import('../../services/apify-santander.service.js'),
+        ])
+
+        const [caixaApify, santanderApify] = await Promise.all([
+          fetchCaixaApifyLastRun(),
+          fetchSantanderApifyLastRun(),
+        ])
+
+        if (caixaApify.length > 0) {
+          auctions.push(...caixaApify.map(item => ({
+            ...item,
+            coverImageUrl: item.photos?.[0] || item.coverImageUrl,
+          })))
+          sources.push('apify-caixa')
+          app.log.info(`[auctions] Apify Caixa: ${caixaApify.length} items`)
+        }
+
+        if (santanderApify.length > 0) {
+          auctions.push(...santanderApify.map(item => ({
+            ...item,
+            coverImageUrl: item.photos?.[0] || item.coverImageUrl,
+          })))
+          sources.push('apify-santander')
+          app.log.info(`[auctions] Apify Santander: ${santanderApify.length} items`)
+        }
+
+        if (auctions.length > 0) source = 'apify'
+      } catch (apifyErr) {
+        app.log.warn({ err: apifyErr }, '[auctions] Apify fallback failed, using CSV')
       }
 
-      // Buscar em paralelo (máximo 5 estados por vez para não sobrecarregar)
-      const allCsvTexts: string[] = []
-      for (let i = 0; i < UFS.length; i += 5) {
-        const batch = UFS.slice(i, i + 5)
-        const results = await Promise.all(batch.map(fetchCaixaCSV))
-        allCsvTexts.push(...results)
-      }
+      // 2. Fallback to CSV scraper if Apify returned nothing
+      if (auctions.length === 0) {
+        const UFS = stateFilter
+          ? [stateFilter.toUpperCase()]
+          : ['SP', 'MG', 'RJ', 'PR', 'GO', 'MS', 'RS', 'SC', 'BA', 'CE', 'PE', 'DF']
 
-      const auctions: Array<{
-        id: string; city: string; state: string; neighborhood: string; address: string
-        price: number; appraisalValue: number; discount: number
-        financeable: boolean; description: string; saleType: string; link: string
-        propertyType: string; bedrooms: number; totalArea: number
-        privateArea: number; landArea: number; parkingSpots: number
-        bankName: string
-      }> = []
+        for (const uf of UFS) {
+          try {
+            const csvUrl = `https://venda-imoveis.caixa.gov.br/listaweb/Lista_imoveis_${uf}.csv`
+            const response = await fetch(csvUrl, {
+              headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                'Referer': 'https://venda-imoveis.caixa.gov.br/',
+              },
+              signal: AbortSignal.timeout(15000),
+            })
+            if (!response.ok) continue
 
-      for (let idx = 0; idx < allCsvTexts.length; idx++) {
-        const csvText = allCsvTexts[idx]
-        if (!csvText) continue
-        const uf = UFS[idx]
-        const lines = csvText.split('\n').slice(2)
+            const buffer = await response.arrayBuffer()
+            const csvText = new TextDecoder('latin1').decode(buffer)
+            const lines = csvText.split('\n').slice(2)
 
-        for (const line of lines) {
-          if (!line.trim()) continue
-          const cols = line.split(';')
-          if (cols.length < 11) continue
+            for (const line of lines) {
+              if (!line.trim()) continue
+              const cols = line.split(';')
+              if (cols.length < 11) continue
 
-          const id = (cols[0] ?? '').trim()
-          const city = (cols[2] ?? '').trim()
-          const neighborhood = (cols[3] ?? '').trim()
-          const address = (cols[4] ?? '').trim()
-          const price = parseFloat(((cols[5] ?? '0').replace(/\./g, '').replace(',', '.').trim())) || 0
-          const appraisalValue = parseFloat(((cols[6] ?? '0').replace(/\./g, '').replace(',', '.').trim())) || 0
-          const discount = parseFloat(((cols[7] ?? '0').replace(',', '.').trim())) || 0
-          const financeable = (cols[8] ?? '').trim().toLowerCase() === 'sim'
-          const description = (cols[9] ?? '').trim()
-          const saleType = (cols[10] ?? '').trim()
-          const link = (cols[11] ?? '').trim()
+              const id = (cols[0] ?? '').trim()
+              if (!id) continue
 
-        const d = description.toLowerCase()
-        let propertyType = 'Imóvel'
-        if (d.includes('apartamento')) propertyType = 'Apartamento'
-        else if (d.includes('casa')) propertyType = 'Casa'
-        else if (d.includes('terreno') || d.includes('lote')) propertyType = 'Terreno'
-        else if (d.includes('galpao') || d.includes('galp')) propertyType = 'Galpão'
-        else if (d.includes('predio') || d.includes('pr')) propertyType = 'Prédio'
-        else if (d.includes('sitio') || d.includes('s')) propertyType = 'Sítio'
-        else if (d.includes('fazenda')) propertyType = 'Fazenda'
-        else if (d.includes('chacara') || d.includes('ch')) propertyType = 'Chácara'
+              const city = (cols[2] ?? '').trim()
+              const neighborhood = (cols[3] ?? '').trim()
+              const address = (cols[4] ?? '').trim()
+              const price = parseFloat(((cols[5] ?? '0').replace(/\./g, '').replace(',', '.').trim())) || 0
+              const appraisalValue = parseFloat(((cols[6] ?? '0').replace(/\./g, '').replace(',', '.').trim())) || 0
+              const discount = parseFloat(((cols[7] ?? '0').replace(',', '.').trim())) || 0
+              const financeable = (cols[8] ?? '').trim().toLowerCase() === 'sim'
+              const description = (cols[9] ?? '').trim()
+              const saleType = (cols[10] ?? '').trim()
+              const link = (cols[11] ?? '').trim()
 
-        const bedroomsMatch = description.match(/(\d+)\s*qto/i)
-        const bedrooms = bedroomsMatch ? parseInt(bedroomsMatch[1]) : 0
-        const totalAreaMatch = description.match(/([\d,.]+)\s*de\s*área\s*total/i)
-        const totalArea = totalAreaMatch ? parseFloat(totalAreaMatch[1].replace(',', '.')) : 0
-        const privateAreaMatch = description.match(/([\d,.]+)\s*de\s*área\s*privativa/i)
-        const privateArea = privateAreaMatch ? parseFloat(privateAreaMatch[1].replace(',', '.')) : 0
-        const landAreaMatch = description.match(/([\d,.]+)\s*de\s*área\s*do\s*terreno/i)
-        const landArea = landAreaMatch ? parseFloat(landAreaMatch[1].replace(',', '.')) : 0
-        const parkingMatch = description.match(/(\d+)\s*vaga/i)
-        const parkingSpots = parkingMatch ? parseInt(parkingMatch[1]) : 0
+              const d = description.toLowerCase()
+              let propertyType = 'Imóvel'
+              if (d.includes('apartamento')) propertyType = 'Apartamento'
+              else if (d.includes('casa')) propertyType = 'Casa'
+              else if (d.includes('terreno') || d.includes('lote')) propertyType = 'Terreno'
+              else if (d.includes('galpao') || d.includes('galp')) propertyType = 'Galpão'
 
-          auctions.push({
-            id, city, state: uf, neighborhood, address,
-            price, appraisalValue, discount, financeable,
-            description, saleType, link, propertyType,
-            bedrooms, totalArea, privateArea, landArea, parkingSpots,
-            bankName: 'Caixa Econômica Federal',
-          })
+              const bedroomsMatch = description.match(/(\d+)\s*qto/i)
+              const totalAreaMatch = description.match(/([\d,.]+)\s*de\s*área\s*total/i)
+              const privateAreaMatch = description.match(/([\d,.]+)\s*de\s*área\s*privativa/i)
+              const landAreaMatch = description.match(/([\d,.]+)\s*de\s*área\s*do\s*terreno/i)
+              const parkingMatch = description.match(/(\d+)\s*vaga/i)
+
+              auctions.push({
+                id: `caixa-${id}`, source: 'CAIXA', bankName: 'Caixa Econômica Federal',
+                city, state: uf, neighborhood, address,
+                price, appraisalValue, discount, financeable,
+                fgtsAllowed: !!d.match(/fgts/i),
+                description, saleType, link, propertyType,
+                bedrooms: bedroomsMatch ? parseInt(bedroomsMatch[1]) : 0,
+                totalArea: totalAreaMatch ? parseFloat(totalAreaMatch[1].replace(',', '.')) : 0,
+                privateArea: privateAreaMatch ? parseFloat(privateAreaMatch[1].replace(',', '.')) : 0,
+                landArea: landAreaMatch ? parseFloat(landAreaMatch[1].replace(',', '.')) : 0,
+                parkingSpots: parkingMatch ? parseInt(parkingMatch[1]) : 0,
+                coverImageUrl: `https://venda-imoveis.caixa.gov.br/fotos-imoveis/${id}_1.jpg`,
+                auctionDate: null,
+                leiloeiro: 'Caixa Econômica Federal',
+              })
+            }
+          } catch { /* skip failed state */ }
         }
       }
 
-      auctions.sort((a, b) => b.discount - a.discount)
+      // Filter by state if Apify returned all states
+      if (stateFilter && source === 'apify') {
+        auctions = auctions.filter(a => (a.state as string)?.toUpperCase() === stateFilter.toUpperCase())
+      }
+
+      auctions.sort((a, b) => ((b.discount as number) || 0) - ((a.discount as number) || 0))
 
       const result = {
         total: auctions.length,
         updatedAt: new Date().toISOString(),
+        source,
         items: auctions,
-        sources: ['Caixa Econômica Federal'],
-        states: UFS.filter((_, i) => allCsvTexts[i]),
       }
 
-      await cacheSet(app.redis, cacheKey, result, 21600) // Cache 6h
+      await cacheSet(app.redis, cacheKey, result, 21600) // 6h cache
       return reply.send(result)
     } catch (err) {
-      app.log.error({ err }, '[auctions] Error fetching national auctions')
+      app.log.error({ err }, '[auctions] Error fetching auctions')
+      return reply.status(500).send({ error: 'INTERNAL_ERROR' })
+    }
+  })
+
+  // ── POST /auctions/apify-trigger — Trigger new Apify Caixa scrape ──
+  app.post('/auctions/apify-trigger', async (_req, reply) => {
+    try {
+      const { fetchCaixaViaApify } = await import('../../services/apify-caixa.service.js')
+      const items = await fetchCaixaViaApify()
+      return reply.send({
+        total: items.length,
+        updatedAt: new Date().toISOString(),
+        source: 'apify-fresh',
+        items,
+      })
+    } catch (err) {
+      app.log.error({ err }, '[auctions] Apify trigger failed')
+      return reply.status(500).send({ error: 'APIFY_ERROR' })
+    }
+  })
+
+  // ── GET /rental-prices — Referência de preços de aluguel (QuintoAndar via Apify) ──
+  app.get('/rental-prices', async (req, reply) => {
+    try {
+      const { city, neighborhood } = req.query as { city?: string; neighborhood?: string }
+      if (!city) return reply.status(400).send({ error: 'city parameter required' })
+
+      const cacheKey = `pub:rental:${city}:${neighborhood || 'all'}`
+      const cached = await cacheGet(app.redis, cacheKey)
+      if (cached) return reply.send(cached)
+
+      const { getRentalPriceReference } = await import('../../services/apify-quintoandar.service.js')
+      const result = await getRentalPriceReference(city, neighborhood)
+
+      if (!result) {
+        return reply.send({ avgRentPerSqm: 0, avgRent: 0, sampleSize: 0, city, neighborhood })
+      }
+
+      const response = { ...result, city, neighborhood }
+      await cacheSet(app.redis, cacheKey, response, 86400) // 24h cache
+      return reply.send(response)
+    } catch (err) {
+      app.log.error({ err }, '[rental-prices] Error')
+      return reply.status(500).send({ error: 'INTERNAL_ERROR' })
+    }
+  })
+
+  // ── GET /market-prices — Preços de mercado (ZAP Imóveis via Apify) ──
+  app.get('/market-prices', async (req, reply) => {
+    try {
+      const { city, neighborhood, type } = req.query as { city?: string; neighborhood?: string; type?: 'sale' | 'rent' }
+      if (!city) return reply.status(400).send({ error: 'city parameter required' })
+
+      const cacheKey = `pub:market:${city}:${neighborhood || 'all'}:${type || 'all'}`
+      const cached = await cacheGet(app.redis, cacheKey)
+      if (cached) return reply.send(cached)
+
+      const { getMarketPriceReference } = await import('../../services/apify-zap.service.js')
+      const result = await getMarketPriceReference(city, neighborhood, type)
+
+      const response = result || { avgPricePerSqm: 0, avgPrice: 0, medianPrice: 0, sampleSize: 0, listingType: type || 'all' }
+      const finalResponse = { ...response, city, neighborhood }
+      await cacheSet(app.redis, cacheKey, finalResponse, 86400)
+      return reply.send(finalResponse)
+    } catch (err) {
+      app.log.error({ err }, '[market-prices] Error')
+      return reply.status(500).send({ error: 'INTERNAL_ERROR' })
+    }
+  })
+
+  // ── GET /auction-opportunities — Cross-references auction prices with rental/market data ──
+  app.get('/auction-opportunities', async (req, reply) => {
+    try {
+      const { city, state, minYield } = req.query as { city?: string; state?: string; minYield?: string }
+
+      const cacheKey = `pub:auction-opportunities:${state || 'ALL'}:${city || 'ALL'}:${minYield || '0'}`
+      const cached = await cacheGet(app.redis, cacheKey)
+      if (cached) return reply.send(cached)
+
+      // 1. Fetch auctions
+      const { fetchCaixaApifyLastRun } = await import('../../services/apify-caixa.service.js')
+      let auctions = await fetchCaixaApifyLastRun()
+
+      // Filter by state/city if provided
+      if (state) auctions = auctions.filter((a: any) => a.state?.toUpperCase() === state.toUpperCase())
+      if (city) auctions = auctions.filter((a: any) => a.city?.toLowerCase().includes(city.toLowerCase()))
+
+      // 2. Fetch rental & market references per city
+      const { getRentalPriceReference } = await import('../../services/apify-quintoandar.service.js')
+      const { getMarketPriceReference } = await import('../../services/apify-zap.service.js')
+
+      const cityCache = new Map<string, { avgRent: number; avgPrice: number }>()
+
+      const opportunities: Array<Record<string, unknown>> = []
+
+      for (const auction of auctions) {
+        const auctionPrice = (auction as any).price as number
+        if (!auctionPrice || auctionPrice <= 0) continue
+
+        const auctionCity = ((auction as any).city || '') as string
+        if (!auctionCity) continue
+
+        // Lookup or fetch rental/market data for this city
+        if (!cityCache.has(auctionCity.toLowerCase())) {
+          try {
+            const [rental, market] = await Promise.all([
+              getRentalPriceReference(auctionCity),
+              getMarketPriceReference(auctionCity),
+            ])
+            cityCache.set(auctionCity.toLowerCase(), {
+              avgRent: rental?.avgRent || 0,
+              avgPrice: market?.avgPrice || 0,
+            })
+          } catch {
+            cityCache.set(auctionCity.toLowerCase(), { avgRent: 0, avgPrice: 0 })
+          }
+        }
+
+        const ref = cityCache.get(auctionCity.toLowerCase())!
+        const estimatedRent = ref.avgRent
+        const marketPrice = ref.avgPrice
+
+        const yieldMensal = estimatedRent > 0 ? (estimatedRent / auctionPrice) * 100 : 0
+        const spreadVsMarket = marketPrice > 0 ? ((marketPrice - auctionPrice) / marketPrice) * 100 : 0
+
+        let classification: string
+        if (yieldMensal > 0.8) classification = 'ALTA_LIQUIDEZ'
+        else if (spreadVsMarket > 40) classification = 'OPORTUNIDADE_OURO'
+        else classification = 'VALORIZACAO'
+
+        // Apply minYield filter
+        const minYieldNum = minYield ? parseFloat(minYield) : 0
+        if (yieldMensal < minYieldNum) continue
+
+        opportunities.push({
+          ...(auction as Record<string, unknown>),
+          yieldMensal: Math.round(yieldMensal * 100) / 100,
+          spreadVsMarket: Math.round(spreadVsMarket * 100) / 100,
+          estimatedRent,
+          marketPrice,
+          classification,
+        })
+      }
+
+      // Sort by yield descending, take top 20
+      opportunities.sort((a, b) => (b.yieldMensal as number) - (a.yieldMensal as number))
+      const top20 = opportunities.slice(0, 20)
+
+      const result = {
+        total: opportunities.length,
+        showing: top20.length,
+        updatedAt: new Date().toISOString(),
+        items: top20,
+      }
+
+      await cacheSet(app.redis, cacheKey, result, 21600) // 6h cache
+      return reply.send(result)
+    } catch (err) {
+      app.log.error({ err }, '[auction-opportunities] Error')
       return reply.status(500).send({ error: 'INTERNAL_ERROR' })
     }
   })

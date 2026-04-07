@@ -48,7 +48,7 @@ export async function scrapeBancoDoBrasil(): Promise<AuctionItem[]> {
         )
 
         if (!res.ok) continue
-        const data = await res.json()
+        const data: any = await res.json()
         if (!data?.imoveis?.length) continue
 
         for (const im of data.imoveis) {

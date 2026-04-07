@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import SocialProofBanner from '@/components/SocialProofBanner'
 import LeiloesClient from './LeiloesClient'
 
 export const metadata: Metadata = {
@@ -33,6 +34,7 @@ export default function LeiloesPage() {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(SCHEMA) }} />
+      <SocialProofBanner />
       <LeiloesClient />
     </>
   )
