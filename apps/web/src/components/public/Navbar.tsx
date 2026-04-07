@@ -7,7 +7,7 @@ import {
   Menu, X, ChevronDown, ChevronRight,
   LayoutDashboard, UserCheck, Users, CreditCard,
   BarChart3, ClipboardList, Home, Calculator,
-  Building, Wrench, Handshake, Gavel, Phone,
+  Building, Wrench, Handshake, Gavel, Phone, Shield,
 } from 'lucide-react'
 
 const NAV_LINKS = [
@@ -29,6 +29,7 @@ const SERVICOS_MENU = [
   { href: '/servicos/fichas-cadastrais', icon: <ClipboardList className="w-4 h-4" />, label: 'Fichas Cadastrais', desc: 'Propostas e cadastros online', color: '#16a34a' },
   { href: '/financiamentos#simulador', icon: <Home className="w-4 h-4" />, label: 'Simule seu Financiamento', desc: 'Calcule parcelas e taxas', color: '#2563eb' },
   { href: '/parceiros/planos', icon: <Handshake className="w-4 h-4" />, label: 'Seja um Parceiro', desc: 'Dashboard privado — Planos Prime e VIP', color: '#C9A84C' },
+  { href: '/parceiros/plano-vip', icon: <Shield className="w-4 h-4" />, label: 'Sentinela Territorial VIP', desc: 'Exclusividade em condomínios e bairros', color: '#1B2B5B' },
   { href: '/leiloes', icon: <Gavel className="w-4 h-4" />, label: 'Leilões Imobiliários', desc: 'Imóveis com até 50% de desconto', color: '#7c3aed' },
 ]
 
