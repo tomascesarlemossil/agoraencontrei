@@ -6,6 +6,7 @@ import { Search, MapPin, Filter, Calculator, Bell, TrendingUp, ChevronDown, X, A
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'https://api-production-669c.up.railway.app'
 const PUBLIC_AUCTIONS_URL = `${API_URL}/api/v1/public/auctions`
+const CAIXA_CSV_URL = '/api/caixa-csv?state=SP' // Vercel proxy (no geo-block)
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://oenbzvxcsgyzqjtlovdq.supabase.co'
 const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
 
@@ -403,14 +404,40 @@ export default function LeiloesClient() {
         }
       }
 
+      // Fetch from Railway API AND Vercel CSV proxy in parallel
       const fallbackParams = new URLSearchParams()
       if (state) fallbackParams.set('state', state)
       const fallbackUrl = `${PUBLIC_AUCTIONS_URL}${fallbackParams.toString() ? '?' + fallbackParams : ''}`
-      const fallbackRes = await fetch(fallbackUrl)
-      if (!fallbackRes.ok) throw new Error('Falha ao buscar fallback público de leilões')
 
-      const fallbackData = await fallbackRes.json()
-      const mappedItems = (fallbackData.items || []).map(mapPublicAuction)
+      const [railwayRes, caixaRes] = await Promise.allSettled([
+        fetch(fallbackUrl),
+        fetch(CAIXA_CSV_URL),
+      ])
+
+      let allItems: any[] = []
+
+      // Railway API items (Apify Santander + any cached Caixa)
+      if (railwayRes.status === 'fulfilled' && railwayRes.value.ok) {
+        const railwayData = await railwayRes.value.json()
+        allItems.push(...(railwayData.items || []))
+      }
+
+      // Vercel CSV proxy items (Caixa SP — always works, no geo-block)
+      if (caixaRes.status === 'fulfilled' && caixaRes.value.ok) {
+        const caixaData = await caixaRes.value.json()
+        const caixaItems = caixaData.items || []
+        // Deduplicate: don't add items that already exist from Railway
+        const existingIds = new Set(allItems.map((i: any) => i.id))
+        for (const item of caixaItems) {
+          if (!existingIds.has(item.id)) {
+            allItems.push(item)
+          }
+        }
+      }
+
+      if (allItems.length === 0) throw new Error('Nenhum dado disponível')
+
+      const mappedItems = allItems.map(mapPublicAuction)
       const filteredItems = filterFallbackAuctions(mappedItems, {
         search,
         city,
