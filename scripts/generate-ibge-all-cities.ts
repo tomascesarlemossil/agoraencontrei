@@ -71,7 +71,8 @@ async function main() {
   const allCities: CityEntry[] = []
 
   for (const m of municipios) {
-    const uf = m.microrregiao.mesorregiao.UF
+    const uf = m.microrregiao?.mesorregiao?.UF
+    if (!uf) continue // Skip municipalities without region data
     const entry: CityEntry = {
       slug: slugify(m.nome),
       name: m.nome,
