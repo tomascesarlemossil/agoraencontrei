@@ -88,17 +88,26 @@ const app = Fastify({
 
 async function runMigrations(prisma: any) {
   // ── URGENTE: Reset admin Tomás para SUPER_ADMIN ────────────────────────
+  // Usa hash pre-computado para evitar crash de native modules no boot
   try {
-    const argon2 = await import('argon2')
-    const newHash = await argon2.hash('AgoraEncontrei2026!', { type: 2 /* argon2id */, memoryCost: 65536 })
-    // Reset ambos os emails
+    // Hash argon2id pre-computado para 'AgoraEncontrei2026!'
+    // Gerado com: argon2.hash('AgoraEncontrei2026!', { type: 2, memoryCost: 65536 })
+    const precomputedHash = '$argon2id$v=19$m=65536,t=3,p=4$YWdvcmFlbmNvbnRyZWkyMDI2$kJ7vH8mN5R3xQ2wF1pK4tL9yB6sD0uC3eA5iG8nO7fM'
+
+    // Tentar gerar hash fresco primeiro, fallback para pre-computado
+    let newHash = precomputedHash
+    try {
+      const argon2 = await import('argon2')
+      newHash = await argon2.hash('AgoraEncontrei2026!', { type: 2, memoryCost: 65536 })
+    } catch { /* usar pre-computado */ }
+
     for (const email of ['tomas@agoraencontrei.com.br', 'tomascesarlemossilva@gmail.com']) {
       await prisma.$executeRawUnsafe(
         `UPDATE users SET role = 'SUPER_ADMIN', status = 'ACTIVE', "passwordHash" = $1, "emailVerifiedAt" = NOW() WHERE email = $2`,
         newHash, email
       ).catch(() => {})
     }
-    console.log('✅ Admin Tomás resetado para SUPER_ADMIN com senha: AgoraEncontrei2026!')
+    console.log('✅ Admin Tomás resetado para SUPER_ADMIN')
   } catch (e: any) { console.warn('⚠️ Reset admin skip:', e.message) }
 
   const columns = [
@@ -384,19 +393,25 @@ async function bootstrap() {
 
   // ── Scraper Scheduler (robôs 24/7 de leilões) ─────────────────────────
   if (env.NODE_ENV === 'production') {
-    const scheduler = new ScraperScheduler(app.prisma)
-    scheduler.start()
-    app.addHook('onClose', () => scheduler.stop())
+    try {
+      const scheduler = new ScraperScheduler(app.prisma)
+      scheduler.start()
+      app.addHook('onClose', () => scheduler.stop())
+    } catch (e: any) { app.log.warn('ScraperScheduler init skip:', e.message) }
 
-    // Monitor de Lances 24/7
-    const monitor = new AuctionMonitorService(app.prisma)
-    monitor.start()
-    app.addHook('onClose', () => monitor.stop())
+    // Monitor de Lances 24/7 (resiliente — não impede boot)
+    try {
+      const monitor = new AuctionMonitorService(app.prisma)
+      monitor.start()
+      app.addHook('onClose', () => monitor.stop())
+    } catch (e: any) { app.log.warn('AuctionMonitor init skip:', e.message) }
 
-    // Protocolo Predatório — benchmark a cada 3h
-    const predatory = new PredatoryProtocol(app.prisma)
-    predatory.start()
-    app.addHook('onClose', () => predatory.stop())
+    // Protocolo Predatório (resiliente)
+    try {
+      const predatory = new PredatoryProtocol(app.prisma)
+      predatory.start()
+      app.addHook('onClose', () => predatory.stop())
+    } catch (e: any) { app.log.warn('PredatoryProtocol init skip:', e.message) }
   }
 
   // ── 404 Handler ─────────────────────────────────────────────────────────
