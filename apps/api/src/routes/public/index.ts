@@ -1300,7 +1300,7 @@ export default async function publicRoutes(app: FastifyInstance) {
   app.get('/auctions', async (req, reply) => {
     try {
       const { state: stateFilter } = req.query as { state?: string }
-      const cacheKey = `pub:caixa:auctions:${stateFilter || 'ALL'}:v4`
+      const cacheKey = `pub:caixa:auctions:${stateFilter || 'ALL'}:v5`
       const cached = await cacheGet(app.redis, cacheKey)
       if (cached) return reply.send(cached)
 
@@ -1342,8 +1342,8 @@ export default async function publicRoutes(app: FastifyInstance) {
         app.log.warn({ err: apifyErr }, '[auctions] Apify fallback failed, using CSV')
       }
 
-      // 2. Fallback to CSV scraper if Apify returned nothing
-      if (auctions.length === 0) {
+      // 2. ALWAYS fetch CSV data from Caixa (primary source for Franca/SP)
+      {
         const UFS = stateFilter
           ? [stateFilter.toUpperCase()]
           : ['SP', 'MG', 'RJ', 'PR', 'GO', 'MS', 'RS', 'SC', 'BA', 'CE', 'PE', 'DF']
