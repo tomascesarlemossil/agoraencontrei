@@ -28,7 +28,7 @@ const SERVICOS_MENU = [
   { href: '/financiamentos', icon: <Calculator className="w-4 h-4" />, label: 'Financiamentos', desc: 'Simule e financie seu imóvel', color: '#2563eb' },
   { href: '/servicos/fichas-cadastrais', icon: <ClipboardList className="w-4 h-4" />, label: 'Fichas Cadastrais', desc: 'Propostas e cadastros online', color: '#16a34a' },
   { href: '/financiamentos#simulador', icon: <Home className="w-4 h-4" />, label: 'Simule seu Financiamento', desc: 'Calcule parcelas e taxas', color: '#2563eb' },
-  { href: '/seja-parceiro', icon: <Handshake className="w-4 h-4" />, label: 'Seja um Parceiro', desc: 'Planos Start, Prime e VIP', color: '#C9A84C' },
+  { href: '/parceiros/planos', icon: <Handshake className="w-4 h-4" />, label: 'Seja um Parceiro', desc: 'Dashboard privado — Planos Prime e VIP', color: '#C9A84C' },
   { href: '/leiloes', icon: <Gavel className="w-4 h-4" />, label: 'Leilões Imobiliários', desc: 'Imóveis com até 50% de desconto', color: '#7c3aed' },
 ]
 
@@ -56,6 +56,14 @@ const ACCESS_AREAS = [
     desc: 'Proprietários, inquilinos e parceiros',
     color: '#5cb85c',
     bg: 'rgba(92,184,92,0.12)',
+  },
+  {
+    href: '/meu-painel',
+    icon: <BarChart3 className="w-5 h-5" />,
+    label: 'Painel do Parceiro',
+    desc: 'Dashboard privado — ferramentas exclusivas',
+    color: '#C9A84C',
+    bg: 'rgba(201,168,76,0.12)',
   },
 ]
 
