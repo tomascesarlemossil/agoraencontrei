@@ -24,6 +24,14 @@ const PLAN_INFO = {
       'Link de WhatsApp direto',
       'Topo das buscas por bairro',
       'Selo Verificado nos condomínios',
+      'Dashboard de analytics',
+      'Calculadora ROI de leilões',
+      'Alertas de oportunidades por e-mail',
+    ],
+    dashboardTools: [
+      { icon: '📊', name: 'Analytics', desc: 'Visualizações e cliques no WhatsApp' },
+      { icon: '🧮', name: 'Calculadora ROI', desc: 'Score de oportunidade em leilões' },
+      { icon: '🔔', name: 'Alertas', desc: 'Leilões com desconto > 40%' },
     ],
   },
   VIP: {
@@ -34,9 +42,17 @@ const PLAN_INFO = {
     bg: 'rgba(27,43,91,0.08)',
     features: [
       'Tudo do Prime +',
-      'Banner exclusivo em condomínios de luxo',
-      'Destaque no mapa de busca',
-      'Relatório mensal de leads',
+      'Sentinela territorial exclusiva',
+      'Relatório mensal de leads (PDF)',
+      'Banner em condomínios de luxo',
+      'Suporte prioritário',
+    ],
+    dashboardTools: [
+      { icon: '📊', name: 'Analytics', desc: 'Visualizações e cliques no WhatsApp' },
+      { icon: '🧮', name: 'Calculadora ROI', desc: 'Score de oportunidade em leilões' },
+      { icon: '🔔', name: 'Alertas', desc: 'Leilões com desconto > 40%' },
+      { icon: '🛡️', name: 'Sentinela Territorial', desc: 'Monitoramento exclusivo de bairros' },
+      { icon: '📈', name: 'Relatório Mensal', desc: 'PDF com performance e ROI' },
     ],
   },
 }
@@ -444,19 +460,57 @@ function CheckoutContent() {
                 </>
               )}
 
-              <div className="flex gap-3 justify-center">
+              {/* Dashboard tools preview */}
+              <div className="bg-[#f8f6f1] rounded-2xl p-5 mb-6 text-left">
+                <p className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">Ferramentas do seu dashboard privado</p>
+                <div className="space-y-2">
+                  {planInfo.dashboardTools.map((tool: any, i: number) => (
+                    <div key={i} className="flex items-center gap-3">
+                      <span className="text-lg">{tool.icon}</span>
+                      <div>
+                        <p className="text-sm font-semibold text-[#1B2B5B]">{tool.name}</p>
+                        <p className="text-xs text-gray-400">{tool.desc}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Aviso de ativação */}
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6 text-sm text-amber-700 text-left">
+                <p className="font-semibold mb-1">⚡ Ativação automática</p>
+                <p className="text-xs leading-relaxed">
+                  {billingType === 'PIX'
+                    ? 'Após o pagamento via PIX, seu dashboard será ativado em instantes automaticamente.'
+                    : billingType === 'BOLETO'
+                    ? 'Após a compensação do boleto (até 3 dias úteis), seu dashboard será ativado automaticamente.'
+                    : 'Após a confirmação do cartão, seu dashboard será ativado em instantes automaticamente.'
+                  }
+                </p>
+              </div>
+
+              <div className="flex flex-col gap-3">
                 <Link
-                  href="/parceiros"
-                  className="px-5 py-2.5 border border-gray-200 rounded-xl text-gray-600 hover:bg-gray-50 transition-colors text-sm"
+                  href="/meu-painel"
+                  className="w-full inline-flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-sm transition-all"
+                  style={{ backgroundColor: planInfo.color, color: plan === 'PRIME' ? '#1B2B5B' : 'white' }}
                 >
-                  Ver Parceiros
+                  Acessar meu dashboard privado →
                 </Link>
-                <Link
-                  href="/"
-                  className="px-5 py-2.5 bg-[#1B2B5B] text-white rounded-xl font-semibold hover:bg-[#162247] transition-colors text-sm"
-                >
-                  Ir para o Início
-                </Link>
+                <div className="flex gap-3">
+                  <Link
+                    href="/parceiros"
+                    className="flex-1 px-5 py-2.5 border border-gray-200 rounded-xl text-gray-600 hover:bg-gray-50 transition-colors text-sm text-center"
+                  >
+                    Ver Parceiros
+                  </Link>
+                  <Link
+                    href="/"
+                    className="flex-1 px-5 py-2.5 bg-[#1B2B5B] text-white rounded-xl font-semibold hover:bg-[#162247] transition-colors text-sm text-center"
+                  >
+                    Ir para o Início
+                  </Link>
+                </div>
               </div>
             </div>
           </div>
