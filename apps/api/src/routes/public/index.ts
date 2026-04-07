@@ -1505,4 +1505,97 @@ export default async function publicRoutes(app: FastifyInstance) {
       return reply.status(500).send({ error: 'INTERNAL_ERROR' })
     }
   })
+
+  // ── GET /auction-opportunities — Cross-references auction prices with rental/market data ──
+  app.get('/auction-opportunities', async (req, reply) => {
+    try {
+      const { city, state, minYield } = req.query as { city?: string; state?: string; minYield?: string }
+
+      const cacheKey = `pub:auction-opportunities:${state || 'ALL'}:${city || 'ALL'}:${minYield || '0'}`
+      const cached = await cacheGet(app.redis, cacheKey)
+      if (cached) return reply.send(cached)
+
+      // 1. Fetch auctions
+      const { fetchCaixaApifyLastRun } = await import('../../services/apify-caixa.service.js')
+      let auctions = await fetchCaixaApifyLastRun()
+
+      // Filter by state/city if provided
+      if (state) auctions = auctions.filter((a: any) => a.state?.toUpperCase() === state.toUpperCase())
+      if (city) auctions = auctions.filter((a: any) => a.city?.toLowerCase().includes(city.toLowerCase()))
+
+      // 2. Fetch rental & market references per city
+      const { getRentalPriceReference } = await import('../../services/apify-quintoandar.service.js')
+      const { getMarketPriceReference } = await import('../../services/apify-zap.service.js')
+
+      const cityCache = new Map<string, { avgRent: number; avgPrice: number }>()
+
+      const opportunities: Array<Record<string, unknown>> = []
+
+      for (const auction of auctions) {
+        const auctionPrice = (auction as any).price as number
+        if (!auctionPrice || auctionPrice <= 0) continue
+
+        const auctionCity = ((auction as any).city || '') as string
+        if (!auctionCity) continue
+
+        // Lookup or fetch rental/market data for this city
+        if (!cityCache.has(auctionCity.toLowerCase())) {
+          try {
+            const [rental, market] = await Promise.all([
+              getRentalPriceReference(auctionCity),
+              getMarketPriceReference(auctionCity),
+            ])
+            cityCache.set(auctionCity.toLowerCase(), {
+              avgRent: rental?.avgRent || 0,
+              avgPrice: market?.avgPrice || 0,
+            })
+          } catch {
+            cityCache.set(auctionCity.toLowerCase(), { avgRent: 0, avgPrice: 0 })
+          }
+        }
+
+        const ref = cityCache.get(auctionCity.toLowerCase())!
+        const estimatedRent = ref.avgRent
+        const marketPrice = ref.avgPrice
+
+        const yieldMensal = estimatedRent > 0 ? (estimatedRent / auctionPrice) * 100 : 0
+        const spreadVsMarket = marketPrice > 0 ? ((marketPrice - auctionPrice) / marketPrice) * 100 : 0
+
+        let classification: string
+        if (yieldMensal > 0.8) classification = 'ALTA_LIQUIDEZ'
+        else if (spreadVsMarket > 40) classification = 'OPORTUNIDADE_OURO'
+        else classification = 'VALORIZACAO'
+
+        // Apply minYield filter
+        const minYieldNum = minYield ? parseFloat(minYield) : 0
+        if (yieldMensal < minYieldNum) continue
+
+        opportunities.push({
+          ...(auction as Record<string, unknown>),
+          yieldMensal: Math.round(yieldMensal * 100) / 100,
+          spreadVsMarket: Math.round(spreadVsMarket * 100) / 100,
+          estimatedRent,
+          marketPrice,
+          classification,
+        })
+      }
+
+      // Sort by yield descending, take top 20
+      opportunities.sort((a, b) => (b.yieldMensal as number) - (a.yieldMensal as number))
+      const top20 = opportunities.slice(0, 20)
+
+      const result = {
+        total: opportunities.length,
+        showing: top20.length,
+        updatedAt: new Date().toISOString(),
+        items: top20,
+      }
+
+      await cacheSet(app.redis, cacheKey, result, 21600) // 6h cache
+      return reply.send(result)
+    } catch (err) {
+      app.log.error({ err }, '[auction-opportunities] Error')
+      return reply.status(500).send({ error: 'INTERNAL_ERROR' })
+    }
+  })
 }
