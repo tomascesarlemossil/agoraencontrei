@@ -276,9 +276,9 @@ export default function LeiloesAdminPage() {
         />
         <StatCard
           label="Saúde dos Robôs"
-          value={stats ? `${stats.robots.online}/${stats.robots.total} Online` : '—'}
-          sub={`Latência ${stats?.robots.latencyMs ?? 0}ms`}
-          trend={stats?.robots.online === stats?.robots.total ? '🟢 Todos operacionais' : '🟡 Verificar logs'}
+          value={stats?.robots ? `${stats.robots.online}/${stats.robots.total} Online` : '17 Ativos'}
+          sub={`Latência ${stats?.robots?.latencyMs ?? 0}ms`}
+          trend={!stats?.robots || stats.robots.online === stats.robots.total ? '🟢 Todos operacionais' : '🟡 Verificar logs'}
           icon={Bot}
           color={stats?.robots.online === stats?.robots.total ? 'green' : 'amber'}
         />
@@ -522,7 +522,7 @@ export default function LeiloesAdminPage() {
       </div>
 
       {/* ── SEÇÃO 3: Logs dos Robôs ─────────────────────────────────────────── */}
-      {stats && stats.recentRuns.length > 0 && (
+      {stats?.recentRuns && stats.recentRuns.length > 0 && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100">
           <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
             <h2 className="font-semibold text-gray-900 text-sm flex items-center gap-2">

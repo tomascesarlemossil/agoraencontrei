@@ -760,26 +760,6 @@ export default async function HomePage() {
 
 
 
-      {/* ── 9. VÍDEO DE APRESENTAÇÃO ─────────────────────────────────────── */}
-      {(siteSettings.presentationVideoUrl || siteSettings.presentationBannerUrl) && (
-        <PresentationSection
-          videoUrl={siteSettings.presentationVideoUrl ?? null}
-          bannerUrl={siteSettings.presentationBannerUrl ?? null}
-          bannerLink={siteSettings.presentationBannerLink ?? null}
-          title={siteSettings.presentationTitle ?? null}
-          subtitle={siteSettings.presentationSubtitle ?? null}
-        />
-      )}
-      {!siteSettings.presentationVideoUrl && !siteSettings.presentationBannerUrl && (
-        <PresentationSection
-          videoUrl="https://files.manuscdn.com/user_upload_by_module/session_file/310519663481419273/MbhJNDOYKAGxseOh.mp4"
-          bannerUrl={null}
-          bannerLink={null}
-          title={null}
-          subtitle={null}
-        />
-      )}
-
       {/* ── 8.5. LEILÕES — CTA + RANKING ──────────────────────────────── */}
       <section className="py-12" style={{ backgroundColor: '#1B2B5B' }}>
         <div className="max-w-6xl mx-auto px-4 text-center">
@@ -892,6 +872,26 @@ export default async function HomePage() {
           </a>
         </div>
       </section>
+
+      {/* ── VÍDEO DE APRESENTAÇÃO (último antes do rodapé) ──────────────── */}
+      {(siteSettings.presentationVideoUrl || siteSettings.presentationBannerUrl) && (
+        <PresentationSection
+          videoUrl={siteSettings.presentationVideoUrl ?? null}
+          bannerUrl={siteSettings.presentationBannerUrl ?? null}
+          bannerLink={siteSettings.presentationBannerLink ?? null}
+          title={siteSettings.presentationTitle ?? null}
+          subtitle={siteSettings.presentationSubtitle ?? null}
+        />
+      )}
+      {!siteSettings.presentationVideoUrl && !siteSettings.presentationBannerUrl && (
+        <PresentationSection
+          videoUrl="https://files.manuscdn.com/user_upload_by_module/session_file/310519663481419273/MbhJNDOYKAGxseOh.mp4"
+          bannerUrl={null}
+          bannerLink={null}
+          title={null}
+          subtitle={null}
+        />
+      )}
     </>
   )
 }
