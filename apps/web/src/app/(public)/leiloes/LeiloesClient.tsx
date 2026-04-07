@@ -969,37 +969,21 @@ export default function LeiloesClient() {
               {auctions.map(auction => (
                 <div key={auction.id} onClick={() => openLeadModal(auction)}
                   className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-200 group cursor-pointer">
-                  {/* Image — Real photo > Street View placeholder > Gradient fallback */}
+                  {/* Image — Real photo > AgoraEncontrei banner fallback */}
                   <div className="relative h-48 bg-gray-200 overflow-hidden">
-                    {auction.coverImage ? (
-                      <img
-                        src={auction.coverImage}
-                        alt={auction.title}
-                        loading="lazy"
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        onError={(e) => {
-                          const img = e.target as HTMLImageElement
-                          // Try Street View static image as fallback
-                          const addr = encodeURIComponent(`${auction.neighborhood || ''} ${auction.city || ''} ${auction.state || 'SP'} Brasil`)
-                          if (!img.dataset.fallback) {
-                            img.dataset.fallback = '1'
-                            img.src = `https://maps.googleapis.com/maps/api/streetview?size=400x300&location=${addr}&key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8`
-                          } else {
-                            // Final fallback: hide and show gradient
-                            img.style.display = 'none'
-                          }
-                        }}
-                      />
-                    ) : (
-                      <div className={`w-full h-full bg-gradient-to-br ${typeGradient(auction.propertyType)} flex flex-col items-center justify-center`}>
-                        <div className="text-center px-4">
-                          <span className="text-3xl mb-1 block">{typeIcon(auction.propertyType)}</span>
-                          <span className="text-white font-bold text-sm">{typeLabel(auction.propertyType)}</span>
-                          {auction.city && <span className="text-white/60 text-xs block mt-1">{auction.city}/{auction.state}</span>}
-                          {Number(auction.minimumBid) > 0 && <span className="text-white font-bold text-lg block mt-1">{formatCurrency(Number(auction.minimumBid))}</span>}
-                        </div>
-                      </div>
-                    )}
+                    <img
+                      src={auction.coverImage || '/hero-banner.jpg'}
+                      alt={auction.title}
+                      loading="lazy"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      onError={(e) => {
+                        const img = e.target as HTMLImageElement
+                        if (!img.dataset.fallback) {
+                          img.dataset.fallback = '1'
+                          img.src = '/hero-banner.jpg'
+                        }
+                      }}
+                    />
                     {/* Top-left: Source badge */}
                     <div className="absolute top-2 left-2 flex gap-1.5">
                       <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-white/90 backdrop-blur text-gray-800 shadow-sm">
@@ -1113,19 +1097,21 @@ export default function LeiloesClient() {
                 <button
                   disabled={page <= 1}
                   onClick={() => setPage(p => Math.max(1, p - 1))}
-                  className="px-4 py-2 bg-white border rounded-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                  className="px-5 py-2.5 rounded-lg text-sm font-bold disabled:opacity-30 disabled:cursor-not-allowed transition"
+                  style={{ backgroundColor: '#1B2B5B', color: '#FFFFFF' }}
                 >
-                  Anterior
+                  ← Anterior
                 </button>
-                <span className="px-4 py-2 text-sm text-gray-600">
+                <span className="px-4 py-2 text-sm font-bold" style={{ color: '#1B2B5B' }}>
                   Página {page} de {totalPages}
                 </span>
                 <button
                   disabled={page >= totalPages}
                   onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                  className="px-4 py-2 bg-white border rounded-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                  className="px-5 py-2.5 rounded-lg text-sm font-bold disabled:opacity-30 disabled:cursor-not-allowed transition"
+                  style={{ backgroundColor: '#C9A84C', color: '#1B2B5B' }}
                 >
-                  Próxima
+                  Próxima →
                 </button>
               </div>
             )}

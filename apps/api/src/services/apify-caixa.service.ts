@@ -13,7 +13,7 @@
 
 import { env } from '../utils/env.js'
 
-const APIFY_ACTOR_ID = 'efraimkaov~caixa-economica-federal-imoveis'
+const APIFY_ACTOR_ID = 'brasil-scrapers~caixa-leiloes-api'
 const APIFY_BASE = 'https://api.apify.com/v2'
 
 /** Exact shape returned by the Caixa Apify actor */
