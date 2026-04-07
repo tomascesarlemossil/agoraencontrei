@@ -220,7 +220,8 @@ export default async function authRoutes(app: FastifyInstance) {
        LIMIT 1`
 
     if (!client.length) {
-      return reply.status(401).send({ error: 'NOT_FOUND', message: 'CPF não encontrado' })
+      // Generic error message to prevent CPF enumeration
+      return reply.status(401).send({ error: 'INVALID_CREDENTIALS', message: 'CPF ou data de nascimento incorretos' })
     }
 
     const cl = client[0]
@@ -234,7 +235,7 @@ export default async function authRoutes(app: FastifyInstance) {
         ? inputDate.split('/').reverse().join('-')
         : inputDate
       if (dbDate !== normalizedInput) {
-        return reply.status(401).send({ error: 'INVALID_CREDENTIALS', message: 'Data de nascimento incorreta' })
+        return reply.status(401).send({ error: 'INVALID_CREDENTIALS', message: 'CPF ou data de nascimento incorretos' })
       }
     }
 
