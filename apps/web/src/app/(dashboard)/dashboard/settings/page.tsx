@@ -495,7 +495,25 @@ export default function SettingsPage() {
       return authApi.changePassword(token!, pwd.current, pwd.next)
     },
     onSuccess: () => { setPwdSaved(true); setPwd({ current: '', next: '', confirm: '' }); setTimeout(() => setPwdSaved(false), 3000) },
-    onError: (e: Error) => setPwdError(e.message ?? 'Erro ao alterar senha'),
+    onError: (e: Error) => {
+      const msg = e.message || ''
+      // Traduz erros comuns de validação para português
+      if (msg.includes('maiúscula') || msg.includes('uppercase')) {
+        setPwdError('A senha deve conter pelo menos uma letra maiúscula (A-Z)')
+      } else if (msg.includes('minúscula') || msg.includes('lowercase')) {
+        setPwdError('A senha deve conter pelo menos uma letra minúscula (a-z)')
+      } else if (msg.includes('número') || msg.includes('digit') || msg.includes('number')) {
+        setPwdError('A senha deve conter pelo menos um número (0-9)')
+      } else if (msg.includes('especial') || msg.includes('special')) {
+        setPwdError('A senha deve conter pelo menos um caractere especial (!@#$%)')
+      } else if (msg.includes('Invalid') || msg.includes('invalid_string') || msg.includes('regex')) {
+        setPwdError('Senha fraca. Use pelo menos 8 caracteres com maiúsculas, minúsculas, números e caracteres especiais.')
+      } else if (msg.includes('current') || msg.includes('atual') || msg.includes('incorrect')) {
+        setPwdError('Senha atual incorreta. Verifique e tente novamente.')
+      } else {
+        setPwdError(msg || 'Erro ao alterar senha. Tente novamente.')
+      }
+    },
   })
 
   return (
