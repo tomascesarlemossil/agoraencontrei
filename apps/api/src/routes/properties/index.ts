@@ -388,7 +388,7 @@ export default async function propertiesRoutes(app: FastifyInstance) {
   // ── Protected routes ─────────────────────────────────────────────────────
 
   app.addHook('preHandler', async (req, reply) => {
-    if (req.routerMethod !== 'GET') {
+    if (req.method !== 'GET') {
       await app.authenticate(req, reply)
     }
   })

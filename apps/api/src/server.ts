@@ -422,21 +422,22 @@ async function bootstrap() {
   })
 
   // ── Error Handler ────────────────────────────────────────────────────────
-  app.setErrorHandler((error, _req, reply) => {
+  app.setErrorHandler((err: unknown, _req, reply) => {
+    const error = err as any
     // Zod validation errors → 400
-    if (error instanceof ZodError || error.name === 'ZodError' || (error as any).issues != null) {
+    if (error instanceof ZodError || error?.name === 'ZodError' || error?.issues != null) {
       return reply.status(400).send({
         error: 'VALIDATION_ERROR',
         message: error.message,
       })
     }
     app.log.error(error)
-    const statusCode = error.statusCode ?? 500
+    const statusCode = error?.statusCode ?? 500
     reply.status(statusCode).send({
-      error: error.code ?? 'INTERNAL_ERROR',
+      error: error?.code ?? 'INTERNAL_ERROR',
       message: env.NODE_ENV === 'production' && statusCode === 500
         ? 'Internal server error'
-        : error.message,
+        : error?.message || 'Unknown error',
     })
   })
 

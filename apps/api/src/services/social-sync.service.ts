@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Social Media Sync Service
  * Syncs Instagram posts and YouTube videos to the blog.

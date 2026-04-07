@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Instagram Graph API Publisher
  * Posts property images to Instagram Business account

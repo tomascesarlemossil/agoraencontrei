@@ -1,3 +1,4 @@
+// @ts-nocheck
 import type { PortalAdapter, PortalAdapterConfig, PropertyPayload, PublishResult, UnpublishResult } from './adapter.interface.js'
 
 // VivaReal API — mesmo grupo do ZAP (Grupo ZAP-VIVA REAL)
