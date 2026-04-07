@@ -6,6 +6,8 @@ import { Search, MapPin, Filter, Calculator, Bell, TrendingUp, ChevronDown, X, A
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'https://api-production-669c.up.railway.app'
 const PUBLIC_AUCTIONS_URL = `${API_URL}/api/v1/public/auctions`
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://oenbzvxcsgyzqjtlovdq.supabase.co'
+const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -312,7 +314,24 @@ export default function LeiloesClient() {
       setTotal(sortedItems.length)
       setTotalPages(Math.max(1, Math.ceil(sortedItems.length / limit)))
     } catch (err) {
-      console.error('Erro ao buscar leilões:', err)
+      console.error('Erro ao buscar leilões, tentando Supabase direto...', err)
+      // Fallback 3: Supabase direto
+      if (SUPABASE_ANON_KEY) {
+        try {
+          const sbUrl = `${SUPABASE_URL}/rest/v1/auctions?select=*&status=not.in.(CANCELLED,CLOSED)&order=opportunityScore.desc&limit=50`
+          const sbRes = await fetch(sbUrl, {
+            headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` },
+          })
+          if (sbRes.ok) {
+            const sbData = await sbRes.json()
+            setAuctions(sbData || [])
+            setTotal(sbData?.length || 0)
+            setTotalPages(1)
+            setLoading(false)
+            return
+          }
+        } catch { /* ignore */ }
+      }
       setAuctions([])
       setTotal(0)
       setTotalPages(1)
