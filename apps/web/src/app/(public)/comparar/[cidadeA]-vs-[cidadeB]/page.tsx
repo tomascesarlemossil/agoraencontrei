@@ -14,18 +14,18 @@ import { IBGE_CITIES_152, IBGE_CITY_BY_SLUG, type IbgeCityData } from '@/data/se
 
 export const revalidate = 86400
 
-// Top 100 cidades para generateStaticParams (pré-gera as mais populares)
-const TOP_CITIES = IBGE_CITIES_152
+// Todas as 152 cidades para generateStaticParams
+// 152 × 151 / 2 = 11.476 páginas pré-geradas no build
+// Demais combinações via ISR (fallback blocking)
+const ALL_CITIES_SORTED = IBGE_CITIES_152
   .sort((a, b) => b.populacao - a.populacao)
-  .slice(0, 50)
 
 export function generateStaticParams() {
   const params: { 'cidadeA-vs-cidadeB': string }[] = []
-  // Gerar combinações das top 50 cidades (50×49/2 = 1.225 páginas pré-geradas)
-  for (let i = 0; i < TOP_CITIES.length; i++) {
-    for (let j = i + 1; j < TOP_CITIES.length; j++) {
+  for (let i = 0; i < ALL_CITIES_SORTED.length; i++) {
+    for (let j = i + 1; j < ALL_CITIES_SORTED.length; j++) {
       params.push({
-        'cidadeA-vs-cidadeB': `${TOP_CITIES[i].slug}-vs-${TOP_CITIES[j].slug}`,
+        'cidadeA-vs-cidadeB': `${ALL_CITIES_SORTED[i].slug}-vs-${ALL_CITIES_SORTED[j].slug}`,
       })
     }
   }

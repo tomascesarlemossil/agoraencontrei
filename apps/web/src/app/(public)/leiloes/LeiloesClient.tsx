@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import { Search, MapPin, Filter, Calculator, Bell, TrendingUp, ChevronDown, X, ArrowRight, Building, Home, Map as MapIcon, Star, Clock, DollarSign, BarChart3, AlertTriangle, Loader2, CheckCircle, ExternalLink } from 'lucide-react'
+import { CalculadoraROI } from '@/components/CalculadoraROI'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'https://api-production-669c.up.railway.app'
 const PUBLIC_AUCTIONS_URL = `${API_URL}/api/v1/public/auctions`
@@ -1039,6 +1040,16 @@ export default function LeiloesClient() {
                   )}
                 </div>
               </div>
+
+              {/* Calculadora ROI */}
+              {selectedAuction.appraisalValue && selectedAuction.minimumBid && selectedAuction.appraisalValue > selectedAuction.minimumBid && (
+                <CalculadoraROI
+                  valorAvaliado={Number(selectedAuction.appraisalValue)}
+                  valorLance={Number(selectedAuction.minimumBid)}
+                  bairro={selectedAuction.neighborhood || undefined}
+                  cidade={`${selectedAuction.city || 'Franca'}/${selectedAuction.state || 'SP'}`}
+                />
+              )}
 
               {leadError && <div className="bg-red-50 text-red-700 text-sm p-2 rounded-lg">{leadError}</div>}
 
