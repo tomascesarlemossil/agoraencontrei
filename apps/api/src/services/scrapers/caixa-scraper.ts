@@ -78,22 +78,39 @@ export class CaixaScraper extends BaseScraper {
 
   async scrape(): Promise<ScrapedAuction[]> {
     const allAuctions: ScrapedAuction[] = []
+    const CONCURRENCY = 3 // 3 estados em paralelo para não sobrecarregar a Caixa
+    const DELAY_MS = 300  // delay entre lotes
 
-    for (const estado of ESTADOS) {
-      try {
-        console.log(`[CaixaScraper] Varrendo ${estado}...`)
-        const items = await this.fetchEstado(estado)
-        allAuctions.push(...items)
-        console.log(`[CaixaScraper] ${estado}: ${items.length} imóveis`)
+    console.log(`[CaixaScraper] Iniciando varredura paralela (${CONCURRENCY} estados simultâneos)...`)
+    const startTime = Date.now()
 
-        // Rate limit entre estados: 500ms
-        await new Promise(resolve => setTimeout(resolve, 500))
-      } catch (err: any) {
-        console.error(`[CaixaScraper] Erro ${estado}: ${err.message}`)
+    // Divide os estados em lotes de CONCURRENCY
+    for (let i = 0; i < ESTADOS.length; i += CONCURRENCY) {
+      const lote = ESTADOS.slice(i, i + CONCURRENCY)
+      const results = await Promise.allSettled(
+        lote.map(async (estado) => {
+          const items = await this.fetchEstado(estado)
+          console.log(`[CaixaScraper] ${estado}: ${items.length} imóveis`)
+          return items
+        })
+      )
+
+      for (const result of results) {
+        if (result.status === 'fulfilled') {
+          allAuctions.push(...result.value)
+        } else {
+          console.error(`[CaixaScraper] Lote falhou:`, result.reason?.message)
+        }
+      }
+
+      // Delay entre lotes para evitar rate limiting
+      if (i + CONCURRENCY < ESTADOS.length) {
+        await new Promise(resolve => setTimeout(resolve, DELAY_MS))
       }
     }
 
-    console.log(`[CaixaScraper] Total: ${allAuctions.length} imóveis em todos os estados`)
+    const elapsed = ((Date.now() - startTime) / 1000).toFixed(1)
+    console.log(`[CaixaScraper] Total: ${allAuctions.length} imóveis em ${elapsed}s (paralelo ${CONCURRENCY}x)`)
     return allAuctions
   }
 

@@ -1,4 +1,5 @@
 import type { FastifyInstance } from 'fastify'
+import { calculateDealScore } from '../../services/market-intelligence.service.js'
 
 // ── In-memory cache helpers (reuse from parent if available) ──────────────────
 const _memCache = new Map<string, { value: unknown; expiresAt: number }>()
@@ -144,12 +145,23 @@ export async function auctionsRoute(app: FastifyInstance) {
         const parkingMatch = description.match(/(\d+)\s*vaga/i)
         const parkingSpots = parkingMatch ? parseInt(parkingMatch[1]) : 0
 
+        const dealScore = calculateDealScore({
+          precoVenda: price,
+          precoAvaliacao: appraisalValue,
+          area: privateArea || totalArea || undefined,
+          bairro: neighborhood,
+          cidade: city,
+          uf: 'SP',
+          modalidade: saleType,
+        })
+
         auctions.push({
           id, city, neighborhood, address,
           price, appraisalValue, discount, financeable,
           description, saleType, link, propertyType,
           bedrooms, totalArea, privateArea, landArea, parkingSpots,
-        })
+          dealScore,
+        } as AuctionItem & { dealScore: typeof dealScore })
       }
 
       // Sort by discount descending

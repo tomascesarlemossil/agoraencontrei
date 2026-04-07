@@ -68,8 +68,11 @@ function CheckoutContent() {
   const [error, setError] = useState('')
   const [result, setResult] = useState<CheckoutResult | null>(null)
   const [copied, setCopied] = useState(false)
+  const [acceptedTerms, setAcceptedTerms] = useState(false)
+  const [isFounder, setIsFounder] = useState(false)
 
   const planInfo = PLAN_INFO[plan] ?? PLAN_INFO.PRIME
+  const isVIP = plan === 'VIP'
 
   // Se não tem specialistId, redireciona para cadastro
   useEffect(() => {
@@ -308,10 +311,42 @@ function CheckoutContent() {
                     />
                   </div>
 
+                  {/* ── Aceite de Termos de Membro Fundador ─────────────── */}
+                  {isVIP && (
+                    <div className="rounded-xl border-2 p-4 mb-2" style={{ borderColor: '#C9A84C', backgroundColor: 'rgba(201,168,76,0.06)' }}>
+                      <label className="flex items-start gap-3 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={isFounder}
+                          onChange={e => setIsFounder(e.target.checked)}
+                          className="mt-0.5 w-4 h-4 accent-yellow-500 flex-shrink-0"
+                        />
+                        <span className="text-xs text-gray-700 leading-relaxed">
+                          <strong className="text-[#1B2B5B]">Quero ser Membro Fundador 💎</strong> — Meu preço de R$ 497/mês fica congelado vitaliciamente enquanto a assinatura estiver ativa. Recebo o selo exclusivo &quot;Fundador&quot; e prioridade máxima (score 100) em todos os meus territórios.
+                        </span>
+                      </label>
+                    </div>
+                  )}
+
+                  <label className="flex items-start gap-3 cursor-pointer mb-2">
+                    <input
+                      type="checkbox"
+                      checked={acceptedTerms}
+                      onChange={e => setAcceptedTerms(e.target.checked)}
+                      className="mt-0.5 w-4 h-4 accent-blue-600 flex-shrink-0"
+                    />
+                    <span className="text-xs text-gray-600 leading-relaxed">
+                      Li e concordo com os{' '}
+                      <Link href="/termos-uso" className="underline text-[#1B2B5B] hover:text-blue-700" target="_blank">Termos de Uso</Link>{' '}e com os{' '}
+                      <Link href="/parceiros/membro-fundador" className="underline text-[#C9A84C] hover:text-yellow-700" target="_blank">Termos de Parceria</Link>.
+                      Autorizo a cobrança recorrente mensal e o cancelamento sem multa a qualquer momento.
+                    </span>
+                  </label>
+
                   <button
                     type="submit"
-                    disabled={step === 'processing'}
-                    className="w-full flex items-center justify-center gap-2 py-4 rounded-xl font-bold text-base transition-all hover:brightness-110 disabled:opacity-60"
+                    disabled={step === 'processing' || !acceptedTerms}
+                    className="w-full flex items-center justify-center gap-2 py-4 rounded-xl font-bold text-base transition-all hover:brightness-110 disabled:opacity-60 disabled:cursor-not-allowed"
                     style={{ backgroundColor: planInfo.color, color: plan === 'PRIME' ? '#1B2B5B' : 'white' }}
                   >
                     {step === 'processing' ? (
@@ -321,11 +356,11 @@ function CheckoutContent() {
                     )}
                   </button>
 
-                  <p className="text-center text-xs text-gray-400">
-                    Ao confirmar, você aceita os{' '}
-                    <Link href="/termos" className="underline hover:text-gray-600">Termos de Uso</Link>{' '}
-                    e autoriza a cobrança recorrente mensal.
-                  </p>
+                  {!acceptedTerms && (
+                    <p className="text-center text-xs text-amber-600">
+                      ⚠️ Aceite os termos acima para continuar.
+                    </p>
+                  )}
                 </form>
               </div>
             </div>
