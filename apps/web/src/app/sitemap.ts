@@ -416,6 +416,73 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       // Custo de vida e comparação
       { url: `${WEB_URL}/custo-de-vida/${c}`, lastModified: now, changeFrequency: 'weekly' as const, priority: 0.75 },
       { url: `${WEB_URL}/valor-metro-quadrado/${c}`, lastModified: now, changeFrequency: 'weekly' as const, priority: 0.8 },
+      // Por quartos
+      { url: `${WEB_URL}/imoveis-1-quarto/${c}`, lastModified: now, changeFrequency: 'weekly' as const, priority: 0.7 },
+      { url: `${WEB_URL}/imoveis-2-quartos/${c}`, lastModified: now, changeFrequency: 'weekly' as const, priority: 0.75 },
+      { url: `${WEB_URL}/imoveis-3-quartos/${c}`, lastModified: now, changeFrequency: 'weekly' as const, priority: 0.75 },
+      { url: `${WEB_URL}/imoveis-4-quartos/${c}`, lastModified: now, changeFrequency: 'weekly' as const, priority: 0.7 },
+      // Por preço
+      { url: `${WEB_URL}/imoveis-ate-200mil/${c}`, lastModified: now, changeFrequency: 'weekly' as const, priority: 0.75 },
+      { url: `${WEB_URL}/imoveis-200-500mil/${c}`, lastModified: now, changeFrequency: 'weekly' as const, priority: 0.75 },
+      { url: `${WEB_URL}/imoveis-500mil-1milhao/${c}`, lastModified: now, changeFrequency: 'weekly' as const, priority: 0.7 },
+      { url: `${WEB_URL}/imoveis-acima-1milhao/${c}`, lastModified: now, changeFrequency: 'weekly' as const, priority: 0.7 },
+      // Aluguel por faixa
+      { url: `${WEB_URL}/aluguel-ate-1000/${c}`, lastModified: now, changeFrequency: 'weekly' as const, priority: 0.7 },
+      { url: `${WEB_URL}/aluguel-1000-2000/${c}`, lastModified: now, changeFrequency: 'weekly' as const, priority: 0.7 },
+      { url: `${WEB_URL}/aluguel-2000-3000/${c}`, lastModified: now, changeFrequency: 'weekly' as const, priority: 0.7 },
+      { url: `${WEB_URL}/aluguel-acima-3000/${c}`, lastModified: now, changeFrequency: 'weekly' as const, priority: 0.65 },
+      // Lançamentos e novos
+      { url: `${WEB_URL}/lancamentos/${c}`, lastModified: now, changeFrequency: 'weekly' as const, priority: 0.75 },
+      { url: `${WEB_URL}/imoveis-novos/${c}`, lastModified: now, changeFrequency: 'weekly' as const, priority: 0.7 },
+      { url: `${WEB_URL}/imoveis-usados/${c}`, lastModified: now, changeFrequency: 'weekly' as const, priority: 0.7 },
+      // Perto de
+      { url: `${WEB_URL}/imoveis-perto-metro/${c}`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.65 },
+      { url: `${WEB_URL}/imoveis-perto-escola/${c}`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.65 },
+      { url: `${WEB_URL}/imoveis-perto-hospital/${c}`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.65 },
+      { url: `${WEB_URL}/imoveis-perto-shopping/${c}`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.65 },
+      // Específicos
+      { url: `${WEB_URL}/imoveis-com-piscina/${c}`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.65 },
+      { url: `${WEB_URL}/imoveis-com-churrasqueira/${c}`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.6 },
+      { url: `${WEB_URL}/imoveis-aceita-pets/${c}`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.6 },
+      { url: `${WEB_URL}/imoveis-mobiliados/${c}`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.65 },
+      { url: `${WEB_URL}/imoveis-com-varanda/${c}`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.6 },
+      // Tipo + Finalidade cruzados
+      { url: `${WEB_URL}/casas-para-alugar/${c}`, lastModified: now, changeFrequency: 'daily' as const, priority: 0.85 },
+      { url: `${WEB_URL}/apartamentos-para-alugar/${c}`, lastModified: now, changeFrequency: 'daily' as const, priority: 0.85 },
+      { url: `${WEB_URL}/kitnets-para-alugar/${c}`, lastModified: now, changeFrequency: 'weekly' as const, priority: 0.7 },
+      { url: `${WEB_URL}/salas-para-alugar/${c}`, lastModified: now, changeFrequency: 'weekly' as const, priority: 0.65 },
+      { url: `${WEB_URL}/galpoes-para-alugar/${c}`, lastModified: now, changeFrequency: 'weekly' as const, priority: 0.65 },
+      { url: `${WEB_URL}/casas-em-condominio/${c}`, lastModified: now, changeFrequency: 'weekly' as const, priority: 0.75 },
+      // Temporada
+      { url: `${WEB_URL}/aluguel-temporada/${c}`, lastModified: now, changeFrequency: 'weekly' as const, priority: 0.7 },
+      // Permuta
+      { url: `${WEB_URL}/imoveis-permuta/${c}`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.6 },
+      // Documentação
+      { url: `${WEB_URL}/regularizacao-imovel/${c}`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.6 },
+      { url: `${WEB_URL}/escritura-imovel/${c}`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.6 },
+      { url: `${WEB_URL}/usucapiao/${c}`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.55 },
+      { url: `${WEB_URL}/inventario-imovel/${c}`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.55 },
+      // Construção
+      { url: `${WEB_URL}/construtoras/${c}`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.6 },
+      { url: `${WEB_URL}/empreiteiros/${c}`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.6 },
+      { url: `${WEB_URL}/pedreiros/${c}`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.55 },
+      { url: `${WEB_URL}/eletricistas/${c}`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.55 },
+      { url: `${WEB_URL}/encanadores/${c}`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.55 },
+      { url: `${WEB_URL}/pintores/${c}`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.55 },
+      { url: `${WEB_URL}/marceneiros/${c}`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.55 },
+      { url: `${WEB_URL}/vidraceiros/${c}`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.5 },
+      { url: `${WEB_URL}/serralheiros/${c}`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.5 },
+      // Seguros
+      { url: `${WEB_URL}/seguro-residencial/${c}`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.55 },
+      { url: `${WEB_URL}/seguro-incendio/${c}`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.5 },
+      // Mudança
+      { url: `${WEB_URL}/empresas-mudanca/${c}`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.55 },
+      { url: `${WEB_URL}/guarda-moveis/${c}`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.5 },
+      // Limpeza e manutenção
+      { url: `${WEB_URL}/limpeza-pos-obra/${c}`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.5 },
+      { url: `${WEB_URL}/dedetizacao/${c}`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.5 },
+      { url: `${WEB_URL}/jardinagem-paisagismo/${c}`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.5 },
+      { url: `${WEB_URL}/impermeabilizacao/${c}`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.5 },
     ]),
     ...leilaoBairros,
     ...pois,
