@@ -53,6 +53,28 @@ export default async function authRoutes(app: FastifyInstance) {
     return reply.status(201).send(result)
   })
 
+  // POST /api/v1/auth/verify-email
+  app.post('/verify-email', {
+    config: { rateLimit: { max: 20, timeWindow: '15 minutes' } },
+    schema: { tags: ['auth'], summary: 'Verify email with token' },
+  }, async (req, reply) => {
+    const { token } = req.body as { token?: string }
+    if (!token) return reply.status(400).send({ error: 'MISSING_TOKEN', message: 'Token obrigatório' })
+    const result = await svc.verifyEmail(token)
+    return reply.send(result)
+  })
+
+  // POST /api/v1/auth/resend-verification
+  app.post('/resend-verification', {
+    config: { rateLimit: { max: 5, timeWindow: '15 minutes' } },
+    schema: { tags: ['auth'], summary: 'Resend verification email' },
+  }, async (req, reply) => {
+    const { email } = req.body as { email?: string }
+    if (!email) return reply.status(400).send({ error: 'MISSING_EMAIL', message: 'E-mail obrigatório' })
+    const result = await svc.resendVerification(email)
+    return reply.send(result)
+  })
+
   // POST /api/v1/auth/login
   app.post('/login', {
     config: { rateLimit: { max: 10, timeWindow: '15 minutes' } },

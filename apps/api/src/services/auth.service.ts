@@ -6,6 +6,7 @@ import type { FastifyInstance } from 'fastify'
 import type { PrismaClient, User } from '@prisma/client'
 import type { JwtPayload } from '../plugins/jwt.js'
 import { env } from '../utils/env.js'
+import { sendEmail, isEmailConfigured } from './email.service.js'
 
 export interface TokenPair {
   accessToken: string
@@ -84,12 +85,13 @@ export class AuthService {
         phone: input.phone,
         passwordHash,
         role: 'ADMIN',
-        status: 'ACTIVE', // TODO: require email verification in prod
+        status: 'PENDING_VERIFICATION',
       },
       select: this.userSelect,
     })
 
-    const tokens = await this.generateTokens(user as User, companyId)
+    // Send verification email
+    await this.sendVerificationEmail(user.email, user.id)
 
     await this.prisma.auditLog.create({
       data: {
@@ -101,7 +103,8 @@ export class AuthService {
       },
     })
 
-    return { user, ...tokens }
+    // Return user WITHOUT tokens — user must verify email first
+    return { user, pendingVerification: true }
   }
 
   // ── Login ────────────────────────────────────────────────────────────────
@@ -115,12 +118,16 @@ export class AuthService {
       throw Object.assign(new Error('Credenciais inválidas'), { statusCode: 401, code: 'INVALID_CREDENTIALS' })
     }
 
+    if (user.status === 'PENDING_VERIFICATION') {
+      throw Object.assign(new Error('Verifique seu e-mail antes de fazer login. Enviamos um link de confirmação para ' + user.email), { statusCode: 403, code: 'PENDING_VERIFICATION' })
+    }
+
     if (user.status === 'SUSPENDED') {
-      throw Object.assign(new Error('Conta suspensa'), { statusCode: 403, code: 'ACCOUNT_SUSPENDED' })
+      throw Object.assign(new Error('Conta suspensa. Contate o administrador.'), { statusCode: 403, code: 'ACCOUNT_SUSPENDED' })
     }
 
     if (user.status === 'INACTIVE') {
-      throw Object.assign(new Error('Conta inativa'), { statusCode: 403, code: 'ACCOUNT_INACTIVE' })
+      throw Object.assign(new Error('Conta inativa. Contate o administrador.'), { statusCode: 403, code: 'ACCOUNT_INACTIVE' })
     }
 
     const valid = await this.verifyPassword(user.passwordHash, input.password)
@@ -362,6 +369,118 @@ export class AuthService {
       refreshToken: token,
       expiresIn: 15 * 60, // 15 minutes in seconds
     }
+  }
+
+  // ── Email Verification ───────────────────────────────────────────────────
+
+  async sendVerificationEmail(email: string, userId: string) {
+    // Create verification token
+    const token = nanoid(64)
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000) // 24h
+
+    await this.prisma.emailVerification.create({
+      data: { email: email.toLowerCase(), token, expiresAt },
+    })
+
+    const verifyUrl = `${env.WEB_URL}/verificar-email?token=${token}`
+
+    if (isEmailConfigured()) {
+      await sendEmail({
+        to: email,
+        subject: 'Confirme seu e-mail — AgoraEncontrei',
+        html: `<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="UTF-8"/></head>
+<body style="margin:0;padding:0;background:#f5f5f5;font-family:Arial,sans-serif">
+<div style="max-width:600px;margin:32px auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08)">
+  <div style="background:#1B2B5B;padding:24px 32px;text-align:center">
+    <h1 style="color:#C9A84C;font-size:22px;margin:0">AgoraEncontrei</h1>
+    <p style="color:#fff;opacity:0.7;margin:8px 0 0;font-size:14px">Marketplace Imobiliário</p>
+  </div>
+  <div style="padding:32px;color:#333;font-size:15px;line-height:1.7">
+    <p>Olá! Obrigado por se cadastrar no <strong>AgoraEncontrei</strong>.</p>
+    <p>Para ativar sua conta, clique no botão abaixo:</p>
+    <div style="text-align:center;margin:32px 0">
+      <a href="${verifyUrl}" style="background:#1B2B5B;color:#fff;padding:14px 40px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;display:inline-block">
+        Confirmar meu e-mail
+      </a>
+    </div>
+    <p style="font-size:13px;color:#888">Se o botão não funcionar, copie e cole este link: <br/>${verifyUrl}</p>
+    <p style="font-size:13px;color:#888">Este link expira em 24 horas.</p>
+  </div>
+  <div style="padding:20px 32px;background:#f9f9f9;border-top:1px solid #eee;font-size:12px;color:#888;text-align:center">
+    AgoraEncontrei | Franca — SP
+  </div>
+</div>
+</body></html>`,
+      })
+    }
+
+    return { token, verifyUrl }
+  }
+
+  async verifyEmail(token: string) {
+    const verification = await this.prisma.emailVerification.findUnique({
+      where: { token },
+    })
+
+    if (!verification) {
+      throw Object.assign(new Error('Token de verificação inválido'), { statusCode: 400, code: 'INVALID_TOKEN' })
+    }
+
+    if (verification.usedAt) {
+      throw Object.assign(new Error('Este link já foi utilizado'), { statusCode: 400, code: 'TOKEN_ALREADY_USED' })
+    }
+
+    if (verification.expiresAt < new Date()) {
+      throw Object.assign(new Error('Link expirado. Solicite um novo.'), { statusCode: 400, code: 'TOKEN_EXPIRED' })
+    }
+
+    // Mark token as used
+    await this.prisma.emailVerification.update({
+      where: { id: verification.id },
+      data: { usedAt: new Date() },
+    })
+
+    // Activate user
+    const user = await this.prisma.user.findFirst({
+      where: { email: verification.email, status: 'PENDING_VERIFICATION' },
+    })
+
+    if (!user) {
+      throw Object.assign(new Error('Usuário não encontrado ou já verificado'), { statusCode: 400, code: 'USER_NOT_FOUND' })
+    }
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        status: 'ACTIVE',
+        emailVerifiedAt: new Date(),
+      },
+    })
+
+    // Generate tokens so user can login immediately after verification
+    const tokens = await this.generateTokens(user, user.companyId)
+
+    const safeUser = await this.prisma.user.findUniqueOrThrow({
+      where: { id: user.id },
+      select: this.userSelect,
+    })
+
+    return { user: safeUser, ...tokens }
+  }
+
+  async resendVerification(email: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { email: email.toLowerCase().trim() },
+    })
+
+    if (!user || user.status !== 'PENDING_VERIFICATION') {
+      // Don't reveal if user exists — return success either way
+      return { success: true }
+    }
+
+    await this.sendVerificationEmail(user.email, user.id)
+    return { success: true }
   }
 
   private userSelect = {

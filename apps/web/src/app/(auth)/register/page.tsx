@@ -5,14 +5,12 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { authApi, ApiError } from '@/lib/api'
-import { useAuthStore } from '@/stores/auth.store'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-import { Loader2 } from 'lucide-react'
+import { Loader2, CheckCircle, Mail } from 'lucide-react'
 
 const schema = z.object({
   name: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
@@ -29,9 +27,11 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>
 
 export default function RegisterPage() {
-  const router = useRouter()
-  const setAuth = useAuthStore((s) => s.setAuth)
   const [error, setError] = useState('')
+  const [registered, setRegistered] = useState(false)
+  const [registeredEmail, setRegisteredEmail] = useState('')
+  const [resending, setResending] = useState(false)
+  const [resent, setResent] = useState(false)
 
   const {
     register,
@@ -42,9 +42,9 @@ export default function RegisterPage() {
   async function onSubmit(data: FormData) {
     setError('')
     try {
-      const res = await authApi.register(data)
-      setAuth(res.user as any, res.accessToken, res.expiresIn)
-      router.push('/dashboard')
+      await authApi.register(data)
+      setRegistered(true)
+      setRegisteredEmail(data.email)
     } catch (err) {
       if (err instanceof ApiError) {
         setError(
@@ -58,11 +58,70 @@ export default function RegisterPage() {
     }
   }
 
+  async function handleResend() {
+    setResending(true)
+    try {
+      await fetch('/api/v1/auth/resend-verification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: registeredEmail }),
+      })
+      setResent(true)
+    } catch { /* ignore */ }
+    setResending(false)
+  }
+
+  // ── Tela de verificação de email ──────────────────────────────────────────
+  if (registered) {
+    return (
+      <Card>
+        <CardHeader className="text-center">
+          <div className="mx-auto mb-4 w-16 h-16 rounded-full bg-green-100 flex items-center justify-center">
+            <Mail className="w-8 h-8 text-green-600" />
+          </div>
+          <CardTitle>Verifique seu e-mail</CardTitle>
+          <CardDescription>
+            Enviamos um link de confirmação para <strong>{registeredEmail}</strong>
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4 text-center">
+          <p className="text-sm text-muted-foreground">
+            Clique no link que enviamos para ativar sua conta.
+            Após a verificação, você poderá escolher seu plano e acessar o painel.
+          </p>
+          <div className="bg-amber-50 rounded-lg p-3 text-sm text-amber-800">
+            <strong>Importante:</strong> Verifique também a pasta de spam/lixo eletrônico.
+          </div>
+          {resent ? (
+            <div className="flex items-center justify-center gap-2 text-sm text-green-600">
+              <CheckCircle className="w-4 h-4" />
+              E-mail reenviado com sucesso!
+            </div>
+          ) : (
+            <Button variant="outline" onClick={handleResend} disabled={resending} className="w-full">
+              {resending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+              Reenviar e-mail de verificação
+            </Button>
+          )}
+        </CardContent>
+        <CardFooter className="flex flex-col gap-2">
+          <p className="text-sm text-muted-foreground text-center">
+            Já verificou?{' '}
+            <Link href="/login" className="text-primary hover:underline font-medium">
+              Fazer login
+            </Link>
+          </p>
+        </CardFooter>
+      </Card>
+    )
+  }
+
+  // ── Formulário de registro ────────────────────────────────────────────────
   return (
     <Card>
       <CardHeader>
         <CardTitle>Criar conta</CardTitle>
-        <CardDescription>Preencha os dados para criar sua conta de imobiliária</CardDescription>
+        <CardDescription>Preencha os dados para criar sua conta no marketplace</CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit(onSubmit)}>
         <CardContent className="space-y-4">
@@ -71,7 +130,7 @@ export default function RegisterPage() {
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="companyName">Nome da Imobiliária</Label>
+            <Label htmlFor="companyName">Nome da Imobiliária / Empresa</Label>
             <Input id="companyName" placeholder="Lemos Imóveis" {...register('companyName')} />
             {errors.companyName && <p className="text-xs text-destructive">{errors.companyName.message}</p>}
           </div>
@@ -83,27 +142,33 @@ export default function RegisterPage() {
               {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="phone">Telefone</Label>
+              <Label htmlFor="phone">Telefone / WhatsApp</Label>
               <Input id="phone" placeholder="(16) 99999-9999" {...register('phone')} />
             </div>
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="email">E-mail</Label>
-            <Input id="email" type="email" placeholder="seu@email.com" {...register('email')} />
+            <Input id="email" type="email" placeholder="seu@email.com" autoComplete="email" {...register('email')} />
             {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="password">Senha</Label>
-            <Input id="password" type="password" placeholder="••••••••" {...register('password')} />
+            <Input id="password" type="password" placeholder="Min. 8 caracteres, 1 maiúscula, 1 número" autoComplete="new-password" {...register('password')} />
             {errors.password && <p className="text-xs text-destructive">{errors.password.message}</p>}
           </div>
+
+          <p className="text-xs text-muted-foreground">
+            Ao criar sua conta, você concorda com nossos{' '}
+            <Link href="/termos-uso" className="underline">Termos de Uso</Link> e{' '}
+            <Link href="/politica-privacidade" className="underline">Política de Privacidade</Link>.
+          </p>
         </CardContent>
 
         <CardFooter className="flex flex-col gap-3">
           <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
+            {isSubmitting && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
             Criar conta
           </Button>
           <p className="text-sm text-muted-foreground text-center">

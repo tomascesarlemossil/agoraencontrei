@@ -103,9 +103,12 @@ export default function LoginPage() {
       await login(data.email, data.password)
     } catch (err) {
       if (err instanceof ApiError) {
+        const body = err.data as any
+        const code = body?.code || body?.error
         setError(
+          code === 'PENDING_VERIFICATION' ? 'Verifique seu e-mail antes de fazer login. Cheque sua caixa de entrada e spam.' :
           err.status === 401 ? 'E-mail ou senha incorretos' :
-          err.status === 403 ? 'Conta inativa. Contate o suporte.' :
+          err.status === 403 ? 'Conta inativa ou suspensa. Contate o administrador.' :
           'Erro ao fazer login. Tente novamente.',
         )
       } else {
