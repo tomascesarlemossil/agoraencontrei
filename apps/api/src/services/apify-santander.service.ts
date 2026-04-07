@@ -66,21 +66,20 @@ interface SantanderAuctionItem {
   condominioValue: number | null
 }
 
-function extractCityState(url: string): { city: string; state: string } {
-  // URL format: .../imovel/tipo-a-venda-na-rua-xxx-cidade-estado-.../
-  const parts = url.split('/')
-  const slug = parts[parts.length - 2] || ''
-  // Try to extract state (2 letter code before last segment)
-  const stateMatch = slug.match(/-([a-z]{2})-codigo-/i)
-  const state = stateMatch ? stateMatch[1].toUpperCase() : 'SP'
+function extractCityStateFromAddress(endereco: string): { city: string; state: string; neighborhood: string } {
+  // Address format: "Rua X, 123, Bairro, Cidade - UF. CEP: 12345678"
+  const stateMatch = endereco.match(/[\s-]+([A-Z]{2})[\s.,]/)
+  const state = stateMatch ? stateMatch[1] : 'SP'
 
-  // Try to extract city from slug
-  const cityMatch = slug.match(/-([a-z-]+)-[a-z]{2}-codigo-/i)
-  const city = cityMatch
-    ? cityMatch[1].split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
-    : ''
+  // Try to extract city from "Cidade - UF" pattern
+  const cityMatch = endereco.match(/,\s*([^,]+?)\s*-\s*[A-Z]{2}/)
+  const city = cityMatch ? cityMatch[1].trim() : ''
 
-  return { city, state }
+  // Neighborhood: often the segment before city
+  const parts = endereco.split(',').map(p => p.trim())
+  const neighborhood = parts.length >= 3 ? parts[parts.length - 3] || '' : ''
+
+  return { city, state, neighborhood }
 }
 
 function normalizePropertyType(titulo: string): string {
@@ -96,11 +95,17 @@ function normalizePropertyType(titulo: string): string {
   return 'Imóvel'
 }
 
+function parsePrice(v: unknown): number {
+  if (typeof v === 'number') return v
+  if (typeof v === 'string') return parseFloat(v.replace(/[R$\s.]/g, '').replace(',', '.')) || 0
+  return 0
+}
+
 function normalizeSantanderItem(item: ApifySantanderItem): SantanderAuctionItem {
   const id = item.codigo || `sant-${Date.now()}`
-  const { city, state } = item.url ? extractCityState(item.url) : { city: '', state: 'SP' }
-  const price = item.valorVenda || 0
-  const appraisalValue = item.valorAvaliado || 0
+  const extracted = extractCityStateFromAddress(item.endereco || '')
+  const price = parsePrice(item.valorVenda)
+  const appraisalValue = parsePrice(item.valorAvaliado)
   const discount = typeof item.desagio === 'string'
     ? parseFloat(item.desagio.replace('%', '')) || 0
     : item.desagio || 0
@@ -115,16 +120,16 @@ function normalizeSantanderItem(item: ApifySantanderItem): SantanderAuctionItem 
     id: `santander-${id}`,
     source: 'SANTANDER',
     bankName: 'Santander',
-    city,
-    state,
-    neighborhood: '',
+    city: extracted.city,
+    state: extracted.state,
+    neighborhood: extracted.neighborhood,
     address: item.endereco || '',
     price,
     appraisalValue,
     discount,
     financeable: false,
     fgtsAllowed: false,
-    description: item.titulo || `Imóvel Santander em ${city}/${state}`,
+    description: item.titulo || `Imóvel Santander em ${extracted.city}/${extracted.state}`,
     saleType: 'Venda Direta',
     link: item.url || '',
     propertyType: normalizePropertyType(item.titulo || ''),
