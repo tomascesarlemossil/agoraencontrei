@@ -2,7 +2,9 @@
 /* eslint-disable */
 import { FastifyInstance } from 'fastify'
 import { prisma } from '../../lib/prisma.js'
-import { emailService } from '../../services/email.service.js'
+import { sendEmail as _sendEmail } from '../../services/email.service.js'
+// Compatibilidade: wrapper para uso como emailService.sendEmail()
+const emailService = { sendEmail: _sendEmail }
 
 // Turnstile verification
 async function verifyTurnstile(token: string, ip: string): Promise<boolean> {

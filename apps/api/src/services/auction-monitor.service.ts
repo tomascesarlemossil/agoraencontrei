@@ -133,8 +133,12 @@ export class AuctionMonitorService {
     }
 
     // 4. Enviar alertas para mudanças de preço significativas
-    // (Detectar via diferença entre minimumBid atual e o valor no metadata.previousBid)
     const priceChanges = await this.detectPriceChanges()
+
+    // 5. Alertar parceiros Prime sobre novas oportunidades com ROI > 40% no bairro deles
+    await this.alertPrimePartnersAboutOpportunities().catch(err =>
+      console.error('[AuctionMonitor] Erro ao alertar parceiros Prime:', err.message)
+    )
 
     console.log(`[AuctionMonitor] Concluído: ${expired.count + expiredEnd.count} expirados, ${suspended} suspensos, ${scoresUpdated} scores atualizados, ${priceChanges} mudanças de preço`)
 
@@ -208,6 +212,103 @@ export class AuctionMonitorService {
     }
 
     return changes
+  }
+
+  /**
+   * Alerta parceiros Prime/VIP quando um leilão com ROI > 40% entra no bairro de atuação deles
+   * Roda a cada ciclo do monitor (30 min) mas só envia para leilões criados na última hora
+   */
+  private async alertPrimePartnersAboutOpportunities(): Promise<void> {
+    const { sendEmail, isEmailConfigured } = await import('./email.service.js')
+    if (!isEmailConfigured()) return
+
+    // Buscar leilões com desconto > 40% criados na última hora
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000)
+    const highROIAuctions = await this.prisma.auction.findMany({
+      where: {
+        status: { in: ['UPCOMING', 'OPEN', 'FIRST_ROUND', 'SECOND_ROUND'] },
+        createdAt: { gte: oneHourAgo },
+        discountPercent: { gte: 40 },
+      },
+      select: {
+        id: true, title: true, slug: true, city: true, state: true,
+        neighborhood: true, minimumBid: true, appraisalValue: true,
+        discountPercent: true, opportunityScore: true, propertyType: true,
+      },
+    })
+
+    if (highROIAuctions.length === 0) return
+
+    // Buscar parceiros Prime/VIP com email
+    const primePartners = await this.prisma.specialist.findMany({
+      where: {
+        planStatus: { in: ['PRIME', 'VIP', 'ELITE', 'FOUNDER'] },
+        status: 'ACTIVE',
+        email: { not: null },
+      },
+      select: { id: true, name: true, email: true, city: true, neighborhoods: true },
+    })
+
+    for (const auction of highROIAuctions) {
+      // Filtrar parceiros que atuam na mesma cidade/bairro
+      const relevantPartners = primePartners.filter(p => {
+        if (p.city && auction.city && p.city.toLowerCase() !== auction.city.toLowerCase()) return false
+        return true // Se não tem cidade configurada, recebe todos
+      })
+
+      for (const partner of relevantPartners) {
+        if (!partner.email) continue
+        const bid = auction.minimumBid ? `R$ ${Number(auction.minimumBid).toLocaleString('pt-BR')}` : 'a consultar'
+        const disc = auction.discountPercent ? `${auction.discountPercent}%` : ''
+        const score = auction.opportunityScore || 0
+        const scoreColor = score >= 80 ? '#16a34a' : score >= 60 ? '#d97706' : '#dc2626'
+
+        await sendEmail({
+          to: partner.email,
+          subject: `🔨 Novo Leilão Detectado em ${auction.neighborhood || auction.city}! ${disc} de desconto`,
+          html: `
+            <div style="font-family:system-ui,sans-serif;max-width:600px;margin:0 auto;background:#fff">
+              <div style="background:linear-gradient(135deg,#1B2B5B,#2d4a8a);padding:24px;text-align:center">
+                <h1 style="color:#C9A84C;margin:0;font-size:22px">🔨 Oportunidade Detectada!</h1>
+                <p style="color:#fff;margin:8px 0 0;font-size:14px">AgoraEncontrei — Alerta Exclusivo Parceiro ${partner.name?.split(' ')[0] || ''}</p>
+              </div>
+              <div style="padding:24px">
+                <p style="color:#555;font-size:15px">Olá, <strong>${partner.name?.split(' ')[0] || 'Parceiro'}</strong>!</p>
+                <p style="color:#555;font-size:15px">Nosso robô acabou de detectar um leilão de alto ROI no seu bairro de atuação:</p>
+                <div style="background:#f8faff;border:2px solid #C9A84C;border-radius:12px;padding:20px;margin:16px 0">
+                  <h2 style="color:#1B2B5B;margin:0 0 8px;font-size:16px">${auction.title}</h2>
+                  <p style="color:#666;margin:0 0 12px;font-size:13px">📍 ${auction.neighborhood || ''}, ${auction.city}/${auction.state}</p>
+                  <div style="display:flex;gap:12px;flex-wrap:wrap">
+                    <div style="background:#fff;border-radius:8px;padding:10px 14px;text-align:center;flex:1;min-width:100px">
+                      <div style="font-size:11px;color:#999">Lance Mínimo</div>
+                      <div style="font-size:18px;font-weight:800;color:#1B2B5B">${bid}</div>
+                    </div>
+                    <div style="background:#fff;border-radius:8px;padding:10px 14px;text-align:center;flex:1;min-width:100px">
+                      <div style="font-size:11px;color:#999">Desconto Real</div>
+                      <div style="font-size:18px;font-weight:800;color:#dc2626">${disc}</div>
+                    </div>
+                    <div style="background:#fff;border-radius:8px;padding:10px 14px;text-align:center;flex:1;min-width:100px">
+                      <div style="font-size:11px;color:#999">Score</div>
+                      <div style="font-size:18px;font-weight:800;color:${scoreColor}">${score}/100</div>
+                    </div>
+                  </div>
+                </div>
+                <p style="color:#555;font-size:14px">💡 <strong>Por que isso é bom para você?</strong> Investidores interessados neste imóvel vão buscar um especialista de confiança na região. Esteja com seu perfil em dia!</p>
+                <div style="text-align:center;margin:24px 0">
+                  <a href="https://agoraencontrei.com.br/leiloes/${auction.slug}" style="background:linear-gradient(135deg,#C9A84C,#e6c96a);color:#1B2B5B;padding:14px 28px;border-radius:10px;font-weight:700;font-size:15px;text-decoration:none;display:inline-block">
+                    Ver Imóvel no Mapa →
+                  </a>
+                </div>
+              </div>
+              <div style="background:#f5f5f5;padding:16px;text-align:center;font-size:11px;color:#999">
+                Você recebe este alerta por ser Parceiro ${partner.name ? 'Prime/VIP' : ''} do AgoraEncontrei.
+                <a href="https://agoraencontrei.com.br/dashboard" style="color:#1B2B5B">Gerenciar preferências</a>
+              </div>
+            </div>
+          `,
+        }).catch(() => {}) // fire and forget
+      }
+    }
   }
 
   private async sendWhatsApp(phone: string, message: string): Promise<void> {

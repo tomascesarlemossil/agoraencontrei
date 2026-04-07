@@ -141,6 +141,54 @@ export const LEILOEIROS_CONFIG: LeiloeirConfig[] = [
       date: '.data,.date',
     },
   },
+  {
+    name: 'Milan Leilões',
+    baseUrl: 'https://www.milanleiloes.com.br',
+    listUrl: 'https://www.milanleiloes.com.br/leiloes/imoveis',
+    source: 'MILAN',
+    selectors: {
+      itemList: '.card-lote,.lote-card,.auction-item',
+      title: 'h3,h2,.titulo,.card-title',
+      price: '.valor,.lance-minimo,.price,.card-price',
+      appraisal: '.avaliacao,.appraisal,.valor-avaliacao',
+      image: 'img.foto,img.thumb,img',
+      date: '.data,.date,.data-leilao',
+      address: '.endereco,.address,.local',
+      area: '.area,.metragem',
+      bedrooms: '.quartos,.dormitorios,.bedrooms',
+    },
+    headers: {
+      'Referer': 'https://www.milanleiloes.com.br/',
+    },
+  },
+  {
+    name: 'Leilão do Bem',
+    baseUrl: 'https://www.leilaodobem.com.br',
+    listUrl: 'https://www.leilaodobem.com.br/imoveis',
+    source: 'LEILAO_DO_BEM',
+    selectors: {
+      itemList: '.card,.lote,.produto',
+      title: 'h3,h4,.titulo,.nome',
+      price: '.preco,.valor,.lance',
+      image: 'img',
+      date: '.data,.encerramento',
+      address: '.local,.endereco',
+    },
+  },
+  {
+    name: 'Biasi Leilões',
+    baseUrl: 'https://www.biasileiloes.com.br',
+    listUrl: 'https://www.biasileiloes.com.br/leiloes',
+    source: 'BIASI',
+    selectors: {
+      itemList: '.leilao-card,.item-leilao',
+      title: 'h3,.titulo',
+      price: '.valor,.lance-minimo',
+      image: 'img',
+      date: '.data',
+      address: '.endereco',
+    },
+  },
 ]
 
 // ── Bancos com venda direta ──────────────────────────────────────────────────
@@ -248,6 +296,39 @@ function extractLink(html: string, selector: string): string | undefined {
 export class GenericLeiloeiroScraper extends BaseScraper {
   private config: LeiloeirConfig
 
+  // Pool de User-Agents para rotação anti-bloqueio (stealth mode)
+  private static readonly UA_POOL = [
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:123.0) Gecko/20100101 Firefox/123.0',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_3_1) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.3.1 Safari/605.1.15',
+    'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (iPhone; CPU iPhone OS 17_3_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.3.1 Mobile/15E148 Safari/604.1',
+  ]
+
+  private getStealthHeaders(): Record<string, string> {
+    const ua = GenericLeiloeiroScraper.UA_POOL[Math.floor(Math.random() * GenericLeiloeiroScraper.UA_POOL.length)]
+    return {
+      'User-Agent': ua,
+      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+      'Accept-Language': 'pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',
+      'Accept-Encoding': 'gzip, deflate, br',
+      'DNT': '1',
+      'Connection': 'keep-alive',
+      'Upgrade-Insecure-Requests': '1',
+      'Sec-Fetch-Dest': 'document',
+      'Sec-Fetch-Mode': 'navigate',
+      'Sec-Fetch-Site': 'none',
+      'Cache-Control': 'max-age=0',
+      ...this.config.headers,
+    }
+  }
+
+  private async stealthDelay(min = 800, max = 3000): Promise<void> {
+    const ms = min + Math.random() * (max - min)
+    await new Promise(r => setTimeout(r, ms))
+  }
+
   constructor(prisma: PrismaClient, config: LeiloeirConfig) {
     super(prisma, config.source, config.listUrl)
     this.config = config
@@ -257,13 +338,9 @@ export class GenericLeiloeiroScraper extends BaseScraper {
     const auctions: ScrapedAuction[] = []
 
     try {
+      await this.stealthDelay(500, 2000) // delay inicial anti-bot
       const response = await fetch(this.config.listUrl, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-          'Accept': 'text/html,application/xhtml+xml',
-          'Accept-Language': 'pt-BR,pt;q=0.9',
-          ...this.config.headers,
-        },
+        headers: this.getStealthHeaders(),
       })
 
       if (!response.ok) {
