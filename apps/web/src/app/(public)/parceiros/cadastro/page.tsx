@@ -47,6 +47,55 @@ interface Building {
 
 type Step = 'category' | 'info' | 'buildings' | 'success'
 
+function validateCPF(cpf: string): boolean {
+  const digits = cpf.replace(/\D/g, '')
+  if (digits.length !== 11) return false
+  if (/^(\d)\1{10}$/.test(digits)) return false
+  let sum = 0
+  for (let i = 0; i < 9; i++) sum += parseInt(digits[i]) * (10 - i)
+  let remainder = (sum * 10) % 11
+  if (remainder === 10) remainder = 0
+  if (remainder !== parseInt(digits[9])) return false
+  sum = 0
+  for (let i = 0; i < 10; i++) sum += parseInt(digits[i]) * (11 - i)
+  remainder = (sum * 10) % 11
+  if (remainder === 10) remainder = 0
+  return remainder === parseInt(digits[10])
+}
+
+function validateCNPJ(cnpj: string): boolean {
+  const digits = cnpj.replace(/\D/g, '')
+  if (digits.length !== 14) return false
+  if (/^(\d)\1{13}$/.test(digits)) return false
+  const weights1 = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]
+  let sum = 0
+  for (let i = 0; i < 12; i++) sum += parseInt(digits[i]) * weights1[i]
+  let remainder = sum % 11
+  const d1 = remainder < 2 ? 0 : 11 - remainder
+  if (d1 !== parseInt(digits[12])) return false
+  const weights2 = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]
+  sum = 0
+  for (let i = 0; i < 13; i++) sum += parseInt(digits[i]) * weights2[i]
+  remainder = sum % 11
+  const d2 = remainder < 2 ? 0 : 11 - remainder
+  return d2 === parseInt(digits[13])
+}
+
+function validateDocument(value: string): { valid: boolean; type: 'cpf' | 'cnpj' | null; error: string } {
+  const digits = value.replace(/\D/g, '')
+  if (!digits) return { valid: true, type: null, error: '' }
+  if (digits.length <= 11) {
+    if (digits.length < 11) return { valid: true, type: 'cpf', error: '' }
+    return validateCPF(digits)
+      ? { valid: true, type: 'cpf', error: '' }
+      : { valid: false, type: 'cpf', error: 'CPF inválido' }
+  }
+  if (digits.length < 14) return { valid: true, type: 'cnpj', error: '' }
+  return validateCNPJ(digits)
+    ? { valid: true, type: 'cnpj', error: '' }
+    : { valid: false, type: 'cnpj', error: 'CNPJ inválido' }
+}
+
 export default function CadastroParceirosPage() {
   const [step, setStep] = useState<Step>('category')
   const [loading, setLoading] = useState(false)
@@ -55,6 +104,7 @@ export default function CadastroParceirosPage() {
   const [selectedBuildings, setSelectedBuildings] = useState<Building[]>([])
   const [result, setResult] = useState<{ slug: string; profileUrl: string; name: string } | null>(null)
   const [error, setError] = useState('')
+  const [docError, setDocError] = useState('')
 
   const [form, setForm] = useState({
     category: '',
@@ -62,6 +112,7 @@ export default function CadastroParceirosPage() {
     email: '',
     phone: '',
     whatsapp: '',
+    cpfcnpj: '',
     bio: '',
     crea: '',
     instagram: '',
@@ -108,6 +159,7 @@ export default function CadastroParceirosPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...form,
+          cpfcnpj: form.cpfcnpj.replace(/\D/g, '') || undefined,
           buildingIds: selectedBuildings.map(b => b.id),
         }),
       })
@@ -273,6 +325,39 @@ export default function CadastroParceirosPage() {
                 </div>
               </div>
 
+              {/* CPF/CNPJ */}
+              <div>
+                <label className="block text-sm font-semibold text-[#1B2B5B] mb-1.5">CPF ou CNPJ</label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input
+                    type="text"
+                    value={form.cpfcnpj}
+                    onChange={e => {
+                      const val = e.target.value
+                      setForm(f => ({ ...f, cpfcnpj: val }))
+                      const result = validateDocument(val)
+                      setDocError(result.error)
+                    }}
+                    placeholder="000.000.000-00 ou 00.000.000/0001-00"
+                    maxLength={18}
+                    className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:outline-none focus:ring-2 bg-white ${
+                      docError
+                        ? 'border-red-400 focus:border-red-400 focus:ring-red-200'
+                        : 'border-gray-200 focus:border-[#C9A84C] focus:ring-[#C9A84C]/20'
+                    }`}
+                  />
+                </div>
+                {docError && (
+                  <p className="text-red-500 text-xs mt-1">{docError}</p>
+                )}
+                {!docError && form.cpfcnpj && (
+                  <p className="text-gray-400 text-xs mt-1">
+                    {form.cpfcnpj.replace(/\D/g, '').length <= 11 ? 'CPF' : 'CNPJ'} detectado
+                  </p>
+                )}
+              </div>
+
               {/* CREA/CAU/CRO */}
               {['ARQUITETO', 'ENGENHEIRO', 'AVALIADOR', 'CORRETOR', 'ADVOGADO_IMOBILIARIO'].includes(form.category) && (
                 <div>
@@ -370,6 +455,10 @@ export default function CadastroParceirosPage() {
               <button
                 onClick={() => {
                   if (!form.name || !form.email) { setError('Preencha nome e e-mail'); return }
+                  if (form.cpfcnpj) {
+                    const docResult = validateDocument(form.cpfcnpj)
+                    if (!docResult.valid) { setError(docResult.error); return }
+                  }
                   setError('')
                   setStep('buildings')
                 }}
