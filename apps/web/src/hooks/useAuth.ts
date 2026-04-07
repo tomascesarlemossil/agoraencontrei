@@ -45,6 +45,11 @@ export function useAuth() {
       // ignore
     }
     clearAuth()
+    // Forçar limpeza de cookies httpOnly no browser
+    document.cookie = 'access_token=; Max-Age=0; path=/;'
+    document.cookie = 'refresh_token=; Max-Age=0; path=/;'
+    // Limpar qualquer vestígio de auth no localStorage
+    try { localStorage.removeItem('auth') } catch {}
     router.push('/login')
   }, [clearAuth, router])
 
