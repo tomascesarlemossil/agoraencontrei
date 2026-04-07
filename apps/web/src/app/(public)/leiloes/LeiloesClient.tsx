@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import { Search, MapPin, Filter, Calculator, Bell, TrendingUp, ChevronDown, X, ArrowRight, Building, Home, Map as MapIcon, Star, Clock, DollarSign, BarChart3, AlertTriangle, Loader2, CheckCircle, ExternalLink } from 'lucide-react'
 import { CalculadoraROI } from '@/components/CalculadoraROI'
+import { LegalRiskSeal } from '@/components/LegalRiskSeal'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'https://api-production-669c.up.railway.app'
 const PUBLIC_AUCTIONS_URL = `${API_URL}/api/v1/public/auctions`
@@ -1058,6 +1059,16 @@ export default function LeiloesClient() {
                   )}
                 </div>
               </div>
+
+              {/* Score de Risco Jurídico */}
+              <LegalRiskSeal leilao={{
+                saleType: selectedAuction.modality,
+                occupation: selectedAuction.occupation,
+                financeable: selectedAuction.financingAvailable,
+                fgtsAllowed: selectedAuction.fgtsAllowed,
+                discountPercent: selectedAuction.discountPercent,
+                description: selectedAuction.title,
+              }} />
 
               {/* Calculadora ROI */}
               {selectedAuction.appraisalValue && selectedAuction.minimumBid && selectedAuction.appraisalValue > selectedAuction.minimumBid && (
