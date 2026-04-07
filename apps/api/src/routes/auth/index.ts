@@ -122,7 +122,16 @@ export default async function authRoutes(app: FastifyInstance) {
       await svc.logout(refreshToken)
     }
 
-    reply.clearCookie('refresh_token', { path: '/api/v1/auth' })
+    // Limpar cookie com TODOS os mesmos parâmetros usados no setCookie
+    reply.clearCookie('refresh_token', {
+      path: '/api/v1/auth',
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none',
+    })
+    // Também tentar limpar com path raiz (caso haja cookie antigo)
+    reply.clearCookie('refresh_token', { path: '/' })
+    reply.clearCookie('access_token', { path: '/' })
     return reply.send({ success: true })
   })
 
