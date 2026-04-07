@@ -1323,8 +1323,7 @@ export default async function publicRoutes(app: FastifyInstance) {
 
         if (caixaApify.length > 0) {
           auctions.push(...caixaApify.map(item => ({
-            ...item,
-            coverImageUrl: item.photos?.[0] || item.coverImageUrl,
+            ...item as unknown as Record<string, unknown>,
           })))
           sources.push('apify-caixa')
           app.log.info(`[auctions] Apify Caixa: ${caixaApify.length} items`)
@@ -1332,8 +1331,7 @@ export default async function publicRoutes(app: FastifyInstance) {
 
         if (santanderApify.length > 0) {
           auctions.push(...santanderApify.map(item => ({
-            ...item,
-            coverImageUrl: item.photos?.[0] || item.coverImageUrl,
+            ...item as unknown as Record<string, unknown>,
           })))
           sources.push('apify-santander')
           app.log.info(`[auctions] Apify Santander: ${santanderApify.length} items`)
@@ -1571,7 +1569,7 @@ export default async function publicRoutes(app: FastifyInstance) {
         if (yieldMensal < minYieldNum) continue
 
         opportunities.push({
-          ...(auction as Record<string, unknown>),
+          ...(auction as unknown as Record<string, unknown>),
           yieldMensal: Math.round(yieldMensal * 100) / 100,
           spreadVsMarket: Math.round(spreadVsMarket * 100) / 100,
           estimatedRent,
