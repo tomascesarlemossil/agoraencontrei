@@ -639,15 +639,6 @@ export default async function HomePage() {
                       loading="lazy"
                       decoding="async"
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      onError={(e) => {
-                        const el = e.target as HTMLImageElement
-                        el.style.display = 'none'
-                        const parent = el.parentElement
-                        if (parent) {
-                          parent.style.background = 'linear-gradient(135deg, #1B2B5B, #0f1c3a)'
-                          parent.innerHTML = '<div style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px"><svg xmlns=\'http://www.w3.org/2000/svg\' width=\'48\' height=\'48\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'rgba(255,255,255,0.3)\'><path stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'1\' d=\'M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z\'/><polyline points=\'9 22 9 12 15 12 15 22\'/></svg><span style=\'color:rgba(255,255,255,0.3);font-size:11px\'>Foto em breve</span></div>'
-                        }
-                      }}
                     />
                   ) : (
                     <div className="h-full flex flex-col items-center justify-center gap-2" style={{ background: 'linear-gradient(135deg, #1B2B5B, #0f1c3a)' }}>
