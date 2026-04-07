@@ -176,7 +176,7 @@ function mapPublicAuction(item: any): Auction {
     firstRoundDate: null,
     secondRoundDate: null,
     auctionDate: null,
-    coverImage: null,
+    coverImage: item.id ? `https://venda-imoveis.caixa.gov.br/fotos-imoveis/${item.id}_1.jpg` : null,
     opportunityScore: item.discount ? Math.min(95, Math.round(item.discount * 1.4)) : null,
     estimatedROI: item.discount || null,
     occupation: null,
@@ -229,7 +229,7 @@ export default function LeiloesClient() {
 
   // Filters
   const [search, setSearch] = useState('')
-  const [city, setCity] = useState('')
+  const [city, setCity] = useState('FRANCA')
   const [state, setState] = useState('')
   const [source, setSource] = useState('')
   const [propertyType, setPropertyType] = useState('')
