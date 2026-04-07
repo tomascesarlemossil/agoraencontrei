@@ -3,7 +3,7 @@
  * Motor de interlinking automático para páginas SEO programáticas.
  * Baseado no SEO Growth Pack — adaptado para Prisma + Fastify.
  */
-import { prisma } from '@agoraencontrei/database'
+import type { PrismaClient } from '@prisma/client'
 
 export type LinkBlock = {
   title: string
@@ -31,7 +31,7 @@ const LIMITS = {
  * 3) Cidades vizinhas (seo_city_neighbors) com mesma intenção
  * 4) Mesma UF + guias de apoio
  */
-export async function getSmartInternalLinks(pageId: bigint): Promise<LinkBlock[]> {
+export async function getSmartInternalLinks(prisma: PrismaClient, pageId: bigint): Promise<LinkBlock[]> {
   const current = await prisma.$queryRaw<Array<{
     id: bigint; slug: string; h1: string; cidade_id: bigint
     bairro_id: bigint | null; cluster: string | null; uf: string
