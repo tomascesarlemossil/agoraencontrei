@@ -154,30 +154,65 @@ function normalizePublicPropertyType(type: string): string {
   return map[type.toLowerCase()] || 'HOUSE'
 }
 
+// Parse "R$ 2.273.000" or number → pure number
+function parseMoneyValue(v: unknown): number | null {
+  if (typeof v === 'number' && v > 0) return v
+  if (typeof v === 'string') {
+    const n = parseFloat(v.replace(/[R$\s.]/g, '').replace(',', '.'))
+    return isNaN(n) ? null : n
+  }
+  return null
+}
+
+// Franca-first geographic priority
+function cityPriority(city: string | null, state: string | null): number {
+  const c = (city || '').toUpperCase()
+  const s = (state || '').toUpperCase()
+  if (c.includes('FRANCA')) return 0
+  if (c.includes('BATATAIS') || c.includes('PATROCINIO') || c.includes('CRISTAIS') || c.includes('RESTINGA')) return 1
+  if (c.includes('RIBEIRAO') || c.includes('RIBEIRÃO')) return 2
+  if (s === 'SP') return 3
+  if (s === 'MG' || s === 'GO' || s === 'PR') return 4
+  return 5
+}
+
 function mapPublicAuction(item: any): Auction {
-  // Extract cover image: Apify photos array > coverImageUrl > Caixa CDN fallback
-  const rawId = (item.id || '').replace(/^caixa-/, '')
+  const rawId = (item.id || '').replace(/^(caixa-|santander-)/, '')
   const coverImage = item.photos?.[0]
     || item.coverImageUrl
-    || (rawId ? `https://venda-imoveis.caixa.gov.br/fotos-imoveis/${rawId}_1.jpg` : null)
+    || (rawId && item.source !== 'SANTANDER' ? `https://venda-imoveis.caixa.gov.br/fotos-imoveis/${rawId}_1.jpg` : null)
+
+  // Parse prices — handle both number and "R$ X.XXX.XXX" string formats
+  const price = parseMoneyValue(item.price) || parseMoneyValue(item.minimumSaleValue1)
+  const appraisal = parseMoneyValue(item.appraisalValue) || parseMoneyValue(item.evaluationValue)
+
+  // Extract city from address for Santander (address format: "..., Cidade - UF...")
+  let city = item.city || ''
+  let neighborhood = item.neighborhood || item.district || ''
+  if (item.source === 'SANTANDER' && item.address && (!city || city.includes('Venda'))) {
+    const addrMatch = (item.address as string).match(/,\s*([^,]+?)\s*-\s*[A-Z]{2}/)
+    if (addrMatch) city = addrMatch[1].trim()
+    const parts = (item.address as string).split(',').map((p: string) => p.trim())
+    if (parts.length >= 4) neighborhood = parts[parts.length - 3] || neighborhood
+  }
 
   return {
     id: `public-${item.id}`,
-    title: item.description || `${item.propertyType || 'Imóvel'} em ${item.city}`,
+    title: item.description || item.titulo || `${item.propertyType || 'Imóvel'} em ${city}`,
     slug: `public-${item.id}`,
     source: item.source || 'CAIXA',
     status: 'OPEN',
     modality: item.saleType || 'VENDA_DIRETA',
     propertyType: normalizePublicPropertyType(item.propertyType || ''),
-    city: item.city || null,
+    city: city || null,
     state: item.state || 'SP',
-    neighborhood: item.neighborhood || item.district || null,
+    neighborhood: neighborhood || null,
     totalArea: item.totalArea || item.privateArea || item.landArea || null,
     bedrooms: item.bedrooms || item.rooms || 0,
     bathrooms: 0,
     parkingSpaces: item.parkingSpots || item.garage || 0,
-    appraisalValue: item.appraisalValue || item.evaluationValue || null,
-    minimumBid: item.price || item.minimumSaleValue1 || null,
+    appraisalValue: appraisal,
+    minimumBid: price,
     discountPercent: item.discount || null,
     firstRoundDate: item.firstAuctionDate || null,
     secondRoundDate: item.secondAuctionDate || null,
@@ -185,7 +220,7 @@ function mapPublicAuction(item: any): Auction {
     coverImage,
     opportunityScore: item.discount ? Math.min(95, Math.round(item.discount * 1.4)) : null,
     estimatedROI: item.discount || null,
-    occupation: null,
+    occupation: item.occupation || item.ocupacao || null,
     bankName: item.bankName || item.leiloeiro || 'Caixa Econômica Federal',
     auctioneerName: item.leiloeiro || item.auctioneer || null,
     financingAvailable: Boolean(item.financeable || item.acceptsFinancing),
@@ -386,17 +421,23 @@ export default function LeiloesClient() {
         maxPrice,
       })
 
+      // FRANCA-FIRST: Always prioritize by geographic relevance, then by selected sort
       const sortedItems = [...filteredItems].sort((a, b) => {
-        const orderFactor = sortOrder === 'desc' ? -1 : 1
+        // Primary: Geographic priority (Franca=0, neighbors=1, Ribeirão=2, SP=3, others=5)
+        const geoA = cityPriority(a.city, a.state)
+        const geoB = cityPriority(b.city, b.state)
+        if (geoA !== geoB) return geoA - geoB
 
+        // Secondary: User-selected sort
+        const orderFactor = sortOrder === 'desc' ? -1 : 1
         const getComparable = (auction: Auction) => {
           switch (sortBy) {
-            case 'minimumBid': return auction.minimumBid || 0
+            case 'minimumBid': return Number(auction.minimumBid) || 0
             case 'discountPercent': return auction.discountPercent || 0
             case 'opportunityScore': return auction.opportunityScore || 0
             case 'auctionDate': return auction.auctionDate ? new Date(auction.auctionDate).getTime() : Number.MAX_SAFE_INTEGER
             case 'zapSpread': return auction.zapMarketPrice && auction.minimumBid ? ((Number(auction.zapMarketPrice) - Number(auction.minimumBid)) / Number(auction.zapMarketPrice)) * 100 : 0
-            default: return auction.minimumBid || 0
+            default: return Number(auction.minimumBid) || 0
           }
         }
 
@@ -611,11 +652,12 @@ export default function LeiloesClient() {
                 if (next) { setSortBy('discountPercent'); setSortOrder('desc') }
                 setPage(1)
               }}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold transition"
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-bold transition"
               style={{
-                backgroundColor: minDiscount === '40' ? '#C9A84C' : '#fff7e6',
-                color: minDiscount === '40' ? '#1B2B5B' : '#b8943d',
-                border: '1.5px solid #C9A84C',
+                backgroundColor: minDiscount === '40' ? '#000000' : '#1B2B5B',
+                color: minDiscount === '40' ? '#00C805' : '#FFFFFF',
+                border: '2px solid',
+                borderColor: minDiscount === '40' ? '#00C805' : '#1B2B5B',
               }}
               title="Leilões com mais de 40% de desconto sobre o valor de avaliação"
             >
@@ -628,11 +670,12 @@ export default function LeiloesClient() {
                 if (next === 'zapSpread') setSortOrder('desc')
                 setPage(1)
               }}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold transition"
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-bold transition"
               style={{
-                backgroundColor: sortBy === 'zapSpread' ? '#1B2B5B' : '#eef2ff',
-                color: sortBy === 'zapSpread' ? '#C9A84C' : '#1B2B5B',
-                border: '1.5px solid #1B2B5B',
+                backgroundColor: sortBy === 'zapSpread' ? '#000000' : '#1B2B5B',
+                color: sortBy === 'zapSpread' ? '#00C805' : '#FFFFFF',
+                border: '2px solid',
+                borderColor: sortBy === 'zapSpread' ? '#00C805' : '#1B2B5B',
               }}
               title="Ordenar por maior spread vs preço de mercado ZAP"
             >
@@ -896,19 +939,35 @@ export default function LeiloesClient() {
               {auctions.map(auction => (
                 <div key={auction.id} onClick={() => openLeadModal(auction)}
                   className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-200 group cursor-pointer">
-                  {/* Image */}
-                  <div className="relative h-48 bg-gray-100 overflow-hidden">
+                  {/* Image — Real photo > Street View placeholder > Gradient fallback */}
+                  <div className="relative h-48 bg-gray-200 overflow-hidden">
                     {auction.coverImage ? (
                       <img
                         src={auction.coverImage}
                         alt={auction.title}
+                        loading="lazy"
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; (e.target as HTMLImageElement).parentElement!.classList.add('bg-gradient-to-br', typeGradient(auction.propertyType).split(' ').pop()!) }}
+                        onError={(e) => {
+                          const img = e.target as HTMLImageElement
+                          // Try Street View static image as fallback
+                          const addr = encodeURIComponent(`${auction.neighborhood || ''} ${auction.city || ''} ${auction.state || 'SP'} Brasil`)
+                          if (!img.dataset.fallback) {
+                            img.dataset.fallback = '1'
+                            img.src = `https://maps.googleapis.com/maps/api/streetview?size=400x300&location=${addr}&key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8`
+                          } else {
+                            // Final fallback: hide and show gradient
+                            img.style.display = 'none'
+                          }
+                        }}
                       />
                     ) : (
                       <div className={`w-full h-full bg-gradient-to-br ${typeGradient(auction.propertyType)} flex flex-col items-center justify-center`}>
-                        <span className="text-5xl mb-1">{typeIcon(auction.propertyType)}</span>
-                        <span className="text-white/80 text-xs font-semibold">{typeLabel(auction.propertyType)}</span>
+                        <div className="text-center px-4">
+                          <span className="text-3xl mb-1 block">{typeIcon(auction.propertyType)}</span>
+                          <span className="text-white font-bold text-sm">{typeLabel(auction.propertyType)}</span>
+                          {auction.city && <span className="text-white/60 text-xs block mt-1">{auction.city}/{auction.state}</span>}
+                          {Number(auction.minimumBid) > 0 && <span className="text-white font-bold text-lg block mt-1">{formatCurrency(Number(auction.minimumBid))}</span>}
+                        </div>
                       </div>
                     )}
                     {/* Top-left: Source badge */}
