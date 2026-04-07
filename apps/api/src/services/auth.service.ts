@@ -1,4 +1,5 @@
-import * as argon2 from 'argon2'
+import argon2 from 'argon2'
+import bcrypt from 'bcryptjs'
 import { nanoid } from 'nanoid'
 import { OAuth2Client } from 'google-auth-library'
 import type { FastifyInstance } from 'fastify'
@@ -31,6 +32,24 @@ export class AuthService {
     private readonly prisma: PrismaClient,
     private readonly app: FastifyInstance,
   ) {}
+
+  private async verifyPassword(passwordHash: string, plainPassword: string): Promise<boolean> {
+    if (!passwordHash) return false
+
+    if (passwordHash.startsWith('$argon2')) {
+      return argon2.verify(passwordHash, plainPassword)
+    }
+
+    if (passwordHash.startsWith('$2a$') || passwordHash.startsWith('$2b$') || passwordHash.startsWith('$2y$')) {
+      return bcrypt.compare(plainPassword, passwordHash)
+    }
+
+    return false
+  }
+
+  private needsRehashToArgon2(passwordHash: string): boolean {
+    return !passwordHash.startsWith('$argon2')
+  }
 
   // ── Register ─────────────────────────────────────────────────────────────
 
@@ -104,9 +123,24 @@ export class AuthService {
       throw Object.assign(new Error('Conta inativa'), { statusCode: 403, code: 'ACCOUNT_INACTIVE' })
     }
 
-    const valid = await argon2.verify(user.passwordHash, input.password)
+    const valid = await this.verifyPassword(user.passwordHash, input.password)
     if (!valid) {
       throw Object.assign(new Error('Credenciais inválidas'), { statusCode: 401, code: 'INVALID_CREDENTIALS' })
+    }
+
+    if (this.needsRehashToArgon2(user.passwordHash)) {
+      const migratedHash = await argon2.hash(input.password, {
+        type: argon2.argon2id,
+        memoryCost: 65536,
+        timeCost: 3,
+      })
+
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: { passwordHash: migratedHash },
+      })
+
+      user.passwordHash = migratedHash
     }
 
     const tokens = await this.generateTokens(user, user.companyId)
@@ -290,7 +324,7 @@ export class AuthService {
       throw Object.assign(new Error('Usuário sem senha local'), { statusCode: 400, code: 'NO_LOCAL_PASSWORD' })
     }
 
-    const valid = await argon2.verify(user.passwordHash, currentPassword)
+    const valid = await this.verifyPassword(user.passwordHash, currentPassword)
     if (!valid) {
       throw Object.assign(new Error('Senha atual incorreta'), { statusCode: 401, code: 'WRONG_PASSWORD' })
     }
