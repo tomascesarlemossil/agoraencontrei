@@ -341,7 +341,7 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
     if (!document.getElementById('maplibre-critical-css')) {
       const style = document.createElement('style')
       style.id = 'maplibre-critical-css'
-      style.textContent = `.maplibregl-map{overflow:hidden;position:relative;-webkit-tap-highlight-color:rgba(0,0,0,0)}.maplibregl-canvas-container{position:absolute;top:0;bottom:0;width:100%}.maplibregl-canvas{position:absolute;left:0;top:0}`
+      style.textContent = `.maplibregl-map{font:12px/20px Helvetica Neue,Arial,Helvetica,sans-serif;overflow:hidden;position:relative;width:100%;height:100%;-webkit-tap-highlight-color:rgba(0,0,0,0)}.maplibregl-canvas{position:absolute;left:0;top:0}.maplibregl-canvas-container.maplibregl-interactive{cursor:grab;user-select:none}`
       document.head.appendChild(style)
     }
     // Full CSS from CDN
@@ -387,6 +387,10 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
         })
 
         map.addControl(new maplibregl.NavigationControl(), 'top-right')
+
+        // Ensure canvas fills container after layout settles
+        map.once('render', () => { map.resize() })
+        setTimeout(() => { try { map.resize() } catch {} }, 200)
 
         map.on('load', () => {
           // Add auction GeoJSON source with clustering
@@ -892,7 +896,7 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
       <div ref={mapRef} className="absolute inset-0 z-0" />
 
       {/* Top controls */}
-      <div className="absolute top-3 left-3 right-3 z-10 flex items-start gap-2 pointer-events-none">
+      <div className="absolute top-3 left-3 right-3 z-10 flex flex-wrap items-start gap-2 pointer-events-none">
         <div className="flex gap-2 pointer-events-auto">
           {!drawing && polygon.length === 0 && (
             <button
@@ -934,9 +938,9 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
           )}
         </div>
 
-        {/* ROI Slider */}
+        {/* ROI Slider — hidden on small mobile */}
         {showAuctionLayer && (
-          <div className="pointer-events-auto flex items-center gap-2 bg-white/95 backdrop-blur px-3 py-2 rounded-xl shadow-lg">
+          <div className="pointer-events-auto hidden sm:flex items-center gap-2 bg-white/95 backdrop-blur px-3 py-2 rounded-xl shadow-lg">
             <span className="text-[10px] font-semibold text-gray-500 whitespace-nowrap">ROI mín.</span>
             <input
               type="range"
@@ -956,9 +960,9 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
           </div>
         )}
 
-        {/* Heatmap Toggle + Filtros Estilo de Vida */}
+        {/* Heatmap Toggle + Filtros Estilo de Vida — hidden on small mobile */}
         {showAuctionLayer && (
-          <div className="pointer-events-auto flex items-center gap-1.5 bg-white/95 backdrop-blur px-2 py-1.5 rounded-xl shadow-lg">
+          <div className="pointer-events-auto hidden sm:flex items-center gap-1.5 bg-white/95 backdrop-blur px-2 py-1.5 rounded-xl shadow-lg">
             <span className="text-[10px] font-semibold text-gray-500 whitespace-nowrap hidden sm:block">Filtros:</span>
             {([
               { key: 'financing', label: '\uD83C\uDFE6 Financ.', title: 'Financiamento aceito' },
