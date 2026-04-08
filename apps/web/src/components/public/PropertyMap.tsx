@@ -1,6 +1,5 @@
 'use client'
 
-import 'maplibre-gl/dist/maplibre-gl.css'
 import { useEffect, useRef, useState } from 'react'
 import { MapPin } from 'lucide-react'
 
@@ -20,12 +19,23 @@ export function PropertyMap({ latitude, longitude, city, neighborhood, state, la
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
 
+  // Inject MapLibre CSS
+  useEffect(() => {
+    if (document.getElementById('maplibre-gl-css')) return
+    const link = document.createElement('link')
+    link.id = 'maplibre-gl-css'
+    link.rel = 'stylesheet'
+    link.href = 'https://unpkg.com/maplibre-gl@5/dist/maplibre-gl.css'
+    document.head.appendChild(link)
+  }, [])
+
   useEffect(() => {
     if (mapInstance.current || !mapRef.current) return
 
     async function initMap() {
       try {
-        const maplibregl = (await import('maplibre-gl')).default
+        const mod = await import('maplibre-gl')
+        const maplibregl = mod.default || mod
 
         let lat = latitude
         let lng = longitude
