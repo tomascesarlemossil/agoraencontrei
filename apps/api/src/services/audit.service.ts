@@ -22,7 +22,7 @@ export type AuditAction =
   | 'blog.create'     | 'blog.update'     | 'blog.delete'     | 'blog.publish'
   // Usuários
   | 'user.login'      | 'user.register'   | 'user.update'     | 'user.delete'
-  | 'user.password_change' | 'user.role_change' | 'user.invite'
+  | 'user.password_change' | 'user.password_reset' | 'user.role_change' | 'user.invite'
   // Configurações do sistema
   | 'config.update'   | 'config.reset'    | 'config.permissions_update'
   // Financeiro
