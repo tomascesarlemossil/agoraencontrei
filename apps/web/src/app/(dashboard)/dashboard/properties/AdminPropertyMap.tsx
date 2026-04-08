@@ -1,6 +1,5 @@
 'use client'
 
-import 'maplibre-gl/dist/maplibre-gl.css'
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { Loader2, MapPin, AlertCircle, RefreshCw } from 'lucide-react'
@@ -165,12 +164,23 @@ export default function AdminPropertyMap({ statusFilter, purposeFilter, searchFi
     loadPins()
   }, [loadPins])
 
+  // Inject MapLibre CSS
+  useEffect(() => {
+    if (document.getElementById('maplibre-gl-css')) return
+    const link = document.createElement('link')
+    link.id = 'maplibre-gl-css'
+    link.rel = 'stylesheet'
+    link.href = 'https://unpkg.com/maplibre-gl@5/dist/maplibre-gl.css'
+    document.head.appendChild(link)
+  }, [])
+
   // Initialize or update MapLibre map
   useEffect(() => {
     if (!mapRef.current || loading || pins.length === 0) return
 
     async function initOrUpdateMap() {
-      const maplibregl = (await import('maplibre-gl')).default
+      const mod = await import('maplibre-gl')
+      const maplibregl = mod.default || mod
 
       // Build GeoJSON features
       const features = pins.map(p => ({

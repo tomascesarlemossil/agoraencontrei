@@ -1,6 +1,5 @@
 'use client'
 
-import 'maplibre-gl/dist/maplibre-gl.css'
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { X, PenLine, Trash2, Search, MapPin, BedDouble, Maximize } from 'lucide-react'
@@ -336,18 +335,28 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
     loadAuctions()
   }, [])
 
+  // Inject MapLibre CSS via link tag (reliable across all build configs)
+  useEffect(() => {
+    if (document.getElementById('maplibre-gl-css')) return
+    const link = document.createElement('link')
+    link.id = 'maplibre-gl-css'
+    link.rel = 'stylesheet'
+    link.href = 'https://unpkg.com/maplibre-gl@5/dist/maplibre-gl.css'
+    document.head.appendChild(link)
+  }, [])
+
   // Initialize MapLibre GL map
   useEffect(() => {
     if (!mapRef.current || mapInstance.current) return
 
-    import('maplibre-gl').then(maplibregl => {
+    import('maplibre-gl').then(mod => {
+      const maplibregl = mod.default || mod
       try {
         const map = new maplibregl.Map({
           container: mapRef.current!,
           style: 'https://tiles.openfreemap.org/styles/bright',
           center: [FRANCA_CENTER[1], FRANCA_CENTER[0]], // MapLibre uses [lng, lat]
           zoom: 13,
-          attributionControl: {},
         })
 
         map.addControl(new maplibregl.NavigationControl(), 'top-right')
@@ -500,7 +509,8 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
     markersRef.current.forEach(m => m.remove())
     markersRef.current = []
 
-    import('maplibre-gl').then(maplibregl => {
+    import('maplibre-gl').then(mod => {
+      const maplibregl = mod.default || mod
       const map = mapInstance.current!
 
       clusters.forEach(c => {
@@ -565,7 +575,8 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
   useEffect(() => {
     if (!isLoaded || !mapInstance.current) return
 
-    import('maplibre-gl').then(maplibregl => {
+    import('maplibre-gl').then(mod => {
+      const maplibregl = mod.default || mod
       ownerDirectMarkersRef.current.forEach(m => { try { m.remove() } catch {} })
       ownerDirectMarkersRef.current = []
       if (ownerDirectPins.length === 0) return
@@ -614,7 +625,8 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
       drawingPointsRef.current = [...drawingPointsRef.current, pt]
 
       // Add vertex marker
-      import('maplibre-gl').then(maplibregl => {
+      import('maplibre-gl').then(mod => {
+        const maplibregl = mod.default || mod
         const el = document.createElement('div')
         el.style.cssText = 'width:10px;height:10px;border-radius:50%;background:#C9A84C;border:2px solid #C9A84C;'
         const vm = new maplibregl.Marker({ element: el })
