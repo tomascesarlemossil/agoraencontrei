@@ -92,6 +92,24 @@ const nextConfig = {
   },
   async headers() {
     return [
+      // ── Dashboard/Auth: noindex ────────────────────────────────────
+      {
+        source: '/dashboard/:path*',
+        headers: [{ key: 'X-Robots-Tag', value: 'noindex, nofollow' }],
+      },
+      {
+        source: '/login',
+        headers: [{ key: 'X-Robots-Tag', value: 'noindex, nofollow' }],
+      },
+      {
+        source: '/register',
+        headers: [{ key: 'X-Robots-Tag', value: 'noindex, nofollow' }],
+      },
+      {
+        source: '/portal/:path*',
+        headers: [{ key: 'X-Robots-Tag', value: 'noindex, nofollow' }],
+      },
+      // ── Public pages: full indexing ────────────────────────────────
       {
         source: '/(.*)',
         headers: [

@@ -5,6 +5,7 @@ import { SpeedInsights } from '@vercel/speed-insights/next'
 import { Providers } from '@/components/providers'
 import { ConditionalMetaPixel } from '@/components/ConditionalMetaPixel'
 import { WebVitals } from '@/components/WebVitals'
+import { GoogleAnalytics } from '@/components/GoogleAnalytics'
 import { FRANCA_GEO_KEYWORDS } from '@/data/seo-geo-keywords'
 import './globals.css'
 
@@ -381,6 +382,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ConditionalMetaPixel />
         {/* ── Core Web Vitals monitoring ──────────────────────── */}
         <WebVitals />
+        {/* ── Google Analytics 4 ─────────────────────────────── */}
+        <GoogleAnalytics />
         {/* ── Vercel Analytics + Speed Insights ──────────────── */}
         <Analytics />
         <SpeedInsights />
