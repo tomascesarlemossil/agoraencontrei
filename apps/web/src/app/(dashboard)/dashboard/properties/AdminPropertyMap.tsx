@@ -56,7 +56,7 @@ const FAKE_IMAGE_PATTERNS = [
   '/images/logo', '/images/banner', 'whatsapp',
 ]
 
-interface MapPin {
+interface MapPinData {
   id: string
   reference: string | null
   title: string
@@ -86,9 +86,8 @@ interface AdminPropertyMapProps {
   searchFilter?: string
 }
 
-// Fetch ALL properties with pagination, return only those with lat/lng
-async function fetchAllPins(accessToken: string, statusFilter?: string, purposeFilter?: string, searchFilter?: string): Promise<MapPin[]> {
-  const allPins: MapPin[] = []
+async function fetchAllPins(accessToken: string, statusFilter?: string, purposeFilter?: string, searchFilter?: string): Promise<MapPinData[]> {
+  const allPins: MapPinData[] = []
   let page = 1
   const limit = 200
   let totalPages = 1
@@ -109,9 +108,8 @@ async function fetchAllPins(accessToken: string, statusFilter?: string, purposeF
     if (!res.ok) throw new Error(`API error: ${res.status}`)
 
     const data = await res.json()
-    const items: MapPin[] = data.data ?? []
+    const items: MapPinData[] = data.data ?? []
 
-    // Only keep properties with valid coordinates
     items.forEach(p => {
       if (p.latitude && p.longitude && !isNaN(Number(p.latitude)) && !isNaN(Number(p.longitude))) {
         allPins.push(p)
@@ -120,71 +118,10 @@ async function fetchAllPins(accessToken: string, statusFilter?: string, purposeF
 
     totalPages = data.meta?.totalPages ?? 1
     page++
-
-    // Safety break to avoid infinite loops
     if (page > 50) break
   }
 
   return allPins
-}
-
-function buildMarkers(L: any, clusterGroup: any, pins: MapPin[], router: any) {
-  if (typeof window !== 'undefined') {
-    (window as any).__adminMapNav = (id: string) => {
-      router.push(`/dashboard/properties/${id}`)
-    }
-  }
-
-  pins.forEach(p => {
-    const statusColor = STATUS_COLORS[p.status?.toUpperCase()] ?? '#94a3b8'
-    const lat = Number(p.latitude)
-    const lng = Number(p.longitude)
-    if (isNaN(lat) || isNaN(lng)) return
-
-    const icon = L.divIcon({
-      html: `<div style="width:26px;height:26px;background:${statusColor};border:2.5px solid white;border-radius:50% 50% 50% 0;transform:rotate(-45deg);box-shadow:0 2px 6px rgba(0,0,0,0.35);${p.isFeatured ? 'outline:2px solid #C9A84C;outline-offset:1px;' : ''}"></div>`,
-      className: '',
-      iconSize: [26, 26],
-      iconAnchor: [13, 26],
-      popupAnchor: [0, -28],
-    })
-
-    const hasImage = p.coverImage && !FAKE_IMAGE_PATTERNS.some(pat => p.coverImage!.includes(pat))
-    const priceStr = (p.purpose === 'RENT' || p.purpose === 'SEASON')
-      ? (p.priceRent ? fmt.format(Number(p.priceRent)) + '/mês' : 'Consulte')
-      : (p.price ? fmt.format(Number(p.price)) : (p.priceRent ? fmt.format(Number(p.priceRent)) + '/mês' : 'Consulte'))
-
-    const address = [p.street, p.number, p.neighborhood, p.city].filter(Boolean).join(', ')
-    const imgHtml = hasImage ? `<img src="${p.coverImage}" alt="" style="width:100%;height:110px;object-fit:cover;border-radius:6px 6px 0 0;display:block;" />` : ''
-    const refHtml = p.reference ? `<div style="font-size:10px;color:#64748b;margin-bottom:2px;font-family:monospace;">Ref: ${p.reference}</div>` : ''
-    const featHtml = p.isFeatured ? '<span style="background:#fef3c7;color:#b45309;font-size:10px;font-weight:600;padding:2px 8px;border-radius:999px;">⭐ Destaque</span>' : ''
-    const addrHtml = address ? `<div style="font-size:11px;color:#64748b;margin-bottom:6px;">📍 ${address}</div>` : ''
-    const bedsHtml = p.bedrooms ? `<span>🛏 ${p.bedrooms}</span>` : ''
-    const bathHtml = p.bathrooms ? `<span>🚿 ${p.bathrooms}</span>` : ''
-    const areaHtml = p.totalArea ? `<span>📐 ${p.totalArea}m²</span>` : ''
-
-    const popupHtml = `
-      <div style="width:240px;font-family:system-ui,sans-serif;border-radius:8px;overflow:hidden;">
-        ${imgHtml}
-        <div style="padding:10px 12px;">
-          <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;flex-wrap:wrap;">
-            <span style="background:${statusColor}22;color:${statusColor};font-size:10px;font-weight:600;padding:2px 8px;border-radius:999px;">${STATUS_LABELS[p.status?.toUpperCase()] ?? p.status}</span>
-            ${featHtml}
-          </div>
-          ${refHtml}
-          <div style="font-size:12px;font-weight:600;color:#1e293b;line-height:1.3;margin-bottom:4px;">${p.title}</div>
-          <div style="font-size:11px;color:#64748b;margin-bottom:6px;">${TYPE_LABELS[p.type?.toUpperCase()] ?? p.type} · ${PURPOSE_LABELS[p.purpose?.toUpperCase()] ?? p.purpose}</div>
-          ${addrHtml}
-          <div style="display:flex;gap:8px;font-size:11px;color:#64748b;margin-bottom:8px;flex-wrap:wrap;">${bedsHtml}${bathHtml}${areaHtml}</div>
-          <div style="font-size:14px;font-weight:700;color:#1B2B5B;margin-bottom:8px;">${priceStr}</div>
-          <button onclick="window.__adminMapNav('${p.id}')" style="width:100%;background:linear-gradient(135deg,#1B2B5B,#2d4a8a);color:white;text-align:center;padding:8px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;border:none;">Abrir Cadastro →</button>
-        </div>
-      </div>`
-
-    const marker = L.marker([lat, lng], { icon })
-    marker.bindPopup(popupHtml, { maxWidth: 260 })
-    clusterGroup.addLayer(marker)
-  })
 }
 
 export default function AdminPropertyMap({ statusFilter, purposeFilter, searchFilter }: AdminPropertyMapProps) {
@@ -192,8 +129,7 @@ export default function AdminPropertyMap({ statusFilter, purposeFilter, searchFi
   const { accessToken } = useAuthStore()
   const mapRef = useRef<HTMLDivElement>(null)
   const mapInstanceRef = useRef<any>(null)
-  const clusterGroupRef = useRef<any>(null)
-  const [pins, setPins] = useState<MapPin[]>([])
+  const [pins, setPins] = useState<MapPinData[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [stats, setStats] = useState({ total: 0, active: 0, inactive: 0, sold: 0, rented: 0 })
@@ -228,93 +164,203 @@ export default function AdminPropertyMap({ statusFilter, purposeFilter, searchFi
     loadPins()
   }, [loadPins])
 
-  // Update markers when filters change (without reinitializing map)
-  useEffect(() => {
-    if (!mapInstanceRef.current || !clusterGroupRef.current || loading) return
-    const L = (window as any).__leafletInstance
-    if (!L) return
-    clusterGroupRef.current.clearLayers()
-    buildMarkers(L, clusterGroupRef.current, pins, router)
-  }, [pins, loading, router])
-
-  // Initialize map once pins are loaded
+  // Initialize or update MapLibre map
   useEffect(() => {
     if (!mapRef.current || loading || pins.length === 0) return
-    if (mapInstanceRef.current) {
-      // Map already initialized — just update markers
-      if (clusterGroupRef.current) {
-        const L = (window as any).__leafletInstance
-        if (L) {
-          clusterGroupRef.current.clearLayers()
-          buildMarkers(L, clusterGroupRef.current, pins, router)
+
+    async function initOrUpdateMap() {
+      const maplibregl = (await import('maplibre-gl')).default
+      await import('maplibre-gl/dist/maplibre-gl.css' as any)
+
+      // Build GeoJSON features
+      const features = pins.map(p => ({
+        type: 'Feature' as const,
+        properties: {
+          id: p.id,
+          title: p.title,
+          slug: p.slug,
+          type: p.type,
+          purpose: p.purpose,
+          status: p.status?.toUpperCase() ?? 'ACTIVE',
+          price: p.price,
+          priceRent: p.priceRent,
+          neighborhood: p.neighborhood,
+          city: p.city,
+          street: p.street,
+          number: p.number,
+          reference: p.reference,
+          coverImage: p.coverImage,
+          bedrooms: p.bedrooms,
+          bathrooms: p.bathrooms,
+          totalArea: p.totalArea,
+          isFeatured: p.isFeatured,
+          statusColor: STATUS_COLORS[p.status?.toUpperCase()] ?? '#94a3b8',
+        },
+        geometry: {
+          type: 'Point' as const,
+          coordinates: [Number(p.longitude), Number(p.latitude)],
+        },
+      }))
+
+      const geojson = { type: 'FeatureCollection' as const, features }
+
+      if (mapInstanceRef.current) {
+        // Update existing source
+        const source = mapInstanceRef.current.getSource('properties')
+        if (source) {
+          source.setData(geojson)
+          return
         }
       }
-      return
-    }
 
-    async function initMap() {
-      const injectCss = (href: string, id: string) => {
-        if (!document.getElementById(id)) {
-          const link = document.createElement('link')
-          link.id = id; link.rel = 'stylesheet'; link.href = href
-          document.head.appendChild(link)
-        }
-      }
-      injectCss('https://unpkg.com/leaflet@1.9.4/dist/leaflet.css', 'leaflet-css')
-      injectCss('https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css', 'mc-css')
-      injectCss('https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css', 'mc-default-css')
-
-      const L = (await import('leaflet')).default
-      await import('leaflet.markercluster');
-      (window as any).__leafletInstance = L
-
-      delete (L.Icon.Default.prototype as any)._getIconUrl
-      L.Icon.Default.mergeOptions({
-        iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-        iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-        shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+      // Create new map
+      const map = new maplibregl.Map({
+        container: mapRef.current!,
+        style: 'https://tiles.openfreemap.org/styles/bright',
+        center: [-47.4008, -20.5386],
+        zoom: 13,
+        attributionControl: {},
       })
 
-      const map = L.map(mapRef.current!, { center: [-20.5386, -47.4008], zoom: 13 })
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap contributors',
-        maxZoom: 19,
-      }).addTo(map)
+      map.addControl(new maplibregl.NavigationControl(), 'top-right')
+
+      map.on('load', () => {
+        map.addSource('properties', {
+          type: 'geojson',
+          data: geojson,
+          cluster: true,
+          clusterMaxZoom: 15,
+          clusterRadius: 50,
+        })
+
+        // Cluster circles
+        map.addLayer({
+          id: 'clusters',
+          type: 'circle',
+          source: 'properties',
+          filter: ['has', 'point_count'],
+          paint: {
+            'circle-color': '#1B2B5B',
+            'circle-radius': ['step', ['get', 'point_count'], 18, 10, 22, 50, 28],
+            'circle-stroke-width': 3,
+            'circle-stroke-color': '#C9A84C',
+          },
+        })
+
+        // Cluster count labels
+        map.addLayer({
+          id: 'cluster-count',
+          type: 'symbol',
+          source: 'properties',
+          filter: ['has', 'point_count'],
+          layout: {
+            'text-field': '{point_count_abbreviated}',
+            'text-font': ['Open Sans Bold'],
+            'text-size': 13,
+          },
+          paint: { 'text-color': '#ffffff' },
+        })
+
+        // Individual markers — colored circles by status
+        map.addLayer({
+          id: 'unclustered-point',
+          type: 'circle',
+          source: 'properties',
+          filter: ['!', ['has', 'point_count']],
+          paint: {
+            'circle-color': ['get', 'statusColor'],
+            'circle-radius': 8,
+            'circle-stroke-width': 2.5,
+            'circle-stroke-color': '#ffffff',
+          },
+        })
+
+        // Featured properties — outer glow
+        map.addLayer({
+          id: 'featured-glow',
+          type: 'circle',
+          source: 'properties',
+          filter: ['all', ['!', ['has', 'point_count']], ['==', ['get', 'isFeatured'], true]],
+          paint: {
+            'circle-radius': 12,
+            'circle-color': 'transparent',
+            'circle-stroke-width': 2,
+            'circle-stroke-color': '#C9A84C',
+          },
+        })
+
+        // Click cluster → zoom in
+        map.on('click', 'clusters', (e) => {
+          const features = map.queryRenderedFeatures(e.point, { layers: ['clusters'] })
+          if (!features.length) return
+          const clusterId = features[0].properties.cluster_id
+          const source = map.getSource('properties') as any
+          source.getClusterExpansionZoom(clusterId).then((zoom: number) => {
+            map.easeTo({ center: (features[0].geometry as any).coordinates, zoom })
+          })
+        })
+
+        // Click property → show popup
+        map.on('click', 'unclustered-point', (e) => {
+          if (!e.features?.length) return
+          const f = e.features[0]
+          const coords = (f.geometry as any).coordinates.slice()
+          const p = f.properties as any
+
+          const statusColor = p.statusColor || '#94a3b8'
+          const hasImage = p.coverImage && !FAKE_IMAGE_PATTERNS.some((pat: string) => p.coverImage.includes(pat))
+          const priceStr = (p.purpose === 'RENT' || p.purpose === 'SEASON')
+            ? (p.priceRent ? fmt.format(Number(p.priceRent)) + '/mês' : 'Consulte')
+            : (p.price ? fmt.format(Number(p.price)) : (p.priceRent ? fmt.format(Number(p.priceRent)) + '/mês' : 'Consulte'))
+
+          const address = [p.street, p.number, p.neighborhood, p.city].filter(Boolean).join(', ')
+
+          const html = `
+            <div style="width:240px;font-family:system-ui,sans-serif;">
+              ${hasImage ? `<img src="${p.coverImage}" alt="" style="width:100%;height:110px;object-fit:cover;border-radius:6px 6px 0 0;display:block;" />` : ''}
+              <div style="padding:10px 12px;">
+                <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;flex-wrap:wrap;">
+                  <span style="background:${statusColor}22;color:${statusColor};font-size:10px;font-weight:600;padding:2px 8px;border-radius:999px;">${STATUS_LABELS[p.status] ?? p.status}</span>
+                  ${p.isFeatured === true || p.isFeatured === 'true' ? '<span style="background:#fef3c7;color:#b45309;font-size:10px;font-weight:600;padding:2px 8px;border-radius:999px;">⭐ Destaque</span>' : ''}
+                </div>
+                ${p.reference ? `<div style="font-size:10px;color:#64748b;margin-bottom:2px;font-family:monospace;">Ref: ${p.reference}</div>` : ''}
+                <div style="font-size:12px;font-weight:600;color:#1e293b;line-height:1.3;margin-bottom:4px;">${p.title}</div>
+                <div style="font-size:11px;color:#64748b;margin-bottom:6px;">${TYPE_LABELS[p.type] ?? p.type} · ${PURPOSE_LABELS[p.purpose] ?? p.purpose}</div>
+                ${address ? `<div style="font-size:11px;color:#64748b;margin-bottom:6px;">📍 ${address}</div>` : ''}
+                <div style="display:flex;gap:8px;font-size:11px;color:#64748b;margin-bottom:8px;flex-wrap:wrap;">
+                  ${p.bedrooms > 0 ? `<span>🛏 ${p.bedrooms}</span>` : ''}
+                  ${p.bathrooms > 0 ? `<span>🚿 ${p.bathrooms}</span>` : ''}
+                  ${p.totalArea > 0 ? `<span>📐 ${p.totalArea}m²</span>` : ''}
+                </div>
+                <div style="font-size:14px;font-weight:700;color:#1B2B5B;margin-bottom:8px;">${priceStr}</div>
+                <a href="/dashboard/properties/${p.id}" style="display:block;width:100%;background:linear-gradient(135deg,#1B2B5B,#2d4a8a);color:white;text-align:center;padding:8px;border-radius:6px;font-size:12px;font-weight:600;text-decoration:none;">Abrir Cadastro →</a>
+              </div>
+            </div>`
+
+          new maplibregl.Popup({ offset: 25, maxWidth: '280px' })
+            .setLngLat(coords)
+            .setHTML(html)
+            .addTo(map)
+        })
+
+        // Cursor changes
+        map.on('mouseenter', 'clusters', () => { map.getCanvas().style.cursor = 'pointer' })
+        map.on('mouseleave', 'clusters', () => { map.getCanvas().style.cursor = '' })
+        map.on('mouseenter', 'unclustered-point', () => { map.getCanvas().style.cursor = 'pointer' })
+        map.on('mouseleave', 'unclustered-point', () => { map.getCanvas().style.cursor = '' })
+
+        // Fit bounds to all pins
+        if (pins.length > 0) {
+          const bounds = new maplibregl.LngLatBounds()
+          pins.forEach(p => bounds.extend([Number(p.longitude), Number(p.latitude)]))
+          map.fitBounds(bounds, { padding: 40, maxZoom: 16 })
+        }
+      })
 
       mapInstanceRef.current = map
-
-      const clusterGroup = (L as any).markerClusterGroup({
-        maxClusterRadius: 50,
-        spiderfyOnMaxZoom: true,
-        showCoverageOnHover: false,
-        zoomToBoundsOnClick: true,
-        iconCreateFunction: (cluster: any) => {
-          const count = cluster.getChildCount()
-          const size = count < 10 ? 36 : count < 50 ? 44 : 52
-          return L.divIcon({
-            html: `<div style="width:${size}px;height:${size}px;background:linear-gradient(135deg,#1B2B5B,#2d4a8a);border:3px solid #C9A84C;border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:${count < 100 ? 13 : 11}px;box-shadow:0 2px 8px rgba(0,0,0,0.3);">${count}</div>`,
-            className: '',
-            iconSize: [size, size],
-            iconAnchor: [size / 2, size / 2],
-          })
-        },
-      })
-
-      clusterGroupRef.current = clusterGroup
-      map.addLayer(clusterGroup)
-
-      buildMarkers(L, clusterGroup, pins, router)
-
-      // Fit map to markers
-      if (pins.length > 0) {
-        try {
-          const bounds = L.latLngBounds(pins.map(p => [Number(p.latitude), Number(p.longitude)]))
-          map.fitBounds(bounds, { padding: [40, 40], maxZoom: 16 })
-        } catch {}
-      }
     }
 
-    initMap().catch(e => {
+    initOrUpdateMap().catch(e => {
       console.error('[AdminPropertyMap] initMap error:', e)
       setError('Erro ao inicializar o mapa.')
     })
@@ -326,7 +372,6 @@ export default function AdminPropertyMap({ statusFilter, purposeFilter, searchFi
       if (mapInstanceRef.current) {
         mapInstanceRef.current.remove()
         mapInstanceRef.current = null
-        clusterGroupRef.current = null
       }
     }
   }, [])

@@ -343,8 +343,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="preconnect" href="https://agoraencontrei-media.s3.us-east-1.amazonaws.com" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link rel="dns-prefetch" href="https://tile.openstreetmap.org" />
-        <link rel="dns-prefetch" href="https://unpkg.com" />
+        <link rel="dns-prefetch" href="https://tiles.openfreemap.org" />
         <link rel="dns-prefetch" href="https://nominatim.openstreetmap.org" />
         <link rel="dns-prefetch" href="https://cdnuso.com" />
         <link rel="dns-prefetch" href="https://cdn2.uso.com.br" />

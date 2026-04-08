@@ -24,18 +24,8 @@ export function PropertyMap({ latitude, longitude, city, neighborhood, state, la
 
     async function initMap() {
       try {
-        // Inject Leaflet CSS via CDN (avoids Next.js CSS module issues)
-        if (!document.getElementById('leaflet-css')) {
-          const link = document.createElement('link')
-          link.id = 'leaflet-css'
-          link.rel = 'stylesheet'
-          link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'
-          document.head.appendChild(link)
-          await new Promise(r => setTimeout(r, 100))
-        }
-
-        // Dynamically import leaflet (client only)
-        const L = (await import('leaflet')).default
+        const maplibregl = (await import('maplibre-gl')).default
+        await import('maplibre-gl/dist/maplibre-gl.css' as any)
 
         let lat = latitude
         let lng = longitude
@@ -60,60 +50,94 @@ export function PropertyMap({ latitude, longitude, city, neighborhood, state, la
           return
         }
 
-        // Fix default icon paths for Next.js
-        delete (L.Icon.Default.prototype as any)._getIconUrl
-        L.Icon.Default.mergeOptions({
-          iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-          iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-          shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-        })
-
         if (mapInstance.current) return
 
-        const map = L.map(mapRef.current, {
-          center: [lat, lng],
+        const map = new maplibregl.Map({
+          container: mapRef.current,
+          style: 'https://tiles.openfreemap.org/styles/bright',
+          center: [lng, lat],
           zoom: showExactLocation ? 17 : 15,
-          scrollWheelZoom: false,
-          zoomControl: true,
+          pitch: 0,
+          attributionControl: {},
         })
 
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-          maxZoom: 19,
-        }).addTo(map)
+        map.scrollZoom.disable()
+        map.addControl(new maplibregl.NavigationControl(), 'top-right')
 
-        if (showExactLocation) {
-          // Pin exato — endereço preciso autorizado pelo proprietário
-          const icon = L.divIcon({
-            html: `<div style="background:#e07742;width:28px;height:28px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.3)"></div>`,
-            iconSize: [28, 28],
-            iconAnchor: [14, 28],
-            className: '',
-          })
-          L.marker([lat, lng], { icon })
-            .addTo(map)
-            .bindPopup(label ?? 'Localização do imóvel')
-        } else {
-          // Círculo de privacidade — ~300m radius para proteger endereço exato
-          L.circle([lat, lng], {
-            radius: 300,
-            color: '#e07742',
-            fillColor: '#e07742',
-            fillOpacity: 0.15,
-            weight: 2,
-          }).addTo(map)
-          // Ponto central
-          L.circleMarker([lat, lng], {
-            radius: 6,
-            color: '#e07742',
-            fillColor: '#e07742',
-            fillOpacity: 0.9,
-            weight: 2,
-          }).addTo(map)
-        }
+        map.on('load', () => {
+          if (showExactLocation) {
+            // Exact pin marker
+            const el = document.createElement('div')
+            el.style.cssText = 'width:28px;height:28px;background:#e07742;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.3);cursor:pointer;'
+
+            new maplibregl.Marker({ element: el, anchor: 'bottom' })
+              .setLngLat([lng, lat])
+              .setPopup(new maplibregl.Popup({ offset: 25 }).setText(label ?? 'Localização do imóvel'))
+              .addTo(map)
+          } else {
+            // Privacy circle — ~300m radius
+            const center = [lng, lat] as [number, number]
+            const points = 64
+            const km = 0.3
+            const coords: [number, number][] = []
+            for (let i = 0; i < points; i++) {
+              const angle = (i / points) * 2 * Math.PI
+              const dx = km * Math.cos(angle)
+              const dy = km * Math.sin(angle)
+              coords.push([
+                center[0] + (dx / (111.32 * Math.cos((center[1] * Math.PI) / 180))),
+                center[1] + (dy / 110.574),
+              ])
+            }
+            coords.push(coords[0]) // Close the circle
+
+            map.addSource('privacy-circle', {
+              type: 'geojson',
+              data: {
+                type: 'Feature',
+                properties: {},
+                geometry: { type: 'Polygon', coordinates: [coords] },
+              },
+            })
+
+            map.addLayer({
+              id: 'privacy-circle-fill',
+              type: 'fill',
+              source: 'privacy-circle',
+              paint: { 'fill-color': '#e07742', 'fill-opacity': 0.15 },
+            })
+
+            map.addLayer({
+              id: 'privacy-circle-stroke',
+              type: 'line',
+              source: 'privacy-circle',
+              paint: { 'line-color': '#e07742', 'line-width': 2 },
+            })
+
+            // Center dot
+            map.addSource('center-point', {
+              type: 'geojson',
+              data: { type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: center } },
+            })
+
+            map.addLayer({
+              id: 'center-dot',
+              type: 'circle',
+              source: 'center-point',
+              paint: {
+                'circle-radius': 6,
+                'circle-color': '#e07742',
+                'circle-opacity': 0.9,
+                'circle-stroke-width': 2,
+                'circle-stroke-color': '#e07742',
+              },
+            })
+          }
+
+          setLoading(false)
+        })
 
         mapInstance.current = map
-        setLoading(false)
       } catch {
         setError(true)
         setLoading(false)
@@ -128,7 +152,7 @@ export function PropertyMap({ latitude, longitude, city, neighborhood, state, la
         mapInstance.current = null
       }
     }
-  }, [latitude, longitude, city, neighborhood, state, showExactLocation])
+  }, [latitude, longitude, city, neighborhood, state, showExactLocation, label])
 
   if (error) {
     return (
@@ -148,7 +172,7 @@ export function PropertyMap({ latitude, longitude, city, neighborhood, state, la
       )}
       <div ref={mapRef} className="h-72 w-full" />
       {!loading && !showExactLocation && (
-        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-white/90 backdrop-blur-sm text-xs text-gray-500 px-3 py-1 rounded-full shadow-sm border border-gray-200">
+        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-white/90 backdrop-blur-sm text-xs text-gray-500 px-3 py-1 rounded-full shadow-sm border border-gray-200 z-10">
           📍 Localização aproximada — {neighborhood ?? city}
         </div>
       )}
