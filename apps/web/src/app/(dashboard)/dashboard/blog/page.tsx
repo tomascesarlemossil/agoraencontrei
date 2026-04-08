@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Plus, Edit2, Trash2, Eye, EyeOff, Star, ExternalLink, X, Save, Loader2, Globe, RefreshCw } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { Plus, Edit2, Trash2, Eye, EyeOff, Star, ExternalLink, X, Save, Loader2, Globe, RefreshCw, Upload } from 'lucide-react'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 
@@ -53,6 +53,8 @@ export default function BlogManagementPage() {
   const [deleting, setDeleting] = useState<string | null>(null)
   const [tab, setTab] = useState<'content' | 'seo'>('content')
   const [syncing, setSyncing] = useState(false)
+  const [coverUploading, setCoverUploading] = useState(false)
+  const coverInputRef = useRef<HTMLInputElement>(null)
 
   async function fetchPosts() {
     setLoading(true)
@@ -264,8 +266,52 @@ export default function BlogManagementPage() {
                     <input {...field('tags')} placeholder="imóveis, franca, financiamento" className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white placeholder:text-white/30 outline-none focus:border-yellow-400/50" />
                   </div>
                   <div>
-                    <label className="text-xs text-white/60 font-semibold mb-1 block">Imagem de Capa (URL)</label>
-                    <input {...field('coverImage')} placeholder="https://..." className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white placeholder:text-white/30 outline-none focus:border-yellow-400/50" />
+                    <label className="text-xs text-white/60 font-semibold mb-1 block">Imagem de Capa</label>
+                    <div className="flex items-center gap-2">
+                      <input {...field('coverImage')} placeholder="Cole a URL da imagem (https://...)" className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white placeholder:text-white/30 outline-none focus:border-yellow-400/50" />
+                      <span className="text-xs text-white/30">ou</span>
+                      <button
+                        type="button"
+                        onClick={() => coverInputRef.current?.click()}
+                        disabled={coverUploading}
+                        className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl border border-white/20 text-sm text-white/70 hover:text-white hover:border-white/40 transition-colors disabled:opacity-50 flex-shrink-0"
+                      >
+                        {coverUploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
+                        Upload
+                      </button>
+                      <input
+                        ref={coverInputRef}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0]
+                          if (!file || !editing) return
+                          setCoverUploading(true)
+                          try {
+                            const fd = new FormData()
+                            fd.append('file', file)
+                            const res = await fetch(`${API_URL}/api/v1/upload`, {
+                              method: 'POST',
+                              headers: { Authorization: `Bearer ${getToken()}` },
+                              body: fd,
+                            })
+                            if (!res.ok) throw new Error('Upload falhou')
+                            const data = await res.json()
+                            setEditing(p => p ? { ...p, coverImage: data.url } : p)
+                          } catch (err: any) {
+                            alert(err.message || 'Erro ao fazer upload')
+                          } finally {
+                            setCoverUploading(false)
+                          }
+                        }}
+                      />
+                    </div>
+                    {editing?.coverImage && (
+                      <div className="mt-2 w-32 h-20 rounded-lg overflow-hidden border border-white/10 bg-white/5">
+                        <img src={editing.coverImage} alt="Preview" className="w-full h-full object-cover" />
+                      </div>
+                    )}
                   </div>
                   <div>
                     <label className="text-xs text-white/60 font-semibold mb-1 block">Resumo (excerpt)</label>

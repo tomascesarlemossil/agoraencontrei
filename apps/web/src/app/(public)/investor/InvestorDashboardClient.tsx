@@ -145,7 +145,20 @@ export function InvestorDashboardClient() {
           </div>
         )}
 
-        {data && !loading && (
+        {data && !loading && data.items.length === 0 && (
+          <div className="border border-yellow-900/50 bg-yellow-950/10 rounded-lg p-6 text-center">
+            <div className="text-yellow-500 text-sm mb-2">DADOS_EM_ATUALIZACAO</div>
+            <p className="text-gray-400 text-xs">
+              Os scrapers de mercado (QuintoAndar, ZAP) estão sendo atualizados.
+              As oportunidades serão exibidas assim que os dados estiverem disponíveis.
+            </p>
+            <p className="text-gray-600 text-[10px] mt-3">
+              Última tentativa: {new Date(data.updatedAt).toLocaleString('pt-BR')}
+            </p>
+          </div>
+        )}
+
+        {data && !loading && data.items.length > 0 && (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
             {/* ── Left Column: KPI Cards ── */}
             <div className="lg:col-span-4 space-y-4">
@@ -156,10 +169,10 @@ export function InvestorDashboardClient() {
                   YIELD_BRUTO_MENSAL
                 </div>
                 <div className="text-3xl font-bold text-green-400">
-                  {topYield.toFixed(2)}%
+                  {topYield > 0 ? `${topYield.toFixed(2)}%` : 'N/D'}
                 </div>
                 <div className="text-xs text-gray-600 mt-1">
-                  Melhor oportunidade do lote
+                  {topYield > 0 ? 'Melhor oportunidade do lote' : 'Aguardando dados de aluguel'}
                 </div>
               </div>
 

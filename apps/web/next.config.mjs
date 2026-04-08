@@ -62,6 +62,20 @@ const nextConfig = {
     }
     return config
   },
+  async redirects() {
+    return [
+      {
+        source: '/busca',
+        destination: '/imoveis',
+        permanent: true,
+      },
+      {
+        source: '/cadastro',
+        destination: '/register',
+        permanent: true,
+      },
+    ]
+  },
   async rewrites() {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://agoraencontrei-api-production.up.railway.app'
     return [
@@ -78,6 +92,24 @@ const nextConfig = {
   },
   async headers() {
     return [
+      // ── Dashboard/Auth: noindex ────────────────────────────────────
+      {
+        source: '/dashboard/:path*',
+        headers: [{ key: 'X-Robots-Tag', value: 'noindex, nofollow' }],
+      },
+      {
+        source: '/login',
+        headers: [{ key: 'X-Robots-Tag', value: 'noindex, nofollow' }],
+      },
+      {
+        source: '/register',
+        headers: [{ key: 'X-Robots-Tag', value: 'noindex, nofollow' }],
+      },
+      {
+        source: '/portal/:path*',
+        headers: [{ key: 'X-Robots-Tag', value: 'noindex, nofollow' }],
+      },
+      // ── Public pages: full indexing ────────────────────────────────
       {
         source: '/(.*)',
         headers: [

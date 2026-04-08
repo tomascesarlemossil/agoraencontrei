@@ -248,6 +248,11 @@ export const usersApi = {
   delete: (token: string, id: string) =>
     request(`/api/v1/users/${id}`, { method: 'DELETE', token }),
 
+  resetPassword: (token: string, id: string, newPassword: string) =>
+    request<{ success: boolean; message: string }>(`/api/v1/users/${id}/reset-password`, {
+      method: 'POST', token, body: JSON.stringify({ newPassword }),
+    }),
+
   updateSiteSettings: (token: string, body: { heroVideoUrl?: string; heroVideoType?: string }) =>
     request<{ success: boolean; settings: Record<string, unknown> }>('/api/v1/users/site-settings', {
       method: 'PATCH', token, body: JSON.stringify(body),
