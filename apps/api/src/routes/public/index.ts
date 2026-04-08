@@ -1029,10 +1029,15 @@ export default async function publicRoutes(app: FastifyInstance) {
       neighborhood: { not: null },
       ...(purpose && { purpose: purpose.toUpperCase() }),
       ...(type && { type: type.toUpperCase() }),
-      // BBOX spatial filter — only include properties within the viewport
+      // BBOX spatial filter — include properties within viewport OR without coordinates
       ...(hasBbox && {
-        latitude:  { gte: parseFloat(swLat!), lte: parseFloat(neLat!) },
-        longitude: { gte: parseFloat(swLng!), lte: parseFloat(neLng!) },
+        OR: [
+          {
+            latitude:  { gte: parseFloat(swLat!), lte: parseFloat(neLat!) },
+            longitude: { gte: parseFloat(swLng!), lte: parseFloat(neLng!) },
+          },
+          { latitude: null },
+        ],
       }),
     }
 
