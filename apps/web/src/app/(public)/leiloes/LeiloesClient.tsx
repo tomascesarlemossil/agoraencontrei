@@ -177,6 +177,31 @@ function cityPriority(city: string | null, state: string | null): number {
   return 5
 }
 
+// Google Street View Static API URL (requires API key in admin panel)
+function streetViewUrl(address: string, city: string, state: string, apiKey?: string): string | null {
+  if (!apiKey) return null
+  const location = encodeURIComponent(`${address}, ${city} - ${state}, Brasil`)
+  return `https://maps.googleapis.com/maps/api/streetview?size=640x480&location=${location}&key=${apiKey}&source=outdoor`
+}
+
+// OpenStreetMap static map as free fallback (no API key needed)
+function staticMapUrl(city: string, state: string): string {
+  // Franca/SP default coords
+  let lat = -20.5386
+  let lng = -47.4009
+  const c = (city || '').toUpperCase()
+  if (c.includes('BATATAIS')) { lat = -20.8907; lng = -47.5856 }
+  else if (c.includes('RIBEIR')) { lat = -21.1767; lng = -47.8208 }
+  else if (c.includes('SAO PAULO') || c.includes('SÃO PAULO')) { lat = -23.5505; lng = -46.6333 }
+  else if (c.includes('CAMPINAS')) { lat = -22.9099; lng = -47.0626 }
+  else if (!c.includes('FRANCA') && city) {
+    // Generic fallback - use OSM nominatim-style tile center
+    lat = -20.5 + Math.random() * 0.1
+    lng = -47.4 + Math.random() * 0.1
+  }
+  return `https://tile.openstreetmap.org/14/${Math.floor((lng + 180) / 360 * Math.pow(2, 14))}/${Math.floor((1 - Math.log(Math.tan(lat * Math.PI / 180) + 1 / Math.cos(lat * Math.PI / 180)) / Math.PI) / 2 * Math.pow(2, 14))}.png`
+}
+
 function mapPublicAuction(item: any): Auction {
   const rawId = (item.id || '').replace(/^(caixa-|santander-)/, '')
   const coverImage = item.photos?.[0]
@@ -984,21 +1009,51 @@ export default function LeiloesClient() {
               {auctions.map(auction => (
                 <div key={auction.id} onClick={() => openLeadModal(auction)}
                   className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-200 group cursor-pointer">
-                  {/* Image — Real photo > AgoraEncontrei banner fallback */}
-                  <div className="relative h-48 bg-gray-200 overflow-hidden">
-                    <img
-                      src={auction.coverImage || '/hero-banner.jpg'}
-                      alt={auction.title}
-                      loading="lazy"
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      onError={(e) => {
-                        const img = e.target as HTMLImageElement
-                        if (!img.dataset.fallback) {
-                          img.dataset.fallback = '1'
-                          img.src = '/hero-banner.jpg'
-                        }
-                      }}
-                    />
+                  {/* Image — Real photo > Caixa > Styled fallback */}
+                  <div className="relative h-48 overflow-hidden">
+                    {auction.coverImage ? (
+                      <img
+                        src={auction.coverImage}
+                        alt={auction.title}
+                        loading="lazy"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        onError={(e) => {
+                          const img = e.target as HTMLImageElement
+                          if (!img.dataset.fb) {
+                            img.dataset.fb = '1'
+                            // Try Caixa photo variants (_2, _3)
+                            const caixaMatch = img.src.match(/fotos-imoveis\/(\d+)_1\.jpg/)
+                            if (caixaMatch) {
+                              img.src = `https://venda-imoveis.caixa.gov.br/fotos-imoveis/${caixaMatch[1]}_2.jpg`
+                              return
+                            }
+                          }
+                          // Final fallback: hide img, show styled placeholder
+                          img.style.display = 'none'
+                          const parent = img.parentElement
+                          if (parent && !parent.querySelector('.auction-fallback')) {
+                            const div = document.createElement('div')
+                            div.className = 'auction-fallback absolute inset-0 flex flex-col items-center justify-center text-center p-4'
+                            div.style.background = 'linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%)'
+                            div.innerHTML = `
+                              <div style="font-size:32px;margin-bottom:8px">${typeIcon(auction.propertyType)}</div>
+                              <p style="color:#C9A84C;font-weight:700;font-size:13px;font-family:Georgia,serif">Imóvel em Leilão</p>
+                              <p style="color:rgba(255,255,255,0.6);font-size:11px;margin-top:4px">${auction.city || 'Franca'}/${auction.state || 'SP'}</p>
+                              <p style="color:rgba(255,255,255,0.4);font-size:10px;margin-top:2px">Confira o edital completo</p>
+                            `
+                            parent.appendChild(div)
+                          }
+                        }}
+                      />
+                    ) : (
+                      <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-4"
+                        style={{ background: 'linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%)' }}>
+                        <span className="text-3xl mb-2">{typeIcon(auction.propertyType)}</span>
+                        <p className="text-sm font-bold" style={{ color: '#C9A84C', fontFamily: 'Georgia, serif' }}>Imóvel em Leilão</p>
+                        <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.6)' }}>{auction.city || 'Franca'}/{auction.state || 'SP'}</p>
+                        <p className="text-[10px] mt-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>Confira o edital completo</p>
+                      </div>
+                    )}
                     {/* Top-left: Source badge */}
                     <div className="absolute top-2 left-2 flex gap-1.5">
                       <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-white/90 backdrop-blur text-gray-800 shadow-sm">
