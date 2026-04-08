@@ -250,46 +250,61 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
 
   // Load clusters from API
   useEffect(() => {
-    async function loadClusters(bbox?: { swLat: number; swLng: number; neLat: number; neLng: number }) {
-      try {
-        const params = new URLSearchParams()
-        if (initialPurpose) params.set('purpose', initialPurpose)
-        // Use BBOX for targeted loading — default to Franca/SP area
-        const b = bbox ?? FRANCA_BBOX
+    async function fetchClusters(useBbox: boolean): Promise<Cluster[]> {
+      const params = new URLSearchParams()
+      if (initialPurpose) params.set('purpose', initialPurpose)
+      if (useBbox) {
+        const b = FRANCA_BBOX
         params.set('swLat', b.swLat.toFixed(6))
         params.set('swLng', b.swLng.toFixed(6))
         params.set('neLat', b.neLat.toFixed(6))
         params.set('neLng', b.neLng.toFixed(6))
-        const res = await fetch(`${API_URL}/api/v1/public/map-clusters?${params}`)
-        if (!res.ok) return
-        const data: Cluster[] = await res.json()
-        // Start with null coords, geocode progressively
-        const withCoords = data.map(c => ({
-          ...c,
-          resolvedLat: c.lat ?? 0,
-          resolvedLng: c.lng ?? 0,
-        }))
-        setClusters(withCoords)
+      }
+      const res = await fetch(`${API_URL}/api/v1/public/map-clusters?${params}`)
+      if (!res.ok) return []
+      const data = await res.json()
+      return Array.isArray(data) ? data : []
+    }
 
-        // Geocode neighborhoods without coords
-        const needsGeocode = data.filter(c => !c.lat || !c.lng)
-        let delay = 0
-        for (const c of needsGeocode) {
-          setTimeout(async () => {
-            const coords = await geocodeNeighborhood(c.neighborhood, c.city ?? 'Franca')
-            if (coords) {
-              setClusters(prev => prev.map(p =>
-                p.neighborhood === c.neighborhood && p.city === c.city
-                  ? { ...p, resolvedLat: coords[0], resolvedLng: coords[1] }
-                  : p
-              ))
-            }
-          }, delay)
-          delay += NOMINATIM_DELAY
+    function processClusters(data: Cluster[]) {
+      const withCoords = data.map(c => ({
+        ...c,
+        resolvedLat: c.lat ?? 0,
+        resolvedLng: c.lng ?? 0,
+      }))
+      setClusters(withCoords)
+
+      // Geocode neighborhoods without coords
+      const needsGeocode = data.filter(c => !c.lat || !c.lng)
+      let delay = 0
+      for (const c of needsGeocode) {
+        setTimeout(async () => {
+          const coords = await geocodeNeighborhood(c.neighborhood, c.city ?? 'Franca')
+          if (coords) {
+            setClusters(prev => prev.map(p =>
+              p.neighborhood === c.neighborhood && p.city === c.city
+                ? { ...p, resolvedLat: coords[0], resolvedLng: coords[1] }
+                : p
+            ))
+          }
+        }, delay)
+        delay += NOMINATIM_DELAY
+      }
+    }
+
+    async function loadClusters() {
+      try {
+        // Try with BBOX first
+        let data = await fetchClusters(true)
+        // Fallback: if BBOX returns empty, retry without BBOX
+        if (data.length === 0) {
+          data = await fetchClusters(false)
         }
+        if (data.length > 0) processClusters(data)
       } catch {}
     }
-     // Only fetch if no SSR clusters provided
+
+    // Only fetch if no SSR clusters provided
     if (!initialClusters || initialClusters.length === 0) {
       loadClusters()
     }

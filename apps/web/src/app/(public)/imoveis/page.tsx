@@ -185,6 +185,19 @@ export default async function ImoveisPage({ searchParams }: { searchParams: Prom
         const clusterData = await clusterRes.json()
         initialClusters = Array.isArray(clusterData) ? clusterData : []
       }
+      // Fallback: if BBOX returned empty, retry without BBOX
+      if (initialClusters.length === 0) {
+        const fallbackParams = new URLSearchParams()
+        if (resolvedSearchParams.purpose) fallbackParams.set('purpose', resolvedSearchParams.purpose)
+        const fallbackRes = await fetch(
+          `${API_URL}/api/v1/public/map-clusters?${fallbackParams}`,
+          { next: { revalidate: 120 } }
+        )
+        if (fallbackRes.ok) {
+          const fallbackData = await fallbackRes.json()
+          initialClusters = Array.isArray(fallbackData) ? fallbackData : []
+        }
+      }
     } catch {}
   }
 
