@@ -1,5 +1,6 @@
 'use client'
 
+import 'maplibre-gl/dist/maplibre-gl.css'
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { X, PenLine, Trash2, Search, MapPin, BedDouble, Maximize } from 'lucide-react'
@@ -190,7 +191,6 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
   const [properties, setProperties] = useState<Property[]>([])
   const [loadingProps, setLoadingProps] = useState(false)
   const [isLoaded, setIsLoaded] = useState(false)
-  const [isCssLoaded, setIsCssLoaded] = useState(false)
   const [mapError, setMapError] = useState<string | null>(null)
   const router = useRouter()
 
@@ -248,11 +248,6 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
     }
     return true
   })
-
-  // MapLibre CSS is imported dynamically with the library
-  useEffect(() => {
-    setIsCssLoaded(true)
-  }, [])
 
   // Load clusters from API
   useEffect(() => {
@@ -343,12 +338,10 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
 
   // Initialize MapLibre GL map
   useEffect(() => {
-    if (!mapRef.current || mapInstance.current || !isCssLoaded) return
+    if (!mapRef.current || mapInstance.current) return
 
     import('maplibre-gl').then(maplibregl => {
       try {
-        import('maplibre-gl/dist/maplibre-gl.css' as any)
-
         const map = new maplibregl.Map({
           container: mapRef.current!,
           style: 'https://tiles.openfreemap.org/styles/bright',
@@ -478,7 +471,7 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
         mapInstance.current = null
       }
     }
-  }, [isCssLoaded]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Toggle sale layer visibility (markers)
   useEffect(() => {

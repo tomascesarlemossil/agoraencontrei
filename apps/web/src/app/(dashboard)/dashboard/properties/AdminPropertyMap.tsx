@@ -1,5 +1,6 @@
 'use client'
 
+import 'maplibre-gl/dist/maplibre-gl.css'
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { Loader2, MapPin, AlertCircle, RefreshCw } from 'lucide-react'
@@ -170,7 +171,6 @@ export default function AdminPropertyMap({ statusFilter, purposeFilter, searchFi
 
     async function initOrUpdateMap() {
       const maplibregl = (await import('maplibre-gl')).default
-      await import('maplibre-gl/dist/maplibre-gl.css' as any)
 
       // Build GeoJSON features
       const features = pins.map(p => ({

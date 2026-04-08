@@ -1,5 +1,6 @@
 'use client'
 
+import 'maplibre-gl/dist/maplibre-gl.css'
 import { useEffect, useRef, useState } from 'react'
 import { MapPin } from 'lucide-react'
 
@@ -25,7 +26,6 @@ export function PropertyMap({ latitude, longitude, city, neighborhood, state, la
     async function initMap() {
       try {
         const maplibregl = (await import('maplibre-gl')).default
-        await import('maplibre-gl/dist/maplibre-gl.css' as any)
 
         let lat = latitude
         let lng = longitude
