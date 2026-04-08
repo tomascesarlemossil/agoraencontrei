@@ -32,10 +32,11 @@ export const revalidate = 300
 
 const SCHEMA = {
   '@context': 'https://schema.org',
-  '@type': 'SearchResultsPage',
+  '@type': 'CollectionPage',
   name: 'Apartamentos para Alugar em Franca SP',
   description: 'Listagem de apartamentos disponíveis para aluguel em Franca, São Paulo. Imobiliária Lemos.',
   url: 'https://www.agoraencontrei.com.br/apartamentos-para-alugar-franca-sp',
+  isPartOf: { '@type': 'WebSite', name: 'AgoraEncontrei', url: 'https://www.agoraencontrei.com.br' },
   provider: { '@type': 'RealEstateAgent', name: 'Imobiliária Lemos', url: 'https://www.agoraencontrei.com.br' },
 }
 

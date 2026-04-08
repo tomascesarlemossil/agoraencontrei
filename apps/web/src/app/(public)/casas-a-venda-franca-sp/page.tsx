@@ -34,10 +34,11 @@ export const revalidate = 300
 
 const SCHEMA = {
   '@context': 'https://schema.org',
-  '@type': 'SearchResultsPage',
+  '@type': 'CollectionPage',
   name: 'Casas à Venda em Franca SP',
   description: 'Listagem de casas disponíveis para venda em Franca, São Paulo. Imobiliária Lemos.',
   url: 'https://www.agoraencontrei.com.br/casas-a-venda-franca-sp',
+  isPartOf: { '@type': 'WebSite', name: 'AgoraEncontrei', url: 'https://www.agoraencontrei.com.br' },
   provider: {
     '@type': 'RealEstateAgent',
     name: 'Imobiliária Lemos',
