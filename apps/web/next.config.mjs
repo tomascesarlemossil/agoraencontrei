@@ -62,6 +62,20 @@ const nextConfig = {
     }
     return config
   },
+  async redirects() {
+    return [
+      {
+        source: '/busca',
+        destination: '/imoveis',
+        permanent: true,
+      },
+      {
+        source: '/cadastro',
+        destination: '/register',
+        permanent: true,
+      },
+    ]
+  },
   async rewrites() {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://agoraencontrei-api-production.up.railway.app'
     return [
