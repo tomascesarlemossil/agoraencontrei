@@ -43,13 +43,16 @@ export function HeroBackground({ videoUrl, videoType }: Props) {
   }, [])
 
   // ── Modo imagem (padrão quando não há vídeo configurado) ──────────────────
-  const heroBannerSrc = (isImage && videoUrl) ? videoUrl : '/hero-banner.jpg'
+  // Desktop: hero-bg-desktop.jpg | Mobile: hero-bg-mobile.jpg (fallback: desktop)
+  const desktopSrc = (isImage && videoUrl) ? videoUrl : '/hero-bg-desktop.jpg'
+  const mobileSrc = '/hero-bg-mobile.jpg'
+  const heroBannerSrc = isMobile ? mobileSrc : desktopSrc
   const useImageBg = isImage || (!videoUrl && !isUpload)
 
   if (useImageBg) {
     return (
       <div className="absolute inset-0 overflow-hidden">
-        {/* Imagem de fundo — object-position otimizado para mobile */}
+        {/* Imagem de fundo — versões separadas desktop/mobile */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={heroBannerSrc}
@@ -60,20 +63,26 @@ export function HeroBackground({ videoUrl, videoType }: Props) {
             width: '100%',
             height: '100%',
             objectFit: 'cover',
-            // No mobile: foca no lado direito (onde a mulher está posicionada na imagem)
             objectPosition: isMobile ? '80% center' : 'center center',
           }}
           loading="eager"
           fetchPriority="high"
+          onError={(e) => {
+            // Fallback: se mobile não existir, usa desktop
+            const img = e.target as HTMLImageElement
+            if (img.src.includes('hero-bg-mobile')) {
+              img.src = desktopSrc
+            }
+          }}
         />
-        {/* Overlay gradiente — mais escuro no mobile para legibilidade */}
+        {/* Overlay gradiente — leve para preservar a imagem de fundo */}
         <div
           style={{
             position: 'absolute',
             inset: 0,
             background: isMobile
-              ? 'linear-gradient(180deg, rgba(10,20,45,0.82) 0%, rgba(10,20,45,0.58) 35%, rgba(10,20,45,0.88) 100%)'
-              : 'linear-gradient(135deg, rgba(10,20,45,0.72) 0%, rgba(15,28,58,0.55) 40%, rgba(10,20,45,0.65) 100%)',
+              ? 'linear-gradient(180deg, rgba(10,20,45,0.75) 0%, rgba(10,20,45,0.45) 35%, rgba(10,20,45,0.80) 100%)'
+              : 'linear-gradient(135deg, rgba(5,15,10,0.35) 0%, rgba(5,15,10,0.20) 40%, rgba(5,15,10,0.40) 100%)',
           }}
         />
       </div>
