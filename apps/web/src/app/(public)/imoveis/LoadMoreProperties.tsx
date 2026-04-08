@@ -227,7 +227,7 @@ interface Props {
 }
 
 export function LoadMoreProperties({ initialProperties, initialTotal, initialTotalPages, searchParams }: Props) {
-  const [properties, setProperties] = useState(initialProperties)
+  const [properties, setProperties] = useState(Array.isArray(initialProperties) ? initialProperties : [])
   const [page, setPage] = useState(1)
   const [loading, setLoading] = useState(false)
   const [hasMore, setHasMore] = useState(initialTotalPages > 1)
@@ -264,12 +264,14 @@ export function LoadMoreProperties({ initialProperties, initialTotal, initialTot
 
     try {
       const res = await fetch(`${API_URL}/api/v1/public/properties?${qs}`)
+      if (!res.ok) throw new Error('fetch failed')
       const data = await res.json()
-      setProperties(prev => [...prev, ...(data.data ?? [])])
+      const items = Array.isArray(data?.data) ? data.data : []
+      setProperties(prev => [...prev, ...items])
       setPage(nextPage)
-      setHasMore(nextPage < data.meta.totalPages)
+      setHasMore(nextPage < (data?.meta?.totalPages ?? 1))
     } catch {
-      // ignore
+      setHasMore(false)
     } finally {
       setLoading(false)
     }

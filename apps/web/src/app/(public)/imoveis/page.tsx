@@ -84,15 +84,25 @@ function buildQs(params: SearchParams, overrides?: Record<string, string>) {
   return qs
 }
 
+const EMPTY_RESULT = { data: [], meta: { total: 0, page: 1, totalPages: 1 } }
+
 async function fetchProperties(params: SearchParams) {
   try {
     const res = await fetch(`${API_URL}/api/v1/public/properties?${buildQs(params)}`, {
       next: { revalidate: 60 },
     })
-    if (!res.ok) return { data: [], meta: { total: 0, page: 1, totalPages: 1 } }
-    return res.json()
+    if (!res.ok) return EMPTY_RESULT
+    const json = await res.json()
+    return {
+      data: Array.isArray(json?.data) ? json.data : [],
+      meta: {
+        total: json?.meta?.total ?? 0,
+        page: json?.meta?.page ?? 1,
+        totalPages: json?.meta?.totalPages ?? 1,
+      },
+    }
   } catch {
-    return { data: [], meta: { total: 0, page: 1, totalPages: 1 } }
+    return EMPTY_RESULT
   }
 }
 
@@ -131,7 +141,7 @@ async function fetchAlternatives(params: SearchParams) {
       const res = await fetch(`${API_URL}/api/v1/public/properties?${qs}`, { next: { revalidate: 60 } })
       if (!res.ok) continue
       const data = await res.json()
-      const items: any[] = data.data ?? []
+      const items: any[] = Array.isArray(data?.data) ? data.data : []
       if (items.length === 0) continue
 
       // Filter out rural types when searching for residential
@@ -171,7 +181,10 @@ export default async function ImoveisPage({ searchParams }: { searchParams: Prom
         `${API_URL}/api/v1/public/map-clusters?${clusterParams}`,
         { next: { revalidate: 120 } }
       )
-      if (clusterRes.ok) initialClusters = await clusterRes.json()
+      if (clusterRes.ok) {
+        const clusterData = await clusterRes.json()
+        initialClusters = Array.isArray(clusterData) ? clusterData : []
+      }
     } catch {}
   }
 
