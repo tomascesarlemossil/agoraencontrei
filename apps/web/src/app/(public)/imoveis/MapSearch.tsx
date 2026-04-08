@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { X, PenLine, Trash2, Search, MapPin, BedDouble, Maximize } from 'lucide-react'
-// next/image removed — using <img> for external CDN images
+import type { Map as MapLibreMap, Marker as MapLibreMarker } from 'maplibre-gl'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://oenbzvxcsgyzqjtlovdq.supabase.co'
@@ -149,12 +149,12 @@ async function geocodeNeighborhood(neighborhood: string, city: string): Promise<
 
 export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initialBedrooms, initialClusters }: Props) {
   const mapRef = useRef<HTMLDivElement>(null)
-  const mapInstance = useRef<any>(null)
-  const markersRef = useRef<any[]>([])
-  const polygonRef = useRef<any>(null)
+  const mapInstance = useRef<MapLibreMap | null>(null)
+  const markersRef = useRef<MapLibreMarker[]>([])
+  const polygonRef = useRef<boolean>(false)
   const drawingPointsRef = useRef<[number, number][]>([])
-  const tempLineRef = useRef<any>(null)
-  const tempMarkersRef = useRef<any[]>([])
+  const drawingRef = useRef(false)
+  const tempMarkersRef = useRef<MapLibreMarker[]>([])
 
   const [clusters, setClusters] = useState<(Cluster & { resolvedLat: number; resolvedLng: number })[]>(() => {
     if (!initialClusters) return []
@@ -162,10 +162,9 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
   })
   const [auctions, setAuctions] = useState<AuctionPin[]>([])
   const [selectedAuction, setSelectedAuction] = useState<AuctionPin | null>(null)
-  const auctionMarkersRef = useRef<any[]>([])
-  const auctionClusterRef = useRef<any>(null)
+  const auctionLookupRef = useRef<Map<string, AuctionPin>>(new Map())
   const [ownerDirectPins, setOwnerDirectPins] = useState<OwnerDirectPin[]>([])
-  const ownerDirectMarkersRef = useRef<any[]>([])
+  const ownerDirectMarkersRef = useRef<MapLibreMarker[]>([])
 
   // Layer toggles
   const [showSaleLayer, setShowSaleLayer] = useState(true)
@@ -250,22 +249,10 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
     return true
   })
 
-  // Inject Leaflet CSS — uses CDN directly for reliability (bundled CSS import fails in some Next.js builds)
+  // MapLibre CSS is imported dynamically with the library
   useEffect(() => {
-    if (document.getElementById('leaflet-css')) {
-      setIsCssLoaded(true)
-      return
-    }
-    const link = document.createElement('link')
-    link.id = 'leaflet-css'
-    link.rel = 'stylesheet'
-    link.crossOrigin = 'anonymous'
-    link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'
-    document.head.insertBefore(link, document.head.firstChild)
-    link.onload = () => setIsCssLoaded(true)
-    // If CDN fails, still try to initialize (tiles may look broken but map works)
-    link.onerror = () => setIsCssLoaded(true)
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+    setIsCssLoaded(true)
+  }, [])
 
   // Load clusters from API
   useEffect(() => {
@@ -354,52 +341,134 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
     loadAuctions()
   }, [])
 
-  // Initialize Leaflet map — only after CSS is loaded to avoid broken tiles
+  // Initialize MapLibre GL map
   useEffect(() => {
     if (!mapRef.current || mapInstance.current || !isCssLoaded) return
 
-    import('leaflet').then(L => {
+    import('maplibre-gl').then(maplibregl => {
       try {
-        // Fix default marker icons
-        delete (L.Icon.Default.prototype as any)._getIconUrl
-        L.Icon.Default.mergeOptions({
-          iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-          iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-          shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-        })
+        import('maplibre-gl/dist/maplibre-gl.css' as any)
 
-        const map = L.map(mapRef.current!, {
-          center: FRANCA_CENTER,
+        const map = new maplibregl.Map({
+          container: mapRef.current!,
+          style: 'https://tiles.openfreemap.org/styles/bright',
+          center: [FRANCA_CENTER[1], FRANCA_CENTER[0]], // MapLibre uses [lng, lat]
           zoom: 13,
-          zoomControl: true,
+          attributionControl: {},
         })
 
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          attribution: '© OpenStreetMap contributors',
-          maxZoom: 19,
-        }).addTo(map)
+        map.addControl(new maplibregl.NavigationControl(), 'top-right')
+
+        map.on('load', () => {
+          // Add auction GeoJSON source with clustering
+          map.addSource('auctions-source', {
+            type: 'geojson',
+            data: { type: 'FeatureCollection', features: [] },
+            cluster: true,
+            clusterMaxZoom: 14,
+            clusterRadius: 60,
+          })
+
+          map.addLayer({
+            id: 'auction-clusters',
+            type: 'circle',
+            source: 'auctions-source',
+            filter: ['has', 'point_count'],
+            paint: {
+              'circle-color': '#C9A84C',
+              'circle-radius': ['step', ['get', 'point_count'], 20, 10, 24, 50, 30],
+              'circle-stroke-width': 3,
+              'circle-stroke-color': '#1B2B5B',
+            },
+          })
+
+          map.addLayer({
+            id: 'auction-cluster-count',
+            type: 'symbol',
+            source: 'auctions-source',
+            filter: ['has', 'point_count'],
+            layout: { 'text-field': '{point_count_abbreviated}', 'text-size': 12 },
+            paint: { 'text-color': '#1B2B5B' },
+          })
+
+          map.addLayer({
+            id: 'auction-unclustered',
+            type: 'circle',
+            source: 'auctions-source',
+            filter: ['!', ['has', 'point_count']],
+            paint: {
+              'circle-color': '#C9A84C',
+              'circle-radius': 10,
+              'circle-stroke-width': 3,
+              'circle-stroke-color': '#1B2B5B',
+            },
+          })
+
+          // Polygon drawing source
+          map.addSource('draw-polygon', {
+            type: 'geojson',
+            data: { type: 'FeatureCollection', features: [] },
+          })
+          map.addLayer({
+            id: 'draw-polygon-fill',
+            type: 'fill',
+            source: 'draw-polygon',
+            paint: { 'fill-color': '#C9A84C', 'fill-opacity': 0.15 },
+          })
+          map.addLayer({
+            id: 'draw-polygon-line',
+            type: 'line',
+            source: 'draw-polygon',
+            paint: { 'line-color': '#C9A84C', 'line-width': 2.5 },
+          })
+
+          // Drawing temp line source
+          map.addSource('draw-temp-line', {
+            type: 'geojson',
+            data: { type: 'FeatureCollection', features: [] },
+          })
+          map.addLayer({
+            id: 'draw-temp-line-layer',
+            type: 'line',
+            source: 'draw-temp-line',
+            paint: { 'line-color': '#C9A84C', 'line-width': 2, 'line-dasharray': [3, 2] },
+          })
+
+          setIsLoaded(true)
+        })
+
+        // Click auction cluster → zoom in
+        map.on('click', 'auction-clusters', (e) => {
+          const features = map.queryRenderedFeatures(e.point, { layers: ['auction-clusters'] })
+          if (!features.length) return
+          const clusterId = features[0].properties.cluster_id
+          ;(map.getSource('auctions-source') as any).getClusterExpansionZoom(clusterId).then((zoom: number) => {
+            map.easeTo({ center: (features[0].geometry as any).coordinates, zoom })
+          })
+        })
+
+        // Click individual auction → select it
+        map.on('click', 'auction-unclustered', (e) => {
+          if (!e.features?.length) return
+          const id = e.features[0].properties?.id as string
+          if (id) {
+            const auction = auctionLookupRef.current.get(id)
+            if (auction) setSelectedAuction(auction)
+          }
+        })
+
+        map.on('mouseenter', 'auction-clusters', () => { map.getCanvas().style.cursor = 'pointer' })
+        map.on('mouseleave', 'auction-clusters', () => { map.getCanvas().style.cursor = '' })
+        map.on('mouseenter', 'auction-unclustered', () => { map.getCanvas().style.cursor = 'pointer' })
+        map.on('mouseleave', 'auction-unclustered', () => { map.getCanvas().style.cursor = '' })
 
         mapInstance.current = map
-        setIsLoaded(true)
-
-        // Force tile redraw after container is fully visible
-        setTimeout(() => { try { map.invalidateSize() } catch {} }, 50)
-        setTimeout(() => { try { map.invalidateSize() } catch {} }, 200)
-        setTimeout(() => { try { map.invalidateSize() } catch {} }, 600)
-
-        // ResizeObserver: auto-invalidate when container resizes
-        if (typeof ResizeObserver !== 'undefined' && mapRef.current) {
-          const ro = new ResizeObserver(() => {
-            try { map.invalidateSize() } catch {}
-          })
-          ro.observe(mapRef.current)
-        }
       } catch (err) {
-        console.error('[MapSearch] Leaflet init error:', err)
+        console.error('[MapSearch] MapLibre init error:', err)
         setMapError('Não foi possível carregar o mapa. Tente recarregar a página.')
       }
     }).catch(err => {
-      console.error('[MapSearch] Leaflet import error:', err)
+      console.error('[MapSearch] MapLibre import error:', err)
       setMapError('Não foi possível carregar o mapa. Tente recarregar a página.')
     })
 
@@ -411,275 +480,186 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
     }
   }, [isCssLoaded]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Optimistic toggle: show/hide sale layer instantly (no re-render)
-  const saleLayerGroupRef = useRef<any>(null)
+  // Toggle sale layer visibility (markers)
   useEffect(() => {
-    if (!mapInstance.current || !saleLayerGroupRef.current) return
-    if (showSaleLayer) {
-      if (!mapInstance.current.hasLayer(saleLayerGroupRef.current)) {
-        mapInstance.current.addLayer(saleLayerGroupRef.current)
-      }
-    } else {
-      mapInstance.current.removeLayer(saleLayerGroupRef.current)
-    }
+    markersRef.current.forEach(m => {
+      m.getElement().style.display = showSaleLayer ? '' : 'none'
+    })
   }, [showSaleLayer])
 
-  // Optimistic toggle: show/hide auction layer instantly (no re-render)
+  // Toggle auction layer visibility
   useEffect(() => {
-    if (!mapInstance.current || !auctionClusterRef.current) return
-    if (showAuctionLayer) {
-      if (!mapInstance.current.hasLayer(auctionClusterRef.current)) {
-        mapInstance.current.addLayer(auctionClusterRef.current)
-      }
-    } else {
-      mapInstance.current.removeLayer(auctionClusterRef.current)
-    }
+    const map = mapInstance.current
+    if (!map || !map.isStyleLoaded()) return
+    const vis = showAuctionLayer ? 'visible' : 'none'
+    try {
+      map.setLayoutProperty('auction-clusters', 'visibility', vis)
+      map.setLayoutProperty('auction-cluster-count', 'visibility', vis)
+      map.setLayoutProperty('auction-unclustered', 'visibility', vis)
+    } catch {}
   }, [showAuctionLayer])
 
-  // Render cluster markers on map (blue — conventional properties)
+  // Render cluster markers on map (blue — conventional properties) using MapLibre Markers
   useEffect(() => {
     if (!isLoaded || !mapInstance.current) return
 
-    import('leaflet').then(L => {
-      // Remove old layer group
-      if (saleLayerGroupRef.current) {
-        try { mapInstance.current.removeLayer(saleLayerGroupRef.current) } catch {}
-      }
-      markersRef.current = []
+    // Remove old markers
+    markersRef.current.forEach(m => m.remove())
+    markersRef.current = []
 
-      const layerGroup = L.layerGroup()
+    import('maplibre-gl').then(maplibregl => {
+      const map = mapInstance.current!
 
       clusters.forEach(c => {
         if (!c.resolvedLat || !c.resolvedLng) return
 
-        // Custom cluster marker icon
         const isSelected = selectedNeighborhoods.includes(c.neighborhood)
-        const icon = L.divIcon({
-          className: '',
-          html: `<div style="
-            display:flex;align-items:center;justify-content:center;
-            width:${c.count > 99 ? 52 : 44}px;height:${c.count > 99 ? 52 : 44}px;
-            border-radius:50%;
-            background:${isSelected ? '#C9A84C' : '#1B2B5B'};
-            color:white;font-size:13px;font-weight:700;
-            border:3px solid ${isSelected ? '#e6c96a' : 'rgba(255,255,255,0.3)'};
-            box-shadow:0 2px 8px rgba(0,0,0,0.3);
-            cursor:pointer;
-            transition:transform 0.15s;
-          ">${c.count}</div>`,
-          iconSize: [c.count > 99 ? 52 : 44, c.count > 99 ? 52 : 44],
-          iconAnchor: [c.count > 99 ? 26 : 22, c.count > 99 ? 26 : 22],
+        const size = c.count > 99 ? 52 : 44
+
+        const el = document.createElement('div')
+        el.style.cssText = `display:flex;align-items:center;justify-content:center;width:${size}px;height:${size}px;border-radius:50%;background:${isSelected ? '#C9A84C' : '#1B2B5B'};color:white;font-size:13px;font-weight:700;border:3px solid ${isSelected ? '#e6c96a' : 'rgba(255,255,255,0.3)'};box-shadow:0 2px 8px rgba(0,0,0,0.3);cursor:pointer;transition:transform 0.15s;`
+        el.textContent = String(c.count)
+        el.style.display = showSaleLayer ? '' : 'none'
+
+        el.addEventListener('click', () => {
+          if (!drawingRef.current) {
+            // Show popup
+            new maplibregl.Popup({ offset: 25 })
+              .setLngLat([c.resolvedLng, c.resolvedLat])
+              .setHTML(`<div style="min-width:160px"><p style="font-weight:700;margin:0 0 4px">${c.neighborhood}</p><p style="color:#666;margin:0;font-size:12px">${c.city ?? ''}${c.state ? `, ${c.state}` : ''}</p><p style="color:#1B2B5B;font-weight:600;margin:4px 0 0;font-size:13px">${c.count} imóve${c.count !== 1 ? 'is' : 'l'}</p></div>`)
+              .addTo(map)
+            handleNeighborhoodClick(c.neighborhood, c.city)
+          }
         })
 
-        const marker = L.marker([c.resolvedLat, c.resolvedLng], { icon })
-          .addTo(layerGroup)
-          .bindPopup(`
-            <div style="min-width:160px">
-              <p style="font-weight:700;margin:0 0 4px">${c.neighborhood}</p>
-              <p style="color:#666;margin:0;font-size:12px">${c.city ?? ''}${c.state ? `, ${c.state}` : ''}</p>
-              <p style="color:#1B2B5B;font-weight:600;margin:4px 0 0;font-size:13px">${c.count} imóve${c.count !== 1 ? 'is' : 'l'}</p>
-            </div>
-          `)
-          .on('click', () => {
-            if (!drawing) {
-              handleNeighborhoodClick(c.neighborhood, c.city)
-            }
-          })
+        const marker = new maplibregl.Marker({ element: el })
+          .setLngLat([c.resolvedLng, c.resolvedLat])
+          .addTo(map)
 
         markersRef.current.push(marker)
       })
-
-      // Store layer group and add to map if toggle is on
-      saleLayerGroupRef.current = layerGroup
-      if (showSaleLayer) layerGroup.addTo(mapInstance.current)
     })
-  }, [clusters, isLoaded, selectedNeighborhoods, drawing])
+  }, [clusters, isLoaded, selectedNeighborhoods, drawing, showSaleLayer])
 
-  // Render auction pins (golden) with marker clustering
+  // Render auction pins by updating GeoJSON source data (MapLibre native clustering)
   useEffect(() => {
-    // Clean old auction markers/cluster
-    auctionMarkersRef.current.forEach(m => { try { m.remove() } catch {} })
-    auctionMarkersRef.current = []
-    if (auctionClusterRef.current) {
-      try { mapInstance.current?.removeLayer(auctionClusterRef.current) } catch {}
-      auctionClusterRef.current = null
-    }
+    const map = mapInstance.current
+    if (!isLoaded || !map) return
 
-    if (!isLoaded || !mapInstance.current || filteredAuctions.length === 0) return
+    const source = map.getSource('auctions-source') as any
+    if (!source) return
 
-    import('leaflet').then(async (L) => {
+    // Update lookup for click handler
+    const lookup = new Map<string, AuctionPin>()
+    filteredAuctions.forEach(a => lookup.set(a.id, a))
+    auctionLookupRef.current = lookup
 
-      // Try to use MarkerClusterGroup
-      let clusterGroup: any = null
-      try {
-        const mc = await import('leaflet.markercluster' as any)
-        // Inject cluster CSS
-        if (!document.getElementById('marker-cluster-css')) {
-          const s1 = document.createElement('style')
-          s1.id = 'marker-cluster-css'
-          s1.textContent = `
-            .marker-cluster-auction { background: rgba(201,168,76,0.4); }
-            .marker-cluster-auction div { background: #C9A84C; color: #1B2B5B; font-weight: 700; width: 34px; height: 34px; margin: 3px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; }
-            .marker-cluster-auction-large { background: rgba(201,168,76,0.5); }
-            .marker-cluster-auction-large div { width: 40px; height: 40px; font-size: 13px; }
-          `
-          document.head.appendChild(s1)
-        }
-        clusterGroup = (L as any).markerClusterGroup({
-          maxClusterRadius: 60,
-          iconCreateFunction: (cluster: any) => {
-            const count = cluster.getChildCount()
-            const size = count > 50 ? 'large' : 'small'
-            return L.divIcon({
-              html: `<div>${count}</div>`,
-              className: `marker-cluster-auction${size === 'large' ? ' marker-cluster-auction-large' : ''}`,
-              iconSize: L.point(size === 'large' ? 46 : 40, size === 'large' ? 46 : 40),
-            })
-          },
-          spiderfyOnMaxZoom: true,
-          showCoverageOnHover: false,
-          zoomToBoundsOnClick: true,
-        })
-      } catch {
-        // Fallback: no clustering
-      }
+    const features = filteredAuctions
+      .filter(a => a.latitude && a.longitude)
+      .map(a => ({
+        type: 'Feature' as const,
+        properties: { id: a.id },
+        geometry: {
+          type: 'Point' as const,
+          coordinates: [a.longitude!, a.latitude!],
+        },
+      }))
 
-      const auctionIcon = L.divIcon({
-        className: '',
-        html: `<div style="
-          width:32px;height:32px;border-radius:50%;
-          background:linear-gradient(135deg,#C9A84C,#e6c96a);
-          border:3px solid #1B2B5B;
-          display:flex;align-items:center;justify-content:center;
-          font-size:14px;box-shadow:0 2px 8px rgba(0,0,0,0.4);
-          cursor:pointer;
-        ">🏛️</div>`,
-        iconSize: [32, 32],
-        iconAnchor: [16, 16],
-      })
-
-      for (const a of filteredAuctions) {
-        if (!a.latitude || !a.longitude) continue
-
-        const discount = a.discountPercent ? `<span style="color:#e53e3e;font-weight:700">-${a.discountPercent}%</span>` : ''
-        const score = a.opportunityScore ? `<span style="color:${a.opportunityScore >= 80 ? '#38a169' : a.opportunityScore >= 60 ? '#d69e2e' : '#e53e3e'};font-weight:700">Score: ${a.opportunityScore}/100</span>` : ''
-        const bid = a.minimumBid ? fmt(Number(a.minimumBid)) : '—'
-        const appr = a.appraisalValue ? fmt(Number(a.appraisalValue)) : ''
-        const roi = a.appraisalValue && a.minimumBid
-          ? `ROI est.: <strong style="color:#38a169">${((Number(a.appraisalValue) - Number(a.minimumBid)) / Number(a.minimumBid) * 100 * 0.7).toFixed(0)}%</strong>`
-          : ''
-
-        const marker = L.marker([a.latitude, a.longitude], { icon: auctionIcon })
-          .on('click', () => setSelectedAuction(a))
-          .bindPopup(`
-            <div style="min-width:220px;max-width:280px;font-family:system-ui">
-              <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#C9A84C;font-weight:700;margin-bottom:4px">
-                🏛️ LEILÃO — ${sourceLabel(a.source)}
-              </div>
-              <p style="font-weight:700;margin:0 0 4px;font-size:13px;color:#1B2B5B">${a.title}</p>
-              <p style="color:#666;margin:0 0 6px;font-size:11px">${a.neighborhood || ''} · ${a.city || ''}/${a.state || ''}</p>
-              ${appr ? `<p style="margin:0;font-size:11px;color:#999;text-decoration:line-through">Avaliação: ${appr}</p>` : ''}
-              <p style="margin:2px 0;font-size:16px;font-weight:800;color:#1B2B5B">Lance: ${bid}</p>
-              <div style="display:flex;gap:8px;margin:6px 0;font-size:11px">${discount} ${score}</div>
-              ${roi ? `<p style="margin:4px 0;font-size:11px">${roi}</p>` : ''}
-              <div style="display:flex;gap:4px;flex-wrap:wrap;margin:4px 0">
-                ${a.financingAvailable ? '<span style="font-size:10px;background:#e6fffa;color:#2d7d6f;padding:1px 6px;border-radius:8px">Financiável</span>' : ''}
-                ${a.occupation === 'DESOCUPADO' ? '<span style="font-size:10px;background:#e6fffa;color:#2d7d6f;padding:1px 6px;border-radius:8px">Desocupado</span>' : ''}
-                ${a.occupation === 'OCUPADO' ? '<span style="font-size:10px;background:#fff5f5;color:#c53030;padding:1px 6px;border-radius:8px">Ocupado</span>' : ''}
-              </div>
-              <a href="/leiloes/${a.slug}" style="display:block;text-align:center;margin-top:8px;padding:6px;background:#1B2B5B;color:white;border-radius:8px;font-size:12px;font-weight:600;text-decoration:none">
-                Ver detalhes + Calculadora ROI →
-              </a>
-            </div>
-          `, { maxWidth: 300 })
-
-        if (clusterGroup) {
-          clusterGroup.addLayer(marker)
-        } else {
-          marker.addTo(mapInstance.current)
-        }
-        auctionMarkersRef.current.push(marker)
-      }
-
-      if (clusterGroup) {
-        auctionClusterRef.current = clusterGroup
-        if (showAuctionLayer) mapInstance.current.addLayer(clusterGroup)
-      }
-    })
+    source.setData({ type: 'FeatureCollection', features })
   }, [filteredAuctions, isLoaded])
 
-  // Render owner-direct green pins
+  // Render owner-direct green pins using MapLibre Markers
   useEffect(() => {
     if (!isLoaded || !mapInstance.current) return
-    import('leaflet').then(L => {
+
+    import('maplibre-gl').then(maplibregl => {
       ownerDirectMarkersRef.current.forEach(m => { try { m.remove() } catch {} })
       ownerDirectMarkersRef.current = []
       if (ownerDirectPins.length === 0) return
-      const greenIcon = (L as any).divIcon({
-        className: '',
-        html: '<div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#22c55e,#16a34a);border:3px solid #fff;display:flex;align-items:center;justify-content:center;font-size:15px;box-shadow:0 2px 10px rgba(34,197,94,0.5);cursor:pointer;">&#127968;</div>',
-        iconSize: [34, 34],
-        iconAnchor: [17, 17],
-      })
+
+      const map = mapInstance.current!
+
       for (const p of ownerDirectPins) {
         if (!p.lat || !p.lng) continue
         const priceStr = p.price ? fmt(p.price) : 'Consulte'
-        const marker = (L as any).marker([p.lat, p.lng], { icon: greenIcon })
-          .bindPopup(`<div style="min-width:200px;max-width:260px;font-family:system-ui"><div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#16a34a;font-weight:700;margin-bottom:4px">VENDA DIRETA - Proprietario</div><p style="font-weight:700;margin:0 0 4px;font-size:13px;color:#1B2B5B">${p.title}</p><p style="color:#666;margin:0 0 6px;font-size:11px">${p.neighborhood || ''} - ${p.city || ''}</p><p style="margin:2px 0;font-size:16px;font-weight:800;color:#1B2B5B">${priceStr}</p><div style="margin:6px 0"><span style="font-size:10px;background:#dcfce7;color:#16a34a;padding:2px 8px;border-radius:8px;font-weight:600">Sem comissao</span></div><a href="/imoveis/${p.slug}" style="display:block;text-align:center;margin-top:8px;padding:6px;background:#16a34a;color:white;border-radius:8px;font-size:12px;font-weight:600;text-decoration:none">Ver imovel</a></div>`, { maxWidth: 280 })
-        marker.addTo(mapInstance.current)
+
+        const el = document.createElement('div')
+        el.style.cssText = 'width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#22c55e,#16a34a);border:3px solid #fff;display:flex;align-items:center;justify-content:center;font-size:15px;box-shadow:0 2px 10px rgba(34,197,94,0.5);cursor:pointer;'
+        el.textContent = '\u{1F3E0}'
+
+        el.addEventListener('click', () => {
+          new maplibregl.Popup({ offset: 25 })
+            .setLngLat([p.lng!, p.lat!])
+            .setHTML(`<div style="min-width:200px;max-width:260px;font-family:system-ui"><div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#16a34a;font-weight:700;margin-bottom:4px">VENDA DIRETA - Proprietário</div><p style="font-weight:700;margin:0 0 4px;font-size:13px;color:#1B2B5B">${p.title}</p><p style="color:#666;margin:0 0 6px;font-size:11px">${p.neighborhood || ''} - ${p.city || ''}</p><p style="margin:2px 0;font-size:16px;font-weight:800;color:#1B2B5B">${priceStr}</p><div style="margin:6px 0"><span style="font-size:10px;background:#dcfce7;color:#16a34a;padding:2px 8px;border-radius:8px;font-weight:600">Sem comissão</span></div><a href="/imoveis/${p.slug}" style="display:block;text-align:center;margin-top:8px;padding:6px;background:#16a34a;color:white;border-radius:8px;font-size:12px;font-weight:600;text-decoration:none">Ver imóvel</a></div>`)
+            .addTo(map)
+        })
+
+        const marker = new maplibregl.Marker({ element: el })
+          .setLngLat([p.lng!, p.lat!])
+          .addTo(map)
+
         ownerDirectMarkersRef.current.push(marker)
       }
     })
   }, [ownerDirectPins, isLoaded])
 
-  // Handle drawing mode map clicks
+  // Sync drawingRef with drawing state for closures
+  useEffect(() => {
+    drawingRef.current = drawing
+  }, [drawing])
+
+  // Handle drawing mode map clicks (MapLibre events)
   useEffect(() => {
     if (!isLoaded || !mapInstance.current) return
 
     const map = mapInstance.current
 
     function onClick(e: any) {
-      if (!drawing) return
+      if (!drawingRef.current) return
 
-      import('leaflet').then(L => {
-        const pt: [number, number] = [e.latlng.lat, e.latlng.lng]
-        drawingPointsRef.current = [...drawingPointsRef.current, pt]
+      const pt: [number, number] = [e.lngLat.lat, e.lngLat.lng]
+      drawingPointsRef.current = [...drawingPointsRef.current, pt]
 
-        // Add vertex marker
-        const vm = L.circleMarker(pt, {
-          radius: 5,
-          color: '#C9A84C',
-          fillColor: '#C9A84C',
-          fillOpacity: 1,
-          weight: 2,
-        }).addTo(map)
+      // Add vertex marker
+      import('maplibre-gl').then(maplibregl => {
+        const el = document.createElement('div')
+        el.style.cssText = 'width:10px;height:10px;border-radius:50%;background:#C9A84C;border:2px solid #C9A84C;'
+        const vm = new maplibregl.Marker({ element: el })
+          .setLngLat([e.lngLat.lng, e.lngLat.lat])
+          .addTo(map)
         tempMarkersRef.current.push(vm)
-
-        // Update temp polyline
-        if (tempLineRef.current) tempLineRef.current.remove()
-        if (drawingPointsRef.current.length >= 2) {
-          tempLineRef.current = L.polyline(drawingPointsRef.current, {
-            color: '#C9A84C',
-            weight: 2,
-            dashArray: '6 4',
-          }).addTo(map)
-        }
-
-        // Auto-close polygon when clicking near first point (within ~50px)
-        if (drawingPointsRef.current.length >= 3) {
-          const first = drawingPointsRef.current[0]
-          const dx = Math.abs(first[0] - pt[0])
-          const dy = Math.abs(first[1] - pt[1])
-          if (dx < 0.001 && dy < 0.001) {
-            closePolygon()
-          }
-        }
       })
+
+      // Update temp line via GeoJSON source
+      const pts = drawingPointsRef.current
+      if (pts.length >= 2) {
+        const lineSource = map.getSource('draw-temp-line') as any
+        if (lineSource) {
+          lineSource.setData({
+            type: 'Feature',
+            properties: {},
+            geometry: {
+              type: 'LineString',
+              coordinates: pts.map(p => [p[1], p[0]]), // [lng, lat]
+            },
+          })
+        }
+      }
+
+      // Auto-close polygon when clicking near first point
+      if (pts.length >= 3) {
+        const first = pts[0]
+        const dx = Math.abs(first[0] - pt[0])
+        const dy = Math.abs(first[1] - pt[1])
+        if (dx < 0.001 && dy < 0.001) {
+          closePolygon()
+        }
+      }
     }
 
     function onDblClick(e: any) {
-      if (!drawing) return
-      e.originalEvent.preventDefault()
+      if (!drawingRef.current) return
+      e.preventDefault?.()
       if (drawingPointsRef.current.length >= 3) {
         closePolygon()
       }
@@ -692,83 +672,99 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
       map.off('click', onClick)
       map.off('dblclick', onDblClick)
     }
-  }, [drawing, isLoaded])
+  }, [isLoaded]) // eslint-disable-line react-hooks/exhaustive-deps
 
   function closePolygon() {
     const pts = drawingPointsRef.current
     if (pts.length < 3) return
 
-    import('leaflet').then(L => {
-      const map = mapInstance.current
-      // Clear temp elements
-      if (tempLineRef.current) { tempLineRef.current.remove(); tempLineRef.current = null }
-      tempMarkersRef.current.forEach(m => m.remove())
-      tempMarkersRef.current = []
+    const map = mapInstance.current
+    if (!map) return
 
-      // Remove old polygon
-      if (polygonRef.current) { polygonRef.current.remove(); polygonRef.current = null }
+    // Clear temp elements
+    const tempLineSource = map.getSource('draw-temp-line') as any
+    if (tempLineSource) tempLineSource.setData({ type: 'FeatureCollection', features: [] })
+    tempMarkersRef.current.forEach(m => m.remove())
+    tempMarkersRef.current = []
 
-      // Draw final polygon
-      polygonRef.current = L.polygon(pts, {
-        color: '#C9A84C',
-        fillColor: '#C9A84C',
-        fillOpacity: 0.15,
-        weight: 2.5,
-      }).addTo(map)
+    // Draw final polygon via GeoJSON source
+    const coords = pts.map(p => [p[1], p[0]] as [number, number]) // [lng, lat]
+    coords.push(coords[0]) // close the ring
 
-      setPolygon(pts)
-      setDrawing(false)
-      drawingPointsRef.current = []
+    const polygonSource = map.getSource('draw-polygon') as any
+    if (polygonSource) {
+      polygonSource.setData({
+        type: 'Feature',
+        properties: {},
+        geometry: {
+          type: 'Polygon',
+          coordinates: [coords],
+        },
+      })
+    }
 
-      // Find clusters inside polygon
-      const inside = clusters.filter(c =>
-        c.resolvedLat && c.resolvedLng &&
-        pointInPolygon(c.resolvedLat, c.resolvedLng, pts)
-      )
-      setSelectedNeighborhoods(inside.map(c => c.neighborhood))
+    polygonRef.current = true
+    setPolygon(pts)
+    setDrawing(false)
+    drawingRef.current = false
+    drawingPointsRef.current = []
 
-      // Also find auctions inside polygon (instant results)
-      const auctionsInside = auctions.filter(a =>
-        a.latitude && a.longitude &&
-        pointInPolygon(a.latitude, a.longitude, pts)
-      )
-      if (auctionsInside.length > 0) {
-        // Convert auctions to property format for the results panel
-        const auctionProps: Property[] = auctionsInside.map(a => ({
-          id: a.id,
-          slug: `../leiloes/${a.slug}`,
-          title: `🏛️ ${a.title}`,
-          neighborhood: a.neighborhood,
-          city: a.city,
-          coverImage: a.coverImage,
-          price: a.minimumBid ? Number(a.minimumBid) : null,
-          priceRent: null,
-          purpose: 'AUCTION',
-          type: a.propertyType,
-          bedrooms: a.bedrooms || 0,
-          totalArea: a.totalArea,
-          bathrooms: 0,
-        }))
-        setProperties(prev => [...auctionProps, ...prev])
-      }
-    })
+    // Find clusters inside polygon
+    const inside = clusters.filter(c =>
+      c.resolvedLat && c.resolvedLng &&
+      pointInPolygon(c.resolvedLat, c.resolvedLng, pts)
+    )
+    setSelectedNeighborhoods(inside.map(c => c.neighborhood))
+
+    // Also find auctions inside polygon (instant results)
+    const auctionsInside = auctions.filter(a =>
+      a.latitude && a.longitude &&
+      pointInPolygon(a.latitude, a.longitude, pts)
+    )
+    if (auctionsInside.length > 0) {
+      // Convert auctions to property format for the results panel
+      const auctionProps: Property[] = auctionsInside.map(a => ({
+        id: a.id,
+        slug: `../leiloes/${a.slug}`,
+        title: `🏛️ ${a.title}`,
+        neighborhood: a.neighborhood,
+        city: a.city,
+        coverImage: a.coverImage,
+        price: a.minimumBid ? Number(a.minimumBid) : null,
+        priceRent: null,
+        purpose: 'AUCTION',
+        type: a.propertyType,
+        bedrooms: a.bedrooms || 0,
+        totalArea: a.totalArea,
+        bathrooms: 0,
+      }))
+      setProperties(prev => [...auctionProps, ...prev])
+    }
   }
 
   function clearPolygon() {
-    if (polygonRef.current) { polygonRef.current.remove(); polygonRef.current = null }
-    if (tempLineRef.current) { tempLineRef.current.remove(); tempLineRef.current = null }
+    const map = mapInstance.current
+    if (map) {
+      const polygonSource = map.getSource('draw-polygon') as any
+      if (polygonSource) polygonSource.setData({ type: 'FeatureCollection', features: [] })
+      const tempLineSource = map.getSource('draw-temp-line') as any
+      if (tempLineSource) tempLineSource.setData({ type: 'FeatureCollection', features: [] })
+    }
     tempMarkersRef.current.forEach(m => m.remove())
     tempMarkersRef.current = []
     drawingPointsRef.current = []
+    polygonRef.current = false
     setPolygon([])
     setSelectedNeighborhoods([])
     setProperties([])
     setDrawing(false)
+    drawingRef.current = false
   }
 
   function startDrawing() {
     clearPolygon()
     setDrawing(true)
+    drawingRef.current = true
     if (mapInstance.current) mapInstance.current.getContainer().style.cursor = 'crosshair'
   }
 
@@ -837,7 +833,7 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
 
   return (
     <div className="relative rounded-2xl overflow-hidden border border-gray-200 shadow-xl" style={{ height: 580 }}>
-      {/* Map container — Leaflet CSS injected via useEffect to avoid hydration mismatch */}
+      {/* Map container */}
       {mapError ? (
         <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-gray-50 gap-4">
           <MapPin className="w-12 h-12 text-gray-300" />

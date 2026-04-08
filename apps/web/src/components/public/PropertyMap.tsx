@@ -25,7 +25,7 @@ export function PropertyMap({ latitude, longitude, city, neighborhood, state, la
     async function initMap() {
       try {
         const maplibregl = (await import('maplibre-gl')).default
-        await import('maplibre-gl/dist/maplibre-gl.css')
+        await import('maplibre-gl/dist/maplibre-gl.css' as any)
 
         let lat = latitude
         let lng = longitude
@@ -58,7 +58,7 @@ export function PropertyMap({ latitude, longitude, city, neighborhood, state, la
           center: [lng, lat],
           zoom: showExactLocation ? 17 : 15,
           pitch: 0,
-          attributionControl: true,
+          attributionControl: {},
         })
 
         map.scrollZoom.disable()

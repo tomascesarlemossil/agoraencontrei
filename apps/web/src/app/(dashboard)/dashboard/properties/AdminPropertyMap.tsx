@@ -170,7 +170,7 @@ export default function AdminPropertyMap({ statusFilter, purposeFilter, searchFi
 
     async function initOrUpdateMap() {
       const maplibregl = (await import('maplibre-gl')).default
-      await import('maplibre-gl/dist/maplibre-gl.css')
+      await import('maplibre-gl/dist/maplibre-gl.css' as any)
 
       // Build GeoJSON features
       const features = pins.map(p => ({
@@ -219,7 +219,7 @@ export default function AdminPropertyMap({ statusFilter, purposeFilter, searchFi
         style: 'https://tiles.openfreemap.org/styles/bright',
         center: [-47.4008, -20.5386],
         zoom: 13,
-        attributionControl: true,
+        attributionControl: {},
       })
 
       map.addControl(new maplibregl.NavigationControl(), 'top-right')
