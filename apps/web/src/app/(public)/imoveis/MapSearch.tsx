@@ -294,6 +294,28 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
       loadClusters()
     }
   }, [initialPurpose]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Geocode SSR-provided clusters that have null/0 coordinates
+  useEffect(() => {
+    const needsGeocode = clusters.filter(c => !c.resolvedLat || !c.resolvedLng)
+    if (needsGeocode.length === 0) return
+
+    let delay = 0
+    for (const c of needsGeocode) {
+      setTimeout(async () => {
+        const coords = await geocodeNeighborhood(c.neighborhood, c.city ?? 'Franca')
+        if (coords) {
+          setClusters(prev => prev.map(p =>
+            p.neighborhood === c.neighborhood && p.city === c.city
+              ? { ...p, resolvedLat: coords[0], resolvedLng: coords[1] }
+              : p
+          ))
+        }
+      }, delay)
+      delay += NOMINATIM_DELAY
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
   // Load owner-direct (green pins) properties from free-listing endpoint
   useEffect(() => {
     fetch(`${API_URL}/api/v1/public/free-listing/map-pins`)
@@ -376,6 +398,7 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
         container: mapRef.current!,
         style: {
           version: 8,
+          glyphs: 'https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf',
           sources: {
             'osm': {
               type: 'raster',
@@ -393,79 +416,83 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
       map.addControl(new maplibregl.NavigationControl(), 'top-right')
 
         map.on('load', () => {
-          // Add auction GeoJSON source with clustering
-          map.addSource('auctions-source', {
-            type: 'geojson',
-            data: { type: 'FeatureCollection', features: [] },
-            cluster: true,
-            clusterMaxZoom: 14,
-            clusterRadius: 60,
-          })
+          try {
+            // Add auction GeoJSON source with clustering
+            map.addSource('auctions-source', {
+              type: 'geojson',
+              data: { type: 'FeatureCollection', features: [] },
+              cluster: true,
+              clusterMaxZoom: 14,
+              clusterRadius: 60,
+            })
 
-          map.addLayer({
-            id: 'auction-clusters',
-            type: 'circle',
-            source: 'auctions-source',
-            filter: ['has', 'point_count'],
-            paint: {
-              'circle-color': '#C9A84C',
-              'circle-radius': ['step', ['get', 'point_count'], 20, 10, 24, 50, 30],
-              'circle-stroke-width': 3,
-              'circle-stroke-color': '#1B2B5B',
-            },
-          })
+            map.addLayer({
+              id: 'auction-clusters',
+              type: 'circle',
+              source: 'auctions-source',
+              filter: ['has', 'point_count'],
+              paint: {
+                'circle-color': '#C9A84C',
+                'circle-radius': ['step', ['get', 'point_count'], 20, 10, 24, 50, 30],
+                'circle-stroke-width': 3,
+                'circle-stroke-color': '#1B2B5B',
+              },
+            })
 
-          map.addLayer({
-            id: 'auction-cluster-count',
-            type: 'symbol',
-            source: 'auctions-source',
-            filter: ['has', 'point_count'],
-            layout: { 'text-field': '{point_count_abbreviated}', 'text-size': 12 },
-            paint: { 'text-color': '#1B2B5B' },
-          })
+            map.addLayer({
+              id: 'auction-cluster-count',
+              type: 'symbol',
+              source: 'auctions-source',
+              filter: ['has', 'point_count'],
+              layout: { 'text-field': '{point_count_abbreviated}', 'text-size': 12 },
+              paint: { 'text-color': '#1B2B5B' },
+            })
 
-          map.addLayer({
-            id: 'auction-unclustered',
-            type: 'circle',
-            source: 'auctions-source',
-            filter: ['!', ['has', 'point_count']],
-            paint: {
-              'circle-color': '#C9A84C',
-              'circle-radius': 10,
-              'circle-stroke-width': 3,
-              'circle-stroke-color': '#1B2B5B',
-            },
-          })
+            map.addLayer({
+              id: 'auction-unclustered',
+              type: 'circle',
+              source: 'auctions-source',
+              filter: ['!', ['has', 'point_count']],
+              paint: {
+                'circle-color': '#C9A84C',
+                'circle-radius': 10,
+                'circle-stroke-width': 3,
+                'circle-stroke-color': '#1B2B5B',
+              },
+            })
 
-          // Polygon drawing source
-          map.addSource('draw-polygon', {
-            type: 'geojson',
-            data: { type: 'FeatureCollection', features: [] },
-          })
-          map.addLayer({
-            id: 'draw-polygon-fill',
-            type: 'fill',
-            source: 'draw-polygon',
-            paint: { 'fill-color': '#C9A84C', 'fill-opacity': 0.15 },
-          })
-          map.addLayer({
-            id: 'draw-polygon-line',
-            type: 'line',
-            source: 'draw-polygon',
-            paint: { 'line-color': '#C9A84C', 'line-width': 2.5 },
-          })
+            // Polygon drawing source
+            map.addSource('draw-polygon', {
+              type: 'geojson',
+              data: { type: 'FeatureCollection', features: [] },
+            })
+            map.addLayer({
+              id: 'draw-polygon-fill',
+              type: 'fill',
+              source: 'draw-polygon',
+              paint: { 'fill-color': '#C9A84C', 'fill-opacity': 0.15 },
+            })
+            map.addLayer({
+              id: 'draw-polygon-line',
+              type: 'line',
+              source: 'draw-polygon',
+              paint: { 'line-color': '#C9A84C', 'line-width': 2.5 },
+            })
 
-          // Drawing temp line source
-          map.addSource('draw-temp-line', {
-            type: 'geojson',
-            data: { type: 'FeatureCollection', features: [] },
-          })
-          map.addLayer({
-            id: 'draw-temp-line-layer',
-            type: 'line',
-            source: 'draw-temp-line',
-            paint: { 'line-color': '#C9A84C', 'line-width': 2, 'line-dasharray': [3, 2] },
-          })
+            // Drawing temp line source
+            map.addSource('draw-temp-line', {
+              type: 'geojson',
+              data: { type: 'FeatureCollection', features: [] },
+            })
+            map.addLayer({
+              id: 'draw-temp-line-layer',
+              type: 'line',
+              source: 'draw-temp-line',
+              paint: { 'line-color': '#C9A84C', 'line-width': 2, 'line-dasharray': [3, 2] },
+            })
+          } catch (err) {
+            console.warn('[MapSearch] Error adding map layers:', err)
+          }
 
           setIsLoaded(true)
         })
@@ -512,7 +539,7 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
   // Toggle sale layer visibility (markers)
   useEffect(() => {
     markersRef.current.forEach(m => {
-      m.getElement().style.display = showSaleLayer ? '' : 'none'
+      m.getElement().style.display = showSaleLayer ? 'flex' : 'none'
     })
   }, [showSaleLayer])
 
@@ -550,7 +577,7 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
         const el = document.createElement('div')
         el.style.cssText = `display:flex;align-items:center;justify-content:center;width:${size}px;height:${size}px;border-radius:50%;background:${isSelected ? '#C9A84C' : '#1B2B5B'};color:white;font-size:13px;font-weight:700;border:3px solid ${isSelected ? '#e6c96a' : 'rgba(255,255,255,0.3)'};box-shadow:0 2px 8px rgba(0,0,0,0.3);cursor:pointer;transition:transform 0.15s;`
         el.textContent = String(c.count)
-        el.style.display = showSaleLayer ? '' : 'none'
+        if (!showSaleLayer) el.style.display = 'none'
 
         el.addEventListener('click', () => {
           if (!drawingRef.current) {
