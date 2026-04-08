@@ -341,6 +341,11 @@ export default function SettingsPage() {
   const [editUserSaved, setEditUserSaved] = useState(false)
   const [editAvatarFile, setEditAvatarFile] = useState<File | null>(null)
   const [editAvatarPreview, setEditAvatarPreview] = useState<string | null>(null)
+  const [resetPwdOpen, setResetPwdOpen] = useState(false)
+  const [resetPwdValue, setResetPwdValue] = useState('')
+  const [resetPwdConfirm, setResetPwdConfirm] = useState('')
+  const [resetPwdError, setResetPwdError] = useState('')
+  const [resetPwdSaved, setResetPwdSaved] = useState(false)
 
   const { data: teamUsers, isLoading: loadingTeam } = useQuery({
     queryKey: ['users'],
@@ -399,6 +404,24 @@ export default function SettingsPage() {
     },
   })
 
+  const adminResetPwdMutation = useMutation({
+    mutationFn: async () => {
+      if (!editingUserId) return
+      if (resetPwdValue.length < 8) throw new Error('Mínimo 8 caracteres')
+      if (resetPwdValue !== resetPwdConfirm) throw new Error('As senhas não coincidem')
+      const token = await getValidToken()
+      return usersApi.resetPassword(token!, editingUserId, resetPwdValue)
+    },
+    onSuccess: () => {
+      setResetPwdSaved(true)
+      setResetPwdValue('')
+      setResetPwdConfirm('')
+      setResetPwdError('')
+      setTimeout(() => { setResetPwdSaved(false); setResetPwdOpen(false) }, 2000)
+    },
+    onError: (e: Error) => { setResetPwdError(e.message || 'Erro ao redefinir senha') },
+  })
+
   const startEditUser = (u: User) => {
     setEditingUserId(u.id)
     setEditUser({
@@ -412,6 +435,11 @@ export default function SettingsPage() {
     })
     setEditAvatarFile(null)
     setEditAvatarPreview(null)
+    setResetPwdOpen(false)
+    setResetPwdValue('')
+    setResetPwdConfirm('')
+    setResetPwdError('')
+    setResetPwdSaved(false)
     setShowNewUser(false)
   }
 
@@ -567,17 +595,23 @@ export default function SettingsPage() {
                       )}
                     </div>
                     <div className="flex-1 space-y-2">
-                      <label
-                        htmlFor="logo-upload"
-                        className="flex items-center gap-2 px-4 py-2 rounded-xl border border-white/20 text-sm text-white/70 hover:text-white hover:border-white/40 cursor-pointer transition-colors w-fit"
-                      >
-                        {logoUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-                        {logoFile ? logoFile.name : 'Carregar logo'}
-                      </label>
-                      <input id="logo-upload" type="file" className="hidden" onChange={handleLogoChange} />
-                      {empresa.logoUrl && !logoFile && (
-                        <p className="text-xs text-white/40 truncate max-w-xs">{empresa.logoUrl}</p>
-                      )}
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <label
+                          htmlFor="logo-upload"
+                          className="flex items-center gap-2 px-4 py-2 rounded-xl border border-white/20 text-sm text-white/70 hover:text-white hover:border-white/40 cursor-pointer transition-colors w-fit"
+                        >
+                          {logoUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                          {logoFile ? logoFile.name : 'Upload arquivo'}
+                        </label>
+                        <span className="text-xs text-white/30">ou</span>
+                        <DarkInput
+                          placeholder="Cole a URL da imagem (https://...)"
+                          value={!logoFile ? empresa.logoUrl : ''}
+                          onChange={e => { setEmpresa(p => ({ ...p, logoUrl: e.target.value })); setLogoPreview(e.target.value || null); setLogoFile(null) }}
+                          className="flex-1 !py-2 min-w-[200px]"
+                        />
+                      </div>
+                      <input id="logo-upload" type="file" accept="image/*" className="hidden" onChange={handleLogoChange} />
                     </div>
                   </div>
                 </div>
@@ -727,18 +761,35 @@ export default function SettingsPage() {
                       }}
                     />
                   </div>
-                  <div className="text-sm">
-                    <label
-                      htmlFor="edit-user-avatar-upload"
-                      className="inline-flex items-center gap-1.5 text-xs text-[#C9A84C] hover:text-[#e8c66a] cursor-pointer transition-colors"
-                    >
-                      <Camera className="w-3 h-3" />
-                      {editAvatarFile ? editAvatarFile.name : 'Trocar foto'}
-                    </label>
-                    {editAvatarFile && (
-                      <button type="button" onClick={() => { setEditAvatarFile(null); setEditAvatarPreview(null) }}
-                        className="ml-2 text-xs text-red-400 hover:text-red-300">Remover</button>
-                    )}
+                  <div className="text-sm space-y-1.5">
+                    <div className="flex items-center gap-2">
+                      <label
+                        htmlFor="edit-user-avatar-upload"
+                        className="inline-flex items-center gap-1.5 text-xs text-[#C9A84C] hover:text-[#e8c66a] cursor-pointer transition-colors"
+                      >
+                        <Camera className="w-3 h-3" />
+                        {editAvatarFile ? editAvatarFile.name : 'Upload foto'}
+                      </label>
+                      {editAvatarFile && (
+                        <button type="button" onClick={() => { setEditAvatarFile(null); setEditAvatarPreview(null) }}
+                          className="text-xs text-red-400 hover:text-red-300">Remover</button>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs text-white/30">ou URL:</span>
+                      <input
+                        type="text"
+                        placeholder="https://..."
+                        value={!editAvatarFile ? (editUser.avatarUrl || '') : ''}
+                        onChange={e => {
+                          const url = e.target.value
+                          setEditUser(p => ({ ...p, avatarUrl: url }))
+                          setEditAvatarPreview(url || null)
+                          setEditAvatarFile(null)
+                        }}
+                        className="flex-1 bg-white/5 border border-white/10 rounded-lg px-2.5 py-1 text-xs text-white placeholder:text-white/30 outline-none focus:border-yellow-400/50 transition-colors"
+                      />
+                    </div>
                   </div>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -765,6 +816,36 @@ export default function SettingsPage() {
                     {editUserSaved ? 'Salvo!' : 'Salvar Alterações'}
                   </button>
                   {updateTeamUserMutation.isError && <p className="text-xs text-red-400">Erro ao salvar</p>}
+                </div>
+
+                {/* Admin Reset Password */}
+                <div className="border-t border-white/10 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => { setResetPwdOpen(v => !v); setResetPwdError('') }}
+                    className="flex items-center gap-2 text-xs text-orange-400 hover:text-orange-300 transition-colors"
+                  >
+                    <Shield className="w-3.5 h-3.5" />
+                    {resetPwdOpen ? 'Fechar' : 'Redefinir Senha deste Usuário'}
+                  </button>
+                  {resetPwdOpen && (
+                    <div className="mt-3 space-y-3 bg-orange-500/5 border border-orange-500/20 rounded-xl p-4">
+                      <p className="text-xs text-orange-300/80">Define uma nova senha para este usuário. Ele precisará usar a nova senha no próximo login.</p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <DarkInput label="Nova Senha" type="password" value={resetPwdValue} onChange={e => { setResetPwdValue(e.target.value); setResetPwdError('') }} placeholder="Mínimo 8 caracteres" />
+                        <DarkInput label="Confirmar Nova Senha" type="password" value={resetPwdConfirm} onChange={e => { setResetPwdConfirm(e.target.value); setResetPwdError('') }} placeholder="Repita a nova senha" />
+                      </div>
+                      {resetPwdError && <p className="text-xs text-red-400">{resetPwdError}</p>}
+                      <button
+                        onClick={() => adminResetPwdMutation.mutate()}
+                        disabled={adminResetPwdMutation.isPending || !resetPwdValue || !resetPwdConfirm}
+                        className="flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-bold disabled:opacity-50 bg-orange-500/20 text-orange-400 hover:bg-orange-500/30 border border-orange-500/30 transition-colors"
+                      >
+                        {adminResetPwdMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Shield className="w-4 h-4" />}
+                        {resetPwdSaved ? 'Senha Redefinida!' : 'Redefinir Senha'}
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
