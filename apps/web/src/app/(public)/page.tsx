@@ -419,7 +419,7 @@ export default async function HomePage() {
               {
                 label: 'Busca com IA',
                 desc: 'Encontre imóveis por conversa inteligente',
-                href: '/busca',
+                href: '/imoveis',
                 icon: (
                   <svg viewBox="0 0 32 32" fill="none" className="w-7 h-7 mx-auto mb-3" xmlns="http://www.w3.org/2000/svg">
                     <circle cx="16" cy="16" r="12" stroke="#C9A84C" strokeWidth="2"/>
@@ -432,7 +432,7 @@ export default async function HomePage() {
               {
                 label: 'Mapa Interativo',
                 desc: 'Navegue por bairros e regiões no mapa',
-                href: '/mapa',
+                href: '/imoveis?view=map',
                 icon: (
                   <svg viewBox="0 0 32 32" fill="none" className="w-7 h-7 mx-auto mb-3" xmlns="http://www.w3.org/2000/svg">
                     <path d="M16 4C11.6 4 8 7.6 8 12C8 18 16 28 16 28C16 28 24 18 24 12C24 7.6 20.4 4 16 4Z" stroke="#C9A84C" strokeWidth="2" fill="none"/>

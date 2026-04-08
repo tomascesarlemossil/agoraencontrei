@@ -264,12 +264,14 @@ export function LoadMoreProperties({ initialProperties, initialTotal, initialTot
 
     try {
       const res = await fetch(`${API_URL}/api/v1/public/properties?${qs}`)
+      if (!res.ok) { setHasMore(false); return }
       const data = await res.json()
-      setProperties(prev => [...prev, ...(data.data ?? [])])
+      const items = Array.isArray(data?.data) ? data.data : (Array.isArray(data) ? data : [])
+      setProperties(prev => [...prev, ...items])
       setPage(nextPage)
-      setHasMore(nextPage < data.meta.totalPages)
+      setHasMore(nextPage < (data?.meta?.totalPages ?? data?.pagination?.totalPages ?? 1))
     } catch {
-      // ignore
+      setHasMore(false)
     } finally {
       setLoading(false)
     }

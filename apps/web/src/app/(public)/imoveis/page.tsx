@@ -84,15 +84,21 @@ function buildQs(params: SearchParams, overrides?: Record<string, string>) {
   return qs
 }
 
+const EMPTY_RESULT = { data: [], meta: { total: 0, page: 1, totalPages: 1 } }
+
 async function fetchProperties(params: SearchParams) {
   try {
     const res = await fetch(`${API_URL}/api/v1/public/properties?${buildQs(params)}`, {
       next: { revalidate: 60 },
     })
-    if (!res.ok) return { data: [], meta: { total: 0, page: 1, totalPages: 1 } }
-    return res.json()
+    if (!res.ok) return EMPTY_RESULT
+    const json = await res.json()
+    return {
+      data: Array.isArray(json?.data) ? json.data : (Array.isArray(json) ? json : []),
+      meta: json?.meta ?? json?.pagination ?? EMPTY_RESULT.meta,
+    }
   } catch {
-    return { data: [], meta: { total: 0, page: 1, totalPages: 1 } }
+    return EMPTY_RESULT
   }
 }
 
@@ -170,7 +176,10 @@ export default async function ImoveisPage({ searchParams }: { searchParams: Sear
         `${API_URL}/api/v1/public/map-clusters?${clusterParams}`,
         { next: { revalidate: 120 } }
       )
-      if (clusterRes.ok) initialClusters = await clusterRes.json()
+      if (clusterRes.ok) {
+        const clusterData = await clusterRes.json()
+        initialClusters = Array.isArray(clusterData) ? clusterData : (clusterData?.clusters ?? clusterData?.data ?? [])
+      }
     } catch {}
   }
 

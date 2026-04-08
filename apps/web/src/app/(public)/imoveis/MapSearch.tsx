@@ -281,7 +281,9 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
         params.set('neLng', b.neLng.toFixed(6))
         const res = await fetch(`${API_URL}/api/v1/public/map-clusters?${params}`)
         if (!res.ok) return
-        const data: Cluster[] = await res.json()
+        const rawData = await res.json()
+        const data: Cluster[] = Array.isArray(rawData) ? rawData : (rawData?.clusters ?? rawData?.data ?? [])
+        if (!data.length) return
         // Start with null coords, geocode progressively
         const withCoords = data.map(c => ({
           ...c,
@@ -329,7 +331,8 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
         const res = await fetch(`${API_URL}/api/v1/auctions/map?state=SP&limit=2000`)
         if (res.ok) {
           const data = await res.json()
-          if (data.data?.length > 0) { setAuctions(data.data); return }
+          const items = Array.isArray(data?.data) ? data.data : (Array.isArray(data) ? data : [])
+          if (items.length > 0) { setAuctions(items); return }
         }
       } catch {}
 

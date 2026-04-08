@@ -334,17 +334,18 @@ export default function LeiloesClient() {
       })
       if (!res.ok) throw new Error('Erro ao enviar')
       setLeadSuccess(true)
-      // Redirect to external link after 2 seconds
-      setTimeout(() => {
-        if (externalLinkRef.current) {
-          window.open(externalLinkRef.current, '_blank')
-        }
-        setShowLeadModal(false)
-        setLeadForm({ name: '', cpf: '', phone: '', email: '', investmentRange: '', propertyPreference: '', wantsAssessoria: false })
-      }, 2500)
     } catch {
-      setLeadError('Erro ao enviar. Tente novamente.')
+      // Even if lead capture fails, still redirect to auctioneer
+      setLeadSuccess(true)
     }
+    // Always redirect to external link — lead capture is best-effort
+    setTimeout(() => {
+      if (externalLinkRef.current) {
+        window.open(externalLinkRef.current, '_blank')
+      }
+      setShowLeadModal(false)
+      setLeadForm({ name: '', cpf: '', phone: '', email: '', investmentRange: '', propertyPreference: '', wantsAssessoria: false })
+    }, 1500)
     setLeadSubmitting(false)
   }
 
