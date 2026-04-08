@@ -24,7 +24,7 @@ export function PropertyMap({ latitude, longitude, city, neighborhood, state, la
     if (!document.getElementById('maplibre-critical-css')) {
       const style = document.createElement('style')
       style.id = 'maplibre-critical-css'
-      style.textContent = `.maplibregl-map{overflow:hidden;position:relative;-webkit-tap-highlight-color:rgba(0,0,0,0)}.maplibregl-canvas-container{position:absolute;top:0;bottom:0;width:100%}.maplibregl-canvas{position:absolute;left:0;top:0}`
+      style.textContent = `.maplibregl-map{font:12px/20px Helvetica Neue,Arial,Helvetica,sans-serif;overflow:hidden;position:relative;width:100%;height:100%;-webkit-tap-highlight-color:rgba(0,0,0,0)}.maplibregl-canvas{position:absolute;left:0;top:0}.maplibregl-canvas-container.maplibregl-interactive{cursor:grab;user-select:none}`
       document.head.appendChild(style)
     }
     if (!document.getElementById('maplibre-gl-css')) {
