@@ -419,6 +419,7 @@ export default async function HomePage() {
               {
                 label: 'Busca com IA',
                 desc: 'Encontre imóveis por conversa inteligente',
+                href: '/busca',
                 icon: (
                   <svg viewBox="0 0 32 32" fill="none" className="w-7 h-7 mx-auto mb-3" xmlns="http://www.w3.org/2000/svg">
                     <circle cx="16" cy="16" r="12" stroke="#C9A84C" strokeWidth="2"/>
@@ -431,6 +432,7 @@ export default async function HomePage() {
               {
                 label: 'Mapa Interativo',
                 desc: 'Navegue por bairros e regiões no mapa',
+                href: '/mapa',
                 icon: (
                   <svg viewBox="0 0 32 32" fill="none" className="w-7 h-7 mx-auto mb-3" xmlns="http://www.w3.org/2000/svg">
                     <path d="M16 4C11.6 4 8 7.6 8 12C8 18 16 28 16 28C16 28 24 18 24 12C24 7.6 20.4 4 16 4Z" stroke="#C9A84C" strokeWidth="2" fill="none"/>
@@ -441,6 +443,7 @@ export default async function HomePage() {
               {
                 label: '1000+ Imóveis',
                 desc: 'O maior acervo imobiliário da região',
+                href: '/imoveis',
                 icon: (
                   <svg viewBox="0 0 32 32" fill="none" className="w-7 h-7 mx-auto mb-3" xmlns="http://www.w3.org/2000/svg">
                     <rect x="4" y="14" width="10" height="14" rx="1" stroke="#C9A84C" strokeWidth="2" fill="none"/>
@@ -454,6 +457,7 @@ export default async function HomePage() {
               {
                 label: 'Anúncio Gratuito',
                 desc: 'Cadastre seu imóvel sem custo inicial',
+                href: '/anunciar',
                 icon: (
                   <svg viewBox="0 0 32 32" fill="none" className="w-7 h-7 mx-auto mb-3" xmlns="http://www.w3.org/2000/svg">
                     <circle cx="16" cy="16" r="12" stroke="#C9A84C" strokeWidth="2"/>
@@ -462,9 +466,10 @@ export default async function HomePage() {
                 ),
               },
             ].map(feat => (
-              <div
+              <Link
                 key={feat.label}
-                className="rounded-2xl p-5 text-center transition-all hover:scale-105"
+                href={feat.href}
+                className="rounded-2xl p-5 text-center transition-all hover:scale-105 block"
                 style={{ backgroundColor: 'rgba(255,255,255,0.06)', border: '1px solid rgba(201,168,76,0.15)' }}
               >
                 {feat.icon}
@@ -472,7 +477,7 @@ export default async function HomePage() {
                   {feat.label}
                 </p>
                 <p className="text-white/40 text-xs leading-relaxed">{feat.desc}</p>
-              </div>
+              </Link>
             ))}
           </div>
 

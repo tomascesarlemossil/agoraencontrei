@@ -7,9 +7,9 @@ import Link from 'next/link'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 
-const PLAN_CONFIG = {
+const PLAN_CONFIG: Record<string, { label: string; color: string; bg: string; border: string; badge: string; icon: any; price: string }> = {
   START: {
-    label: 'Start',
+    label: 'Free',
     color: '#6B7280',
     bg: 'bg-gray-50',
     border: 'border-gray-200',
@@ -18,22 +18,31 @@ const PLAN_CONFIG = {
     price: 'Gratuito',
   },
   PRIME: {
-    label: 'Prime',
+    label: 'Lite',
     color: '#C9A84C',
     bg: 'bg-amber-50',
     border: 'border-amber-200',
     badge: 'bg-amber-100 text-amber-700',
     icon: Star,
-    price: 'R$ 197/mês',
+    price: 'R$ 79,90/mês',
+  },
+  MODERADO: {
+    label: 'Moderado',
+    color: '#C9A84C',
+    bg: 'bg-amber-50',
+    border: 'border-amber-200',
+    badge: 'bg-amber-100 text-amber-700',
+    icon: Star,
+    price: 'R$ 279/mês',
   },
   VIP: {
-    label: 'VIP',
+    label: 'Pro',
     color: '#1B2B5B',
     bg: 'bg-blue-50',
     border: 'border-blue-200',
     badge: 'bg-blue-100 text-blue-800',
     icon: Crown,
-    price: 'R$ 497/mês',
+    price: 'R$ 499/mês',
   },
 }
 
@@ -125,7 +134,7 @@ export default function ParceirosPage() {
   }
 
   // MRR estimado
-  const mrr = (stats.byPlan.PRIME * 197) + (stats.byPlan.VIP * 497)
+  const mrr = (stats.byPlan.PRIME * 79.90) + ((stats.byPlan.MODERADO ?? 0) * 279) + (stats.byPlan.VIP * 499)
 
   // Filtrar lista
   const filtered = list.filter(s => {
@@ -231,7 +240,8 @@ export default function ParceirosPage() {
           const cfg = PLAN_CONFIG[plan]
           const Icon = cfg.icon
           const count = stats.byPlan[plan]
-          const revenue = plan === 'PRIME' ? count * 197 : plan === 'VIP' ? count * 497 : 0
+          const planPrices: Record<string, number> = { PRIME: 79.90, MODERADO: 279, VIP: 499 }
+          const revenue = (planPrices[plan] ?? 0) * count
           return (
             <button
               key={plan}

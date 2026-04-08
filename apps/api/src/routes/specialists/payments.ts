@@ -14,13 +14,15 @@ const ASAAS_BASE_URL = env.ASAAS_BASE_URL ?? 'https://www.asaas.com/api/v3'
 const ASAAS_API_KEY  = env.ASAAS_API_KEY  ?? ''
 
 const PLAN_PRICES: Record<string, number> = {
-  PRIME: 197,
-  VIP:   497,
+  PRIME:    79.90,
+  MODERADO: 279,
+  VIP:      499,
 }
 
 const PLAN_DESCRIPTIONS: Record<string, string> = {
-  PRIME: 'AgoraEncontrei Parceiros — Plano Prime (Mensal)',
-  VIP:   'AgoraEncontrei Parceiros — Plano VIP (Mensal)',
+  PRIME:    'AgoraEncontrei Parceiros — Plano Lite (Mensal)',
+  MODERADO: 'AgoraEncontrei Parceiros — Plano Moderado (Mensal)',
+  VIP:      'AgoraEncontrei Parceiros — Plano Pro (Mensal)',
 }
 
 async function asaasFetch<T>(path: string, options: RequestInit = {}): Promise<T> {

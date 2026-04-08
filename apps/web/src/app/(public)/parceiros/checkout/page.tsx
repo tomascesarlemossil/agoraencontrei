@@ -12,21 +12,38 @@ import {
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 
-const PLAN_INFO = {
+const PLAN_INFO: Record<string, { name: string; price: number; icon: React.ReactNode; color: string; bg: string; features: string[]; dashboardTools: { icon: string; name: string; desc: string }[] }> = {
   PRIME: {
-    name: 'Prime',
-    price: 197,
+    name: 'Lite',
+    price: 79.90,
     icon: <Star className="w-6 h-6 text-[#C9A84C]" />,
     color: '#C9A84C',
     bg: 'rgba(201,168,76,0.1)',
     features: [
-      'Perfil público verificado ✓',
+      'Até 10 anúncios ativos',
+      'Selo Verificado ✓',
       'Link de WhatsApp direto',
+      'Filtros de busca avançados',
       'Topo das buscas por bairro',
-      'Selo Verificado nos condomínios',
-      'Dashboard de analytics',
-      'Calculadora ROI de leilões',
-      'Alertas de oportunidades por e-mail',
+    ],
+    dashboardTools: [
+      { icon: '📊', name: 'Analytics', desc: 'Visualizações e cliques no WhatsApp' },
+      { icon: '🔍', name: 'Filtros', desc: 'Busca avançada por bairro e tipo' },
+    ],
+  },
+  MODERADO: {
+    name: 'Moderado',
+    price: 279,
+    icon: <Star className="w-6 h-6 text-[#C9A84C]" />,
+    color: '#C9A84C',
+    bg: 'rgba(201,168,76,0.1)',
+    features: [
+      'Até 30 anúncios ativos',
+      'I.A. de ROI (10 análises/mês)',
+      'Alertas de oportunidades',
+      'Selo Verificado ✓',
+      'Topo das buscas por bairro',
+      'Dashboard de analytics completo',
     ],
     dashboardTools: [
       { icon: '📊', name: 'Analytics', desc: 'Visualizações e cliques no WhatsApp' },
@@ -35,17 +52,19 @@ const PLAN_INFO = {
     ],
   },
   VIP: {
-    name: 'VIP',
-    price: 497,
+    name: 'Pro',
+    price: 499,
     icon: <Crown className="w-6 h-6 text-[#1B2B5B]" />,
     color: '#1B2B5B',
     bg: 'rgba(27,43,91,0.08)',
     features: [
-      'Tudo do Prime +',
-      'Sentinela territorial exclusiva',
-      'Relatório mensal de leads (PDF)',
+      'Até 100 anúncios ativos',
+      'I.A. Ilimitada (ROI + Fotos + Dossiês)',
+      'Edição de fotos profissional com I.A.',
+      'Alertas em tempo real',
       'Banner em condomínios de luxo',
-      'Suporte prioritário',
+      'Destaque no mapa de busca',
+      'Relatórios mensais de desempenho',
     ],
     dashboardTools: [
       { icon: '📊', name: 'Analytics', desc: 'Visualizações e cliques no WhatsApp' },
