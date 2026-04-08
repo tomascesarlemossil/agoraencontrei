@@ -13,6 +13,7 @@ import {
   Building2, Paintbrush, FormInput, Share2, History, CreditCard, Banknote,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { Upload } from 'lucide-react'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 
@@ -68,6 +69,83 @@ function Toggle({ label, hint, checked, onChange }: { label: string; hint?: stri
           checked ? 'translate-x-6' : 'translate-x-1'
         )} />
       </button>
+    </div>
+  )
+}
+
+function HeroImageUpload({ label, hint, currentUrl, onUpload }: { label: string; hint?: string; currentUrl: string; onUpload: (url: string) => void }) {
+  const { getValidToken } = useAuth()
+  const [uploading, setUploading] = useState(false)
+  const [preview, setPreview] = useState<string | null>(null)
+
+  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    // Preview local
+    const reader = new FileReader()
+    reader.onload = ev => setPreview(ev.target?.result as string)
+    reader.readAsDataURL(file)
+
+    // Upload
+    setUploading(true)
+    try {
+      const token = await getValidToken()
+      const fd = new FormData()
+      fd.append('file', file)
+      fd.append('folder', 'hero')
+      const res = await fetch(`${API_URL}/api/v1/upload`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: fd,
+      })
+      if (!res.ok) throw new Error('Erro no upload')
+      const data = await res.json()
+      onUpload(data.url)
+      setPreview(null)
+    } catch (err) {
+      console.error('Upload failed:', err)
+    }
+    setUploading(false)
+  }
+
+  const displayUrl = preview || currentUrl
+  return (
+    <div>
+      <label className="text-xs font-semibold text-white/70 mb-1.5 block">{label}</label>
+      {hint && <p className="text-xs text-white/30 mb-2">{hint}</p>}
+      <div className="flex gap-3 items-start">
+        <div className="flex-1">
+          {displayUrl ? (
+            <div className="relative rounded-xl overflow-hidden border border-white/10 bg-white/5">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={displayUrl} alt={label} className="w-full h-32 object-cover" />
+              {uploading && (
+                <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                  <Loader2 className="w-6 h-6 animate-spin text-yellow-400" />
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="w-full h-32 rounded-xl border-2 border-dashed border-white/20 flex items-center justify-center bg-white/5">
+              <p className="text-xs text-white/30">Nenhuma imagem</p>
+            </div>
+          )}
+        </div>
+        <div className="flex flex-col gap-2">
+          <label className="cursor-pointer inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-yellow-400/10 border border-yellow-400/30 text-yellow-400 text-xs font-bold hover:bg-yellow-400/20 transition">
+            <Upload className="w-4 h-4" />
+            {uploading ? 'Enviando...' : 'Upload'}
+            <input type="file" accept="image/*" onChange={handleFile} className="hidden" disabled={uploading} />
+          </label>
+          <DarkInput
+            placeholder="Ou cole uma URL"
+            value={currentUrl}
+            onChange={e => onUpload((e.target as HTMLInputElement).value)}
+            className="!text-xs !py-1.5"
+          />
+        </div>
+      </div>
     </div>
   )
 }
@@ -297,19 +375,46 @@ export function SystemConfigPanel() {
                     >
                       <option value="youtube">YouTube</option>
                       <option value="upload">Vídeo enviado</option>
-                      <option value="image">Imagem</option>
+                      <option value="image">Imagem (Desktop + Mobile)</option>
                       <option value="none">Sem fundo (cor sólida)</option>
                     </select>
                   </div>
                   <DarkInput
-                    label="URL do vídeo/imagem"
+                    label="URL do vídeo (se YouTube ou upload)"
                     value={cfg.site?.heroVideoUrl ?? ''}
                     onChange={e => updateCfg('site', 'heroVideoUrl', e.target.value)}
                     placeholder="https://youtube.com/watch?v=..."
                   />
                 </div>
+
+                {/* ── Imagens de fundo separadas: Desktop e Mobile ── */}
+                <div className="bg-white/5 rounded-xl border border-white/10 p-4 space-y-4">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Monitor className="w-4 h-4 text-yellow-400" />
+                    <span className="text-xs font-bold text-white/80">Imagens de Fundo do Hero (Desktop &amp; Mobile)</span>
+                  </div>
+                  <p className="text-xs text-white/40">
+                    Faça upload de imagens separadas para desktop (horizontal, ~1920x1080) e mobile (vertical, ~828x1472).
+                    Se configurado, essas imagens tem prioridade sobre o vídeo quando o tipo for &quot;Imagem&quot;.
+                  </p>
+                  <div className="grid grid-cols-2 gap-4">
+                    <HeroImageUpload
+                      label="Imagem Desktop"
+                      hint="Formato paisagem (ex: 1920x1080)"
+                      currentUrl={cfg.site?.heroDesktopImageUrl ?? ''}
+                      onUpload={url => updateCfg('site', 'heroDesktopImageUrl', url)}
+                    />
+                    <HeroImageUpload
+                      label="Imagem Mobile"
+                      hint="Formato retrato (ex: 828x1472)"
+                      currentUrl={cfg.site?.heroMobileImageUrl ?? ''}
+                      onUpload={url => updateCfg('site', 'heroMobileImageUrl', url)}
+                    />
+                  </div>
+                </div>
+
                 <DarkInput
-                  label="URL de imagem de fundo alternativa"
+                  label="URL de imagem de fundo alternativa (fallback)"
                   value={cfg.site?.heroImageUrl ?? ''}
                   onChange={e => updateCfg('site', 'heroImageUrl', e.target.value)}
                   placeholder="https://..."

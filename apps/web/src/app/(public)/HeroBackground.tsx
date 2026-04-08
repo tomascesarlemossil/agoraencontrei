@@ -13,9 +13,11 @@ function extractYouTubeId(url: string): string {
 interface Props {
   videoUrl?: string | null
   videoType?: string | null
+  heroDesktopImageUrl?: string | null
+  heroMobileImageUrl?: string | null
 }
 
-export function HeroBackground({ videoUrl, videoType }: Props) {
+export function HeroBackground({ videoUrl, videoType, heroDesktopImageUrl, heroMobileImageUrl }: Props) {
   const isUpload = videoType === 'upload'
   const isImage = videoType === 'image'
   const [isMobile, setIsMobile] = useState(false)
@@ -43,16 +45,15 @@ export function HeroBackground({ videoUrl, videoType }: Props) {
   }, [])
 
   // ── Modo imagem (padrão quando não há vídeo configurado) ──────────────────
-  // Desktop: hero-bg-desktop.jpg | Mobile: hero-bg-mobile.jpg (fallback: desktop)
-  const desktopSrc = (isImage && videoUrl) ? videoUrl : '/hero-bg-desktop.jpg'
-  const mobileSrc = '/hero-bg-mobile.jpg'
+  // Prioridade: URLs do admin > arquivos estáticos > fallback
+  const desktopSrc = heroDesktopImageUrl || '/hero-bg-desktop.jpg'
+  const mobileSrc = heroMobileImageUrl || '/hero-bg-mobile.jpg'
   const heroBannerSrc = isMobile ? mobileSrc : desktopSrc
   const useImageBg = isImage || (!videoUrl && !isUpload)
 
   if (useImageBg) {
     return (
       <div className="absolute inset-0 overflow-hidden">
-        {/* Imagem de fundo — versões separadas desktop/mobile */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={heroBannerSrc}
@@ -68,10 +69,12 @@ export function HeroBackground({ videoUrl, videoType }: Props) {
           loading="eager"
           fetchPriority="high"
           onError={(e) => {
-            // Fallback: se mobile não existir, usa desktop
+            // Fallback chain: mobile → desktop → hero-banner.jpg
             const img = e.target as HTMLImageElement
             if (img.src.includes('hero-bg-mobile')) {
               img.src = desktopSrc
+            } else if (!img.src.includes('hero-banner.jpg')) {
+              img.src = '/hero-banner.jpg'
             }
           }}
         />
@@ -117,7 +120,6 @@ export function HeroBackground({ videoUrl, videoType }: Props) {
             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
           />
         ) : isMobile ? (
-          // No mobile: thumbnail do YouTube (evita iframe pesado)
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={thumbUrl}

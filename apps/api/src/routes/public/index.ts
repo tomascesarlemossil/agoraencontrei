@@ -811,6 +811,8 @@ export default async function publicRoutes(app: FastifyInstance) {
       heroVideoType: settings.heroVideoType ?? siteConfig.heroVideoType ?? 'youtube',
       logoUrl:       settings.logoUrl       ?? company.logoUrl          ?? null,
       heroImageUrl:  settings.heroImageUrl  ?? siteConfig.heroImageUrl  ?? null,
+      heroDesktopImageUrl: siteConfig.heroDesktopImageUrl ?? null,
+      heroMobileImageUrl:  siteConfig.heroMobileImageUrl  ?? null,
       // ── Empresa ──────────────────────────────────────────────────────
       companyName:    company.tradeName || company.name,
       companyPhone:   company.phone    ?? '',

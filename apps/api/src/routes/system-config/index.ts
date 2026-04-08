@@ -48,6 +48,8 @@ export const DEFAULT_SYSTEM_CONFIG = {
     heroVideoUrl:      '',
     heroVideoType:     'youtube',
     heroImageUrl:      '',
+    heroDesktopImageUrl: '',
+    heroMobileImageUrl:  '',
     heroBadge:         'Mais de 20 anos de tradição em Franca/SP',
     heroTitle:         'Encontre o imóvel',
     heroTitleHighlight:'dos seus sonhos',
