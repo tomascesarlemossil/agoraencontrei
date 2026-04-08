@@ -903,6 +903,9 @@ export default async function publicRoutes(app: FastifyInstance) {
       presentationBannerLink: siteConfig.presentationBannerLink ?? null,
       presentationTitle:      siteConfig.presentationTitle      ?? null,
       presentationSubtitle:   siteConfig.presentationSubtitle   ?? null,
+      // ── Cidade Master ─────────────────────────────────────────────────────
+      masterCity:  siteConfig.masterCity  ?? 'Franca',
+      masterState: siteConfig.masterState ?? 'SP',
     };
     await cacheSet(app.redis, cacheKey, siteSettingsResult, 600); // 10 min cache
     return reply.send(siteSettingsResult);

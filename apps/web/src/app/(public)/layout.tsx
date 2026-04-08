@@ -5,18 +5,47 @@ import { Navbar } from '@/components/public/Navbar'
 import { FloatingChatbot } from '@/components/chat/FloatingChatbot'
 import { SkipNav } from '@/components/SkipNav'
 
-export const metadata: Metadata = {
-  title: {
-    template: '%s | AgoraEncontrei Marketplace',
-    default: 'AgoraEncontrei — Marketplace Imobiliário de Franca/SP',
-  },
-  description: 'AgoraEncontrei é o marketplace imobiliário de Franca e região. Compra, venda e locação de imóveis com a Imobiliária Lemos e parceiros. Criado pela Imobiliária Lemos, referência desde 2002.',
-  metadataBase: new URL('https://www.agoraencontrei.com.br'),
-  keywords: 'imóveis franca, casas franca, apartamentos franca, terrenos franca, imobiliária franca, comprar imóvel franca, alugar imóvel franca, financiamento imobiliário, leilão imóvel, imobiliária lemos, aluguel franca sp, investimento imóvel franca, marketplace imobiliário franca, agoraencontrei',
-  authors: [{ name: 'AgoraEncontrei Marketplace', url: 'https://www.agoraencontrei.com.br' }],
-  creator: 'AgoraEncontrei — Imobiliária Lemos',
-  publisher: 'AgoraEncontrei Marketplace',
-  robots: { index: true, follow: true, googleBot: { index: true, follow: true } },
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
+const WEB_URL = 'https://www.agoraencontrei.com.br'
+
+async function fetchSeoSettings() {
+  try {
+    const res = await fetch(`${API_URL}/api/v1/public/site-settings`, { next: { revalidate: 300 } })
+    if (!res.ok) return null
+    return res.json()
+  } catch { return null }
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await fetchSeoSettings()
+
+  return {
+    title: {
+      template: '%s | AgoraEncontrei Marketplace',
+      default: settings?.seoTitle || 'AgoraEncontrei — Marketplace Imobiliário de Franca/SP',
+    },
+    description: settings?.seoDescription || 'AgoraEncontrei é o marketplace imobiliário de Franca e região. Compra, venda e locação de imóveis com a Imobiliária Lemos e parceiros.',
+    metadataBase: new URL(WEB_URL),
+    keywords: settings?.seoKeywords?.length
+      ? settings.seoKeywords
+      : 'imóveis franca, casas franca, apartamentos franca, terrenos franca, imobiliária franca, comprar imóvel franca, alugar imóvel franca, marketplace imobiliário franca, agoraencontrei',
+    authors: [{ name: 'AgoraEncontrei Marketplace', url: WEB_URL }],
+    creator: 'AgoraEncontrei — Imobiliária Lemos',
+    publisher: 'AgoraEncontrei Marketplace',
+    robots: { index: true, follow: true, googleBot: { index: true, follow: true } },
+    alternates: { canonical: settings?.seoCanonical || WEB_URL },
+    openGraph: {
+      title: settings?.seoTitle || 'AgoraEncontrei — Marketplace Imobiliário de Franca/SP',
+      description: settings?.seoDescription || 'Marketplace imobiliário de Franca e região.',
+      type: 'website',
+      locale: 'pt_BR',
+      siteName: 'AgoraEncontrei',
+      images: settings?.seoOgImage ? [{ url: settings.seoOgImage }] : [{ url: '/og-image.jpg' }],
+    },
+    verification: {
+      google: settings?.seoGoogleSiteVerify || undefined,
+    },
+  }
 }
 
 const FOOTER_IMOVEIS = [
