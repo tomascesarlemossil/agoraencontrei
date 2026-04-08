@@ -5,7 +5,7 @@ import { FRANCA_NEIGHBORHOODS_SEO } from '@/data/seo-locations'
 import { MapPin, Home, Building2, Search, Star, Phone, ArrowRight, CheckCircle2 } from 'lucide-react'
 
 interface Props {
-  params: { slug: string }
+  params: Promise<{ slug: string }>
 }
 
 function getNeighborhood(slug: string) {
@@ -16,7 +16,8 @@ export async function generateStaticParams() {
   return FRANCA_NEIGHBORHOODS_SEO.map(n => ({ slug: n.slug }))
 }
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+export async function generateMetadata(props: Props): Promise<Metadata> {
+  const params = await props.params
   const neighborhood = getNeighborhood(params.slug)
   if (!neighborhood) return {}
 
@@ -42,7 +43,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
-export default function NeighborhoodPage({ params }: Props) {
+export default async function NeighborhoodPage(props: Props) {
+  const params = await props.params
   const neighborhood = getNeighborhood(params.slug)
   if (!neighborhood) notFound()
 

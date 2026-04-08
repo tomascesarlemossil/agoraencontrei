@@ -21,11 +21,8 @@ export function generateStaticParams() {
   }))
 }
 
-export async function generateMetadata({
-  params,
-}: {
-  params: { estado: string; cidade: string; bairro: string }
-}): Promise<Metadata> {
+export async function generateMetadata(props: { params: Promise<{ estado: string; cidade: string; bairro: string }> }): Promise<Metadata> {
+  const params = await props.params
   const bairro = BAIRRO_BY_SLUG[params.bairro]
   const city = IBGE_CITY_BY_SLUG[params.cidade]
   if (!bairro || !city) return {}
@@ -52,11 +49,8 @@ const zonaColors: Record<string, { bg: string; text: string; label: string }> = 
   misto: { bg: 'bg-gray-100', text: 'text-gray-800', label: 'Zona Mista' },
 }
 
-export default function BairroPage({
-  params,
-}: {
-  params: { estado: string; cidade: string; bairro: string }
-}) {
+export default async function BairroPage(props: { params: Promise<{ estado: string; cidade: string; bairro: string }> }) {
+  const params = await props.params
   const bairro = BAIRRO_BY_SLUG[params.bairro]
   const city = IBGE_CITY_BY_SLUG[params.cidade]
   if (!bairro || !city) notFound()

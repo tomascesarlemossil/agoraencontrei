@@ -151,7 +151,8 @@ async function fetchProperty(slug: string) {
   } catch { return null }
 }
 
-export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
+export async function generateMetadata(props: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const params = await props.params
   const p = await fetchProperty(params.slug)
   if (!p) return { title: 'Imóvel não encontrado' }
   const title = p.metaTitle || `${p.title} | Imobiliária Lemos`
@@ -333,7 +334,8 @@ function organizeFeatures(features: string[]): { label: string; items: string[] 
   return categorized
 }
 
-export default async function PropertyDetailPage({ params }: { params: { slug: string } }) {
+export default async function PropertyDetailPage(props: { params: Promise<{ slug: string }> }) {
+  const params = await props.params
   const property = await fetchProperty(params.slug)
   if (!property) notFound()
 

@@ -10,7 +10,8 @@ export const revalidate = 86400
 
 // ISR: gera on-demand, sem generateStaticParams
 
-export async function generateMetadata({ params }: { params: { cidade: string } }): Promise<Metadata> {
+export async function generateMetadata(props: { params: Promise<{ cidade: string }> }): Promise<Metadata> {
+  const params = await props.params
   const city = UNIQUE_CITIES.find(c => c.slug === params.cidade)
   if (!city) return { title: 'Imóveis em Leilão | AgoraEncontrei' }
   return {
@@ -31,7 +32,8 @@ async function fetchProps(cityName: string) {
 
 function fmt(v: number) { return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(v) }
 
-export default async function LeilaoCidadePage({ params }: { params: { cidade: string } }) {
+export default async function LeilaoCidadePage(props: { params: Promise<{ cidade: string }> }) {
+  const params = await props.params
   const city = UNIQUE_CITIES.find(c => c.slug === params.cidade)
   if (!city) return <div className="min-h-screen flex items-center justify-center"><h1 className="text-xl">Cidade não encontrada</h1></div>
   const properties = await fetchProps(city.name)

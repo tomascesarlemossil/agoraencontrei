@@ -36,11 +36,8 @@ export async function generateStaticParams() {
   return params
 }
 
-export async function generateMetadata({
-  params,
-}: {
-  params: { estado: string; cidade: string; cluster: string }
-}): Promise<Metadata> {
+export async function generateMetadata(props: { params: Promise<{ estado: string; cidade: string; cluster: string }> }): Promise<Metadata> {
+  const params = await props.params
   const city = IBGE_CITY_BY_SLUG[params.cidade]
   if (!city || city.stateSlug !== params.estado) return {}
   const guia = GUIAS[params.cluster]
@@ -66,11 +63,8 @@ export async function generateMetadata({
 
 export const revalidate = 86400
 
-export default function GuiaCidadePage({
-  params,
-}: {
-  params: { estado: string; cidade: string; cluster: string }
-}) {
+export default async function GuiaCidadePage(props: { params: Promise<{ estado: string; cidade: string; cluster: string }> }) {
+  const params = await props.params
   const city = IBGE_CITY_BY_SLUG[params.cidade]
   if (!city || city.stateSlug !== params.estado) notFound()
   const guia = GUIAS[params.cluster]

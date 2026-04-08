@@ -129,9 +129,10 @@ function categoryColor(cat: string): string {
   return 'bg-yellow-100 text-yellow-800'
 }
 
-type Props = { params: { cidade: string } }
+type Props = { params: Promise<{ cidade: string }> }
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+export async function generateMetadata(props: Props): Promise<Metadata> {
+  const params = await props.params
   const city = CITY_DATA[params.cidade]
   if (!city) return { title: 'Custo de Vida | AgoraEncontrei' }
 
@@ -156,7 +157,8 @@ export function generateStaticParams() {
   return Object.keys(CITY_DATA).map(cidade => ({ cidade }))
 }
 
-export default function CustoDeVidaPage({ params }: Props) {
+export default async function CustoDeVidaPage(props: Props) {
+  const params = await props.params
   const city = CITY_DATA[params.cidade]
   if (!city) {
     return (

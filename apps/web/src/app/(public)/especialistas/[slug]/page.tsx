@@ -35,7 +35,8 @@ async function getSpecialist(slug: string) {
   }
 }
 
-export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
+export async function generateMetadata(props: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const params = await props.params
   const specialist = await getSpecialist(params.slug)
   if (!specialist) return { title: 'Especialista não encontrado' }
 
@@ -61,7 +62,8 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   }
 }
 
-export default async function EspecialistaPage({ params }: { params: { slug: string } }) {
+export default async function EspecialistaPage(props: { params: Promise<{ slug: string }> }) {
+  const params = await props.params
   const specialist = await getSpecialist(params.slug)
   if (!specialist) notFound()
 

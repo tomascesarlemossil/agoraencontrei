@@ -43,13 +43,14 @@ function fmt(v: number) {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(v)
 }
 
-type Props = { params: { slug: string } }
+type Props = { params: Promise<{ slug: string }> }
 
 export function generateStaticParams() {
   return Object.keys(LOCATIONS).map(slug => ({ slug }))
 }
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+export async function generateMetadata(props: Props): Promise<Metadata> {
+  const params = await props.params
   const loc = LOCATIONS[params.slug]
   if (!loc) return { title: 'Leilão de Imóveis | AgoraEncontrei' }
   return {
@@ -90,7 +91,8 @@ async function fetchAuctions(bairro: string, cidade: string) {
   return []
 }
 
-export default async function LeilaoBairroPage({ params }: Props) {
+export default async function LeilaoBairroPage(props: Props) {
+  const params = await props.params
   const loc = LOCATIONS[params.slug]
   if (!loc) {
     return (
