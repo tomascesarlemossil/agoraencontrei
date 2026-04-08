@@ -335,26 +335,53 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
     loadAuctions()
   }, [])
 
-  // Inject MapLibre CSS via link tag (reliable across all build configs)
+  // Inject MapLibre CSS + critical inline styles
   useEffect(() => {
-    if (document.getElementById('maplibre-gl-css')) return
-    const link = document.createElement('link')
-    link.id = 'maplibre-gl-css'
-    link.rel = 'stylesheet'
-    link.href = 'https://unpkg.com/maplibre-gl@5/dist/maplibre-gl.css'
-    document.head.appendChild(link)
+    // Critical inline CSS for canvas positioning (no network needed)
+    if (!document.getElementById('maplibre-critical-css')) {
+      const style = document.createElement('style')
+      style.id = 'maplibre-critical-css'
+      style.textContent = `.maplibregl-map{overflow:hidden;position:relative;-webkit-tap-highlight-color:rgba(0,0,0,0)}.maplibregl-canvas-container{position:absolute;top:0;bottom:0;width:100%}.maplibregl-canvas{position:absolute;left:0;top:0}`
+      document.head.appendChild(style)
+    }
+    // Full CSS from CDN
+    if (!document.getElementById('maplibre-gl-css')) {
+      const link = document.createElement('link')
+      link.id = 'maplibre-gl-css'
+      link.rel = 'stylesheet'
+      link.href = 'https://unpkg.com/maplibre-gl@5/dist/maplibre-gl.css'
+      document.head.appendChild(link)
+    }
   }, [])
 
   // Initialize MapLibre GL map
   useEffect(() => {
     if (!mapRef.current || mapInstance.current) return
 
+    // Inline raster tile style — no external style URL dependency
+    const mapStyle: any = {
+      version: 8,
+      sources: {
+        'osm': {
+          type: 'raster',
+          tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+          tileSize: 256,
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+        },
+      },
+      layers: [{ id: 'osm-tiles', type: 'raster', source: 'osm' }],
+    }
+
     import('maplibre-gl').then(mod => {
-      const maplibregl = mod.default || mod
+      const maplibregl: any = mod.default || mod
+      if (typeof maplibregl?.Map !== 'function') {
+        setMapError(`MapLibre não carregou. Keys: ${Object.keys(mod).join(',')}`)
+        return
+      }
       try {
         const map = new maplibregl.Map({
           container: mapRef.current!,
-          style: 'https://tiles.openfreemap.org/styles/bright',
+          style: mapStyle,
           center: [FRANCA_CENTER[1], FRANCA_CENTER[0]], // MapLibre uses [lng, lat]
           zoom: 13,
         })
@@ -440,7 +467,7 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
         })
 
         // Click auction cluster → zoom in
-        map.on('click', 'auction-clusters', (e) => {
+        map.on('click', 'auction-clusters', (e: any) => {
           const features = map.queryRenderedFeatures(e.point, { layers: ['auction-clusters'] })
           if (!features.length) return
           const clusterId = features[0].properties.cluster_id
@@ -450,7 +477,7 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
         })
 
         // Click individual auction → select it
-        map.on('click', 'auction-unclustered', (e) => {
+        map.on('click', 'auction-unclustered', (e: any) => {
           if (!e.features?.length) return
           const id = e.features[0].properties?.id as string
           if (id) {

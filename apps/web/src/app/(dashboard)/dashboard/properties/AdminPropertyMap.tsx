@@ -166,12 +166,19 @@ export default function AdminPropertyMap({ statusFilter, purposeFilter, searchFi
 
   // Inject MapLibre CSS
   useEffect(() => {
-    if (document.getElementById('maplibre-gl-css')) return
-    const link = document.createElement('link')
-    link.id = 'maplibre-gl-css'
-    link.rel = 'stylesheet'
-    link.href = 'https://unpkg.com/maplibre-gl@5/dist/maplibre-gl.css'
-    document.head.appendChild(link)
+    if (!document.getElementById('maplibre-critical-css')) {
+      const style = document.createElement('style')
+      style.id = 'maplibre-critical-css'
+      style.textContent = `.maplibregl-map{overflow:hidden;position:relative;-webkit-tap-highlight-color:rgba(0,0,0,0)}.maplibregl-canvas-container{position:absolute;top:0;bottom:0;width:100%}.maplibregl-canvas{position:absolute;left:0;top:0}`
+      document.head.appendChild(style)
+    }
+    if (!document.getElementById('maplibre-gl-css')) {
+      const link = document.createElement('link')
+      link.id = 'maplibre-gl-css'
+      link.rel = 'stylesheet'
+      link.href = 'https://unpkg.com/maplibre-gl@5/dist/maplibre-gl.css'
+      document.head.appendChild(link)
+    }
   }, [])
 
   // Initialize or update MapLibre map
@@ -180,7 +187,7 @@ export default function AdminPropertyMap({ statusFilter, purposeFilter, searchFi
 
     async function initOrUpdateMap() {
       const mod = await import('maplibre-gl')
-      const maplibregl = mod.default || mod
+      const maplibregl: any = mod.default || mod
 
       // Build GeoJSON features
       const features = pins.map(p => ({
@@ -226,7 +233,7 @@ export default function AdminPropertyMap({ statusFilter, purposeFilter, searchFi
       // Create new map
       const map = new maplibregl.Map({
         container: mapRef.current!,
-        style: 'https://tiles.openfreemap.org/styles/bright',
+        style: { version: 8, sources: { 'osm': { type: 'raster', tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'], tileSize: 256, attribution: '&copy; OpenStreetMap' } }, layers: [{ id: 'osm-tiles', type: 'raster', source: 'osm' }] } as any,
         center: [-47.4008, -20.5386],
         zoom: 13,
         attributionControl: {},
@@ -300,7 +307,7 @@ export default function AdminPropertyMap({ statusFilter, purposeFilter, searchFi
         })
 
         // Click cluster → zoom in
-        map.on('click', 'clusters', (e) => {
+        map.on('click', 'clusters', (e: any) => {
           const features = map.queryRenderedFeatures(e.point, { layers: ['clusters'] })
           if (!features.length) return
           const clusterId = features[0].properties.cluster_id
@@ -311,7 +318,7 @@ export default function AdminPropertyMap({ statusFilter, purposeFilter, searchFi
         })
 
         // Click property → show popup
-        map.on('click', 'unclustered-point', (e) => {
+        map.on('click', 'unclustered-point', (e: any) => {
           if (!e.features?.length) return
           const f = e.features[0]
           const coords = (f.geometry as any).coordinates.slice()

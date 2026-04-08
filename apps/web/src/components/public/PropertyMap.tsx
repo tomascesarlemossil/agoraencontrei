@@ -21,12 +21,19 @@ export function PropertyMap({ latitude, longitude, city, neighborhood, state, la
 
   // Inject MapLibre CSS
   useEffect(() => {
-    if (document.getElementById('maplibre-gl-css')) return
-    const link = document.createElement('link')
-    link.id = 'maplibre-gl-css'
-    link.rel = 'stylesheet'
-    link.href = 'https://unpkg.com/maplibre-gl@5/dist/maplibre-gl.css'
-    document.head.appendChild(link)
+    if (!document.getElementById('maplibre-critical-css')) {
+      const style = document.createElement('style')
+      style.id = 'maplibre-critical-css'
+      style.textContent = `.maplibregl-map{overflow:hidden;position:relative;-webkit-tap-highlight-color:rgba(0,0,0,0)}.maplibregl-canvas-container{position:absolute;top:0;bottom:0;width:100%}.maplibregl-canvas{position:absolute;left:0;top:0}`
+      document.head.appendChild(style)
+    }
+    if (!document.getElementById('maplibre-gl-css')) {
+      const link = document.createElement('link')
+      link.id = 'maplibre-gl-css'
+      link.rel = 'stylesheet'
+      link.href = 'https://unpkg.com/maplibre-gl@5/dist/maplibre-gl.css'
+      document.head.appendChild(link)
+    }
   }, [])
 
   useEffect(() => {
@@ -35,7 +42,7 @@ export function PropertyMap({ latitude, longitude, city, neighborhood, state, la
     async function initMap() {
       try {
         const mod = await import('maplibre-gl')
-        const maplibregl = mod.default || mod
+        const maplibregl: any = mod.default || mod
 
         let lat = latitude
         let lng = longitude
@@ -62,9 +69,15 @@ export function PropertyMap({ latitude, longitude, city, neighborhood, state, la
 
         if (mapInstance.current) return
 
+        const mapStyle: any = {
+          version: 8,
+          sources: { 'osm': { type: 'raster', tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'], tileSize: 256, attribution: '&copy; OpenStreetMap' } },
+          layers: [{ id: 'osm-tiles', type: 'raster', source: 'osm' }],
+        }
+
         const map = new maplibregl.Map({
           container: mapRef.current,
-          style: 'https://tiles.openfreemap.org/styles/bright',
+          style: mapStyle,
           center: [lng, lat],
           zoom: showExactLocation ? 17 : 15,
           pitch: 0,
