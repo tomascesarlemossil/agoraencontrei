@@ -117,6 +117,10 @@ export const DEFAULT_SYSTEM_CONFIG = {
     footerCopyright:   'Imobiliária Lemos. Todos os direitos reservados.',
     footerAddress:     'Franca — SP',
 
+    // Cidade Master (prioridade nas buscas)
+    masterCity:         'Franca',
+    masterState:        'SP',
+
     // Manutenção
     maintenanceMode:    false,
     maintenanceMessage: 'Site em manutenção. Voltamos em breve.',
@@ -371,6 +375,76 @@ export const DEFAULT_SYSTEM_CONFIG = {
     // Hotjar / Clarity
     hotjarId:                     '',
     clarityId:                    '',
+    // MapTiler / Maps
+    maptilerApiKey:               '',
+    // SendGrid / Resend
+    sendgridApiKey:               '',
+    resendApiKey:                 '',
+  },
+
+  // ── Planos & Preços (SaaS) ─────────────────────────────────────────────────
+  pricing: {
+    // Cidade prioritária nas buscas
+    masterCity:      'Franca',
+    masterState:     'SP',
+    scrapingRadius:  50,
+
+    // Planos
+    plans: [
+      {
+        id:          'FREE',
+        name:        'Free',
+        price:       0,
+        maxListings: 1,
+        features:    ['1 anúncio grátis', 'Acesso básico ao mapa', 'Perfil público'],
+        aiQuota:     0,
+        active:      true,
+      },
+      {
+        id:          'LITE',
+        name:        'Lite',
+        price:       79.90,
+        maxListings: 10,
+        features:    ['Até 10 anúncios', 'Filtros avançados', 'Selo Verificado', 'WhatsApp direto'],
+        aiQuota:     0,
+        active:      true,
+      },
+      {
+        id:          'MODERADO',
+        name:        'Moderado',
+        price:       279,
+        maxListings: 30,
+        features:    ['Até 30 anúncios', 'I.A. de ROI (10/mês)', 'Alertas', 'Analytics completo'],
+        aiQuota:     10,
+        active:      true,
+      },
+      {
+        id:          'PRO',
+        name:        'Pro',
+        price:       499,
+        maxListings: 100,
+        features:    ['Até 100 anúncios', 'I.A. Ilimitada', 'Edição de fotos I.A.', 'Relatórios mensais', 'Banner exclusivo'],
+        aiQuota:     -1,
+        active:      true,
+      },
+      {
+        id:          'BUSINESS',
+        name:        'Business',
+        price:       0,
+        maxListings: -1,
+        features:    ['Anúncios ilimitados', 'Gestão de Carteira', 'Loteamentos', 'API completa', 'Site próprio'],
+        aiQuota:     -1,
+        active:      true,
+        customPrice: true,
+      },
+    ],
+
+    // Add-ons avulsos
+    addons: [
+      { id: 'AI_PHOTOS',  name: 'I.A. de Fotos (30 dias)',       price: 49.90 },
+      { id: 'DOSSIE',     name: 'Dossiê de Leilão (unidade)',    price: 29.90 },
+      { id: 'LOTEAMENTO', name: 'Gestão de Loteamento (mensal)', price: 199 },
+    ],
   },
 
   // ── Empresa ────────────────────────────────────────────────────────────────────

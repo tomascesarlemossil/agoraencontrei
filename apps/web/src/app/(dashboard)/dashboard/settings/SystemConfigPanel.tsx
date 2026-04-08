@@ -234,6 +234,8 @@ function ThemeSelector({ value, onChange }: { value: string; onChange: (id: stri
 // ── Sub-abas do painel ────────────────────────────────────────────────────────
 const SUB_TABS = [
   { id: 'empresa',       label: 'Empresa',           icon: Building2 },
+  { id: 'planos',        label: 'Planos & Preços',   icon: CreditCard },
+  { id: 'integracoes',   label: 'Integrações',       icon: Zap },
   { id: 'temas',         label: 'Temas do Site',     icon: Palette },
   { id: 'seo',           label: 'SEO & Google',      icon: Search },
   { id: 'site-texts',    label: 'Textos & Seções',   icon: FileText },
@@ -347,6 +349,193 @@ export function SystemConfigPanel() {
 
       {/* Conteúdo */}
       <div className="flex-1 space-y-4 min-w-0">
+
+        {/* ── PLANOS & PREÇOS ──────────────────────────────────────────── */}
+        {subTab === 'planos' && (
+          <div className="space-y-4">
+            <div>
+              <h2 className="text-base font-bold text-white mb-1">Planos & Preços SaaS</h2>
+              <p className="text-xs text-white/40">Gerencie os planos, valores e benefícios que aparecem na página de vendas. Alterações são aplicadas instantaneamente.</p>
+            </div>
+
+            <Section title="Cidade Master (Prioridade de Busca)" icon={MapPin} collapsible={false}>
+              <div className="space-y-3">
+                <p className="text-xs text-white/40">Imóveis desta cidade aparecem sempre no topo das buscas e leilões.</p>
+                <div className="grid grid-cols-3 gap-3">
+                  <DarkInput label="Cidade Master" value={cfg.pricing?.masterCity ?? 'Franca'} onChange={e => updateCfg('pricing', 'masterCity', e.target.value)} />
+                  <DarkInput label="Estado" value={cfg.pricing?.masterState ?? 'SP'} onChange={e => updateCfg('pricing', 'masterState', e.target.value)} />
+                  <DarkInput label="Raio de scraping (km)" type="number" value={cfg.pricing?.scrapingRadius ?? 50} onChange={e => updateCfg('pricing', 'scrapingRadius', Number(e.target.value))} />
+                </div>
+                <SaveButton onClick={() => save('pricing')} isPending={saveMutation.isPending} saved={saved} />
+              </div>
+            </Section>
+
+            {(cfg.pricing?.plans ?? []).map((plan: any, idx: number) => (
+              <Section key={plan.id} title={`${plan.name} — R$ ${plan.customPrice ? 'Sob Consulta' : plan.price?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`} icon={CreditCard}>
+                <div className="space-y-3">
+                  <div className="grid grid-cols-3 gap-3">
+                    <DarkInput label="Nome do plano" value={plan.name} onChange={e => {
+                      const plans = [...(cfg.pricing?.plans ?? [])]
+                      plans[idx] = { ...plans[idx], name: e.target.value }
+                      updateCfg('pricing', 'plans', plans)
+                    }} />
+                    <DarkInput label="Preço mensal (R$)" type="number" step="0.01" value={plan.price} onChange={e => {
+                      const plans = [...(cfg.pricing?.plans ?? [])]
+                      plans[idx] = { ...plans[idx], price: parseFloat(e.target.value) || 0 }
+                      updateCfg('pricing', 'plans', plans)
+                    }} />
+                    <DarkInput label="Máx. anúncios (-1 = ilimitado)" type="number" value={plan.maxListings} onChange={e => {
+                      const plans = [...(cfg.pricing?.plans ?? [])]
+                      plans[idx] = { ...plans[idx], maxListings: parseInt(e.target.value) || 0 }
+                      updateCfg('pricing', 'plans', plans)
+                    }} />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <DarkInput label="Cota de I.A. por mês (-1 = ilimitado)" type="number" value={plan.aiQuota} onChange={e => {
+                      const plans = [...(cfg.pricing?.plans ?? [])]
+                      plans[idx] = { ...plans[idx], aiQuota: parseInt(e.target.value) || 0 }
+                      updateCfg('pricing', 'plans', plans)
+                    }} />
+                    <div>
+                      <Toggle label="Plano ativo" checked={plan.active ?? true} onChange={v => {
+                        const plans = [...(cfg.pricing?.plans ?? [])]
+                        plans[idx] = { ...plans[idx], active: v }
+                        updateCfg('pricing', 'plans', plans)
+                      }} />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-white/70 mb-1.5 block">Benefícios (um por linha)</label>
+                    <textarea
+                      value={(plan.features ?? []).join('\n')}
+                      onChange={e => {
+                        const plans = [...(cfg.pricing?.plans ?? [])]
+                        plans[idx] = { ...plans[idx], features: e.target.value.split('\n').filter(Boolean) }
+                        updateCfg('pricing', 'plans', plans)
+                      }}
+                      rows={4}
+                      className="bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-white/40 outline-none focus:border-yellow-400/50 w-full resize-none"
+                    />
+                  </div>
+                </div>
+              </Section>
+            ))}
+
+            <Section title="Add-ons Avulsos" icon={Banknote}>
+              <div className="space-y-3">
+                {(cfg.pricing?.addons ?? []).map((addon: any, idx: number) => (
+                  <div key={addon.id} className="grid grid-cols-3 gap-3">
+                    <DarkInput label="Nome" value={addon.name} onChange={e => {
+                      const addons = [...(cfg.pricing?.addons ?? [])]
+                      addons[idx] = { ...addons[idx], name: e.target.value }
+                      updateCfg('pricing', 'addons', addons)
+                    }} />
+                    <DarkInput label="Preço (R$)" type="number" step="0.01" value={addon.price} onChange={e => {
+                      const addons = [...(cfg.pricing?.addons ?? [])]
+                      addons[idx] = { ...addons[idx], price: parseFloat(e.target.value) || 0 }
+                      updateCfg('pricing', 'addons', addons)
+                    }} />
+                    <DarkInput label="ID" value={addon.id} onChange={e => {
+                      const addons = [...(cfg.pricing?.addons ?? [])]
+                      addons[idx] = { ...addons[idx], id: e.target.value }
+                      updateCfg('pricing', 'addons', addons)
+                    }} />
+                  </div>
+                ))}
+              </div>
+            </Section>
+
+            <SaveButton onClick={() => save('pricing')} isPending={saveMutation.isPending} saved={saved} />
+          </div>
+        )}
+
+        {/* ── INTEGRAÇÕES ─────────────────────────────────────────────────── */}
+        {subTab === 'integracoes' && (
+          <div className="space-y-4">
+            <div>
+              <h2 className="text-base font-bold text-white mb-1">Integrações & API Keys</h2>
+              <p className="text-xs text-white/40">Gerencie suas chaves de API. Valores são salvos de forma segura no banco de dados.</p>
+            </div>
+
+            <Section title="Asaas (Pagamentos)" icon={CreditCard}>
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <DarkInput label="API Key Asaas" value={cfg.integrations?.asaasApiKey ?? ''} onChange={e => updateCfg('integrations', 'asaasApiKey', e.target.value)} placeholder="$aact_..." type="password" />
+                  <div>
+                    <label className="text-xs font-semibold text-white/70 mb-1.5 block">Modo</label>
+                    <select value={cfg.integrations?.asaasMode ?? 'sandbox'} onChange={e => updateCfg('integrations', 'asaasMode', e.target.value)} className="bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white outline-none focus:border-yellow-400/50 w-full">
+                      <option value="sandbox">Sandbox (testes)</option>
+                      <option value="production">Produção</option>
+                    </select>
+                  </div>
+                </div>
+                <SaveButton onClick={() => save('integrations')} isPending={saveMutation.isPending} saved={saved} />
+              </div>
+            </Section>
+
+            <Section title="Google Maps / MapTiler" icon={MapPin}>
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <DarkInput label="Google Maps API Key" value={cfg.integrations?.googleMapsApiKey ?? ''} onChange={e => updateCfg('integrations', 'googleMapsApiKey', e.target.value)} placeholder="AIza..." type="password" />
+                  <DarkInput label="MapTiler API Key" value={cfg.integrations?.maptilerApiKey ?? ''} onChange={e => updateCfg('integrations', 'maptilerApiKey', e.target.value)} placeholder="..." type="password" />
+                </div>
+                <SaveButton onClick={() => save('integrations')} isPending={saveMutation.isPending} saved={saved} />
+              </div>
+            </Section>
+
+            <Section title="E-mail (SendGrid / Resend / SMTP)" icon={Mail}>
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <DarkInput label="SendGrid API Key" value={cfg.integrations?.sendgridApiKey ?? ''} onChange={e => updateCfg('integrations', 'sendgridApiKey', e.target.value)} placeholder="SG...." type="password" />
+                  <DarkInput label="Resend API Key" value={cfg.integrations?.resendApiKey ?? ''} onChange={e => updateCfg('integrations', 'resendApiKey', e.target.value)} placeholder="re_..." type="password" />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <DarkInput label="SMTP Host" value={cfg.integrations?.smtpHost ?? ''} onChange={e => updateCfg('integrations', 'smtpHost', e.target.value)} placeholder="smtp.gmail.com" />
+                  <DarkInput label="SMTP Porta" type="number" value={cfg.integrations?.smtpPort ?? 587} onChange={e => updateCfg('integrations', 'smtpPort', Number(e.target.value))} />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <DarkInput label="SMTP Usuário" value={cfg.integrations?.smtpUser ?? ''} onChange={e => updateCfg('integrations', 'smtpUser', e.target.value)} />
+                  <DarkInput label="SMTP Senha" value={cfg.integrations?.smtpPass ?? ''} onChange={e => updateCfg('integrations', 'smtpPass', e.target.value)} type="password" />
+                </div>
+                <SaveButton onClick={() => save('integrations')} isPending={saveMutation.isPending} saved={saved} />
+              </div>
+            </Section>
+
+            <Section title="OpenAI / I.A." icon={Zap}>
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <DarkInput label="OpenAI API Key" value={cfg.integrations?.openaiApiKey ?? ''} onChange={e => updateCfg('integrations', 'openaiApiKey', e.target.value)} placeholder="sk-..." type="password" />
+                  <DarkInput label="Modelo padrão" value={cfg.integrations?.openaiModel ?? 'gpt-4o-mini'} onChange={e => updateCfg('integrations', 'openaiModel', e.target.value)} />
+                </div>
+                <SaveButton onClick={() => save('integrations')} isPending={saveMutation.isPending} saved={saved} />
+              </div>
+            </Section>
+
+            <Section title="Analytics & Tracking" icon={Search}>
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <DarkInput label="Google Analytics ID" value={cfg.integrations?.googleAnalyticsId ?? ''} onChange={e => updateCfg('integrations', 'googleAnalyticsId', e.target.value)} placeholder="G-XXXXXXX" />
+                  <DarkInput label="Google Tag Manager" value={cfg.integrations?.googleTagManagerId ?? ''} onChange={e => updateCfg('integrations', 'googleTagManagerId', e.target.value)} placeholder="GTM-XXXXXXX" />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <DarkInput label="Facebook Pixel ID" value={cfg.integrations?.facebookPixelId ?? ''} onChange={e => updateCfg('integrations', 'facebookPixelId', e.target.value)} />
+                  <DarkInput label="Hotjar ID" value={cfg.integrations?.hotjarId ?? ''} onChange={e => updateCfg('integrations', 'hotjarId', e.target.value)} />
+                </div>
+                <SaveButton onClick={() => save('integrations')} isPending={saveMutation.isPending} saved={saved} />
+              </div>
+            </Section>
+
+            <Section title="WhatsApp Business API" icon={Phone}>
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <DarkInput label="WhatsApp API Token" value={cfg.integrations?.whatsappApiToken ?? ''} onChange={e => updateCfg('integrations', 'whatsappApiToken', e.target.value)} type="password" />
+                  <DarkInput label="Phone Number ID" value={cfg.integrations?.whatsappPhoneNumberId ?? ''} onChange={e => updateCfg('integrations', 'whatsappPhoneNumberId', e.target.value)} />
+                </div>
+                <SaveButton onClick={() => save('integrations')} isPending={saveMutation.isPending} saved={saved} />
+              </div>
+            </Section>
+          </div>
+        )}
 
         {/* ── TEMAS DO SITE ─────────────────────────────────────────────── */}
         {subTab === 'temas' && (
