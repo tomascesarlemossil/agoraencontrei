@@ -48,9 +48,10 @@ function getPoiLabel(type: string) {
   return 'Local'
 }
 
-type Props = { params: { poi: string } }
+type Props = { params: Promise<{ poi: string }> }
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+export async function generateMetadata(props: Props): Promise<Metadata> {
+  const params = await props.params
   const poi = POIS[params.poi]
   if (!poi) return { title: 'Imóveis Próximos | AgoraEncontrei' }
 
@@ -94,7 +95,8 @@ function fmtPrice(p: any) {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(v) + (p.purpose === 'RENT' ? '/mês' : '')
 }
 
-export default async function PoiPage({ params }: Props) {
+export default async function PoiPage(props: Props) {
+  const params = await props.params
   const poi = POIS[params.poi]
   if (!poi) {
     return (

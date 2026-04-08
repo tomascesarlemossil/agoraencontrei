@@ -11,10 +11,11 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 export const revalidate = 600
 
 interface Props {
-  params: { condo: string }
+  params: Promise<{ condo: string }>
 }
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+export async function generateMetadata(props: Props): Promise<Metadata> {
+  const params = await props.params
   const condoName = getCondoName(params.condo)
   if (!condoName) return { title: 'Condomínio não encontrado' }
 
@@ -111,7 +112,8 @@ const CATEGORY_LABELS: Record<string, string> = {
   OUTRO: 'Especialista',
 }
 
-export default async function CondoPage({ params }: Props) {
+export default async function CondoPage(props: Props) {
+  const params = await props.params
   const condoName = getCondoName(params.condo)
   if (!condoName) notFound()
 

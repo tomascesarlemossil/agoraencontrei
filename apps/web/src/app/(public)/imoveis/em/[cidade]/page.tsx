@@ -405,7 +405,8 @@ async function fetchCityData(citySlug: string) {
   }
 }
 
-export async function generateMetadata({ params }: { params: { cidade: string } }): Promise<Metadata> {
+export async function generateMetadata(props: { params: Promise<{ cidade: string }> }): Promise<Metadata> {
+  const params = await props.params
   const cidade = CIDADES[params.cidade]
   const cityName = cidade?.nome ?? slugToCity(params.cidade)
   const estado = cidade?.estado ?? 'SP'
@@ -444,7 +445,8 @@ export async function generateStaticParams() {
 
 export const revalidate = 120
 
-export default async function CidadePage({ params }: { params: { cidade: string } }) {
+export default async function CidadePage(props: { params: Promise<{ cidade: string }> }) {
+  const params = await props.params
   const { properties, total, neighborhoods, cityName, citySlug } = await fetchCityData(params.cidade)
   const cidade = CIDADES[params.cidade]
   const estado = cidade?.estado ?? 'SP'

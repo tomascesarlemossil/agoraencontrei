@@ -61,7 +61,8 @@ async function fetchBairroData(citySlug: string, bairroSlug: string) {
   }
 }
 
-export async function generateMetadata({ params }: { params: { cidade: string; bairro: string } }): Promise<Metadata> {
+export async function generateMetadata(props: { params: Promise<{ cidade: string; bairro: string }> }): Promise<Metadata> {
+  const params = await props.params
   const cidadeInfo = CIDADES[params.cidade]
   const cityName = cidadeInfo?.nome ?? slugToCity(params.cidade)
   const estado = cidadeInfo?.estado ?? 'SP'
@@ -90,7 +91,8 @@ export async function generateMetadata({ params }: { params: { cidade: string; b
 
 export const revalidate = 120
 
-export default async function BairroPage({ params }: { params: { cidade: string; bairro: string } }) {
+export default async function BairroPage(props: { params: Promise<{ cidade: string; bairro: string }> }) {
+  const params = await props.params
   const { properties, total, cityName, bairroName, citySlug, bairroSlug } = await fetchBairroData(params.cidade, params.bairro)
   const cidadeInfo = CIDADES[params.cidade]
   const estado = cidadeInfo?.estado ?? 'SP'

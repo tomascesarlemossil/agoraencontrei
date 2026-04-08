@@ -84,15 +84,25 @@ function buildQs(params: SearchParams, overrides?: Record<string, string>) {
   return qs
 }
 
+const EMPTY_RESULT = { data: [], meta: { total: 0, page: 1, totalPages: 1 } }
+
 async function fetchProperties(params: SearchParams) {
   try {
     const res = await fetch(`${API_URL}/api/v1/public/properties?${buildQs(params)}`, {
       next: { revalidate: 60 },
     })
-    if (!res.ok) return { data: [], meta: { total: 0, page: 1, totalPages: 1 } }
-    return res.json()
+    if (!res.ok) return EMPTY_RESULT
+    const json = await res.json()
+    return {
+      data: Array.isArray(json?.data) ? json.data : [],
+      meta: {
+        total: json?.meta?.total ?? 0,
+        page: json?.meta?.page ?? 1,
+        totalPages: json?.meta?.totalPages ?? 1,
+      },
+    }
   } catch {
-    return { data: [], meta: { total: 0, page: 1, totalPages: 1 } }
+    return EMPTY_RESULT
   }
 }
 
@@ -131,7 +141,7 @@ async function fetchAlternatives(params: SearchParams) {
       const res = await fetch(`${API_URL}/api/v1/public/properties?${qs}`, { next: { revalidate: 60 } })
       if (!res.ok) continue
       const data = await res.json()
-      const items: any[] = data.data ?? []
+      const items: any[] = Array.isArray(data?.data) ? data.data : []
       if (items.length === 0) continue
 
       // Filter out rural types when searching for residential
@@ -154,9 +164,10 @@ function formatPrice(price: number | null, priceRent: number | null, purpose: st
   return 'Consulte'
 }
 
-export default async function ImoveisPage({ searchParams }: { searchParams: SearchParams }) {
-  const isMapView = searchParams.view === 'map'
-  const { data: properties, meta } = isMapView ? { data: [], meta: { total: 0, page: 1, totalPages: 1 } } : await fetchProperties(searchParams)
+export default async function ImoveisPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
+  const resolvedSearchParams = await searchParams
+  const isMapView = resolvedSearchParams.view === 'map'
+  const { data: properties, meta } = isMapView ? { data: [], meta: { total: 0, page: 1, totalPages: 1 } } : await fetchProperties(resolvedSearchParams)
 
   // SSR pre-fetch clusters for Franca/SP BBOX — eliminates map loading delay
   let initialClusters: any[] = []
@@ -165,32 +176,35 @@ export default async function ImoveisPage({ searchParams }: { searchParams: Sear
       const clusterParams = new URLSearchParams({
         swLat: '-20.65', swLng: '-47.52', neLat: '-20.40', neLng: '-47.28',
       })
-      if (searchParams.purpose) clusterParams.set('purpose', searchParams.purpose)
+      if (resolvedSearchParams.purpose) clusterParams.set('purpose', resolvedSearchParams.purpose)
       const clusterRes = await fetch(
         `${API_URL}/api/v1/public/map-clusters?${clusterParams}`,
         { next: { revalidate: 120 } }
       )
-      if (clusterRes.ok) initialClusters = await clusterRes.json()
+      if (clusterRes.ok) {
+        const clusterData = await clusterRes.json()
+        initialClusters = Array.isArray(clusterData) ? clusterData : []
+      }
     } catch {}
   }
 
   // If no results, try to find closest alternatives
-  const hasActiveSearch = !!(searchParams.search || searchParams.type || searchParams.city ||
-    searchParams.neighborhood || searchParams.maxPrice || searchParams.bedrooms)
+  const hasActiveSearch = !!(resolvedSearchParams.search || resolvedSearchParams.type || resolvedSearchParams.city ||
+    resolvedSearchParams.neighborhood || resolvedSearchParams.maxPrice || resolvedSearchParams.bedrooms)
   const alternatives = (!isMapView && properties.length === 0 && hasActiveSearch)
-    ? await fetchAlternatives(searchParams)
+    ? await fetchAlternatives(resolvedSearchParams)
     : { items: [], relaxedBy: {} }
 
-  const title = searchParams.purpose === 'SALE'
+  const title = resolvedSearchParams.purpose === 'SALE'
     ? 'Imóveis à Venda'
-    : searchParams.purpose === 'RENT'
+    : resolvedSearchParams.purpose === 'RENT'
     ? 'Imóveis para Alugar'
-    : searchParams.purpose === 'SEASON'
+    : resolvedSearchParams.purpose === 'SEASON'
     ? 'Temporada'
     : 'Todos os Imóveis'
 
   // Build URL for switching view
-  const viewParams = new URLSearchParams(searchParams as Record<string, string>)
+  const viewParams = new URLSearchParams(resolvedSearchParams as Record<string, string>)
   viewParams.delete('view')
   const listViewUrl = `/imoveis?${viewParams}`
   viewParams.set('view', 'map')
@@ -256,7 +270,7 @@ export default async function ImoveisPage({ searchParams }: { searchParams: Sear
         </div>
       </div>
 
-      <PropertyFiltersForm initialValues={searchParams as Record<string, string | undefined>} />
+      <PropertyFiltersForm initialValues={resolvedSearchParams as Record<string, string | undefined>} />
 
       {/* Map CTA banner — only shown in list view */}
       {!isMapView && (
@@ -308,10 +322,10 @@ export default async function ImoveisPage({ searchParams }: { searchParams: Sear
 
       {isMapView ? (
         <MapSearchClient
-          initialPurpose={searchParams.purpose}
-          initialCity={searchParams.city}
-          initialMaxPrice={searchParams.maxPrice}
-          initialBedrooms={searchParams.bedrooms}
+          initialPurpose={resolvedSearchParams.purpose}
+          initialCity={resolvedSearchParams.city}
+          initialMaxPrice={resolvedSearchParams.maxPrice}
+          initialBedrooms={resolvedSearchParams.bedrooms}
           initialClusters={initialClusters}
         />
       ) : properties.length === 0 ? (
@@ -360,7 +374,7 @@ export default async function ImoveisPage({ searchParams }: { searchParams: Sear
           initialProperties={properties}
           initialTotal={meta.total}
           initialTotalPages={meta.totalPages}
-          searchParams={searchParams as Record<string, string | undefined>}
+          searchParams={resolvedSearchParams as Record<string, string | undefined>}
         />
       )}
     </div>

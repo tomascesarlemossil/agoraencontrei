@@ -7,13 +7,14 @@ import { getStreetName, getStreetKeywords } from '@/data/seo-slug-maps'
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 
 interface Props {
-  params: { slug: string }
+  params: Promise<{ slug: string }>
 }
 
 export const revalidate = 600
 export const dynamicParams = true
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+export async function generateMetadata(props: Props): Promise<Metadata> {
+  const params = await props.params
   const streetName = getStreetName(params.slug)
   if (!streetName) {
     // Tentar derivar um nome do slug
@@ -66,7 +67,8 @@ function fmtPrice(p: any) {
   return p.purpose === 'RENT' ? fmt + '/mês' : fmt
 }
 
-export default async function RuaPage({ params }: Props) {
+export default async function RuaPage(props: Props) {
+  const params = await props.params
   const streetName = getStreetName(params.slug) ?? params.slug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
 
   const result = await fetchProperties(streetName)

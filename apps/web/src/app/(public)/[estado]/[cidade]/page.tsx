@@ -43,11 +43,8 @@ export async function generateStaticParams() {
   }))
 }
 
-export async function generateMetadata({
-  params,
-}: {
-  params: { estado: string; cidade: string }
-}): Promise<Metadata> {
+export async function generateMetadata(props: { params: Promise<{ estado: string; cidade: string }> }): Promise<Metadata> {
+  const params = await props.params
   const city = IBGE_CITY_BY_SLUG[params.cidade]
   if (!city || city.stateSlug !== params.estado) return {}
 
@@ -79,11 +76,8 @@ export async function generateMetadata({
 
 export const revalidate = 86400
 
-export default function CidadePage({
-  params,
-}: {
-  params: { estado: string; cidade: string }
-}) {
+export default async function CidadePage(props: { params: Promise<{ estado: string; cidade: string }> }) {
+  const params = await props.params
   const city = IBGE_CITY_BY_SLUG[params.cidade]
   if (!city || city.stateSlug !== params.estado) notFound()
 

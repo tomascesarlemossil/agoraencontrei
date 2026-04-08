@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import LeilaoDetailClient from './LeilaoDetailClient'
 
-type Props = { params: { slug: string } }
+type Props = { params: Promise<{ slug: string }> }
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'https://api-production-669c.up.railway.app'
 
@@ -17,7 +17,8 @@ async function getAuction(slug: string) {
   }
 }
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+export async function generateMetadata(props: Props): Promise<Metadata> {
+  const params = await props.params
   const auction = await getAuction(params.slug)
   if (!auction) return { title: 'Leilão não encontrado | AgoraEncontrei' }
 
@@ -41,7 +42,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
-export default async function LeilaoPage({ params }: Props) {
+export default async function LeilaoPage(props: Props) {
+  const params = await props.params
   const auction = await getAuction(params.slug)
 
   if (!auction) {
