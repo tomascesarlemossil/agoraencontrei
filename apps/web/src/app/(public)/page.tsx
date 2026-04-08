@@ -341,7 +341,7 @@ export default async function HomePage() {
       {/* ── 1. HERO ──────────────────────────────────────────────────────── */}
       <section
         className="relative flex items-center justify-center overflow-hidden"
-        style={{ background: '#0f1c3a', minHeight: 'max(85vh, 600px)' }}
+        style={{ background: '#0a1a0a', minHeight: 'max(85vh, 600px)' }}
       >
         <HeroBackground videoUrl={siteSettings.heroVideoUrl} videoType={siteSettings.heroVideoType} />
 
