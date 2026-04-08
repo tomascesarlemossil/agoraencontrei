@@ -335,16 +335,11 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
     loadAuctions()
   }, [])
 
-  // Inject MapLibre CSS + critical inline styles
+  const [mapLibReady, setMapLibReady] = useState(false)
+
+  // Load MapLibre GL JS + CSS from CDN (bypasses webpack/Next.js entirely)
   useEffect(() => {
-    // Critical inline CSS for canvas positioning (no network needed)
-    if (!document.getElementById('maplibre-critical-css')) {
-      const style = document.createElement('style')
-      style.id = 'maplibre-critical-css'
-      style.textContent = `.maplibregl-map{font:12px/20px Helvetica Neue,Arial,Helvetica,sans-serif;overflow:hidden;position:relative;width:100%;height:100%;-webkit-tap-highlight-color:rgba(0,0,0,0)}.maplibregl-canvas{position:absolute;left:0;top:0}.maplibregl-canvas-container.maplibregl-interactive{cursor:grab;user-select:none}`
-      document.head.appendChild(style)
-    }
-    // Full CSS from CDN
+    // CSS
     if (!document.getElementById('maplibre-gl-css')) {
       const link = document.createElement('link')
       link.id = 'maplibre-gl-css'
@@ -352,45 +347,50 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
       link.href = 'https://unpkg.com/maplibre-gl@5/dist/maplibre-gl.css'
       document.head.appendChild(link)
     }
+    // JS
+    if ((window as any).maplibregl) {
+      setMapLibReady(true)
+      return
+    }
+    if (document.getElementById('maplibre-gl-js')) return
+    const script = document.createElement('script')
+    script.id = 'maplibre-gl-js'
+    script.src = 'https://unpkg.com/maplibre-gl@5/dist/maplibre-gl.js'
+    script.onload = () => setMapLibReady(true)
+    script.onerror = () => setMapError('Não foi possível carregar o mapa.')
+    document.head.appendChild(script)
   }, [])
 
-  // Initialize MapLibre GL map
+  // Initialize MapLibre GL map (uses CDN-loaded window.maplibregl)
   useEffect(() => {
-    if (!mapRef.current || mapInstance.current) return
+    if (!mapLibReady || !mapRef.current || mapInstance.current) return
 
-    // Inline raster tile style — no external style URL dependency
-    const mapStyle: any = {
-      version: 8,
-      sources: {
-        'osm': {
-          type: 'raster',
-          tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
-          tileSize: 256,
-          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-        },
-      },
-      layers: [{ id: 'osm-tiles', type: 'raster', source: 'osm' }],
+    const maplibregl = (window as any).maplibregl
+    if (!maplibregl?.Map) {
+      setMapError('MapLibre não disponível.')
+      return
     }
 
-    import('maplibre-gl').then(mod => {
-      const maplibregl: any = mod.default || mod
-      if (typeof maplibregl?.Map !== 'function') {
-        setMapError(`MapLibre não carregou. Keys: ${Object.keys(mod).join(',')}`)
-        return
-      }
-      try {
-        const map = new maplibregl.Map({
-          container: mapRef.current!,
-          style: mapStyle,
-          center: [FRANCA_CENTER[1], FRANCA_CENTER[0]], // MapLibre uses [lng, lat]
-          zoom: 13,
-        })
+    try {
+      const map = new maplibregl.Map({
+        container: mapRef.current!,
+        style: {
+          version: 8,
+          sources: {
+            'osm': {
+              type: 'raster',
+              tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+              tileSize: 256,
+              attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+            },
+          },
+          layers: [{ id: 'osm-tiles', type: 'raster', source: 'osm' }],
+        },
+        center: [FRANCA_CENTER[1], FRANCA_CENTER[0]],
+        zoom: 13,
+      })
 
-        map.addControl(new maplibregl.NavigationControl(), 'top-right')
-
-        // Ensure canvas fills container after layout settles
-        map.once('render', () => { map.resize() })
-        setTimeout(() => { try { map.resize() } catch {} }, 200)
+      map.addControl(new maplibregl.NavigationControl(), 'top-right')
 
         map.on('load', () => {
           // Add auction GeoJSON source with clustering
@@ -500,10 +500,6 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
         console.error('[MapSearch] MapLibre init error:', err)
         setMapError('Não foi possível carregar o mapa. Tente recarregar a página.')
       }
-    }).catch(err => {
-      console.error('[MapSearch] MapLibre import error:', err)
-      setMapError('Não foi possível carregar o mapa. Tente recarregar a página.')
-    })
 
     return () => {
       if (mapInstance.current) {
@@ -511,7 +507,7 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
         mapInstance.current = null
       }
     }
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [mapLibReady]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Toggle sale layer visibility (markers)
   useEffect(() => {
@@ -540,8 +536,9 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
     markersRef.current.forEach(m => m.remove())
     markersRef.current = []
 
-    import('maplibre-gl').then(mod => {
-      const maplibregl = mod.default || mod
+    const maplibregl = (window as any).maplibregl
+    if (!maplibregl) return
+    {
       const map = mapInstance.current!
 
       clusters.forEach(c => {
@@ -572,8 +569,8 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
 
         markersRef.current.push(marker)
       })
-    })
-  }, [clusters, isLoaded, selectedNeighborhoods, drawing, showSaleLayer])
+    }
+  }, [clusters, isLoaded, selectedNeighborhoods, drawing, showSaleLayer, mapLibReady])
 
   // Render auction pins by updating GeoJSON source data (MapLibre native clustering)
   useEffect(() => {
@@ -606,17 +603,17 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
   useEffect(() => {
     if (!isLoaded || !mapInstance.current) return
 
-    import('maplibre-gl').then(mod => {
-      const maplibregl = mod.default || mod
-      ownerDirectMarkersRef.current.forEach(m => { try { m.remove() } catch {} })
-      ownerDirectMarkersRef.current = []
-      if (ownerDirectPins.length === 0) return
+    const maplibregl = (window as any).maplibregl
+    if (!maplibregl) return
+    ownerDirectMarkersRef.current.forEach(m => { try { m.remove() } catch {} })
+    ownerDirectMarkersRef.current = []
+    if (ownerDirectPins.length === 0) return
 
-      const map = mapInstance.current!
+    const map = mapInstance.current!
 
-      for (const p of ownerDirectPins) {
-        if (!p.lat || !p.lng) continue
-        const priceStr = p.price ? fmt(p.price) : 'Consulte'
+    for (const p of ownerDirectPins) {
+      if (!p.lat || !p.lng) continue
+      const priceStr = p.price ? fmt(p.price) : 'Consulte'
 
         const el = document.createElement('div')
         el.style.cssText = 'width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#22c55e,#16a34a);border:3px solid #fff;display:flex;align-items:center;justify-content:center;font-size:15px;box-shadow:0 2px 10px rgba(34,197,94,0.5);cursor:pointer;'
@@ -634,8 +631,7 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
           .addTo(map)
 
         ownerDirectMarkersRef.current.push(marker)
-      }
-    })
+    }
   }, [ownerDirectPins, isLoaded])
 
   // Sync drawingRef with drawing state for closures
@@ -656,15 +652,15 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
       drawingPointsRef.current = [...drawingPointsRef.current, pt]
 
       // Add vertex marker
-      import('maplibre-gl').then(mod => {
-        const maplibregl = mod.default || mod
+      const maplibregl = (window as any).maplibregl
+      if (maplibregl) {
         const el = document.createElement('div')
         el.style.cssText = 'width:10px;height:10px;border-radius:50%;background:#C9A84C;border:2px solid #C9A84C;'
         const vm = new maplibregl.Marker({ element: el })
           .setLngLat([e.lngLat.lng, e.lngLat.lat])
           .addTo(map)
         tempMarkersRef.current.push(vm)
-      })
+      }
 
       // Update temp line via GeoJSON source
       const pts = drawingPointsRef.current
@@ -893,7 +889,7 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
           </div>
         </div>
       ) : null}
-      <div ref={mapRef} className="absolute inset-0 z-0" />
+      <div ref={mapRef} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 0 }} />
 
       {/* Top controls */}
       <div className="absolute top-3 left-3 right-3 z-10 flex flex-wrap items-start gap-2 pointer-events-none">
