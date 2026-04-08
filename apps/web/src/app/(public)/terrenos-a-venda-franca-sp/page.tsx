@@ -17,19 +17,18 @@ export const metadata: Metadata = {
 
 const SCHEMA = {
   '@context': 'https://schema.org',
-  '@type': 'LocalBusiness',
-  '@id': 'https://www.agoraencontrei.com.br/terrenos-a-venda-franca-sp',
-  name: 'Imobiliária Lemos — Terrenos à Venda em Franca/SP',
-  description: 'Encontre terrenos à venda em Franca/SP com a Imobiliária Lemos. Lotes residenciais, comerciais e industriais em todos os bairros. Financiamento disponível..',
+  '@type': 'CollectionPage',
+  name: 'Terrenos à Venda em Franca/SP',
+  description: 'Encontre terrenos à venda em Franca/SP com a Imobiliária Lemos. Lotes residenciais, comerciais e industriais em todos os bairros. Financiamento disponível.',
   url: 'https://www.agoraencontrei.com.br/terrenos-a-venda-franca-sp',
-  telephone: '+55-16-3723-0045',
-  address: {
-    '@type': 'PostalAddress', addressLocality: 'Franca', addressRegion: 'SP',
-    postalCode: '14400-000', addressCountry: 'BR',
+  isPartOf: { '@type': 'WebSite', name: 'AgoraEncontrei', url: 'https://www.agoraencontrei.com.br' },
+  provider: {
+    '@type': 'RealEstateAgent',
+    name: 'Imobiliária Lemos',
+    url: 'https://www.agoraencontrei.com.br',
+    telephone: '+55-16-3723-0045',
+    address: { '@type': 'PostalAddress', addressLocality: 'Franca', addressRegion: 'SP', addressCountry: 'BR' },
   },
-  geo: { '@type': 'GeoCoordinates', latitude: -20.5386, longitude: -47.4008 },
-  openingHours: 'Mo-Fr 08:00-18:00, Sa 08:00-12:00',
-  sameAs: ['https://www.instagram.com/imobiliarialemos/', 'https://www.facebook.com/imobiliarialemos/'],
 }
 
 export default function TemaPage() {

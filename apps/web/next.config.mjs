@@ -74,6 +74,11 @@ const nextConfig = {
         destination: '/register',
         permanent: true,
       },
+      {
+        source: '/planos',
+        destination: '/parceiros/planos',
+        permanent: true,
+      },
     ]
   },
   async rewrites() {

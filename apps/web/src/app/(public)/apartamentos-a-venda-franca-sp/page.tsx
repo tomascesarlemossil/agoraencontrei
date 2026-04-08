@@ -48,6 +48,16 @@ function fmtPrice(p: any) {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(v)
 }
 
+const SCHEMA = {
+  '@context': 'https://schema.org',
+  '@type': 'CollectionPage',
+  name: 'Apartamentos à Venda em Franca SP',
+  description: 'Compre seu apartamento em Franca/SP com a Imobiliária Lemos. Studios, 1, 2 e 3 quartos. Lançamentos e usados. Financiamento facilitado.',
+  url: 'https://www.agoraencontrei.com.br/apartamentos-a-venda-franca-sp',
+  isPartOf: { '@type': 'WebSite', name: 'AgoraEncontrei', url: 'https://www.agoraencontrei.com.br' },
+  provider: { '@type': 'RealEstateAgent', name: 'Imobiliária Lemos', url: 'https://www.agoraencontrei.com.br' },
+}
+
 export default async function ApartamentosAVendaFrancaSP() {
   const result = await fetchApartamentosVenda()
   const properties = result.data ?? []
@@ -55,6 +65,7 @@ export default async function ApartamentosAVendaFrancaSP() {
 
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(SCHEMA) }} />
       <section className="bg-gradient-to-br from-[#1B2B5B] to-[#0f1c3a] text-white py-16 px-4">
         <div className="max-w-5xl mx-auto text-center">
           <div className="inline-flex items-center gap-2 bg-white/10 rounded-full px-4 py-1.5 text-xs font-semibold mb-4" style={{ color: '#C9A84C' }}>

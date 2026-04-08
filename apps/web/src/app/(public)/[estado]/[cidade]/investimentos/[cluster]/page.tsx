@@ -74,7 +74,7 @@ export default async function InvestimentoCidadePage(props: { params: Promise<{ 
 
   const schema = {
     '@context': 'https://schema.org',
-    '@type': 'FinancialProduct',
+    '@type': 'WebPage',
     name: `${inv.label} em ${city.name}/${city.state}`,
     url: `${WEB_URL}/${params.estado}/${params.cidade}/investimentos/${params.cluster}`,
     description: desc,
