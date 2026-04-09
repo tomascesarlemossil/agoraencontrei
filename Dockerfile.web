@@ -35,13 +35,14 @@ ENV NODE_ENV=production
 ENV HOSTNAME="0.0.0.0"
 
 # Copy standalone server (includes necessary node_modules)
-COPY --from=base /app/apps/web/.next/standalone ./
+# Railway start command expects: node apps/web/.next/standalone/apps/web/server.js
+COPY --from=base /app/apps/web/.next/standalone ./apps/web/.next/standalone
 
-# Copy static assets that standalone mode doesn't include automatically
-COPY --from=base /app/apps/web/.next/static ./apps/web/.next/static
-COPY --from=base /app/apps/web/public ./apps/web/public
+# Copy static assets into the standalone server's expected location
+COPY --from=base /app/apps/web/.next/static ./apps/web/.next/standalone/apps/web/.next/static
+COPY --from=base /app/apps/web/public ./apps/web/.next/standalone/apps/web/public
 
 EXPOSE 3000
 
-# Start Next.js standalone server
-CMD ["node", "apps/web/server.js"]
+# Start Next.js standalone server (matches Railway start command)
+CMD ["node", "apps/web/.next/standalone/apps/web/server.js"]

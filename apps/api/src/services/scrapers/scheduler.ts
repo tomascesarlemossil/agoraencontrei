@@ -175,20 +175,34 @@ export class ScraperScheduler {
     return results
   }
 
-  /** Marcar leilões com data passada como CLOSED */
+  /** Marcar leilões com data passada como CLOSED (exceto Caixa vendas diretas) */
   async cleanup(): Promise<void> {
     console.log('[ScraperScheduler] Limpeza de leilões expirados...')
     const now = new Date()
 
+    // Only close time-limited auctions (judicial, extrajudicial, leiloeiro)
+    // Caixa/bank direct sales don't have strict end dates - they stay active until sold
     const result = await this.prisma.auction.updateMany({
       where: {
         auctionDate: { lt: now },
         status: { in: ['UPCOMING', 'OPEN', 'FIRST_ROUND', 'SECOND_ROUND'] },
+        source: { notIn: ['CAIXA', 'BANCO_DO_BRASIL', 'BRADESCO', 'SANTANDER', 'ITAU'] },
       },
       data: { status: 'CLOSED' },
     })
 
-    console.log(`[ScraperScheduler] ${result.count} leilões marcados como CLOSED`)
+    // For bank auctions, only close if they haven't been scraped in 7+ days
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+    const bankResult = await this.prisma.auction.updateMany({
+      where: {
+        lastScrapedAt: { lt: sevenDaysAgo },
+        status: { in: ['UPCOMING', 'OPEN', 'FIRST_ROUND', 'SECOND_ROUND'] },
+        source: { in: ['CAIXA', 'BANCO_DO_BRASIL', 'BRADESCO', 'SANTANDER', 'ITAU'] },
+      },
+      data: { status: 'CLOSED' },
+    })
+
+    console.log(`[ScraperScheduler] ${result.count} leilões + ${bankResult.count} bancários marcados como CLOSED`)
   }
 
   /** Recalcular scores de oportunidade */
