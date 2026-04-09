@@ -384,7 +384,84 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ── 2. MARKETPLACE (logo após o hero/busca) ──────────────────────── */}
+      {/* ── 2. SMART QUIZ + CTA AVALIAÇÃO (primeiro após hero) ────────── */}
+      <SmartQuizModal>
+      <section style={{ backgroundColor: '#f0ede6' }} className="py-14">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 rounded-3xl overflow-hidden shadow-xl border border-gray-200/60">
+            <div className="bg-[#f0ede6] px-8 py-10 flex flex-col justify-center">
+              <div className="inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-bold mb-5 w-fit" style={{ backgroundColor: 'rgba(201,168,76,0.2)', color: '#C9A84C' }}>
+                <Sparkles className="w-3.5 h-3.5" />
+                Busca Inteligente com IA
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-bold mb-3" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>
+                Não sabe por onde começar?
+              </h2>
+              <p className="text-gray-500 text-sm mb-8 max-w-sm leading-relaxed">
+                Responda 5 perguntas rápidas e nossa IA encontra os imóveis perfeitos para o seu perfil — em menos de 2 minutos.
+              </p>
+              <SmartQuizButton />
+              <p className="text-gray-400 text-xs mt-3">Gratuito · 2 minutos · Sem compromisso</p>
+            </div>
+            <div className="hidden lg:block absolute" style={{ display: 'none' }} />
+            <div className="bg-white px-8 py-10 flex flex-col justify-center border-t lg:border-t-0 lg:border-l border-gray-200">
+              <h2 className="text-2xl sm:text-3xl font-bold mb-3" style={{ color: 'var(--site-primary-color, #1B2B5B)', fontFamily: 'Georgia, serif' }}>
+                Quer saber quanto vale seu imóvel?
+              </h2>
+              <p className="text-gray-500 text-sm mb-8 max-w-sm leading-relaxed">
+                Avaliação profissional com dados em tempo real. 3 métodos, laudo instantâneo. 1ª avaliação gratuita por CPF.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Link href="/avaliacao" className="px-7 py-3 rounded-xl text-sm font-bold transition-all hover:brightness-110 text-center" style={{ backgroundColor: 'var(--site-accent-color, #C9A84C)', color: 'var(--site-primary-color, #1B2B5B)' }}>
+                  Avaliação imediata
+                </Link>
+                <a href="https://wa.me/5516981010004?text=Olá! Gostaria de uma avaliação imediata do meu imóvel." target="_blank" rel="noreferrer" className="px-7 py-3 rounded-xl text-sm font-bold border-2 transition-all hover:bg-[#1B2B5B] hover:text-white text-center" style={{ borderColor: 'var(--site-primary-color, #1B2B5B)', color: 'var(--site-primary-color, #1B2B5B)' }}>
+                  Falar pelo WhatsApp
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      </SmartQuizModal>
+
+      {/* ── 3. LEILÕES ────────────────────────────────────────────────────── */}
+      <section className="py-12" style={{ backgroundColor: '#1B2B5B' }}>
+        <div className="max-w-6xl mx-auto px-4 text-center">
+          <h2 className="text-3xl font-bold text-white mb-3" style={{ fontFamily: 'Georgia, serif' }}>
+            Leilões de Imóveis com até 70% de Desconto
+          </h2>
+          <p className="text-white/60 text-lg mb-6 max-w-2xl mx-auto">
+            Dados reais cruzados de Caixa, Santander, ZAP e QuintoAndar. Calculadora de ROI, score jurídico e alertas inteligentes.
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-4 mb-8">
+            <Link href="/leiloes" className="px-8 py-4 rounded-xl font-bold text-lg transition-all hover:scale-105" style={{ backgroundColor: '#C9A84C', color: '#1B2B5B' }}>
+              Ver Leilões Ativos
+            </Link>
+            <Link href="/oportunidades/melhores-alugueis-brasil" className="px-8 py-4 rounded-xl font-bold text-lg border-2 text-white transition-all hover:bg-white/10" style={{ borderColor: '#C9A84C' }}>
+              Ranking de Yield Nacional
+            </Link>
+            <Link href="/investor" className="px-8 py-4 rounded-xl font-bold text-lg border-2 text-white transition-all hover:bg-white/10" style={{ borderColor: '#4ade80' }}>
+              Terminal Investidor
+            </Link>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-3xl mx-auto">
+            {[
+              { label: 'Leilões Monitorados', value: '500+' },
+              { label: 'Desconto Médio', value: '38%' },
+              { label: 'Cidades Cobertas', value: '5.570' },
+              { label: 'Fontes de Dados', value: '12' },
+            ].map(s => (
+              <div key={s.label} className="bg-white/10 rounded-xl px-4 py-3 text-center">
+                <div className="text-xl font-bold" style={{ color: '#C9A84C' }}>{s.value}</div>
+                <div className="text-[11px] text-white/50">{s.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── 4. MARKETPLACE ────────────────────────────────────────────────── */}
       <section style={{ backgroundColor: 'var(--site-primary-color, #1B2B5B)' }} className="py-20">
         <div className="max-w-5xl mx-auto px-4 sm:px-6">
           <div className="text-center mb-12">
@@ -710,119 +787,7 @@ export default async function HomePage() {
         </section>
       )}
 
-      {/* ── 6 & 7. SMART QUIZ + CTA AVALIAÇÃO (lado a lado) ────────────── */}
-      <SmartQuizModal>
-      <section style={{ backgroundColor: '#f0ede6' }} className="py-14">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 rounded-3xl overflow-hidden shadow-xl border border-gray-200/60">
-
-            {/* Coluna esquerda — Smart Quiz */}
-            <div className="bg-[#f0ede6] px-8 py-10 flex flex-col justify-center">
-              <div
-                className="inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-bold mb-5 w-fit"
-                style={{ backgroundColor: 'rgba(201,168,76,0.2)', color: '#C9A84C' }}
-              >
-                <Sparkles className="w-3.5 h-3.5" />
-                Busca Inteligente com IA
-              </div>
-              <h2 className="text-2xl sm:text-3xl font-bold mb-3" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>
-                Não sabe por onde começar?
-              </h2>
-              <p className="text-gray-500 text-sm mb-8 max-w-sm leading-relaxed">
-                Responda 5 perguntas rápidas e nossa IA encontra os imóveis perfeitos para o seu perfil — em menos de 2 minutos.
-              </p>
-              <SmartQuizButton />
-              <p className="text-gray-400 text-xs mt-3">Gratuito · 2 minutos · Sem compromisso</p>
-            </div>
-
-            {/* Divisor vertical */}
-            <div className="hidden lg:block absolute" style={{ display: 'none' }} />
-
-            {/* Coluna direita — CTA Avaliação */}
-            <div className="bg-white px-8 py-10 flex flex-col justify-center border-t lg:border-t-0 lg:border-l border-gray-200">
-              <h2 className="text-2xl sm:text-3xl font-bold mb-3" style={{ color: 'var(--site-primary-color, #1B2B5B)', fontFamily: 'Georgia, serif' }}>
-                Quer saber quanto vale seu imóvel?
-              </h2>
-              <p className="text-gray-500 text-sm mb-8 max-w-sm leading-relaxed">
-                Avaliação profissional com dados em tempo real. 3 métodos, laudo instantâneo. 1ª avaliação gratuita por CPF.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-3">
-                <Link
-                  href="/avaliacao"
-                  className="px-7 py-3 rounded-xl text-sm font-bold transition-all hover:brightness-110 text-center"
-                  style={{ backgroundColor: 'var(--site-accent-color, #C9A84C)', color: 'var(--site-primary-color, #1B2B5B)' }}
-                >
-                  Avaliação imediata
-                </Link>
-                <a
-                  href="https://wa.me/5516981010004?text=Olá! Gostaria de uma avaliação imediata do meu imóvel."
-                  target="_blank"
-                  rel="noreferrer"
-                  className="px-7 py-3 rounded-xl text-sm font-bold border-2 transition-all hover:bg-[#1B2B5B] hover:text-white text-center"
-                  style={{ borderColor: 'var(--site-primary-color, #1B2B5B)', color: 'var(--site-primary-color, #1B2B5B)' }}
-                >
-                  Falar pelo WhatsApp
-                </a>
-              </div>
-            </div>
-
-          </div>
-        </div>
-      </section>
-      </SmartQuizModal>
-
-
-
-      {/* ── 8.5. LEILÕES — CTA + RANKING ──────────────────────────────── */}
-      <section className="py-12" style={{ backgroundColor: '#1B2B5B' }}>
-        <div className="max-w-6xl mx-auto px-4 text-center">
-          <h2 className="text-3xl font-bold text-white mb-3" style={{ fontFamily: 'Georgia, serif' }}>
-            Leilões de Imóveis com até 70% de Desconto
-          </h2>
-          <p className="text-white/60 text-lg mb-6 max-w-2xl mx-auto">
-            Dados reais cruzados de Caixa, Santander, ZAP e QuintoAndar.
-            Calculadora de ROI, score jurídico e alertas inteligentes.
-          </p>
-          <div className="flex flex-wrap items-center justify-center gap-4 mb-8">
-            <Link
-              href="/leiloes"
-              className="px-8 py-4 rounded-xl font-bold text-lg transition-all hover:scale-105"
-              style={{ backgroundColor: '#C9A84C', color: '#1B2B5B' }}
-            >
-              Ver Leilões Ativos
-            </Link>
-            <Link
-              href="/oportunidades/melhores-alugueis-brasil"
-              className="px-8 py-4 rounded-xl font-bold text-lg border-2 text-white transition-all hover:bg-white/10"
-              style={{ borderColor: '#C9A84C' }}
-            >
-              Ranking de Yield Nacional
-            </Link>
-            <Link
-              href="/investor"
-              className="px-8 py-4 rounded-xl font-bold text-lg border-2 text-white transition-all hover:bg-white/10"
-              style={{ borderColor: '#4ade80' }}
-            >
-              Terminal Investidor
-            </Link>
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-3xl mx-auto">
-            {[
-              { label: 'Leilões Monitorados', value: '500+' },
-              { label: 'Desconto Médio', value: '38%' },
-              { label: 'Cidades Cobertas', value: '5.570' },
-              { label: 'Fontes de Dados', value: '12' },
-            ].map(s => (
-              <div key={s.label} className="bg-white/10 rounded-xl px-4 py-3 text-center">
-                <div className="text-xl font-bold" style={{ color: '#C9A84C' }}>{s.value}</div>
-                <div className="text-[11px] text-white/50">{s.label}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── 9. REDES SOCIAIS + QUICK STATS ──────────────────────────────── */}
+      {/* ── 7. REDES SOCIAIS + QUICK STATS ──────────────────────────────── */}
       <section className="max-w-4xl mx-auto px-4 sm:px-6 py-10">
         {/* Quick Stats */}
         <div className="flex flex-wrap justify-center gap-10 py-5 px-8 rounded-2xl bg-white shadow-lg border border-gray-100 mb-10">
