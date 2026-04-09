@@ -8,6 +8,7 @@ const UpdateUserBody = z.object({
   bio: z.string().max(500).optional(),
   creciNumber: z.string().optional(),
   avatarUrl: z.string().optional(), // accepts URLs, data URLs, relative paths
+  role: z.enum(['ADMIN', 'MANAGER', 'BROKER', 'FINANCIAL', 'LAWYER', 'CLIENT']).optional(),
 })
 
 const CreateUserBody = z.object({
@@ -264,6 +265,17 @@ export default async function usersRoutes(app: FastifyInstance) {
     }
 
     const body = UpdateUserBody.parse(req.body)
+
+    // Only ADMIN/SUPER_ADMIN can change roles, and cannot change own role
+    if (body.role) {
+      if (!['SUPER_ADMIN', 'ADMIN'].includes(req.user.role)) {
+        return reply.status(403).send({ error: 'FORBIDDEN', message: 'Apenas administradores podem alterar perfis de usuário' })
+      }
+      if (id === req.user.sub) {
+        return reply.status(400).send({ error: 'VALIDATION_ERROR', message: 'Você não pode alterar seu próprio perfil de acesso' })
+      }
+    }
+
     const existingUser = await app.prisma.user.findUnique({ where: { id }, select: { id: true, name: true, role: true, phone: true, bio: true, creciNumber: true } })
 
     const user = await app.prisma.user.update({
