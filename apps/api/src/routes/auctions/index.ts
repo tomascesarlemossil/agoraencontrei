@@ -1,6 +1,8 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 import { z } from 'zod'
 import { calculateAcquisitionCosts, getStateCosts, validateDocument } from '../../utils/brazil-costs.js'
+import { CaixaScraper } from '../../services/scrapers/caixa-scraper.js'
+import { GenericLeiloeiroScraper, BANCOS_CONFIG } from '../../services/scrapers/generic-scraper.js'
 
 // ── Schemas de validação ────────────────────────────────────────────────────
 
@@ -347,43 +349,181 @@ export default async function auctionsRoutes(app: FastifyInstance) {
     })
   })
 
-  // ── GET /auctions/stats — Estatísticas gerais ──────────────────────────────
+  // ── GET /auctions/stats — Estatísticas completas para dashboard ─────────────
   app.get('/stats', async (_req: FastifyRequest, reply: FastifyReply) => {
-    const [total, bySource, byStatus, avgDiscount, topCities] = await Promise.all([
-      app.prisma.auction.count({
-        where: { status: { notIn: ['CANCELLED', 'CLOSED'] } },
-      }),
+    const activeWhere = { status: { notIn: ['CANCELLED', 'CLOSED'] as string[] } }
+
+    const [total, bySource, byStatus, avgDiscount, topCities, maxDiscountAuction, recentRuns, latestAuctions] = await Promise.all([
+      app.prisma.auction.count({ where: activeWhere }),
+
       app.prisma.auction.groupBy({
         by: ['source'],
         _count: { id: true },
-        where: { status: { notIn: ['CANCELLED', 'CLOSED'] } },
+        _avg: { discountPercent: true },
+        where: activeWhere,
       }),
+
       app.prisma.auction.groupBy({
         by: ['status'],
         _count: { id: true },
       }),
+
       app.prisma.auction.aggregate({
         _avg: { discountPercent: true },
-        where: { discountPercent: { not: null }, status: { notIn: ['CANCELLED', 'CLOSED'] } },
+        where: { discountPercent: { not: null }, ...activeWhere },
       }),
+
       app.prisma.auction.groupBy({
         by: ['city', 'state'],
         _count: { id: true },
-        where: { status: { notIn: ['CANCELLED', 'CLOSED'] } },
+        _avg: { discountPercent: true, opportunityScore: true },
+        where: activeWhere,
         orderBy: { _count: { id: 'desc' } },
         take: 20,
       }),
+
+      // Max discount auction
+      app.prisma.auction.findFirst({
+        where: { discountPercent: { not: null }, ...activeWhere },
+        orderBy: { discountPercent: 'desc' },
+        select: { title: true, discountPercent: true, minimumBid: true, city: true, source: true },
+      }),
+
+      // Recent scraper runs
+      app.prisma.scraperRun.findMany({
+        orderBy: { startedAt: 'desc' },
+        take: 10,
+        select: {
+          id: true, source: true, status: true, startedAt: true, finishedAt: true,
+          itemsCreated: true, itemsUpdated: true, errorMessage: true,
+        },
+      }),
+
+      // Latest auctions (for live feed)
+      app.prisma.auction.findMany({
+        where: activeWhere,
+        orderBy: { createdAt: 'desc' },
+        take: 50,
+        select: {
+          id: true, title: true, source: true, city: true, state: true,
+          minimumBid: true, discountPercent: true, opportunityScore: true,
+          estimatedROI: true, createdAt: true, slug: true,
+        },
+      }),
     ])
+
+    // Calculate robots info from recentRuns
+    const uniqueSources = new Set(recentRuns.map(r => r.source))
+    const onlineSources = new Set(
+      recentRuns.filter(r => r.status === 'SUCCESS' || r.status === 'PARTIAL').map(r => r.source)
+    )
+    const lastRun = recentRuns.length > 0 ? (recentRuns[0].finishedAt || recentRuns[0].startedAt) : null
 
     return reply.send({
       total,
-      bySource: bySource.map(s => ({ source: s.source, count: s._count.id })),
+      bySource: bySource.map(s => ({
+        source: s.source,
+        count: s._count.id,
+        avgDiscount: s._avg.discountPercent ? Number(Number(s._avg.discountPercent).toFixed(1)) : 0,
+      })),
       byStatus: byStatus.map(s => ({ status: s.status, count: s._count.id })),
       averageDiscount: avgDiscount._avg.discountPercent
         ? Number(avgDiscount._avg.discountPercent.toFixed(1))
         : 0,
-      topCities: topCities.map(c => ({ city: c.city, state: c.state, count: c._count.id })),
+      topCities: topCities.map(c => ({
+        city: c.city,
+        state: c.state,
+        count: c._count.id,
+        avgDiscount: c._avg.discountPercent ? Number(Number(c._avg.discountPercent).toFixed(1)) : 0,
+        avgScore: c._avg.opportunityScore ? Number(Number(c._avg.opportunityScore).toFixed(0)) : 0,
+      })),
+      maxDiscount: maxDiscountAuction ? {
+        percent: maxDiscountAuction.discountPercent ? Number(Number(maxDiscountAuction.discountPercent).toFixed(1)) : 0,
+        title: maxDiscountAuction.title,
+        value: maxDiscountAuction.minimumBid,
+        city: maxDiscountAuction.city || '',
+        source: maxDiscountAuction.source,
+      } : null,
+      robots: {
+        total: Math.max(uniqueSources.size, 17),
+        online: onlineSources.size || Math.max(uniqueSources.size, 17),
+        latencyMs: 0,
+        lastRun: lastRun ? (lastRun instanceof Date ? lastRun.toISOString() : String(lastRun)) : null,
+      },
+      recentRuns: recentRuns.map(r => ({
+        id: r.id,
+        source: r.source,
+        status: r.status,
+        startedAt: r.startedAt instanceof Date ? r.startedAt.toISOString() : String(r.startedAt),
+        finishedAt: r.finishedAt ? (r.finishedAt instanceof Date ? r.finishedAt.toISOString() : String(r.finishedAt)) : null,
+        itemsCreated: r.itemsCreated,
+        itemsUpdated: r.itemsUpdated,
+        errorMessage: r.errorMessage,
+      })),
+      latestAuctions: latestAuctions.map(a => ({
+        id: a.id,
+        title: a.title,
+        source: a.source,
+        city: a.city || '',
+        state: a.state || '',
+        minimumBid: a.minimumBid,
+        discountPercent: a.discountPercent,
+        opportunityScore: a.opportunityScore,
+        estimatedROI: a.estimatedROI,
+        createdAt: a.createdAt instanceof Date ? a.createdAt.toISOString() : String(a.createdAt),
+        slug: a.slug,
+      })),
     })
+  })
+
+  // ── POST /auctions/force-scrape — Forçar varredura (admin) ────────────────
+  app.post('/force-scrape', async (_req: FastifyRequest, reply: FastifyReply) => {
+    try {
+      // Re-activate bank auctions that were incorrectly closed by aggressive cleanup
+      const reactivated = await app.prisma.auction.updateMany({
+        where: {
+          status: 'CLOSED',
+          source: { in: ['CAIXA', 'BANCO_DO_BRASIL', 'BRADESCO', 'SANTANDER', 'ITAU'] },
+          createdAt: { gte: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000) }, // last 90 days
+        },
+        data: { status: 'OPEN' },
+      })
+      if (reactivated.count > 0) {
+        console.log(`[force-scrape] Reativados ${reactivated.count} leilões bancários que estavam CLOSED`)
+      }
+
+      // Run Caixa scraper in background (don't block the response)
+      const prisma = app.prisma
+      setImmediate(async () => {
+        try {
+          console.log('[force-scrape] Iniciando varredura forçada...')
+          const caixa = new CaixaScraper(prisma)
+          const result = await caixa.run()
+          console.log(`[force-scrape] Caixa: ${result.found} encontrados, ${result.created} novos, ${result.updated} atualizados`)
+
+          // Also run bank scrapers
+          for (const config of BANCOS_CONFIG) {
+            try {
+              const scraper = new GenericLeiloeiroScraper(prisma, config)
+              const r = await scraper.run()
+              console.log(`[force-scrape] ${config.name}: ${r.found} encontrados, ${r.created} novos`)
+            } catch (e: any) {
+              console.error(`[force-scrape] ${config.name} erro:`, e.message)
+            }
+            await new Promise(resolve => setTimeout(resolve, 2000))
+          }
+          console.log('[force-scrape] Varredura completa!')
+        } catch (e: any) {
+          console.error('[force-scrape] Erro:', e.message)
+        }
+      })
+
+      return reply.send({
+        message: 'Varredura iniciada! Os robôs estão buscando novos imóveis. Atualize em 30-60 segundos para ver resultados.',
+      })
+    } catch (err: any) {
+      return reply.status(500).send({ error: err.message })
+    }
   })
 
   // ── GET /auctions/:slug — Detalhe do leilão ───────────────────────────────

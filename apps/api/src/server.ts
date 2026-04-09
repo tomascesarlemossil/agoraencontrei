@@ -472,6 +472,21 @@ async function bootstrap() {
   await app.register(seoProgramaticoRoutes,    { prefix: '/api/v1/seo' })
   await app.register(financialAnalysisRoutes,  { prefix: '/api/v1/financial' })
 
+  // ── Re-ativar leilões bancários fechados erroneamente pelo cleanup ────
+  try {
+    const reactivated = await app.prisma.auction.updateMany({
+      where: {
+        status: 'CLOSED',
+        source: { in: ['CAIXA', 'BANCO_DO_BRASIL', 'BRADESCO', 'SANTANDER', 'ITAU'] },
+        createdAt: { gte: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000) },
+      },
+      data: { status: 'OPEN' },
+    })
+    if (reactivated.count > 0) {
+      app.log.info(`[boot] Reativados ${reactivated.count} leilões bancários que estavam CLOSED`)
+    }
+  } catch (e: any) { app.log.warn('Auction reactivation skip:', e.message) }
+
   // ── Scraper Scheduler (robôs 24/7 de leilões) ─────────────────────────
   if (env.NODE_ENV === 'production') {
     try {
