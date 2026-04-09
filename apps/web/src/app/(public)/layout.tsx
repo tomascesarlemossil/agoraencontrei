@@ -25,7 +25,7 @@ const FOOTER_IMOVEIS = [
   { href: '/imoveis?type=APARTMENT', label: 'Apartamentos' },
   { href: '/imoveis?type=HOUSE', label: 'Casas' },
   { href: '/imoveis?type=LAND', label: 'Terrenos' },
-  { href: '/imoveis?category=COMMERCIAL', label: 'Comercial' },
+  { href: '/imoveis?type=STORE', label: 'Comercial' },
 ]
 
 const FOOTER_SERVICOS = [
@@ -101,7 +101,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
                     <span style={{ color: '#1a5c2a', fontWeight: 700 }}>Agora</span>
                     <span style={{ color: '#d1d5db', fontWeight: 700 }}>Encontrei</span>
                   </span>
-                  <span className="text-[10px] font-medium" style={{ color: '#9ca3af', letterSpacing: '0.04em' }}>Marktplace</span>
+                  <span className="text-[10px] font-medium" style={{ color: '#9ca3af', letterSpacing: '0.04em' }}>Marketplace</span>
                 </div>
               </div>
               <p className="text-white/50 text-xs leading-relaxed">

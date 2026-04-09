@@ -21,7 +21,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
             />
           </div>
           <h1 className="text-2xl font-bold">
-            <span style={{ color: '#1a5c2a', fontWeight: 800 }}>Agora</span><span style={{ color: '#d1d5db', fontWeight: 800 }}>Encontrei</span>
+            <span style={{ color: '#4ade80', fontWeight: 800 }}>Agora</span><span style={{ color: '#d1d5db', fontWeight: 800 }}>Encontrei</span>
           </h1>
           <p className="text-white/50 text-sm mt-1">Marketplace Imobiliário</p>
         </div>

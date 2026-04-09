@@ -41,6 +41,7 @@ interface SearchParams {
   sortOrder?: string
   view?: string
   closedCondo?: string
+  isFeatured?: string
 }
 
 // Map the user-facing `sort` param to API `sortBy` + `sortOrder`
@@ -76,6 +77,7 @@ function buildQs(params: SearchParams, overrides?: Record<string, string>) {
   if (params.maxArea)   qs.set('maxArea', params.maxArea)
   if (params.bathrooms)   qs.set('bathrooms', params.bathrooms)
   if (params.closedCondo) qs.set('closedCondo', params.closedCondo)
+  if (params.isFeatured)  qs.set('isFeatured', params.isFeatured)
   const { sortBy, sortOrder } = parseSortParam(params)
   qs.set('sortBy', sortBy)
   qs.set('sortOrder', sortOrder)
