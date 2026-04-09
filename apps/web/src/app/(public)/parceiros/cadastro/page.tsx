@@ -12,7 +12,7 @@ import {
   Crown, ArrowRight, Sparkles,
 }
  from 'lucide-react'
-import { PlanosContent } from '../planos/page'
+import { PlanosContent } from '../PlanosContent'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 
