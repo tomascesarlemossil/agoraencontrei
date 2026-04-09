@@ -7,27 +7,19 @@ import Image from 'next/image'
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 
 const FILTERS = [
-  {
-    id: 'efeito-1',
-    name: 'Suave Pastel',
-    description: 'Tons suaves e luminosos. Ideal para interiores.',
-    emoji: '🌸',
-    color: '#f9a8d4',
-  },
-  {
-    id: 'efeito-2',
-    name: 'Vibrante Moderno',
-    description: 'Cores vivas e contraste marcante. Impacto visual.',
-    emoji: '⚡',
-    color: '#60a5fa',
-  },
-  {
-    id: 'efeito-3',
-    name: 'Quente Natural',
-    description: 'Tons quentes e naturais. Aconchego e conforto.',
-    emoji: '🌅',
-    color: '#fb923c',
-  },
+  { id: 'efeito-1',       name: 'Suave Pastel',       description: 'Tons suaves e luminosos. Ideal para interiores.', emoji: '🌸', color: '#f9a8d4' },
+  { id: 'efeito-2',       name: 'Vibrante Moderno',    description: 'Cores vivas e contraste marcante. Impacto visual.', emoji: '⚡', color: '#60a5fa' },
+  { id: 'efeito-3',       name: 'Quente Natural',      description: 'Tons quentes e naturais. Aconchego e conforto.', emoji: '🌅', color: '#fb923c' },
+  { id: 'hdr-interior',   name: 'HDR Interior',        description: 'Sombras abertas, destaques controlados. Ambientes com janelas.', emoji: '🏠', color: '#fbbf24' },
+  { id: 'magazine',       name: 'Magazine Editorial',   description: 'Padrão de revistas de arquitetura e decoração.', emoji: '📸', color: '#a78bfa' },
+  { id: 'luxury-premium', name: 'Luxo Premium',        description: 'Tons ricos e quentes. Imóveis de alto padrão.', emoji: '💎', color: '#c9a84c' },
+  { id: 'fresh-bright',   name: 'Fresh & Bright',      description: 'Ultra brilhante e arejado. Popular no Airbnb.', emoji: '☀️', color: '#34d399' },
+  { id: 'twilight',       name: 'Twilight',             description: 'Céu azul + interior quente. Fotos ao entardecer.', emoji: '🌆', color: '#818cf8' },
+  { id: 'cinematic',      name: 'Cinematográfico',     description: 'Contraste dramático, tom de filme.', emoji: '🎬', color: '#6366f1' },
+  { id: 'exterior-vivid', name: 'Exterior Vívido',     description: 'Gramados verdes, céu azul. Fachadas impactantes.', emoji: '🌿', color: '#22c55e' },
+  { id: 'pool-leisure',   name: 'Piscina & Lazer',     description: 'Água cristalina, verdes vibrantes.', emoji: '🏊', color: '#06b6d4' },
+  { id: 'drone-aerial',   name: 'Vista Aérea',         description: 'Clareza máxima para fotos de drone.', emoji: '🚁', color: '#0ea5e9' },
+  { id: 'night-elegant',  name: 'Noturna Elegante',    description: 'Iluminação quente noturna, fachada à noite.', emoji: '🌙', color: '#8b5cf6' },
 ]
 
 type Step = 'upload' | 'payment' | 'processing' | 'done'

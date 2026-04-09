@@ -97,6 +97,157 @@ FILTERS: dict[str, dict] = {
             "luminance_hsl": {"red": 0, "orange": -13, "yellow": 15, "green": -47, "aqua": 0, "blue": -8},
         }
     },
+    # ── Presets Profissionais para Fotografia Imobiliária ──────────────────────
+    "hdr-interior": {
+        "id": "hdr-interior",
+        "name": "HDR Interior",
+        "description": "Sombras abertas, destaques controlados. Perfeito para ambientes internos com janelas.",
+        "params": {
+            "exposure": 0.55, "contrast": 15, "highlights": -80, "shadows": 65,
+            "whites": -40, "blacks": 20, "texture": 20, "clarity": 15,
+            "dehaze": 10, "vibrance": 25, "saturation": 5, "sharpness": 45,
+            "luminance_smoothing": 15, "vignette": 0, "grain_amount": 0,
+            "grain_size": 0, "temperature_shift": 2, "tint_shift": 0,
+            "hue": {"red": 0, "orange": -5, "yellow": -10, "green": 0, "aqua": 0, "blue": 0},
+            "saturation_hsl": {"red": -10, "orange": 5, "yellow": -5, "green": -10, "aqua": 0, "blue": 0},
+            "luminance_hsl": {"red": 0, "orange": 10, "yellow": 20, "green": 0, "aqua": 0, "blue": 0},
+        }
+    },
+    "magazine": {
+        "id": "magazine",
+        "name": "Magazine Editorial",
+        "description": "Alto contraste limpo, cores precisas. Padrão de revistas de arquitetura.",
+        "params": {
+            "exposure": 0.30, "contrast": 20, "highlights": -50, "shadows": 30,
+            "whites": -20, "blacks": -10, "texture": 25, "clarity": 20,
+            "dehaze": 15, "vibrance": 15, "saturation": 0, "sharpness": 55,
+            "luminance_smoothing": 0, "vignette": -5, "grain_amount": 0,
+            "grain_size": 0, "temperature_shift": 0, "tint_shift": 0,
+            "hue": {"red": 0, "orange": 0, "yellow": 0, "green": 0, "aqua": 0, "blue": 0},
+            "saturation_hsl": {"red": -5, "orange": 0, "yellow": -10, "green": -5, "aqua": 5, "blue": 5},
+            "luminance_hsl": {"red": 0, "orange": 5, "yellow": 10, "green": 0, "aqua": 0, "blue": -5},
+        }
+    },
+    "luxury-premium": {
+        "id": "luxury-premium",
+        "name": "Luxo Premium",
+        "description": "Tons ricos e quentes, sensação de sofisticação. Ideal para imóveis de alto padrão.",
+        "params": {
+            "exposure": 0.25, "contrast": 10, "highlights": -40, "shadows": 35,
+            "whites": -30, "blacks": 5, "texture": 15, "clarity": 10,
+            "dehaze": 5, "vibrance": 20, "saturation": 8, "sharpness": 40,
+            "luminance_smoothing": 10, "vignette": -12, "grain_amount": 0,
+            "grain_size": 0, "temperature_shift": 4, "tint_shift": -3,
+            "hue": {"red": -5, "orange": -8, "yellow": -10, "green": 0, "aqua": 0, "blue": 5},
+            "saturation_hsl": {"red": -5, "orange": 10, "yellow": -10, "green": -15, "aqua": -5, "blue": 0},
+            "luminance_hsl": {"red": 0, "orange": 8, "yellow": 15, "green": 5, "aqua": 0, "blue": -10},
+        }
+    },
+    "fresh-bright": {
+        "id": "fresh-bright",
+        "name": "Fresh & Bright",
+        "description": "Ultra brilhante e arejado. Popular em plataformas como Airbnb e Viva Real.",
+        "params": {
+            "exposure": 0.85, "contrast": -30, "highlights": -60, "shadows": 50,
+            "whites": -50, "blacks": 30, "texture": 10, "clarity": -5,
+            "dehaze": 0, "vibrance": 30, "saturation": 5, "sharpness": 30,
+            "luminance_smoothing": 20, "vignette": 0, "grain_amount": 0,
+            "grain_size": 0, "temperature_shift": 1, "tint_shift": 0,
+            "hue": {"red": 0, "orange": 0, "yellow": -5, "green": 5, "aqua": 0, "blue": 0},
+            "saturation_hsl": {"red": -15, "orange": -5, "yellow": -10, "green": -5, "aqua": 0, "blue": 0},
+            "luminance_hsl": {"red": 5, "orange": 15, "yellow": 25, "green": 10, "aqua": 5, "blue": 0},
+        }
+    },
+    "twilight": {
+        "id": "twilight",
+        "name": "Twilight / Blue Hour",
+        "description": "Céu azul profundo com interior quente iluminado. Perfeito para fotos ao entardecer.",
+        "params": {
+            "exposure": 0.40, "contrast": 15, "highlights": -30, "shadows": 40,
+            "whites": -25, "blacks": 10, "texture": 20, "clarity": 15,
+            "dehaze": 20, "vibrance": 45, "saturation": 10, "sharpness": 50,
+            "luminance_smoothing": 10, "vignette": -8, "grain_amount": 0,
+            "grain_size": 0, "temperature_shift": -6, "tint_shift": 5,
+            "hue": {"red": 0, "orange": -10, "yellow": -15, "green": 0, "aqua": 5, "blue": 10},
+            "saturation_hsl": {"red": -10, "orange": 15, "yellow": -20, "green": -10, "aqua": 20, "blue": 30},
+            "luminance_hsl": {"red": 5, "orange": 10, "yellow": 15, "green": 0, "aqua": -5, "blue": -15},
+        }
+    },
+    "cinematic": {
+        "id": "cinematic",
+        "name": "Cinematográfico",
+        "description": "Tom de filme, contraste dramático. Excelente para vídeos e tours virtuais.",
+        "params": {
+            "exposure": 0.20, "contrast": 25, "highlights": -45, "shadows": 25,
+            "whites": -35, "blacks": -15, "texture": 15, "clarity": 20,
+            "dehaze": 10, "vibrance": 10, "saturation": -5, "sharpness": 40,
+            "luminance_smoothing": 5, "vignette": -15, "grain_amount": 8,
+            "grain_size": 20, "temperature_shift": 2, "tint_shift": -2,
+            "hue": {"red": -5, "orange": -8, "yellow": -10, "green": 5, "aqua": 5, "blue": 10},
+            "saturation_hsl": {"red": -10, "orange": -5, "yellow": -15, "green": -10, "aqua": 5, "blue": 10},
+            "luminance_hsl": {"red": 0, "orange": 5, "yellow": 10, "green": -5, "aqua": 0, "blue": -10},
+        }
+    },
+    "exterior-vivid": {
+        "id": "exterior-vivid",
+        "name": "Exterior Vívido",
+        "description": "Cores vibrantes para fachadas, gramados verdes e céu azul.",
+        "params": {
+            "exposure": 0.45, "contrast": 5, "highlights": -55, "shadows": 35,
+            "whites": -35, "blacks": 10, "texture": 30, "clarity": 20,
+            "dehaze": 25, "vibrance": 55, "saturation": 10, "sharpness": 55,
+            "luminance_smoothing": 5, "vignette": 0, "grain_amount": 0,
+            "grain_size": 0, "temperature_shift": -2, "tint_shift": 0,
+            "hue": {"red": 0, "orange": 0, "yellow": -10, "green": 15, "aqua": 10, "blue": 5},
+            "saturation_hsl": {"red": -5, "orange": 0, "yellow": -5, "green": 25, "aqua": 15, "blue": 20},
+            "luminance_hsl": {"red": 0, "orange": 5, "yellow": 10, "green": -10, "aqua": -5, "blue": -5},
+        }
+    },
+    "pool-leisure": {
+        "id": "pool-leisure",
+        "name": "Piscina & Lazer",
+        "description": "Água azul cristalina, verdes vibrantes. Perfeito para áreas de lazer.",
+        "params": {
+            "exposure": 0.50, "contrast": 10, "highlights": -45, "shadows": 30,
+            "whites": -30, "blacks": 15, "texture": 25, "clarity": 15,
+            "dehaze": 20, "vibrance": 60, "saturation": 15, "sharpness": 50,
+            "luminance_smoothing": 10, "vignette": 0, "grain_amount": 0,
+            "grain_size": 0, "temperature_shift": -3, "tint_shift": 2,
+            "hue": {"red": 0, "orange": 0, "yellow": -5, "green": 10, "aqua": 15, "blue": 10},
+            "saturation_hsl": {"red": -15, "orange": -5, "yellow": -10, "green": 20, "aqua": 35, "blue": 25},
+            "luminance_hsl": {"red": 0, "orange": 5, "yellow": 10, "green": -5, "aqua": -10, "blue": -8},
+        }
+    },
+    "drone-aerial": {
+        "id": "drone-aerial",
+        "name": "Vista Aérea / Drone",
+        "description": "Clareza máxima, céu dramático, detalhes nítidos para fotos de drone.",
+        "params": {
+            "exposure": 0.35, "contrast": 15, "highlights": -60, "shadows": 25,
+            "whites": -30, "blacks": 5, "texture": 35, "clarity": 25,
+            "dehaze": 30, "vibrance": 40, "saturation": 8, "sharpness": 60,
+            "luminance_smoothing": 0, "vignette": 0, "grain_amount": 0,
+            "grain_size": 0, "temperature_shift": -1, "tint_shift": 0,
+            "hue": {"red": 0, "orange": 0, "yellow": -5, "green": 10, "aqua": 5, "blue": 0},
+            "saturation_hsl": {"red": -5, "orange": 0, "yellow": -5, "green": 15, "aqua": 10, "blue": 15},
+            "luminance_hsl": {"red": 0, "orange": 0, "yellow": 5, "green": -10, "aqua": -5, "blue": -10},
+        }
+    },
+    "night-elegant": {
+        "id": "night-elegant",
+        "name": "Noturna Elegante",
+        "description": "Iluminação quente noturna, sombras ricas. Para fotos de fachada à noite.",
+        "params": {
+            "exposure": 0.70, "contrast": 20, "highlights": -30, "shadows": 55,
+            "whites": -20, "blacks": 25, "texture": 15, "clarity": 10,
+            "dehaze": 5, "vibrance": 20, "saturation": 5, "sharpness": 40,
+            "luminance_smoothing": 25, "vignette": -10, "grain_amount": 5,
+            "grain_size": 15, "temperature_shift": 6, "tint_shift": -2,
+            "hue": {"red": -5, "orange": -8, "yellow": -10, "green": 0, "aqua": 5, "blue": 10},
+            "saturation_hsl": {"red": -5, "orange": 10, "yellow": -10, "green": -10, "aqua": 5, "blue": 15},
+            "luminance_hsl": {"red": 5, "orange": 10, "yellow": 15, "green": 5, "aqua": 0, "blue": -5},
+        }
+    },
 }
 
 # ── Funções de conversão ─────────────────────────────────────────────────────

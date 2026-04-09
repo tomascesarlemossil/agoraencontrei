@@ -40,17 +40,31 @@ interface MediaEditorModalProps {
 }
 
 // ── Filtros CSS (client-side via Canvas) ──────────────────────────────────────
+// Presets profissionais para fotografia imobiliária
 const FILTERS = [
-  { id: 'none',       name: 'Original',    css: '' },
-  { id: 'vivid',      name: 'Vívido',      css: 'saturate(1.6) contrast(1.1) brightness(1.05)' },
-  { id: 'warm',       name: 'Quente',      css: 'sepia(0.3) saturate(1.4) brightness(1.08) hue-rotate(-10deg)' },
-  { id: 'cool',       name: 'Frio',        css: 'saturate(0.9) brightness(1.05) hue-rotate(20deg) contrast(1.05)' },
-  { id: 'bright',     name: 'Claro',       css: 'brightness(1.25) contrast(0.95) saturate(1.1)' },
-  { id: 'dramatic',   name: 'Dramático',   css: 'contrast(1.4) saturate(0.8) brightness(0.95)' },
-  { id: 'golden',     name: 'Dourado',     css: 'sepia(0.5) saturate(1.8) brightness(1.1) hue-rotate(-15deg)' },
-  { id: 'clean',      name: 'Limpo',       css: 'saturate(1.1) brightness(1.15) contrast(0.9)' },
-  { id: 'bw',         name: 'P&B',         css: 'grayscale(1) contrast(1.1) brightness(1.05)' },
-  { id: 'sunset',     name: 'Pôr do Sol',  css: 'sepia(0.4) saturate(2) brightness(1.05) hue-rotate(-20deg)' },
+  { id: 'none',       name: 'Original',         css: '' },
+  // ── Presets Lightroom (equivalente CSS dos 3 DNG presets) ──
+  { id: 'pastel',     name: 'Suave Pastel',      css: 'brightness(1.12) contrast(0.95) saturate(1.3) hue-rotate(-5deg)' },
+  { id: 'vibrante',   name: 'Vibrante Moderno',   css: 'brightness(1.15) contrast(1.05) saturate(1.6) hue-rotate(2deg)' },
+  { id: 'quente-nat', name: 'Quente Natural',     css: 'brightness(1.18) contrast(0.92) saturate(1.3) sepia(0.15) hue-rotate(-8deg)' },
+  // ── Presets Profissionais Imobiliários ──
+  { id: 'hdr-int',    name: 'HDR Interior',       css: 'brightness(1.22) contrast(1.15) saturate(1.2) hue-rotate(0deg)' },
+  { id: 'magazine',   name: 'Magazine',            css: 'brightness(1.08) contrast(1.2) saturate(1.15) hue-rotate(-3deg)' },
+  { id: 'luxury',     name: 'Luxo Premium',        css: 'brightness(1.05) contrast(1.1) saturate(1.25) sepia(0.12) hue-rotate(-10deg)' },
+  { id: 'modern',     name: 'Moderno Clean',       css: 'brightness(1.2) contrast(0.92) saturate(0.95) hue-rotate(5deg)' },
+  { id: 'fresh',      name: 'Fresh & Bright',      css: 'brightness(1.3) contrast(0.88) saturate(1.15) hue-rotate(3deg)' },
+  { id: 'airy',       name: 'Airy Light',          css: 'brightness(1.25) contrast(0.85) saturate(1.05) sepia(0.05)' },
+  { id: 'cozy',       name: 'Aconchegante',        css: 'brightness(1.1) contrast(1.05) saturate(1.2) sepia(0.2) hue-rotate(-12deg)' },
+  { id: 'twilight',   name: 'Twilight',             css: 'brightness(0.95) contrast(1.15) saturate(1.4) hue-rotate(15deg)' },
+  { id: 'cinematic',  name: 'Cinematográfico',     css: 'brightness(1.02) contrast(1.25) saturate(0.9) sepia(0.08) hue-rotate(-5deg)' },
+  { id: 'ext-vivid',  name: 'Exterior Vívido',     css: 'brightness(1.1) contrast(1.12) saturate(1.55) hue-rotate(5deg)' },
+  { id: 'pool',       name: 'Piscina & Lazer',     css: 'brightness(1.15) contrast(1.08) saturate(1.7) hue-rotate(10deg)' },
+  { id: 'garden',     name: 'Jardim Verde',         css: 'brightness(1.12) contrast(1.05) saturate(1.5) hue-rotate(15deg)' },
+  { id: 'night',      name: 'Noturna Elegante',    css: 'brightness(1.3) contrast(1.2) saturate(1.1) hue-rotate(8deg)' },
+  { id: 'drone',      name: 'Vista Aérea',          css: 'brightness(1.08) contrast(1.18) saturate(1.45) hue-rotate(5deg)' },
+  { id: 'golden',     name: 'Hora Dourada',         css: 'sepia(0.4) saturate(1.8) brightness(1.1) hue-rotate(-15deg)' },
+  { id: 'bw',         name: 'P&B Elegante',         css: 'grayscale(1) contrast(1.15) brightness(1.08)' },
+  { id: 'bw-warm',    name: 'P&B Quente',           css: 'grayscale(0.9) contrast(1.1) brightness(1.1) sepia(0.15)' },
 ]
 
 const LOGO_POSITIONS = [
