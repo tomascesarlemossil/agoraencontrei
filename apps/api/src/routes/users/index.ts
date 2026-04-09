@@ -7,8 +7,11 @@ const UpdateUserBody = z.object({
   phone: z.string().optional(),
   bio: z.string().max(500).optional(),
   creciNumber: z.string().optional(),
-  avatarUrl: z.string().optional(), // accepts URLs, data URLs, relative paths
+  avatarUrl: z.string().optional(),
   role: z.enum(['ADMIN', 'MANAGER', 'BROKER', 'FINANCIAL', 'LAWYER', 'CLIENT']).optional(),
+  accessLevel: z.enum(['full', 'custom', 'readonly']).optional(),
+  moduleAccess: z.array(z.string()).optional(),
+  hasDataAccess: z.boolean().optional(),
 })
 
 // All available system modules for granular permission control
@@ -53,7 +56,7 @@ export default async function usersRoutes(app: FastifyInstance) {
       where: { companyId: req.user.cid, status: { not: 'SUSPENDED' } },
       select: {
         id: true, name: true, email: true, phone: true,
-        avatarUrl: true, role: true, status: true,
+        avatarUrl: true, role: true, status: true, settings: true,
         creciNumber: true, lastLoginAt: true, createdAt: true,
       },
       orderBy: { name: 'asc' },
@@ -321,14 +324,32 @@ export default async function usersRoutes(app: FastifyInstance) {
       }
     }
 
-    const existingUser = await app.prisma.user.findUnique({ where: { id }, select: { id: true, name: true, role: true, phone: true, bio: true, creciNumber: true } })
+    const existingUser = await app.prisma.user.findUnique({ where: { id }, select: { id: true, name: true, role: true, phone: true, bio: true, creciNumber: true, settings: true } })
+
+    // Extract permission fields that go into settings JSON
+    const { accessLevel, moduleAccess, hasDataAccess, ...directFields } = body
+    const updateData: any = { ...directFields }
+
+    // Update settings if permission fields are provided
+    if (accessLevel !== undefined || moduleAccess !== undefined || hasDataAccess !== undefined) {
+      const currentSettings = (existingUser?.settings as Record<string, any>) ?? {}
+      const newSettings = { ...currentSettings }
+      if (accessLevel) {
+        newSettings.accessLevel = accessLevel
+        if (accessLevel === 'full') newSettings.moduleAccess = ALL_MODULES
+        else if (accessLevel === 'readonly') newSettings.moduleAccess = ['imoveis']
+      }
+      if (moduleAccess) newSettings.moduleAccess = moduleAccess
+      if (hasDataAccess !== undefined) newSettings.isolatedCompany = !hasDataAccess
+      updateData.settings = newSettings
+    }
 
     const user = await app.prisma.user.update({
       where: { id },
-      data: body,
+      data: updateData,
       select: {
         id: true, name: true, email: true, phone: true,
-        avatarUrl: true, role: true, bio: true, creciNumber: true,
+        avatarUrl: true, role: true, bio: true, creciNumber: true, settings: true,
       },
     })
 

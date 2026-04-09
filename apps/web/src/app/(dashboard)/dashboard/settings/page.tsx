@@ -343,7 +343,12 @@ export default function SettingsPage() {
     isolatedCompanyName: '',
   })
   const [editingUserId, setEditingUserId] = useState<string | null>(null)
-  const [editUser, setEditUser] = useState({ name: '', email: '', phone: '', role: '', creciNumber: '', bio: '', avatarUrl: '' })
+  const [editUser, setEditUser] = useState({
+    name: '', email: '', phone: '', role: '', creciNumber: '', bio: '', avatarUrl: '',
+    accessLevel: 'full' as string,
+    moduleAccess: [] as string[],
+    hasDataAccess: true,
+  })
   const [editUserSaved, setEditUserSaved] = useState(false)
   const [editAvatarFile, setEditAvatarFile] = useState<File | null>(null)
   const [editAvatarPreview, setEditAvatarPreview] = useState<string | null>(null)
@@ -430,6 +435,7 @@ export default function SettingsPage() {
 
   const startEditUser = (u: User) => {
     setEditingUserId(u.id)
+    const settings = (u as any).settings ?? {}
     setEditUser({
       name: u.name ?? '',
       email: u.email ?? '',
@@ -438,6 +444,9 @@ export default function SettingsPage() {
       creciNumber: u.creciNumber ?? '',
       bio: (u as any).bio ?? '',
       avatarUrl: u.avatarUrl ?? '',
+      accessLevel: settings.accessLevel ?? 'full',
+      moduleAccess: settings.moduleAccess ?? [],
+      hasDataAccess: !settings.isolatedCompany,
     })
     setEditAvatarFile(null)
     setEditAvatarPreview(null)
@@ -812,6 +821,75 @@ export default function SettingsPage() {
                   <DarkInput label="CRECI" value={editUser.creciNumber} onChange={e => setEditUser(p => ({ ...p, creciNumber: e.target.value }))} placeholder="000000-F" />
                 </div>
                 <DarkTextarea label="Bio / Apresentação" value={editUser.bio} onChange={e => setEditUser(p => ({ ...p, bio: e.target.value }))} rows={3} placeholder="Sobre o usuário..." />
+
+                {/* ── Permissões do Usuário ─────────────────────── */}
+                <div className="p-4 rounded-xl bg-white/5 border border-white/10">
+                  <p className="text-xs font-bold text-white/60 uppercase tracking-wider mb-3">Permissões de Acesso</p>
+                  <div className="flex gap-2 mb-3">
+                    {[
+                      { id: 'full', label: 'Acesso Total', desc: 'Todas as ferramentas' },
+                      { id: 'custom', label: 'Personalizado', desc: 'Escolher módulos' },
+                      { id: 'readonly', label: 'Somente Leitura', desc: 'Apenas visualizar' },
+                    ].map(opt => (
+                      <button key={opt.id} type="button"
+                        onClick={() => setEditUser(p => ({ ...p, accessLevel: opt.id }))}
+                        className={`flex-1 p-2.5 rounded-lg text-xs text-center border transition-all ${
+                          editUser.accessLevel === opt.id
+                            ? 'border-[#C9A84C] bg-[#C9A84C]/10 text-[#C9A84C]'
+                            : 'border-white/10 text-white/40 hover:border-white/20'
+                        }`}>
+                        <p className="font-bold">{opt.label}</p>
+                        <p className="text-[10px] mt-0.5 opacity-60">{opt.desc}</p>
+                      </button>
+                    ))}
+                  </div>
+
+                  {editUser.accessLevel === 'custom' && (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-3">
+                      {[
+                        { id: 'imoveis', label: 'Imóveis' }, { id: 'leads', label: 'Leads' },
+                        { id: 'contatos', label: 'Contatos' }, { id: 'negocios', label: 'Negócios' },
+                        { id: 'financeiro', label: 'Financeiro' }, { id: 'juridico', label: 'Jurídico' },
+                        { id: 'chat', label: 'Chat/WhatsApp' }, { id: 'leiloes', label: 'Leilões' },
+                        { id: 'blog', label: 'Blog' }, { id: 'seo', label: 'SEO' },
+                        { id: 'automacoes', label: 'Automações' }, { id: 'ia-visual', label: 'IA Visual' },
+                        { id: 'documentos', label: 'Documentos IA' }, { id: 'configuracoes', label: 'Configurações' },
+                        { id: 'financiamentos', label: 'Financiamentos' }, { id: 'campanhas', label: 'Campanhas' },
+                        { id: 'notas-fiscais', label: 'Notas Fiscais' }, { id: 'foto-editor', label: 'Editor Fotos' },
+                      ].map(mod => (
+                        <label key={mod.id} className="flex items-center gap-2 text-xs text-white/60 cursor-pointer hover:text-white/80">
+                          <input type="checkbox" className="rounded border-white/20 bg-white/5 text-[#C9A84C]"
+                            checked={editUser.moduleAccess.includes(mod.id)}
+                            onChange={e => {
+                              setEditUser(p => ({
+                                ...p,
+                                moduleAccess: e.target.checked
+                                  ? [...p.moduleAccess, mod.id]
+                                  : p.moduleAccess.filter(m => m !== mod.id),
+                              }))
+                            }}
+                          />
+                          {mod.label}
+                        </label>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Acesso a dados */}
+                  <div className="mt-3 pt-3 border-t border-white/10">
+                    <label className="flex items-center gap-3 cursor-pointer">
+                      <input type="checkbox" className="rounded border-white/20 bg-white/5 text-[#C9A84C]"
+                        checked={editUser.hasDataAccess}
+                        onChange={e => setEditUser(p => ({ ...p, hasDataAccess: e.target.checked }))}
+                      />
+                      <div>
+                        <p className="text-xs font-bold text-white/80">Acesso aos dados da empresa (imóveis, clientes, contratos)</p>
+                        <p className="text-[10px] text-white/40">Se desativado, o usuário terá acesso às ferramentas mas sem dados existentes.</p>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+
                 <div className="flex items-center gap-3">
                   <button
                     onClick={() => updateTeamUserMutation.mutate()}
