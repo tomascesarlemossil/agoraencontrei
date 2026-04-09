@@ -340,7 +340,31 @@ export default async function usersRoutes(app: FastifyInstance) {
         else if (accessLevel === 'readonly') newSettings.moduleAccess = ['imoveis']
       }
       if (moduleAccess) newSettings.moduleAccess = moduleAccess
-      if (hasDataAccess !== undefined) newSettings.isolatedCompany = !hasDataAccess
+
+      // Handle data isolation: move user to isolated company or back
+      if (hasDataAccess === false && !currentSettings.isolatedCompany) {
+        // Create isolated company and move user there
+        const newCompany = await app.prisma.company.create({
+          data: {
+            name: `${existingUser?.name ?? 'User'} — Empresa`,
+            tradeName: existingUser?.name ?? 'Empresa Isolada',
+            isActive: true,
+            plan: 'starter',
+            settings: {},
+          },
+        })
+        updateData.companyId = newCompany.id
+        newSettings.isolatedCompany = true
+        newSettings.parentCompanyId = req.user.cid
+        newSettings.originalCompanyId = req.user.cid
+      } else if (hasDataAccess === true && currentSettings.isolatedCompany) {
+        // Move user back to original company
+        const originalCid = currentSettings.originalCompanyId || currentSettings.parentCompanyId || req.user.cid
+        updateData.companyId = originalCid
+        newSettings.isolatedCompany = false
+        delete newSettings.parentCompanyId
+      }
+
       updateData.settings = newSettings
     }
 

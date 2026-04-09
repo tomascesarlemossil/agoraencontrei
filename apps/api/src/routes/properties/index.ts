@@ -158,8 +158,13 @@ export default async function propertiesRoutes(app: FastifyInstance) {
 
     // Scope by company when authenticated; restrict to public-safe defaults when not
     const isAuth = !!(req as any).user
+    const userSettings = isAuth ? ((await app.prisma.user.findUnique({ where: { id: (req as any).user.sub }, select: { settings: true } }))?.settings as any ?? {}) : {}
+    const isIsolated = userSettings.isolatedCompany === true
+    const showAllProperties = isAuth && (req.query as any).showAll === 'true'
+
     const where: any = {
-      ...(isAuth  && { companyId: (req as any).user.cid }),
+      ...(isAuth && !showAllProperties && { companyId: (req as any).user.cid }),
+      ...(isAuth && showAllProperties && { status: 'ACTIVE', authorizedPublish: true }),
       ...(!isAuth && { status: 'ACTIVE', authorizedPublish: true }),
       ...(isAuth && q.status && { status: q.status }),
       ...(q.type        && { type: q.type }),
@@ -197,7 +202,7 @@ export default async function propertiesRoutes(app: FastifyInstance) {
       app.prisma.property.findMany({
         where,
         select: {
-          id: true, reference: true, title: true, slug: true,
+          id: true, companyId: true, reference: true, title: true, slug: true,
           type: true, purpose: true, status: true,
           price: true, priceRent: true, condoFee: true,
           neighborhood: true, city: true, state: true, street: true, number: true,
@@ -227,8 +232,25 @@ export default async function propertiesRoutes(app: FastifyInstance) {
       }),
     ])
 
+    // Strip confidential data from properties that belong to other companies
+    const userCid = isAuth ? (req as any).user.cid : null
+    const sanitizedItems = items.map((item: any) => {
+      if (!isAuth || item.companyId === userCid) return item
+      // Other company's property: hide confidential fields
+      const { street, number, latitude, longitude, contracts, ...safeFields } = item
+      return {
+        ...safeFields,
+        street: null,
+        number: null,
+        latitude: null,
+        longitude: null,
+        contracts: [],
+        _otherCompany: true,
+      }
+    })
+
     return reply.send({
-      data: items,
+      data: sanitizedItems,
       meta: {
         total,
         page: q.page,
