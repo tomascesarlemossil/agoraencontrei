@@ -417,7 +417,7 @@ export default async function PropertyDetailPage(props: { params: Promise<{ slug
           ════════════════════════════════════════════════════ */}
           <div className="lg:col-span-2 space-y-5">
 
-            {/* Video */}
+            {/* YouTube Video */}
             {youtubeId && (
               <div className="rounded-2xl overflow-hidden shadow-md border" style={{ aspectRatio: '16/9', borderColor: '#ddd9d0' }}>
                 <iframe
@@ -425,6 +425,33 @@ export default async function PropertyDetailPage(props: { params: Promise<{ slug
                   title={p.title} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                   allowFullScreen className="w-full h-full" style={{ border: 0 }}
                 />
+              </div>
+            )}
+
+            {/* Direct Videos (MP4/WebM from property.videos) */}
+            {p.videos && (p.videos as string[]).length > 0 && (
+              <div className="space-y-3">
+                <h3 className="text-sm font-semibold flex items-center gap-2" style={{ color: '#1B2B5B' }}>
+                  <Video className="w-4 h-4" style={{ color: '#C9A84C' }} />
+                  Vídeos do Imóvel
+                </h3>
+                <div className="grid grid-cols-1 gap-3">
+                  {(p.videos as string[]).slice(0, 5).map((videoUrl: string, idx: number) => (
+                    <div key={idx} className="rounded-2xl overflow-hidden shadow-md border bg-black" style={{ borderColor: '#ddd9d0' }}>
+                      <video
+                        controls
+                        preload="metadata"
+                        playsInline
+                        className="w-full"
+                        style={{ maxHeight: '500px' }}
+                        poster={allImages[0]}
+                      >
+                        <source src={videoUrl} />
+                        Seu navegador não suporta vídeos.
+                      </video>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
 

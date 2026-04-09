@@ -15,7 +15,7 @@ import { Controller, useForm } from 'react-hook-form'
 import {
   ArrowLeft, Edit, Save, X, MapPin, BedDouble, Bath, Car, Ruler, Eye,
   Calendar, ImagePlus, Trash2, Star, Upload, Phone, Mail, User as UserIcon, ZoomIn,
-  Home, Globe, Settings, Shield, Briefcase, Building2, Search, MessageSquare, Clock, Wand2, Film,
+  Home, Globe, Settings, Shield, Briefcase, Building2, Search, MessageSquare, Clock, Wand2, Film, Download,
 } from 'lucide-react'
 import Link from 'next/link'
 import { useState, useRef, useEffect } from 'react'
@@ -370,6 +370,21 @@ export default function PropertyDetailPage() {
     onSuccess: () => router.push('/dashboard/properties'),
   })
 
+  // Auto-save draft every 30 seconds when editing
+  const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle')
+  const formValues = watch()
+  useEffect(() => {
+    if (!editing || !p) return
+    const timer = setTimeout(() => {
+      setAutoSaveStatus('saving')
+      handleSubmit((d) => updateMutation.mutate(d, {
+        onSuccess: () => setAutoSaveStatus('saved'),
+        onError: () => setAutoSaveStatus('idle'),
+      }))()
+    }, 30000)
+    return () => clearTimeout(timer)
+  }, [formValues, editing]) // eslint-disable-line react-hooks/exhaustive-deps
+
   // Image & Video management
   const [uploadingImages, setUploadingImages] = useState(false)
   const [uploadingVideos, setUploadingVideos] = useState(false)
@@ -505,7 +520,9 @@ export default function PropertyDetailPage() {
             </>
           ) : (
             <>
-              <Button variant="ghost" size="sm" onClick={() => { setEditing(false); reset() }}
+              {autoSaveStatus === 'saving' && <span className="text-xs text-yellow-400 animate-pulse">Salvando...</span>}
+              {autoSaveStatus === 'saved' && <span className="text-xs text-green-400">Salvo automaticamente</span>}
+              <Button variant="ghost" size="sm" onClick={() => { setEditing(false); setAutoSaveStatus('idle'); reset() }}
                 className="text-white/60 h-8">Cancelar</Button>
               <Button size="sm" onClick={handleSubmit((d) => updateMutation.mutate(d))}
                 disabled={updateMutation.isPending} className="gap-2 h-8">
@@ -540,6 +557,18 @@ export default function PropertyDetailPage() {
             </button>
             <input ref={videoInputRef} type="file" accept="video/mp4,video/mov,video/quicktime,video/webm,video/*" multiple className="hidden"
               onChange={(e) => handleVideoUpload(e.target.files)} />
+            {allPhotos.length > 0 && (
+              <button onClick={async () => {
+                const a = document.createElement('a')
+                for (const url of allPhotos) {
+                  a.href = url; a.download = url.split('/').pop() || 'foto.jpg'; a.click()
+                  await new Promise(r => setTimeout(r, 300))
+                }
+              }}
+                className="flex items-center gap-1.5 text-xs text-green-400 hover:text-green-300 transition-colors px-2 py-1 rounded-lg hover:bg-green-400/10 border border-green-400/20">
+                <Download className="h-3.5 w-3.5" /> Baixar Todas
+              </button>
+            )}
             {(allPhotos.length > 0 || ((p as any)?.videos ?? []).length > 0) && (
               <button onClick={async () => { const tk = await getValidToken(); setMediaEditorToken(tk); setShowMediaEditor(true) }}
                 className="flex items-center gap-1.5 text-xs text-yellow-400 hover:text-yellow-300 transition-colors px-2 py-1 rounded-lg hover:bg-yellow-400/10 border border-yellow-400/30">
