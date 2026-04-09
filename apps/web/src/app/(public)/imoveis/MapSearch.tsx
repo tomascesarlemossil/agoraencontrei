@@ -250,87 +250,50 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
 
   // Load clusters from API
   useEffect(() => {
-    async function fetchClusters(useBbox: boolean): Promise<Cluster[]> {
-      const params = new URLSearchParams()
-      if (initialPurpose) params.set('purpose', initialPurpose)
-      if (useBbox) {
-        const b = FRANCA_BBOX
+    async function loadClusters(bbox?: { swLat: number; swLng: number; neLat: number; neLng: number }) {
+      try {
+        const params = new URLSearchParams()
+        if (initialPurpose) params.set('purpose', initialPurpose)
+        // Use BBOX for targeted loading — default to Franca/SP area
+        const b = bbox ?? FRANCA_BBOX
         params.set('swLat', b.swLat.toFixed(6))
         params.set('swLng', b.swLng.toFixed(6))
         params.set('neLat', b.neLat.toFixed(6))
         params.set('neLng', b.neLng.toFixed(6))
-      }
-      const res = await fetch(`${API_URL}/api/v1/public/map-clusters?${params}`)
-      if (!res.ok) return []
-      const data = await res.json()
-      return Array.isArray(data) ? data : []
-    }
+        const res = await fetch(`${API_URL}/api/v1/public/map-clusters?${params}`)
+        if (!res.ok) return
+        const data: Cluster[] = await res.json()
+        // Start with null coords, geocode progressively
+        const withCoords = data.map(c => ({
+          ...c,
+          resolvedLat: c.lat ?? 0,
+          resolvedLng: c.lng ?? 0,
+        }))
+        setClusters(withCoords)
 
-    function processClusters(data: Cluster[]) {
-      const withCoords = data.map(c => ({
-        ...c,
-        resolvedLat: c.lat ?? 0,
-        resolvedLng: c.lng ?? 0,
-      }))
-      setClusters(withCoords)
-
-      // Geocode neighborhoods without coords
-      const needsGeocode = data.filter(c => !c.lat || !c.lng)
-      let delay = 0
-      for (const c of needsGeocode) {
-        setTimeout(async () => {
-          const coords = await geocodeNeighborhood(c.neighborhood, c.city ?? 'Franca')
-          if (coords) {
-            setClusters(prev => prev.map(p =>
-              p.neighborhood === c.neighborhood && p.city === c.city
-                ? { ...p, resolvedLat: coords[0], resolvedLng: coords[1] }
-                : p
-            ))
-          }
-        }, delay)
-        delay += NOMINATIM_DELAY
-      }
-    }
-
-    async function loadClusters() {
-      try {
-        // Try with BBOX first
-        let data = await fetchClusters(true)
-        // Fallback: if BBOX returns empty, retry without BBOX
-        if (data.length === 0) {
-          data = await fetchClusters(false)
+        // Geocode neighborhoods without coords
+        const needsGeocode = data.filter(c => !c.lat || !c.lng)
+        let delay = 0
+        for (const c of needsGeocode) {
+          setTimeout(async () => {
+            const coords = await geocodeNeighborhood(c.neighborhood, c.city ?? 'Franca')
+            if (coords) {
+              setClusters(prev => prev.map(p =>
+                p.neighborhood === c.neighborhood && p.city === c.city
+                  ? { ...p, resolvedLat: coords[0], resolvedLng: coords[1] }
+                  : p
+              ))
+            }
+          }, delay)
+          delay += NOMINATIM_DELAY
         }
-        if (data.length > 0) processClusters(data)
       } catch {}
     }
-
-    // Only fetch if no SSR clusters provided
+     // Only fetch if no SSR clusters provided
     if (!initialClusters || initialClusters.length === 0) {
       loadClusters()
     }
   }, [initialPurpose]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Geocode SSR-provided clusters that have null/0 coordinates
-  useEffect(() => {
-    const needsGeocode = clusters.filter(c => !c.resolvedLat || !c.resolvedLng)
-    if (needsGeocode.length === 0) return
-
-    let delay = 0
-    for (const c of needsGeocode) {
-      setTimeout(async () => {
-        const coords = await geocodeNeighborhood(c.neighborhood, c.city ?? 'Franca')
-        if (coords) {
-          setClusters(prev => prev.map(p =>
-            p.neighborhood === c.neighborhood && p.city === c.city
-              ? { ...p, resolvedLat: coords[0], resolvedLng: coords[1] }
-              : p
-          ))
-        }
-      }, delay)
-      delay += NOMINATIM_DELAY
-    }
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
-
   // Load owner-direct (green pins) properties from free-listing endpoint
   useEffect(() => {
     fetch(`${API_URL}/api/v1/public/free-listing/map-pins`)
@@ -372,11 +335,16 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
     loadAuctions()
   }, [])
 
-  const [mapLibReady, setMapLibReady] = useState(false)
-
-  // Load MapLibre GL JS + CSS from CDN (bypasses webpack/Next.js entirely)
+  // Inject MapLibre CSS + critical inline styles
   useEffect(() => {
-    // CSS
+    // Critical inline CSS for canvas positioning (no network needed)
+    if (!document.getElementById('maplibre-critical-css')) {
+      const style = document.createElement('style')
+      style.id = 'maplibre-critical-css'
+      style.textContent = `.maplibregl-map{font:12px/20px Helvetica Neue,Arial,Helvetica,sans-serif;overflow:hidden;position:relative;width:100%;height:100%;-webkit-tap-highlight-color:rgba(0,0,0,0)}.maplibregl-canvas{position:absolute;left:0;top:0}.maplibregl-canvas-container.maplibregl-interactive{cursor:grab;user-select:none}`
+      document.head.appendChild(style)
+    }
+    // Full CSS from CDN
     if (!document.getElementById('maplibre-gl-css')) {
       const link = document.createElement('link')
       link.id = 'maplibre-gl-css'
@@ -384,130 +352,120 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
       link.href = 'https://unpkg.com/maplibre-gl@5/dist/maplibre-gl.css'
       document.head.appendChild(link)
     }
-    // JS
-    if ((window as any).maplibregl) {
-      setMapLibReady(true)
-      return
-    }
-    if (document.getElementById('maplibre-gl-js')) return
-    const script = document.createElement('script')
-    script.id = 'maplibre-gl-js'
-    script.src = 'https://unpkg.com/maplibre-gl@5/dist/maplibre-gl.js'
-    script.onload = () => setMapLibReady(true)
-    script.onerror = () => setMapError('Não foi possível carregar o mapa.')
-    document.head.appendChild(script)
   }, [])
 
-  // Initialize MapLibre GL map (uses CDN-loaded window.maplibregl)
+  // Initialize MapLibre GL map
   useEffect(() => {
-    if (!mapLibReady || !mapRef.current || mapInstance.current) return
+    if (!mapRef.current || mapInstance.current) return
 
-    const maplibregl = (window as any).maplibregl
-    if (!maplibregl?.Map) {
-      setMapError('MapLibre não disponível.')
-      return
+    // Inline raster tile style — no external style URL dependency
+    const mapStyle: any = {
+      version: 8,
+      sources: {
+        'osm': {
+          type: 'raster',
+          tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+          tileSize: 256,
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+        },
+      },
+      layers: [{ id: 'osm-tiles', type: 'raster', source: 'osm' }],
     }
 
-    try {
-      const map = new maplibregl.Map({
-        container: mapRef.current!,
-        style: {
-          version: 8,
-          glyphs: 'https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf',
-          sources: {
-            'osm': {
-              type: 'raster',
-              tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
-              tileSize: 256,
-              attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-            },
-          },
-          layers: [{ id: 'osm-tiles', type: 'raster', source: 'osm' }],
-        },
-        center: [FRANCA_CENTER[1], FRANCA_CENTER[0]],
-        zoom: 13,
-      })
+    import('maplibre-gl').then(mod => {
+      const maplibregl: any = mod.default || mod
+      if (typeof maplibregl?.Map !== 'function') {
+        setMapError(`MapLibre não carregou. Keys: ${Object.keys(mod).join(',')}`)
+        return
+      }
+      try {
+        const map = new maplibregl.Map({
+          container: mapRef.current!,
+          style: mapStyle,
+          center: [FRANCA_CENTER[1], FRANCA_CENTER[0]], // MapLibre uses [lng, lat]
+          zoom: 13,
+        })
 
-      map.addControl(new maplibregl.NavigationControl(), 'top-right')
+        map.addControl(new maplibregl.NavigationControl(), 'top-right')
+
+        // Ensure canvas fills container after layout settles
+        map.once('render', () => { map.resize() })
+        setTimeout(() => { try { map.resize() } catch {} }, 200)
 
         map.on('load', () => {
-          try {
-            // Add auction GeoJSON source with clustering
-            map.addSource('auctions-source', {
-              type: 'geojson',
-              data: { type: 'FeatureCollection', features: [] },
-              cluster: true,
-              clusterMaxZoom: 14,
-              clusterRadius: 60,
-            })
+          // Add auction GeoJSON source with clustering
+          map.addSource('auctions-source', {
+            type: 'geojson',
+            data: { type: 'FeatureCollection', features: [] },
+            cluster: true,
+            clusterMaxZoom: 14,
+            clusterRadius: 60,
+          })
 
-            map.addLayer({
-              id: 'auction-clusters',
-              type: 'circle',
-              source: 'auctions-source',
-              filter: ['has', 'point_count'],
-              paint: {
-                'circle-color': '#C9A84C',
-                'circle-radius': ['step', ['get', 'point_count'], 20, 10, 24, 50, 30],
-                'circle-stroke-width': 3,
-                'circle-stroke-color': '#1B2B5B',
-              },
-            })
+          map.addLayer({
+            id: 'auction-clusters',
+            type: 'circle',
+            source: 'auctions-source',
+            filter: ['has', 'point_count'],
+            paint: {
+              'circle-color': '#C9A84C',
+              'circle-radius': ['step', ['get', 'point_count'], 20, 10, 24, 50, 30],
+              'circle-stroke-width': 3,
+              'circle-stroke-color': '#1B2B5B',
+            },
+          })
 
-            map.addLayer({
-              id: 'auction-cluster-count',
-              type: 'symbol',
-              source: 'auctions-source',
-              filter: ['has', 'point_count'],
-              layout: { 'text-field': '{point_count_abbreviated}', 'text-size': 12 },
-              paint: { 'text-color': '#1B2B5B' },
-            })
+          map.addLayer({
+            id: 'auction-cluster-count',
+            type: 'symbol',
+            source: 'auctions-source',
+            filter: ['has', 'point_count'],
+            layout: { 'text-field': '{point_count_abbreviated}', 'text-size': 12 },
+            paint: { 'text-color': '#1B2B5B' },
+          })
 
-            map.addLayer({
-              id: 'auction-unclustered',
-              type: 'circle',
-              source: 'auctions-source',
-              filter: ['!', ['has', 'point_count']],
-              paint: {
-                'circle-color': '#C9A84C',
-                'circle-radius': 10,
-                'circle-stroke-width': 3,
-                'circle-stroke-color': '#1B2B5B',
-              },
-            })
+          map.addLayer({
+            id: 'auction-unclustered',
+            type: 'circle',
+            source: 'auctions-source',
+            filter: ['!', ['has', 'point_count']],
+            paint: {
+              'circle-color': '#C9A84C',
+              'circle-radius': 10,
+              'circle-stroke-width': 3,
+              'circle-stroke-color': '#1B2B5B',
+            },
+          })
 
-            // Polygon drawing source
-            map.addSource('draw-polygon', {
-              type: 'geojson',
-              data: { type: 'FeatureCollection', features: [] },
-            })
-            map.addLayer({
-              id: 'draw-polygon-fill',
-              type: 'fill',
-              source: 'draw-polygon',
-              paint: { 'fill-color': '#C9A84C', 'fill-opacity': 0.15 },
-            })
-            map.addLayer({
-              id: 'draw-polygon-line',
-              type: 'line',
-              source: 'draw-polygon',
-              paint: { 'line-color': '#C9A84C', 'line-width': 2.5 },
-            })
+          // Polygon drawing source
+          map.addSource('draw-polygon', {
+            type: 'geojson',
+            data: { type: 'FeatureCollection', features: [] },
+          })
+          map.addLayer({
+            id: 'draw-polygon-fill',
+            type: 'fill',
+            source: 'draw-polygon',
+            paint: { 'fill-color': '#C9A84C', 'fill-opacity': 0.15 },
+          })
+          map.addLayer({
+            id: 'draw-polygon-line',
+            type: 'line',
+            source: 'draw-polygon',
+            paint: { 'line-color': '#C9A84C', 'line-width': 2.5 },
+          })
 
-            // Drawing temp line source
-            map.addSource('draw-temp-line', {
-              type: 'geojson',
-              data: { type: 'FeatureCollection', features: [] },
-            })
-            map.addLayer({
-              id: 'draw-temp-line-layer',
-              type: 'line',
-              source: 'draw-temp-line',
-              paint: { 'line-color': '#C9A84C', 'line-width': 2, 'line-dasharray': [3, 2] },
-            })
-          } catch (err) {
-            console.warn('[MapSearch] Error adding map layers:', err)
-          }
+          // Drawing temp line source
+          map.addSource('draw-temp-line', {
+            type: 'geojson',
+            data: { type: 'FeatureCollection', features: [] },
+          })
+          map.addLayer({
+            id: 'draw-temp-line-layer',
+            type: 'line',
+            source: 'draw-temp-line',
+            paint: { 'line-color': '#C9A84C', 'line-width': 2, 'line-dasharray': [3, 2] },
+          })
 
           setIsLoaded(true)
         })
@@ -542,6 +500,10 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
         console.error('[MapSearch] MapLibre init error:', err)
         setMapError('Não foi possível carregar o mapa. Tente recarregar a página.')
       }
+    }).catch(err => {
+      console.error('[MapSearch] MapLibre import error:', err)
+      setMapError('Não foi possível carregar o mapa. Tente recarregar a página.')
+    })
 
     return () => {
       if (mapInstance.current) {
@@ -549,12 +511,12 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
         mapInstance.current = null
       }
     }
-  }, [mapLibReady]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Toggle sale layer visibility (markers)
   useEffect(() => {
     markersRef.current.forEach(m => {
-      m.getElement().style.display = showSaleLayer ? 'flex' : 'none'
+      m.getElement().style.display = showSaleLayer ? '' : 'none'
     })
   }, [showSaleLayer])
 
@@ -578,9 +540,8 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
     markersRef.current.forEach(m => m.remove())
     markersRef.current = []
 
-    const maplibregl = (window as any).maplibregl
-    if (!maplibregl) return
-    {
+    import('maplibre-gl').then(mod => {
+      const maplibregl = mod.default || mod
       const map = mapInstance.current!
 
       clusters.forEach(c => {
@@ -592,7 +553,7 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
         const el = document.createElement('div')
         el.style.cssText = `display:flex;align-items:center;justify-content:center;width:${size}px;height:${size}px;border-radius:50%;background:${isSelected ? '#C9A84C' : '#1B2B5B'};color:white;font-size:13px;font-weight:700;border:3px solid ${isSelected ? '#e6c96a' : 'rgba(255,255,255,0.3)'};box-shadow:0 2px 8px rgba(0,0,0,0.3);cursor:pointer;transition:transform 0.15s;`
         el.textContent = String(c.count)
-        if (!showSaleLayer) el.style.display = 'none'
+        el.style.display = showSaleLayer ? '' : 'none'
 
         el.addEventListener('click', () => {
           if (!drawingRef.current) {
@@ -611,8 +572,8 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
 
         markersRef.current.push(marker)
       })
-    }
-  }, [clusters, isLoaded, selectedNeighborhoods, drawing, showSaleLayer, mapLibReady])
+    })
+  }, [clusters, isLoaded, selectedNeighborhoods, drawing, showSaleLayer])
 
   // Render auction pins by updating GeoJSON source data (MapLibre native clustering)
   useEffect(() => {
@@ -645,17 +606,17 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
   useEffect(() => {
     if (!isLoaded || !mapInstance.current) return
 
-    const maplibregl = (window as any).maplibregl
-    if (!maplibregl) return
-    ownerDirectMarkersRef.current.forEach(m => { try { m.remove() } catch {} })
-    ownerDirectMarkersRef.current = []
-    if (ownerDirectPins.length === 0) return
+    import('maplibre-gl').then(mod => {
+      const maplibregl = mod.default || mod
+      ownerDirectMarkersRef.current.forEach(m => { try { m.remove() } catch {} })
+      ownerDirectMarkersRef.current = []
+      if (ownerDirectPins.length === 0) return
 
-    const map = mapInstance.current!
+      const map = mapInstance.current!
 
-    for (const p of ownerDirectPins) {
-      if (!p.lat || !p.lng) continue
-      const priceStr = p.price ? fmt(p.price) : 'Consulte'
+      for (const p of ownerDirectPins) {
+        if (!p.lat || !p.lng) continue
+        const priceStr = p.price ? fmt(p.price) : 'Consulte'
 
         const el = document.createElement('div')
         el.style.cssText = 'width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#22c55e,#16a34a);border:3px solid #fff;display:flex;align-items:center;justify-content:center;font-size:15px;box-shadow:0 2px 10px rgba(34,197,94,0.5);cursor:pointer;'
@@ -673,7 +634,8 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
           .addTo(map)
 
         ownerDirectMarkersRef.current.push(marker)
-    }
+      }
+    })
   }, [ownerDirectPins, isLoaded])
 
   // Sync drawingRef with drawing state for closures
@@ -694,15 +656,15 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
       drawingPointsRef.current = [...drawingPointsRef.current, pt]
 
       // Add vertex marker
-      const maplibregl = (window as any).maplibregl
-      if (maplibregl) {
+      import('maplibre-gl').then(mod => {
+        const maplibregl = mod.default || mod
         const el = document.createElement('div')
         el.style.cssText = 'width:10px;height:10px;border-radius:50%;background:#C9A84C;border:2px solid #C9A84C;'
         const vm = new maplibregl.Marker({ element: el })
           .setLngLat([e.lngLat.lng, e.lngLat.lat])
           .addTo(map)
         tempMarkersRef.current.push(vm)
-      }
+      })
 
       // Update temp line via GeoJSON source
       const pts = drawingPointsRef.current
@@ -931,7 +893,7 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
           </div>
         </div>
       ) : null}
-      <div ref={mapRef} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 0 }} />
+      <div ref={mapRef} className="absolute inset-0 z-0" />
 
       {/* Top controls */}
       <div className="absolute top-3 left-3 right-3 z-10 flex flex-wrap items-start gap-2 pointer-events-none">
