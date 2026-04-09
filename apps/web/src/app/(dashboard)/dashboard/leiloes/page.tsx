@@ -14,13 +14,13 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'https://api-production-669c.
 // ── Tipos ─────────────────────────────────────────────────────────────────────
 interface AuctionStats {
   total: number
-  bySource: { source: string; count: number; avgDiscount: number }[]
+  bySource: { source: string; count: number; avgDiscount?: number }[]
   byStatus: { status: string; count: number }[]
-  topCities: { city: string; state: string; count: number; avgDiscount: number; avgScore: number }[]
-  maxDiscount: { percent: number; title: string; value: any; city: string; source: string } | null
+  topCities: { city: string; state: string; count: number; avgDiscount?: number; avgScore?: number }[]
+  maxDiscount?: { percent: number; title: string; value: any; city: string; source: string } | null
   averageDiscount: number
-  robots: { total: number; online: number; latencyMs: number; lastRun: string | null }
-  recentRuns: { id: string; source: string; status: string; startedAt: string; finishedAt: string | null; itemsCreated: number; itemsUpdated: number; errorMessage: string | null }[]
+  robots?: { total: number; online: number; latencyMs: number; lastRun: string | null }
+  recentRuns?: { id: string; source: string; status: string; startedAt: string; finishedAt: string | null; itemsCreated: number; itemsUpdated: number; errorMessage: string | null }[]
   latestAuctions: {
     id: string; title: string; source: string; city: string; state: string
     minimumBid: any; discountPercent: number | null; opportunityScore: number | null
@@ -485,7 +485,7 @@ export default function LeiloesAdminPage() {
                     <span className="text-xs text-gray-700 truncate">{city.city}/{city.state}</span>
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
-                    <span className="text-xs text-green-600 font-medium">{city.avgDiscount.toFixed(0)}% desc</span>
+                    {city.avgDiscount != null && <span className="text-xs text-green-600 font-medium">{city.avgDiscount.toFixed(0)}% desc</span>}
                     <span className="text-xs text-gray-400">{city.count}</span>
                   </div>
                 </div>
@@ -510,7 +510,7 @@ export default function LeiloesAdminPage() {
                       {sourceLabel(s.source)}
                     </span>
                     <div className="flex items-center gap-3">
-                      <span className="text-xs text-green-600 font-medium">{s.avgDiscount.toFixed(0)}% desc</span>
+                      {s.avgDiscount != null && <span className="text-xs text-green-600 font-medium">{s.avgDiscount.toFixed(0)}% desc</span>}
                       <span className="text-xs font-bold text-gray-700">{s.count}</span>
                     </div>
                   </div>
