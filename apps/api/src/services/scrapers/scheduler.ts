@@ -38,23 +38,25 @@ export class ScraperScheduler {
     this.isRunning = true
     console.log('[ScraperScheduler] Iniciando scheduler de scrapers...')
 
+    const safe = (fn: () => Promise<any>, label: string) => () => fn().catch(e => console.error(`[ScraperScheduler] ${label} error:`, e.message))
+
     // Rodar uma vez na inicialização (com delay para não travar o boot)
-    setTimeout(() => this.runAll(), 30_000) // 30s após boot
+    setTimeout(safe(() => this.runAll(), 'runAll'), 30_000) // 30s após boot
 
     // Caixa: a cada 6 horas
-    this.intervals.push(setInterval(() => this.runCaixa(), 6 * 60 * 60 * 1000))
+    this.intervals.push(setInterval(safe(() => this.runCaixa(), 'runCaixa'), 6 * 60 * 60 * 1000))
 
     // Bancos: a cada 12 horas
-    this.intervals.push(setInterval(() => this.runBancos(), 12 * 60 * 60 * 1000))
+    this.intervals.push(setInterval(safe(() => this.runBancos(), 'runBancos'), 12 * 60 * 60 * 1000))
 
     // Leiloeiros: a cada 24 horas (stagger)
-    this.intervals.push(setInterval(() => this.runLeiloeiros(), 24 * 60 * 60 * 1000))
+    this.intervals.push(setInterval(safe(() => this.runLeiloeiros(), 'runLeiloeiros'), 24 * 60 * 60 * 1000))
 
     // Limpeza: diário
-    this.intervals.push(setInterval(() => this.cleanup(), 24 * 60 * 60 * 1000))
+    this.intervals.push(setInterval(safe(() => this.cleanup(), 'cleanup'), 24 * 60 * 60 * 1000))
 
     // Atualizar scores: a cada 4 horas
-    this.intervals.push(setInterval(() => this.updateScores(), 4 * 60 * 60 * 1000))
+    this.intervals.push(setInterval(safe(() => this.updateScores(), 'updateScores'), 4 * 60 * 60 * 1000))
 
     console.log('[ScraperScheduler] Scheduler ativo — Caixa 6h, Bancos 12h, Leiloeiros 24h')
   }

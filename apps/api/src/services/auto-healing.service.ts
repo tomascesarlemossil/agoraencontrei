@@ -20,9 +20,9 @@ export class AutoHealingService {
 
   start() {
     console.log('[AutoHealing] Iniciando monitoramento...')
-    this.interval = setInterval(() => this.runHealthChecks(), this.CHECK_INTERVAL)
+    this.interval = setInterval(() => this.runHealthChecks().catch(e => console.error('[AutoHealing] error:', e.message)), this.CHECK_INTERVAL)
     // Primeira verificação após 2 min
-    setTimeout(() => this.runHealthChecks(), 2 * 60 * 1000)
+    setTimeout(() => this.runHealthChecks().catch(e => console.error('[AutoHealing] error:', e.message)), 2 * 60 * 1000)
   }
 
   stop() {

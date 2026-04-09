@@ -96,9 +96,9 @@ export class PredatoryProtocol {
   start() {
     console.log('[PredatoryProtocol] Iniciando varredura a cada 3 horas...')
     // Primeira execução após 5 min
-    setTimeout(() => this.run(), 5 * 60 * 1000)
+    setTimeout(() => this.run().catch(e => console.error('[PredatoryProtocol] run error:', e.message)), 5 * 60 * 1000)
     // A cada 3 horas
-    this.interval = setInterval(() => this.run(), 3 * 60 * 60 * 1000)
+    this.interval = setInterval(() => this.run().catch(e => console.error('[PredatoryProtocol] run error:', e.message)), 3 * 60 * 60 * 1000)
   }
 
   stop() {
