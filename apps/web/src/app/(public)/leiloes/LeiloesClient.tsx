@@ -389,7 +389,7 @@ export default function LeiloesClient() {
       if (minDiscount) params.set('minDiscount', minDiscount)
       if (maxPrice) params.set('maxPrice', maxPrice)
 
-      // SKIP internal API — go straight to public endpoint (Franca-first sort)
+      // Internal API disabled — database has bad data from scraper; use CSV endpoints instead
       const res = await fetch(`${API_URL}/api/v1/auctions?${params}`)
       if (false && res.ok) {
         const data = await res.json()

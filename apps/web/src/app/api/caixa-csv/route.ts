@@ -15,10 +15,12 @@ export async function GET(req: NextRequest) {
     const csvUrl = `https://venda-imoveis.caixa.gov.br/listaweb/Lista_imoveis_${state.toUpperCase()}.csv`
     const response = await fetch(csvUrl, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         'Referer': 'https://venda-imoveis.caixa.gov.br/',
+        'Accept': 'text/csv,text/plain,*/*',
+        'Accept-Language': 'pt-BR,pt;q=0.9,en;q=0.8',
       },
-      signal: AbortSignal.timeout(30000),
+      signal: AbortSignal.timeout(45000),
     })
 
     if (!response.ok) {
