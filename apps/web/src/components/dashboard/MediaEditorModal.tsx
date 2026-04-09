@@ -105,34 +105,37 @@ async function applyPhotoEffects(
       ctx.drawImage(img, 0, 0, w, h)
       ctx.filter = 'none'
 
-      // Apply logo overlay
+      // Apply logo overlay AFTER filter (filter doesn't affect logo)
       if (applyLogo && logoUrl) {
         await new Promise<void>((res) => {
           const logo = new window.Image()
           logo.crossOrigin = 'anonymous'
           logo.onload = () => {
-            const logoMaxW = Math.round(w * 0.18) // 18% da largura
-            const logoScale = logoMaxW / logo.naturalWidth
-            const lw = logoMaxW
-            const lh = Math.round(logo.naturalHeight * logoScale)
-            const margin = Math.round(w * 0.025)
+            // Logo proportional to the SMALLER dimension of the image
+            // ~8% of min(width, height) — professional standard for real estate
+            const minDim = Math.min(w, h)
+            const targetSize = Math.max(50, Math.min(160, Math.round(minDim * 0.08)))
+            const logoRatio = Math.min(targetSize / logo.naturalWidth, targetSize / logo.naturalHeight)
+            const lw = Math.round(logo.naturalWidth * logoRatio)
+            const lh = Math.round(logo.naturalHeight * logoRatio)
+            const margin = Math.max(12, Math.round(minDim * 0.02))
 
             let x = 0, y = 0
             switch (logoPosition) {
-              case 'top-left':     x = margin;         y = margin; break
+              case 'top-left':     x = margin;          y = margin; break
               case 'top-right':    x = w - lw - margin; y = margin; break
-              case 'bottom-left':  x = margin;         y = h - lh - margin; break
+              case 'bottom-left':  x = margin;          y = h - lh - margin; break
               case 'bottom-right': x = w - lw - margin; y = h - lh - margin; break
-              case 'center':       x = (w - lw) / 2;  y = (h - lh) / 2; break
+              case 'center':       x = (w - lw) / 2;   y = (h - lh) / 2; break
               default:             x = w - lw - margin; y = h - lh - margin
             }
 
-            // Fundo branco semi-transparente atrás do logo
-            ctx.globalAlpha = 0.85
+            // Subtle white background behind logo (rounded rect)
+            const pad = Math.max(4, Math.round(lw * 0.06))
+            ctx.globalAlpha = 0.7
             ctx.fillStyle = '#ffffff'
-            const pad = 8
             ctx.beginPath()
-            const rx = x - pad, ry = y - pad, rw = lw + pad * 2, rh = lh + pad * 2, r = 6
+            const rx = x - pad, ry = y - pad, rw = lw + pad * 2, rh = lh + pad * 2, r = Math.round(pad * 0.8)
             ctx.moveTo(rx + r, ry)
             ctx.lineTo(rx + rw - r, ry)
             ctx.quadraticCurveTo(rx + rw, ry, rx + rw, ry + r)
@@ -148,7 +151,7 @@ async function applyPhotoEffects(
             ctx.drawImage(logo, x, y, lw, lh)
             res()
           }
-          logo.onerror = () => res() // logo falhou, continua sem ele
+          logo.onerror = () => res()
           logo.src = logoUrl
         })
       }

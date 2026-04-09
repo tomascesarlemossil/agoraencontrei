@@ -689,13 +689,13 @@ def apply_watermark(img: Image.Image, logo_path: str, position: str = 'bottom-ri
     logo = Image.open(logo_path).convert('RGBA')
     
     # Calcular tamanho ideal do logo
-    # Regra: logo ocupa ~6% da menor dimensão da foto
+    # Regra: logo ocupa ~8% da menor dimensão da foto (padrão profissional imobiliário)
     img_w, img_h = img.size
     min_dim = min(img_w, img_h)
-    target_size = int(min_dim * 0.06)  # 6% da menor dimensão
-    
-    # Limitar: mínimo 40px, máximo 120px
-    target_size = max(40, min(120, target_size))
+    target_size = int(min_dim * 0.08)  # 8% da menor dimensão
+
+    # Limitar: mínimo 50px, máximo 160px (proporcional mas nunca excessivo)
+    target_size = max(50, min(160, target_size))
     
     # Redimensionar logo mantendo proporção
     logo_w, logo_h = logo.size
