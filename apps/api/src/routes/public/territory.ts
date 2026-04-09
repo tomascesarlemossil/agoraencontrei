@@ -86,8 +86,8 @@ export async function territoryRoute(app: FastifyInstance) {
 
     // Notificar Tomás se for Founder/Elite
     if (plan === 'FOUNDER' || plan === 'ELITE') {
-      const token = process.env.WHATSAPP_ACCESS_TOKEN || process.env.META_WHATSAPP_TOKEN
-      const phoneId = process.env.WHATSAPP_PHONE_NUMBER_ID
+      const token = process.env.WHATSAPP_TOKEN || process.env.WHATSAPP_ACCESS_TOKEN || process.env.META_WHATSAPP_TOKEN
+      const phoneId = process.env.WHATSAPP_PHONE_ID || process.env.WHATSAPP_PHONE_NUMBER_ID
       if (token && phoneId) {
         fetch(`https://graph.facebook.com/v18.0/${phoneId}/messages`, {
           method: 'POST',

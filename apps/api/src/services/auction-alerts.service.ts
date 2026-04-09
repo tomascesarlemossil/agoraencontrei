@@ -140,8 +140,8 @@ export class AuctionAlertService {
       const formattedPhone = cleanPhone.startsWith('55') ? cleanPhone : `55${cleanPhone}`
 
       // Usar a Meta Cloud API diretamente
-      const WHATSAPP_TOKEN = process.env.WHATSAPP_ACCESS_TOKEN || process.env.META_WHATSAPP_TOKEN
-      const WHATSAPP_PHONE_ID = process.env.WHATSAPP_PHONE_NUMBER_ID
+      const WHATSAPP_TOKEN = process.env.WHATSAPP_TOKEN || process.env.WHATSAPP_ACCESS_TOKEN || process.env.META_WHATSAPP_TOKEN
+      const WHATSAPP_PHONE_ID = process.env.WHATSAPP_PHONE_ID || process.env.WHATSAPP_PHONE_NUMBER_ID
 
       if (!WHATSAPP_TOKEN || !WHATSAPP_PHONE_ID) {
         console.warn('[AuctionAlerts] WhatsApp não configurado — alerta não enviado')

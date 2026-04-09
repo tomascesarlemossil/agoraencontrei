@@ -192,7 +192,8 @@ export class PredatoryProtocol {
 
     for (const endpoint of endpoints) {
       try {
-        const res = await fetch(`https://api-production-669c.up.railway.app${endpoint}`, {
+        const baseUrl = process.env.APP_URL || 'http://localhost:3100'
+        const res = await fetch(`${baseUrl}${endpoint}`, {
           signal: AbortSignal.timeout(5000),
         })
         if (!res.ok) {
@@ -292,8 +293,8 @@ export class PredatoryProtocol {
   }
 
   private async sendAlert(report: string): Promise<void> {
-    const token = process.env.WHATSAPP_ACCESS_TOKEN || process.env.META_WHATSAPP_TOKEN
-    const phoneId = process.env.WHATSAPP_PHONE_NUMBER_ID
+    const token = process.env.WHATSAPP_TOKEN || process.env.WHATSAPP_ACCESS_TOKEN || process.env.META_WHATSAPP_TOKEN
+    const phoneId = process.env.WHATSAPP_PHONE_ID || process.env.WHATSAPP_PHONE_NUMBER_ID
     if (!token || !phoneId) return
 
     await fetch(`https://graph.facebook.com/v18.0/${phoneId}/messages`, {

@@ -39,8 +39,8 @@ export async function partnerRegisterRoute(app: FastifyInstance) {
       })
 
       // Notify Tomás via WhatsApp
-      const whatsappToken = process.env.WHATSAPP_ACCESS_TOKEN || process.env.META_WHATSAPP_TOKEN
-      const phoneId = process.env.WHATSAPP_PHONE_NUMBER_ID
+      const whatsappToken = process.env.WHATSAPP_TOKEN || process.env.WHATSAPP_ACCESS_TOKEN || process.env.META_WHATSAPP_TOKEN
+      const phoneId = process.env.WHATSAPP_PHONE_ID || process.env.WHATSAPP_PHONE_NUMBER_ID
 
       if (whatsappToken && phoneId) {
         const emoji = data.isFounder ? '💰 NOVO MEMBRO FUNDADOR ADERIU!' : '👤 NOVO PARCEIRO CADASTRADO!'

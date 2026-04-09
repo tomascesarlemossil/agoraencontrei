@@ -307,8 +307,8 @@ export class AuctionMonitorService {
   }
 
   private async sendWhatsApp(phone: string, message: string): Promise<void> {
-    const token = process.env.WHATSAPP_ACCESS_TOKEN || process.env.META_WHATSAPP_TOKEN
-    const phoneId = process.env.WHATSAPP_PHONE_NUMBER_ID
+    const token = process.env.WHATSAPP_TOKEN || process.env.WHATSAPP_ACCESS_TOKEN || process.env.META_WHATSAPP_TOKEN
+    const phoneId = process.env.WHATSAPP_PHONE_ID || process.env.WHATSAPP_PHONE_NUMBER_ID
     if (!token || !phoneId) return
 
     const cleanPhone = phone.replace(/\D/g, '')

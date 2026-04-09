@@ -383,6 +383,9 @@ async function bootstrap() {
   // auctionsRoute desativada (FST_ERR_DUPLICATED_ROUTE com publicRoutes)
   // Leilões disponíveis em /api/v1/auctions (Claude) e /api/v1/public/auctions via publicRoutes
   await app.register(freeListingRoutes,        { prefix: '/api/v1/public' })
+  await app.register(partnerRegisterRoute,     { prefix: '/api/v1/public' })
+  await app.register(partnerAnalyticsRoute,    { prefix: '/api/v1/public' })
+  await app.register(territoryRoute,           { prefix: '/api/v1/public' })
   await app.register(specialistsRoutes,        { prefix: '/api/v1/specialists' })
   await app.register(specialistPaymentRoutes,  { prefix: '/api/v1/specialists/payments' })
   await app.register(seoProgramaticoRoutes,    { prefix: '/api/v1/seo' })
