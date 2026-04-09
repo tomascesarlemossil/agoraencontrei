@@ -190,7 +190,7 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
   const [properties, setProperties] = useState<Property[]>([])
   const [loadingProps, setLoadingProps] = useState(false)
   const [isLoaded, setIsLoaded] = useState(false)
-  const [isSatellite, setIsSatellite] = useState(false)
+  const [isSatellite, setIsSatellite] = useState(true)
   const [mapError, setMapError] = useState<string | null>(null)
   const router = useRouter()
 
@@ -393,8 +393,8 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
             },
           },
           layers: [
-            { id: 'osm-tiles', type: 'raster', source: 'osm' },
-            { id: 'satellite-tiles', type: 'raster', source: 'satellite', layout: { visibility: 'none' } },
+            { id: 'osm-tiles', type: 'raster', source: 'osm', layout: { visibility: 'none' } },
+            { id: 'satellite-tiles', type: 'raster', source: 'satellite' },
           ],
           terrain: { source: 'terrain-dem', exaggeration: 1.3 },
         }
@@ -404,7 +404,8 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
           style: mapStyle,
           center: [FRANCA_CENTER[1], FRANCA_CENTER[0]],
           zoom: 14,
-          pitch: 0,
+          pitch: 50,
+          bearing: 30,
           maxPitch: 85,
           antialias: true,
         })
