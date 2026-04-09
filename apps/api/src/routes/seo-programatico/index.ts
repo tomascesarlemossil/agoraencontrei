@@ -27,6 +27,18 @@ export default async function seoProgramaticoRoutes(app: FastifyInstance) {
   // ── Security: all write operations require authentication ──────────────
   // GET routes (pages, sitemap, stats) remain public for SEO crawlers.
   // POST routes (import, seed, generate, publish) require admin auth.
+  // SEO tables are NOT multi-tenant — only the main company (SUPER_ADMIN) can modify.
+  // Isolated users can view SEO stats but cannot modify pages.
+
+  // Block isolated/non-main companies from modifying shared SEO data
+  app.addHook('preHandler', async (req: any, reply) => {
+    if (req.method === 'GET') return // GET routes are public (SEO crawlers)
+    if (!req.user) return // Auth not yet checked
+    const publicCid = process.env.PUBLIC_COMPANY_ID
+    if (publicCid && req.user.cid !== publicCid && req.user.role !== 'SUPER_ADMIN') {
+      return reply.status(403).send({ error: 'FORBIDDEN', message: 'SEO Programático é gerenciado pelo admin principal. Configure seu próprio site para ter SEO próprio.' })
+    }
+  })
 
   // ── Migrate: create SEO tables ──────────────────────────────────────────
   const seoMigrations = [
