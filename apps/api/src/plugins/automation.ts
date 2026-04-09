@@ -27,7 +27,21 @@ export default fp(async (app: FastifyInstance) => {
     return
   }
 
-  const connection = new Redis(env.REDIS_URL, { maxRetriesPerRequest: null })
+  const connection = new Redis(env.REDIS_URL, {
+    maxRetriesPerRequest: null,
+    lazyConnect: true,
+    connectTimeout: 10000,
+  })
+
+  // Connect with timeout — don't block server startup
+  try {
+    await Promise.race([
+      connection.connect(),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Automation Redis timeout (10s)')), 10000)),
+    ])
+  } catch (err: any) {
+    app.log.warn(`⚠️ Automation Redis connect failed: ${err.message} — queues may not work`)
+  }
 
   // ── Queues ────────────────────────────────────────────────────────────────
   const automationQueue = new Queue('automation',  { connection })
