@@ -165,7 +165,7 @@ const FAQ = [
   },
 ]
 
-export default function ParceirosPlanos() {
+export function PlanosContent() {
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#f8f6f1' }}>
 
@@ -675,4 +675,10 @@ export default function ParceirosPlanos() {
 
     </div>
   )
+}
+
+// Redirect to unified page
+import { redirect } from 'next/navigation'
+export default function ParceirosPlanos() {
+  redirect('/parceiros/cadastro')
 }

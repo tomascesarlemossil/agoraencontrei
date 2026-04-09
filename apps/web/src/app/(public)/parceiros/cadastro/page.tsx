@@ -4,12 +4,15 @@ import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
+import dynamic from 'next/dynamic'
 import {
   User, Mail, Phone, Building2, Award, MapPin, Instagram,
   Globe, CheckCircle2, ChevronRight, Loader2, Search, X,
   Briefcase, Camera, Scale, Wrench, Palette, Video, Star,
   Crown, ArrowRight, Sparkles,
-} from 'lucide-react'
+}
+ from 'lucide-react'
+import { PlanosContent } from '../planos/page'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 
@@ -680,12 +683,18 @@ function CadastroParceirosContent() {
 
 export default function CadastroParceirosPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#f8f6f1' }}>
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C9A84C]" />
-      </div>
-    }>
-      <CadastroParceirosContent />
-    </Suspense>
+    <>
+      {/* Planos e ferramentas (primeiro) */}
+      <PlanosContent />
+
+      {/* Formulário de cadastro (depois dos planos) */}
+      <Suspense fallback={
+        <div className="py-20 flex items-center justify-center" style={{ backgroundColor: '#f8f6f1' }}>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C9A84C]" />
+        </div>
+      }>
+        <CadastroParceirosContent />
+      </Suspense>
+    </>
   )
 }
