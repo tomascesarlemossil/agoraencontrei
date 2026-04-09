@@ -544,6 +544,11 @@ if (process.env.NODE_ENV === 'production') {
   }, KEEP_ALIVE_INTERVAL)
 }
 
+// Prevent unhandled rejections from crashing the process
+process.on('unhandledRejection', (err: any) => {
+  console.error('[UnhandledRejection]', err?.message || err)
+})
+
 // Graceful shutdown
 const signals = ['SIGINT', 'SIGTERM'] as const
 for (const signal of signals) {
