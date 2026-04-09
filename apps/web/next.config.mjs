@@ -82,7 +82,7 @@ const nextConfig = {
     ]
   },
   async rewrites() {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://agoraencontrei-api-production.up.railway.app'
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api-production-669c.up.railway.app'
     return [
       {
         source: '/api/v1/:path*',
