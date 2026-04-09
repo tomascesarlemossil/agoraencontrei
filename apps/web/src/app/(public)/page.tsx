@@ -699,6 +699,7 @@ export default async function HomePage() {
       )}
 
       {/* ── 6 & 7. SMART QUIZ + CTA AVALIAÇÃO (lado a lado) ────────────── */}
+      <SmartQuizModal>
       <section style={{ backgroundColor: '#f0ede6' }} className="py-14">
         <div className="max-w-5xl mx-auto px-4 sm:px-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 rounded-3xl overflow-hidden shadow-xl border border-gray-200/60">
@@ -756,7 +757,7 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
-      <SmartQuizModal />
+      </SmartQuizModal>
 
 
 

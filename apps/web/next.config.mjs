@@ -161,7 +161,7 @@ const nextConfig = {
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com",
               "font-src 'self' https://fonts.gstatic.com",
               "img-src 'self' data: blob: https: http:",
-              "connect-src 'self' https://api.agoraencontrei.com.br https://*.railway.app https://www.google-analytics.com https://analytics.google.com https://www.facebook.com https://maps.googleapis.com https://nominatim.openstreetmap.org https://tile.openstreetmap.org https://demotiles.maplibre.org https://unpkg.com wss:",
+              "connect-src 'self' https://api.agoraencontrei.com.br https://*.railway.app https://www.google-analytics.com https://analytics.google.com https://www.facebook.com https://maps.googleapis.com https://nominatim.openstreetmap.org https://tile.openstreetmap.org https://tiles.openfreemap.org https://demotiles.maplibre.org https://unpkg.com wss:",
               "frame-src 'self' https://www.youtube.com https://www.google.com https://maps.google.com",
               "media-src 'self' https: blob:",
               "object-src 'none'",

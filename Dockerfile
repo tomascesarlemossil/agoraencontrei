@@ -1,21 +1,9 @@
 FROM node:22-slim AS base
 
-# Install OpenSSL (required by Prisma) + Chromium (required by Playwright scrapers)
-RUN apt-get update -y && apt-get install -y \
-  openssl ca-certificates \
-  chromium \
-  fonts-liberation \
-  libnss3 \
-  libatk-bridge2.0-0 \
-  libdrm2 \
-  libxkbcommon0 \
-  libgbm1 \
-  libasound2 \
-  && rm -rf /var/lib/apt/lists/*
+# Install OpenSSL (required by Prisma)
+RUN apt-get update -y && apt-get install -y openssl ca-certificates && rm -rf /var/lib/apt/lists/*
 
-ENV PLAYWRIGHT_CHROMIUM_PATH=/usr/bin/chromium
-
-# Install pnpm (pinned version to avoid breaking changes from pnpm@latest)
+# Install pnpm (pinned version to match packageManager field)
 RUN corepack enable && corepack prepare pnpm@10.0.0 --activate
 
 WORKDIR /app
@@ -28,7 +16,7 @@ COPY apps/api/package.json ./apps/api/
 # Install dependencies (pnpm.onlyBuiltDependencies in package.json allows build scripts)
 RUN pnpm install --frozen-lockfile
 
-# Cache bust — increment to force rebuild: v6
+# Cache bust — increment to force rebuild: v8
 ARG CACHE_BUST=6
 
 # Copy source
