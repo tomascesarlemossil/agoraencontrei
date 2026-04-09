@@ -732,7 +732,7 @@ export default async function HomePage() {
                 Quer saber quanto vale seu imóvel?
               </h2>
               <p className="text-gray-500 text-sm mb-8 max-w-sm leading-relaxed">
-                Solicite uma avaliação gratuita com nossa equipe especializada. Resposta em até 24 horas.
+                Avaliação profissional com dados em tempo real. 3 métodos, laudo instantâneo. 1ª avaliação gratuita por CPF.
               </p>
               <div className="flex flex-col sm:flex-row gap-3">
                 <Link
@@ -740,10 +740,10 @@ export default async function HomePage() {
                   className="px-7 py-3 rounded-xl text-sm font-bold transition-all hover:brightness-110 text-center"
                   style={{ backgroundColor: 'var(--site-accent-color, #C9A84C)', color: 'var(--site-primary-color, #1B2B5B)' }}
                 >
-                  Solicitar avaliação gratuita
+                  Avaliação imediata
                 </Link>
                 <a
-                  href="https://wa.me/5516981010004?text=Olá! Gostaria de uma avaliação gratuita do meu imóvel."
+                  href="https://wa.me/5516981010004?text=Olá! Gostaria de uma avaliação imediata do meu imóvel."
                   target="_blank"
                   rel="noreferrer"
                   className="px-7 py-3 rounded-xl text-sm font-bold border-2 transition-all hover:bg-[#1B2B5B] hover:text-white text-center"

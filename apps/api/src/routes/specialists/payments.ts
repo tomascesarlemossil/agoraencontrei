@@ -18,9 +18,13 @@ const PLAN_PRICES: Record<string, number> = {
   VIP:   497,
 }
 
+// Imobiliárias e Loteadoras pagam R$350/mês (preço premium)
+const PREMIUM_CATEGORY_PRICE = 350
+
 const PLAN_DESCRIPTIONS: Record<string, string> = {
   PRIME: 'AgoraEncontrei Parceiros — Plano Prime (Mensal)',
   VIP:   'AgoraEncontrei Parceiros — Plano VIP (Mensal)',
+  PREMIUM_CATEGORY: 'AgoraEncontrei Parceiros — Imobiliária/Loteadora (Mensal)',
 }
 
 async function asaasFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
@@ -82,7 +86,7 @@ export async function specialistPaymentRoutes(app: FastifyInstance) {
     try {
       const specialist = await prisma.specialist.findUnique({
         where: { id: specialistId },
-        select: { id: true, name: true, email: true, phone: true, cpfCnpj: true, asaasCustomerId: true, plan: true },
+        select: { id: true, name: true, email: true, phone: true, cpfCnpj: true, asaasCustomerId: true, plan: true, category: true },
       })
 
       if (!specialist) return reply.status(404).send({ error: 'Especialista não encontrado' })
@@ -109,13 +113,18 @@ export async function specialistPaymentRoutes(app: FastifyInstance) {
       nextDueDate.setDate(nextDueDate.getDate() + 1)
       const dueDateStr = nextDueDate.toISOString().split('T')[0]
 
+      // Determine price: Imobiliárias/Loteadoras pay R$350, others use plan prices
+      const isPremiumCategory = ['IMOBILIARIA', 'LOTEADORA'].includes((specialist as any).category ?? '')
+      const price = isPremiumCategory ? PREMIUM_CATEGORY_PRICE : PLAN_PRICES[plan]
+      const desc = isPremiumCategory ? PLAN_DESCRIPTIONS.PREMIUM_CATEGORY : PLAN_DESCRIPTIONS[plan]
+
       // Criar assinatura recorrente no Asaas
       const subscription = await createSubscription({
         customer: asaasCustomerId,
         billingType,
-        value: PLAN_PRICES[plan],
+        value: price,
         nextDueDate: dueDateStr,
-        description: PLAN_DESCRIPTIONS[plan],
+        description: desc,
         externalReference: `specialist:${specialistId}:${plan}`,
       })
 

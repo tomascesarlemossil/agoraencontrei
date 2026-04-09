@@ -14,6 +14,8 @@ import {
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 
 const CATEGORIES = [
+  { value: 'IMOBILIARIA',         label: 'Imobiliária',             icon: Building2,  desc: 'Imobiliária parceira — anuncie seus imóveis no marketplace' },
+  { value: 'LOTEADORA',           label: 'Loteadora',               icon: Building2,  desc: 'Loteamentos e empreendimentos imobiliários' },
   { value: 'ARQUITETO',           label: 'Arquiteto(a)',            icon: Building2,  desc: 'Projetos arquitetônicos e regularização' },
   { value: 'ENGENHEIRO',          label: 'Engenheiro(a)',           icon: Wrench,     desc: 'Laudos, vistorias e reformas' },
   { value: 'CORRETOR',            label: 'Corretor(a)',             icon: Briefcase,  desc: 'Compra, venda e locação de imóveis' },
@@ -26,7 +28,12 @@ const CATEGORIES = [
   { value: 'OUTRO',               label: 'Outro',                   icon: User,       desc: 'Outros serviços relacionados a imóveis' },
 ]
 
+// Categorias com preço diferenciado (R$350/mês em vez do padrão)
+const PREMIUM_CATEGORIES = ['IMOBILIARIA', 'LOTEADORA']
+
 const SPECIALTY_TAGS: Record<string, string[]> = {
+  IMOBILIARIA:          ['Venda de Imóveis', 'Locação', 'Administração de Imóveis', 'Lançamentos', 'Imóveis de Leilão', 'Financiamento Imobiliário'],
+  LOTEADORA:            ['Loteamentos', 'Empreendimentos', 'Lotes Residenciais', 'Lotes Comerciais', 'Condomínios Fechados', 'Lotes Rurais'],
   ARQUITETO:            ['Reforma Pós-Arrematação', 'Regularização de Matrícula', 'Projeto Residencial', 'Projeto Comercial', 'Aprovação de Planta', 'Habite-se'],
   ENGENHEIRO:           ['Laudo Estrutural', 'Vistoria Cautelar', 'Reforma', 'Regularização', 'AVCB', 'Laudo de Avaliação'],
   CORRETOR:             ['Compra e Venda', 'Locação', 'Lançamentos', 'Imóveis de Leilão', 'Imóveis Comerciais', 'Financiamento'],
@@ -383,10 +390,10 @@ function CadastroParceirosContent() {
               </div>
 
               {/* CREA/CAU/CRO */}
-              {['ARQUITETO', 'ENGENHEIRO', 'AVALIADOR', 'CORRETOR', 'ADVOGADO_IMOBILIARIO'].includes(form.category) && (
+              {['IMOBILIARIA', 'LOTEADORA', 'ARQUITETO', 'ENGENHEIRO', 'AVALIADOR', 'CORRETOR', 'ADVOGADO_IMOBILIARIO'].includes(form.category) && (
                 <div>
                   <label className="block text-sm font-semibold text-[#1B2B5B] mb-1.5">
-                    {form.category === 'CORRETOR' ? 'CRECI' :
+                    {form.category === 'IMOBILIARIA' || form.category === 'LOTEADORA' || form.category === 'CORRETOR' ? 'CRECI' :
                      form.category === 'ARQUITETO' ? 'CAU' :
                      form.category === 'ADVOGADO_IMOBILIARIO' ? 'OAB' : 'CREA'} (opcional)
                   </label>

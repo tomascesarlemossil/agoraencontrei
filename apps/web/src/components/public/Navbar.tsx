@@ -15,8 +15,8 @@ const NAV_LINKS = [
   { href: '/imoveis?purpose=RENT', label: 'Alugar' },
   { href: '/leiloes', label: '🏛️ Leilões' },
   { href: '/imoveis', label: 'Todos os Imóveis' },
-  { href: '/avaliacao', label: 'Avaliação Gratuita' },
-  { href: '/parceiros', label: 'Parceiros' },
+  { href: '/avaliacao', label: 'Avaliação Imediata' },
+  { href: '/parceiros/cadastro', label: 'Seja um Parceiro' },
   { href: '/blog', label: 'Blog' },
 ]
 

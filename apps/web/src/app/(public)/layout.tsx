@@ -30,8 +30,8 @@ const FOOTER_IMOVEIS = [
 
 const FOOTER_SERVICOS = [
   { href: '/servicos', label: 'Nossos Serviços' },
-  { href: '/avaliacao', label: 'Avaliação Gratuita' },
-  { href: '/parceiros', label: 'Parceiros' },
+  { href: '/avaliacao', label: 'Avaliação Imediata' },
+  { href: '/parceiros/cadastro', label: 'Seja um Parceiro' },
   { href: '/corretores', label: 'Nossa Equipe (Lemos)' },
   { href: '/servicos/2via-boleto', label: '2ª Via de Boleto' },
   { href: '/servicos/extrato-proprietario', label: 'Extrato do Proprietário' },
