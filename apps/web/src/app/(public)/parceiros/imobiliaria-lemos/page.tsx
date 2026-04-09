@@ -16,8 +16,8 @@ export const revalidate = 60
 // Busca avatares atualizados do banco
 async function fetchTeamFromDB(): Promise<Record<string, { creci?: string; avatarUrl?: string }>> {
   try {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'https://www.agoraencontrei.com.br/api/v1'
-    const res = await fetch(`${apiUrl}/public/team`, { next: { revalidate: 60 } })
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
+    const res = await fetch(`${apiUrl}/api/v1/public/team`, { next: { revalidate: 60 } })
     if (!res.ok) return {}
     const users: Array<{ name: string; email: string; creciNumber?: string; avatarUrl?: string }> = await res.json()
     return Object.fromEntries(
