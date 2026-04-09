@@ -638,7 +638,7 @@ export function AvaliacaoForm() {
             <button type="button" onClick={() => setStep(3)} className="flex-1 py-3 rounded-xl text-sm font-semibold border transition-all" style={{ borderColor: '#e5e7eb', color: '#6b7280' }}>← Voltar</button>
             <button
               type="button"
-              disabled={!form.name || !form.phone || form.cpf.replace(/\D/g, '').length !== 11 || cpfChecking || (!cpfStatus && true)}
+              disabled={!form.name || !form.phone || form.cpf.replace(/\D/g, '').length !== 11 || cpfChecking || (cpfStatus !== null && !cpfStatus.freeAvailable && !paymentConfirmed)}
               onClick={() => {
                 if (!cpfStatus) { checkCPF(); return }
                 if (cpfStatus.freeAvailable || paymentConfirmed) {

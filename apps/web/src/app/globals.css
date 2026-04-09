@@ -61,3 +61,16 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* ── Fix: ensure form inputs on public (light) pages always have dark text ── */
+/* The root <html> has class="dark" for the dashboard, but public pages use   */
+/* light backgrounds. This forces dark text/placeholders on all form inputs.  */
+#main-content input:not([type="checkbox"]):not([type="radio"]),
+#main-content textarea,
+#main-content select {
+  color: #111827 !important; /* gray-900 */
+}
+#main-content input::placeholder,
+#main-content textarea::placeholder {
+  color: #9ca3af !important; /* gray-400 */
+}
