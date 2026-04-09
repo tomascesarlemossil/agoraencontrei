@@ -26,12 +26,15 @@ export default async function socialPostRoutes(app: FastifyInstance) {
     const { caption, hashtags } = await generatePropertyCaption(property as any)
     const fullCaption = `${caption}\n\n${hashtags}`
 
-    // Select token and IG user ID
-    const token = account === 'tomas'
-      ? env.INSTAGRAM_TOKEN_TOMAS
-      : (env.INSTAGRAM_TOKEN_LEMOS || env.INSTAGRAM_PAGE_ACCESS_TOKEN)
+    // Select token and IG user ID - read from company settings first, fallback to env
+    const company = await app.prisma.company.findUnique({ where: { id: req.user.cid }, select: { settings: true } })
+    const cs = (company?.settings as any) ?? {}
 
-    const igUserId = env.INSTAGRAM_BUSINESS_ACCOUNT_ID
+    const token = account === 'tomas'
+      ? (cs.instagramTokenTomas || env.INSTAGRAM_TOKEN_TOMAS)
+      : (cs.instagramTokenLemos || cs.instagramPageAccessToken || env.INSTAGRAM_TOKEN_LEMOS || env.INSTAGRAM_PAGE_ACCESS_TOKEN)
+
+    const igUserId = cs.instagramBusinessAccountId || env.INSTAGRAM_BUSINESS_ACCOUNT_ID
 
     if (!token || !igUserId) {
       return reply.status(503).send({

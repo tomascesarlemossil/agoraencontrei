@@ -228,8 +228,8 @@ export default async function publicRoutes(app: FastifyInstance) {
     }
     const filters = _parsed.data
 
+    // Show properties from ALL companies (marketplace) — not just one
     const where: any = {
-      companyId: company.id,
       status: 'ACTIVE',
       authorizedPublish: true,
       ...(filters.ids && { id: { in: filters.ids.split(',').map(s => s.trim()).filter(Boolean) } }),
@@ -509,7 +509,7 @@ export default async function publicRoutes(app: FastifyInstance) {
     if (cached) return reply.send(cached)
 
     const items = await app.prisma.property.findMany({
-      where:   { companyId: company.id, status: 'ACTIVE', authorizedPublish: true, isFeatured: true },
+      where:   { status: 'ACTIVE', authorizedPublish: true, isFeatured: true },
       select:  PUBLIC_PROPERTY_SELECT,
       orderBy: [{ createdAt: 'desc' }, { updatedAt: 'desc' }],
       take:    8,

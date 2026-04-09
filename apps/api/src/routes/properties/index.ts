@@ -623,8 +623,11 @@ export default async function propertiesRoutes(app: FastifyInstance) {
         const { generatePropertyCaption } = await import('../../services/caption-generator.service.js')
         const { publishPropertyToInstagram } = await import('../../services/instagram-publisher.service.js')
 
-        const igToken = env.INSTAGRAM_PAGE_ACCESS_TOKEN
-        const igUserId = env.INSTAGRAM_BUSINESS_ACCOUNT_ID
+        // Read Instagram tokens from company settings first, fallback to env
+        const company = await app.prisma.company.findUnique({ where: { id: req.user.cid }, select: { settings: true } })
+        const companySettings = (company?.settings as any) ?? {}
+        const igToken = companySettings.instagramPageAccessToken || env.INSTAGRAM_PAGE_ACCESS_TOKEN
+        const igUserId = companySettings.instagramBusinessAccountId || env.INSTAGRAM_BUSINESS_ACCOUNT_ID
 
         if (igToken && igUserId && updated.coverImage) {
           const { caption, hashtags } = await generatePropertyCaption(updated as any)
