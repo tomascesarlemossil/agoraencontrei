@@ -389,14 +389,20 @@ export default function LeiloesClient() {
       if (minDiscount) params.set('minDiscount', minDiscount)
       if (maxPrice) params.set('maxPrice', maxPrice)
 
-      // Internal API disabled — database has bad data from scraper; use CSV endpoints instead
       const res = await fetch(`${API_URL}/api/v1/auctions?${params}`)
-      if (false && res.ok) {
+      if (res.ok) {
         const data = await res.json()
-        const internalItems = data.data || []
+        const internalItems = (data.data || []) as Auction[]
         const internalTotal = data.pagination?.total || 0
 
         if (internalItems.length > 0 || internalTotal > 0) {
+          // Apply Franca-first geographic priority
+          internalItems.sort((a: Auction, b: Auction) => {
+            const geoA = cityPriority(a.city, a.state)
+            const geoB = cityPriority(b.city, b.state)
+            if (geoA !== geoB) return geoA - geoB
+            return 0 // keep DB sort order as secondary
+          })
           setAuctions(internalItems)
           setTotal(internalTotal)
           setTotalPages(data.pagination?.totalPages || 1)

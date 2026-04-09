@@ -365,13 +365,26 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
         return
       }
       try {
+        // Use reliable OSM raster tiles (OpenFreeMap vector style is unreliable)
+        const mapStyle: any = {
+          version: 8,
+          sources: {
+            'osm': {
+              type: 'raster',
+              tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+              tileSize: 256,
+              attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+            },
+          },
+          layers: [{ id: 'osm-tiles', type: 'raster', source: 'osm' }],
+        }
+
         const map = new maplibregl.Map({
           container: mapRef.current!,
-          style: 'https://tiles.openfreemap.org/styles/bright',
+          style: mapStyle,
           center: [FRANCA_CENTER[1], FRANCA_CENTER[0]], // MapLibre uses [lng, lat]
           zoom: 14,
-          pitch: 45,
-          bearing: -17.6,
+          pitch: 0,
           maxPitch: 70,
           antialias: true,
         })
@@ -383,36 +396,6 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
         setTimeout(() => { try { map.resize() } catch {} }, 200)
 
         map.on('load', () => {
-          // Add 3D building extrusion layer
-          try {
-            const layers = map.getStyle().layers || []
-            let labelLayerId: string | undefined
-            for (const layer of layers) {
-              if (layer.type === 'symbol' && layer.layout?.['text-field']) {
-                labelLayerId = layer.id
-                break
-              }
-            }
-
-            // Check if vector source has 'building' layer
-            map.addLayer({
-              id: '3d-buildings',
-              source: 'openmaptiles',
-              'source-layer': 'building',
-              filter: ['==', 'extrude', 'true'],
-              type: 'fill-extrusion',
-              minzoom: 14,
-              paint: {
-                'fill-extrusion-color': '#ddd',
-                'fill-extrusion-height': ['interpolate', ['linear'], ['zoom'], 14, 0, 14.5, ['get', 'render_height']],
-                'fill-extrusion-base': ['interpolate', ['linear'], ['zoom'], 14, 0, 14.5, ['get', 'render_min_height']],
-                'fill-extrusion-opacity': 0.6,
-              },
-            }, labelLayerId)
-          } catch (e) {
-            console.warn('[MapSearch] 3D buildings layer not available:', e)
-          }
-
           // Add auction GeoJSON source with clustering
           map.addSource('auctions-source', {
             type: 'geojson',
