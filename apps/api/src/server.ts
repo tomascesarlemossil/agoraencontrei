@@ -270,6 +270,84 @@ async function runMigrations(prisma: any) {
       await prisma.$executeRawUnsafe(sql)
     } catch { /* already exists */ }
   }
+
+  // ── Partners & Territory tables (used by partner-analytics, territory routes) ──
+  const partnerMigrations = [
+    `CREATE TABLE IF NOT EXISTS partners (
+      id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+      name TEXT NOT NULL,
+      email TEXT UNIQUE NOT NULL,
+      phone TEXT,
+      specialty TEXT,
+      company TEXT,
+      creci TEXT,
+      bio TEXT,
+      plan TEXT NOT NULL DEFAULT 'FREE',
+      "isFounder" BOOLEAN NOT NULL DEFAULT false,
+      "planPrice" DECIMAL(10,2),
+      condos TEXT[] NOT NULL DEFAULT '{}',
+      active BOOLEAN NOT NULL DEFAULT true,
+      city TEXT NOT NULL DEFAULT 'Franca',
+      state TEXT NOT NULL DEFAULT 'SP',
+      "whatsappClicks" INTEGER NOT NULL DEFAULT 0,
+      "profileViews" INTEGER NOT NULL DEFAULT 0,
+      "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )`,
+    `CREATE TABLE IF NOT EXISTS partner_analytics (
+      id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+      "partnerId" TEXT NOT NULL,
+      event TEXT NOT NULL,
+      "condoName" TEXT,
+      "condoSlug" TEXT,
+      "auctionId" TEXT,
+      "propertyId" TEXT,
+      "visitorIp" TEXT,
+      "visitorUserAgent" TEXT,
+      referrer TEXT,
+      "pageUrl" TEXT,
+      "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )`,
+    `CREATE TABLE IF NOT EXISTS territory_claims (
+      id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+      "partnerId" TEXT NOT NULL,
+      "partnerName" TEXT,
+      "partnerPlan" TEXT,
+      "territoryType" TEXT NOT NULL DEFAULT 'BUILDING',
+      neighborhood TEXT,
+      "buildingName" TEXT,
+      "buildingSlug" TEXT,
+      city TEXT NOT NULL DEFAULT 'Franca',
+      state TEXT NOT NULL DEFAULT 'SP',
+      "priorityScore" INTEGER NOT NULL DEFAULT 10,
+      "isExclusive" BOOLEAN NOT NULL DEFAULT false,
+      status TEXT NOT NULL DEFAULT 'ACTIVE',
+      "claimedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )`,
+    `CREATE TABLE IF NOT EXISTS territory_waitlist (
+      id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+      name TEXT NOT NULL,
+      email TEXT NOT NULL,
+      phone TEXT NOT NULL,
+      specialty TEXT,
+      neighborhood TEXT,
+      "buildingName" TEXT,
+      "buildingSlug" TEXT,
+      city TEXT NOT NULL DEFAULT 'Franca',
+      state TEXT NOT NULL DEFAULT 'SP',
+      message TEXT,
+      "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )`,
+    `CREATE INDEX IF NOT EXISTS partner_analytics_partner_idx ON partner_analytics("partnerId")`,
+    `CREATE INDEX IF NOT EXISTS partner_analytics_created_idx ON partner_analytics("createdAt")`,
+    `CREATE INDEX IF NOT EXISTS territory_claims_partner_idx ON territory_claims("partnerId")`,
+    `CREATE INDEX IF NOT EXISTS territory_claims_slug_idx ON territory_claims("buildingSlug")`,
+  ]
+  for (const sql of partnerMigrations) {
+    try { await prisma.$executeRawUnsafe(sql) } catch { /* already exists */ }
+  }
+
   for (const [col, type] of columns) {
     try {
       await prisma.$executeRawUnsafe(
