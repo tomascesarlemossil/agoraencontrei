@@ -74,16 +74,53 @@ export default async function InvestimentoCidadePage(props: { params: Promise<{ 
 
   const schema = {
     '@context': 'https://schema.org',
-    '@type': 'WebPage',
+    '@type': 'FinancialProduct',
     name: `${inv.label} em ${city.name}/${city.state}`,
     url: `${WEB_URL}/${params.estado}/${params.cidade}/investimentos/${params.cluster}`,
     description: desc,
     areaServed: { '@type': 'City', name: city.name },
+    provider: {
+      '@type': 'RealEstateAgent',
+      name: 'AgoraEncontrei',
+      url: WEB_URL,
+    },
+  }
+
+  const faqSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: [
+      {
+        '@type': 'Question',
+        name: `Como funciona ${inv.label.toLowerCase()} em ${city.name}?`,
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: `${desc} Acesse o AgoraEncontrei para ver as oportunidades disponíveis em ${city.name}/${city.state}, com dados verificados e análise de investimento.`,
+        },
+      },
+      {
+        '@type': 'Question',
+        name: `Vale a pena investir em imóveis em ${city.name}?`,
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: `${city.name} possui ${pop} habitantes e PIB per capita de ${pib}, indicando uma economia ativa. O mercado imobiliário local oferece oportunidades de valorização e renda passiva com leilões, imóveis retomados e lançamentos.`,
+        },
+      },
+      {
+        '@type': 'Question',
+        name: `Quais os riscos de ${inv.label.toLowerCase()}?`,
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: `Todo investimento imobiliário envolve riscos como vacância, desvalorização e custos de manutenção. No AgoraEncontrei, oferecemos análise de investimento com DCF, simulação Monte Carlo e stress tests para auxiliar na tomada de decisão.`,
+        },
+      },
+    ],
   }
 
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
 
       {/* Hero */}
       <section className="bg-gradient-to-br from-[#1B2B5B] to-[#0f1c3a] text-white py-14 px-4">

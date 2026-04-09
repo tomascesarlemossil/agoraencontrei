@@ -137,11 +137,46 @@ export default async function ClusterPage(props: { params: Promise<{ estado: str
     ...(properties.length > 0 && { numberOfItems: properties.length }),
   }
 
+  const faqSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: [
+      {
+        '@type': 'Question',
+        name: `Quantos ${meta.title.toLowerCase()} existem em ${city.name}?`,
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: `O AgoraEncontrei lista ${properties.length > 0 ? `${properties.length}+` : 'diversos'} ${meta.title.toLowerCase()} em ${city.name}/${city.state}. Novos imóveis são adicionados diariamente.`,
+        },
+      },
+      {
+        '@type': 'Question',
+        name: `Como encontrar ${meta.title.toLowerCase()} em ${city.name}?`,
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: `Acesse o AgoraEncontrei e use os filtros de busca para encontrar ${meta.title.toLowerCase()} em ${city.name}. Filtre por preço, bairro, metragem e número de quartos para encontrar o imóvel ideal.`,
+        },
+      },
+      {
+        '@type': 'Question',
+        name: `O AgoraEncontrei atende ${city.name}/${city.state}?`,
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: `Sim! O AgoraEncontrei é o marketplace imobiliário #1 do Brasil, atendendo ${city.name} e mais de 150 cidades. Oferecemos imóveis à venda, aluguel e leilão com fotos profissionais e negociação segura.`,
+        },
+      },
+    ],
+  }
+
   return (
     <>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
       />
 
       {/* Hero */}

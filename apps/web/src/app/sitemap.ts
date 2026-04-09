@@ -138,6 +138,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${WEB_URL}/blog`, lastModified: now, changeFrequency: 'daily', priority: 0.8 },
     { url: `${WEB_URL}/bairros/franca`, lastModified: now, changeFrequency: 'weekly', priority: 0.9 },
     { url: `${WEB_URL}/avaliacao`, lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
+    { url: `${WEB_URL}/sp/franca/guia-completo-imobiliario`, lastModified: now, changeFrequency: 'weekly', priority: 0.95 },
     { url: `${WEB_URL}/sobre`, lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
     { url: `${WEB_URL}/corretores`, lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
     { url: `${WEB_URL}/faq`, lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
@@ -559,21 +560,77 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
           'leilao-de-imoveis', 'imoveis-para-investir', 'imoveis-caixa',
           'chacaras-a-venda', 'sitios-a-venda', 'loteamentos', 'imoveis-rurais',
         ]
-        const cityHubs = (IBGE_CITIES_152 as any[]).map((c: any) => ({
+        const GUIA_SLUGS = [
+          'melhores-bairros-para-morar', 'custo-de-vida', 'como-comprar-imovel',
+          'como-alugar-imovel', 'financiamento-imobiliario', 'melhores-construtoras',
+          'bairros-mais-valorizados', 'onde-morar-em', 'precos-de-imoveis', 'mercado-imobiliario',
+        ]
+        const SERVICO_SLUGS = [
+          'arquiteto', 'engenheiro-civil', 'pedreiro', 'empreiteira', 'construtora',
+          'avaliacao-de-imovel', 'vistoria-de-imovel', 'topografia',
+          'regularizacao-de-imovel', 'fotografia-de-imovel', 'drone', 'decoracao-de-interiores',
+        ]
+        const INVEST_SLUGS = [
+          'leilao-de-imoveis', 'leilao-judicial-de-imoveis', 'imoveis-caixa',
+          'imoveis-retomados', 'investimento-imobiliario', 'imoveis-para-investir',
+          'fundos-imobiliarios', 'arrematacao-de-imoveis',
+        ]
+        const MOD_SLUGS = [
+          'para-investidor', 'para-proprietario', 'alto-padrao', 'popular',
+          'minha-casa-minha-vida', 'para-empresa', 'residencial', 'comercial',
+          'alto-retorno', 'baixo-risco', 'para-familia', 'perto-de-escola',
+          'com-home-office', 'para-airbnb',
+        ]
+        // Top 5 clusters for modificadores (keep sitemap under 50k limit)
+        const TOP_CLUSTERS_FOR_MODS = [
+          'imoveis-a-venda', 'imoveis-para-alugar', 'casas-a-venda',
+          'apartamentos-a-venda', 'leilao-de-imoveis',
+        ]
+        const cities = IBGE_CITIES_152 as any[]
+
+        // City hub pages: /{estado}/{cidade}
+        const cityHubs = cities.map((c: any) => ({
           url: `${WEB_URL}/${c.stateSlug}/${c.slug}`,
-          lastModified: now,
-          changeFrequency: 'weekly' as const,
-          priority: 0.85,
+          lastModified: now, changeFrequency: 'weekly' as const, priority: 0.85,
         }))
-        const clusterPages = (IBGE_CITIES_152 as any[]).flatMap((c: any) =>
+        // Cluster pages: /{estado}/{cidade}/{cluster}
+        const clusterPages = cities.flatMap((c: any) =>
           CLUSTER_SLUGS.map(cluster => ({
             url: `${WEB_URL}/${c.stateSlug}/${c.slug}/${cluster}`,
-            lastModified: now,
-            changeFrequency: 'weekly' as const,
-            priority: 0.8,
+            lastModified: now, changeFrequency: 'weekly' as const, priority: 0.8,
           }))
         )
-        return [...cityHubs, ...clusterPages]
+        // Guia pages: /{estado}/{cidade}/guia/{cluster}
+        const guiaPages = cities.flatMap((c: any) =>
+          GUIA_SLUGS.map(g => ({
+            url: `${WEB_URL}/${c.stateSlug}/${c.slug}/guia/${g}`,
+            lastModified: now, changeFrequency: 'monthly' as const, priority: 0.75,
+          }))
+        )
+        // Servico pages: /{estado}/{cidade}/servicos/{cluster}
+        const servicoPages = cities.flatMap((c: any) =>
+          SERVICO_SLUGS.map(s => ({
+            url: `${WEB_URL}/${c.stateSlug}/${c.slug}/servicos/${s}`,
+            lastModified: now, changeFrequency: 'monthly' as const, priority: 0.7,
+          }))
+        )
+        // Investimentos pages: /{estado}/{cidade}/investimentos/{cluster}
+        const investPages = cities.flatMap((c: any) =>
+          INVEST_SLUGS.map(i => ({
+            url: `${WEB_URL}/${c.stateSlug}/${c.slug}/investimentos/${i}`,
+            lastModified: now, changeFrequency: 'weekly' as const, priority: 0.8,
+          }))
+        )
+        // Modificador pages: /{estado}/{cidade}/{cluster}/{modificador} (top combos only)
+        const modPages = cities.flatMap((c: any) =>
+          TOP_CLUSTERS_FOR_MODS.flatMap(cluster =>
+            MOD_SLUGS.map(mod => ({
+              url: `${WEB_URL}/${c.stateSlug}/${c.slug}/${cluster}/${mod}`,
+              lastModified: now, changeFrequency: 'monthly' as const, priority: 0.65,
+            }))
+          )
+        )
+        return [...cityHubs, ...clusterPages, ...guiaPages, ...servicoPages, ...investPages, ...modPages]
       } catch { return [] }
     })(),
   ]
