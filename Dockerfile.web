@@ -34,15 +34,18 @@ ENV NODE_ENV=production
 # Railway sets PORT dynamically; Next.js standalone reads HOSTNAME + PORT
 ENV HOSTNAME="0.0.0.0"
 
-# Copy standalone server (includes necessary node_modules)
-# Railway start command expects: node apps/web/.next/standalone/apps/web/server.js
-COPY --from=base /app/apps/web/.next/standalone ./apps/web/.next/standalone
+# Copy standalone server using flat layout (proven approach)
+COPY --from=base /app/apps/web/.next/standalone ./
 
-# Copy static assets into the standalone server's expected location
-COPY --from=base /app/apps/web/.next/static ./apps/web/.next/standalone/apps/web/.next/static
-COPY --from=base /app/apps/web/public ./apps/web/.next/standalone/apps/web/public
+# Copy static assets that standalone mode doesn't include automatically
+COPY --from=base /app/apps/web/.next/static ./apps/web/.next/static
+COPY --from=base /app/apps/web/public ./apps/web/public
+
+# Create wrapper at Railway's start command path so both CMD and Railway work
+RUN mkdir -p apps/web/.next/standalone/apps/web && \
+    echo 'require("/app/apps/web/server.js")' > apps/web/.next/standalone/apps/web/server.js
 
 EXPOSE 3000
 
-# Start Next.js standalone server (matches Railway start command)
-CMD ["node", "apps/web/.next/standalone/apps/web/server.js"]
+# Default CMD (Railway overrides with its own start command)
+CMD ["node", "apps/web/server.js"]
