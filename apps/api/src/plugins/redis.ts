@@ -15,8 +15,24 @@ export default fp(async (app) => {
     return
   }
 
-  const redis = new Redis(env.REDIS_URL, { lazyConnect: true, maxRetriesPerRequest: 3 })
-  await redis.connect()
+  const redis = new Redis(env.REDIS_URL, {
+    lazyConnect: true,
+    maxRetriesPerRequest: 3,
+    connectTimeout: 10000,
+    commandTimeout: 5000,
+  })
+
+  // Connect with timeout — don't block server startup
+  try {
+    await Promise.race([
+      redis.connect(),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Redis connection timeout (10s)')), 10000)),
+    ])
+    app.log.info('✅ Redis connected')
+  } catch (err: any) {
+    app.log.warn(`⚠️ Redis connect failed: ${err.message} — falling back to in-memory`)
+  }
+
   app.decorate('redis', redis)
 
   app.addHook('onClose', async () => {

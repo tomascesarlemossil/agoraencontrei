@@ -286,7 +286,10 @@ async function bootstrap() {
   await app.register(rateLimitPlugin)
   await app.register(jwtPlugin)
   await app.register(prismaPlugin)
-  await runMigrations(app.prisma).catch(e => app.log.warn('Migration warning:', e.message))
+  await Promise.race([
+    runMigrations(app.prisma),
+    new Promise((_, reject) => setTimeout(() => reject(new Error('Migrations timeout (20s)')), 20000)),
+  ]).catch(e => app.log.warn('Migration warning:', e.message))
   await app.register(redisPlugin)
   await app.register(automationPlugin)
   // No file size limit — accept any file type and size
