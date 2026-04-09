@@ -359,12 +359,17 @@ export default async function usersRoutes(app: FastifyInstance) {
         newSettings.isolatedCompany = true
         newSettings.parentCompanyId = req.user.cid
         newSettings.originalCompanyId = req.user.cid
+
+        // Invalidate all user sessions to force re-login with new companyId
+        await app.prisma.refreshToken.deleteMany({ where: { userId: id } }).catch(() => {})
       } else if (hasDataAccess === true && currentSettings.isolatedCompany) {
         // Move user back to original company
         const originalCid = currentSettings.originalCompanyId || currentSettings.parentCompanyId || req.user.cid
         updateData.companyId = originalCid
         newSettings.isolatedCompany = false
         delete newSettings.parentCompanyId
+        // Invalidate sessions to force re-login
+        await app.prisma.refreshToken.deleteMany({ where: { userId: id } }).catch(() => {})
       }
 
       if (welcomeMessage !== undefined) newSettings.welcomeMessage = welcomeMessage || undefined
