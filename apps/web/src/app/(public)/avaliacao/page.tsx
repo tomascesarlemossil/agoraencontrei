@@ -3,16 +3,48 @@ import { CheckCircle, TrendingUp, Clock, Shield, Star, MapPin, Phone } from 'luc
 import { AvaliacaoForm } from './AvaliacaoForm'
 
 export const metadata: Metadata = {
-  title: 'Avaliação Gratuita de Imóvel | AgoraEncontrei — Franca e Região',
-  description: 'Solicite a avaliação gratuita do seu imóvel em Franca e região. Laudo profissional com base em dados reais de mercado. AgoraEncontrei — Imobiliária Lemos.',
-  keywords: 'avaliação imóvel gratuita, avaliação imóvel franca, laudo imobiliário, quanto vale meu imóvel, avaliação casa franca sp',
+  title: 'Avaliação Inteligente de Imóvel | AgoraEncontrei — 3 Métodos Profissionais',
+  description: 'Avaliação inteligente e gratuita do seu imóvel em Franca e região. 3 métodos profissionais (comparativo, custo e renda), detecção de anomalias, e laudo instantâneo com dados reais de mercado.',
+  keywords: 'avaliação imóvel gratuita, avaliação imóvel franca, laudo imobiliário, quanto vale meu imóvel, avaliação casa franca sp, avaliação inteligente, método comparativo, método custo, capitalização de renda, valor de mercado imóvel',
   openGraph: {
-    title: 'Avaliação Gratuita de Imóvel | AgoraEncontrei',
-    description: 'Descubra quanto vale seu imóvel. Avaliação gratuita e profissional em Franca e região.',
+    title: 'Avaliação Inteligente de Imóvel | AgoraEncontrei',
+    description: 'Descubra o valor real do seu imóvel com 3 métodos profissionais: comparativo, custo e renda. Avaliação gratuita e instantânea.',
     type: 'website',
     locale: 'pt_BR',
     siteName: 'AgoraEncontrei — Imobiliária Lemos',
   },
+  alternates: {
+    canonical: 'https://agoraencontrei.com.br/avaliacao',
+  },
+}
+
+// Schema.org structured data
+const avaliacaoJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebApplication',
+  name: 'Avaliador Inteligente de Imóveis',
+  description: 'Ferramenta de avaliação profissional de imóveis com 3 métodos (comparativo, custo, capitalização de renda), detecção de anomalias de preço e estratégia de precificação.',
+  url: 'https://agoraencontrei.com.br/avaliacao',
+  applicationCategory: 'FinanceApplication',
+  operatingSystem: 'Web',
+  offers: { '@type': 'Offer', price: '0', priceCurrency: 'BRL' },
+  provider: {
+    '@type': 'RealEstateAgent',
+    name: 'AgoraEncontrei — Imobiliária Lemos',
+    url: 'https://agoraencontrei.com.br',
+    telephone: '+55-16-98101-0004',
+    address: { '@type': 'PostalAddress', addressLocality: 'Franca', addressRegion: 'SP', addressCountry: 'BR' },
+  },
+  featureList: [
+    'Método Comparativo de Dados de Mercado',
+    'Método de Custo (SINAPI/CUB)',
+    'Capitalização de Renda',
+    'Detecção de Anomalias de Preço',
+    'Estratégia de Precificação com cenários',
+    'Score de Confiabilidade',
+    '3 Valores: Mercado, Bancário, Venda Rápida',
+    'Comparáveis com scoring de similaridade',
+  ],
 }
 
 const BENEFICIOS = [
@@ -59,6 +91,10 @@ const DEPOIMENTOS = [
 export default function AvaliacaoPage() {
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(avaliacaoJsonLd) }}
+      />
       {/* ── HERO ──────────────────────────────────────────────────────── */}
       <section
         className="relative py-20 overflow-hidden"

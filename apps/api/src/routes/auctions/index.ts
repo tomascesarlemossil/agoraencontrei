@@ -50,6 +50,31 @@ const alertSchema = z.object({
   frequency: z.enum(['INSTANT', 'DAILY', 'WEEKLY']).default('DAILY'),
 })
 
+// ── NPV / IRR / DCF helpers ─────────────────────────────────────────────────
+
+const MACRO_RATES = {
+  selic: 14.25, ipca: 4.5, igpm: 5.0, cdi: 14.15, tr: 2.0, poupanca: 7.5, financingRate: 9.5,
+}
+
+function calcNPV(cashFlows: number[], discountRate: number): number {
+  const r = discountRate / 100
+  return cashFlows.reduce((npv, cf, t) => npv + cf / Math.pow(1 + r, t), 0)
+}
+
+function calcIRR(cashFlows: number[], maxIter = 1000, tol = 0.00001): number {
+  if (cashFlows.length < 2) return 0
+  let lo = -0.5, hi = 5.0
+  for (let i = 0; i < maxIter; i++) {
+    const mid = (lo + hi) / 2
+    const npv = cashFlows.reduce((s, cf, t) => s + cf / Math.pow(1 + mid, t), 0)
+    if (Math.abs(npv) < tol) return mid * 100
+    if (npv > 0) lo = mid; else hi = mid
+  }
+  return ((lo + hi) / 2) * 100
+}
+
+function round(n: number, d = 2): number { return Math.round(n * 10 ** d) / 10 ** d }
+
 // ── Calculadora financeira de leilão ─────────────────────────────────────────
 
 function calculateAuctionFinancials(data: z.infer<typeof calculateSchema>) {
@@ -102,33 +127,100 @@ function calculateAuctionFinancials(data: z.infer<typeof calculateSchema>) {
   if (isOccupied && needsReform) riskLevel = 'HIGH'
   else if (!isOccupied && !needsReform && discount > 30) riskLevel = 'LOW'
 
+  // ── DCF Projection (10 years) ──────────────────────────────────────────────
+  const projectionYears = 10
+  const vacancyRate = 8.33
+  const annualAppreciation = MACRO_RATES.ipca / 100
+  const annualRentAdj = MACRO_RATES.igpm / 100
+
+  const cf: number[] = [-totalInvestment]
+  let cumCF = -totalInvestment
+  let propValue = marketValue
+  let rent = monthlyRent
+  const yearlyFlows: Array<{ year: number; grossRent: number; vacancy: number; noi: number; equityValue: number; cumulativeCF: number }> = []
+
+  for (let y = 1; y <= projectionYears; y++) {
+    if (y > 1) { rent *= (1 + annualRentAdj); propValue *= (1 + annualAppreciation) }
+    const gross = rent * 12
+    const vac = gross * (vacancyRate / 100)
+    const maint = propValue * 0.01
+    const iptu = propValue * 0.008
+    const ins = propValue * 0.0015
+    const mgmt = (gross - vac) * 0.1
+    const noi = gross - vac - maint - iptu - ins - mgmt
+    cumCF += noi
+    const terminal = y === projectionYears ? propValue * (1 + annualAppreciation) : 0
+    cf.push(noi + terminal)
+    yearlyFlows.push({ year: y, grossRent: round(gross), vacancy: round(vac), noi: round(noi), equityValue: round(propValue), cumulativeCF: round(cumCF) })
+  }
+
+  const npv = calcNPV(cf, MACRO_RATES.selic)
+  const irr = calcIRR(cf)
+  const firstNOI = yearlyFlows[0]?.noi || 0
+  const capRate = marketValue > 0 ? (firstNOI / marketValue) * 100 : 0
+  const cashOnCash = totalInvestment > 0 ? (firstNOI / totalInvestment) * 100 : 0
+  const grossYield = totalInvestment > 0 ? ((yearlyFlows[0]?.grossRent || 0) / totalInvestment) * 100 : 0
+
+  // Break-even month
+  let breakEvenMonth = 0
+  let running = -totalInvestment
+  for (let m = 1; m <= projectionYears * 12; m++) {
+    const idx = Math.ceil(m / 12) - 1
+    if (idx >= yearlyFlows.length) break
+    running += yearlyFlows[idx].noi / 12
+    if (running >= 0 && breakEvenMonth === 0) breakEvenMonth = m
+  }
+
+  // ── Scenarios ─────────────────────────────────────────────────────────────
+  function runScenarioDCF(vacRate: number, ipca: number, igpm: number): { npv: number; irr: number; totalReturn: number } {
+    const scf: number[] = [-totalInvestment]
+    let pv = marketValue, r = monthlyRent, cum = -totalInvestment
+    for (let y = 1; y <= projectionYears; y++) {
+      if (y > 1) { r *= (1 + igpm / 100); pv *= (1 + ipca / 100) }
+      const gr = r * 12
+      const noi = gr - gr * (vacRate / 100) - pv * 0.01 - pv * 0.008 - pv * 0.0015 - (gr - gr * (vacRate / 100)) * 0.1
+      cum += noi
+      scf.push(noi + (y === projectionYears ? pv * (1 + ipca / 100) : 0))
+    }
+    const sNpv = calcNPV(scf, MACRO_RATES.selic)
+    const sIrr = calcIRR(scf)
+    const tr = totalInvestment > 0 ? ((cum + pv * (1 + ipca / 100) - totalInvestment) / totalInvestment) * 100 : 0
+    return { npv: round(sNpv), irr: round(sIrr), totalReturn: round(tr) }
+  }
+
+  const scenarios = {
+    optimistic: runScenarioDCF(Math.max(0, vacancyRate - 3), MACRO_RATES.ipca + 2, MACRO_RATES.igpm + 1),
+    base: { npv: round(npv), irr: round(irr), totalReturn: round(totalInvestment > 0 ? ((cumCF + propValue * (1 + annualAppreciation) - totalInvestment) / totalInvestment) * 100 : 0) },
+    pessimistic: runScenarioDCF(vacancyRate + 5, Math.max(0, MACRO_RATES.ipca - 2), Math.max(0, MACRO_RATES.igpm - 1)),
+  }
+
   return {
     // Valores de entrada
     bidValue,
     appraisalValue: appraisalValue || null,
-    marketValueEstimate: Number(marketValue.toFixed(2)),
+    marketValueEstimate: round(marketValue),
 
     // Custos detalhados (por estado)
     costs: {
-      itbi: Number(acq.itbi.toFixed(2)),
+      itbi: round(acq.itbi),
       itbiRate: `${(acq.costs.itbiRate * 100).toFixed(1)}%`,
-      registry: Number(acq.registry.toFixed(2)),
-      notary: Number(acq.notary.toFixed(2)),
-      lawyer: Number(acq.lawyer.toFixed(2)),
-      eviction: Number(acq.eviction.toFixed(2)),
-      reform: Number(acq.reform.toFixed(2)),
-      totalCosts: Number(totalCosts.toFixed(2)),
+      registry: round(acq.registry),
+      notary: round(acq.notary),
+      lawyer: round(acq.lawyer),
+      eviction: round(acq.eviction),
+      reform: round(acq.reform),
+      totalCosts: round(totalCosts),
       stateNotes: acq.costs.notes,
     },
 
     // Investimento total
-    totalInvestment: Number(totalInvestment.toFixed(2)),
+    totalInvestment: round(totalInvestment),
 
-    // Retorno
-    discount: Number(discount.toFixed(1)),
-    potentialProfit: Number(potentialProfit.toFixed(2)),
-    roiPercent: Number(roiPercent.toFixed(1)),
-    monthlyRentEstimate: Number(monthlyRent.toFixed(2)),
+    // Retorno básico (backward compat)
+    discount: round(discount, 1),
+    potentialProfit: round(potentialProfit),
+    roiPercent: round(roiPercent, 1),
+    monthlyRentEstimate: round(monthlyRent),
     paybackMonths,
 
     // Score
@@ -137,8 +229,23 @@ function calculateAuctionFinancials(data: z.infer<typeof calculateSchema>) {
 
     // Lance máximo recomendado (para ROI mínimo de 20%)
     maxRecommendedBid: appraisalValue
-      ? Number((appraisalValue * 0.7 - totalCosts * 0.7).toFixed(2))
-      : Number((bidValue * 1.2).toFixed(2)),
+      ? round(appraisalValue * 0.7 - totalCosts * 0.7)
+      : round(bidValue * 1.2),
+
+    // ── Advanced DCF Analysis (NEW) ──────────────────────────────────────────
+    dcf: {
+      npv: round(npv),
+      irr: round(irr),
+      capRate: round(capRate),
+      cashOnCash: round(cashOnCash),
+      grossYield: round(grossYield),
+      netYield: round(totalInvestment > 0 ? (firstNOI / totalInvestment) * 100 : 0),
+      paybackYears: round(breakEvenMonth / 12),
+      breakEvenMonth,
+      cashFlows: yearlyFlows,
+    },
+    scenarios,
+    macroRates: MACRO_RATES,
   }
 }
 
