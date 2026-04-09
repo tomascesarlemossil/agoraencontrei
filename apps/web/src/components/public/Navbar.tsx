@@ -35,7 +35,7 @@ const SERVICOS_MENU = [
 
 const ACCESS_AREAS = [
   {
-    href: '/dashboard',
+    href: '/login',
     icon: <LayoutDashboard className="w-5 h-5" />,
     label: 'Painel Administrativo',
     desc: 'Acesso completo ao sistema',

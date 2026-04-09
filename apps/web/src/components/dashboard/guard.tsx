@@ -12,15 +12,14 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     async function check() {
-      // Se não tem token no localStorage, NÃO tenta silent refresh
-      // Isso evita login automático após logout
+      // No tokens at all → redirect to login immediately
       if (!accessToken && !refreshToken) {
+        clearAuth()
         router.replace('/login')
         return
       }
 
       if (!isAuthenticated()) {
-        // Só tenta refresh se tem refreshToken salvo localmente
         if (refreshToken) {
           try {
             const data = await authApi.refresh(refreshToken)
@@ -30,6 +29,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
             router.replace('/login')
           }
         } else {
+          clearAuth()
           router.replace('/login')
         }
         return
@@ -52,6 +52,15 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     }
 
     check()
+
+    // Safety: if still no user after 5s, force redirect to login
+    const timeout = setTimeout(() => {
+      if (!useAuthStore.getState().user) {
+        useAuthStore.getState().clearAuth()
+        router.replace('/login')
+      }
+    }, 5000)
+    return () => clearTimeout(timeout)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!user) {

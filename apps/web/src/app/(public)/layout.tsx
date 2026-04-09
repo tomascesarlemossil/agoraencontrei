@@ -193,7 +193,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
               <p className="text-sm font-semibold mt-6 mb-3 tracking-wide uppercase" style={{ color: '#C9A84C' }}>Área de Acesso</p>
               <ul className="space-y-2.5">
                 <li>
-                  <Link href="/dashboard" className="flex items-center gap-2 text-white/50 text-sm hover:text-white transition-colors group">
+                  <Link href="/login" className="flex items-center gap-2 text-white/50 text-sm hover:text-white transition-colors group">
                     <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ backgroundColor: '#C9A84C' }} />
                     Painel Administrativo
                   </Link>
