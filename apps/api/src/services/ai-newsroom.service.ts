@@ -154,7 +154,7 @@ export class AiNewsroomService {
             published: true,
             source: 'AI_NEWSROOM',
             publishedAt: new Date(),
-            category: 'investimento',
+            isAutoImported: true,
           },
         })
 

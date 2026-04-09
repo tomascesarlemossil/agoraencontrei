@@ -375,18 +375,34 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
   } catch {}
 
-  // ── Blog ───────────────────────────────────────────────────────────────────
+  // ── Blog (posts + categories + clusters) ────────────────────────────────────
   let blog: MetadataRoute.Sitemap = []
   try {
-    const res = await fetch(`${API_URL}/api/v1/blog?limit=500`, { next: { revalidate: 3600 } })
-    if (res.ok) {
-      const data = await res.json()
+    const [postsRes, catsRes, clustersRes] = await Promise.all([
+      fetch(`${API_URL}/api/v1/blog?limit=500`, { next: { revalidate: 3600 } }),
+      fetch(`${API_URL}/api/v1/blog/categories`, { next: { revalidate: 3600 } }),
+      fetch(`${API_URL}/api/v1/blog/clusters`, { next: { revalidate: 3600 } }),
+    ])
+    if (postsRes.ok) {
+      const data = await postsRes.json()
       blog = (data.data ?? []).map((p: any) => ({
         url: `${WEB_URL}/blog/${p.slug}`,
         lastModified: new Date(p.publishedAt ?? now),
         changeFrequency: 'monthly' as const,
-        priority: 0.65,
+        priority: p.featured ? 0.85 : 0.65,
       }))
+    }
+    if (catsRes.ok) {
+      const data = await catsRes.json()
+      for (const cat of (data.data ?? [])) {
+        blog.push({ url: `${WEB_URL}/blog/categoria/${cat.slug}`, lastModified: now, changeFrequency: 'weekly', priority: 0.75 })
+      }
+    }
+    if (clustersRes.ok) {
+      const data = await clustersRes.json()
+      for (const cl of (data.data ?? [])) {
+        blog.push({ url: `${WEB_URL}/blog/cluster/${cl.slug}`, lastModified: now, changeFrequency: 'weekly', priority: 0.75 })
+      }
     }
   } catch {}
 
