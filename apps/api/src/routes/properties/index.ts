@@ -162,11 +162,14 @@ export default async function propertiesRoutes(app: FastifyInstance) {
     const isIsolated = userSettings.isolatedCompany === true
     const showAllProperties = isAuth && (req.query as any).showAll === 'true'
 
+    // Isolated users always see all ACTIVE properties (read-only marketplace)
+    const showMarketplace = showAllProperties || isIsolated
+
     const where: any = {
-      ...(isAuth && !showAllProperties && { companyId: (req as any).user.cid }),
-      ...(isAuth && showAllProperties && { status: 'ACTIVE', authorizedPublish: true }),
+      ...(isAuth && !showMarketplace && { companyId: (req as any).user.cid }),
+      ...(isAuth && showMarketplace && { status: 'ACTIVE', authorizedPublish: true }),
       ...(!isAuth && { status: 'ACTIVE', authorizedPublish: true }),
-      ...(isAuth && q.status && { status: q.status }),
+      ...(isAuth && !showMarketplace && q.status && { status: q.status }),
       ...(q.type        && { type: q.type }),
       ...(q.purpose     && { purpose: q.purpose }),
       ...(q.city        && { city: { contains: q.city, mode: 'insensitive' } }),
@@ -232,20 +235,51 @@ export default async function propertiesRoutes(app: FastifyInstance) {
       }),
     ])
 
-    // Strip confidential data from properties that belong to other companies
+    // Strip confidential data from properties of other companies
     const userCid = isAuth ? (req as any).user.cid : null
     const sanitizedItems = items.map((item: any) => {
-      if (!isAuth || item.companyId === userCid) return item
-      // Other company's property: hide confidential fields
-      const { street, number, latitude, longitude, contracts, ...safeFields } = item
+      // Own company: show everything
+      if (isAuth && item.companyId === userCid && !isIsolated) return item
+      // Other company or isolated user: hide confidential fields
       return {
-        ...safeFields,
+        id: item.id,
+        companyId: item.companyId,
+        reference: item.reference,
+        title: item.title,
+        slug: item.slug,
+        type: item.type,
+        purpose: item.purpose,
+        status: item.status,
+        price: item.price,
+        priceRent: item.priceRent,
+        condoFee: item.condoFee,
+        neighborhood: item.neighborhood,
+        city: item.city,
+        state: item.state,
+        // CONFIDENTIAL: hide street, number, exact location
         street: null,
         number: null,
         latitude: null,
         longitude: null,
+        // Show areas and specs
+        totalArea: item.totalArea,
+        builtArea: item.builtArea,
+        bedrooms: item.bedrooms,
+        suites: item.suites,
+        bathrooms: item.bathrooms,
+        parkingSpaces: item.parkingSpaces,
+        // Show photos
+        coverImage: item.coverImage,
+        images: item.images,
+        isFeatured: item.isFeatured,
+        isPremium: item.isPremium,
+        views: item.views,
+        favorites: item.favorites,
+        createdAt: item.createdAt,
+        // CONFIDENTIAL: hide contracts, owners, counts
         contracts: [],
-        _otherCompany: true,
+        _count: { contracts: 0, documents: 0 },
+        _readOnly: true,
       }
     })
 

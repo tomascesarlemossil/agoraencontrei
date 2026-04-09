@@ -12,6 +12,8 @@ const UpdateUserBody = z.object({
   accessLevel: z.enum(['full', 'custom', 'readonly']).optional(),
   moduleAccess: z.array(z.string()).optional(),
   hasDataAccess: z.boolean().optional(),
+  welcomeMessage: z.string().optional(),
+  welcomeDuration: z.number().optional(),
 })
 
 // All available system modules for granular permission control
@@ -327,11 +329,11 @@ export default async function usersRoutes(app: FastifyInstance) {
     const existingUser = await app.prisma.user.findUnique({ where: { id }, select: { id: true, name: true, role: true, phone: true, bio: true, creciNumber: true, settings: true } })
 
     // Extract permission fields that go into settings JSON
-    const { accessLevel, moduleAccess, hasDataAccess, ...directFields } = body
+    const { accessLevel, moduleAccess, hasDataAccess, welcomeMessage, welcomeDuration, ...directFields } = body
     const updateData: any = { ...directFields }
 
     // Update settings if permission fields are provided
-    if (accessLevel !== undefined || moduleAccess !== undefined || hasDataAccess !== undefined) {
+    if (accessLevel !== undefined || moduleAccess !== undefined || hasDataAccess !== undefined || welcomeMessage !== undefined || welcomeDuration !== undefined) {
       const currentSettings = (existingUser?.settings as Record<string, any>) ?? {}
       const newSettings = { ...currentSettings }
       if (accessLevel) {
@@ -365,6 +367,8 @@ export default async function usersRoutes(app: FastifyInstance) {
         delete newSettings.parentCompanyId
       }
 
+      if (welcomeMessage !== undefined) newSettings.welcomeMessage = welcomeMessage || undefined
+      if (welcomeDuration !== undefined) newSettings.welcomeDuration = welcomeDuration ? welcomeDuration * 1000 : 6000
       updateData.settings = newSettings
     }
 

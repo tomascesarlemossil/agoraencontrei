@@ -353,6 +353,8 @@ export default function SettingsPage() {
     accessLevel: 'full' as string,
     moduleAccess: [] as string[],
     hasDataAccess: true,
+    welcomeMessage: '',
+    welcomeDuration: 6,
   })
   const [editUserSaved, setEditUserSaved] = useState(false)
   const [editAvatarFile, setEditAvatarFile] = useState<File | null>(null)
@@ -452,6 +454,8 @@ export default function SettingsPage() {
       accessLevel: settings.accessLevel ?? 'full',
       moduleAccess: settings.moduleAccess ?? [],
       hasDataAccess: !settings.isolatedCompany,
+      welcomeMessage: settings.welcomeMessage ?? '',
+      welcomeDuration: Math.round((settings.welcomeDuration ?? 6000) / 1000),
     })
     setEditAvatarFile(null)
     setEditAvatarPreview(null)
@@ -893,6 +897,28 @@ export default function SettingsPage() {
                       </div>
                     </label>
                   </div>
+                </div>
+
+                {/* ── Mensagem de Boas-Vindas ────────────────── */}
+                <div className="p-4 rounded-xl bg-white/5 border border-white/10">
+                  <p className="text-xs font-bold text-white/60 uppercase tracking-wider mb-3">Mensagem de Boas-Vindas</p>
+                  <DarkTextarea
+                    label="Mensagem (use {nome} para o nome do usuário)"
+                    value={editUser.welcomeMessage}
+                    onChange={e => setEditUser(p => ({ ...p, welcomeMessage: e.target.value }))}
+                    rows={3}
+                    placeholder="Olá {nome}, está preparado para vender muito? ..."
+                  />
+                  <div className="mt-2">
+                    <DarkInput
+                      label="Tempo de exibição (segundos)"
+                      type="number"
+                      value={String(editUser.welcomeDuration)}
+                      onChange={e => setEditUser(p => ({ ...p, welcomeDuration: parseInt(e.target.value) || 6 }))}
+                      placeholder="6"
+                    />
+                  </div>
+                  <p className="text-[10px] text-white/30 mt-2">Deixe vazio para usar a mensagem padrão. Aparece 1x por sessão ao fazer login.</p>
                 </div>
 
                 <div className="flex items-center gap-3">
