@@ -58,7 +58,7 @@ async function fetchFeaturedProperties() {
     })
     if (!res.ok) return []
     const data = await res.json()
-    return data.data ?? []
+    return Array.isArray(data?.data) ? data.data : []
   } catch {
     return []
   }
@@ -639,15 +639,6 @@ export default async function HomePage() {
                       loading="lazy"
                       decoding="async"
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      onError={(e) => {
-                        const el = e.target as HTMLImageElement
-                        el.style.display = 'none'
-                        const parent = el.parentElement
-                        if (parent) {
-                          parent.style.background = 'linear-gradient(135deg, #1B2B5B, #0f1c3a)'
-                          parent.innerHTML = '<div style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px"><svg xmlns=\'http://www.w3.org/2000/svg\' width=\'48\' height=\'48\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'rgba(255,255,255,0.3)\'><path stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'1\' d=\'M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z\'/><polyline points=\'9 22 9 12 15 12 15 22\'/></svg><span style=\'color:rgba(255,255,255,0.3);font-size:11px\'>Foto em breve</span></div>'
-                        }
-                      }}
                     />
                   ) : (
                     <div className="h-full flex flex-col items-center justify-center gap-2" style={{ background: 'linear-gradient(135deg, #1B2B5B, #0f1c3a)' }}>
@@ -708,6 +699,7 @@ export default async function HomePage() {
       )}
 
       {/* ── 6 & 7. SMART QUIZ + CTA AVALIAÇÃO (lado a lado) ────────────── */}
+      <SmartQuizModal>
       <section style={{ backgroundColor: '#f0ede6' }} className="py-14">
         <div className="max-w-5xl mx-auto px-4 sm:px-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 rounded-3xl overflow-hidden shadow-xl border border-gray-200/60">
@@ -765,29 +757,58 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
-      <SmartQuizModal />
+      </SmartQuizModal>
 
 
 
-      {/* ── 9. VÍDEO DE APRESENTAÇÃO ─────────────────────────────────────── */}
-      {(siteSettings.presentationVideoUrl || siteSettings.presentationBannerUrl) && (
-        <PresentationSection
-          videoUrl={siteSettings.presentationVideoUrl ?? null}
-          bannerUrl={siteSettings.presentationBannerUrl ?? null}
-          bannerLink={siteSettings.presentationBannerLink ?? null}
-          title={siteSettings.presentationTitle ?? null}
-          subtitle={siteSettings.presentationSubtitle ?? null}
-        />
-      )}
-      {!siteSettings.presentationVideoUrl && !siteSettings.presentationBannerUrl && (
-        <PresentationSection
-          videoUrl="https://files.manuscdn.com/user_upload_by_module/session_file/310519663481419273/MbhJNDOYKAGxseOh.mp4"
-          bannerUrl={null}
-          bannerLink={null}
-          title={null}
-          subtitle={null}
-        />
-      )}
+      {/* ── 8.5. LEILÕES — CTA + RANKING ──────────────────────────────── */}
+      <section className="py-12" style={{ backgroundColor: '#1B2B5B' }}>
+        <div className="max-w-6xl mx-auto px-4 text-center">
+          <h2 className="text-3xl font-bold text-white mb-3" style={{ fontFamily: 'Georgia, serif' }}>
+            Leilões de Imóveis com até 70% de Desconto
+          </h2>
+          <p className="text-white/60 text-lg mb-6 max-w-2xl mx-auto">
+            Dados reais cruzados de Caixa, Santander, ZAP e QuintoAndar.
+            Calculadora de ROI, score jurídico e alertas inteligentes.
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-4 mb-8">
+            <Link
+              href="/leiloes"
+              className="px-8 py-4 rounded-xl font-bold text-lg transition-all hover:scale-105"
+              style={{ backgroundColor: '#C9A84C', color: '#1B2B5B' }}
+            >
+              Ver Leilões Ativos
+            </Link>
+            <Link
+              href="/oportunidades/melhores-alugueis-brasil"
+              className="px-8 py-4 rounded-xl font-bold text-lg border-2 text-white transition-all hover:bg-white/10"
+              style={{ borderColor: '#C9A84C' }}
+            >
+              Ranking de Yield Nacional
+            </Link>
+            <Link
+              href="/investor"
+              className="px-8 py-4 rounded-xl font-bold text-lg border-2 text-white transition-all hover:bg-white/10"
+              style={{ borderColor: '#4ade80' }}
+            >
+              Terminal Investidor
+            </Link>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-3xl mx-auto">
+            {[
+              { label: 'Leilões Monitorados', value: '500+' },
+              { label: 'Desconto Médio', value: '38%' },
+              { label: 'Cidades Cobertas', value: '5.570' },
+              { label: 'Fontes de Dados', value: '12' },
+            ].map(s => (
+              <div key={s.label} className="bg-white/10 rounded-xl px-4 py-3 text-center">
+                <div className="text-xl font-bold" style={{ color: '#C9A84C' }}>{s.value}</div>
+                <div className="text-[11px] text-white/50">{s.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
       {/* ── 9. REDES SOCIAIS + QUICK STATS ──────────────────────────────── */}
       <section className="max-w-4xl mx-auto px-4 sm:px-6 py-10">
@@ -852,6 +873,26 @@ export default async function HomePage() {
           </a>
         </div>
       </section>
+
+      {/* ── VÍDEO DE APRESENTAÇÃO (último antes do rodapé) ──────────────── */}
+      {(siteSettings.presentationVideoUrl || siteSettings.presentationBannerUrl) && (
+        <PresentationSection
+          videoUrl={siteSettings.presentationVideoUrl ?? null}
+          bannerUrl={siteSettings.presentationBannerUrl ?? null}
+          bannerLink={siteSettings.presentationBannerLink ?? null}
+          title={siteSettings.presentationTitle ?? null}
+          subtitle={siteSettings.presentationSubtitle ?? null}
+        />
+      )}
+      {!siteSettings.presentationVideoUrl && !siteSettings.presentationBannerUrl && (
+        <PresentationSection
+          videoUrl="https://files.manuscdn.com/user_upload_by_module/session_file/310519663481419273/MbhJNDOYKAGxseOh.mp4"
+          bannerUrl={null}
+          bannerLink={null}
+          title={null}
+          subtitle={null}
+        />
+      )}
     </>
   )
 }

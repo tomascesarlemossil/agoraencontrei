@@ -133,7 +133,7 @@ const CIDADES_SP: IbgeCityData[] = [
   { slug: 'presidente-prudente', name: 'Presidente Prudente', state: 'SP', stateSlug: 'sp', stateName: 'São Paulo', ibgeId: 3541406, populacao: 234706, areakm2: 368.89, pibPerCapita: 51480.93, salarioMedioSM: 2.4, region: 'interior-sp' },
   { slug: 'rio-claro', name: 'Rio Claro', state: 'SP', stateSlug: 'sp', stateName: 'São Paulo', ibgeId: 3543907, populacao: 210323, areakm2: 373.69, pibPerCapita: 76592.54, salarioMedioSM: 2.9, region: 'interior-sp' },
   { slug: 'aracatuba', name: 'Araçatuba', state: 'SP', stateSlug: 'sp', stateName: 'São Paulo', ibgeId: 3502804, populacao: 208415, areakm2: 155.54, pibPerCapita: 57253.2, salarioMedioSM: 2.4, region: 'interior-sp' },
-  { slug: 'santa-barbara-d-oeste', name: 'Santa Bárbara d'Oeste', state: 'SP', stateSlug: 'sp', stateName: 'São Paulo', ibgeId: 3545803, populacao: 189456, areakm2: 664.49, pibPerCapita: 58926.47, salarioMedioSM: 2.6, region: 'interior-sp' },
+  { slug: 'santa-barbara-d-oeste', name: 'Santa Bárbara d\'Oeste', state: 'SP', stateSlug: 'sp', stateName: 'São Paulo', ibgeId: 3545803, populacao: 189456, areakm2: 664.49, pibPerCapita: 58926.47, salarioMedioSM: 2.6, region: 'interior-sp' },
   { slug: 'itu', name: 'Itu', state: 'SP', stateSlug: 'sp', stateName: 'São Paulo', ibgeId: 3523909, populacao: 175047, areakm2: 241.01, pibPerCapita: 83288.93, salarioMedioSM: 2.8, region: 'interior-sp' },
   { slug: 'mogi-guacu', name: 'Mogi Guaçu', state: 'SP', stateSlug: 'sp', stateName: 'São Paulo', ibgeId: 3530706, populacao: 160318, areakm2: 168.99, pibPerCapita: 61395.03, salarioMedioSM: 2.7, region: 'interior-sp' },
   { slug: 'botucatu', name: 'Botucatu', state: 'SP', stateSlug: 'sp', stateName: 'São Paulo', ibgeId: 3507506, populacao: 151053, areakm2: 85.88, pibPerCapita: 55059.4, salarioMedioSM: 2.8, region: 'interior-sp' },
@@ -197,7 +197,6 @@ const CIDADES_SP: IbgeCityData[] = [
 ]
 
 // ── Array consolidado de todas as 152 cidades ─────────────────────────────
-export const IBGE_CITIES_152: IbgeCityData[] = [
 export const IBGE_CITIES_152: IbgeCityData[] = [
   ...CIDADES_GO,
   ...CIDADES_MG,

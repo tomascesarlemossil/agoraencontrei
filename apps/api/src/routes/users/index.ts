@@ -286,6 +286,51 @@ export default async function usersRoutes(app: FastifyInstance) {
     return reply.send(user)
   })
 
+  // POST /api/v1/users/:id/reset-password — admin force-reset a user's password
+  app.post('/:id/reset-password', {
+    schema: { tags: ['users'], summary: 'Admin reset user password' },
+  }, async (req, reply) => {
+    if (!['SUPER_ADMIN', 'ADMIN'].includes(req.user.role)) {
+      return reply.status(403).send({ error: 'FORBIDDEN' })
+    }
+
+    const { id } = req.params as { id: string }
+    const { newPassword } = req.body as { newPassword?: string }
+
+    if (!newPassword || newPassword.length < 8) {
+      return reply.status(400).send({ error: 'VALIDATION_ERROR', message: 'Nova senha deve ter pelo menos 8 caracteres' })
+    }
+
+    // Verify user belongs to same company
+    const targetUser = await app.prisma.user.findFirst({
+      where: { id, companyId: req.user.cid },
+      select: { id: true, name: true, email: true, role: true },
+    })
+    if (!targetUser) return reply.status(404).send({ error: 'NOT_FOUND' })
+
+    // Prevent non-SUPER_ADMIN from resetting SUPER_ADMIN passwords
+    if (targetUser.role === 'SUPER_ADMIN' && req.user.role !== 'SUPER_ADMIN') {
+      return reply.status(403).send({ error: 'FORBIDDEN', message: 'Apenas Super Admin pode redefinir senha de outro Super Admin' })
+    }
+
+    const argon2 = await import('argon2')
+    const passwordHash = await argon2.hash(newPassword, { type: argon2.argon2id })
+
+    await app.prisma.user.update({
+      where: { id },
+      data: { passwordHash },
+    })
+
+    await createAuditLog({
+      prisma: app.prisma, req,
+      action: 'user.password_reset',
+      resource: 'user', resourceId: id,
+      after: { resetBy: req.user.sub, targetEmail: targetUser.email } as any,
+    })
+
+    return reply.send({ success: true, message: 'Senha redefinida com sucesso' })
+  })
+
   // DELETE /api/v1/users/:id — soft delete (set inactive)
   app.delete('/:id', {
     schema: { tags: ['users'] },

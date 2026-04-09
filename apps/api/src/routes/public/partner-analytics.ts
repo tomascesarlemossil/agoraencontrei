@@ -85,7 +85,8 @@ export async function partnerAnalyticsRoute(app: FastifyInstance) {
   })
 
   // GET /api/v1/public/partner-stats/:partnerId — dashboard do parceiro
-  app.get('/partner-stats/:partnerId', async (req, reply) => {
+  // Requires authentication to prevent enumeration of partner data
+  app.get('/partner-stats/:partnerId', { preHandler: [app.authenticate] }, async (req, reply) => {
     const { partnerId } = req.params as { partnerId: string }
 
     try {

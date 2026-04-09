@@ -20,9 +20,9 @@ export class AutoHealingService {
 
   start() {
     console.log('[AutoHealing] Iniciando monitoramento...')
-    this.interval = setInterval(() => this.runHealthChecks(), this.CHECK_INTERVAL)
+    this.interval = setInterval(() => this.runHealthChecks().catch(e => console.error('[AutoHealing] error:', e.message)), this.CHECK_INTERVAL)
     // Primeira verificação após 2 min
-    setTimeout(() => this.runHealthChecks(), 2 * 60 * 1000)
+    setTimeout(() => this.runHealthChecks().catch(e => console.error('[AutoHealing] error:', e.message)), 2 * 60 * 1000)
   }
 
   stop() {
@@ -103,8 +103,8 @@ export class AutoHealingService {
 
   private async sendAlert(message: string) {
     console.error(`[AutoHealing] ${message}`)
-    const token = process.env.WHATSAPP_ACCESS_TOKEN || process.env.META_WHATSAPP_TOKEN
-    const phoneId = process.env.WHATSAPP_PHONE_NUMBER_ID
+    const token = process.env.WHATSAPP_TOKEN || process.env.WHATSAPP_ACCESS_TOKEN || process.env.META_WHATSAPP_TOKEN
+    const phoneId = process.env.WHATSAPP_PHONE_ID || process.env.WHATSAPP_PHONE_NUMBER_ID
     if (!token || !phoneId) return
 
     await fetch(`https://graph.facebook.com/v18.0/${phoneId}/messages`, {

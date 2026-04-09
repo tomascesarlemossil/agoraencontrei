@@ -41,7 +41,8 @@ async function fetchPosts(category?: string) {
   }
 }
 
-export default async function BlogPage({ searchParams }: { searchParams: { category?: string } }) {
+export default async function BlogPage(props: { searchParams: Promise<{ category?: string }> }) {
+  const searchParams = await props.searchParams
   const { data: posts } = await fetchPosts(searchParams.category)
 
   return (

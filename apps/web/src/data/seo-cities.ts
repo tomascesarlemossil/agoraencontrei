@@ -248,3 +248,11 @@ const SP_EXPANSION: CityData[] = [
 
 // Adicionar à lista principal
 UNIQUE_CITIES.push(...SP_EXPANSION.filter(c => !seen.has(c.slug) && (seen.add(c.slug), true)))
+
+// ── INTEGRAÇÃO: 152 cidades IBGE com dados reais (PR #41 Manus) ────────
+import { IBGE_CITIES_152 } from './seo-ibge-cities-expanded'
+UNIQUE_CITIES.push(
+  ...IBGE_CITIES_152
+    .filter(c => !seen.has(c.slug) && (seen.add(c.slug), true))
+    .map(c => ({ slug: c.slug, name: c.name, state: c.state, stateSlug: c.stateSlug, population: c.populacao, region: c.region }))
+)

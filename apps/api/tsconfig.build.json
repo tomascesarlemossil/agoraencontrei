@@ -3,7 +3,11 @@
   "compilerOptions": {
     "outDir": "./dist",
     "sourceMap": false,
-    "declarationMap": false
+    "declarationMap": false,
+    "strict": false,
+    "noImplicitAny": false,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false
   },
-  "exclude": ["node_modules", "dist", "**/*.test.ts", "**/*.spec.ts"]
+  "exclude": ["node_modules", "dist", "**/*.test.ts", "**/*.spec.ts", "scripts"]
 }

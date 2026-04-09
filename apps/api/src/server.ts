@@ -90,28 +90,16 @@ const app = Fastify({
 })
 
 async function runMigrations(prisma: any) {
-  // ── URGENTE: Reset admin Tomás para SUPER_ADMIN ────────────────────────
-  // Usa hash pre-computado para evitar crash de native modules no boot
+  // ── Admin role enforcement ──────────────────────────────────────────────
+  // Ensures admin users have correct role on boot (no password reset in code)
   try {
-    // Hash argon2id pre-computado para 'AgoraEncontrei2026!'
-    // Gerado com: argon2.hash('AgoraEncontrei2026!', { type: 2, memoryCost: 65536 })
-    const precomputedHash = '$argon2id$v=19$m=65536,t=3,p=4$YWdvcmFlbmNvbnRyZWkyMDI2$kJ7vH8mN5R3xQ2wF1pK4tL9yB6sD0uC3eA5iG8nO7fM'
-
-    // Tentar gerar hash fresco primeiro, fallback para pre-computado
-    let newHash = precomputedHash
-    try {
-      const argon2 = await import('argon2')
-      newHash = await argon2.hash('AgoraEncontrei2026!', { type: 2, memoryCost: 65536 })
-    } catch { /* usar pre-computado */ }
-
     for (const email of ['tomas@agoraencontrei.com.br', 'tomascesarlemossilva@gmail.com']) {
       await prisma.$executeRawUnsafe(
-        `UPDATE users SET role = 'SUPER_ADMIN', status = 'ACTIVE', "passwordHash" = $1, "emailVerifiedAt" = NOW() WHERE email = $2`,
-        newHash, email
+        `UPDATE users SET role = 'SUPER_ADMIN', status = 'ACTIVE', "emailVerifiedAt" = COALESCE("emailVerifiedAt", NOW()) WHERE email = $1 AND role != 'SUPER_ADMIN'`,
+        email
       ).catch(() => {})
     }
-    console.log('✅ Admin Tomás resetado para SUPER_ADMIN')
-  } catch (e: any) { console.warn('⚠️ Reset admin skip:', e.message) }
+  } catch { /* skip silently */ }
 
   const columns = [
     ['pricePromo',               'DECIMAL(12,2)'],
@@ -282,6 +270,84 @@ async function runMigrations(prisma: any) {
       await prisma.$executeRawUnsafe(sql)
     } catch { /* already exists */ }
   }
+
+  // ── Partners & Territory tables (used by partner-analytics, territory routes) ──
+  const partnerMigrations = [
+    `CREATE TABLE IF NOT EXISTS partners (
+      id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+      name TEXT NOT NULL,
+      email TEXT UNIQUE NOT NULL,
+      phone TEXT,
+      specialty TEXT,
+      company TEXT,
+      creci TEXT,
+      bio TEXT,
+      plan TEXT NOT NULL DEFAULT 'FREE',
+      "isFounder" BOOLEAN NOT NULL DEFAULT false,
+      "planPrice" DECIMAL(10,2),
+      condos TEXT[] NOT NULL DEFAULT '{}',
+      active BOOLEAN NOT NULL DEFAULT true,
+      city TEXT NOT NULL DEFAULT 'Franca',
+      state TEXT NOT NULL DEFAULT 'SP',
+      "whatsappClicks" INTEGER NOT NULL DEFAULT 0,
+      "profileViews" INTEGER NOT NULL DEFAULT 0,
+      "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )`,
+    `CREATE TABLE IF NOT EXISTS partner_analytics (
+      id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+      "partnerId" TEXT NOT NULL,
+      event TEXT NOT NULL,
+      "condoName" TEXT,
+      "condoSlug" TEXT,
+      "auctionId" TEXT,
+      "propertyId" TEXT,
+      "visitorIp" TEXT,
+      "visitorUserAgent" TEXT,
+      referrer TEXT,
+      "pageUrl" TEXT,
+      "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )`,
+    `CREATE TABLE IF NOT EXISTS territory_claims (
+      id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+      "partnerId" TEXT NOT NULL,
+      "partnerName" TEXT,
+      "partnerPlan" TEXT,
+      "territoryType" TEXT NOT NULL DEFAULT 'BUILDING',
+      neighborhood TEXT,
+      "buildingName" TEXT,
+      "buildingSlug" TEXT,
+      city TEXT NOT NULL DEFAULT 'Franca',
+      state TEXT NOT NULL DEFAULT 'SP',
+      "priorityScore" INTEGER NOT NULL DEFAULT 10,
+      "isExclusive" BOOLEAN NOT NULL DEFAULT false,
+      status TEXT NOT NULL DEFAULT 'ACTIVE',
+      "claimedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )`,
+    `CREATE TABLE IF NOT EXISTS territory_waitlist (
+      id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+      name TEXT NOT NULL,
+      email TEXT NOT NULL,
+      phone TEXT NOT NULL,
+      specialty TEXT,
+      neighborhood TEXT,
+      "buildingName" TEXT,
+      "buildingSlug" TEXT,
+      city TEXT NOT NULL DEFAULT 'Franca',
+      state TEXT NOT NULL DEFAULT 'SP',
+      message TEXT,
+      "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )`,
+    `CREATE INDEX IF NOT EXISTS partner_analytics_partner_idx ON partner_analytics("partnerId")`,
+    `CREATE INDEX IF NOT EXISTS partner_analytics_created_idx ON partner_analytics("createdAt")`,
+    `CREATE INDEX IF NOT EXISTS territory_claims_partner_idx ON territory_claims("partnerId")`,
+    `CREATE INDEX IF NOT EXISTS territory_claims_slug_idx ON territory_claims("buildingSlug")`,
+  ]
+  for (const sql of partnerMigrations) {
+    try { await prisma.$executeRawUnsafe(sql) } catch { /* already exists */ }
+  }
+
   for (const [col, type] of columns) {
     try {
       await prisma.$executeRawUnsafe(
@@ -298,7 +364,12 @@ async function bootstrap() {
   await app.register(rateLimitPlugin)
   await app.register(jwtPlugin)
   await app.register(prismaPlugin)
-  await runMigrations(app.prisma).catch(e => app.log.warn('Migration warning:', e.message))
+  {
+    const migP = runMigrations(app.prisma)
+    const timeoutP = new Promise((_, reject) => setTimeout(() => reject(new Error('Migrations timeout (20s)')), 20000))
+    await Promise.race([migP, timeoutP]).catch(e => app.log.warn('Migration warning:', e.message))
+    migP.catch(() => {})
+  }
   await app.register(redisPlugin)
   await app.register(automationPlugin)
   // No file size limit — accept any file type and size
@@ -392,6 +463,9 @@ async function bootstrap() {
   // auctionsRoute desativada (FST_ERR_DUPLICATED_ROUTE com publicRoutes)
   // Leilões disponíveis em /api/v1/auctions (Claude) e /api/v1/public/auctions via publicRoutes
   await app.register(freeListingRoutes,        { prefix: '/api/v1/public' })
+  await app.register(partnerRegisterRoute,     { prefix: '/api/v1/public' })
+  await app.register(partnerAnalyticsRoute,    { prefix: '/api/v1/public' })
+  await app.register(territoryRoute,           { prefix: '/api/v1/public' })
   await app.register(specialistsRoutes,        { prefix: '/api/v1/specialists' })
   await app.register(specialistPaymentRoutes,  { prefix: '/api/v1/specialists/payments' })
   await app.register(seoProgramaticoRoutes,    { prefix: '/api/v1/seo' })
@@ -471,6 +545,11 @@ if (process.env.NODE_ENV === 'production') {
     } catch {}
   }, KEEP_ALIVE_INTERVAL)
 }
+
+// Prevent unhandled rejections from crashing the process
+process.on('unhandledRejection', (err: any) => {
+  console.error('[UnhandledRejection]', err?.message || err)
+})
 
 // Graceful shutdown
 const signals = ['SIGINT', 'SIGTERM'] as const

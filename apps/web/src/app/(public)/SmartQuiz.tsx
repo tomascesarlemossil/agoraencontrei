@@ -132,7 +132,7 @@ export function SmartQuizButton() {
 }
 
 // ── Main component ─────────────────────────────────────────────────────────
-export function SmartQuiz() {
+export function SmartQuiz({ children }: { children?: React.ReactNode }) {
   const router = useRouter()
   const [isOpen, setIsOpen] = useState(false)
   const [step, setStep] = useState(0)
@@ -256,6 +256,7 @@ export function SmartQuiz() {
 
   return (
     <SmartQuizContext.Provider value={{ open }}>
+      {children}
       {/* ── Modal overlay ───────────────────────────────────────────── */}
       {isOpen && (
         <div
@@ -464,6 +465,6 @@ export function SmartQuiz() {
 }
 
 // ── SmartQuizModal: wrapper que provê o contexto + modal (usado na página) ──────
-export function SmartQuizModal() {
-  return <SmartQuiz />
+export function SmartQuizModal({ children }: { children?: React.ReactNode }) {
+  return <SmartQuiz>{children}</SmartQuiz>
 }

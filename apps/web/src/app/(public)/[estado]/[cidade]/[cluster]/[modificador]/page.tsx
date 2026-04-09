@@ -60,11 +60,8 @@ export async function generateStaticParams() {
   return params
 }
 
-export async function generateMetadata({
-  params,
-}: {
-  params: { estado: string; cidade: string; cluster: string; modificador: string }
-}): Promise<Metadata> {
+export async function generateMetadata(props: { params: Promise<{ estado: string; cidade: string; cluster: string; modificador: string }> }): Promise<Metadata> {
+  const params = await props.params
   const city = IBGE_CITY_BY_SLUG[params.cidade]
   if (!city || city.stateSlug !== params.estado) return {}
   const mod = MODIFICADORES[params.modificador]
@@ -91,11 +88,8 @@ export async function generateMetadata({
 
 export const revalidate = 86400
 
-export default function ClusterModificadorPage({
-  params,
-}: {
-  params: { estado: string; cidade: string; cluster: string; modificador: string }
-}) {
+export default async function ClusterModificadorPage(props: { params: Promise<{ estado: string; cidade: string; cluster: string; modificador: string }> }) {
+  const params = await props.params
   const city = IBGE_CITY_BY_SLUG[params.cidade]
   if (!city || city.stateSlug !== params.estado) notFound()
 

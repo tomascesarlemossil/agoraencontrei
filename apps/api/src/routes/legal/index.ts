@@ -302,7 +302,7 @@ export default async function legalRoutes(app: FastifyInstance) {
       SELECT lu.*, u.name as "userName"
       FROM legal_case_updates lu
       LEFT JOIN users u ON u.id = lu."userId"
-      WHERE lu."legalCaseId" = $1
+      WHERE lu."caseId" = $1
       ORDER BY lu."createdAt" DESC`, id)
 
     // Buscar documentos vinculados
@@ -405,9 +405,9 @@ export default async function legalRoutes(app: FastifyInstance) {
     if (!existing.length) return reply.status(404).send({ error: 'NOT_FOUND' })
     const updateId = genId()
     await app.prisma.$executeRawUnsafe(`
-      INSERT INTO legal_case_updates (id, "legalCaseId", "userId", description, type, "occurredAt", "createdAt")
-      VALUES ($1, $2, $3, $4, $5, $6, NOW())`,
-      updateId, id, userId, b.description, b.type,
+      INSERT INTO legal_case_updates (id, "caseId", "companyId", "userId", description, type, "date", "createdAt")
+      VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())`,
+      updateId, id, cid, userId, b.description, b.type,
       b.occurredAt ? new Date(b.occurredAt) : null)
     // Atualizar updatedAt do caso
     await app.prisma.$executeRawUnsafe(

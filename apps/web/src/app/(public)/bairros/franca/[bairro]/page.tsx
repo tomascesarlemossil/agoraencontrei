@@ -6,13 +6,14 @@ import { getNeighborhoodName, getNeighborhoodKeywords } from '@/data/seo-slug-ma
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 
 interface Props {
-  params: { bairro: string }
+  params: Promise<{ bairro: string }>
 }
 
 export const revalidate = 600
 export const dynamicParams = true
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+export async function generateMetadata(props: Props): Promise<Metadata> {
+  const params = await props.params
   const neighborhoodName = getNeighborhoodName(params.bairro)
     ?? params.bairro.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
 
@@ -54,7 +55,8 @@ function fmtPrice(p: any) {
   return p.purpose === 'RENT' ? fmt + '/mês' : fmt
 }
 
-export default async function BairroPage({ params }: Props) {
+export default async function BairroPage(props: Props) {
+  const params = await props.params
   const neighborhoodName = getNeighborhoodName(params.bairro)
     ?? params.bairro.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
 

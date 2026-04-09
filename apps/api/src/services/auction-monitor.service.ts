@@ -23,10 +23,10 @@ export class AuctionMonitorService {
     console.log('[AuctionMonitor] Iniciando monitor de lances 24/7...')
 
     // Rodar imediatamente após 10s do boot
-    setTimeout(() => this.runCheck(), 10_000)
+    setTimeout(() => this.runCheck().catch(e => console.error('[AuctionMonitor] runCheck error:', e.message)), 10_000)
 
     // A cada 30 minutos
-    this.interval = setInterval(() => this.runCheck(), 30 * 60 * 1000)
+    this.interval = setInterval(() => this.runCheck().catch(e => console.error('[AuctionMonitor] runCheck error:', e.message)), 30 * 60 * 1000)
   }
 
   stop() {
@@ -307,8 +307,8 @@ export class AuctionMonitorService {
   }
 
   private async sendWhatsApp(phone: string, message: string): Promise<void> {
-    const token = process.env.WHATSAPP_ACCESS_TOKEN || process.env.META_WHATSAPP_TOKEN
-    const phoneId = process.env.WHATSAPP_PHONE_NUMBER_ID
+    const token = process.env.WHATSAPP_TOKEN || process.env.WHATSAPP_ACCESS_TOKEN || process.env.META_WHATSAPP_TOKEN
+    const phoneId = process.env.WHATSAPP_PHONE_ID || process.env.WHATSAPP_PHONE_NUMBER_ID
     if (!token || !phoneId) return
 
     const cleanPhone = phone.replace(/\D/g, '')

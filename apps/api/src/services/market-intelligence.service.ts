@@ -145,12 +145,12 @@ export async function calculateDealScoreFromDB(
   try {
     // Tenta buscar preço médio m² do banco (tabela de imóveis de mercado)
     const marketData = await (prisma as any).$queryRawUnsafe(`
-      SELECT AVG(price / NULLIF(area, 0)) as avg_price_m2, COUNT(*) as count
+      SELECT AVG(price / NULLIF("totalArea", 0)) as avg_price_m2, COUNT(*) as count
       FROM properties
       WHERE city ILIKE $1
         AND neighborhood ILIKE $2
         AND status = 'ACTIVE'
-        AND area > 0
+        AND "totalArea" > 0
         AND price > 0
       LIMIT 1
     `, imovel.cidade ?? 'Franca', `%${imovel.bairro ?? ''}%`) as Array<{ avg_price_m2: number | null; count: number }>

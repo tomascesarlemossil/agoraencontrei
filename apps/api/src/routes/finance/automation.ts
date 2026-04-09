@@ -122,7 +122,7 @@ export default async function financeAutomationRoutes(app: FastifyInstance) {
       : 0
 
     // Asaas balance
-    let asaasBalance = null
+    let asaasBalance: any = null
     if (env.ASAAS_API_KEY) {
       try {
         asaasBalance = await getBalance()

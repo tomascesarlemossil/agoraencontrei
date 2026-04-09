@@ -549,5 +549,32 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...imoveis,
     ...blog,
     ...seoProgramatico,
+    // ── 152 cidades IBGE: rotas /{estado}/{cidade} (PR #41) ─────────────
+    ...(() => {
+      try {
+        const { IBGE_CITIES_152 } = require('@/data/seo-ibge-cities-expanded')
+        const CLUSTER_SLUGS = [
+          'imoveis-a-venda', 'imoveis-para-alugar', 'casas-a-venda', 'apartamentos-a-venda',
+          'terrenos-a-venda', 'condominios-fechados', 'lancamentos-imobiliarios', 'imoveis-comerciais',
+          'leilao-de-imoveis', 'imoveis-para-investir', 'imoveis-caixa',
+          'chacaras-a-venda', 'sitios-a-venda', 'loteamentos', 'imoveis-rurais',
+        ]
+        const cityHubs = (IBGE_CITIES_152 as any[]).map((c: any) => ({
+          url: `${WEB_URL}/${c.stateSlug}/${c.slug}`,
+          lastModified: now,
+          changeFrequency: 'weekly' as const,
+          priority: 0.85,
+        }))
+        const clusterPages = (IBGE_CITIES_152 as any[]).flatMap((c: any) =>
+          CLUSTER_SLUGS.map(cluster => ({
+            url: `${WEB_URL}/${c.stateSlug}/${c.slug}/${cluster}`,
+            lastModified: now,
+            changeFrequency: 'weekly' as const,
+            priority: 0.8,
+          }))
+        )
+        return [...cityHubs, ...clusterPages]
+      } catch { return [] }
+    })(),
   ]
 }

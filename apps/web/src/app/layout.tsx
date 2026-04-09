@@ -1,17 +1,12 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
+import { Analytics } from '@vercel/analytics/next'
+import { SpeedInsights } from '@vercel/speed-insights/next'
 import { Providers } from '@/components/providers'
 import { ConditionalMetaPixel } from '@/components/ConditionalMetaPixel'
 import { WebVitals } from '@/components/WebVitals'
+import { GoogleAnalytics } from '@/components/GoogleAnalytics'
 import { FRANCA_GEO_KEYWORDS } from '@/data/seo-geo-keywords'
 import './globals.css'
-
-const inter = Inter({
-  subsets: ['latin'],
-  display: 'swap',
-  preload: true,
-  variable: '--font-inter',
-})
 
 const META_PIXEL_ID = '932688306232065'
 const WEB_URL = 'https://www.agoraencontrei.com.br'
@@ -336,12 +331,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="pt-BR" suppressHydrationWarning className="dark">
       <head>
         {/* ── Preconnect para recursos externos críticos (melhora LCP/FCP) ── */}
-        <link rel="preconnect" href="https://agoraencontrei-api-production.up.railway.app" />
+        <link rel="preconnect" href="https://api-production-669c.up.railway.app" />
         <link rel="preconnect" href="https://agoraencontrei-media.s3.us-east-1.amazonaws.com" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link rel="dns-prefetch" href="https://tile.openstreetmap.org" />
-        <link rel="dns-prefetch" href="https://unpkg.com" />
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet" />
+        <link rel="dns-prefetch" href="https://tiles.openfreemap.org" />
         <link rel="dns-prefetch" href="https://nominatim.openstreetmap.org" />
         <link rel="dns-prefetch" href="https://cdnuso.com" />
         <link rel="dns-prefetch" href="https://cdn2.uso.com.br" />
@@ -373,12 +368,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdWebsite) }}
         />
       </head>
-      <body className={inter.className}>
+      <body className="font-sans" style={{ fontFamily: "'Inter', system-ui, -apple-system, sans-serif" }}>
         <Providers>{children}</Providers>
         {/* ── Meta Pixel condicional (LGPD) ───────────────────── */}
         <ConditionalMetaPixel />
         {/* ── Core Web Vitals monitoring ──────────────────────── */}
         <WebVitals />
+        {/* ── Google Analytics 4 ─────────────────────────────── */}
+        <GoogleAnalytics />
+        {/* ── Vercel Analytics + Speed Insights ──────────────── */}
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   )

@@ -5,8 +5,8 @@ import { MembroCard, type Membro } from './MembroCard'
 // Busca corretores do banco para obter creciNumber e avatarUrl atualizados
 async function fetchTeamFromDB(): Promise<Record<string, { creci?: string; avatarUrl?: string }>> {
   try {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'https://www.agoraencontrei.com.br/api/v1'
-    const res = await fetch(`${apiUrl}/public/team`, { next: { revalidate: 60 } })
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
+    const res = await fetch(`${apiUrl}/api/v1/public/team`, { next: { revalidate: 60 } })
     if (!res.ok) return {}
     const users: Array<{ name: string; email: string; creciNumber?: string; avatarUrl?: string }> = await res.json()
     // Mapeia email -> { creci, avatarUrl }

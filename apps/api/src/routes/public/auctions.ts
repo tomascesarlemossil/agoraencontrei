@@ -87,7 +87,7 @@ function parseAreaFromDesc(description: string, keyword: string): number {
 export async function auctionsRoute(app: FastifyInstance) {
   app.get('/auctions', async (_req, reply) => {
     try {
-      const cacheKey = 'pub:caixa:auctions:SP:v3'
+      const cacheKey = 'pub:caixa:auctions:SP:v4'
       const cached = await cacheGet(app.redis, cacheKey)
       if (cached) return reply.send(cached)
 
@@ -120,9 +120,6 @@ export async function auctionsRoute(app: FastifyInstance) {
         if (!line.trim()) continue
         const cols = line.split(';')
         if (cols.length < 11) continue
-
-        const cityRaw = (cols[2] ?? '').trim().toUpperCase()
-        if (!TARGET_CITIES.some(c => cityRaw.includes(c))) continue
 
         const id = (cols[0] ?? '').trim()
         const city = (cols[2] ?? '').trim()
@@ -164,8 +161,15 @@ export async function auctionsRoute(app: FastifyInstance) {
         } as AuctionItem & { dealScore: typeof dealScore })
       }
 
-      // Sort by discount descending
-      auctions.sort((a, b) => b.discount - a.discount)
+      // Sort: Franca first, then by discount descending
+      auctions.sort((a, b) => {
+        const cA = a.city.toUpperCase()
+        const cB = b.city.toUpperCase()
+        const pA = cA.includes('FRANCA') ? 0 : cA.includes('BATATAIS') || cA.includes('PATROCINIO') || cA.includes('CRISTAIS') || cA.includes('RESTINGA') ? 1 : 3
+        const pB = cB.includes('FRANCA') ? 0 : cB.includes('BATATAIS') || cB.includes('PATROCINIO') || cB.includes('CRISTAIS') || cB.includes('RESTINGA') ? 1 : 3
+        if (pA !== pB) return pA - pB
+        return b.discount - a.discount
+      })
 
       const result = {
         total: auctions.length,
