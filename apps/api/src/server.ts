@@ -66,6 +66,7 @@ import { partnerRegisterRoute } from './routes/public/partner-register.js'
 import { partnerAnalyticsRoute } from './routes/public/partner-analytics.js'
 import { territoryRoute } from './routes/public/territory.js'
 import seoProgramaticoRoutes from './routes/seo-programatico/index.js'
+import financialAnalysisRoutes from './routes/financial/index.js'
 
 const app = Fastify({
   // No body size limit — accept any file size
@@ -469,6 +470,7 @@ async function bootstrap() {
   await app.register(specialistsRoutes,        { prefix: '/api/v1/specialists' })
   await app.register(specialistPaymentRoutes,  { prefix: '/api/v1/specialists/payments' })
   await app.register(seoProgramaticoRoutes,    { prefix: '/api/v1/seo' })
+  await app.register(financialAnalysisRoutes,  { prefix: '/api/v1/financial' })
 
   // ── Scraper Scheduler (robôs 24/7 de leilões) ─────────────────────────
   if (env.NODE_ENV === 'production') {

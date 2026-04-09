@@ -90,11 +90,24 @@ const nextConfig = {
         source: '/api/v1/:path*',
         destination: `${apiUrl}/api/v1/:path*`,
       },
-      {
-        // Proxy para o health check da API Railway (keep-alive)
-        source: '/health',
-        destination: `${apiUrl}/health`,
-      },
+      // /health is handled directly by app/health/route.ts — no proxy needed
+      // ── SEO Programático: /{categoria}/{cidade} → /seo/{categoria}/{cidade} ──
+      // Property types
+      { source: '/:cat(casas-a-venda|apartamentos-a-venda|terrenos-a-venda|imoveis-comerciais|salas-comerciais|galpoes|cobertura-duplex|kitnet|condominio-fechado|chacaras-a-venda|sitios-a-venda|fazendas-a-venda|imoveis-rurais|casas-para-alugar|apartamentos-para-alugar|kitnets-para-alugar|salas-para-alugar|galpoes-para-alugar|casas-em-condominio|aluguel-temporada|imoveis-permuta|lancamentos|imoveis-novos|imoveis-usados)/:cidade', destination: '/seo/:cat/:cidade' },
+      // Leilões
+      { source: '/:cat(leilao-casas|leilao-apartamentos|leilao-terrenos|leilao-caixa|leilao-judicial|leilao-extrajudicial|leilao-banco-do-brasil|leilao-bradesco|leilao-itau|leilao-santander|leilao-rural)/:cidade', destination: '/seo/:cat/:cidade' },
+      // Serviços e profissionais
+      { source: '/:cat(avaliacao-imoveis|financiamento-imovel|reforma-de-imoveis|materiais-de-construcao|vistoria-imovel|decoracao-interiores|investimento-imobiliario|home-staging|engenheiros-civis|arquitetos|advogados-imobiliarios|agrimensores|corretores-de-imoveis|despachante-imobiliario|fotografo-imoveis)/:cidade', destination: '/seo/:cat/:cidade' },
+      // Construção
+      { source: '/:cat(construtoras|empreiteiros|pedreiros|eletricistas|encanadores|pintores|marceneiros|vidraceiros|serralheiros)/:cidade', destination: '/seo/:cat/:cidade' },
+      // Documentação
+      { source: '/:cat(regularizacao-imovel|escritura-imovel|usucapiao|inventario-imovel)/:cidade', destination: '/seo/:cat/:cidade' },
+      // Filtros (quartos, preço, features)
+      { source: '/:cat(valor-metro-quadrado|imoveis-1-quarto|imoveis-2-quartos|imoveis-3-quartos|imoveis-4-quartos|imoveis-ate-200mil|imoveis-200-500mil|imoveis-500mil-1milhao|imoveis-acima-1milhao|aluguel-ate-1000|aluguel-1000-2000|aluguel-2000-3000|aluguel-acima-3000)/:cidade', destination: '/seo/:cat/:cidade' },
+      // Proximity & features
+      { source: '/:cat(imoveis-perto-metro|imoveis-perto-escola|imoveis-perto-hospital|imoveis-perto-shopping|imoveis-com-piscina|imoveis-com-churrasqueira|imoveis-aceita-pets|imoveis-mobiliados|imoveis-com-varanda)/:cidade', destination: '/seo/:cat/:cidade' },
+      // Outros serviços
+      { source: '/:cat(seguro-residencial|seguro-incendio|empresas-mudanca|guarda-moveis|limpeza-pos-obra|dedetizacao|jardinagem-paisagismo|impermeabilizacao)/:cidade', destination: '/seo/:cat/:cidade' },
     ]
   },
   async headers() {

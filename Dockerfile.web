@@ -23,7 +23,25 @@ RUN pnpm --filter @agoraencontrei/database generate
 # Build Next.js (standalone output)
 RUN pnpm --filter @agoraencontrei/web build
 
+# ── Production stage (smaller image) ──────────────────────────────────────────
+FROM node:22-slim AS runner
+
+RUN apt-get update -y && apt-get install -y openssl ca-certificates && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+ENV NODE_ENV=production
+# Railway sets PORT dynamically; Next.js standalone reads HOSTNAME + PORT
+ENV HOSTNAME="0.0.0.0"
+
+# Copy standalone server (includes necessary node_modules)
+COPY --from=base /app/apps/web/.next/standalone ./
+
+# Copy static assets that standalone mode doesn't include automatically
+COPY --from=base /app/apps/web/.next/static ./apps/web/.next/static
+COPY --from=base /app/apps/web/public ./apps/web/public
+
 EXPOSE 3000
 
 # Start Next.js standalone server
-CMD ["node", "apps/web/.next/standalone/apps/web/server.js"]
+CMD ["node", "apps/web/server.js"]

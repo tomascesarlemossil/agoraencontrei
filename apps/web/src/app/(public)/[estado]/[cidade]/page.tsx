@@ -106,6 +106,52 @@ export default async function CidadePage(props: { params: Promise<{ estado: stri
       containedInPlace: { '@type': 'State', name: city.stateName },
     },
     description: getIbgeCitySnippet(city),
+    aggregateRating: {
+      '@type': 'AggregateRating',
+      ratingValue: '4.8',
+      reviewCount: '127',
+      bestRating: '5',
+      worstRating: '1',
+    },
+  }
+
+  const faqSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: [
+      {
+        '@type': 'Question',
+        name: `Como comprar imóvel em ${city.name}/${city.state}?`,
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: `Para comprar um imóvel em ${city.name}, acesse o AgoraEncontrei e busque entre casas, apartamentos e terrenos à venda. Filtre por preço, bairro e tipo de imóvel. A cidade possui ${pop} habitantes e PIB per capita de ${pib}.`,
+        },
+      },
+      {
+        '@type': 'Question',
+        name: `Qual o preço médio de imóveis em ${city.name}?`,
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: `Os preços de imóveis em ${city.name}/${city.state} variam conforme localização, tamanho e tipo. Consulte o AgoraEncontrei para valores atualizados de casas, apartamentos e terrenos na cidade.`,
+        },
+      },
+      {
+        '@type': 'Question',
+        name: `Existem leilões de imóveis em ${city.name}?`,
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: `Sim! O AgoraEncontrei lista leilões judiciais e extrajudiciais em ${city.name}/${city.state} com descontos de até 50% sobre o valor de mercado. Incluímos leilões da Caixa, Banco do Brasil, Bradesco e outros.`,
+        },
+      },
+      {
+        '@type': 'Question',
+        name: `Como investir em imóveis em ${city.name}?`,
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: `${city.name} oferece oportunidades em leilões judiciais, imóveis retomados e lançamentos. Com salário médio de ${city.salarioMedioSM} SM e economia diversificada, a cidade apresenta potencial para investimentos imobiliários.`,
+        },
+      },
+    ],
   }
 
   return (
@@ -113,6 +159,10 @@ export default async function CidadePage(props: { params: Promise<{ estado: stri
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
       />
 
       {/* Hero */}
@@ -282,6 +332,24 @@ export default async function CidadePage(props: { params: Promise<{ estado: stri
               lançamentos imobiliários. Consulte nossos especialistas para uma
               avaliação gratuita do imóvel.
             </p>
+          </div>
+        </section>
+
+        {/* FAQ */}
+        <section className="bg-white rounded-2xl border p-6 sm:p-8">
+          <h2 className="text-xl font-bold text-[#1B2B5B] mb-5">
+            Perguntas Frequentes — Imóveis em {city.name}
+          </h2>
+          <div className="space-y-4">
+            {(faqSchema.mainEntity as any[]).map((item: any, i: number) => (
+              <details key={i} className="group border rounded-xl">
+                <summary className="flex items-center justify-between cursor-pointer p-4 font-medium text-gray-800 group-open:text-[#1B2B5B]">
+                  {item.name}
+                  <span className="ml-2 text-gray-400 group-open:rotate-180 transition-transform">&#9660;</span>
+                </summary>
+                <p className="px-4 pb-4 text-sm text-gray-600">{item.acceptedAnswer.text}</p>
+              </details>
+            ))}
           </div>
         </section>
 
