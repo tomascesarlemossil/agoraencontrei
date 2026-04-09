@@ -382,9 +382,17 @@ async function runMigrations(prisma: any) {
 
   // ── Ensure all active properties are visible on map/listings ──────────
   try {
-    await prisma.$executeRawUnsafe(
+    const result = await prisma.$executeRawUnsafe(
       `UPDATE properties SET "authorizedPublish" = true, "showExactLocation" = true WHERE status = 'ACTIVE' AND "authorizedPublish" = false`
     )
+    // Clear Redis cache so updated properties appear immediately
+    if (app.redis && typeof result === 'number' && result > 0) {
+      try {
+        const keys = await app.redis.keys('pub:*')
+        if (keys.length > 0) await app.redis.del(...keys)
+        app.log.info(`[boot] Cleared ${keys.length} cached entries after property visibility update`)
+      } catch {}
+    }
   } catch { /* column may not exist yet */ }
 }
 

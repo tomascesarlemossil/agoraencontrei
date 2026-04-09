@@ -143,7 +143,7 @@ export function HeroSearchForm() {
 
   function buildManualParams() {
     const params = new URLSearchParams()
-    params.set('purpose', purpose)
+    // Don't filter by purpose — show all property types by default
     if (city.trim())         params.set('city', city.trim())
     if (neighborhood.trim()) params.set('search', neighborhood.trim())
     if (maxPrice)            params.set('maxPrice', maxPrice)
@@ -160,10 +160,7 @@ export function HeroSearchForm() {
     startTransition(() => router.push(`/imoveis?${buildManualParams()}&view=map`))
   }
 
-  const priceOptions = purpose === 'RENT' ? PRICE_RENT_OPTIONS : PRICE_SALE_OPTIONS
-  const headline = purpose === 'RENT'
-    ? 'Alugue um lar\npara chamar de seu'
-    : 'Compre um lar\npara chamar de seu'
+  const priceOptions = PRICE_SALE_OPTIONS
 
   return (
     <div className="w-full max-w-2xl mx-auto">
@@ -186,39 +183,13 @@ export function HeroSearchForm() {
         </a>
       </div>
 
-      {/* Headline */}
-      <h2
-        className="text-white text-3xl sm:text-4xl font-bold mb-6 leading-tight whitespace-pre-line"
-        style={{ fontFamily: 'Georgia, serif' }}
-      >
-        {headline}
-      </h2>
-
-      {/* Purpose tabs */}
-      <div className="flex gap-6 mb-5 border-b" style={{ borderColor: 'rgba(255,255,255,0.15)' }}>
-        {(['RENT', 'SALE'] as const).map(p => (
-          <button
-            key={p}
-            type="button"
-            onClick={() => { setPurpose(p); setMaxPrice('') }}
-            className="pb-3 text-sm font-semibold transition-colors relative"
-            style={{ color: purpose === p ? 'white' : 'rgba(255,255,255,0.45)' }}
-          >
-            {p === 'RENT' ? 'Alugar' : 'Comprar'}
-            {purpose === p && (
-              <span
-                className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full"
-                style={{ backgroundColor: '#C9A84C' }}
-              />
-            )}
-          </button>
-        ))}
-        {/* Mode toggle */}
+      {/* Mode toggle */}
+      <div className="flex justify-end mb-3">
         <button
           type="button"
           onClick={() => setAiMode(!aiMode)}
-          className="ml-auto pb-3 text-xs font-medium transition-colors"
-          style={{ color: 'rgba(255,255,255,0.4)' }}
+          className="text-xs font-medium transition-colors"
+          style={{ color: 'rgba(255,255,255,0.5)' }}
         >
           {aiMode ? 'Busca manual ↓' : '✨ Busca IA ↑'}
         </button>
@@ -335,7 +306,7 @@ export function HeroSearchForm() {
               <DollarSign className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: '#1B2B5B' }} />
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-0.5">
-                  {purpose === 'RENT' ? 'Aluguel até' : 'Valor até'}
+                  Valor até
                 </p>
                 <div className="relative">
                   <select
