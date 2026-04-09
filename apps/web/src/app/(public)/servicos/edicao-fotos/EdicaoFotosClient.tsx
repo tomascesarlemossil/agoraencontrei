@@ -124,7 +124,7 @@ export function EdicaoFotosClient() {
         const fd = new FormData()
         fd.append('file', photos[i])
         fd.append('filter_id', selectedFilter)
-        const res = await fetch(`${API_URL}/api/v1/photo-editor/apply`, {
+        const res = await fetch(`${API_URL}/api/v1/public/photo-editor/apply`, {
           method: 'POST',
           body: fd,
         })

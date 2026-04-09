@@ -66,6 +66,7 @@ import { partnerRegisterRoute } from './routes/public/partner-register.js'
 import { partnerAnalyticsRoute } from './routes/public/partner-analytics.js'
 import { territoryRoute } from './routes/public/territory.js'
 import { valuationRoutes } from './routes/public/valuation.js'
+import { publicPhotoEditorRoutes } from './routes/public/photo-editor.js'
 import seoProgramaticoRoutes from './routes/seo-programatico/index.js'
 import financialAnalysisRoutes from './routes/financial/index.js'
 
@@ -497,6 +498,7 @@ async function bootstrap() {
   await app.register(partnerAnalyticsRoute,    { prefix: '/api/v1/public' })
   await app.register(territoryRoute,           { prefix: '/api/v1/public' })
   await app.register(valuationRoutes,          { prefix: '/api/v1/public' })
+  await app.register(publicPhotoEditorRoutes,  { prefix: '/api/v1/public' })
   await app.register(specialistsRoutes,        { prefix: '/api/v1/specialists' })
   await app.register(specialistPaymentRoutes,  { prefix: '/api/v1/specialists/payments' })
   await app.register(seoProgramaticoRoutes,    { prefix: '/api/v1/seo' })
