@@ -168,8 +168,8 @@ const schema = z.object({
   documentationPending:   z.boolean().default(false),
   documentationNotes:     z.string().optional(),
   isReserved:             z.boolean().default(false),
-  authorizedPublish:      z.boolean().default(false),
-  showExactLocation:      z.boolean().default(false),
+  authorizedPublish:      z.boolean().default(true),
+  showExactLocation:      z.boolean().default(true),
   // Financeiro do imóvel
   pricePerMeter:          z.coerce.number().positive().optional().or(z.literal('')),
   rentPerMeter:           z.coerce.number().positive().optional().or(z.literal('')),
