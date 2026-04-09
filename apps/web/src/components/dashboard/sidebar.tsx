@@ -141,19 +141,33 @@ function NavContent({ onClose }: { onClose?: () => void }) {
 
   return (
     <div className="flex flex-col h-full">
-      {/* Logo */}
+      {/* Logo - show company name for isolated users */}
       <div className="flex items-center gap-2 px-4 py-4 border-b border-white/10">
-        <Image
-          src="/logo-lemos-v2.png"
-          alt="Imobiliária Lemos"
-          width={40}
-          height={40}
-          className="rounded-full flex-shrink-0 object-cover"
-        />
-        <div className="min-w-0">
-          <p className="font-bold text-sm leading-none text-white" style={{ fontFamily: 'Georgia, serif' }}>IMOBILIÁRIA</p>
-          <p className="text-xs font-bold leading-none mt-0.5 truncate" style={{ color: '#C9A84C', fontFamily: 'Georgia, serif' }}>LEMOS</p>
-        </div>
+        {!hasFullAccess || userSettings.isolatedCompany ? (
+          <>
+            <div className="w-10 h-10 rounded-full bg-[#C9A84C]/20 flex items-center justify-center flex-shrink-0">
+              <span className="text-sm font-bold" style={{ color: '#C9A84C' }}>{(user?.name ?? 'U')[0]}</span>
+            </div>
+            <div className="min-w-0">
+              <p className="font-bold text-sm leading-none text-white truncate" style={{ fontFamily: 'Georgia, serif' }}>{user?.name ?? 'Minha Empresa'}</p>
+              <p className="text-xs leading-none mt-0.5 text-white/40">CRM</p>
+            </div>
+          </>
+        ) : (
+          <>
+            <Image
+              src="/logo-lemos-v2.png"
+              alt="Imobiliária Lemos"
+              width={40}
+              height={40}
+              className="rounded-full flex-shrink-0 object-cover"
+            />
+            <div className="min-w-0">
+              <p className="font-bold text-sm leading-none text-white" style={{ fontFamily: 'Georgia, serif' }}>IMOBILIÁRIA</p>
+              <p className="text-xs font-bold leading-none mt-0.5 truncate" style={{ color: '#C9A84C', fontFamily: 'Georgia, serif' }}>LEMOS</p>
+            </div>
+          </>
+        )}
         {onClose && (
           <button onClick={onClose} className="ml-auto text-white/40 hover:text-white">
             <X className="h-5 w-5" />
@@ -190,8 +204,8 @@ function NavContent({ onClose }: { onClose?: () => void }) {
           )
         })}
 
-        {/* ── Lemosbank Section ─────────────────────────────── */}
-        {!isBroker && <div>
+        {/* ── Lemosbank Section (hidden for isolated users) ─── */}
+        {!isBroker && !userSettings.isolatedCompany && <div>
           <button
             onClick={() => setLemosbankOpen(o => !o)}
             className={cn(
@@ -228,8 +242,8 @@ function NavContent({ onClose }: { onClose?: () => void }) {
           )}
         </div>}
 
-        {/* ── Jurídico Section ─────────────────────────────────── */}
-        {!isBroker && <div>
+        {/* ── Jurídico Section (hidden for isolated users) ───── */}
+        {!isBroker && !userSettings.isolatedCompany && <div>
           <button
             onClick={() => setJuridicoOpen(o => !o)}
             className={cn(

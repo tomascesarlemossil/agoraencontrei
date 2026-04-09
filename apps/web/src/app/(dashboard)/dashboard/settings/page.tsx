@@ -131,14 +131,19 @@ export default function SettingsPage() {
   const { updateUser } = useAuthStore()
   const qc = useQueryClient()
 
+  const userSettings = (user as any)?.settings ?? {}
+  const isIsolated = userSettings.isolatedCompany === true
+  const isAdmin = ['SUPER_ADMIN', 'ADMIN'].includes(user?.role ?? '')
+  const isManager = ['SUPER_ADMIN', 'ADMIN', 'MANAGER'].includes(user?.role ?? '')
+
   const TABS = [
     { id: 'empresa',      label: 'Empresa',       icon: Building2, show: true },
-    { id: 'equipe',       label: 'Equipe',        icon: Users,     show: ['SUPER_ADMIN', 'ADMIN'].includes(user?.role ?? '') },
+    { id: 'equipe',       label: 'Equipe',        icon: Users,     show: isAdmin && !isIsolated },
     { id: 'perfil',       label: 'Perfil',        icon: UserIcon,  show: true },
     { id: 'seguranca',    label: 'Segurança',     icon: Shield,    show: true },
-    { id: 'site',         label: 'Site & IA',     icon: Globe,     show: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'].includes(user?.role ?? '') },
-    { id: 'integracoes',  label: 'Integrações',   icon: Plug,      show: ['SUPER_ADMIN', 'ADMIN'].includes(user?.role ?? '') },
-    { id: 'sistema',      label: 'Sistema',       icon: Settings,  show: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'].includes(user?.role ?? '') },
+    { id: 'site',         label: 'Site & IA',     icon: Globe,     show: isManager && !isIsolated },
+    { id: 'integracoes',  label: 'Integrações',   icon: Plug,      show: isAdmin && !isIsolated },
+    { id: 'sistema',      label: 'Sistema',       icon: Settings,  show: isManager },
   ].filter(t => t.show)
 
   const [activeTab, setActiveTab] = useState('empresa')
