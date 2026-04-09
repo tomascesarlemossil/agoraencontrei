@@ -335,7 +335,13 @@ export default function SettingsPage() {
 
   // ── Team ──────────────────────────────────────────────────────────────────
   const [showNewUser, setShowNewUser] = useState(false)
-  const [newUser, setNewUser] = useState({ name: '', email: '', password: '', role: 'BROKER', phone: '', creciNumber: '' })
+  const [newUser, setNewUser] = useState({
+    name: '', email: '', password: '', role: 'BROKER', phone: '', creciNumber: '',
+    accessLevel: 'full' as 'full' | 'custom' | 'readonly',
+    moduleAccess: [] as string[],
+    createIsolatedCompany: false,
+    isolatedCompanyName: '',
+  })
   const [editingUserId, setEditingUserId] = useState<string | null>(null)
   const [editUser, setEditUser] = useState({ name: '', email: '', phone: '', role: '', creciNumber: '', bio: '', avatarUrl: '' })
   const [editUserSaved, setEditUserSaved] = useState(false)
@@ -870,6 +876,82 @@ export default function SettingsPage() {
                   <DarkInput label="Telefone" value={newUser.phone} onChange={e => setNewUser(p => ({ ...p, phone: e.target.value }))} placeholder="(16) 99999-9999" />
                   <DarkInput label="CRECI" value={newUser.creciNumber} onChange={e => setNewUser(p => ({ ...p, creciNumber: e.target.value }))} placeholder="000000-F" />
                 </div>
+
+                {/* ── Nível de Acesso ────────────────────────── */}
+                <div className="mt-4 p-4 rounded-xl bg-white/5 border border-white/10">
+                  <p className="text-xs font-bold text-white/60 uppercase tracking-wider mb-3">Nível de Acesso</p>
+                  <div className="flex gap-2 mb-3">
+                    {[
+                      { id: 'full', label: 'Acesso Total', desc: 'Todas as ferramentas' },
+                      { id: 'custom', label: 'Personalizado', desc: 'Escolher módulos' },
+                      { id: 'readonly', label: 'Somente Leitura', desc: 'Apenas visualizar' },
+                    ].map(opt => (
+                      <button key={opt.id} type="button"
+                        onClick={() => setNewUser(p => ({ ...p, accessLevel: opt.id as any }))}
+                        className={`flex-1 p-3 rounded-lg text-xs text-center border transition-all ${
+                          newUser.accessLevel === opt.id
+                            ? 'border-[#C9A84C] bg-[#C9A84C]/10 text-[#C9A84C]'
+                            : 'border-white/10 text-white/40 hover:border-white/20'
+                        }`}>
+                        <p className="font-bold">{opt.label}</p>
+                        <p className="text-[10px] mt-0.5 opacity-60">{opt.desc}</p>
+                      </button>
+                    ))}
+                  </div>
+
+                  {newUser.accessLevel === 'custom' && (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-3">
+                      {[
+                        { id: 'imoveis', label: 'Imóveis' }, { id: 'leads', label: 'Leads' },
+                        { id: 'contatos', label: 'Contatos' }, { id: 'negocios', label: 'Negócios' },
+                        { id: 'financeiro', label: 'Financeiro' }, { id: 'juridico', label: 'Jurídico' },
+                        { id: 'chat', label: 'Chat/WhatsApp' }, { id: 'leiloes', label: 'Leilões' },
+                        { id: 'blog', label: 'Blog' }, { id: 'seo', label: 'SEO' },
+                        { id: 'automacoes', label: 'Automações' }, { id: 'ia-visual', label: 'IA Visual' },
+                        { id: 'documentos', label: 'Documentos IA' }, { id: 'configuracoes', label: 'Configurações' },
+                        { id: 'financiamentos', label: 'Financiamentos' }, { id: 'campanhas', label: 'Campanhas' },
+                        { id: 'notas-fiscais', label: 'Notas Fiscais' }, { id: 'foto-editor', label: 'Editor Fotos' },
+                      ].map(mod => (
+                        <label key={mod.id} className="flex items-center gap-2 text-xs text-white/60 cursor-pointer hover:text-white/80">
+                          <input type="checkbox" className="rounded border-white/20 bg-white/5 text-[#C9A84C]"
+                            checked={newUser.moduleAccess.includes(mod.id)}
+                            onChange={e => {
+                              setNewUser(p => ({
+                                ...p,
+                                moduleAccess: e.target.checked
+                                  ? [...p.moduleAccess, mod.id]
+                                  : p.moduleAccess.filter(m => m !== mod.id),
+                              }))
+                            }}
+                          />
+                          {mod.label}
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* ── Empresa Isolada (dados do zero) ─────────── */}
+                <div className="mt-3 p-4 rounded-xl bg-white/5 border border-white/10">
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <input type="checkbox" className="rounded border-white/20 bg-white/5 text-[#C9A84C]"
+                      checked={newUser.createIsolatedCompany}
+                      onChange={e => setNewUser(p => ({ ...p, createIsolatedCompany: e.target.checked }))}
+                    />
+                    <div>
+                      <p className="text-xs font-bold text-white/80">Criar empresa isolada (banco de dados do zero)</p>
+                      <p className="text-[10px] text-white/40">O usuário terá acesso total às ferramentas, mas sem nenhum dado existente. Começa do zero.</p>
+                    </div>
+                  </label>
+                  {newUser.createIsolatedCompany && (
+                    <div className="mt-3">
+                      <DarkInput label="Nome da Empresa" value={newUser.isolatedCompanyName}
+                        onChange={e => setNewUser(p => ({ ...p, isolatedCompanyName: e.target.value }))}
+                        placeholder="Ex: Imobiliária Silva" />
+                    </div>
+                  )}
+                </div>
+
                 <button
                   onClick={() => createUserMutation.mutate()}
                   disabled={createUserMutation.isPending || !newUser.name || !newUser.email || !newUser.password}
@@ -1192,8 +1274,51 @@ export default function SettingsPage() {
 
         {/* ── SISTEMA ─────────────────────────────────────────────────────── */}
         {activeTab === 'sistema' && (
-          <div>
+          <div className="space-y-6">
             <SystemConfigPanel />
+
+            {/* ── Importação de Dados ──────────────────────────── */}
+            {['SUPER_ADMIN', 'ADMIN'].includes(user?.role ?? '') && (
+              <div className="bg-white/5 rounded-xl border border-white/10 p-6">
+                <h3 className="text-sm font-bold text-white mb-1">Importação de Dados</h3>
+                <p className="text-xs text-white/40 mb-4">
+                  Migre seus imóveis e clientes de outro sistema. Aceita CSV ou JSON. O sistema identifica automaticamente os campos.
+                </p>
+                <input type="file" accept=".csv,.json" id="import-data-file" className="hidden"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0]
+                    if (!file) return
+                    const fd = new FormData()
+                    fd.append('file', file)
+                    try {
+                      const token = await getValidToken()
+                      const res = await fetch(`${API_URL}/api/v1/users/import-data`, {
+                        method: 'POST',
+                        headers: { Authorization: `Bearer ${token}` },
+                        body: fd,
+                      })
+                      const data = await res.json()
+                      alert(data.message || JSON.stringify(data))
+                    } catch (err: any) {
+                      alert('Erro: ' + err.message)
+                    }
+                    e.target.value = ''
+                  }}
+                />
+                <div className="flex gap-3">
+                  <button onClick={() => document.getElementById('import-data-file')?.click()}
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-[#1B2B5B]"
+                    style={{ background: 'linear-gradient(135deg, #C9A84C, #e8c66a)' }}>
+                    <Upload className="w-4 h-4" /> Upload CSV ou JSON
+                  </button>
+                </div>
+                <div className="mt-3 text-[10px] text-white/30 leading-relaxed">
+                  <p><strong>CSV:</strong> Primeira linha = cabeçalho. Campos aceitos: titulo, tipo, finalidade, preco, cidade, bairro, endereco, quartos, banheiros, vagas, area, descricao, referencia</p>
+                  <p><strong>JSON:</strong> Array de objetos ou {`{ data: [...] }`}. Mesmos campos do CSV.</p>
+                  <p><strong>Clientes:</strong> Se o arquivo contém campos como cpf, nomeCliente, telefoneCliente, eles são importados automaticamente.</p>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

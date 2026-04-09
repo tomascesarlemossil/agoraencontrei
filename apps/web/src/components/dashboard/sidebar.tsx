@@ -108,6 +108,30 @@ function NavContent({ onClose }: { onClose?: () => void }) {
   const { user, logout } = useAuth()
   const unreadCount = useNotifications(s => s.unreadCount)
   const isBroker = user?.role === 'BROKER'
+  // Module-based access control
+  const userSettings = (user as any)?.settings ?? {}
+  const moduleAccess: string[] = userSettings.moduleAccess ?? []
+  const hasFullAccess = userSettings.accessLevel === 'full' || !userSettings.accessLevel || ['SUPER_ADMIN', 'ADMIN'].includes(user?.role ?? '')
+
+  // Map sidebar hrefs to module IDs
+  const hrefToModule: Record<string, string> = {
+    '/dashboard/properties': 'imoveis', '/dashboard/ai-visual': 'ia-visual',
+    '/dashboard/leads': 'leads', '/dashboard/contacts': 'contatos',
+    '/dashboard/deals': 'negocios', '/dashboard/inbox': 'chat',
+    '/dashboard/financiamentos': 'financiamentos', '/dashboard/portals': 'portal',
+    '/dashboard/automations': 'automacoes', '/dashboard/marketing/campanhas': 'campanhas',
+    '/dashboard/fiscal': 'notas-fiscais', '/dashboard/crm/renovacoes': 'renovacoes',
+    '/dashboard/blog': 'blog', '/dashboard/seo-programatico': 'seo',
+    '/dashboard/leiloes': 'leiloes', '/dashboard/parceiros': 'parceiros',
+    '/dashboard/documentos': 'documentos',
+  }
+
+  function hasModuleAccess(href: string): boolean {
+    if (hasFullAccess) return true
+    const mod = hrefToModule[href]
+    if (!mod) return true // items without module mapping are always visible
+    return moduleAccess.includes(mod)
+  }
   const lemosbankActive = pathname.startsWith('/dashboard/lemosbank') ||
     pathname.startsWith('/dashboard/contratos') ||
     pathname.startsWith('/dashboard/clientes')
@@ -140,7 +164,7 @@ function NavContent({ onClose }: { onClose?: () => void }) {
       {/* Nav */}
       <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
         {/* ── Top items: Painel + Agente IA Documentos ──────── */}
-        {topNavItems.map(({ href, icon: Icon, label, highlight }) => {
+        {topNavItems.filter(item => hasModuleAccess(item.href)).map(({ href, icon: Icon, label, highlight }) => {
           const active = pathname === href || (href !== '/dashboard' && pathname.startsWith(href))
           return (
             <Link
@@ -242,8 +266,8 @@ function NavContent({ onClose }: { onClose?: () => void }) {
           )}
         </div>}
 
-        {/* ── Mid items: Imóveis → Blog ──────────────────────── */}
-        {midNavItems.map(({ href, icon: Icon, label, highlight }) => {
+        {/* ── Mid items: Imóveis → Blog (filtered by module access) ── */}
+        {midNavItems.filter(item => hasModuleAccess(item.href)).map(({ href, icon: Icon, label, highlight }) => {
           const active = pathname === href || (href !== '/dashboard' && pathname.startsWith(href))
           return (
             <Link
