@@ -4,6 +4,7 @@
     "outDir": "./dist",
     "sourceMap": false,
     "declarationMap": false,
+    "strict": false,
     "noImplicitAny": false,
     "noUnusedLocals": false,
     "noUnusedParameters": false
