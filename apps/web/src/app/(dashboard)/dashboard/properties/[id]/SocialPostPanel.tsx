@@ -38,9 +38,13 @@ export function SocialPostPanel({ propertyId }: { propertyId: string }) {
         headers: { Authorization: `Bearer ${getToken()}` },
       })
       const data = await res.json()
-      setPreview(data)
+      if (data.error) {
+        setPreview({ caption: '', hashtags: '', fullCaption: '', charCount: 0, coverImage: null, canPost: false })
+      } else {
+        setPreview(data)
+      }
     } catch {
-      // ignore
+      setPreview({ caption: 'Erro ao carregar preview. Verifique se o imóvel tem foto de capa e descrição.', hashtags: '', fullCaption: '', charCount: 0, coverImage: null, canPost: false })
     } finally {
       setLoadingPreview(false)
     }

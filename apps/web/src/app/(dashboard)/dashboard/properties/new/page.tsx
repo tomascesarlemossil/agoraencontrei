@@ -241,14 +241,15 @@ export default function NewPropertyPage() {
   const { register, handleSubmit, control, watch, setValue, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
-      type: '', purpose: '', category: 'RESIDENTIAL', status: 'ACTIVE',
+      title: '', type: '', purpose: '', category: 'RESIDENTIAL', status: 'ACTIVE',
+      reference: '', description: '',
       bedrooms: 0, suites: 0, suitesWithCloset: 0, demiSuites: 0,
       bathrooms: 0, rooms: 0, livingRooms: 0, diningRooms: 0, tvRooms: 0,
       parkingSpaces: 0, garagesCovered: 0, garagesOpen: 0, elevators: 0,
       priceNegotiable: false, valueUnderConsultation: false, allowExchange: false,
       isFeatured: false, isPremium: false, closedCondo: false, signOnSite: false,
       exclusivityContract: false, documentationPending: false,
-      isReserved: false, authorizedPublish: false, showExactLocation: false,
+      isReserved: false, authorizedPublish: true, showExactLocation: true,
       publishOlx: false, publishZap: false, publishVivaReal: false, publishFacebook: false,
       features: [],
     },

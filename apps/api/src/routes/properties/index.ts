@@ -108,8 +108,8 @@ const CreatePropertyBody = z.object({
   documentationPending: z.boolean().optional(),
   documentationNotes: z.string().optional(),
   isReserved:   z.boolean().optional(),
-  authorizedPublish: z.boolean().optional(),
-  showExactLocation: z.boolean().optional(), // Exibir localização exata no mapa (padrão: false)
+  authorizedPublish: z.boolean().default(true),
+  showExactLocation: z.boolean().default(true), // Exibir localização exata no mapa
   // Captação
   captorName:   z.string().optional(),
   captorCommissionPct: z.number().optional(),
@@ -469,6 +469,8 @@ export default async function propertiesRoutes(app: FastifyInstance) {
         price: body.price ? body.price : undefined,
         priceRent: body.priceRent ? body.priceRent : undefined,
         publishedAt: body.status === 'ACTIVE' ? new Date() : undefined,
+        authorizedPublish: body.authorizedPublish ?? (body.status === 'ACTIVE'),
+        showExactLocation: body.showExactLocation ?? true,
         portalDescriptions: body.portalDescriptions as any,
         ...(autoLat && autoLng && { latitude: autoLat, longitude: autoLng }),
       },
@@ -559,27 +561,30 @@ export default async function propertiesRoutes(app: FastifyInstance) {
     })
 
     // Auto-post to Instagram when property becomes ACTIVE
+    let autoPostStatus: string | null = null
     if (body.status === 'ACTIVE' && existing.status !== 'ACTIVE') {
-      ;(async () => {
-        try {
-          const { generatePropertyCaption } = await import('../../services/caption-generator.service.js')
-          const { publishPropertyToInstagram } = await import('../../services/instagram-publisher.service.js')
-          const { env } = await import('../../utils/env.js')
+      try {
+        const { generatePropertyCaption } = await import('../../services/caption-generator.service.js')
+        const { publishPropertyToInstagram } = await import('../../services/instagram-publisher.service.js')
 
-          const token = env.INSTAGRAM_PAGE_ACCESS_TOKEN
-          const igUserId = env.INSTAGRAM_BUSINESS_ACCOUNT_ID
+        const igToken = env.INSTAGRAM_PAGE_ACCESS_TOKEN
+        const igUserId = env.INSTAGRAM_BUSINESS_ACCOUNT_ID
 
-          if (token && igUserId && updated.coverImage) {
-            const { caption, hashtags } = await generatePropertyCaption(updated as any)
-            await publishPropertyToInstagram(updated.coverImage, `${caption}\n\n${hashtags}`, igUserId, token)
-          }
-        } catch (err) {
-          app.log.warn({ err }, '[auto-post] Failed to auto-post to Instagram')
+        if (igToken && igUserId && updated.coverImage) {
+          const { caption, hashtags } = await generatePropertyCaption(updated as any)
+          await publishPropertyToInstagram(updated.coverImage, `${caption}\n\n${hashtags}`, igUserId, igToken)
+          autoPostStatus = 'posted'
+          app.log.info(`[auto-post] Instagram post published for property ${id}`)
+        } else {
+          autoPostStatus = 'skipped'
         }
-      })()
+      } catch (err: any) {
+        autoPostStatus = `failed: ${err.message}`
+        app.log.warn({ err }, '[auto-post] Failed to auto-post to Instagram')
+      }
     }
 
-    return reply.send(updated)
+    return reply.send({ ...updated, _autoPost: autoPostStatus })
   })
 
   // DELETE /api/v1/properties/:id (soft — set INACTIVE)

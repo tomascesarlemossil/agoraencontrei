@@ -341,7 +341,7 @@ export default function PropertyDetailPage() {
       const { publishOlx, publishZap, publishVivaReal, publishFacebook, metaKeywords, ...rest } = data
       const clean: Record<string, unknown> = {}
       for (const [k, v] of Object.entries(rest)) {
-        if (v !== '' && v !== undefined) clean[k] = v
+        if (v !== '' && v !== undefined && v !== null) clean[k] = v
       }
       // Store portal toggles in portalDescriptions JSON
       clean.portalDescriptions = {

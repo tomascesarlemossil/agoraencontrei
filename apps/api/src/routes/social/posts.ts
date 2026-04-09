@@ -29,7 +29,7 @@ export default async function socialPostRoutes(app: FastifyInstance) {
     // Select token and IG user ID
     const token = account === 'tomas'
       ? env.INSTAGRAM_TOKEN_TOMAS
-      : env.INSTAGRAM_PAGE_ACCESS_TOKEN
+      : (env.INSTAGRAM_TOKEN_LEMOS || env.INSTAGRAM_PAGE_ACCESS_TOKEN)
 
     const igUserId = env.INSTAGRAM_BUSINESS_ACCOUNT_ID
 
