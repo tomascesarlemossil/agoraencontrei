@@ -35,10 +35,10 @@ export default fp(async (app: FastifyInstance) => {
 
   // Connect with timeout — don't block server startup
   try {
-    await Promise.race([
-      connection.connect(),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('Automation Redis timeout (10s)')), 10000)),
-    ])
+    const connectP = connection.connect()
+    const timeoutP = new Promise((_, reject) => setTimeout(() => reject(new Error('Automation Redis timeout (10s)')), 10000))
+    await Promise.race([connectP, timeoutP])
+    connectP.catch(() => {})
   } catch (err: any) {
     app.log.warn(`⚠️ Automation Redis connect failed: ${err.message} — queues may not work`)
   }
@@ -98,8 +98,8 @@ export default fp(async (app: FastifyInstance) => {
   // ── Scheduled jobs — every 30 minutes after boot ──────────────────────────
   let scheduledTimer: ReturnType<typeof setInterval> | null = null
   app.addHook('onReady', () => {
-    setTimeout(() => runScheduledJobs(app), 60_000)
-    scheduledTimer = setInterval(() => runScheduledJobs(app), 30 * 60 * 1000)
+    setTimeout(() => runScheduledJobs(app).catch(e => app.log.error('Scheduled jobs error:', e.message)), 60_000)
+    scheduledTimer = setInterval(() => runScheduledJobs(app).catch(e => app.log.error('Scheduled jobs error:', e.message)), 30 * 60 * 1000)
     app.log.info('✅ Scheduled jobs started (interval: 30min)')
   })
 

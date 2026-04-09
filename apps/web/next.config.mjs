@@ -1,6 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  // Standalone output for Docker/Railway deployment
+  output: 'standalone',
   // Compressão gzip/brotli automática
   compress: true,
   // Skip type checking during build — types are checked in CI/dev
