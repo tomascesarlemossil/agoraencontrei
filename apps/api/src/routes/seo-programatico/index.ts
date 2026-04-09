@@ -1,14 +1,17 @@
 /**
  * SEO Programático — Rotas de Geração e Consulta
  *
- * POST /import-ibge        → Importa todas cidades do IBGE
- * POST /keywords/seed      → Popula keywords de SEO
- * POST /pages/generate     → Gera páginas base (slug + meta + FAQ)
- * POST /pages/publish-ai   → Gera conteúdo IA para páginas rascunho
- * GET  /pages/:slug        → Busca página publicada por slug
- * GET  /pages              → Lista páginas publicadas (paginado)
- * GET  /sitemap/pages.xml  → Sitemap XML das páginas publicadas
- * GET  /stats              → Estatísticas do motor SEO
+ * POST /import-ibge           → Importa todas cidades do IBGE
+ * POST /keywords/seed         → Popula keywords de SEO
+ * POST /pages/generate        → Gera páginas base (slug + meta + FAQ)
+ * POST /pages/publish-ai      → Gera conteúdo IA para páginas rascunho
+ * POST /pages/publish-batch   → Publica rascunhos sem IA (intro existente)
+ * GET  /pages/:slug           → Busca página publicada por slug
+ * GET  /pages                 → Lista páginas publicadas (paginado)
+ * GET  /sitemap/pages.xml     → Sitemap XML das páginas publicadas
+ * GET  /stats                 → Estatísticas do motor SEO
+ * GET  /cities                → Lista cidades com dados IBGE
+ * PATCH /cities/:id/ibge      → Atualiza dados IBGE de uma cidade
  */
 
 import type { FastifyInstance } from 'fastify'
@@ -680,5 +683,100 @@ ${sitemaps
     )
 
     return reply.send({ ok: true, published: result })
+  })
+
+  // ── GET /cities ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  // Lista todas as cidades com seus dados IBGE (para o script de importação)
+  app.get('/cities', async (req, reply) => {
+    const q = req.query as Record<string, string>
+    const limit = parseInt(q.limit || '10000', 10)
+    const offset = parseInt(q.offset || '0', 10)
+    const semDados = q.sem_dados === 'true'
+
+    let sql = `
+      SELECT
+        c.id,
+        c.id_ibge,
+        c.nome,
+        c.slug,
+        e.sigla AS uf,
+        c.populacao,
+        c.populacao_estimada,
+        c.densidade_demografica,
+        c.pib_per_capita,
+        c.salario_medio_sm,
+        c.pessoal_ocupado,
+        c.area_territorial,
+        c.gentilico
+      FROM seo_cidades c
+      JOIN seo_estados e ON e.id = c.estado_id
+    `
+    if (semDados) {
+      sql += ` WHERE c.populacao_estimada IS NULL AND c.populacao = 0`
+    }
+    sql += ` ORDER BY c.id ASC LIMIT ${limit} OFFSET ${offset}`
+
+    const cidades = await app.prisma.$queryRawUnsafe(sql)
+    return reply.send({ cidades, total: (cidades as any[]).length })
+  })
+
+  // ── PATCH /cities/:id/ibge ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  // Atualiza dados IBGE de uma cidade específica (usado pelo script de importação)
+  app.patch('/cities/:id/ibge', async (req, reply) => {
+    const { id } = req.params as { id: string }
+    const body = req.body as {
+      populacao_estimada?: number | null
+      area_territorial?: number | null
+      pib_per_capita?: number | null
+      salario_medio_sm?: number | null
+      densidade_demografica?: number | null
+      pessoal_ocupado?: number | null
+      gentilico?: string | null
+    }
+
+    const updates: string[] = []
+    const values: (number | string | null)[] = []
+    let idx = 1
+
+    if (body.populacao_estimada !== undefined) {
+      updates.push(`populacao_estimada = $${idx++}`)
+      values.push(body.populacao_estimada)
+    }
+    if (body.area_territorial !== undefined) {
+      updates.push(`area_territorial = $${idx++}`)
+      values.push(body.area_territorial)
+    }
+    if (body.pib_per_capita !== undefined) {
+      updates.push(`pib_per_capita = $${idx++}`)
+      values.push(body.pib_per_capita)
+    }
+    if (body.salario_medio_sm !== undefined) {
+      updates.push(`salario_medio_sm = $${idx++}`)
+      values.push(body.salario_medio_sm)
+    }
+    if (body.densidade_demografica !== undefined) {
+      updates.push(`densidade_demografica = $${idx++}`)
+      values.push(body.densidade_demografica)
+    }
+    if (body.pessoal_ocupado !== undefined) {
+      updates.push(`pessoal_ocupado = $${idx++}`)
+      values.push(body.pessoal_ocupado)
+    }
+    if (body.gentilico !== undefined) {
+      updates.push(`gentilico = $${idx++}`)
+      values.push(body.gentilico)
+    }
+
+    if (updates.length === 0) {
+      return reply.status(400).send({ ok: false, error: 'Nenhum campo para atualizar' })
+    }
+
+    values.push(parseInt(id, 10))
+    await app.prisma.$executeRawUnsafe(
+      `UPDATE seo_cidades SET ${updates.join(', ')} WHERE id = $${idx}`,
+      ...values
+    )
+
+    return reply.send({ ok: true })
   })
 }
