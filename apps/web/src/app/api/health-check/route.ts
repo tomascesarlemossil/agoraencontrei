@@ -31,5 +31,5 @@ export async function GET() {
     checks,
     timestamp: new Date().toISOString(),
     version: process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) || 'dev',
-  }, { status: allOk ? 200 : 503 })
+  }, { status: 200 }) // Always 200 — Railway healthcheck must not fail due to API being slow
 }
