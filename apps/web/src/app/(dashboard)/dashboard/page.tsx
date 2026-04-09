@@ -172,10 +172,9 @@ export default function DashboardPage() {
           const isolated = s.isolatedCompany === true
           const actions = [
             { href: '/dashboard/properties/new', icon: PlusCircle, label: 'Novo Imóvel',    color: 'text-blue-600',   bg: 'bg-blue-50',   show: true },
-            { href: '/dashboard/contratos/novo', icon: FileText,   label: 'Novo Contrato', color: 'text-green-600',  bg: 'bg-green-50',  show: !isolated },
+            { href: '/dashboard/contratos/novo', icon: FileText,   label: 'Novo Contrato', color: 'text-green-600',  bg: 'bg-green-50',  show: true },
             { href: '/dashboard/leads',          icon: UserCheck,  label: 'Ver Leads',     color: 'text-purple-600', bg: 'bg-purple-50', show: true },
-            { href: '/dashboard/documentos',     icon: FileText,   label: 'Documentos IA', color: 'text-cyan-600',   bg: 'bg-cyan-50',   show: true },
-            { href: '/dashboard/lemosbank',      icon: Banknote,   label: 'Financeiro',    color: 'text-yellow-600', bg: 'bg-yellow-50', show: !isolated },
+            { href: '/dashboard/lemosbank',      icon: Banknote,   label: 'Financeiro',    color: 'text-yellow-600', bg: 'bg-yellow-50', show: true },
           ]
           return actions.filter(a => a.show)
         })().map(a => (

@@ -138,11 +138,11 @@ export default function SettingsPage() {
 
   const TABS = [
     { id: 'empresa',      label: 'Empresa',       icon: Building2, show: true },
-    { id: 'equipe',       label: 'Equipe',        icon: Users,     show: isAdmin && !isIsolated },
+    { id: 'equipe',       label: 'Equipe',        icon: Users,     show: isAdmin },
     { id: 'perfil',       label: 'Perfil',        icon: UserIcon,  show: true },
     { id: 'seguranca',    label: 'Segurança',     icon: Shield,    show: true },
-    { id: 'site',         label: 'Site & IA',     icon: Globe,     show: isManager && !isIsolated },
-    { id: 'integracoes',  label: 'Integrações',   icon: Plug,      show: isAdmin && !isIsolated },
+    { id: 'site',         label: 'Site & IA',     icon: Globe,     show: isManager },
+    { id: 'integracoes',  label: 'Integrações',   icon: Plug,      show: isAdmin },
     { id: 'sistema',      label: 'Sistema',       icon: Settings,  show: isManager },
   ].filter(t => t.show)
 

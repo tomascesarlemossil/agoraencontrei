@@ -204,8 +204,8 @@ function NavContent({ onClose }: { onClose?: () => void }) {
           )
         })}
 
-        {/* ── Lemosbank Section (hidden for isolated users) ─── */}
-        {!isBroker && !userSettings.isolatedCompany && <div>
+        {/* ── Lemosbank / Financeiro Section ────────────────── */}
+        {!isBroker && <div>
           <button
             onClick={() => setLemosbankOpen(o => !o)}
             className={cn(
@@ -242,8 +242,8 @@ function NavContent({ onClose }: { onClose?: () => void }) {
           )}
         </div>}
 
-        {/* ── Jurídico Section (hidden for isolated users) ───── */}
-        {!isBroker && !userSettings.isolatedCompany && <div>
+        {/* ── Jurídico Section ─────────────────────────────────── */}
+        {!isBroker && <div>
           <button
             onClick={() => setJuridicoOpen(o => !o)}
             className={cn(
