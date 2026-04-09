@@ -378,6 +378,13 @@ async function runMigrations(prisma: any) {
       )
     } catch { /* column already exists or unsupported */ }
   }
+
+  // ── Ensure all active properties are visible on map/listings ──────────
+  try {
+    await prisma.$executeRawUnsafe(
+      `UPDATE properties SET "authorizedPublish" = true, "showExactLocation" = true WHERE status = 'ACTIVE' AND "authorizedPublish" = false`
+    )
+  } catch { /* column may not exist yet */ }
 }
 
 async function bootstrap() {

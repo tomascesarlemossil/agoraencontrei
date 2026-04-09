@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { findOrCreateCustomer, createCharge } from '../../services/asaas.service.js'
 
 const VALUATION_PRICE = 200 // R$ 200,00
+const PIX_KEY = 'c278f53d-994f-47e5-b720-c3d67d18aeb1' // Chave PIX fixa para pagamentos
 
 function cleanCPF(cpf: string): string {
   return cpf.replace(/\D/g, '')
@@ -46,6 +47,16 @@ const registerSchema = z.object({
 })
 
 export async function valuationRoutes(app: FastifyInstance) {
+
+  // ── GET /valuation/pix-info — Retorna chave PIX para pagamentos ────────
+  app.get('/valuation/pix-info', async (_req: FastifyRequest, reply: FastifyReply) => {
+    return reply.send({
+      pixKey: PIX_KEY,
+      pixKeyType: 'EVP',
+      beneficiary: 'AgoraEncontrei — Imobiliária Lemos',
+      valuationPrice: VALUATION_PRICE,
+    })
+  })
 
   // ── GET /valuation/check-cpf — Verifica se CPF tem avaliação gratuita ──
   app.get('/valuation/check-cpf', async (req: FastifyRequest, reply: FastifyReply) => {
@@ -98,6 +109,28 @@ export async function valuationRoutes(app: FastifyInstance) {
     }
 
     try {
+      // If Asaas is not configured, return static PIX key
+      if (!process.env.ASAAS_API_KEY) {
+        const refId = `valuation-${cpf}-${Date.now()}`
+        await app.prisma.$executeRawUnsafe(
+          `INSERT INTO valuation_requests (id, cpf, name, email, phone, "paymentStatus")
+           VALUES (gen_random_uuid()::text, $1, $2, $3, $4, 'PENDING')`,
+          cpf, name, email || null, phone || null,
+        )
+        return reply.send({
+          chargeId: refId,
+          status: 'PENDING',
+          value: VALUATION_PRICE,
+          billingType: 'PIX',
+          invoiceUrl: null,
+          bankSlipUrl: null,
+          pixCode: PIX_KEY,
+          pixQrCodeUrl: null,
+          dueDate: new Date().toISOString().split('T')[0],
+          pixKeyType: 'static',
+        })
+      }
+
       // Find or create Asaas customer
       const customer = await findOrCreateCustomer({
         name,

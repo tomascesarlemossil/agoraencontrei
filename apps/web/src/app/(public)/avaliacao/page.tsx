@@ -3,12 +3,12 @@ import { CheckCircle, TrendingUp, Clock, Shield, Star, MapPin, Phone } from 'luc
 import { AvaliacaoForm } from './AvaliacaoForm'
 
 export const metadata: Metadata = {
-  title: 'Avaliação Inteligente de Imóvel | AgoraEncontrei — 3 Métodos Profissionais',
-  description: 'Avaliação inteligente e gratuita do seu imóvel em Franca e região. 3 métodos profissionais (comparativo, custo e renda), detecção de anomalias, e laudo instantâneo com dados reais de mercado.',
-  keywords: 'avaliação imóvel gratuita, avaliação imóvel franca, laudo imobiliário, quanto vale meu imóvel, avaliação casa franca sp, avaliação inteligente, método comparativo, método custo, capitalização de renda, valor de mercado imóvel',
+  title: 'Avaliação Profissional de Imóvel com Dados em Tempo Real | AgoraEncontrei',
+  description: 'Avaliação profissional do seu imóvel com dados em tempo real. 3 métodos (comparativo, custo SINAPI e capitalização de renda), detecção de anomalias e laudo instantâneo. 1a avaliação gratuita.',
+  keywords: 'avaliação imóvel profissional, avaliação imóvel franca, laudo imobiliário, quanto vale meu imóvel, avaliação casa franca sp, avaliação inteligente, método comparativo, método custo sinapi, capitalização de renda, valor de mercado imóvel, avaliação dados tempo real',
   openGraph: {
-    title: 'Avaliação Inteligente de Imóvel | AgoraEncontrei',
-    description: 'Descubra o valor real do seu imóvel com 3 métodos profissionais: comparativo, custo e renda. Avaliação gratuita e instantânea.',
+    title: 'Avaliação Profissional de Imóvel com Dados em Tempo Real | AgoraEncontrei',
+    description: 'Descubra o valor real do seu imóvel com 3 métodos profissionais e dados em tempo real. 1a avaliação gratuita.',
     type: 'website',
     locale: 'pt_BR',
     siteName: 'AgoraEncontrei — Imobiliária Lemos',
@@ -22,12 +22,12 @@ export const metadata: Metadata = {
 const avaliacaoJsonLd = {
   '@context': 'https://schema.org',
   '@type': 'WebApplication',
-  name: 'Avaliador Inteligente de Imóveis',
-  description: 'Ferramenta de avaliação profissional de imóveis com 3 métodos (comparativo, custo, capitalização de renda), detecção de anomalias de preço e estratégia de precificação.',
+  name: 'Avaliador Profissional de Imóveis com Dados em Tempo Real',
+  description: 'Ferramenta profissional de avaliação de imóveis com dados em tempo real, 3 métodos (comparativo, custo SINAPI, capitalização de renda), detecção de anomalias de preço e estratégia de precificação.',
   url: 'https://agoraencontrei.com.br/avaliacao',
   applicationCategory: 'FinanceApplication',
   operatingSystem: 'Web',
-  offers: { '@type': 'Offer', price: '0', priceCurrency: 'BRL' },
+  offers: { '@type': 'Offer', price: '0', priceCurrency: 'BRL', description: '1a avaliação gratuita por CPF, demais R$200' },
   provider: {
     '@type': 'RealEstateAgent',
     name: 'AgoraEncontrei — Imobiliária Lemos',
@@ -50,23 +50,23 @@ const avaliacaoJsonLd = {
 const BENEFICIOS = [
   {
     icon: <CheckCircle className="w-5 h-5" />,
-    title: '100% Gratuita',
-    desc: 'Sem custo algum. Nossa avaliação é um serviço que oferecemos a todos os proprietários.',
+    title: '1a Avaliação Gratuita',
+    desc: 'Sua primeira avaliação por CPF é totalmente gratuita. Demais avaliações por apenas R$ 200.',
   },
   {
     icon: <TrendingUp className="w-5 h-5" />,
-    title: 'Baseada em dados reais',
-    desc: 'Análise com comparativos do mercado local, histórico de vendas e tendências da região.',
+    title: 'Dados em Tempo Real',
+    desc: 'Análise com 3 métodos profissionais, comparativos do mercado local e tendências atualizadas.',
   },
   {
     icon: <Clock className="w-5 h-5" />,
-    title: 'Resposta em 24 horas',
-    desc: 'Nosso especialista entra em contato em até um dia útil com o laudo completo.',
+    title: 'Laudo Instantâneo',
+    desc: 'Resultado imediato com valor de mercado, valor bancário e valor de venda rápida.',
   },
   {
     icon: <Shield className="w-5 h-5" />,
-    title: 'Sem compromisso',
-    desc: 'A avaliação não gera nenhuma obrigação de venda ou locação com nossa imobiliária.',
+    title: 'Score de Confiança',
+    desc: 'Cada avaliação inclui score de confiabilidade, detecção de anomalias e estratégia de preço.',
   },
 ]
 
@@ -113,7 +113,7 @@ export default function AvaliacaoPage() {
             style={{ backgroundColor: 'rgba(201,168,76,0.15)', color: '#C9A84C', border: '1px solid rgba(201,168,76,0.3)' }}
           >
             <Star className="w-3 h-3 fill-current" />
-            Serviço gratuito e sem compromisso
+            Avaliação profissional com dados em tempo real
           </div>
           <h1
             className="text-4xl sm:text-5xl font-bold text-white mb-4 leading-tight"
@@ -124,8 +124,8 @@ export default function AvaliacaoPage() {
             <span style={{ color: '#C9A84C' }}>seu imóvel?</span>
           </h1>
           <p className="text-white/60 text-lg max-w-xl mx-auto mb-3">
-            Descubra o valor real de mercado do seu imóvel em Franca e região.
-            Avaliação profissional, gratuita e sem compromisso.
+            Descubra o valor real de mercado do seu imóvel com dados em tempo real.
+            3 métodos profissionais, detecção de anomalias e laudo instantâneo.
           </p>
           <div className="flex flex-wrap justify-center gap-6 mt-8">
             {[
@@ -152,9 +152,9 @@ export default function AvaliacaoPage() {
               <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8">
                 <div className="mb-6">
                   <h2 className="text-xl font-bold mb-1" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>
-                    Solicitar Avaliação Gratuita
+                    Avaliação Profissional com Dados em Tempo Real
                   </h2>
-                  <p className="text-gray-500 text-sm">Preencha os dados do seu imóvel em 3 etapas simples.</p>
+                  <p className="text-gray-500 text-sm">Preencha os dados do seu imóvel e receba o laudo instantâneo.</p>
                 </div>
                 <AvaliacaoForm />
               </div>
@@ -264,14 +264,14 @@ export default function AvaliacaoPage() {
             Pronto para descobrir o valor do seu imóvel?
           </h2>
           <p className="text-white/50 text-sm mb-6">
-            Preencha o formulário acima ou entre em contato pelo WhatsApp. É rápido, gratuito e sem compromisso.
+            Preencha o formulário acima ou entre em contato pelo WhatsApp. 1a avaliação gratuita por CPF.
           </p>
           <a
             href="/avaliacao"
             className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold transition-all hover:brightness-110"
             style={{ backgroundColor: '#C9A84C', color: '#1B2B5B' }}
           >
-            Solicitar avaliação gratuita
+            Avaliar meu imóvel agora
           </a>
         </div>
       </section>

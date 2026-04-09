@@ -598,12 +598,17 @@ export function AvaliacaoForm() {
                 <div className="mt-3 space-y-3">
                   {paymentData.pixCode && (
                     <div>
-                      <p className="text-xs font-medium text-gray-600 mb-1">PIX Copia e Cola:</p>
+                      <p className="text-xs font-medium text-gray-600 mb-1">
+                        {paymentData.pixKeyType === 'static' ? 'Chave PIX:' : 'PIX Copia e Cola:'}
+                      </p>
                       <div className="bg-white border rounded-lg p-2 text-xs break-all text-gray-700 cursor-pointer hover:bg-gray-50"
-                        onClick={() => navigator.clipboard.writeText(paymentData.pixCode)}>
+                        onClick={() => { navigator.clipboard.writeText(paymentData.pixCode); alert('Chave PIX copiada!') }}>
                         {paymentData.pixCode}
                       </div>
-                      <p className="text-[10px] text-gray-400 mt-1">Clique para copiar</p>
+                      <p className="text-[10px] text-gray-400 mt-1">Clique para copiar · Valor: R$ 200,00</p>
+                      {paymentData.pixQrCodeUrl && (
+                        <img src={paymentData.pixQrCodeUrl} alt="QR Code PIX" className="mt-2 mx-auto w-40 h-40 rounded-lg" />
+                      )}
                     </div>
                   )}
                   {paymentData.invoiceUrl && (
