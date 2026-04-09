@@ -62,15 +62,46 @@
   }
 }
 
-/* ── Fix: ensure form inputs on public (light) pages always have dark text ── */
-/* The root <html> has class="dark" for the dashboard, but public pages use   */
-/* light backgrounds. This forces dark text/placeholders on all form inputs.  */
+/* ── Fix: ensure form inputs on light-background pages have dark text ──────── */
+/* Root <html> has class="dark" for dashboard, but public/portal pages use    */
+/* light backgrounds. This forces dark text on inputs in those contexts.       */
+/* Dashboard dark-themed inputs override this with their own text-white.       */
+
+/* Public pages (all wrapped in <main id="main-content">) */
 #main-content input:not([type="checkbox"]):not([type="radio"]),
 #main-content textarea,
 #main-content select {
-  color: #111827 !important; /* gray-900 */
+  color: #111827 !important;
 }
 #main-content input::placeholder,
 #main-content textarea::placeholder {
-  color: #9ca3af !important; /* gray-400 */
+  color: #9ca3af !important;
+}
+
+/* Portal pages (light background #F8F5F0) */
+.dark input.bg-white,
+.dark input[class*="bg-white"],
+.dark textarea.bg-white,
+.dark select.bg-white {
+  color: #111827;
+}
+
+/* Any input with explicit bg-white should have dark text */
+input.bg-white, textarea.bg-white, select.bg-white,
+input[style*="background"], textarea[style*="background"] {
+  color: #111827;
+}
+
+/* Fix the shared Input component — bg-transparent on light cards */
+.dark .bg-white input,
+.dark .bg-white textarea,
+.dark .bg-white select,
+.dark [style*="background-color: #f8f"] input,
+.dark [style*="background-color: #F8F"] input,
+.dark [style*="backgroundColor"] input {
+  color: #111827;
+}
+.dark .bg-white input::placeholder,
+.dark .bg-white textarea::placeholder {
+  color: #9ca3af;
 }

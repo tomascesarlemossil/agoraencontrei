@@ -92,7 +92,7 @@ interface WizardData {
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 function inputCls(extra = '') {
-  return `w-full px-3 py-2 text-sm rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-400 ${extra}`
+  return `w-full px-3 py-2 text-sm rounded-lg border border-gray-200 text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-400 ${extra}`
 }
 
 function labelCls() {
