@@ -190,6 +190,7 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
   const [properties, setProperties] = useState<Property[]>([])
   const [loadingProps, setLoadingProps] = useState(false)
   const [isLoaded, setIsLoaded] = useState(false)
+  const [isSatellite, setIsSatellite] = useState(false)
   const [mapError, setMapError] = useState<string | null>(null)
   const router = useRouter()
 
@@ -365,7 +366,7 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
         return
       }
       try {
-        // Use reliable OSM raster tiles (OpenFreeMap vector style is unreliable)
+        // OSM + Satellite + Terrain sources
         const mapStyle: any = {
           version: 8,
           sources: {
@@ -375,17 +376,36 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
               tileSize: 256,
               attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
             },
+            'satellite': {
+              type: 'raster',
+              tiles: [
+                'https://mt0.google.com/vt/lyrs=s&hl=pt-BR&x={x}&y={y}&z={z}',
+                'https://mt1.google.com/vt/lyrs=s&hl=pt-BR&x={x}&y={y}&z={z}',
+              ],
+              tileSize: 256,
+              maxzoom: 20,
+            },
+            'terrain-dem': {
+              type: 'raster-dem',
+              tiles: ['https://demotiles.maplibre.org/terrain/{z}/{x}/{y}.png'],
+              tileSize: 256,
+              encoding: 'mapbox',
+            },
           },
-          layers: [{ id: 'osm-tiles', type: 'raster', source: 'osm' }],
+          layers: [
+            { id: 'osm-tiles', type: 'raster', source: 'osm' },
+            { id: 'satellite-tiles', type: 'raster', source: 'satellite', layout: { visibility: 'none' } },
+          ],
+          terrain: { source: 'terrain-dem', exaggeration: 1.3 },
         }
 
         const map = new maplibregl.Map({
           container: mapRef.current!,
           style: mapStyle,
-          center: [FRANCA_CENTER[1], FRANCA_CENTER[0]], // MapLibre uses [lng, lat]
+          center: [FRANCA_CENTER[1], FRANCA_CENTER[0]],
           zoom: 14,
           pitch: 0,
-          maxPitch: 70,
+          maxPitch: 85,
           antialias: true,
         })
 
@@ -939,6 +959,32 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
               Limpar área
             </button>
           )}
+          {/* Satellite 3D toggle */}
+          <button
+            onClick={() => {
+              const map = mapInstance.current
+              if (!map) return
+              const next = !isSatellite
+              setIsSatellite(next)
+              if (next) {
+                map.setLayoutProperty('osm-tiles', 'visibility', 'none')
+                map.setLayoutProperty('satellite-tiles', 'visibility', 'visible')
+                map.easeTo({ pitch: 50, bearing: 30, duration: 1200 })
+              } else {
+                map.setLayoutProperty('satellite-tiles', 'visibility', 'none')
+                map.setLayoutProperty('osm-tiles', 'visibility', 'visible')
+                map.easeTo({ pitch: 0, bearing: 0, duration: 1200 })
+              }
+            }}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold shadow-lg transition-all hover:scale-105"
+            style={{
+              background: isSatellite ? 'linear-gradient(135deg, #C9A84C, #e8c66a)' : 'white',
+              color: isSatellite ? '#1B2B5B' : '#6b7280',
+              border: isSatellite ? 'none' : '1px solid #e5e7eb',
+            }}
+          >
+            {isSatellite ? '🛰️ Satélite 3D' : '🗺️ Mapa 2D'}
+          </button>
         </div>
 
         {/* ROI Slider — hidden on small mobile */}
