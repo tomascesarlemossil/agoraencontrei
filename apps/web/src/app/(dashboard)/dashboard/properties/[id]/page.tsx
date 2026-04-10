@@ -18,9 +18,10 @@ import {
   Home, Globe, Settings, Shield, Briefcase, Building2, Search, MessageSquare, Clock, Wand2, Film, Download,
 } from 'lucide-react'
 import Link from 'next/link'
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { cn } from '@/lib/utils'
 import { uploadApi, usersApi, type User } from '@/lib/api'
+import { MoneyInput, CepInput } from '@/components/ui/MoneyInput'
 import { revalidatePublicPages, PAGES } from '@/lib/revalidate'
 import { PropertyImageLightbox } from '@/components/dashboard/PropertyImageLightbox'
 import { PropertyFeaturesEditor } from '@/components/dashboard/PropertyFeaturesEditor'
@@ -549,7 +550,7 @@ export default function PropertyDetailPage() {
               className="flex items-center gap-1.5 text-xs text-white/50 hover:text-white transition-colors px-2 py-1 rounded-lg hover:bg-white/10 disabled:opacity-40">
               <Upload className="h-3.5 w-3.5" /> {uploadingImages ? 'Enviando...' : 'Fotos'}
             </button>
-            <input ref={fileInputRef} type="file" multiple className="hidden"
+            <input ref={fileInputRef} type="file" multiple accept="image/jpeg,image/png,image/webp,image/avif,image/gif,image/*" className="hidden"
               onChange={(e) => handleFileUpload(e.target.files)} />
             <button onClick={() => videoInputRef.current?.click()} disabled={uploadingVideos}
               className="flex items-center gap-1.5 text-xs text-blue-400 hover:text-blue-300 transition-colors px-2 py-1 rounded-lg hover:bg-blue-400/10 border border-blue-400/20 disabled:opacity-40">
@@ -784,22 +785,34 @@ export default function PropertyDetailPage() {
               <Section title="Valores">
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                   <Field label="Preço Venda (R$)">
-                    <Input {...register('price')} type="number" className="bg-white/5 border-white/10 text-white h-9" />
+                    <Controller name="price" control={control} render={({ field }) => (
+                      <MoneyInput value={field.value} onChange={field.onChange} className="bg-white/5 border-white/10 text-white h-9" />
+                    )} />
                   </Field>
                   <Field label="Preço Aluguel (R$)">
-                    <Input {...register('priceRent')} type="number" className="bg-white/5 border-white/10 text-white h-9" />
+                    <Controller name="priceRent" control={control} render={({ field }) => (
+                      <MoneyInput value={field.value} onChange={field.onChange} className="bg-white/5 border-white/10 text-white h-9" />
+                    )} />
                   </Field>
                   <Field label="Preço Promocional (R$)">
-                    <Input {...register('pricePromo')} type="number" className="bg-white/5 border-white/10 text-white h-9" />
+                    <Controller name="pricePromo" control={control} render={({ field }) => (
+                      <MoneyInput value={field.value} onChange={field.onChange} className="bg-white/5 border-white/10 text-white h-9" />
+                    )} />
                   </Field>
                   <Field label="Preço por M² (R$)">
-                    <Input {...register('pricePerM2')} type="number" className="bg-white/5 border-white/10 text-white h-9" />
+                    <Controller name="pricePerM2" control={control} render={({ field }) => (
+                      <MoneyInput value={field.value} onChange={field.onChange} className="bg-white/5 border-white/10 text-white h-9" />
+                    )} />
                   </Field>
                   <Field label="Condomínio (R$)">
-                    <Input {...register('condoFee')} type="number" className="bg-white/5 border-white/10 text-white h-9" />
+                    <Controller name="condoFee" control={control} render={({ field }) => (
+                      <MoneyInput value={field.value} onChange={field.onChange} className="bg-white/5 border-white/10 text-white h-9" />
+                    )} />
                   </Field>
                   <Field label="IPTU (R$/ano)">
-                    <Input {...register('iptu')} type="number" className="bg-white/5 border-white/10 text-white h-9" />
+                    <Controller name="iptu" control={control} render={({ field }) => (
+                      <MoneyInput value={field.value} onChange={field.onChange} className="bg-white/5 border-white/10 text-white h-9" />
+                    )} />
                   </Field>
                 </div>
                 <div className="flex flex-wrap gap-6 pt-1">
@@ -851,8 +864,21 @@ export default function PropertyDetailPage() {
             <div className="space-y-4">
               <Section title="Endereço">
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                  <Field label="CEP">
-                    <Input {...register('zipCode')} placeholder="00000-000" className="bg-white/5 border-white/10 text-white h-9" maxLength={9} />
+                  <Field label="CEP *">
+                    <Controller name="zipCode" control={control} render={({ field }) => (
+                      <CepInput
+                        value={field.value}
+                        onChange={field.onChange}
+                        onAddressFound={(addr) => {
+                          setValue('street', addr.street)
+                          setValue('neighborhood', addr.neighborhood)
+                          setValue('commercialNeighborhood', addr.neighborhood)
+                          setValue('city', addr.city)
+                          setValue('state', addr.state)
+                        }}
+                        className="bg-white/5 border-white/10 text-white h-9"
+                      />
+                    )} />
                   </Field>
                   <Field label="Endereço" span="sm:col-span-2">
                     <Input {...register('street')} className="bg-white/5 border-white/10 text-white h-9" />
