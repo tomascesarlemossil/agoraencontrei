@@ -17,7 +17,8 @@ import {
   ArrowLeft, Save, Home, MapPin, Settings, Globe, Briefcase, Shield, Search,
 } from 'lucide-react'
 import Link from 'next/link'
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
+import { MoneyInput, CepInput } from '@/components/ui/MoneyInput'
 import { useQuery } from '@tanstack/react-query'
 import { usersApi, type User } from '@/lib/api'
 import { cn } from '@/lib/utils'
@@ -258,10 +259,15 @@ export default function NewPropertyPage() {
   const mutation = useMutation({
     mutationFn: async (data: FormData) => {
       const token = await getValidToken()
+      if (!token) throw new Error('Sessão expirada. Faça login novamente.')
       const { publishOlx, publishZap, publishVivaReal, publishFacebook, metaKeywords, ...rest } = data
       const clean: Record<string, unknown> = {}
+      // Numeric fields that should be sent as numbers
+      const numericFields = new Set(['price', 'priceRent', 'priceSeason', 'pricePromo', 'condoFee', 'iptu', 'pricePerM2', 'builtArea', 'totalArea', 'landArea', 'commonArea', 'ceilingHeight', 'bedrooms', 'suites', 'bathrooms', 'parkingSpaces', 'yearBuilt', 'yearLastReformed', 'rooms', 'livingRooms', 'diningRooms', 'tvRooms', 'garagesCovered', 'suitesWithCloset', 'demiSuites', 'floors'])
       for (const [k, v] of Object.entries(rest)) {
-        if (v !== '' && v !== undefined && v !== null) clean[k] = v
+        if (v !== '' && v !== undefined && v !== null) {
+          clean[k] = numericFields.has(k) && typeof v === 'string' ? parseFloat(v) || 0 : v
+        }
       }
       // Store portal toggles in portalDescriptions JSON
       clean.portalDescriptions = { olx: publishOlx, zap: publishZap, vivareal: publishVivaReal, facebook: publishFacebook }
@@ -269,14 +275,17 @@ export default function NewPropertyPage() {
       if (metaKeywords) {
         clean.metaKeywords = metaKeywords.split(',').map((k: string) => k.trim()).filter(Boolean)
       }
-      return propertiesApi.create(token!, clean as any)
+      return propertiesApi.create(token, clean as any)
     },
     onSuccess: (prop: any) => router.push(`/dashboard/properties/${prop.id}`),
+    onError: (err: any) => {
+      alert(`Erro ao salvar imóvel: ${err.message || 'Erro desconhecido'}`)
+    },
   })
 
-  const inputCls = 'bg-white/5 border-white/10 text-white h-9 placeholder:text-white/40'
-  const textareaCls = 'w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white resize-none focus:outline-none focus:ring-2 focus:ring-ring placeholder:text-white/40'
-  const selectTriggerCls = 'bg-white/5 border-white/10 text-white h-9'
+  const inputCls = 'bg-white/5 border-white/10 !text-white h-9 placeholder:!text-white/40 [color-scheme:dark]'
+  const textareaCls = 'w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm !text-white resize-none focus:outline-none focus:ring-2 focus:ring-ring placeholder:!text-white/40 [color-scheme:dark]'
+  const selectTriggerCls = 'bg-white/5 border-white/10 !text-white h-9'
 
   return (
     <div className="p-4 sm:p-6 max-w-5xl mx-auto space-y-5">
@@ -378,22 +387,34 @@ export default function NewPropertyPage() {
             <Section title="Valores">
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <Field label="Preço Venda (R$)">
-                  <Input {...register('price')} type="number" className={inputCls} placeholder="0,00" />
+                  <Controller name="price" control={control} render={({ field }) => (
+                    <MoneyInput value={field.value} onChange={field.onChange} className={inputCls} />
+                  )} />
                 </Field>
                 <Field label="Preço Aluguel (R$)">
-                  <Input {...register('priceRent')} type="number" className={inputCls} placeholder="0,00" />
+                  <Controller name="priceRent" control={control} render={({ field }) => (
+                    <MoneyInput value={field.value} onChange={field.onChange} className={inputCls} />
+                  )} />
                 </Field>
                 <Field label="Preço Temporada (R$)">
-                  <Input {...register('priceSeason')} type="number" className={inputCls} placeholder="0,00" />
+                  <Controller name="priceSeason" control={control} render={({ field }) => (
+                    <MoneyInput value={field.value} onChange={field.onChange} className={inputCls} />
+                  )} />
                 </Field>
                 <Field label="Preço Promocional (R$)">
-                  <Input {...register('pricePromo')} type="number" className={inputCls} placeholder="0,00" />
+                  <Controller name="pricePromo" control={control} render={({ field }) => (
+                    <MoneyInput value={field.value} onChange={field.onChange} className={inputCls} />
+                  )} />
                 </Field>
                 <Field label="Condomínio (R$)">
-                  <Input {...register('condoFee')} type="number" className={inputCls} placeholder="0,00" />
+                  <Controller name="condoFee" control={control} render={({ field }) => (
+                    <MoneyInput value={field.value} onChange={field.onChange} className={inputCls} />
+                  )} />
                 </Field>
                 <Field label="IPTU (R$/ano)">
-                  <Input {...register('iptu')} type="number" className={inputCls} placeholder="0,00" />
+                  <Controller name="iptu" control={control} render={({ field }) => (
+                    <MoneyInput value={field.value} onChange={field.onChange} className={inputCls} />
+                  )} />
                 </Field>
               </div>
               <div className="flex flex-wrap gap-6 pt-1">
@@ -444,10 +465,21 @@ export default function NewPropertyPage() {
           <div className="space-y-4">
             <Section title="Endereço">
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                <Field label="CEP">
-                  <div className="flex gap-2">
-                    <Input {...register('zipCode')} placeholder="00000-000" className={inputCls} maxLength={9} />
-                  </div>
+                <Field label="CEP *">
+                  <Controller name="zipCode" control={control} render={({ field }) => (
+                    <CepInput
+                      value={field.value}
+                      onChange={field.onChange}
+                      onAddressFound={(addr) => {
+                        setValue('street', addr.street)
+                        setValue('neighborhood', addr.neighborhood)
+                        setValue('commercialNeighborhood', addr.neighborhood)
+                        setValue('city', addr.city)
+                        setValue('state', addr.state)
+                      }}
+                      className={inputCls}
+                    />
+                  )} />
                 </Field>
                 <Field label="Endereço" span="sm:col-span-2">
                   <Input {...register('street')} className={inputCls} />

@@ -24,6 +24,26 @@ const PropertyFilters = z.object({
   sortOrder:    z.enum(['asc', 'desc']).default('desc'),
 })
 
+// Coerce strings/nulls to numbers for monetary and numeric fields
+const coerceNum = z.preprocess((v) => {
+  if (v === '' || v === null || v === undefined) return undefined
+  if (typeof v === 'number') return v
+  if (typeof v === 'string') { const n = parseFloat(v.replace(/\./g, '').replace(',', '.')); return isNaN(n) ? undefined : n }
+  return undefined
+}, z.number().optional())
+const coerceNumPositive = z.preprocess((v) => {
+  if (v === '' || v === null || v === undefined) return undefined
+  if (typeof v === 'number') return v > 0 ? v : undefined
+  if (typeof v === 'string') { const n = parseFloat(v.replace(/\./g, '').replace(',', '.')); return isNaN(n) || n <= 0 ? undefined : n }
+  return undefined
+}, z.number().positive().optional())
+const coerceInt = z.preprocess((v) => {
+  if (v === '' || v === null || v === undefined) return 0
+  if (typeof v === 'number') return Math.floor(v)
+  if (typeof v === 'string') { const n = parseInt(v, 10); return isNaN(n) ? 0 : n }
+  return 0
+}, z.number().int().min(0).default(0))
+
 const CreatePropertyBody = z.object({
   title:        z.string().min(3).max(255),
   description:  z.string().optional(),
@@ -31,10 +51,10 @@ const CreatePropertyBody = z.object({
   purpose:      z.preprocess(toUpper, z.enum(['SALE', 'RENT', 'BOTH', 'SEASON'])),
   category:     z.preprocess(toUpper, z.enum(['RESIDENTIAL','COMMERCIAL','RURAL','INDUSTRIAL'])).default('RESIDENTIAL'),
   status:       z.preprocess(toUpper, z.enum(['ACTIVE','INACTIVE','SOLD','RENTED','PENDING','DRAFT'])).default('ACTIVE'),
-  price:        z.number().positive().optional(),
-  priceRent:    z.number().positive().optional(),
-  condoFee:     z.number().optional(),
-  iptu:         z.number().optional(),
+  price:        coerceNumPositive,
+  priceRent:    coerceNumPositive,
+  condoFee:     coerceNum,
+  iptu:         coerceNum,
   zipCode:      z.string().optional(),
   street:       z.string().optional(),
   number:       z.string().optional(),
@@ -42,16 +62,16 @@ const CreatePropertyBody = z.object({
   neighborhood: z.string().optional(),
   city:         z.string().optional(),
   state:        z.string().max(2).optional(),
-  totalArea:    z.number().positive().optional(),
-  builtArea:    z.number().positive().optional(),
-  landArea:     z.number().positive().optional(),
-  latitude:     z.number().min(-90).max(90).optional(),
-  longitude:    z.number().min(-180).max(180).optional(),
-  bedrooms:     z.number().int().min(0).default(0),
-  suites:       z.number().int().min(0).default(0),
-  bathrooms:    z.number().int().min(0).default(0),
-  parkingSpaces: z.number().int().min(0).default(0),
-  yearBuilt:    z.number().int().min(1900).optional(),
+  totalArea:    coerceNumPositive,
+  builtArea:    coerceNumPositive,
+  landArea:     coerceNumPositive,
+  latitude:     coerceNum,
+  longitude:    coerceNum,
+  bedrooms:     coerceInt,
+  suites:       coerceInt,
+  bathrooms:    coerceInt,
+  parkingSpaces: coerceInt,
+  yearBuilt:    coerceNum,
   features:     z.array(z.string()).default([]),
   coverImage:   z.string().optional(),   // accepts URLs, data URLs, relative paths
   images:       z.array(z.string()).default([]),
@@ -62,8 +82,8 @@ const CreatePropertyBody = z.object({
   metaDescription: z.string().optional(),
   metaKeywords: z.array(z.string()).default([]),
   // Extended pricing
-  pricePromo:   z.number().optional(),
-  pricePerM2:   z.number().optional(),
+  pricePromo:   coerceNum,
+  pricePerM2:   coerceNum,
   allowExchange: z.boolean().optional(),
   valueUnderConsultation: z.boolean().optional(),
   // Commercial details
@@ -81,18 +101,18 @@ const CreatePropertyBody = z.object({
   constructionCompany: z.string().optional(),
   signOnSite:   z.boolean().optional(),
   // Rooms breakdown
-  suitesWithCloset: z.number().int().min(0).optional(),
-  demiSuites:   z.number().int().min(0).optional(),
-  rooms:        z.number().int().min(0).optional(),
-  livingRooms:  z.number().int().min(0).optional(),
-  diningRooms:  z.number().int().min(0).optional(),
-  tvRooms:      z.number().int().min(0).optional(),
-  garagesCovered: z.number().int().min(0).optional(),
-  garagesOpen:  z.number().int().min(0).optional(),
-  elevators:    z.number().int().min(0).optional(),
+  suitesWithCloset: coerceInt.optional(),
+  demiSuites:   coerceInt.optional(),
+  rooms:        coerceInt.optional(),
+  livingRooms:  coerceInt.optional(),
+  diningRooms:  coerceInt.optional(),
+  tvRooms:      coerceInt.optional(),
+  garagesCovered: coerceInt.optional(),
+  garagesOpen:  coerceInt.optional(),
+  elevators:    coerceInt.optional(),
   // Extended areas
-  commonArea:   z.number().optional(),
-  ceilingHeight: z.number().optional(),
+  commonArea:   coerceNum,
+  ceilingHeight: coerceNum,
   landDimensions: z.string().optional(),
   landFace:     z.string().optional(),
   sunExposure:  z.string().optional(),
@@ -112,13 +132,13 @@ const CreatePropertyBody = z.object({
   showExactLocation: z.boolean().default(true), // Exibir localização exata no mapa
   // Captação
   captorName:   z.string().optional(),
-  captorCommissionPct: z.number().optional(),
+  captorCommissionPct: coerceNum,
   exclusivityContract: z.boolean().optional(),
   commercialConditions: z.string().optional(),
-  yearLastReformed: z.number().int().optional(),
+  yearLastReformed: coerceNum,
   keyLocation:  z.string().optional(),
   // Additional property fields
-  totalFloors:  z.number().int().min(0).optional(),
+  totalFloors:  coerceInt.optional(),
   isPremium:    z.boolean().optional(),
   isFeatured:   z.boolean().optional(),
   featuredUntil: z.string().optional(), // ISO date string
@@ -626,8 +646,8 @@ export default async function propertiesRoutes(app: FastifyInstance) {
         // Read Instagram tokens from company settings first, fallback to env
         const company = await app.prisma.company.findUnique({ where: { id: req.user.cid }, select: { settings: true } })
         const companySettings = (company?.settings as any) ?? {}
-        const igToken = companySettings.instagramPageAccessToken || env.INSTAGRAM_PAGE_ACCESS_TOKEN
-        const igUserId = companySettings.instagramBusinessAccountId || env.INSTAGRAM_BUSINESS_ACCOUNT_ID
+        const igToken = companySettings.instagramPageAccessToken || process.env.INSTAGRAM_PAGE_ACCESS_TOKEN
+        const igUserId = companySettings.instagramBusinessAccountId || process.env.INSTAGRAM_BUSINESS_ACCOUNT_ID
 
         if (igToken && igUserId && updated.coverImage) {
           const { caption, hashtags } = await generatePropertyCaption(updated as any)

@@ -207,7 +207,7 @@ export async function syncInstagramToBlog(
           excerpt,
           content: `<p>${caption.replace(/\n/g, '<br />')}</p>\n<p><a href="${post.permalink}" target="_blank" rel="noopener">Ver no Instagram @${account}</a></p>`,
           coverImage: post.media_type === 'VIDEO' ? (post.thumbnail_url ?? null) : (post.media_url ?? null),
-          category: 'noticias',
+          // category now uses categoryId relation
           tags: tags ? `${tags}, instagram, imobiliária lemos` : 'instagram, imobiliária lemos',
           source: `Instagram @${account}`,
           sourceUrl: post.permalink,

@@ -18,9 +18,10 @@ import {
   Home, Globe, Settings, Shield, Briefcase, Building2, Search, MessageSquare, Clock, Wand2, Film, Download,
 } from 'lucide-react'
 import Link from 'next/link'
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { cn } from '@/lib/utils'
 import { uploadApi, usersApi, type User } from '@/lib/api'
+import { MoneyInput, CepInput } from '@/components/ui/MoneyInput'
 import { revalidatePublicPages, PAGES } from '@/lib/revalidate'
 import { PropertyImageLightbox } from '@/components/dashboard/PropertyImageLightbox'
 import { PropertyFeaturesEditor } from '@/components/dashboard/PropertyFeaturesEditor'
@@ -113,7 +114,7 @@ function CheckField({ label, checked, onChange }: { label: string; checked: bool
 function NumInput({ reg, label, span }: { reg: any; label: string; span?: string }) {
   return (
     <Field label={label} span={span}>
-      <Input {...reg} type="number" min={0} className="bg-white/5 border-white/10 text-white h-9" />
+      <Input {...reg} type="number" min={0} className="bg-white/5 border-white/10 !text-white h-9 [color-scheme:dark]" />
     </Field>
   )
 }
@@ -428,7 +429,7 @@ export default function PropertyDetailPage() {
       // Abrir editor automaticamente após upload
       setNewUploadedMedia({ urls, types: urls.map(() => 'photo' as const) })
       const tk = await getValidToken()
-      setMediaEditorToken(tk)
+      setMediaEditorToken(tk ?? '')
       setShowMediaEditor(true)
     } catch (e: any) {
       alert(e.message || 'Erro ao fazer upload')
@@ -452,7 +453,7 @@ export default function PropertyDetailPage() {
       // Abrir editor automaticamente após upload de vídeo
       setNewUploadedMedia({ urls, types: urls.map(() => 'video' as const) })
       const tk = await getValidToken()
-      setMediaEditorToken(tk)
+      setMediaEditorToken(tk ?? '')
       setShowMediaEditor(true)
     } catch (e: any) {
       alert(e.message || 'Erro ao fazer upload de vídeo')
@@ -549,7 +550,7 @@ export default function PropertyDetailPage() {
               className="flex items-center gap-1.5 text-xs text-white/50 hover:text-white transition-colors px-2 py-1 rounded-lg hover:bg-white/10 disabled:opacity-40">
               <Upload className="h-3.5 w-3.5" /> {uploadingImages ? 'Enviando...' : 'Fotos'}
             </button>
-            <input ref={fileInputRef} type="file" multiple className="hidden"
+            <input ref={fileInputRef} type="file" multiple accept="image/jpeg,image/png,image/webp,image/avif,image/gif,image/*" className="hidden"
               onChange={(e) => handleFileUpload(e.target.files)} />
             <button onClick={() => videoInputRef.current?.click()} disabled={uploadingVideos}
               className="flex items-center gap-1.5 text-xs text-blue-400 hover:text-blue-300 transition-colors px-2 py-1 rounded-lg hover:bg-blue-400/10 border border-blue-400/20 disabled:opacity-40">
@@ -570,7 +571,7 @@ export default function PropertyDetailPage() {
               </button>
             )}
             {(allPhotos.length > 0 || ((p as any)?.videos ?? []).length > 0) && (
-              <button onClick={async () => { const tk = await getValidToken(); setMediaEditorToken(tk); setShowMediaEditor(true) }}
+              <button onClick={async () => { const tk = await getValidToken(); setMediaEditorToken(tk ?? ''); setShowMediaEditor(true) }}
                 className="flex items-center gap-1.5 text-xs text-yellow-400 hover:text-yellow-300 transition-colors px-2 py-1 rounded-lg hover:bg-yellow-400/10 border border-yellow-400/30">
                 <Wand2 className="h-3.5 w-3.5" /> Efeitos & Logo
               </button>
@@ -582,7 +583,7 @@ export default function PropertyDetailPage() {
             <input value={urlInput} onChange={e => setUrlInput(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleAddUrl()}
               placeholder="Cole a URL da imagem (https://...)"
-              className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white placeholder:text-white/40 focus:outline-none focus:ring-1 focus:ring-white/20" />
+              className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm !text-white placeholder:!text-white/40 focus:outline-none focus:ring-1 focus:ring-white/20 [color-scheme:dark]" />
             <button onClick={handleAddUrl} className="px-3 py-1.5 bg-white/10 rounded-lg text-xs text-white hover:bg-white/20 transition-colors">
               Adicionar
             </button>
@@ -724,13 +725,13 @@ export default function PropertyDetailPage() {
             <div className="space-y-4">
               <Section title="Identificação">
                 <Field label="Título do imóvel" span="col-span-full sm:col-span-2">
-                  <Input {...register('title')} className="bg-white/5 border-white/10 text-white" />
+                  <Input {...register('title')} className="bg-white/5 border-white/10 !text-white [color-scheme:dark]" />
                 </Field>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                   <Field label="Tipo">
                     <Controller name="type" control={control} render={({ field }) => (
                       <Select value={field.value} onValueChange={field.onChange}>
-                        <SelectTrigger className="bg-white/5 border-white/10 text-white h-9"><SelectValue /></SelectTrigger>
+                        <SelectTrigger className="bg-white/5 border-white/10 !text-white h-9 [color-scheme:dark]"><SelectValue /></SelectTrigger>
                         <SelectContent>{TYPES.map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}</SelectContent>
                       </Select>
                     )} />
@@ -738,7 +739,7 @@ export default function PropertyDetailPage() {
                   <Field label="Finalidade">
                     <Controller name="purpose" control={control} render={({ field }) => (
                       <Select value={field.value} onValueChange={field.onChange}>
-                        <SelectTrigger className="bg-white/5 border-white/10 text-white h-9"><SelectValue /></SelectTrigger>
+                        <SelectTrigger className="bg-white/5 border-white/10 !text-white h-9 [color-scheme:dark]"><SelectValue /></SelectTrigger>
                         <SelectContent>{PURPOSES.map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}</SelectContent>
                       </Select>
                     )} />
@@ -746,7 +747,7 @@ export default function PropertyDetailPage() {
                   <Field label="Categoria">
                     <Controller name="category" control={control} render={({ field }) => (
                       <Select value={field.value} onValueChange={field.onChange}>
-                        <SelectTrigger className="bg-white/5 border-white/10 text-white h-9"><SelectValue /></SelectTrigger>
+                        <SelectTrigger className="bg-white/5 border-white/10 !text-white h-9 [color-scheme:dark]"><SelectValue /></SelectTrigger>
                         <SelectContent>{CATEGORIES.map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}</SelectContent>
                       </Select>
                     )} />
@@ -754,7 +755,7 @@ export default function PropertyDetailPage() {
                   <Field label="Situação">
                     <Controller name="status" control={control} render={({ field }) => (
                       <Select value={field.value} onValueChange={field.onChange}>
-                        <SelectTrigger className="bg-white/5 border-white/10 text-white h-9"><SelectValue /></SelectTrigger>
+                        <SelectTrigger className="bg-white/5 border-white/10 !text-white h-9 [color-scheme:dark]"><SelectValue /></SelectTrigger>
                         <SelectContent>{STATUSES.map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}</SelectContent>
                       </Select>
                     )} />
@@ -762,7 +763,7 @@ export default function PropertyDetailPage() {
                   <Field label="Estado Atual">
                     <Controller name="currentState" control={control} render={({ field }) => (
                       <Select value={field.value || ''} onValueChange={field.onChange}>
-                        <SelectTrigger className="bg-white/5 border-white/10 text-white h-9"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                        <SelectTrigger className="bg-white/5 border-white/10 !text-white h-9 [color-scheme:dark]"><SelectValue placeholder="Selecione" /></SelectTrigger>
                         <SelectContent>{CURRENT_STATES.map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}</SelectContent>
                       </Select>
                     )} />
@@ -770,13 +771,13 @@ export default function PropertyDetailPage() {
                   <Field label="Padrão">
                     <Controller name="standard" control={control} render={({ field }) => (
                       <Select value={field.value || ''} onValueChange={field.onChange}>
-                        <SelectTrigger className="bg-white/5 border-white/10 text-white h-9"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                        <SelectTrigger className="bg-white/5 border-white/10 !text-white h-9 [color-scheme:dark]"><SelectValue placeholder="Selecione" /></SelectTrigger>
                         <SelectContent>{STANDARDS.map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}</SelectContent>
                       </Select>
                     )} />
                   </Field>
                   <Field label="Ref. Auxiliar">
-                    <Input {...register('auxReference')} className="bg-white/5 border-white/10 text-white h-9" />
+                    <Input {...register('auxReference')} className="bg-white/5 border-white/10 !text-white h-9 [color-scheme:dark]" />
                   </Field>
                 </div>
               </Section>
@@ -784,22 +785,34 @@ export default function PropertyDetailPage() {
               <Section title="Valores">
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                   <Field label="Preço Venda (R$)">
-                    <Input {...register('price')} type="number" className="bg-white/5 border-white/10 text-white h-9" />
+                    <Controller name="price" control={control} render={({ field }) => (
+                      <MoneyInput value={field.value} onChange={field.onChange} className="bg-white/5 border-white/10 !text-white h-9 [color-scheme:dark]" />
+                    )} />
                   </Field>
                   <Field label="Preço Aluguel (R$)">
-                    <Input {...register('priceRent')} type="number" className="bg-white/5 border-white/10 text-white h-9" />
+                    <Controller name="priceRent" control={control} render={({ field }) => (
+                      <MoneyInput value={field.value} onChange={field.onChange} className="bg-white/5 border-white/10 !text-white h-9 [color-scheme:dark]" />
+                    )} />
                   </Field>
                   <Field label="Preço Promocional (R$)">
-                    <Input {...register('pricePromo')} type="number" className="bg-white/5 border-white/10 text-white h-9" />
+                    <Controller name="pricePromo" control={control} render={({ field }) => (
+                      <MoneyInput value={field.value} onChange={field.onChange} className="bg-white/5 border-white/10 !text-white h-9 [color-scheme:dark]" />
+                    )} />
                   </Field>
                   <Field label="Preço por M² (R$)">
-                    <Input {...register('pricePerM2')} type="number" className="bg-white/5 border-white/10 text-white h-9" />
+                    <Controller name="pricePerM2" control={control} render={({ field }) => (
+                      <MoneyInput value={field.value} onChange={field.onChange} className="bg-white/5 border-white/10 !text-white h-9 [color-scheme:dark]" />
+                    )} />
                   </Field>
                   <Field label="Condomínio (R$)">
-                    <Input {...register('condoFee')} type="number" className="bg-white/5 border-white/10 text-white h-9" />
+                    <Controller name="condoFee" control={control} render={({ field }) => (
+                      <MoneyInput value={field.value} onChange={field.onChange} className="bg-white/5 border-white/10 !text-white h-9 [color-scheme:dark]" />
+                    )} />
                   </Field>
                   <Field label="IPTU (R$/ano)">
-                    <Input {...register('iptu')} type="number" className="bg-white/5 border-white/10 text-white h-9" />
+                    <Controller name="iptu" control={control} render={({ field }) => (
+                      <MoneyInput value={field.value} onChange={field.onChange} className="bg-white/5 border-white/10 !text-white h-9 [color-scheme:dark]" />
+                    )} />
                   </Field>
                 </div>
                 <div className="flex flex-wrap gap-6 pt-1">
@@ -822,13 +835,13 @@ export default function PropertyDetailPage() {
 
               <Section title="Descrição Pública">
                 <textarea {...register('description')} rows={5}
-                  className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white resize-none focus:outline-none focus:ring-2 focus:ring-ring placeholder:text-white/40"
+                  className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm !text-white resize-none focus:outline-none focus:ring-2 focus:ring-ring placeholder:!text-white/40 [color-scheme:dark]"
                   placeholder="Descrição que será publicada no site e portais..." />
               </Section>
 
               <Section title="Descrição Interna (não publicada)">
                 <textarea {...register('descriptionInternal')} rows={4}
-                  className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white resize-none focus:outline-none focus:ring-2 focus:ring-ring placeholder:text-white/40"
+                  className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm !text-white resize-none focus:outline-none focus:ring-2 focus:ring-ring placeholder:!text-white/40 [color-scheme:dark]"
                   placeholder="Informações internas, histórico, observações do corretor..." />
                 <p className="text-xs text-white/50">* Esta informação é de uso interno e NÃO será divulgada no site e portais.</p>
               </Section>
@@ -836,10 +849,10 @@ export default function PropertyDetailPage() {
               <Section title="Vídeo e Tour Virtual">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Field label="Vídeo YouTube (URL ou ID)">
-                    <Input {...register('videoUrl')} placeholder="https://youtube.com/watch?v=..." className="bg-white/5 border-white/10 text-white h-9 placeholder:text-white/40" />
+                    <Input {...register('videoUrl')} placeholder="https://youtube.com/watch?v=..." className="bg-white/5 border-white/10 !text-white h-9 placeholder:!text-white/40 [color-scheme:dark]" />
                   </Field>
                   <Field label="Tour Virtual (URL)">
-                    <Input {...register('virtualTourUrl')} placeholder="https://..." className="bg-white/5 border-white/10 text-white h-9 placeholder:text-white/40" />
+                    <Input {...register('virtualTourUrl')} placeholder="https://..." className="bg-white/5 border-white/10 !text-white h-9 placeholder:!text-white/40 [color-scheme:dark]" />
                   </Field>
                 </div>
               </Section>
@@ -851,38 +864,51 @@ export default function PropertyDetailPage() {
             <div className="space-y-4">
               <Section title="Endereço">
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                  <Field label="CEP">
-                    <Input {...register('zipCode')} placeholder="00000-000" className="bg-white/5 border-white/10 text-white h-9" maxLength={9} />
+                  <Field label="CEP *">
+                    <Controller name="zipCode" control={control} render={({ field }) => (
+                      <CepInput
+                        value={field.value}
+                        onChange={field.onChange}
+                        onAddressFound={(addr) => {
+                          setValue('street', addr.street)
+                          setValue('neighborhood', addr.neighborhood)
+                          setValue('commercialNeighborhood', addr.neighborhood)
+                          setValue('city', addr.city)
+                          setValue('state', addr.state)
+                        }}
+                        className="bg-white/5 border-white/10 !text-white h-9 [color-scheme:dark]"
+                      />
+                    )} />
                   </Field>
                   <Field label="Endereço" span="sm:col-span-2">
-                    <Input {...register('street')} className="bg-white/5 border-white/10 text-white h-9" />
+                    <Input {...register('street')} className="bg-white/5 border-white/10 !text-white h-9 [color-scheme:dark]" />
                   </Field>
                   <Field label="Número">
-                    <Input {...register('number')} className="bg-white/5 border-white/10 text-white h-9" />
+                    <Input {...register('number')} className="bg-white/5 border-white/10 !text-white h-9 [color-scheme:dark]" />
                   </Field>
                   <Field label="Complemento">
-                    <Input {...register('complement')} className="bg-white/5 border-white/10 text-white h-9" />
+                    <Input {...register('complement')} className="bg-white/5 border-white/10 !text-white h-9 [color-scheme:dark]" />
                   </Field>
                   <Field label="Bairro Comercial (exibido no site)">
-                    <Input {...register('commercialNeighborhood')} className="bg-white/5 border-white/10 text-white h-9" />
+                    <Input {...register('commercialNeighborhood')} className="bg-white/5 border-white/10 !text-white h-9 [color-scheme:dark]" />
                   </Field>
                   <Field label="Bairro Oficial">
-                    <Input {...register('neighborhood')} className="bg-white/5 border-white/10 text-white h-9" />
+                    <Input {...register('neighborhood')} className="bg-white/5 border-white/10 !text-white h-9 [color-scheme:dark]" />
                   </Field>
                   <Field label="Cidade">
-                    <Input {...register('city')} className="bg-white/5 border-white/10 text-white h-9" />
+                    <Input {...register('city')} className="bg-white/5 border-white/10 !text-white h-9 [color-scheme:dark]" />
                   </Field>
                   <Field label="UF">
-                    <Input {...register('state')} maxLength={2} className="bg-white/5 border-white/10 text-white h-9 uppercase" placeholder="SP" />
+                    <Input {...register('state')} maxLength={2} className="bg-white/5 border-white/10 !text-white h-9 uppercase [color-scheme:dark]" placeholder="SP" />
                   </Field>
                   <Field label="País">
-                    <Input {...register('country')} className="bg-white/5 border-white/10 text-white h-9" defaultValue="BR" />
+                    <Input {...register('country')} className="bg-white/5 border-white/10 !text-white h-9 [color-scheme:dark]" defaultValue="BR" />
                   </Field>
                   <Field label="Região">
-                    <Input {...register('region')} className="bg-white/5 border-white/10 text-white h-9" />
+                    <Input {...register('region')} className="bg-white/5 border-white/10 !text-white h-9 [color-scheme:dark]" />
                   </Field>
                   <Field label="Ponto de Referência" span="sm:col-span-2">
-                    <Input {...register('referencePoint')} className="bg-white/5 border-white/10 text-white h-9" />
+                    <Input {...register('referencePoint')} className="bg-white/5 border-white/10 !text-white h-9 [color-scheme:dark]" />
                   </Field>
                 </div>
               </Section>
@@ -890,10 +916,10 @@ export default function PropertyDetailPage() {
               <Section title="Coordenadas GPS">
                 <div className="grid grid-cols-2 gap-4">
                   <Field label="Latitude">
-                    <Input {...register('latitude')} type="number" step="any" placeholder="-20.123456" className="bg-white/5 border-white/10 text-white h-9" />
+                    <Input {...register('latitude')} type="number" step="any" placeholder="-20.123456" className="bg-white/5 border-white/10 !text-white h-9 [color-scheme:dark]" />
                   </Field>
                   <Field label="Longitude">
-                    <Input {...register('longitude')} type="number" step="any" placeholder="-47.654321" className="bg-white/5 border-white/10 text-white h-9" />
+                    <Input {...register('longitude')} type="number" step="any" placeholder="-47.654321" className="bg-white/5 border-white/10 !text-white h-9 [color-scheme:dark]" />
                   </Field>
                 </div>
                 <div className="mt-3 p-3 rounded-lg border border-yellow-500/20 bg-yellow-500/5">
@@ -925,14 +951,14 @@ export default function PropertyDetailPage() {
                     </div>
                   )} />
                   <Field label="Nome do Condomínio / Empreendimento" span="sm:col-span-2">
-                    <Input {...register('condoName')} className="bg-white/5 border-white/10 text-white h-9" placeholder="Ex: Residencial das Flores, Ed. Parque Verde..." />
+                    <Input {...register('condoName')} className="bg-white/5 border-white/10 !text-white h-9 [color-scheme:dark]" placeholder="Ex: Residencial das Flores, Ed. Parque Verde..." />
                     <p className="text-[11px] text-white/30 mt-0.5">💡 Deixe em branco para detectar automaticamente da descrição</p>
                   </Field>
                   <Field label="Administradora">
-                    <Input {...register('adminCompany')} className="bg-white/5 border-white/10 text-white h-9" />
+                    <Input {...register('adminCompany')} className="bg-white/5 border-white/10 !text-white h-9 [color-scheme:dark]" />
                   </Field>
                   <Field label="Construtora">
-                    <Input {...register('constructionCompany')} className="bg-white/5 border-white/10 text-white h-9" />
+                    <Input {...register('constructionCompany')} className="bg-white/5 border-white/10 !text-white h-9 [color-scheme:dark]" />
                   </Field>
                   <Controller name="signOnSite" control={control} render={({ field }) => (
                     <div className="col-span-full">
@@ -970,42 +996,42 @@ export default function PropertyDetailPage() {
               <Section title="Áreas">
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                   <Field label="Área Construída (m²)">
-                    <Input {...register('builtArea')} type="number" step="0.01" className="bg-white/5 border-white/10 text-white h-9" />
+                    <Input {...register('builtArea')} type="number" step="0.01" className="bg-white/5 border-white/10 !text-white h-9 [color-scheme:dark]" />
                   </Field>
                   <Field label="Área Útil (m²)">
-                    <Input {...register('totalArea')} type="number" step="0.01" className="bg-white/5 border-white/10 text-white h-9" />
+                    <Input {...register('totalArea')} type="number" step="0.01" className="bg-white/5 border-white/10 !text-white h-9 [color-scheme:dark]" />
                   </Field>
                   <Field label="Área Total Terreno (m²)">
-                    <Input {...register('landArea')} type="number" step="0.01" className="bg-white/5 border-white/10 text-white h-9" />
+                    <Input {...register('landArea')} type="number" step="0.01" className="bg-white/5 border-white/10 !text-white h-9 [color-scheme:dark]" />
                   </Field>
                   <Field label="Área Comum (m²)">
-                    <Input {...register('commonArea')} type="number" step="0.01" className="bg-white/5 border-white/10 text-white h-9" />
+                    <Input {...register('commonArea')} type="number" step="0.01" className="bg-white/5 border-white/10 !text-white h-9 [color-scheme:dark]" />
                   </Field>
                   <Field label="Pé Direto (m)">
-                    <Input {...register('ceilingHeight')} type="number" step="0.01" className="bg-white/5 border-white/10 text-white h-9" />
+                    <Input {...register('ceilingHeight')} type="number" step="0.01" className="bg-white/5 border-white/10 !text-white h-9 [color-scheme:dark]" />
                   </Field>
                   <Field label="Dimensão Terreno">
-                    <Input {...register('landDimensions')} placeholder="Ex: 10x20" className="bg-white/5 border-white/10 text-white h-9" />
+                    <Input {...register('landDimensions')} placeholder="Ex: 10x20" className="bg-white/5 border-white/10 !text-white h-9 [color-scheme:dark]" />
                   </Field>
                   <Field label="Face">
                     <Controller name="landFace" control={control} render={({ field }) => (
                       <Select value={field.value || ''} onValueChange={field.onChange}>
-                        <SelectTrigger className="bg-white/5 border-white/10 text-white h-9"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                        <SelectTrigger className="bg-white/5 border-white/10 !text-white h-9 [color-scheme:dark]"><SelectValue placeholder="Selecione" /></SelectTrigger>
                         <SelectContent>{FACES.map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}</SelectContent>
                       </Select>
                     )} />
                   </Field>
                   <Field label="Insolamento">
-                    <Input {...register('sunExposure')} placeholder="Sol da manhã / tarde" className="bg-white/5 border-white/10 text-white h-9" />
+                    <Input {...register('sunExposure')} placeholder="Sol da manhã / tarde" className="bg-white/5 border-white/10 !text-white h-9 [color-scheme:dark]" />
                   </Field>
                   <Field label="Posição">
-                    <Input {...register('position')} placeholder="Frente / Fundos / Meio" className="bg-white/5 border-white/10 text-white h-9" />
+                    <Input {...register('position')} placeholder="Frente / Fundos / Meio" className="bg-white/5 border-white/10 !text-white h-9 [color-scheme:dark]" />
                   </Field>
                   <Field label="Ano de Construção">
-                    <Input {...register('yearBuilt')} type="number" className="bg-white/5 border-white/10 text-white h-9" />
+                    <Input {...register('yearBuilt')} type="number" className="bg-white/5 border-white/10 !text-white h-9 [color-scheme:dark]" />
                   </Field>
                   <Field label="Ano Última Reforma">
-                    <Input {...register('yearLastReformed')} type="number" className="bg-white/5 border-white/10 text-white h-9" />
+                    <Input {...register('yearLastReformed')} type="number" className="bg-white/5 border-white/10 !text-white h-9 [color-scheme:dark]" />
                   </Field>
                 </div>
               </Section>
@@ -1079,7 +1105,7 @@ export default function PropertyDetailPage() {
                     </div>
                     <Input {...register('metaTitle')} maxLength={60}
                       placeholder="Ex: Apartamento 3 quartos em Franca SP | Imobiliária Lemos"
-                      className="bg-white/5 border-white/10 text-white h-9 placeholder:text-white/40" />
+                      className="bg-white/5 border-white/10 !text-white h-9 placeholder:!text-white/40 [color-scheme:dark]" />
                     <p className="text-xs text-white/40">Ideal: até 60 caracteres. Aparece como título no Google.</p>
                   </div>
 
@@ -1092,7 +1118,7 @@ export default function PropertyDetailPage() {
                     </div>
                     <textarea {...register('metaDescription')} rows={3} maxLength={160}
                       placeholder="Descreva o imóvel em até 160 caracteres para aparecer no Google..."
-                      className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white resize-none focus:outline-none focus:ring-2 focus:ring-ring placeholder:text-white/40" />
+                      className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm !text-white resize-none focus:outline-none focus:ring-2 focus:ring-ring placeholder:!text-white/40 [color-scheme:dark]" />
                     <p className="text-xs text-white/40">Ideal: 120–160 caracteres. Aparece como descrição no Google.</p>
                   </div>
 
@@ -1100,7 +1126,7 @@ export default function PropertyDetailPage() {
                     <Label className="text-white/60 text-xs">Palavras-chave (separadas por vírgula)</Label>
                     <Input {...register('metaKeywords')}
                       placeholder="apartamento, 3 quartos, Franca, imóvel à venda..."
-                      className="bg-white/5 border-white/10 text-white h-9 placeholder:text-white/40" />
+                      className="bg-white/5 border-white/10 !text-white h-9 placeholder:!text-white/40 [color-scheme:dark]" />
                   </div>
 
                   {/* Google Preview */}
@@ -1139,7 +1165,7 @@ export default function PropertyDetailPage() {
                       <select
                         value={field.value ?? ''}
                         onChange={e => field.onChange(e.target.value)}
-                        className="flex h-9 w-full rounded-md border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-white ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        className="flex h-9 w-full rounded-md border border-white/10 bg-white/5 px-3 py-1.5 text-sm !text-white ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring [color-scheme:dark]"
                       >
                         <option value="">— Selecione o captador —</option>
                         {(usersData ?? []).filter(u => ['BROKER', 'ADMIN', 'MANAGER', 'SUPER_ADMIN'].includes(u.role)).map(u => (
@@ -1150,7 +1176,7 @@ export default function PropertyDetailPage() {
                   </Field>
                   <Field label="Comissão (%)">
                     <Input {...register('captorCommissionPct')} type="number" step="0.01" min={0} max={100}
-                      className="bg-white/5 border-white/10 text-white h-9" />
+                      className="bg-white/5 border-white/10 !text-white h-9 [color-scheme:dark]" />
                   </Field>
                   <Field label="Data de Captação">
                     <Input {...register('captureDate' as any)} type="date"
@@ -1163,7 +1189,7 @@ export default function PropertyDetailPage() {
               <Section title="Condições Comerciais">
                 <textarea {...register('commercialConditions')} rows={4}
                   placeholder="Condições de venda, prazo, observações comerciais..."
-                  className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white resize-none focus:outline-none focus:ring-2 focus:ring-ring placeholder:text-white/40" />
+                  className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm !text-white resize-none focus:outline-none focus:ring-2 focus:ring-ring placeholder:!text-white/40 [color-scheme:dark]" />
               </Section>
 
               <Section title="Exclusividade">
@@ -1176,7 +1202,7 @@ export default function PropertyDetailPage() {
                 <Field label="Local das Chaves">
                   <Controller name="keyLocation" control={control} render={({ field }) => (
                     <Select value={field.value || ''} onValueChange={field.onChange}>
-                      <SelectTrigger className="bg-white/5 border-white/10 text-white h-9 max-w-xs"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                      <SelectTrigger className="bg-white/5 border-white/10 !text-white h-9 max-w-xs"><SelectValue placeholder="Selecione" /></SelectTrigger>
                       <SelectContent>{KEY_LOCATIONS.map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}</SelectContent>
                     </Select>
                   )} />
@@ -1200,19 +1226,19 @@ export default function PropertyDetailPage() {
               <Section title="Documentação">
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                   <Field label="CIB (Código Imobiliário Brasileiro)">
-                    <Input {...register('cib')} className="bg-white/5 border-white/10 text-white h-9" />
+                    <Input {...register('cib')} className="bg-white/5 border-white/10 !text-white h-9 [color-scheme:dark]" />
                   </Field>
                   <Field label="Cadastro Prefeitura (Nº IPTU / INCRA)">
-                    <Input {...register('iptuRegistration')} className="bg-white/5 border-white/10 text-white h-9" />
+                    <Input {...register('iptuRegistration')} className="bg-white/5 border-white/10 !text-white h-9 [color-scheme:dark]" />
                   </Field>
                   <Field label="Cartório de Imóveis (Nº Matrícula)">
-                    <Input {...register('cartorioMatricula')} className="bg-white/5 border-white/10 text-white h-9" />
+                    <Input {...register('cartorioMatricula')} className="bg-white/5 border-white/10 !text-white h-9 [color-scheme:dark]" />
                   </Field>
                   <Field label="Eletricidade (Concessionária)">
-                    <Input {...register('electricityInfo')} className="bg-white/5 border-white/10 text-white h-9" />
+                    <Input {...register('electricityInfo')} className="bg-white/5 border-white/10 !text-white h-9 [color-scheme:dark]" />
                   </Field>
                   <Field label="Água e Saneamento">
-                    <Input {...register('waterInfo')} className="bg-white/5 border-white/10 text-white h-9" />
+                    <Input {...register('waterInfo')} className="bg-white/5 border-white/10 !text-white h-9 [color-scheme:dark]" />
                   </Field>
                 </div>
                 <div className="pt-2">
@@ -1222,7 +1248,7 @@ export default function PropertyDetailPage() {
                 </div>
                 <Field label="Observações de Documentação">
                   <textarea {...register('documentationNotes')} rows={3}
-                    className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white resize-none focus:outline-none focus:ring-2 focus:ring-ring placeholder:text-white/40" />
+                    className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm !text-white resize-none focus:outline-none focus:ring-2 focus:ring-ring placeholder:!text-white/40 [color-scheme:dark]" />
                 </Field>
               </Section>
 

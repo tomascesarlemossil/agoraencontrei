@@ -72,7 +72,6 @@ export async function runDailySocialPost(app: FastifyInstance): Promise<void> {
             excerpt: caption.slice(0, 200),
             content: `<p>${caption.replace(/\n/g, '<br />')}</p>`,
             coverImage: property.coverImage,
-            category: 'imoveis',
             tags: 'instagram, imóveis franca, imobiliária lemos',
             source: 'Instagram @imobiliarialemos',
             sourceUrl: result.permalink ?? null,

@@ -156,6 +156,8 @@ model Company {
   visualAIJobs      VisualAIJob[]
   marketingCampaigns MarketingCampaign[]
   blogPosts         BlogPost[]
+  blogCategories    BlogCategory[]
+  blogClusters      BlogCluster[]
   documents         Document[]
   legalCases        LegalCase[]
   auctions          Auction[]
@@ -1502,40 +1504,151 @@ model MarketingCampaign {
   @@map("marketing_campaigns")
 }
 
-// ── Blog Posts ─────────────────────────────────────────────────────────────
+// =============================================================================
+// BLOG MODULE: Categories, Clusters, Posts
+// =============================================================================
+
+model BlogCategory {
+  id          String   @id @default(cuid())
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id])
+
+  name        String
+  slug        String
+  description String?  @db.Text
+  image       String?
+
+  // SEO
+  seoTitle       String?
+  metaDescription String?
+
+  // Organization
+  ordem       Int      @default(0)
+  status      String   @default("active") // active, inactive
+
+  posts       BlogPost[]
+  clusters    BlogCluster[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([companyId, slug])
+  @@index([companyId, status])
+  @@map("blog_categories")
+}
+
+model BlogCluster {
+  id          String   @id @default(cuid())
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id])
+
+  name        String
+  slug        String
+  description String?  @db.Text
+
+  // Relationships
+  categoryId  String?
+  category    BlogCategory? @relation(fields: [categoryId], references: [id])
+  pillarPostId String?  // The main pillar post for this cluster
+
+  // SEO
+  seoTitle       String?
+  metaDescription String?
+
+  status      String   @default("active") // active, inactive
+
+  posts       BlogPost[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([companyId, slug])
+  @@index([companyId, status])
+  @@map("blog_clusters")
+}
 
 model BlogPost {
   id          String   @id @default(cuid())
   companyId   String
   company     Company  @relation(fields: [companyId], references: [id])
 
+  // ── Core Content ──
   title       String
+  subtitle    String?
   slug        String
   excerpt     String?  @db.Text
-  content     String   @db.Text
-  coverImage  String?
+  content     String   @db.Text        // HTML content
+  bodyMarkdown String? @db.Text        // Original markdown source
 
-  // SEO
-  seoTitle       String?
-  seoDescription String?
-  seoKeywords    String?  // comma-separated
+  // ── Cover & Media ──
+  coverImage     String?
+  coverImageAlt  String?
+  coverImageCaption String?
+  galleryImages  Json?    @default("[]")  // [{url, alt, caption, order}]
+  videoUrl       String?
+  videoEmbed     String?  @db.Text
 
-  // Organization
-  category    String?  // imoveis, financiamento, mercado, dicas, noticias, legislacao
+  // ── Organization ──
+  categoryId  String?
+  category    BlogCategory? @relation(fields: [categoryId], references: [id])
+  clusterId   String?
+  cluster     BlogCluster?  @relation(fields: [clusterId], references: [id])
   tags        String?  // comma-separated
 
-  // Source (for auto-imported news)
-  source      String?  // e.g. "CNN Brasil", "Valor Econômico"
+  // ── SEO ──
+  seoTitle       String?
+  seoDescription String?
+  seoKeywords    String?  // comma-separated (legacy compat)
+  keywordPrincipal    String?
+  keywordsSecundarias String?  @db.Text // semicolon-separated
+  canonicalUrl   String?
+  noindex        Boolean  @default(false)
+
+  // ── Open Graph & Twitter ──
+  ogTitle        String?
+  ogDescription  String?
+  ogImage        String?
+  twitterTitle   String?
+  twitterDescription String?
+  twitterImage   String?
+
+  // ── Schema & Breadcrumb ──
+  schemaType     String?  @default("BlogPosting") // BlogPosting, Article
+  breadcrumbLabel String?
+
+  // ── Editorial Strategy ──
+  intencaoBusca     String?  // informacional, comercial, comparacao, etc.
+  estagioFunil      String?  // TOFU, MOFU, BOFU
+  ctaFinal          String?  @db.Text
+  faq               Json?    @default("[]") // [{question, answer}]
+  linksInternos     Json?    @default("[]") // [{url, anchor}]
+  postsRelacionados Json?    @default("[]") // [slugs]
+
+  // ── Location & Property ──
+  cidade         String?
+  bairro         String?
+  tipoImovel     String?  // geral, casa, apartamento, terreno, comercial, rural
+
+  // ── Priority & Notes ──
+  seoPriority        Int?     @default(0)
+  commercialPriority Int?     @default(0)
+  editorialNotes     String?  @db.Text
+  cannibalizationNotes String? @db.Text
+
+  // ── Source (for auto-imported news) ──
+  source      String?
   sourceUrl   String?
   isAutoImported Boolean @default(false)
 
-  // Status
+  // ── Status & Publishing ──
+  status      String   @default("draft") // draft, published, scheduled
   published   Boolean  @default(false)
   publishedAt DateTime?
+  scheduledAt DateTime?
   featured    Boolean  @default(false)
 
-  // Author
-  authorName  String   @default("Equipe Imobiliária Lemos")
+  // ── Author ──
+  authorName  String   @default("Equipe AgoraEncontrei")
 
   views       Int      @default(0)
 
@@ -1544,6 +1657,10 @@ model BlogPost {
 
   @@unique([companyId, slug])
   @@index([companyId, published, publishedAt])
+  @@index([companyId, status])
+  @@index([categoryId])
+  @@index([clusterId])
+  @@index([cidade])
   @@map("blog_posts")
 }
 

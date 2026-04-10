@@ -44,6 +44,7 @@ export default function robots(): MetadataRoute.Robots {
     ],
     sitemap: [
       `${WEB_URL}/sitemap.xml`,
+      `${WEB_URL}/api/sitemap/blog`,
     ],
     host: WEB_URL,
   }

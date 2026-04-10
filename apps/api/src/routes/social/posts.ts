@@ -66,7 +66,6 @@ export default async function socialPostRoutes(app: FastifyInstance) {
           excerpt: caption.slice(0, 200),
           content: `<p>${caption.replace(/\n/g, '<br />')}</p>`,
           coverImage: property.coverImage,
-          category: 'imoveis',
           tags: hashtags.split(' ').slice(0, 10).join(', '),
           source: `Instagram @${account === 'tomas' ? 'tomaslemosbr' : 'imobiliarialemos'}`,
           sourceUrl: result.permalink ?? null,
