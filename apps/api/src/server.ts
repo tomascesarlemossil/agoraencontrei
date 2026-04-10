@@ -43,6 +43,7 @@ import renovacoesRoutes from './routes/crm/renovacoes.js'
 import campanhasRoutes from './routes/marketing/campanhas.js'
 import financingsRoutes from './routes/financings/index.js'
 import blogRoutes from './routes/blog/index.js'
+import cepRoutes from './routes/cep/index.js'
 import socialRoutes from './routes/social/index.js'
 import documentsRoutes from './routes/documents/index.js'
 import portalClientRoutes from './routes/portal/index.js'
@@ -489,6 +490,7 @@ async function bootstrap() {
   await app.register(campanhasRoutes,    { prefix: '/api/v1/marketing/campanhas' })
   await app.register(financingsRoutes,   { prefix: '/api/v1/financings' })
   await app.register(blogRoutes,         { prefix: '/api/v1/blog' })
+  await app.register(cepRoutes,          { prefix: '/api/v1/cep' })
   await app.register(socialRoutes,       { prefix: '/api/v1/social' })
   await app.register(documentsRoutes,    { prefix: '/api/v1/documents' })
   await app.register(portalClientRoutes, { prefix: '/api/v1/portal' })
