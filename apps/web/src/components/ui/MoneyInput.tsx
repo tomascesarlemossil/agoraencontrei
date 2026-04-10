@@ -117,10 +117,15 @@ export const CepInput = forwardRef<HTMLInputElement, CepInputProps>(
       setLoading(true)
       setStatus('idle')
       try {
-        const res = await fetch(`https://viacep.com.br/ws/${digits}/json/`)
-        if (!res.ok) throw new Error('CEP not found')
+        // Use our API proxy to avoid CORS issues
+        const API_URL = process.env.NEXT_PUBLIC_API_URL ?? ''
+        const res = await fetch(`${API_URL}/api/v1/cep/${digits}`)
+        if (!res.ok) {
+          setStatus('notfound')
+          return
+        }
         const data = await res.json()
-        if (data.erro) {
+        if (data.error) {
           setStatus('notfound')
           return
         }
