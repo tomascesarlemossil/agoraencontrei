@@ -109,22 +109,33 @@ input[style*="background"], textarea[style*="background"] {
 /* ── Dashboard: Force white text on all dark-bg inputs ─────────────────────── */
 /* This ensures inputs with bg-white/5 (dark backgrounds) always show white   */
 /* text, overriding any browser defaults or autofill styles.                   */
+/* Uses multiple selectors for maximum coverage.                              */
 .dark .bg-gray-950 input:not([type="checkbox"]):not([type="radio"]),
 .dark .bg-gray-950 textarea,
-.dark .bg-gray-950 select {
+.dark .bg-gray-950 select,
+.dark main.bg-gray-950 input:not([type="checkbox"]):not([type="radio"]),
+.dark main.bg-gray-950 textarea,
+.dark main.bg-gray-950 select,
+html.dark input[class*="bg-white/5"]:not([type="checkbox"]):not([type="radio"]),
+html.dark textarea[class*="bg-white/5"],
+html.dark input[class*="border-white"]:not([type="checkbox"]):not([type="radio"]),
+html.dark textarea[class*="border-white"] {
   color: #ffffff !important;
   color-scheme: dark;
-  -webkit-text-fill-color: #ffffff;
+  -webkit-text-fill-color: #ffffff !important;
 }
 .dark .bg-gray-950 input::placeholder,
-.dark .bg-gray-950 textarea::placeholder {
+.dark .bg-gray-950 textarea::placeholder,
+.dark main.bg-gray-950 input::placeholder,
+.dark main.bg-gray-950 textarea::placeholder {
   color: rgba(255, 255, 255, 0.4) !important;
-  -webkit-text-fill-color: rgba(255, 255, 255, 0.4);
+  -webkit-text-fill-color: rgba(255, 255, 255, 0.4) !important;
 }
 /* Fix autofill background in dark dashboard */
 .dark .bg-gray-950 input:-webkit-autofill,
 .dark .bg-gray-950 input:-webkit-autofill:hover,
-.dark .bg-gray-950 input:-webkit-autofill:focus {
+.dark .bg-gray-950 input:-webkit-autofill:focus,
+html.dark input:-webkit-autofill {
   -webkit-text-fill-color: #ffffff !important;
   -webkit-box-shadow: 0 0 0 1000px rgba(255,255,255,0.05) inset !important;
   box-shadow: 0 0 0 1000px rgba(255,255,255,0.05) inset !important;
@@ -138,7 +149,9 @@ input[style*="background"], textarea[style*="background"] {
 /* Date/time inputs */
 .dark .bg-gray-950 input[type="date"],
 .dark .bg-gray-950 input[type="datetime-local"],
-.dark .bg-gray-950 input[type="time"] {
+.dark .bg-gray-950 input[type="time"],
+html.dark input[type="date"],
+html.dark input[type="datetime-local"] {
   color-scheme: dark;
 }
 /* Select dropdown content (Radix popover on dark) */
