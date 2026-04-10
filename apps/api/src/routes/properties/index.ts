@@ -516,6 +516,12 @@ export default async function propertiesRoutes(app: FastifyInstance) {
       body.reference = `AE-${String(nextNum).padStart(4, '0')}`
     }
 
+    // Require at least one image/video when publishing as ACTIVE
+    const hasMedia = (body.coverImage) || (body.images && body.images.length > 0) || (body.videos && body.videos.length > 0)
+    if (body.status === 'ACTIVE' && !hasMedia) {
+      body.status = 'DRAFT' as any
+    }
+
     const slug = buildSlug(body.title, body.reference)
 
     // Auto-geocode if address is provided but lat/lng are missing
@@ -590,6 +596,17 @@ export default async function propertiesRoutes(app: FastifyInstance) {
     // Only ADMIN and SUPER_ADMIN can set isFeatured (homepage highlights)
     if (body.isFeatured !== undefined && !['ADMIN', 'SUPER_ADMIN'].includes(req.user.role)) {
       delete (body as any).isFeatured
+    }
+
+    // Prevent activating a property without at least one image/video
+    if (body.status === 'ACTIVE') {
+      const mergedCover = body.coverImage ?? existing.coverImage
+      const mergedImages = body.images ?? existing.images
+      const mergedVideos = (body as any).videos ?? (existing as any).videos ?? []
+      const hasAnyMedia = mergedCover || (mergedImages && mergedImages.length > 0) || (mergedVideos.length > 0)
+      if (!hasAnyMedia) {
+        return reply.status(400).send({ error: 'MEDIA_REQUIRED', message: 'Adicione pelo menos uma foto ou vídeo antes de ativar o imóvel.' })
+      }
     }
 
     // Auto-geocode when address fields change and lat/lng are missing

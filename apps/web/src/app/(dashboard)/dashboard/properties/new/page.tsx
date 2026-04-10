@@ -14,7 +14,7 @@ import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import {
-  ArrowLeft, Save, Home, MapPin, Settings, Globe, Briefcase, Shield, Search,
+  ArrowLeft, Save, Home, MapPin, Settings, Globe, Briefcase, Shield, Search, Loader2, Info,
 } from 'lucide-react'
 import Link from 'next/link'
 import { useState } from 'react'
@@ -51,7 +51,7 @@ const schema = z.object({
   type:                   z.string().min(1, 'Selecione o tipo'),
   purpose:                z.string().min(1, 'Selecione a finalidade'),
   category:               z.string().default('RESIDENTIAL'),
-  status:                 z.string().default('ACTIVE'),
+  status:                 z.string().default('DRAFT'),
   reference:              z.string().optional(),
   auxReference:           z.string().optional(),
   currentState:           z.string().optional(),
@@ -241,7 +241,7 @@ export default function NewPropertyPage() {
   const { register, handleSubmit, control, watch, setValue, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
-      title: '', type: '', purpose: '', category: 'RESIDENTIAL', status: 'ACTIVE',
+      title: '', type: '', purpose: '', category: 'RESIDENTIAL', status: 'DRAFT',
       reference: '', description: '',
       bedrooms: 0, suites: 0, suitesWithCloset: 0, demiSuites: 0,
       bathrooms: 0, rooms: 0, livingRooms: 0, diningRooms: 0, tvRooms: 0,
@@ -254,6 +254,27 @@ export default function NewPropertyPage() {
       features: [],
     },
   })
+
+  const [cepLoading, setCepLoading] = useState(false)
+  const fetchCep = async (cep: string) => {
+    const raw = cep.replace(/\D/g, '')
+    if (raw.length !== 8) return
+    setCepLoading(true)
+    try {
+      const res = await fetch(`https://viacep.com.br/ws/${raw}/json/`)
+      const data = await res.json()
+      if (!data.erro) {
+        setValue('street', data.logradouro || '')
+        setValue('neighborhood', data.bairro || '')
+        setValue('city', data.localidade || '')
+        setValue('state', data.uf || '')
+      }
+    } catch {
+      // ignore fetch errors
+    } finally {
+      setCepLoading(false)
+    }
+  }
 
   const mutation = useMutation({
     mutationFn: async (data: FormData) => {
@@ -291,6 +312,11 @@ export default function NewPropertyPage() {
           <h1 className="text-xl font-bold text-white">Cadastrar Imóvel</h1>
           <p className="text-white/40 text-sm">Preencha os dados do imóvel</p>
         </div>
+      </div>
+
+      <div className="flex items-center gap-2 bg-blue-500/10 border border-blue-500/20 rounded-xl p-3">
+        <Info className="h-4 w-4 text-blue-400 flex-shrink-0" />
+        <p className="text-blue-400/90 text-xs">O imóvel será criado como <strong>Rascunho</strong>. Adicione fotos ou vídeos na página de edição para poder ativá-lo.</p>
       </div>
 
       <form onSubmit={handleSubmit((d) => mutation.mutate(d))} className="space-y-4">
@@ -444,9 +470,10 @@ export default function NewPropertyPage() {
           <div className="space-y-4">
             <Section title="Endereço">
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                <Field label="CEP">
-                  <div className="flex gap-2">
-                    <Input {...register('zipCode')} placeholder="00000-000" className={inputCls} maxLength={9} />
+                <Field label="CEP *">
+                  <div className="flex gap-2 items-center">
+                    <Input {...register('zipCode', { onBlur: (e) => fetchCep(e.target.value) })} placeholder="00000-000" className={inputCls} maxLength={9} />
+                    {cepLoading && <Loader2 className="h-4 w-4 animate-spin text-white/40" />}
                   </div>
                 </Field>
                 <Field label="Endereço" span="sm:col-span-2">

@@ -15,7 +15,7 @@ import { Controller, useForm } from 'react-hook-form'
 import {
   ArrowLeft, Edit, Save, X, MapPin, BedDouble, Bath, Car, Ruler, Eye,
   Calendar, ImagePlus, Trash2, Star, Upload, Phone, Mail, User as UserIcon, ZoomIn,
-  Home, Globe, Settings, Shield, Briefcase, Building2, Search, MessageSquare, Clock, Wand2, Film, Download,
+  Home, Globe, Settings, Shield, Briefcase, Building2, Search, MessageSquare, Clock, Wand2, Film, Download, Loader2, AlertCircle,
 } from 'lucide-react'
 import Link from 'next/link'
 import { useState, useRef, useEffect } from 'react'
@@ -386,6 +386,26 @@ export default function PropertyDetailPage() {
     return () => clearTimeout(timer)
   }, [formValues, editing]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // CEP auto-fill
+  const [cepLoading, setCepLoading] = useState(false)
+  const fetchCep = async (cep: string) => {
+    const raw = cep.replace(/\D/g, '')
+    if (raw.length !== 8) return
+    setCepLoading(true)
+    try {
+      const res = await fetch(`https://viacep.com.br/ws/${raw}/json/`)
+      const data = await res.json()
+      if (!data.erro) {
+        setValue('street', data.logradouro || '')
+        setValue('neighborhood', data.bairro || '')
+        setValue('city', data.localidade || '')
+        setValue('state', data.uf || '')
+      }
+    } catch {} finally {
+      setCepLoading(false)
+    }
+  }
+
   // Image & Video management
   const [uploadingImages, setUploadingImages] = useState(false)
   const [uploadingVideos, setUploadingVideos] = useState(false)
@@ -537,6 +557,12 @@ export default function PropertyDetailPage() {
 
       {/* ── PHOTOS & VIDEOS section (always visible) ─────────────────────── */}
       <div className="bg-white/5 rounded-xl border border-white/10 p-4 space-y-3">
+        {allPhotos.length === 0 && ((p as any)?.videos ?? []).length === 0 && (
+          <div className="flex items-center gap-2 bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-3 mb-1">
+            <AlertCircle className="h-4 w-4 text-yellow-400 flex-shrink-0" />
+            <p className="text-yellow-400/90 text-xs font-medium">Adicione pelo menos uma foto ou vídeo. O imóvel não pode ser ativado sem mídia.</p>
+          </div>
+        )}
         <div className="flex items-center justify-between flex-wrap gap-2">
           <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider">
             Mídia · {allPhotos.length} foto{allPhotos.length !== 1 ? 's' : ''} · {((p as any)?.videos ?? []).length} vídeo{((p as any)?.videos ?? []).length !== 1 ? 's' : ''}
@@ -857,8 +883,11 @@ export default function PropertyDetailPage() {
             <div className="space-y-4">
               <Section title="Endereço">
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                  <Field label="CEP">
-                    <Input {...register('zipCode')} placeholder="00000-000" className="bg-white/5 border-white/10 text-white h-9" maxLength={9} />
+                  <Field label="CEP *">
+                    <div className="flex gap-2 items-center">
+                      <Input {...register('zipCode', { onBlur: (e) => fetchCep(e.target.value) })} placeholder="00000-000" className="bg-white/5 border-white/10 text-white h-9" maxLength={9} />
+                      {cepLoading && <Loader2 className="h-4 w-4 animate-spin text-white/40" />}
+                    </div>
                   </Field>
                   <Field label="Endereço" span="sm:col-span-2">
                     <Input {...register('street')} className="bg-white/5 border-white/10 text-white h-9" />
