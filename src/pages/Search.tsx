@@ -25,7 +25,7 @@ import { Badge } from '@/components/ui/badge'
 
 const ALL_PROPERTIES: Property[] = [
   {
-    id: 'p01', slug: 'casa-jardim-america-4-quartos', title: 'Casa de Alto Padrão no Jardim América',
+    id: 'p01', referenceCode: 'AE-0001', slug: 'casa-jardim-america-4-quartos', title: 'Casa de Alto Padrão no Jardim América',
     purpose: 'venda', price: 1250000, priceNegotiable: true,
     address: { neighborhood: 'Jardim América', city: 'Franca', state: 'SP' },
     bedrooms: 4, bathrooms: 3, parking: 3, area: 320,
@@ -33,7 +33,7 @@ const ALL_PROPERTIES: Property[] = [
     featured: true, investmentScore: 9.2,
   },
   {
-    id: 'p02', slug: 'apartamento-centro-3-quartos', title: 'Apartamento Moderno no Centro',
+    id: 'p02', referenceCode: 'AE-0002', slug: 'apartamento-centro-3-quartos', title: 'Apartamento Moderno no Centro',
     purpose: 'venda', price: 480000,
     address: { neighborhood: 'Centro', city: 'Franca', state: 'SP' },
     bedrooms: 3, bathrooms: 2, parking: 2, area: 125,
@@ -41,7 +41,7 @@ const ALL_PROPERTIES: Property[] = [
     isNew: true, investmentScore: 8.5,
   },
   {
-    id: 'p03', slug: 'chacara-rifaina-lazer', title: 'Chácara com Lazer Completo em Rifaina',
+    id: 'p03', referenceCode: 'AE-0003', slug: 'chacara-rifaina-lazer', title: 'Chácara com Lazer Completo em Rifaina',
     purpose: 'venda', price: 890000,
     address: { neighborhood: 'Zona Rural', city: 'Rifaina', state: 'SP' },
     bedrooms: 5, bathrooms: 4, parking: 6, area: 5000,
@@ -49,7 +49,7 @@ const ALL_PROPERTIES: Property[] = [
     featured: true, investmentScore: 8.8,
   },
   {
-    id: 'p04', slug: 'casa-vila-elite-piscina', title: 'Casa Vila Elite com Piscina',
+    id: 'p04', referenceCode: 'AE-0004', slug: 'casa-vila-elite-piscina', title: 'Casa Vila Elite com Piscina',
     purpose: 'venda', price: 680000,
     address: { neighborhood: 'Vila Elite', city: 'Franca', state: 'SP' },
     bedrooms: 3, bathrooms: 2, parking: 2, area: 200,
@@ -57,7 +57,7 @@ const ALL_PROPERTIES: Property[] = [
     investmentScore: 8.1,
   },
   {
-    id: 'p05', slug: 'apartamento-jardim-paulista-aluguel', title: 'Apartamento para Locação Jardim Paulista',
+    id: 'p05', referenceCode: 'AE-0005', slug: 'apartamento-jardim-paulista-aluguel', title: 'Apartamento para Locação Jardim Paulista',
     purpose: 'aluguel', price: 2800,
     address: { neighborhood: 'Jardim Paulista', city: 'Franca', state: 'SP' },
     bedrooms: 2, bathrooms: 1, parking: 1, area: 75,
@@ -65,7 +65,7 @@ const ALL_PROPERTIES: Property[] = [
     investmentScore: 7.8,
   },
   {
-    id: 'p06', slug: 'terreno-patrocinio-comercial', title: 'Terreno Comercial em Patrocínio Paulista',
+    id: 'p06', referenceCode: 'AE-0006', slug: 'terreno-patrocinio-comercial', title: 'Terreno Comercial em Patrocínio Paulista',
     purpose: 'venda', price: 320000, priceNegotiable: true,
     address: { neighborhood: 'Centro', city: 'Patrocínio Paulista', state: 'SP' },
     bedrooms: 0, bathrooms: 0, parking: 0, area: 800,
@@ -73,7 +73,7 @@ const ALL_PROPERTIES: Property[] = [
     isPriceReduced: true, investmentScore: 7.5,
   },
   {
-    id: 'p07', slug: 'casa-nova-franca-2-quartos', title: 'Casa Nova de 2 Quartos no Parque das Flores',
+    id: 'p07', referenceCode: 'AE-0007', slug: 'casa-nova-franca-2-quartos', title: 'Casa Nova de 2 Quartos no Parque das Flores',
     purpose: 'venda', price: 310000,
     address: { neighborhood: 'Parque das Flores', city: 'Franca', state: 'SP' },
     bedrooms: 2, bathrooms: 1, parking: 1, area: 90,
@@ -81,7 +81,7 @@ const ALL_PROPERTIES: Property[] = [
     isNew: true, investmentScore: 7.9,
   },
   {
-    id: 'p08', slug: 'sala-comercial-centro-franca', title: 'Sala Comercial no Centro de Franca',
+    id: 'p08', referenceCode: 'AE-0008', slug: 'sala-comercial-centro-franca', title: 'Sala Comercial no Centro de Franca',
     purpose: 'aluguel', price: 3500,
     address: { neighborhood: 'Centro', city: 'Franca', state: 'SP' },
     bedrooms: 0, bathrooms: 1, parking: 2, area: 60,
@@ -89,7 +89,7 @@ const ALL_PROPERTIES: Property[] = [
     investmentScore: 8.0,
   },
   {
-    id: 'p09', slug: 'casa-condominio-franca-alto-padrao', title: 'Casa em Condomínio Fechado de Alto Padrão',
+    id: 'p09', referenceCode: 'AE-0009', slug: 'casa-condominio-franca-alto-padrao', title: 'Casa em Condomínio Fechado de Alto Padrão',
     purpose: 'venda', price: 980000,
     address: { neighborhood: 'Residencial das Palmeiras', city: 'Franca', state: 'SP' },
     bedrooms: 4, bathrooms: 3, parking: 3, area: 280,
@@ -97,7 +97,7 @@ const ALL_PROPERTIES: Property[] = [
     featured: true, investmentScore: 9.0,
   },
   {
-    id: 'p10', slug: 'apartamento-ibiraci-2-quartos', title: 'Apartamento 2 Quartos em Ibiraci',
+    id: 'p10', referenceCode: 'AE-0010', slug: 'apartamento-ibiraci-2-quartos', title: 'Apartamento 2 Quartos em Ibiraci',
     purpose: 'venda', price: 230000,
     address: { neighborhood: 'Centro', city: 'Ibiraci', state: 'SP' },
     bedrooms: 2, bathrooms: 1, parking: 1, area: 70,
@@ -105,7 +105,7 @@ const ALL_PROPERTIES: Property[] = [
     investmentScore: 7.2,
   },
   {
-    id: 'p11', slug: 'chacara-restinga-temporada', title: 'Chácara para Temporada em Restinga',
+    id: 'p11', referenceCode: 'AE-0011', slug: 'chacara-restinga-temporada', title: 'Chácara para Temporada em Restinga',
     purpose: 'temporada', price: 850,
     address: { neighborhood: 'Zona Rural', city: 'Restinga', state: 'SP' },
     bedrooms: 3, bathrooms: 2, parking: 4, area: 2000,
@@ -113,7 +113,7 @@ const ALL_PROPERTIES: Property[] = [
     investmentScore: 8.3,
   },
   {
-    id: 'p12', slug: 'terreno-residencial-franca-jardins', title: 'Terreno Residencial nos Jardins',
+    id: 'p12', referenceCode: 'AE-0012', slug: 'terreno-residencial-franca-jardins', title: 'Terreno Residencial nos Jardins',
     purpose: 'venda', price: 185000,
     address: { neighborhood: 'Jardins', city: 'Franca', state: 'SP' },
     bedrooms: 0, bathrooms: 0, parking: 0, area: 360,
@@ -199,7 +199,8 @@ export default function Search() {
         (p) =>
           p.title.toLowerCase().includes(q) ||
           p.address.neighborhood.toLowerCase().includes(q) ||
-          p.address.city.toLowerCase().includes(q)
+          p.address.city.toLowerCase().includes(q) ||
+          p.referenceCode.toLowerCase().includes(q)
       )
     }
 
@@ -264,7 +265,7 @@ export default function Search() {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                placeholder="Buscar por cidade, bairro, tipo de imóvel..."
+                placeholder="Buscar por cidade, bairro, código de referência..."
                 className="flex-1 bg-transparent pl-10 pr-4 py-2.5 text-foreground placeholder-foreground/40 text-sm outline-none font-sans"
               />
             </div>

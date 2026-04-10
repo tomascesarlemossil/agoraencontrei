@@ -38,6 +38,7 @@ import { Badge } from '@/components/ui/badge'
 
 const MOCK_PROPERTY = {
   id: 'prop-001',
+  referenceCode: 'AE-0001',
   slug: 'casa-jardim-america-franca-4-quartos',
   title: 'Casa de Alto Padrão com Piscina no Jardim América',
   purpose: 'venda' as const,
@@ -121,7 +122,7 @@ Localização privilegiada, próximo a escolas de alto nível, supermercados, fa
 
 const SIMILAR_PROPERTIES: Property[] = [
   {
-    id: 'sim-1', slug: 'casa-jardins-franca', title: 'Casa nos Jardins com 3 Suítes',
+    id: 'sim-1', referenceCode: 'AE-0013', slug: 'casa-jardins-franca', title: 'Casa nos Jardins com 3 Suítes',
     purpose: 'venda', price: 980000,
     address: { neighborhood: 'Jardins', city: 'Franca', state: 'SP' },
     bedrooms: 3, bathrooms: 3, parking: 2, area: 260,
@@ -129,7 +130,7 @@ const SIMILAR_PROPERTIES: Property[] = [
     investmentScore: 8.7,
   },
   {
-    id: 'sim-2', slug: 'casa-condominio-palmeiras', title: 'Casa em Condomínio das Palmeiras',
+    id: 'sim-2', referenceCode: 'AE-0014', slug: 'casa-condominio-palmeiras', title: 'Casa em Condomínio das Palmeiras',
     purpose: 'venda', price: 1100000,
     address: { neighborhood: 'Residencial das Palmeiras', city: 'Franca', state: 'SP' },
     bedrooms: 4, bathrooms: 3, parking: 3, area: 300,
@@ -137,7 +138,7 @@ const SIMILAR_PROPERTIES: Property[] = [
     featured: true, investmentScore: 9.0,
   },
   {
-    id: 'sim-3', slug: 'casa-vila-elite-piscina', title: 'Casa Vila Elite com Piscina',
+    id: 'sim-3', referenceCode: 'AE-0015', slug: 'casa-vila-elite-piscina', title: 'Casa Vila Elite com Piscina',
     purpose: 'venda', price: 680000,
     address: { neighborhood: 'Vila Elite', city: 'Franca', state: 'SP' },
     bedrooms: 3, bathrooms: 2, parking: 2, area: 200,
@@ -342,11 +343,11 @@ function ContactCard({ property, corretor }: { property: typeof MOCK_PROPERTY; c
   const [proposal, setProposal] = useState('')
 
   const whatsappMsg = encodeURIComponent(
-    `Olá ${corretor.name}! Tenho interesse no imóvel: ${property.title} — ${formatCurrency(property.price)}. Código: ${property.id}`
+    `Olá ${corretor.name}! Tenho interesse no imóvel: ${property.title} — ${formatCurrency(property.price)}. Ref: ${property.referenceCode}`
   )
   const whatsappUrl = `https://wa.me/${corretor.whatsapp}?text=${whatsappMsg}`
   const scheduleMsg = encodeURIComponent(
-    `Olá! Gostaria de agendar uma visita ao imóvel: ${property.title}. Código: ${property.id}`
+    `Olá! Gostaria de agendar uma visita ao imóvel: ${property.title}. Ref: ${property.referenceCode}`
   )
   const scheduleUrl = `https://wa.me/${corretor.whatsapp}?text=${scheduleMsg}`
 
@@ -513,6 +514,9 @@ export default function PropertyDetail() {
                     <div className="flex flex-wrap gap-2 mb-3">
                       <Badge variant="default">Venda</Badge>
                       {property.featured && <Badge variant="featured">Destaque</Badge>}
+                      <span className="text-xs font-mono font-semibold text-gold-400 bg-gold-500/10 border border-gold-500/20 px-2 py-0.5 rounded-full">
+                        Ref: {property.referenceCode}
+                      </span>
                     </div>
                     <h1 className="font-display text-2xl sm:text-3xl font-bold text-foreground leading-tight">
                       {property.title}

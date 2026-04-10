@@ -500,6 +500,22 @@ export default async function propertiesRoutes(app: FastifyInstance) {
     schema: { tags: ['properties'], summary: 'Create a property' },
   }, async (req, reply) => {
      const body = CreatePropertyBody.parse(req.body)
+
+    // Auto-generate reference code if not provided
+    if (!body.reference) {
+      const last = await app.prisma.property.findFirst({
+        where: { companyId: req.user.cid, reference: { startsWith: 'AE-' } },
+        orderBy: { reference: 'desc' },
+        select: { reference: true },
+      })
+      let nextNum = 1
+      if (last?.reference) {
+        const num = parseInt(last.reference.replace('AE-', ''), 10)
+        if (!isNaN(num)) nextNum = num + 1
+      }
+      body.reference = `AE-${String(nextNum).padStart(4, '0')}`
+    }
+
     const slug = buildSlug(body.title, body.reference)
 
     // Auto-geocode if address is provided but lat/lng are missing

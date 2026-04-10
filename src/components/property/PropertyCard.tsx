@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/button'
 
 export interface Property {
   id: string
+  referenceCode: string
   slug: string
   title: string
   purpose: 'venda' | 'aluguel' | 'temporada'
@@ -178,7 +179,7 @@ export function PropertyCard({
   )
 
   const whatsappMessage = encodeURIComponent(
-    `Olá! Tenho interesse no imóvel: ${property.title} - ${formatCurrency(property.price)}${property.purpose === 'aluguel' ? '/mês' : ''}. Código: ${property.id}`
+    `Olá! Tenho interesse no imóvel: ${property.title} - ${formatCurrency(property.price)}${property.purpose === 'aluguel' ? '/mês' : ''}. Ref: ${property.referenceCode}`
   )
   const whatsappUrl = `${WHATSAPP_BASE}?text=${whatsappMessage}`
 
@@ -261,10 +262,15 @@ export function PropertyCard({
           )}
         </div>
 
-        {/* Title */}
-        <h3 className="text-sm font-semibold text-foreground mb-1.5 line-clamp-1 font-sans">
-          {property.title}
-        </h3>
+        {/* Reference Code & Title */}
+        <div className="flex items-center gap-2 mb-1.5">
+          <span className="text-[10px] font-mono font-semibold text-gold-400 bg-gold-500/10 border border-gold-500/20 px-1.5 py-0.5 rounded shrink-0">
+            {property.referenceCode}
+          </span>
+          <h3 className="text-sm font-semibold text-foreground line-clamp-1 font-sans">
+            {property.title}
+          </h3>
+        </div>
 
         {/* Address */}
         <div className="flex items-center gap-1.5 mb-3">

@@ -15,6 +15,19 @@ function buildSlug(titulo, id) {
   return `${slug}-${id}`
 }
 
+async function generateReferenceCode() {
+  const [rows] = await pool.execute(
+    "SELECT codigo FROM properties WHERE codigo LIKE 'AE-%' ORDER BY codigo DESC LIMIT 1"
+  )
+  let nextNum = 1
+  if (rows.length > 0) {
+    const lastCode = rows[0].codigo
+    const num = parseInt(lastCode.replace('AE-', ''), 10)
+    if (!isNaN(num)) nextNum = num + 1
+  }
+  return `AE-${String(nextNum).padStart(4, '0')}`
+}
+
 // GET /api/properties - List with filters
 router.get('/', async (req, res) => {
   try {
@@ -260,6 +273,39 @@ router.get('/types', async (req, res) => {
   }
 })
 
+// GET /api/properties/by-ref/:code - Search by reference code
+router.get('/by-ref/:code', async (req, res) => {
+  try {
+    const { code } = req.params
+
+    const [rows] = await pool.execute(
+      'SELECT * FROM properties WHERE codigo = ? LIMIT 1',
+      [code.toUpperCase()]
+    )
+
+    if (!rows.length) {
+      return res.status(404).json({ error: 'Imóvel não encontrado com este código de referência' })
+    }
+
+    const property = rows[0]
+    const processed = {
+      ...property,
+      fotos: (() => {
+        if (!property.fotos) return []
+        if (typeof property.fotos === 'string') {
+          try { return JSON.parse(property.fotos) } catch { return [] }
+        }
+        return property.fotos
+      })()
+    }
+
+    return res.json({ property: processed })
+  } catch (err) {
+    console.error('Search by reference code error:', err)
+    return res.status(500).json({ error: 'Erro interno do servidor' })
+  }
+})
+
 // GET /api/properties/:id
 router.get('/:id', optionalAuth, async (req, res) => {
   try {
@@ -359,6 +405,9 @@ router.post('/', authenticate, requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'Título, tipo e finalidade são obrigatórios' })
     }
 
+    // Auto-generate reference code if not provided
+    const refCode = codigo || await generateReferenceCode()
+
     const fotosJson = fotos ? JSON.stringify(Array.isArray(fotos) ? fotos : [fotos]) : null
     const detalhesBasicoJson = detalhes_basico ? JSON.stringify(detalhes_basico) : null
     const detalhesServicosJson = detalhes_servicos ? JSON.stringify(detalhes_servicos) : null
@@ -397,7 +446,7 @@ router.post('/', authenticate, requireAuth, async (req, res) => {
         NOW(), NOW(), NOW()
       )`,
       [
-        codigo || null, id_internet || null, titulo, tipo, finalidade, categoria || null, status,
+        refCode, id_internet || null, titulo, tipo, finalidade, categoria || null, status,
         preco_venda || null, preco_locacao || null, preco_temporada || null, preco_m2 || null, preco_condominio || null, preco_iptu || null,
         endereco || null, numero || null, complemento || null, bairro || null, cidade || null, uf || null, cep || null, regiao || null,
         edificio || null, condominio || null, empreendimento || null, construtora || null,

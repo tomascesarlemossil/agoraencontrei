@@ -65,7 +65,7 @@ function PropertyFormModal({ open, onClose }: { open: boolean; onClose: () => vo
                 </select>
               </div>
               <div><Input label="Preço (R$)" type="number" placeholder="0,00" /></div>
-              <div><Input label="Código" placeholder="LEM-0000" /></div>
+              <div><Input label="Código de Referência" placeholder="AE-0000 (gerado automaticamente)" /></div>
               <div>
                 <label className="text-xs font-medium text-foreground/70 block mb-1.5">Status</label>
                 <select className="w-full h-10 rounded-md border border-[#1a2035] bg-[#1a2035] px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-[#d4a843]">
@@ -230,7 +230,7 @@ export default function DashboardProperties() {
 
         <div className="flex flex-wrap gap-3 items-center">
           <div className="flex-1 min-w-48">
-            <Input placeholder="Buscar por título ou código..." leftIcon={<Search className="h-4 w-4" />} value={search} onChange={e => setSearch(e.target.value)} />
+            <Input placeholder="Buscar por título ou código de referência..." leftIcon={<Search className="h-4 w-4" />} value={search} onChange={e => setSearch(e.target.value)} />
           </div>
           <select className="h-10 rounded-md border border-[#1a2035] bg-[#1a2035] px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-[#d4a843]" value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
             {['Todos','Ativo','Inativo','Em análise','Vendido'].map(o => <option key={o}>{o}</option>)}

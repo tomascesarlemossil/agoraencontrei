@@ -234,6 +234,7 @@ export default function PropertyDetailPage() {
     values: p ? {
       // Cadastro
       title: p.title ?? '',
+      reference: p.reference ?? '',
       type: p.type ?? 'HOUSE',
       purpose: p.purpose ?? 'SALE',
       category: p.category ?? 'RESIDENTIAL',
@@ -723,9 +724,14 @@ export default function PropertyDetailPage() {
           {activeTab === 'cadastro' && (
             <div className="space-y-4">
               <Section title="Identificação">
-                <Field label="Título do imóvel" span="col-span-full sm:col-span-2">
-                  <Input {...register('title')} className="bg-white/5 border-white/10 text-white" />
-                </Field>
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                  <Field label="Título do imóvel" span="sm:col-span-3">
+                    <Input {...register('title')} className="bg-white/5 border-white/10 text-white" />
+                  </Field>
+                  <Field label="Código de Referência">
+                    <Input {...register('reference')} placeholder="AE-0000" className="bg-white/5 border-white/10 text-white font-mono" />
+                  </Field>
+                </div>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                   <Field label="Tipo">
                     <Controller name="type" control={control} render={({ field }) => (

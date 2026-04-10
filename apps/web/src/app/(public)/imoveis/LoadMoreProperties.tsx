@@ -201,9 +201,16 @@ function PropertyCard({ p }: { p: any }) {
         propertyId={p.id}
       />
       <div className="p-4">
-        <p className="font-semibold text-gray-900 line-clamp-2 text-sm leading-snug group-hover:text-[#1B2B5B] transition-colors">
-          {p.title}
-        </p>
+        <div className="flex items-center gap-2">
+          {p.reference && (
+            <span className="text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded shrink-0" style={{ backgroundColor: '#f5f0e5', color: '#1B2B5B', border: '1px solid #e8e0cc' }}>
+              {p.reference}
+            </span>
+          )}
+          <p className="font-semibold text-gray-900 line-clamp-1 text-sm leading-snug group-hover:text-[#1B2B5B] transition-colors">
+            {p.title}
+          </p>
+        </div>
         <p className="text-xs text-gray-500 mt-1 truncate">
           {[p.neighborhood, p.city].filter(Boolean).join(' · ')}
         </p>

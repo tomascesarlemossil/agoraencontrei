@@ -37,6 +37,7 @@ import { Badge } from '@/components/ui/badge'
 const FEATURED_PROPERTIES: Property[] = [
   {
     id: 'prop-001',
+    referenceCode: 'AE-0001',
     slug: 'casa-jardim-america-franca-4-quartos',
     title: 'Casa de Alto Padrão no Jardim América',
     purpose: 'venda',
@@ -57,6 +58,7 @@ const FEATURED_PROPERTIES: Property[] = [
   },
   {
     id: 'prop-002',
+    referenceCode: 'AE-0002',
     slug: 'apartamento-centro-franca-3-quartos',
     title: 'Apartamento Moderno no Centro',
     purpose: 'venda',
@@ -74,6 +76,7 @@ const FEATURED_PROPERTIES: Property[] = [
   },
   {
     id: 'prop-003',
+    referenceCode: 'AE-0003',
     slug: 'chacara-rifaina-lazer-completo',
     title: 'Chácara com Área de Lazer Completa em Rifaina',
     purpose: 'venda',
@@ -91,6 +94,7 @@ const FEATURED_PROPERTIES: Property[] = [
   },
   {
     id: 'prop-004',
+    referenceCode: 'AE-0004',
     slug: 'casa-vila-elite-franca-3-quartos',
     title: 'Casa Vila Elite com Piscina',
     purpose: 'venda',
@@ -107,6 +111,7 @@ const FEATURED_PROPERTIES: Property[] = [
   },
   {
     id: 'prop-005',
+    referenceCode: 'AE-0005',
     slug: 'apartamento-aluguel-jardim-paulista-franca',
     title: 'Apartamento para Locação no Jardim Paulista',
     purpose: 'aluguel',
@@ -123,6 +128,7 @@ const FEATURED_PROPERTIES: Property[] = [
   },
   {
     id: 'prop-006',
+    referenceCode: 'AE-0006',
     slug: 'terreno-patrocinio-paulista-comercial',
     title: 'Terreno Comercial em Patrocínio Paulista',
     purpose: 'venda',
