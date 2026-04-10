@@ -429,7 +429,7 @@ export default function PropertyDetailPage() {
       // Abrir editor automaticamente após upload
       setNewUploadedMedia({ urls, types: urls.map(() => 'photo' as const) })
       const tk = await getValidToken()
-      setMediaEditorToken(tk)
+      setMediaEditorToken(tk ?? '')
       setShowMediaEditor(true)
     } catch (e: any) {
       alert(e.message || 'Erro ao fazer upload')
@@ -453,7 +453,7 @@ export default function PropertyDetailPage() {
       // Abrir editor automaticamente após upload de vídeo
       setNewUploadedMedia({ urls, types: urls.map(() => 'video' as const) })
       const tk = await getValidToken()
-      setMediaEditorToken(tk)
+      setMediaEditorToken(tk ?? '')
       setShowMediaEditor(true)
     } catch (e: any) {
       alert(e.message || 'Erro ao fazer upload de vídeo')
@@ -571,7 +571,7 @@ export default function PropertyDetailPage() {
               </button>
             )}
             {(allPhotos.length > 0 || ((p as any)?.videos ?? []).length > 0) && (
-              <button onClick={async () => { const tk = await getValidToken(); setMediaEditorToken(tk); setShowMediaEditor(true) }}
+              <button onClick={async () => { const tk = await getValidToken(); setMediaEditorToken(tk ?? ''); setShowMediaEditor(true) }}
                 className="flex items-center gap-1.5 text-xs text-yellow-400 hover:text-yellow-300 transition-colors px-2 py-1 rounded-lg hover:bg-yellow-400/10 border border-yellow-400/30">
                 <Wand2 className="h-3.5 w-3.5" /> Efeitos & Logo
               </button>

@@ -355,7 +355,7 @@ export default async function blogRoutes(app: FastifyInstance) {
     if (!existing) return reply.status(404).send({ error: 'NOT_FOUND' })
 
     const wasPublished = existing.published
-    const nowPublished = body.published ?? (body.status === 'published') ?? existing.published
+    const nowPublished = body.published ?? (body.status === 'published' ? true : existing.published)
 
     // If bodyMarkdown changed, regenerate content
     let contentUpdate: any = {}

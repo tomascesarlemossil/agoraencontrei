@@ -587,8 +587,8 @@ export default async function propertiesRoutes(app: FastifyInstance) {
         const { generatePropertyCaption } = await import('../../services/caption-generator.service.js')
         const { publishPropertyToInstagram } = await import('../../services/instagram-publisher.service.js')
 
-        const igToken = env.INSTAGRAM_PAGE_ACCESS_TOKEN
-        const igUserId = env.INSTAGRAM_BUSINESS_ACCOUNT_ID
+        const igToken = process.env.INSTAGRAM_PAGE_ACCESS_TOKEN
+        const igUserId = process.env.INSTAGRAM_BUSINESS_ACCOUNT_ID
 
         if (igToken && igUserId && updated.coverImage) {
           const { caption, hashtags } = await generatePropertyCaption(updated as any)
