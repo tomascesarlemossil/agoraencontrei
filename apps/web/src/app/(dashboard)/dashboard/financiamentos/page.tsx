@@ -240,49 +240,50 @@ export default function FinanciamentosPage() {
   const showKanban = filterStage === 'all' && !search
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-white">Financiamentos</h1>
-          <p className="text-sm text-white/50 mt-0.5">Pipeline de financiamentos imobiliários</p>
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl font-bold text-white">Financiamentos</h1>
+          <p className="text-xs sm:text-sm text-white/50 mt-0.5 truncate">Pipeline de financiamentos imobiliários</p>
         </div>
-        <Button onClick={openNew} className="bg-blue-600 hover:bg-blue-700 text-white gap-2">
+        <Button onClick={openNew} className="bg-blue-600 hover:bg-blue-700 text-white gap-1.5 sm:gap-2 text-xs sm:text-sm shrink-0">
           <Plus className="h-4 w-4" />
-          Novo Financiamento
+          <span className="hidden sm:inline">Novo Financiamento</span>
+          <span className="sm:hidden">Novo</span>
         </Button>
       </div>
 
       {/* KPI cards */}
       {summary && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-[#1a1a2e] border border-white/10 rounded-xl p-4">
-            <div className="flex items-center gap-2 text-white/50 text-xs mb-2">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+          <div className="bg-[#1a1a2e] border border-white/10 rounded-xl p-3 sm:p-4">
+            <div className="flex items-center gap-2 text-white/50 text-xs mb-1.5 sm:mb-2">
               <TrendingUp className="h-3.5 w-3.5" />
               Total
             </div>
-            <p className="text-2xl font-bold text-white">{summary.total}</p>
+            <p className="text-lg sm:text-2xl font-bold text-white">{summary.total}</p>
           </div>
-          <div className="bg-[#1a1a2e] border border-white/10 rounded-xl p-4">
-            <div className="flex items-center gap-2 text-blue-400 text-xs mb-2">
+          <div className="bg-[#1a1a2e] border border-white/10 rounded-xl p-3 sm:p-4">
+            <div className="flex items-center gap-2 text-blue-400 text-xs mb-1.5 sm:mb-2">
               <Building2 className="h-3.5 w-3.5" />
               Ativos
             </div>
-            <p className="text-2xl font-bold text-white">{summary.active}</p>
+            <p className="text-lg sm:text-2xl font-bold text-white">{summary.active}</p>
           </div>
-          <div className="bg-[#1a1a2e] border border-white/10 rounded-xl p-4">
-            <div className="flex items-center gap-2 text-emerald-400 text-xs mb-2">
+          <div className="bg-[#1a1a2e] border border-white/10 rounded-xl p-3 sm:p-4">
+            <div className="flex items-center gap-2 text-emerald-400 text-xs mb-1.5 sm:mb-2">
               <CheckCircle2 className="h-3.5 w-3.5" />
               Concluídos
             </div>
-            <p className="text-2xl font-bold text-white">{summary.completed}</p>
+            <p className="text-lg sm:text-2xl font-bold text-white">{summary.completed}</p>
           </div>
-          <div className="bg-[#1a1a2e] border border-white/10 rounded-xl p-4">
-            <div className="flex items-center gap-2 text-emerald-400 text-xs mb-2">
+          <div className="bg-[#1a1a2e] border border-white/10 rounded-xl p-3 sm:p-4">
+            <div className="flex items-center gap-2 text-emerald-400 text-xs mb-1.5 sm:mb-2">
               <DollarSign className="h-3.5 w-3.5" />
               Vol. Financiado
             </div>
-            <p className="text-lg font-bold text-white">{fmtCurrency(summary.totalFinancedValue) ?? 'R$ 0'}</p>
+            <p className="text-sm sm:text-lg font-bold text-white">{fmtCurrency(summary.totalFinancedValue) ?? 'R$ 0'}</p>
           </div>
         </div>
       )}
@@ -409,7 +410,7 @@ export default function FinanciamentosPage() {
 
       {/* Dialog: Create / Edit */}
       <Dialog open={openDialog} onOpenChange={v => { setOpenDialog(v); if (!v) { setEditing(null); reset() } }}>
-        <DialogContent className="bg-[#12122a] border-white/10 text-white max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="bg-[#12122a] border-white/10 text-white max-w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editing ? 'Editar Financiamento' : 'Novo Financiamento'}</DialogTitle>
           </DialogHeader>
@@ -435,7 +436,7 @@ export default function FinanciamentosPage() {
             </div>
 
             {/* Client info */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label>Nome do Cliente</Label>
                 <Input {...register('clientName')} placeholder="Nome completo" className="bg-white/5 border-white/10 text-white placeholder:text-white/40" />
@@ -444,7 +445,7 @@ export default function FinanciamentosPage() {
                 <Label>Telefone</Label>
                 <Input {...register('clientPhone')} placeholder="(00) 00000-0000" className="bg-white/5 border-white/10 text-white placeholder:text-white/40" />
               </div>
-              <div className="space-y-1.5 col-span-2">
+              <div className="space-y-1.5 sm:col-span-2">
                 <Label>E-mail</Label>
                 <Input {...register('clientEmail')} type="email" placeholder="cliente@email.com" className="bg-white/5 border-white/10 text-white placeholder:text-white/40" />
                 {errors.clientEmail && <p className="text-xs text-red-400">{errors.clientEmail.message}</p>}
@@ -452,7 +453,7 @@ export default function FinanciamentosPage() {
             </div>
 
             {/* Bank + Simulator */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label>Banco</Label>
                 <Input {...register('bank')} placeholder="Ex: Caixa, Itaú, Bradesco" className="bg-white/5 border-white/10 text-white placeholder:text-white/40" />
@@ -465,7 +466,7 @@ export default function FinanciamentosPage() {
             </div>
 
             {/* Financial values */}
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               <div className="space-y-1.5">
                 <Label>Valor do Imóvel (R$)</Label>
                 <Input {...register('propertyValue')} type="number" placeholder="0" className="bg-white/5 border-white/10 text-white placeholder:text-white/40" />

@@ -76,37 +76,38 @@ export default function AutomationsPage() {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-yellow-50">
-            <Zap className="w-6 h-6 text-yellow-600" />
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+          <div className="p-2 rounded-lg bg-yellow-50 shrink-0">
+            <Zap className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-600" />
           </div>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Automações</h1>
-            <p className="text-sm text-gray-500">Motor IFTTT — Se isso, então aquilo</p>
+          <div className="min-w-0">
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Automações</h1>
+            <p className="text-xs sm:text-sm text-gray-500 truncate">Motor IFTTT — Se isso, então aquilo</p>
           </div>
         </div>
         <button
           onClick={openNew}
-          className="flex items-center gap-2 px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors text-sm font-medium"
+          className="flex items-center gap-1.5 sm:gap-2 px-3 py-1.5 sm:px-4 sm:py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors text-xs sm:text-sm font-medium shrink-0"
         >
           <Plus className="w-4 h-4" />
-          Nova Regra
+          <span className="hidden sm:inline">Nova Regra</span>
+          <span className="sm:hidden">Nova</span>
         </button>
       </div>
 
       {/* Stats bar */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-3 gap-2 sm:gap-4">
         {[
           { label: 'Total de Regras', value: data?.meta.total ?? 0 },
           { label: 'Ativas', value: rules.filter(r => r.isActive).length },
           { label: 'Inativas', value: rules.filter(r => !r.isActive).length },
         ].map(stat => (
-          <div key={stat.label} className="bg-white rounded-xl border border-gray-100 p-4">
-            <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
-            <p className="text-sm text-gray-500 mt-1">{stat.label}</p>
+          <div key={stat.label} className="bg-white rounded-xl border border-gray-100 p-3 sm:p-4">
+            <p className="text-lg sm:text-2xl font-bold text-gray-900">{stat.value}</p>
+            <p className="text-xs sm:text-sm text-gray-500 mt-1">{stat.label}</p>
           </div>
         ))}
       </div>

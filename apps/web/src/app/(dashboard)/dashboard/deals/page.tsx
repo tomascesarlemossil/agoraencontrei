@@ -160,14 +160,14 @@ export default function DealsPage() {
     : (list?.meta.total ?? 0)
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-white">Negócios</h1>
-          <p className="text-white/50 text-sm mt-1">{totalOpen} negociaç{totalOpen !== 1 ? 'ões' : 'ão'} ativa{totalOpen !== 1 ? 's' : ''}</p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl font-bold text-white">Negócios</h1>
+          <p className="text-white/50 text-xs sm:text-sm mt-1">{totalOpen} negociaç{totalOpen !== 1 ? 'ões' : 'ão'} ativa{totalOpen !== 1 ? 's' : ''}</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           <div className="flex rounded-lg overflow-hidden border border-white/10">
             <button
               onClick={() => setView('pipeline')}
@@ -178,9 +178,10 @@ export default function DealsPage() {
               className={cn('px-3 py-1.5 text-xs font-medium transition-colors', view === 'list' ? 'bg-white/15 text-white' : 'text-white/50 hover:text-white')}
             >Lista</button>
           </div>
-          <Button onClick={() => setShowCreate(true)} className="gap-2">
+          <Button onClick={() => setShowCreate(true)} className="gap-1.5 sm:gap-2 text-xs sm:text-sm">
             <Plus className="h-4 w-4" />
-            Novo Negócio
+            <span className="hidden sm:inline">Novo Negócio</span>
+            <span className="sm:hidden">Novo</span>
           </Button>
         </div>
       </div>
@@ -190,12 +191,13 @@ export default function DealsPage() {
         pipelineLoading ? (
           <div className="py-20 text-center text-white/40">Carregando pipeline...</div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 overflow-x-auto">
+          <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
+            <div className="flex sm:grid sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4 min-w-max sm:min-w-0">
             {COLUMNS.map(({ key, label, color }) => {
               const cards = (pipeline?.[key] ?? []) as Deal[]
               const colValue = cards.reduce((s, d) => s + (Number(d.value) || 0), 0)
               return (
-                <div key={key} className={cn('rounded-xl p-4 space-y-3 min-w-[240px]', color, 'border border-white/10')}>
+                <div key={key} className={cn('rounded-xl p-3 sm:p-4 space-y-3 w-[260px] sm:w-auto', color, 'border border-white/10')}>
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-xs font-medium text-white/60 uppercase tracking-wider">{label}</p>
@@ -220,6 +222,7 @@ export default function DealsPage() {
                 </div>
               )
             })}
+          </div>
           </div>
         )
       )}

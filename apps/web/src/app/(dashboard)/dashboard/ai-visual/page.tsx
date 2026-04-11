@@ -129,25 +129,26 @@ export default function AIVisualPage() {
   const CfgIcon = cfg.icon
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <Sparkles className="w-6 h-6 text-purple-500" />
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2">
+            <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-purple-500 shrink-0" />
             IA Visual
           </h1>
-          <p className="text-sm text-gray-500 mt-0.5">
+          <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
             Renders, virtual staging e melhoria de fotos com IA
           </p>
         </div>
         <button
           onClick={() => setShowForm(true)}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-xl text-white hover:opacity-90 transition-opacity"
+          className="flex items-center gap-1.5 sm:gap-2 px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-medium rounded-xl text-white hover:opacity-90 transition-opacity shrink-0"
           style={{ backgroundColor: '#1B2B5B' }}
         >
           <Plus className="w-4 h-4" />
-          Novo Job
+          <span className="hidden sm:inline">Novo Job</span>
+          <span className="sm:hidden">Novo</span>
         </button>
       </div>
 
@@ -166,16 +167,16 @@ export default function AIVisualPage() {
 
       {/* Stats */}
       {statsData && (
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-3 gap-2 sm:gap-4">
           {Object.entries(TIPO_CONFIG).map(([key, c]) => {
             const count = statsData.byTipo?.find((t: any) => t.tipo === key)?._count ?? 0
             const Icon = c.icon
             return (
-              <div key={key} className="bg-white rounded-xl border border-gray-100 p-4">
-                <div className={`w-8 h-8 rounded-lg ${c.color} flex items-center justify-center mb-2`}>
-                  <Icon className="w-4 h-4" />
+              <div key={key} className="bg-white rounded-xl border border-gray-100 p-3 sm:p-4">
+                <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg ${c.color} flex items-center justify-center mb-2`}>
+                  <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 </div>
-                <p className="text-2xl font-bold text-gray-900">{count}</p>
+                <p className="text-lg sm:text-2xl font-bold text-gray-900">{count}</p>
                 <p className="text-xs text-gray-500 mt-0.5">{c.label}</p>
                 <p className="text-xs text-gray-400">{c.provider}</p>
               </div>
@@ -194,7 +195,7 @@ export default function AIVisualPage() {
       )}
 
       {/* Tabs */}
-      <div className="flex gap-1 bg-gray-100 p-1 rounded-xl w-fit">
+      <div className="flex gap-1 bg-gray-100 p-1 rounded-xl w-full sm:w-fit overflow-x-auto">
         {(Object.keys(TIPO_CONFIG) as Array<keyof typeof TIPO_CONFIG>).map(k => {
           const c = TIPO_CONFIG[k]
           const Icon = c.icon
@@ -202,12 +203,13 @@ export default function AIVisualPage() {
             <button
               key={k}
               onClick={() => setActiveTab(k)}
-              className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+              className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-colors whitespace-nowrap ${
                 activeTab === k ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
               }`}
             >
               <Icon className="w-3.5 h-3.5" />
-              {c.label}
+              <span className="hidden sm:inline">{c.label}</span>
+              <span className="sm:hidden">{c.label.split(' ')[0]}</span>
             </button>
           )
         })}
@@ -305,8 +307,8 @@ export default function AIVisualPage() {
 
       {/* Form Modal */}
       {showForm && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
+        <div className="fixed inset-0 bg-black/40 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
+          <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between p-6 border-b">
               <h2 className="font-semibold text-gray-900">Novo Job de IA Visual</h2>
               <button onClick={() => setShowForm(false)} className="text-gray-400 hover:text-gray-600">
