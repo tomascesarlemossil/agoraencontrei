@@ -13,6 +13,7 @@ import {
 }
  from 'lucide-react'
 import { PlanosContent } from '../PlanosContent'
+import { DynamicPlans } from '@/components/public/DynamicPlans'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 
@@ -684,7 +685,21 @@ function CadastroParceirosContent() {
 export default function CadastroParceirosPage() {
   return (
     <>
-      {/* Planos e ferramentas (primeiro) */}
+      {/* Dynamic Plans from database (Master Toggle) */}
+      <section className="bg-gray-950 text-white py-20 px-4">
+        <div className="max-w-6xl mx-auto">
+          <h2 className="text-3xl sm:text-4xl font-bold text-center mb-4">
+            Escolha o Plano Ideal para o Seu <span className="text-amber-400">Negócio</span>
+          </h2>
+          <p className="text-gray-400 text-center mb-12 max-w-2xl mx-auto">
+            Planos dinâmicos — preços e funcionalidades atualizados em tempo real.
+            Sem surpresas, sem letras pequenas.
+          </p>
+          <DynamicPlans />
+        </div>
+      </section>
+
+      {/* Planos e ferramentas (legado) */}
       <PlanosContent />
 
       {/* Formulário de cadastro (depois dos planos) */}

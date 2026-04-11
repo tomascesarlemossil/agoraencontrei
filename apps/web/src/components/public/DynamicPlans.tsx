@@ -1,0 +1,293 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import Link from 'next/link'
+import {
+  CheckCircle, Crown, Star, Zap, ArrowRight, Shield, Sparkles,
+  Bot, MessageCircle, BarChart3, Globe, Code, EyeOff, Users,
+  FileText, Lock,
+} from 'lucide-react'
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
+
+interface PlanDef {
+  id: string
+  slug: string
+  name: string
+  description: string | null
+  priceMonthly: string | number
+  priceYearly: string | number | null
+  maxProperties: number
+  maxLeadViews: number
+  maxUsers: number
+  themes: string[]
+  modules: string[]
+  features: string[]
+  highlighted: boolean
+}
+
+interface ModuleDef {
+  id: string
+  slug: string
+  name: string
+  description: string | null
+  priceMonthly: string | number | null
+  priceOneTime: string | number | null
+  billingType: string
+  category: string
+  icon: string | null
+}
+
+interface NicheDef {
+  id: string
+  slug: string
+  name: string
+  icon: string | null
+  description: string | null
+  itemLabel: string
+}
+
+const PLAN_ICONS: Record<string, typeof Crown> = {
+  lite: Zap,
+  pro: Star,
+  enterprise: Crown,
+}
+
+const PLAN_STYLES: Record<string, { border: string; badge: string; cta: string; bg: string }> = {
+  lite: {
+    border: 'border-blue-500/30',
+    badge: 'bg-blue-500/10 text-blue-400',
+    cta: 'bg-blue-600 hover:bg-blue-500 text-white',
+    bg: 'from-blue-950/20 to-transparent',
+  },
+  pro: {
+    border: 'border-amber-500/50',
+    badge: 'bg-amber-500/10 text-amber-400',
+    cta: 'bg-amber-600 hover:bg-amber-500 text-gray-950',
+    bg: 'from-amber-950/20 to-transparent',
+  },
+  enterprise: {
+    border: 'border-purple-500/30',
+    badge: 'bg-purple-500/10 text-purple-400',
+    cta: 'bg-purple-600 hover:bg-purple-500 text-white',
+    bg: 'from-purple-950/20 to-transparent',
+  },
+}
+
+const MODULE_ICONS: Record<string, typeof Bot> = {
+  bot: Bot,
+  'message-circle': MessageCircle,
+  'bar-chart-3': BarChart3,
+  globe: Globe,
+  code: Code,
+  'eye-off': EyeOff,
+  'users-round': Users,
+  'file-text': FileText,
+  phone: Sparkles,
+  users: Users,
+}
+
+function formatPrice(val: string | number): string {
+  return Number(val).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
+}
+
+export function DynamicPlans() {
+  const [plans, setPlans] = useState<PlanDef[]>([])
+  const [modules, setModules] = useState<ModuleDef[]>([])
+  const [niches, setNiches] = useState<NicheDef[]>([])
+  const [loading, setLoading] = useState(true)
+  const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly')
+
+  useEffect(() => {
+    fetch(`${API_URL}/api/v1/public/catalog`)
+      .then(r => r.json())
+      .then(d => {
+        if (d.success) {
+          setPlans(d.data.plans || [])
+          setModules(d.data.modules || [])
+          setNiches(d.data.niches || [])
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false))
+  }, [])
+
+  if (loading) {
+    return (
+      <div className="py-20 text-center">
+        <div className="animate-spin w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full mx-auto" />
+        <p className="text-gray-400 mt-4">Carregando planos...</p>
+      </div>
+    )
+  }
+
+  if (plans.length === 0) return null
+
+  return (
+    <div className="space-y-16">
+      {/* Billing toggle */}
+      <div className="flex items-center justify-center gap-3">
+        <button
+          onClick={() => setBillingCycle('monthly')}
+          className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+            billingCycle === 'monthly' ? 'bg-white/10 text-white' : 'text-gray-500 hover:text-gray-300'
+          }`}
+        >
+          Mensal
+        </button>
+        <button
+          onClick={() => setBillingCycle('yearly')}
+          className={`px-4 py-2 rounded-lg text-sm font-medium transition relative ${
+            billingCycle === 'yearly' ? 'bg-white/10 text-white' : 'text-gray-500 hover:text-gray-300'
+          }`}
+        >
+          Anual
+          <span className="absolute -top-2 -right-4 text-[10px] bg-emerald-500 text-white px-1.5 py-0.5 rounded-full font-bold">
+            -17%
+          </span>
+        </button>
+      </div>
+
+      {/* Plan Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+        {plans.map(plan => {
+          const style = PLAN_STYLES[plan.slug] || PLAN_STYLES.lite
+          const Icon = PLAN_ICONS[plan.slug] || Zap
+          const price = billingCycle === 'yearly' && plan.priceYearly
+            ? Math.round(Number(plan.priceYearly) / 12)
+            : Number(plan.priceMonthly)
+
+          return (
+            <div
+              key={plan.id}
+              className={`relative flex flex-col rounded-2xl border ${style.border} bg-gradient-to-b ${style.bg} backdrop-blur-sm p-6 transition-all hover:scale-[1.02] ${
+                plan.highlighted ? 'ring-2 ring-amber-500/50 shadow-lg shadow-amber-500/10' : ''
+              }`}
+            >
+              {plan.highlighted && (
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                  <span className="bg-amber-500 text-gray-950 text-xs font-bold px-3 py-1 rounded-full">
+                    Mais Popular
+                  </span>
+                </div>
+              )}
+
+              <div className="flex items-center gap-3 mb-4">
+                <div className={`w-10 h-10 rounded-xl ${style.badge} flex items-center justify-center`}>
+                  <Icon className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-white">{plan.name}</h3>
+                  {plan.description && (
+                    <p className="text-xs text-gray-400">{plan.description}</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="mb-6">
+                <div className="flex items-baseline gap-1">
+                  <span className="text-3xl font-bold text-white">R$ {formatPrice(price)}</span>
+                  <span className="text-sm text-gray-400">/mês</span>
+                </div>
+                {billingCycle === 'yearly' && plan.priceYearly && (
+                  <p className="text-xs text-emerald-400 mt-1">
+                    R$ {formatPrice(plan.priceYearly)}/ano — economia de R$ {formatPrice(Number(plan.priceMonthly) * 12 - Number(plan.priceYearly))}
+                  </p>
+                )}
+              </div>
+
+              {/* Features */}
+              <ul className="space-y-2 mb-6 flex-1">
+                {plan.features.map((feature, i) => (
+                  <li key={i} className="flex items-start gap-2 text-sm">
+                    <CheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
+                    <span className="text-gray-300">{feature}</span>
+                  </li>
+                ))}
+                {plan.maxProperties > 0 && (
+                  <li className="flex items-start gap-2 text-sm">
+                    <CheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
+                    <span className="text-gray-300">Até {plan.maxProperties} imóveis</span>
+                  </li>
+                )}
+                {plan.maxProperties === -1 && (
+                  <li className="flex items-start gap-2 text-sm">
+                    <Sparkles className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
+                    <span className="text-gray-300">Imóveis ilimitados</span>
+                  </li>
+                )}
+              </ul>
+
+              <Link
+                href={`/parceiros/cadastro?plan=${plan.slug.toUpperCase()}`}
+                className={`block text-center py-3 rounded-xl font-bold text-sm transition ${style.cta}`}
+              >
+                Começar Agora <ArrowRight className="inline w-4 h-4 ml-1" />
+              </Link>
+            </div>
+          )
+        })}
+      </div>
+
+      {/* Modules add-ons */}
+      {modules.length > 0 && (
+        <div className="max-w-5xl mx-auto">
+          <h3 className="text-2xl font-bold text-white text-center mb-2">Módulos Extras</h3>
+          <p className="text-gray-400 text-center mb-8">Expanda seu plano com funcionalidades adicionais</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {modules.map(mod => {
+              const IconComp = MODULE_ICONS[mod.icon || ''] || Sparkles
+              return (
+                <div key={mod.id} className="border border-gray-800 rounded-xl p-4 bg-gray-900/50 hover:border-gray-700 transition">
+                  <div className="flex items-center gap-3 mb-2">
+                    <IconComp className="w-5 h-5 text-amber-400" />
+                    <h4 className="font-semibold text-white text-sm">{mod.name}</h4>
+                  </div>
+                  {mod.description && (
+                    <p className="text-xs text-gray-400 mb-3">{mod.description}</p>
+                  )}
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-bold text-amber-400">
+                      {mod.priceMonthly ? `R$ ${formatPrice(mod.priceMonthly)}/mês` :
+                       mod.priceOneTime ? `R$ ${formatPrice(mod.priceOneTime)} (único)` :
+                       'Incluso'}
+                    </span>
+                    {mod.billingType !== 'included' && (
+                      <span className="text-[10px] bg-gray-800 text-gray-400 px-2 py-0.5 rounded-full">
+                        {mod.category}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Niches */}
+      {niches.length > 1 && (
+        <div className="max-w-4xl mx-auto">
+          <h3 className="text-2xl font-bold text-white text-center mb-2">Atendemos Diversos Nichos</h3>
+          <p className="text-gray-400 text-center mb-8">Nossa plataforma se adapta ao seu negócio</p>
+          <div className="flex flex-wrap justify-center gap-3">
+            {niches.map(niche => (
+              <div key={niche.id} className="border border-gray-800 rounded-full px-4 py-2 bg-gray-900/50 flex items-center gap-2">
+                <span className="text-sm text-gray-300">{niche.name}</span>
+                <span className="text-xs text-gray-500">({niche.itemLabel})</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Security badge */}
+      <div className="flex items-center justify-center gap-3 text-gray-500 text-sm">
+        <Shield className="w-4 h-4" />
+        <span>Pagamento seguro via Asaas</span>
+        <Lock className="w-4 h-4 ml-2" />
+        <span>Protocolo Fort Knox</span>
+      </div>
+    </div>
+  )
+}

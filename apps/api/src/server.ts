@@ -83,6 +83,7 @@ import signatureRoutes from './routes/signatures/index.js'
 import auctionAIRoutes from './routes/auction-ai/index.js'
 import importRoutes from './routes/import/index.js'
 import masterRoutes from './routes/master/index.js'
+import { publicCatalogRoutes } from './routes/master/admin-config.js'
 import streetviewRoutes from './routes/streetview/index.js'
 import tomasRoutes from './routes/tomas/index.js'
 import notificationsRoutes from './routes/notifications/index.js'
@@ -783,6 +784,7 @@ async function bootstrap() {
   await app.register(auctionAIRoutes,          { prefix: '/api/v1/auction-ai' })
   await app.register(importRoutes,             { prefix: '/api/v1/import' })
   await app.register(masterRoutes,             { prefix: '/api/v1/master' })
+  await app.register(publicCatalogRoutes,      { prefix: '/api/v1/public' })
   await app.register(streetviewRoutes,         { prefix: '/api/v1/streetview' })
   await app.register(tomasRoutes,             { prefix: '/api/v1/tomas' })
   await app.register(notificationsRoutes,    { prefix: '/api/v1/notifications' })

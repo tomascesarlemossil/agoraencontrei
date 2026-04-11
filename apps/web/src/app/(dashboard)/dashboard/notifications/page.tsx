@@ -4,12 +4,15 @@ import { Bell, CheckCheck, Trash2 } from 'lucide-react'
 import { useNotifications, type AppNotification } from '@/stores/notifications.store'
 
 const TYPE_COLORS: Record<AppNotification['type'], string> = {
-  lead_created:     'bg-blue-50 text-blue-700',
-  lead_updated:     'bg-indigo-50 text-indigo-700',
-  deal_updated:     'bg-purple-50 text-purple-700',
-  whatsapp_message: 'bg-green-50 text-green-700',
-  automation_done:  'bg-yellow-50 text-yellow-700',
-  notification:     'bg-gray-50 text-gray-700',
+  lead_created:      'bg-blue-50 text-blue-700',
+  lead_updated:      'bg-indigo-50 text-indigo-700',
+  deal_updated:      'bg-purple-50 text-purple-700',
+  whatsapp_message:  'bg-green-50 text-green-700',
+  automation_done:   'bg-yellow-50 text-yellow-700',
+  notification:      'bg-gray-50 text-gray-700',
+  hunter_lead:       'bg-amber-50 text-amber-700',
+  proposal_received: 'bg-emerald-50 text-emerald-700',
+  plan_sale:         'bg-violet-50 text-violet-700',
 }
 
 export default function NotificationsPage() {

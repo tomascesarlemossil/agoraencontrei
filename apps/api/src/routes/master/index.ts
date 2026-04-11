@@ -16,15 +16,30 @@ import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 import { calculateMRR } from '../../services/tenant.service.js'
 import { getRepasseSummary } from '../../services/repasse.service.js'
+import adminConfigRoutes from './admin-config.js'
 
 export default async function masterRoutes(app: FastifyInstance) {
   // All master routes require SUPER_ADMIN
   app.addHook('preHandler', app.authenticate)
   app.addHook('preHandler', async (req, reply) => {
     if (req.user.role !== 'SUPER_ADMIN') {
+      // Log unauthorized access attempt
+      await app.prisma.auditLog.create({
+        data: {
+          companyId: 'platform',
+          action: 'admin.access_denied' as any,
+          resource: 'master_panel',
+          resourceId: req.url,
+          userId: req.user?.sub || 'unknown',
+          payload: { ip: req.ip, method: req.method, url: req.url } as any,
+        },
+      }).catch(() => {})
       return reply.status(403).send({ error: 'FORBIDDEN', message: 'SUPER_ADMIN access required' })
     }
   })
+
+  // Register dynamic config sub-routes under /master/config/*
+  await app.register(adminConfigRoutes, { prefix: '/config' })
 
   // GET /overview — Platform-wide overview
   app.get('/overview', {

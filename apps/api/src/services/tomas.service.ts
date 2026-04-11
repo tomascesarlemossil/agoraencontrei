@@ -64,6 +64,7 @@ export interface TomasChatParams {
   companyId?: string
   userId?: string
   tenantTheme?: string
+  nicheSlug?: string        // Dynamic niche from NicheTemplate table
   propertyContext?: {
     propertyId?: string
     title?: string
@@ -538,6 +539,25 @@ export async function runTomasChat(
   // Apply theme-specific tone
   if (params.tenantTheme && THEME_TONE_ADDENDUM[params.tenantTheme]) {
     systemPrompt += THEME_TONE_ADDENDUM[params.tenantTheme]
+  }
+
+  // Apply dynamic niche persona from NicheTemplate table
+  if (params.nicheSlug) {
+    try {
+      const niche = await (prisma as any).nicheTemplate.findUnique({
+        where: { slug: params.nicheSlug },
+        select: { tomasPersona: true, tomasGreeting: true, tomasTone: true, itemLabel: true, itemLabelPlural: true },
+      })
+      if (niche) {
+        systemPrompt += `\n\n=== PERSONA DINÂMICA (NICHO: ${params.nicheSlug.toUpperCase()}) ===\n`
+        systemPrompt += niche.tomasPersona + '\n'
+        if (niche.tomasGreeting) {
+          systemPrompt += `Use esta saudação inicial: "${niche.tomasGreeting}"\n`
+        }
+        systemPrompt += `Tom de voz: ${niche.tomasTone}\n`
+        systemPrompt += `Neste contexto, o item de venda é "${niche.itemLabel}" (plural: "${niche.itemLabelPlural}"). Adapte todas as referências.\n`
+      }
+    } catch { /* niche table may not exist yet */ }
   }
 
   // Add property context

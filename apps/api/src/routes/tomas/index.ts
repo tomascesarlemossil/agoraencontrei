@@ -39,6 +39,8 @@ export default async function tomasRoutes(app: FastifyInstance) {
           channel: { type: 'string', enum: ['site', 'dashboard'], default: 'site' },
           chatId: { type: 'string' },
           visitorId: { type: 'string' },
+          nicheSlug: { type: 'string' },
+          tenantTheme: { type: 'string' },
           propertyContext: {
             type: 'object',
             properties: {
@@ -60,6 +62,8 @@ export default async function tomasRoutes(app: FastifyInstance) {
       channel?: string
       chatId?: string
       visitorId?: string
+      nicheSlug?: string
+      tenantTheme?: string
       propertyContext?: TomasChatParams['propertyContext']
     }
 
@@ -100,6 +104,8 @@ export default async function tomasRoutes(app: FastifyInstance) {
       visitorId: body.visitorId,
       companyId,
       userId,
+      nicheSlug: body.nicheSlug,
+      tenantTheme: body.tenantTheme,
       propertyContext: body.propertyContext,
     })
 

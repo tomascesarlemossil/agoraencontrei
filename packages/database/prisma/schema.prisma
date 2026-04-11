@@ -2619,3 +2619,184 @@ model SensitiveAccessGrant {
   @@index([expiresAt])
   @@map("sensitive_access_grants")
 }
+
+// =============================================================================
+// DYNAMIC ADMIN CONTROL — "The Master Toggle"
+// Configuração dinâmica: preços, nichos, módulos e settings editáveis via admin
+// =============================================================================
+
+/// Definição de plano — preços, limites e features editáveis sem deploy
+model PlanDefinition {
+  id               String    @id @default(cuid())
+  slug             String    @unique             // "lite", "pro", "enterprise", "cartao_visita"
+  name             String                        // Nome de exibição: "Lite", "Pro"
+  description      String?   @db.Text            // Descrição curta
+  longDescription  String?   @db.Text            // Descrição longa (landing page)
+  priceMonthly     Decimal   @db.Decimal(10, 2)  // Preço mensal
+  priceYearly      Decimal?  @db.Decimal(10, 2)  // Preço anual (desconto)
+  maxProperties    Int       @default(-1)        // -1 = ilimitado
+  maxLeadViews     Int       @default(-1)
+  maxUsers         Int       @default(1)
+  maxAIRequests    Int       @default(0)         // Requisições IA/mês
+  themes           String[]  @default([])        // Themes permitidos (slug): ["urban_tech","classic_trust"] ou ["all"]
+  modules          String[]  @default([])        // Módulos inclusos (slug): ["site_basico","crm","ia_tomas"]
+  features         String[]  @default([])        // Lista de features para exibição: ["Até 5 imóveis", "CRM básico"]
+  nicheFilter      String[]  @default([])        // Se não-vazio, plano só aparece p/ esses nichos
+  billingType      String    @default("recurring") // "recurring" | "one_time"
+  highlighted      Boolean   @default(false)     // Badge "Mais popular"
+  sortOrder        Int       @default(0)
+  isActive         Boolean   @default(true)
+  metadata         Json      @default("{}")
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@index([isActive, sortOrder])
+  @@map("plan_definitions")
+}
+
+/// Template de nicho — define como o Tomás se comporta, labels, campos de busca
+model NicheTemplate {
+  id                   String    @id @default(cuid())
+  slug                 String    @unique           // "imobiliaria", "estetica", "advocacia", "moveis"
+  name                 String                      // "Imobiliária", "Estética e Beleza"
+  icon                 String?                     // Lucide icon name: "building-2", "sparkles"
+  description          String?   @db.Text
+  tomasPersona         String    @db.Text          // Instrução de persona do Tomás para este nicho
+  tomasGreeting        String?   @db.Text          // Saudação personalizada
+  tomasTone            String    @default("consultivo") // "formal" | "agil" | "acolhedor" | "consultivo" | "direto"
+  itemLabel            String    @default("Imóvel")     // O que o nicho vende: "Imóvel", "Veículo", "Serviço"
+  itemLabelPlural      String    @default("Imóveis")
+  searchFields         Json      @default("[]")    // Campos de busca customizados: [{key:"quartos",label:"Quartos"},{key:"ano",label:"Ano/Modelo"}]
+  categoryFields       Json      @default("[]")    // Categorias de filtro: ["Residencial","Comercial"] ou ["Sedã","SUV","Pickup"]
+  seoKeywords          String[]  @default([])      // Palavras-chave globais p/ SEO programático
+  seoTitleTemplate     String?                     // "Melhor {item} em {cidade} - {partner}"
+  defaultTheme         String    @default("urban_tech")
+  availableThemes      String[]  @default([])      // Themes específicos para este nicho
+  sortOrder            Int       @default(0)
+  isActive             Boolean   @default(true)
+  metadata             Json      @default("{}")
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  @@index([isActive, sortOrder])
+  @@map("niche_templates")
+}
+
+/// Módulo avulso — recursos ativáveis por tenant (add-ons)
+model ModuleDefinition {
+  id               String    @id @default(cuid())
+  slug             String    @unique             // "ia_tomas_voz", "crm_avancado", "blog_seo"
+  name             String                        // "IA Tomás com Voz"
+  description      String?   @db.Text
+  priceMonthly     Decimal?  @db.Decimal(10, 2)  // null = incluso em plano
+  priceOneTime     Decimal?  @db.Decimal(10, 2)  // Taxa única (se aplicável)
+  billingType      String    @default("recurring") // "recurring" | "one_time" | "included"
+  category         String    @default("feature")   // "feature" | "integration" | "ai" | "design"
+  requiredPlan     String?                       // Plano mínimo: "pro" (null = qualquer)
+  nicheFilter      String[]  @default([])        // Se não-vazio, módulo só aparece p/ esses nichos
+  icon             String?                       // Lucide icon name
+  sortOrder        Int       @default(0)
+  isActive         Boolean   @default(true)
+  metadata         Json      @default("{}")
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  activations      TenantModuleActivation[]
+
+  @@index([isActive, sortOrder])
+  @@map("module_definitions")
+}
+
+/// Serviço avulso — operacional/humano (implantação, mentoria, setup)
+model ServiceDefinition {
+  id               String    @id @default(cuid())
+  slug             String    @unique             // "implantacao_vip", "mentoria_estrategica"
+  name             String                        // "Implantação VIP"
+  description      String?   @db.Text
+  longDescription  String?   @db.Text
+  price            Decimal   @db.Decimal(10, 2)
+  billingType      String    @default("one_time")  // "one_time" | "recurring"
+  category         String    @default("service")   // "service" | "consulting" | "premium"
+  nicheFilter      String[]  @default([])
+  icon             String?
+  sortOrder        Int       @default(0)
+  isActive         Boolean   @default(true)
+  metadata         Json      @default("{}")
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  orders           TenantServiceOrder[]
+
+  @@index([isActive, sortOrder])
+  @@map("service_definitions")
+}
+
+/// Ativação de módulo por tenant
+model TenantModuleActivation {
+  id             String    @id @default(cuid())
+  tenantId       String
+  moduleId       String
+  status         String    @default("active")    // "active" | "suspended" | "cancelled" | "pending_payment"
+  activatedAt    DateTime  @default(now())
+  expiresAt      DateTime?
+  cancelledAt    DateTime?
+  asaasChargeId  String?                         // ID da cobrança no Asaas
+  metadata       Json      @default("{}")
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  module         ModuleDefinition @relation(fields: [moduleId], references: [id])
+
+  @@unique([tenantId, moduleId])
+  @@index([tenantId, status])
+  @@map("tenant_module_activations")
+}
+
+/// Pedido de serviço por tenant
+model TenantServiceOrder {
+  id             String    @id @default(cuid())
+  tenantId       String
+  serviceId      String
+  status         String    @default("pending")   // "pending" | "paid" | "in_progress" | "completed" | "cancelled"
+  paidAt         DateTime?
+  completedAt    DateTime?
+  cancelledAt    DateTime?
+  asaasChargeId  String?
+  notes          String?   @db.Text
+  metadata       Json      @default("{}")
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  service        ServiceDefinition @relation(fields: [serviceId], references: [id])
+
+  @@index([tenantId, status])
+  @@map("tenant_service_orders")
+}
+
+/// Configurações globais do sistema — singleton editável via admin
+model GlobalSystemSettings {
+  id             String    @id @default("global")
+  seoDefaults    Json      @default("{}")      // { titleTemplate, descriptionTemplate, keywords[] }
+  landingContent Json      @default("{}")      // { headline, subtitle, faq[], testimonials[] }
+  billingConfig  Json      @default("{}")      // { asaasMode, defaultSplit, trialDays }
+  featureFlags   Json      @default("{}")      // { enableHunterMode, enableVoiceAI, enableBlog }
+  brandConfig    Json      @default("{}")      // { platformName, primaryColor, logoUrl }
+  metadata       Json      @default("{}")
+  updatedAt      DateTime  @updatedAt
+  updatedBy      String?                       // userId que fez última edição
+
+  @@map("global_system_settings")
+}
+
+/// Configuração por chave — tabela genérica para settings platform-level
+model SystemConfig {
+  id         String   @id @default(cuid())
+  companyId  String   @default("platform")
+  key        String
+  value      Json
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([companyId, key])
+  @@map("system_configs")
+}

@@ -45,6 +45,9 @@ import {
   FolderOpen,
   Gavel,
   Crown,
+  Palette,
+  ShoppingCart,
+  ShieldAlert,
 } from 'lucide-react'
 import { useNotifications } from '@/stores/notifications.store'
 import { UserAvatar } from '@/components/ui/UserAvatar'
@@ -71,6 +74,9 @@ const midNavItems = [
   { href: '/dashboard/seo-programatico',    icon: Globe,            label: 'SEO Motor',     highlight: true  },
   { href: '/dashboard/leiloes',              icon: Gavel,            label: 'Leilões 🔥',     highlight: true  },
   { href: '/dashboard/parceiros',            icon: Crown,            label: 'Parceiros 💎',    highlight: true  },
+  { href: '/dashboard/site-factory',         icon: Palette,          label: 'Site Factory',   highlight: true  },
+  { href: '/dashboard/crescer',              icon: ShoppingCart,     label: 'Crescer',        highlight: true  },
+  { href: '/dashboard/admin/master',         icon: ShieldAlert,     label: 'Admin Master',   highlight: true  },
 ]
 
 const corretorNavItem = { href: '/dashboard/corretor', icon: BriefcaseBusiness, label: 'Meu Painel', highlight: false }
