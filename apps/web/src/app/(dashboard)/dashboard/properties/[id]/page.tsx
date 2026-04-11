@@ -561,8 +561,10 @@ export default function PropertyDetailPage() {
             {allPhotos.length > 0 && (
               <button onClick={async () => {
                 const a = document.createElement('a')
-                for (const url of allPhotos) {
-                  a.href = url; a.download = url.split('/').pop() || 'foto.jpg'; a.click()
+                const slug = (p.title || 'imovel').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '').slice(0, 60)
+                const city = (p.city || 'franca').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-')
+                for (let i = 0; i < allPhotos.length; i++) {
+                  a.href = allPhotos[i]; a.download = `${slug}-${city}-sp-${i + 1}.jpg`; a.click()
                   await new Promise(r => setTimeout(r, 300))
                 }
               }}
