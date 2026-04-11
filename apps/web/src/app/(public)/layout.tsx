@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { Phone, MapPin, Instagram, Facebook, Youtube } from 'lucide-react'
 import { Navbar } from '@/components/public/Navbar'
-import { FloatingChatbot } from '@/components/chat/FloatingChatbot'
+import TomasWidget from '@/components/tomas/TomasWidget'
 import { SkipNav } from '@/components/SkipNav'
 
 export const metadata: Metadata = {
@@ -79,7 +79,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
       <Navbar />
 
       <main id="main-content" tabIndex={-1}>{children}</main>
-      <FloatingChatbot />
+      <TomasWidget />
 
       {/* Footer */}
       <footer style={{ backgroundColor: '#1B2B5B' }} className="mt-20 pt-14 pb-8">

@@ -2480,3 +2480,122 @@ model AuctionAIAnalysis {
   @@index([riskLevel])
   @@map("auction_ai_analyses")
 }
+
+// =============================================================================
+// TOMÁS OS — AI Agent Conversacional
+// =============================================================================
+
+/// Conversas do agente Tomás (site público + dashboard interno)
+model TomasChat {
+  id            String    @id @default(cuid())
+  companyId     String?
+  leadId        String?
+  contactId     String?
+  userId        String?   // corretor/admin no modo interno
+  channel       String    @default("site")  // "site" | "dashboard"
+  visitorId     String?   // fingerprint anônimo para visitantes
+  propertyId    String?   // contexto do imóvel (quando aberto na página)
+  summary       String?   @db.Text
+  nextAction    String?
+  handoffNeeded Boolean   @default(false)
+  metadata      Json      @default("{}")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  messages      TomasChatMessage[]
+
+  @@index([companyId])
+  @@index([leadId])
+  @@index([visitorId])
+  @@index([channel])
+  @@map("tomas_chats")
+}
+
+/// Mensagens individuais do chat do Tomás
+model TomasChatMessage {
+  id            String    @id @default(cuid())
+  chatId        String
+  chat          TomasChat @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  role          String    // "user" | "assistant" | "system" | "tool"
+  content       String    @db.Text
+  toolName      String?
+  toolPayload   Json?
+  audioUrl      String?
+  actions       Json?     // ações sugeridas pelo Tomás
+  createdAt     DateTime  @default(now())
+
+  @@index([chatId])
+  @@map("tomas_chat_messages")
+}
+
+// =============================================================================
+// TOUR VIRTUAL
+// =============================================================================
+
+/// Tours virtuais vinculados a imóveis
+model PropertyTour {
+  id               String   @id @default(cuid())
+  companyId        String
+  propertyId       String
+  tourType         String   @default("essential") // "essential" | "video_guided" | "tour_360"
+  provider         String   @default("internal")  // "internal" | "matterport" | "custom"
+  embedUrl         String?
+  processingStatus String   @default("queued")     // "queued" | "processing" | "ready" | "failed"
+  qualityScore     Float?
+  roomCount        Int?
+  metadata         Json     @default("{}")
+  publishedAt      DateTime?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([companyId])
+  @@index([propertyId])
+  @@index([processingStatus])
+  @@map("property_tours")
+}
+
+// =============================================================================
+// PROPOSTA DIGITAL — Deal Flow
+// =============================================================================
+
+/// Propostas digitais de compra/aluguel
+model Proposal {
+  id             String   @id @default(cuid())
+  companyId      String
+  propertyId     String
+  leadId         String?
+  contactId      String?
+  offerValue     Decimal  @db.Decimal(14, 2)
+  paymentMethod  String?  // "cash" | "finance" | "installments" | "exchange"
+  downPayment    Decimal? @db.Decimal(14, 2)
+  financingAmount Decimal? @db.Decimal(14, 2)
+  status         String   @default("sent") // "draft" | "sent" | "countered" | "accepted" | "rejected" | "expired"
+  notes          String?  @db.Text
+  expiresAt      DateTime?
+  metadata       Json     @default("{}")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  events         ProposalEvent[]
+
+  @@index([companyId])
+  @@index([propertyId])
+  @@index([leadId])
+  @@index([status])
+  @@map("proposals")
+}
+
+/// Eventos de negociação da proposta
+model ProposalEvent {
+  id          String   @id @default(cuid())
+  proposalId  String
+  proposal    Proposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  type        String   // "created" | "sent" | "countered" | "accepted" | "rejected" | "expired"
+  note        String?  @db.Text
+  value       Decimal? @db.Decimal(14, 2)
+  actorType   String?  // "buyer" | "seller" | "broker" | "system"
+  createdAt   DateTime @default(now())
+
+  @@index([proposalId])
+  @@map("proposal_events")
+}
