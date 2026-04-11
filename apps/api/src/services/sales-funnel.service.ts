@@ -83,12 +83,20 @@ export async function triggerPreviewForFunnel(
       segment: branding.segment,
     })
 
-    // Update funnel stage
+    // Update funnel stage + record previewSentAt for 2-min delay rule
+    const existingFunnel = await prisma.salesFunnel.findUnique({
+      where: { id: funnelId },
+    }).catch(() => null) as any
+
     await prisma.salesFunnel.update({
       where: { id: funnelId },
       data: {
         stage: 'preview_sent',
         previewSiteName: siteName,
+        metadata: {
+          ...((existingFunnel?.metadata as any) || {}),
+          previewSentAt: new Date().toISOString(),
+        },
       },
     }).catch(() => {})
 
@@ -140,6 +148,12 @@ export interface SalesAction {
   checkoutUrl?: string
 }
 
+// ── 2-Minute Delay Rule (Regra Inviolável) ─────────────────────────────────
+// After sending preview, Tomás must wait at least 2 minutes before releasing
+// the checkout link. This prevents rushing the lead and gives time for the
+// preview to create engagement.
+const CHECKOUT_DELAY_MS = 2 * 60 * 1000 // 2 minutes
+
 export async function handleSalesIntent(
   prisma: PrismaClient,
   funnelId: string,
@@ -172,8 +186,23 @@ export async function handleSalesIntent(
       }
     }
 
-    // Preview already sent, suggest checkout
+    // Preview already sent — enforce 2-minute delay before checkout
     if (funnel.stage === 'preview_sent' || funnel.stage === 'preview_clicked') {
+      const previewSentAt = (funnel.metadata as any)?.previewSentAt
+      const elapsed = previewSentAt ? Date.now() - new Date(previewSentAt).getTime() : Infinity
+
+      if (elapsed < CHECKOUT_DELAY_MS) {
+        // 2-minute delay not yet elapsed — warm message, no checkout yet
+        const previewUrl = funnel.previewSiteName
+          ? `${process.env.WEB_URL || 'https://agoraencontrei.com.br'}/preview/${funnel.previewSiteName}`
+          : ''
+        return {
+          type: 'message',
+          message: `Dá uma olhada no modelo que montei pra você 👇\n${previewUrl}\n\nEm instantes te mando as condições pra ativar. 😉`,
+        }
+      }
+
+      // 2 minutes passed — safe to send checkout
       const checkout = await triggerCheckoutForFunnel(prisma, funnelId)
       if (checkout) {
         return {
@@ -185,8 +214,22 @@ export async function handleSalesIntent(
     }
   }
 
-  // ── Intent: activation → go straight to checkout ──────────────────────
+  // ── Intent: activation → enforce same 2-minute delay rule ─────────────
   if (intent === 'activation') {
+    // If preview was sent, check the 2-minute delay
+    const previewSentAt = (funnel.metadata as any)?.previewSentAt
+    const elapsed = previewSentAt ? Date.now() - new Date(previewSentAt).getTime() : Infinity
+
+    if (previewSentAt && elapsed < CHECKOUT_DELAY_MS) {
+      const previewUrl = funnel.previewSiteName
+        ? `${process.env.WEB_URL || 'https://agoraencontrei.com.br'}/preview/${funnel.previewSiteName}`
+        : ''
+      return {
+        type: 'message',
+        message: `Já tá quase! Dá uma olhada no modelo primeiro 👇\n${previewUrl}\n\nJá já te mando o link pra ativar.`,
+      }
+    }
+
     const checkout = await triggerCheckoutForFunnel(prisma, funnelId)
     if (checkout) {
       return {
