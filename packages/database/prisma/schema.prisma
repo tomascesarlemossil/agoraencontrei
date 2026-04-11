@@ -2337,3 +2337,143 @@ model SocialPost {
   @@index([status])
   @@map("social_posts")
 }
+
+// =============================================================================
+// SAAS: MULTI-TENANT (Clones / Revenda de Sistemas)
+// =============================================================================
+
+/// Tenant = um clone/site parceiro vendido como SaaS
+model Tenant {
+  id                  String    @id @default(cuid())
+  ownerId             String?   // User ID do proprietário do clone
+  companyId           String?   // Company vinculada (se já existir)
+  name                String    // Nome da empresa parceira
+  subdomain           String    @unique  // ex: 'imobiliaria-joao'
+  customDomain        String?   @unique  // ex: 'www.joaoimoveis.com.br'
+  domainType          String    @default("subdomain") // subdomain | new | own
+  layoutType          String    @default("clean")     // luxury | clean | social | marketplace
+  primaryColor        String    @default("#3b82f6")
+  logoUrl             String?
+  faviconUrl          String?
+  plan                String    @default("LITE")      // LITE | PRO | ENTERPRISE
+  planStatus          String    @default("TRIAL")     // TRIAL | ACTIVE | PAST_DUE | SUSPENDED | CANCELLED
+  planPrice           Decimal?  @db.Decimal(10, 2)
+  splitPercent        Decimal   @default(2.00) @db.Decimal(5, 2) // % que fica com Agora Encontrei
+  repasseDelayDays    Int       @default(7)           // D+7 padrão
+  repasseFixedDay     Int?      // Dia fixo do mês (1-31) se preferir
+  asaasApiKey         String?   // API key Asaas do parceiro
+  asaasWalletId       String?   // Subconta Asaas para split
+  asaasSubscriptionId String?   // ID da assinatura SaaS no Asaas
+  vercelDomainId      String?   // ID do domínio na Vercel
+  settings            Json      @default("{}")
+  isActive            Boolean   @default(true)
+  trialEndsAt         DateTime?
+  activatedAt         DateTime?
+  suspendedAt         DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  @@index([subdomain])
+  @@index([customDomain])
+  @@index([planStatus])
+  @@index([ownerId])
+  @@map("tenants")
+}
+
+/// Log de comissões/splits recebidos dos clones SaaS
+model SaasCommissionLog {
+  id            String    @id @default(cuid())
+  tenantId      String
+  transactionId String?   // ID da transação original
+  grossValue    Decimal   @db.Decimal(12, 2)
+  commission    Decimal   @db.Decimal(12, 2) // Sua fatia
+  netPartner    Decimal   @db.Decimal(12, 2) // Fatia do parceiro
+  status        String    @default("PENDING") // PENDING | RECEIVED | FAILED
+  asaasRef      String?   // Referência Asaas
+  createdAt     DateTime  @default(now())
+
+  @@index([tenantId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("saas_commission_logs")
+}
+
+/// Repasses agendados (custódia D+7 ou dia fixo)
+model ScheduledRepasse {
+  id              String    @id @default(cuid())
+  tenantId        String?
+  companyId       String
+  contractId      String?
+  rentalId        String?
+  landlordId      String
+  grossValue      Decimal   @db.Decimal(12, 2)
+  commissionValue Decimal   @db.Decimal(12, 2)
+  netValue        Decimal   @db.Decimal(12, 2)
+  scheduledDate   DateTime  // Data programada para liberação
+  status          String    @default("SCHEDULED") // SCHEDULED | PROCESSING | COMPLETED | FAILED
+  asaasPaymentId  String?
+  asaasTransferId String?
+  processedAt     DateTime?
+  errorMsg        String?
+  createdAt       DateTime  @default(now())
+
+  @@index([companyId])
+  @@index([tenantId])
+  @@index([landlordId])
+  @@index([scheduledDate])
+  @@index([status])
+  @@map("scheduled_repasses")
+}
+
+/// Contratos de assinatura digital (Clicksign)
+model DigitalSignature {
+  id              String    @id @default(cuid())
+  companyId       String
+  contractId      String?
+  documentType    String    @default("RENTAL") // RENTAL | SALE | PROPOSAL
+  documentUrl     String?   // URL do PDF gerado
+  externalId      String?   // ID no Clicksign
+  envelopeUrl     String?   // Link para assinatura
+  status          String    @default("PENDING") // PENDING | SENT | SIGNED | CANCELLED | EXPIRED
+  signers         Json      @default("[]") // Array de signatários
+  signedAt        DateTime?
+  expiresAt       DateTime?
+  metadata        Json      @default("{}")
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([companyId])
+  @@index([contractId])
+  @@index([externalId])
+  @@index([status])
+  @@map("digital_signatures")
+}
+
+/// Análises de leilão geradas por IA
+model AuctionAIAnalysis {
+  id              String   @id @default(cuid())
+  auctionId       String
+  editalUrl       String?
+  debtIPTU        Decimal? @db.Decimal(12, 2)
+  debtCondo       Decimal? @db.Decimal(12, 2)
+  debtOther       Decimal? @db.Decimal(12, 2)
+  isOccupied      Boolean?
+  occupationType  String?  // OWNER | TENANT | SQUATTER | UNKNOWN
+  leiloeirFee     Decimal? @db.Decimal(5, 2)  // % do leiloeiro
+  itbiEstimate    Decimal? @db.Decimal(12, 2)
+  escrituraEstimate Decimal? @db.Decimal(12, 2)
+  reformEstimate  Decimal? @db.Decimal(12, 2)
+  totalCost       Decimal? @db.Decimal(14, 2)  // Lance + todos os custos
+  marketValue     Decimal? @db.Decimal(14, 2)  // Valor de mercado estimado
+  roiPercent      Float?                        // ROI estimado
+  paybackMonths   Int?                          // Meses para payback via aluguel
+  yieldMonthly    Float?                        // Yield mensal estimado
+  riskLevel       String?  // LOW | MEDIUM | HIGH
+  aiSummary       String?  @db.Text             // Resumo IA do edital
+  rawExtraction   Json     @default("{}")       // Dados brutos extraídos
+  createdAt       DateTime @default(now())
+
+  @@unique([auctionId])
+  @@index([riskLevel])
+  @@map("auction_ai_analyses")
+}

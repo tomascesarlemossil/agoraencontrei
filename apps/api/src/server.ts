@@ -70,12 +70,19 @@ import { valuationRoutes } from './routes/public/valuation.js'
 import { publicPhotoEditorRoutes } from './routes/public/photo-editor.js'
 import seoProgramaticoRoutes from './routes/seo-programatico/index.js'
 import financialAnalysisRoutes from './routes/financial/index.js'
+import seoIndexingRoutes from './routes/seo/indexing.js'
 import aiMarketingRoutes from './routes/ai-marketing/index.js'
 import leadScoringRoutes from './routes/lead-scoring/index.js'
 import maintenanceRoutes from './routes/maintenance/index.js'
 import ownerDashboardRoutes from './routes/owner-dashboard/index.js'
 import billingAutomationRoutes from './routes/billing/index.js'
 import asaasWebhookRoutes from './routes/finance/webhook.js'
+import tenantRoutes from './routes/tenants/index.js'
+import repasseRoutes from './routes/repasse/index.js'
+import signatureRoutes from './routes/signatures/index.js'
+import auctionAIRoutes from './routes/auction-ai/index.js'
+import importRoutes from './routes/import/index.js'
+import masterRoutes from './routes/master/index.js'
 
 const app = Fastify({
   // No body size limit — accept any file size
@@ -492,6 +499,132 @@ async function runMigrations(prisma: any) {
     try { await prisma.$executeRawUnsafe(sql) } catch { /* already exists */ }
   }
 
+  // ── SaaS Multi-tenant tables ──────────────────────────────────────────────
+  const saasMigrations = [
+    `CREATE TABLE IF NOT EXISTS tenants (
+      id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+      "ownerId" TEXT,
+      "companyId" TEXT NOT NULL REFERENCES companies(id),
+      name TEXT NOT NULL,
+      subdomain TEXT UNIQUE NOT NULL,
+      "customDomain" TEXT UNIQUE,
+      "domainType" TEXT NOT NULL DEFAULT 'subdomain',
+      "layoutType" TEXT NOT NULL DEFAULT 'clean',
+      "primaryColor" TEXT DEFAULT '#3b82f6',
+      "logoUrl" TEXT,
+      "faviconUrl" TEXT,
+      plan TEXT NOT NULL DEFAULT 'LITE',
+      "planStatus" TEXT NOT NULL DEFAULT 'TRIAL',
+      "planPrice" DECIMAL(10,2) NOT NULL DEFAULT 450.00,
+      "splitPercent" DECIMAL(5,2) NOT NULL DEFAULT 2.00,
+      "repasseDelayDays" INTEGER NOT NULL DEFAULT 7,
+      "repasseFixedDay" INTEGER,
+      "asaasApiKey" TEXT,
+      "asaasWalletId" TEXT,
+      "asaasSubscriptionId" TEXT,
+      "vercelDomainId" TEXT,
+      settings JSONB NOT NULL DEFAULT '{}',
+      "isActive" BOOLEAN NOT NULL DEFAULT true,
+      "trialEndsAt" TIMESTAMPTZ,
+      "activatedAt" TIMESTAMPTZ,
+      "suspendedAt" TIMESTAMPTZ,
+      "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )`,
+    `CREATE INDEX IF NOT EXISTS tenants_owner_idx ON tenants("ownerId")`,
+    `CREATE INDEX IF NOT EXISTS tenants_company_idx ON tenants("companyId")`,
+    `CREATE INDEX IF NOT EXISTS tenants_plan_status_idx ON tenants("planStatus")`,
+
+    `CREATE TABLE IF NOT EXISTS saas_commission_logs (
+      id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+      "tenantId" TEXT NOT NULL REFERENCES tenants(id),
+      "transactionId" TEXT,
+      "originalValue" DECIMAL(14,2) NOT NULL,
+      "splitPercent" DECIMAL(5,2) NOT NULL,
+      "commissionValue" DECIMAL(14,2) NOT NULL,
+      "tenantNetValue" DECIMAL(14,2) NOT NULL,
+      status TEXT NOT NULL DEFAULT 'PENDING',
+      "processedAt" TIMESTAMPTZ,
+      "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )`,
+    `CREATE INDEX IF NOT EXISTS saas_commission_tenant_idx ON saas_commission_logs("tenantId")`,
+    `CREATE INDEX IF NOT EXISTS saas_commission_status_idx ON saas_commission_logs(status)`,
+
+    `CREATE TABLE IF NOT EXISTS scheduled_repasses (
+      id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+      "tenantId" TEXT REFERENCES tenants(id),
+      "companyId" TEXT NOT NULL,
+      "contractId" TEXT,
+      "rentalId" TEXT,
+      "landlordId" TEXT NOT NULL,
+      "grossValue" DECIMAL(14,2) NOT NULL,
+      "commissionValue" DECIMAL(14,2) NOT NULL DEFAULT 0,
+      "netValue" DECIMAL(14,2) NOT NULL,
+      "scheduledDate" TIMESTAMPTZ NOT NULL,
+      status TEXT NOT NULL DEFAULT 'SCHEDULED',
+      "processedAt" TIMESTAMPTZ,
+      "failureReason" TEXT,
+      "asaasTransferId" TEXT,
+      metadata JSONB NOT NULL DEFAULT '{}',
+      "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )`,
+    `CREATE INDEX IF NOT EXISTS scheduled_repasses_tenant_idx ON scheduled_repasses("tenantId")`,
+    `CREATE INDEX IF NOT EXISTS scheduled_repasses_status_idx ON scheduled_repasses(status)`,
+    `CREATE INDEX IF NOT EXISTS scheduled_repasses_date_idx ON scheduled_repasses("scheduledDate")`,
+
+    `CREATE TABLE IF NOT EXISTS digital_signatures (
+      id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+      "companyId" TEXT NOT NULL,
+      "tenantId" TEXT REFERENCES tenants(id),
+      "contractId" TEXT,
+      "externalId" TEXT,
+      provider TEXT NOT NULL DEFAULT 'clicksign',
+      "documentUrl" TEXT,
+      "envelopeUrl" TEXT,
+      signers JSONB NOT NULL DEFAULT '[]',
+      status TEXT NOT NULL DEFAULT 'PENDING',
+      "signedAt" TIMESTAMPTZ,
+      "expiredAt" TIMESTAMPTZ,
+      metadata JSONB NOT NULL DEFAULT '{}',
+      "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )`,
+    `CREATE INDEX IF NOT EXISTS digital_signatures_company_idx ON digital_signatures("companyId")`,
+    `CREATE INDEX IF NOT EXISTS digital_signatures_contract_idx ON digital_signatures("contractId")`,
+    `CREATE INDEX IF NOT EXISTS digital_signatures_status_idx ON digital_signatures(status)`,
+
+    `CREATE TABLE IF NOT EXISTS auction_ai_analyses (
+      id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+      "auctionId" TEXT NOT NULL REFERENCES auctions(id),
+      "editalUrl" TEXT,
+      "totalDebts" DECIMAL(14,2),
+      "iptuDebt" DECIMAL(14,2),
+      "condoDebt" DECIMAL(14,2),
+      "otherDebts" DECIMAL(14,2),
+      "occupationStatus" TEXT,
+      "occupationRisk" TEXT,
+      "estimatedReformCost" DECIMAL(14,2),
+      "estimatedITBI" DECIMAL(14,2),
+      "estimatedCartorio" DECIMAL(14,2),
+      "totalInvestment" DECIMAL(14,2),
+      "estimatedMarketValue" DECIMAL(14,2),
+      "estimatedROI" DOUBLE PRECISION,
+      "paybackMonths" INTEGER,
+      "monthlyYield" DOUBLE PRECISION,
+      "riskLevel" TEXT NOT NULL DEFAULT 'MEDIUM',
+      "aiSummary" TEXT,
+      "rawAnalysis" JSONB NOT NULL DEFAULT '{}',
+      "analyzedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )`,
+    `CREATE INDEX IF NOT EXISTS auction_ai_auction_idx ON auction_ai_analyses("auctionId")`,
+    `CREATE INDEX IF NOT EXISTS auction_ai_risk_idx ON auction_ai_analyses("riskLevel")`,
+  ]
+  for (const sql of saasMigrations) {
+    try { await prisma.$executeRawUnsafe(sql) } catch { /* already exists */ }
+  }
+
   for (const [col, type] of columns) {
     try {
       await prisma.$executeRawUnsafe(
@@ -632,12 +765,19 @@ async function bootstrap() {
   await app.register(specialistPaymentRoutes,  { prefix: '/api/v1/specialists/payments' })
   await app.register(seoProgramaticoRoutes,    { prefix: '/api/v1/seo' })
   await app.register(financialAnalysisRoutes,  { prefix: '/api/v1/financial' })
+  await app.register(seoIndexingRoutes,         { prefix: '/api/v1/seo/indexing' })
   await app.register(aiMarketingRoutes,        { prefix: '/api/v1/ai-marketing' })
   await app.register(leadScoringRoutes,        { prefix: '/api/v1/lead-scoring' })
   await app.register(maintenanceRoutes,        { prefix: '/api/v1/maintenance' })
   await app.register(ownerDashboardRoutes,     { prefix: '/api/v1/owner-dashboard' })
   await app.register(billingAutomationRoutes,  { prefix: '/api/v1/billing' })
   await app.register(asaasWebhookRoutes,       { prefix: '/api/v1/finance/webhook' })
+  await app.register(tenantRoutes,             { prefix: '/api/v1/tenants' })
+  await app.register(repasseRoutes,            { prefix: '/api/v1/repasse' })
+  await app.register(signatureRoutes,          { prefix: '/api/v1/signatures' })
+  await app.register(auctionAIRoutes,          { prefix: '/api/v1/auction-ai' })
+  await app.register(importRoutes,             { prefix: '/api/v1/import' })
+  await app.register(masterRoutes,             { prefix: '/api/v1/master' })
 
   // ── Re-ativar leilões bancários fechados erroneamente pelo cleanup ────
   try {
