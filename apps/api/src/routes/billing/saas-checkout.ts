@@ -127,8 +127,8 @@ export default async function saasBillingRoutes(app: FastifyInstance) {
         data: {
           name: body.tenantName,
           subdomain: body.subdomain,
-          layoutType: body.layoutType || 'clean',
-          primaryColor: body.primaryColor || '#3b82f6',
+          layoutType: body.layoutType || 'urban_tech',
+          primaryColor: body.primaryColor || '#d4a853',
           plan: plan.slug.toUpperCase(),
           planStatus: 'TRIAL',
           planPrice: price,

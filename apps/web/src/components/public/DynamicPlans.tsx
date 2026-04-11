@@ -100,7 +100,7 @@ export function DynamicPlans() {
   const [checkoutLoading, setCheckoutLoading] = useState(false)
   const [checkoutForm, setCheckoutForm] = useState({
     name: '', email: '', cpfCnpj: '', phone: '',
-    tenantName: '', subdomain: '', layoutType: 'clean', primaryColor: '#3b82f6',
+    tenantName: '', subdomain: '', layoutType: 'urban_tech', primaryColor: '#d4a853',
   })
 
   useEffect(() => {
@@ -131,10 +131,10 @@ export function DynamicPlans() {
   return (
     <div className="space-y-16">
       {/* Billing toggle */}
-      <div className="flex items-center justify-center gap-3">
+      <div className="flex items-center justify-center gap-2 sm:gap-3">
         <button
           onClick={() => setBillingCycle('monthly')}
-          className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+          className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition ${
             billingCycle === 'monthly' ? 'bg-white/10 text-white' : 'text-gray-500 hover:text-gray-300'
           }`}
         >
@@ -142,19 +142,19 @@ export function DynamicPlans() {
         </button>
         <button
           onClick={() => setBillingCycle('yearly')}
-          className={`px-4 py-2 rounded-lg text-sm font-medium transition relative ${
+          className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition relative ${
             billingCycle === 'yearly' ? 'bg-white/10 text-white' : 'text-gray-500 hover:text-gray-300'
           }`}
         >
           Anual
-          <span className="absolute -top-2 -right-4 text-[10px] bg-emerald-500 text-white px-1.5 py-0.5 rounded-full font-bold">
+          <span className="absolute -top-2 -right-3 sm:-right-4 text-[10px] bg-emerald-500 text-white px-1 sm:px-1.5 py-0.5 rounded-full font-bold">
             -17%
           </span>
         </button>
       </div>
 
       {/* Plan Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+      <div className="grid grid-cols-1 gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3 max-w-5xl mx-auto px-2 sm:px-0">
         {plans.map(plan => {
           const style = PLAN_STYLES[plan.slug] || PLAN_STYLES.lite
           const Icon = PLAN_ICONS[plan.slug] || Zap
@@ -165,59 +165,59 @@ export function DynamicPlans() {
           return (
             <div
               key={plan.id}
-              className={`relative flex flex-col rounded-2xl border ${style.border} bg-gradient-to-b ${style.bg} backdrop-blur-sm p-6 transition-all hover:scale-[1.02] ${
-                plan.highlighted ? 'ring-2 ring-amber-500/50 shadow-lg shadow-amber-500/10' : ''
+              className={`relative flex flex-col rounded-xl sm:rounded-2xl border ${style.border} bg-gradient-to-b ${style.bg} backdrop-blur-sm p-4 sm:p-6 transition-all hover:scale-[1.01] sm:hover:scale-[1.02] ${
+                plan.highlighted ? 'ring-2 ring-amber-500/50 shadow-lg shadow-amber-500/10 order-first sm:order-none' : ''
               }`}
             >
               {plan.highlighted && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <span className="bg-amber-500 text-gray-950 text-xs font-bold px-3 py-1 rounded-full">
+                  <span className="bg-amber-500 text-gray-950 text-[10px] sm:text-xs font-bold px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full whitespace-nowrap">
                     Mais Popular
                   </span>
                 </div>
               )}
 
-              <div className="flex items-center gap-3 mb-4">
-                <div className={`w-10 h-10 rounded-xl ${style.badge} flex items-center justify-center`}>
-                  <Icon className="w-5 h-5" />
+              <div className="flex items-center gap-2.5 sm:gap-3 mb-3 sm:mb-4">
+                <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl ${style.badge} flex items-center justify-center flex-shrink-0`}>
+                  <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
                 </div>
-                <div>
-                  <h3 className="text-lg font-bold text-white">{plan.name}</h3>
+                <div className="min-w-0">
+                  <h3 className="text-base sm:text-lg font-bold text-white">{plan.name}</h3>
                   {plan.description && (
-                    <p className="text-xs text-gray-400">{plan.description}</p>
+                    <p className="text-[11px] sm:text-xs text-gray-400 truncate">{plan.description}</p>
                   )}
                 </div>
               </div>
 
-              <div className="mb-6">
+              <div className="mb-4 sm:mb-6">
                 <div className="flex items-baseline gap-1">
-                  <span className="text-3xl font-bold text-white">R$ {formatPrice(price)}</span>
-                  <span className="text-sm text-gray-400">/mês</span>
+                  <span className="text-2xl sm:text-3xl font-bold text-white">R$ {formatPrice(price)}</span>
+                  <span className="text-xs sm:text-sm text-gray-400">/mês</span>
                 </div>
                 {billingCycle === 'yearly' && plan.priceYearly && (
-                  <p className="text-xs text-emerald-400 mt-1">
+                  <p className="text-[11px] sm:text-xs text-emerald-400 mt-1">
                     R$ {formatPrice(plan.priceYearly)}/ano — economia de R$ {formatPrice(Number(plan.priceMonthly) * 12 - Number(plan.priceYearly))}
                   </p>
                 )}
               </div>
 
               {/* Features */}
-              <ul className="space-y-2 mb-6 flex-1">
+              <ul className="space-y-1.5 sm:space-y-2 mb-4 sm:mb-6 flex-1">
                 {plan.features.map((feature, i) => (
-                  <li key={i} className="flex items-start gap-2 text-sm">
-                    <CheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
+                  <li key={i} className="flex items-start gap-2 text-xs sm:text-sm">
+                    <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
                     <span className="text-gray-300">{feature}</span>
                   </li>
                 ))}
                 {plan.maxProperties > 0 && (
-                  <li className="flex items-start gap-2 text-sm">
-                    <CheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
+                  <li className="flex items-start gap-2 text-xs sm:text-sm">
+                    <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
                     <span className="text-gray-300">Até {plan.maxProperties} imóveis</span>
                   </li>
                 )}
                 {plan.maxProperties === -1 && (
-                  <li className="flex items-start gap-2 text-sm">
-                    <Sparkles className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
+                  <li className="flex items-start gap-2 text-xs sm:text-sm">
+                    <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-400 flex-shrink-0 mt-0.5" />
                     <span className="text-gray-300">Imóveis ilimitados</span>
                   </li>
                 )}
@@ -225,9 +225,9 @@ export function DynamicPlans() {
 
               <button
                 onClick={() => setCheckoutPlan(plan)}
-                className={`block w-full text-center py-3 rounded-xl font-bold text-sm transition cursor-pointer ${style.cta}`}
+                className={`block w-full text-center py-2.5 sm:py-3 rounded-lg sm:rounded-xl font-bold text-xs sm:text-sm transition cursor-pointer ${style.cta}`}
               >
-                Assinar Agora <ArrowRight className="inline w-4 h-4 ml-1" />
+                Assinar Agora <ArrowRight className="inline w-3.5 h-3.5 sm:w-4 sm:h-4 ml-1" />
               </button>
             </div>
           )
@@ -239,26 +239,26 @@ export function DynamicPlans() {
         <div className="max-w-5xl mx-auto">
           <h3 className="text-2xl font-bold text-white text-center mb-2">Módulos Extras</h3>
           <p className="text-gray-400 text-center mb-8">Expanda seu plano com funcionalidades adicionais</p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 px-2 sm:px-0">
             {modules.map(mod => {
               const IconComp = MODULE_ICONS[mod.icon || ''] || Sparkles
               return (
-                <div key={mod.id} className="border border-gray-800 rounded-xl p-4 bg-gray-900/50 hover:border-gray-700 transition">
-                  <div className="flex items-center gap-3 mb-2">
-                    <IconComp className="w-5 h-5 text-amber-400" />
-                    <h4 className="font-semibold text-white text-sm">{mod.name}</h4>
+                <div key={mod.id} className="border border-gray-800 rounded-lg sm:rounded-xl p-3 sm:p-4 bg-gray-900/50 hover:border-gray-700 transition">
+                  <div className="flex items-center gap-2.5 mb-1.5 sm:mb-2">
+                    <IconComp className="w-4 h-4 sm:w-5 sm:h-5 text-amber-400 flex-shrink-0" />
+                    <h4 className="font-semibold text-white text-xs sm:text-sm">{mod.name}</h4>
                   </div>
                   {mod.description && (
-                    <p className="text-xs text-gray-400 mb-3">{mod.description}</p>
+                    <p className="text-[11px] sm:text-xs text-gray-400 mb-2 sm:mb-3 line-clamp-2">{mod.description}</p>
                   )}
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-bold text-amber-400">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs sm:text-sm font-bold text-amber-400">
                       {mod.priceMonthly ? `R$ ${formatPrice(mod.priceMonthly)}/mês` :
                        mod.priceOneTime ? `R$ ${formatPrice(mod.priceOneTime)} (único)` :
                        'Incluso'}
                     </span>
                     {mod.billingType !== 'included' && (
-                      <span className="text-[10px] bg-gray-800 text-gray-400 px-2 py-0.5 rounded-full">
+                      <span className="text-[10px] bg-gray-800 text-gray-400 px-1.5 py-0.5 rounded-full flex-shrink-0">
                         {mod.category}
                       </span>
                     )}
@@ -287,29 +287,33 @@ export function DynamicPlans() {
       )}
 
       {/* Security badge */}
-      <div className="flex items-center justify-center gap-3 text-gray-500 text-sm">
-        <Shield className="w-4 h-4" />
-        <span>Pagamento seguro via Asaas</span>
-        <Lock className="w-4 h-4 ml-2" />
-        <span>Protocolo Fort Knox</span>
+      <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 text-gray-500 text-xs sm:text-sm px-4">
+        <div className="flex items-center gap-1.5">
+          <Shield className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+          <span>Pagamento seguro via Asaas</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <Lock className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+          <span>Protocolo Fort Knox</span>
+        </div>
       </div>
 
       {/* ═══ Checkout Modal ═══ */}
       {checkoutPlan && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm px-4">
-          <div className="relative bg-gray-900 border border-gray-700 rounded-2xl w-full max-w-lg p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm px-0 sm:px-4">
+          <div className="relative bg-gray-900 border border-gray-700 rounded-t-2xl sm:rounded-2xl w-full sm:max-w-lg p-4 sm:p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
             {/* Close button */}
             <button
               onClick={() => { setCheckoutPlan(null); setCheckoutLoading(false) }}
-              className="absolute top-4 right-4 text-gray-400 hover:text-white transition"
+              className="absolute top-3 right-3 sm:top-4 sm:right-4 text-gray-400 hover:text-white transition"
             >
               <X className="w-5 h-5" />
             </button>
 
-            <h3 className="text-xl font-bold text-white mb-1">
+            <h3 className="text-lg sm:text-xl font-bold text-white mb-1 pr-8">
               Assinar Plano {checkoutPlan.name}
             </h3>
-            <p className="text-sm text-gray-400 mb-6">
+            <p className="text-xs sm:text-sm text-gray-400 mb-4 sm:mb-6">
               R$ {formatPrice(
                 billingCycle === 'yearly' && checkoutPlan.priceYearly
                   ? Math.round(Number(checkoutPlan.priceYearly) / 12)
@@ -360,72 +364,72 @@ export function DynamicPlans() {
                   setCheckoutLoading(false)
                 }
               }}
-              className="space-y-4"
+              className="space-y-3 sm:space-y-4"
             >
-              {/* Name */}
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">
-                  Nome completo *
-                </label>
-                <input
-                  required
-                  type="text"
-                  value={checkoutForm.name}
-                  onChange={(e) => setCheckoutForm(f => ({ ...f, name: e.target.value }))}
-                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2.5 text-white text-sm focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
-                  placeholder="João Silva"
-                />
+              {/* Name + Email side by side on larger screens */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">
+                    Nome completo *
+                  </label>
+                  <input
+                    required
+                    type="text"
+                    value={checkoutForm.name}
+                    onChange={(e) => setCheckoutForm(f => ({ ...f, name: e.target.value }))}
+                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 sm:py-2.5 text-white text-sm focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
+                    placeholder="João Silva"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">
+                    E-mail *
+                  </label>
+                  <input
+                    required
+                    type="email"
+                    value={checkoutForm.email}
+                    onChange={(e) => setCheckoutForm(f => ({ ...f, email: e.target.value }))}
+                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 sm:py-2.5 text-white text-sm focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
+                    placeholder="joao@empresa.com"
+                  />
+                </div>
               </div>
 
-              {/* Email */}
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">
-                  E-mail *
-                </label>
-                <input
-                  required
-                  type="email"
-                  value={checkoutForm.email}
-                  onChange={(e) => setCheckoutForm(f => ({ ...f, email: e.target.value }))}
-                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2.5 text-white text-sm focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
-                  placeholder="joao@empresa.com"
-                />
-              </div>
-
-              {/* CPF/CNPJ */}
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">
-                  CPF ou CNPJ *
-                </label>
-                <input
-                  required
-                  type="text"
-                  value={checkoutForm.cpfCnpj}
-                  onChange={(e) => setCheckoutForm(f => ({ ...f, cpfCnpj: e.target.value }))}
-                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2.5 text-white text-sm focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
-                  placeholder="000.000.000-00"
-                />
-              </div>
-
-              {/* Phone */}
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">
-                  Telefone
-                </label>
-                <input
-                  type="text"
-                  value={checkoutForm.phone}
-                  onChange={(e) => setCheckoutForm(f => ({ ...f, phone: e.target.value }))}
-                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2.5 text-white text-sm focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
-                  placeholder="(11) 99999-0000"
-                />
+              {/* CPF + Phone side by side */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">
+                    CPF ou CNPJ *
+                  </label>
+                  <input
+                    required
+                    type="text"
+                    value={checkoutForm.cpfCnpj}
+                    onChange={(e) => setCheckoutForm(f => ({ ...f, cpfCnpj: e.target.value }))}
+                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 sm:py-2.5 text-white text-sm focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
+                    placeholder="000.000.000-00"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">
+                    Telefone
+                  </label>
+                  <input
+                    type="text"
+                    value={checkoutForm.phone}
+                    onChange={(e) => setCheckoutForm(f => ({ ...f, phone: e.target.value }))}
+                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 sm:py-2.5 text-white text-sm focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
+                    placeholder="(11) 99999-0000"
+                  />
+                </div>
               </div>
 
               <hr className="border-gray-700" />
 
               {/* Tenant Name */}
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">
+                <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">
                   Nome do seu site *
                 </label>
                 <input
@@ -433,17 +437,17 @@ export function DynamicPlans() {
                   type="text"
                   value={checkoutForm.tenantName}
                   onChange={(e) => setCheckoutForm(f => ({ ...f, tenantName: e.target.value }))}
-                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2.5 text-white text-sm focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
+                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 sm:py-2.5 text-white text-sm focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
                   placeholder="Imobiliária Premium"
                 />
               </div>
 
               {/* Subdomain */}
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">
+                <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">
                   Subdomínio *
                 </label>
-                <div className="flex items-center gap-0">
+                <div className="flex items-center">
                   <input
                     required
                     type="text"
@@ -454,44 +458,45 @@ export function DynamicPlans() {
                         subdomain: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''),
                       }))
                     }
-                    className="flex-1 bg-gray-800 border border-gray-700 rounded-l-lg px-3 py-2.5 text-white text-sm focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
+                    className="flex-1 min-w-0 bg-gray-800 border border-gray-700 rounded-l-lg px-3 py-2 sm:py-2.5 text-white text-sm focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
                     placeholder="minha-imobiliaria"
                   />
-                  <span className="bg-gray-700 border border-gray-700 border-l-0 rounded-r-lg px-3 py-2.5 text-gray-400 text-sm">
+                  <span className="bg-gray-700 border border-gray-700 border-l-0 rounded-r-lg px-2 sm:px-3 py-2 sm:py-2.5 text-gray-400 text-[11px] sm:text-sm whitespace-nowrap flex-shrink-0">
                     .agoraencontrei.com.br
                   </span>
                 </div>
               </div>
 
-              {/* Layout Type */}
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">
-                  Layout do site
-                </label>
-                <select
-                  value={checkoutForm.layoutType}
-                  onChange={(e) => setCheckoutForm(f => ({ ...f, layoutType: e.target.value }))}
-                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2.5 text-white text-sm focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
-                >
-                  <option value="clean">Clean — Moderno e Minimalista</option>
-                  <option value="classic">Classic — Tradicional e Elegante</option>
-                  <option value="bold">Bold — Vibrante e Impactante</option>
-                </select>
-              </div>
-
-              {/* Primary Color */}
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">
-                  Cor principal
-                </label>
-                <div className="flex items-center gap-3">
-                  <input
-                    type="color"
-                    value={checkoutForm.primaryColor}
-                    onChange={(e) => setCheckoutForm(f => ({ ...f, primaryColor: e.target.value }))}
-                    className="w-10 h-10 rounded-lg border border-gray-700 bg-gray-800 cursor-pointer"
-                  />
-                  <span className="text-sm text-gray-400">{checkoutForm.primaryColor}</span>
+              {/* Layout + Color side by side */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">
+                    Layout do site
+                  </label>
+                  <select
+                    value={checkoutForm.layoutType}
+                    onChange={(e) => setCheckoutForm(f => ({ ...f, layoutType: e.target.value }))}
+                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 sm:py-2.5 text-white text-sm focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
+                  >
+                    <option value="urban_tech">Urban Tech</option>
+                    <option value="clean">Clean</option>
+                    <option value="classic">Classic</option>
+                    <option value="bold">Bold</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">
+                    Cor principal
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="color"
+                      value={checkoutForm.primaryColor}
+                      onChange={(e) => setCheckoutForm(f => ({ ...f, primaryColor: e.target.value }))}
+                      className="w-9 h-9 rounded-lg border border-gray-700 bg-gray-800 cursor-pointer flex-shrink-0"
+                    />
+                    <span className="text-xs text-gray-400">{checkoutForm.primaryColor}</span>
+                  </div>
                 </div>
               </div>
 
@@ -499,7 +504,7 @@ export function DynamicPlans() {
               <button
                 type="submit"
                 disabled={checkoutLoading}
-                className="w-full py-3 rounded-xl font-bold text-sm transition bg-amber-600 hover:bg-amber-500 text-gray-950 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="w-full py-2.5 sm:py-3 rounded-lg sm:rounded-xl font-bold text-xs sm:text-sm transition bg-amber-600 hover:bg-amber-500 text-gray-950 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {checkoutLoading ? (
                   <>
@@ -509,7 +514,7 @@ export function DynamicPlans() {
                 ) : (
                   <>
                     <Shield className="w-4 h-4" />
-                    Assinar e Pagar — R$ {formatPrice(
+                    Assinar — R$ {formatPrice(
                       billingCycle === 'yearly' && checkoutPlan.priceYearly
                         ? Number(checkoutPlan.priceYearly)
                         : Number(checkoutPlan.priceMonthly)
@@ -518,8 +523,8 @@ export function DynamicPlans() {
                 )}
               </button>
 
-              <p className="text-xs text-gray-500 text-center">
-                Pagamento seguro processado via Asaas. Você será redirecionado para a página de pagamento.
+              <p className="text-[11px] sm:text-xs text-gray-500 text-center">
+                Pagamento seguro via Asaas. Redirecionamento automático.
               </p>
             </form>
           </div>

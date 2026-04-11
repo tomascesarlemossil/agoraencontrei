@@ -109,12 +109,17 @@ function emptyPlan() {
   return {
     name: '',
     slug: '',
-    monthlyPrice: 0,
-    annualPrice: 0,
-    maxProperties: 0,
-    maxLeads: 0,
+    description: '',
+    priceMonthly: 0,
+    priceYearly: 0,
+    maxProperties: -1,
+    maxLeadViews: -1,
+    maxUsers: 1,
+    features: '[]',
+    modules: '[]',
+    themes: '[]',
     highlighted: false,
-    active: true,
+    isActive: true,
   };
 }
 
@@ -136,11 +141,14 @@ function emptyModule() {
   return {
     name: '',
     slug: '',
-    monthlyPrice: 0,
-    chargeType: 'recurring',
-    category: '',
-    minimumPlan: '',
-    active: true,
+    description: '',
+    priceMonthly: 0,
+    priceOneTime: 0,
+    billingType: 'recurring',
+    category: 'feature',
+    requiredPlan: '',
+    icon: '',
+    isActive: true,
   };
 }
 
@@ -148,10 +156,12 @@ function emptyService() {
   return {
     name: '',
     slug: '',
+    description: '',
     price: 0,
-    chargeType: 'one-time',
-    category: '',
-    active: true,
+    billingType: 'one_time',
+    category: 'service',
+    icon: '',
+    isActive: true,
   };
 }
 
@@ -177,19 +187,19 @@ function DataTable<T extends Record<string, any>>({
   onDeactivate: (row: T) => void;
 }) {
   return (
-    <div className="overflow-x-auto rounded-lg border border-gray-800">
-      <table className="w-full text-sm">
+    <div className="-mx-4 sm:mx-0 overflow-x-auto rounded-none sm:rounded-lg border-y sm:border border-gray-800">
+      <table className="min-w-[600px] w-full text-sm">
         <thead>
           <tr className="border-b border-gray-800 bg-gray-900">
             {columns.map((col) => (
               <th
                 key={col.key}
-                className="px-4 py-3 text-left font-semibold text-gray-300"
+                className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-xs sm:text-sm font-semibold text-gray-300 whitespace-nowrap"
               >
                 {col.label}
               </th>
             ))}
-            <th className="px-4 py-3 text-left font-semibold text-gray-300">
+            <th className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-xs sm:text-sm font-semibold text-gray-300">
               Ações
             </th>
           </tr>
@@ -211,27 +221,27 @@ function DataTable<T extends Record<string, any>>({
               className="border-b border-gray-800/60 hover:bg-gray-900/50 transition-colors"
             >
               {columns.map((col) => (
-                <td key={col.key} className="px-4 py-3 text-gray-200">
+                <td key={col.key} className="px-3 py-2.5 sm:px-4 sm:py-3 text-xs sm:text-sm text-gray-200 whitespace-nowrap">
                   {col.render
                     ? col.render(row)
                     : String(row[col.key] ?? '—')}
                 </td>
               ))}
-              <td className="px-4 py-3">
-                <div className="flex gap-2">
+              <td className="px-3 py-2.5 sm:px-4 sm:py-3">
+                <div className="flex gap-1.5">
                   <button
                     onClick={() => onEdit(row)}
                     className="rounded p-1.5 text-gray-400 hover:bg-gray-800 hover:text-amber-400 transition-colors"
                     title="Editar"
                   >
-                    <Pencil size={16} />
+                    <Pencil size={14} />
                   </button>
                   <button
                     onClick={() => onDeactivate(row)}
                     className="rounded p-1.5 text-gray-400 hover:bg-gray-800 hover:text-red-400 transition-colors"
                     title="Desativar"
                   >
-                    <Trash2 size={16} />
+                    <Trash2 size={14} />
                   </button>
                 </div>
               </td>
@@ -272,10 +282,10 @@ function FormModal({
   saving: boolean;
 }) {
   return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-      <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-xl border border-gray-800 bg-gray-950 p-6 shadow-2xl">
+    <div className="fixed inset-0 z-40 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm px-0 sm:px-4">
+      <div className="relative w-full sm:max-w-2xl max-h-[85vh] sm:max-h-[90vh] overflow-y-auto rounded-t-xl sm:rounded-xl border border-gray-800 bg-gray-950 p-4 sm:p-6 shadow-2xl">
         <div className="mb-4 flex items-center justify-between">
-          <h3 className="text-lg font-bold text-white">{title}</h3>
+          <h3 className="text-base sm:text-lg font-bold text-white">{title}</h3>
           <button
             onClick={onCancel}
             className="rounded p-1 text-gray-400 hover:bg-gray-800 hover:text-white transition-colors"
@@ -284,7 +294,7 @@ function FormModal({
           </button>
         </div>
 
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-3 sm:gap-4 sm:grid-cols-2">
           {fields.map((f) => (
             <div
               key={f.key}
@@ -382,29 +392,37 @@ function FormModal({
 const PLAN_FIELDS: FieldDef[] = [
   { key: 'name', label: 'Nome', type: 'text' },
   { key: 'slug', label: 'Slug', type: 'text' },
-  { key: 'monthlyPrice', label: 'Preço Mensal (R$)', type: 'number' },
-  { key: 'annualPrice', label: 'Preço Anual (R$)', type: 'number' },
-  { key: 'maxProperties', label: 'Max Imóveis', type: 'number' },
-  { key: 'maxLeads', label: 'Max Leads', type: 'number' },
+  { key: 'description', label: 'Descrição', type: 'text' },
+  { key: 'priceMonthly', label: 'Preço Mensal (R$)', type: 'number' },
+  { key: 'priceYearly', label: 'Preço Anual (R$)', type: 'number' },
+  { key: 'maxProperties', label: 'Max Imóveis (-1 = ilimitado)', type: 'number' },
+  { key: 'maxLeadViews', label: 'Max Leads (-1 = ilimitado)', type: 'number' },
+  { key: 'maxUsers', label: 'Max Usuários', type: 'number' },
+  { key: 'features', label: 'Features (JSON array)', type: 'textarea' },
+  { key: 'modules', label: 'Módulos inclusos (JSON array de slugs)', type: 'textarea' },
+  { key: 'themes', label: 'Temas permitidos (JSON array)', type: 'textarea' },
   { key: 'highlighted', label: 'Destaque', type: 'checkbox' },
-  { key: 'active', label: 'Ativo', type: 'checkbox' },
+  { key: 'isActive', label: 'Ativo', type: 'checkbox' },
 ];
 
 const PLAN_COLUMNS: Column<any>[] = [
   { key: 'name', label: 'Nome' },
   { key: 'slug', label: 'Slug' },
   {
-    key: 'monthlyPrice',
-    label: 'Preço Mensal',
-    render: (r) => `R$ ${Number(r.monthlyPrice ?? 0).toFixed(2)}`,
+    key: 'priceMonthly',
+    label: 'Mensal',
+    render: (r) => `R$ ${Number(r.priceMonthly ?? 0).toFixed(2)}`,
   },
   {
-    key: 'annualPrice',
-    label: 'Preço Anual',
-    render: (r) => `R$ ${Number(r.annualPrice ?? 0).toFixed(2)}`,
+    key: 'priceYearly',
+    label: 'Anual',
+    render: (r) => r.priceYearly ? `R$ ${Number(r.priceYearly).toFixed(2)}` : '—',
   },
-  { key: 'maxProperties', label: 'Max Imóveis' },
-  { key: 'maxLeads', label: 'Max Leads' },
+  {
+    key: 'maxProperties',
+    label: 'Imóveis',
+    render: (r) => r.maxProperties === -1 ? '∞' : String(r.maxProperties ?? 0),
+  },
   {
     key: 'highlighted',
     label: 'Destaque',
@@ -421,17 +439,17 @@ const PLAN_COLUMNS: Column<any>[] = [
     ),
   },
   {
-    key: 'active',
+    key: 'isActive',
     label: 'Ativo',
     render: (r) => (
       <span
         className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${
-          r.active
+          r.isActive
             ? 'bg-emerald-500/20 text-emerald-400'
             : 'bg-red-500/20 text-red-400'
         }`}
       >
-        {r.active ? 'Sim' : 'Não'}
+        {r.isActive ? 'Sim' : 'Não'}
       </span>
     ),
   },
@@ -495,45 +513,58 @@ const NICHE_COLUMNS: Column<any>[] = [
 const MODULE_FIELDS: FieldDef[] = [
   { key: 'name', label: 'Nome', type: 'text' },
   { key: 'slug', label: 'Slug', type: 'text' },
-  { key: 'monthlyPrice', label: 'Preço Mensal (R$)', type: 'number' },
+  { key: 'description', label: 'Descrição', type: 'textarea' },
+  { key: 'priceMonthly', label: 'Preço Mensal (R$)', type: 'number' },
+  { key: 'priceOneTime', label: 'Preço Avulso (R$)', type: 'number' },
   {
-    key: 'chargeType',
+    key: 'billingType',
     label: 'Tipo Cobrança',
     type: 'select',
     options: [
       { value: 'recurring', label: 'Recorrente' },
-      { value: 'one-time', label: 'Avulso' },
-      { value: 'usage', label: 'Por Uso' },
+      { value: 'one_time', label: 'Avulso' },
+      { value: 'included', label: 'Incluso no Plano' },
     ],
   },
-  { key: 'category', label: 'Categoria', type: 'text' },
-  { key: 'minimumPlan', label: 'Plano Mínimo', type: 'text' },
-  { key: 'active', label: 'Ativo', type: 'checkbox' },
+  {
+    key: 'category',
+    label: 'Categoria',
+    type: 'select',
+    options: [
+      { value: 'feature', label: 'Feature' },
+      { value: 'integration', label: 'Integração' },
+      { value: 'ai', label: 'IA' },
+      { value: 'design', label: 'Design' },
+    ],
+  },
+  { key: 'requiredPlan', label: 'Plano Mínimo (slug)', type: 'text' },
+  { key: 'icon', label: 'Ícone (Lucide)', type: 'text' },
+  { key: 'isActive', label: 'Ativo', type: 'checkbox' },
 ];
 
 const MODULE_COLUMNS: Column<any>[] = [
   { key: 'name', label: 'Nome' },
   { key: 'slug', label: 'Slug' },
   {
-    key: 'monthlyPrice',
-    label: 'Preço Mensal',
-    render: (r) => `R$ ${Number(r.monthlyPrice ?? 0).toFixed(2)}`,
+    key: 'priceMonthly',
+    label: 'Mensal',
+    render: (r) => r.priceMonthly ? `R$ ${Number(r.priceMonthly).toFixed(2)}` : '—',
   },
-  { key: 'chargeType', label: 'Tipo Cobrança' },
+  { key: 'billingType', label: 'Cobrança' },
   { key: 'category', label: 'Categoria' },
-  { key: 'minimumPlan', label: 'Plano Mínimo' },
+  { key: 'requiredPlan', label: 'Plano Mín.' },
   {
-    key: 'active',
+    key: 'isActive',
     label: 'Ativo',
     render: (r) => (
       <span
         className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${
-          r.active
+          r.isActive
             ? 'bg-emerald-500/20 text-emerald-400'
             : 'bg-red-500/20 text-red-400'
         }`}
       >
-        {r.active ? 'Sim' : 'Não'}
+        {r.isActive ? 'Sim' : 'Não'}
       </span>
     ),
   },
@@ -546,19 +577,29 @@ const MODULE_COLUMNS: Column<any>[] = [
 const SERVICE_FIELDS: FieldDef[] = [
   { key: 'name', label: 'Nome', type: 'text' },
   { key: 'slug', label: 'Slug', type: 'text' },
+  { key: 'description', label: 'Descrição', type: 'textarea' },
   { key: 'price', label: 'Preço (R$)', type: 'number' },
   {
-    key: 'chargeType',
+    key: 'billingType',
     label: 'Tipo Cobrança',
     type: 'select',
     options: [
-      { value: 'one-time', label: 'Avulso' },
+      { value: 'one_time', label: 'Avulso' },
       { value: 'recurring', label: 'Recorrente' },
-      { value: 'usage', label: 'Por Uso' },
     ],
   },
-  { key: 'category', label: 'Categoria', type: 'text' },
-  { key: 'active', label: 'Ativo', type: 'checkbox' },
+  {
+    key: 'category',
+    label: 'Categoria',
+    type: 'select',
+    options: [
+      { value: 'service', label: 'Serviço' },
+      { value: 'consulting', label: 'Consultoria' },
+      { value: 'premium', label: 'Premium' },
+    ],
+  },
+  { key: 'icon', label: 'Ícone (Lucide)', type: 'text' },
+  { key: 'isActive', label: 'Ativo', type: 'checkbox' },
 ];
 
 const SERVICE_COLUMNS: Column<any>[] = [
@@ -569,20 +610,20 @@ const SERVICE_COLUMNS: Column<any>[] = [
     label: 'Preço',
     render: (r) => `R$ ${Number(r.price ?? 0).toFixed(2)}`,
   },
-  { key: 'chargeType', label: 'Tipo Cobrança' },
+  { key: 'billingType', label: 'Cobrança' },
   { key: 'category', label: 'Categoria' },
   {
-    key: 'active',
+    key: 'isActive',
     label: 'Ativo',
     render: (r) => (
       <span
         className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${
-          r.active
+          r.isActive
             ? 'bg-emerald-500/20 text-emerald-400'
             : 'bg-red-500/20 text-red-400'
         }`}
       >
-        {r.active ? 'Sim' : 'Não'}
+        {r.isActive ? 'Sim' : 'Não'}
       </span>
     ),
   },
@@ -752,6 +793,26 @@ export default function AdminMasterPage() {
         clone.categories = JSON.stringify(clone.categories ?? [], null, 2);
       }
     }
+    // For plans, serialize array fields for editing
+    if (activeTab === 'plans') {
+      if (typeof clone.features !== 'string') {
+        clone.features = JSON.stringify(clone.features ?? [], null, 2);
+      }
+      if (typeof clone.modules !== 'string') {
+        clone.modules = JSON.stringify(clone.modules ?? [], null, 2);
+      }
+      if (typeof clone.themes !== 'string') {
+        clone.themes = JSON.stringify(clone.themes ?? [], null, 2);
+      }
+      // Ensure decimal fields are numbers
+      clone.priceMonthly = Number(clone.priceMonthly ?? 0);
+      clone.priceYearly = Number(clone.priceYearly ?? 0);
+    }
+    // For modules, ensure decimal fields are numbers
+    if (activeTab === 'modules') {
+      clone.priceMonthly = Number(clone.priceMonthly ?? 0);
+      clone.priceOneTime = Number(clone.priceOneTime ?? 0);
+    }
     setEditing(clone);
     setIsNew(false);
   };
@@ -787,7 +848,7 @@ export default function AdminMasterPage() {
         ? TAB_ENDPOINTS[activeTab]
         : `${TAB_ENDPOINTS[activeTab]}/${id}`;
 
-      // Prepare body: parse JSON fields for niches
+      // Prepare body: parse JSON fields
       const body = { ...editing };
       if (activeTab === 'niches') {
         try {
@@ -810,6 +871,26 @@ export default function AdminMasterPage() {
           setSaving(false);
           return;
         }
+      }
+      if (activeTab === 'plans') {
+        for (const arrKey of ['features', 'modules', 'themes']) {
+          try {
+            body[arrKey] =
+              typeof body[arrKey] === 'string'
+                ? JSON.parse(body[arrKey])
+                : (body[arrKey] ?? []);
+          } catch {
+            addToast(`${arrKey} contém JSON inválido.`, 'error');
+            setSaving(false);
+            return;
+          }
+        }
+        body.priceMonthly = Number(body.priceMonthly ?? 0);
+        body.priceYearly = Number(body.priceYearly ?? 0) || null;
+      }
+      if (activeTab === 'modules') {
+        body.priceMonthly = Number(body.priceMonthly ?? 0) || null;
+        body.priceOneTime = Number(body.priceOneTime ?? 0) || null;
       }
 
       const res = await api(url, token, {
@@ -935,16 +1016,15 @@ export default function AdminMasterPage() {
 
       {/* Header */}
       <div className="border-b border-gray-800 bg-gray-950">
-        <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-3">
-            <ShieldAlert size={28} className="text-amber-400" />
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight text-white">
-                Controle Master — Configuração Dinâmica
+        <div className="mx-auto max-w-7xl px-4 py-4 sm:py-6 sm:px-6 lg:px-8">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <ShieldAlert size={22} className="text-amber-400 flex-shrink-0 sm:w-7 sm:h-7" />
+            <div className="min-w-0">
+              <h1 className="text-lg sm:text-2xl font-bold tracking-tight text-white truncate">
+                Controle Master
               </h1>
-              <p className="mt-1 text-sm text-gray-400">
-                Gerencie planos, nichos, módulos, serviços e configurações
-                globais da plataforma.
+              <p className="mt-0.5 text-xs sm:text-sm text-gray-400 line-clamp-1">
+                Planos, módulos, serviços e configurações da plataforma
               </p>
             </div>
           </div>
@@ -954,12 +1034,12 @@ export default function AdminMasterPage() {
       {/* Tabs */}
       <div className="border-b border-gray-800">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <nav className="-mb-px flex gap-1 overflow-x-auto">
+          <nav className="-mb-px flex gap-0 overflow-x-auto scrollbar-hide">
             {TABS.map((tab) => (
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
-                className={`whitespace-nowrap border-b-2 px-4 py-3 text-sm font-medium transition-colors ${
+                className={`whitespace-nowrap border-b-2 px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-medium transition-colors ${
                   activeTab === tab.key
                     ? 'border-amber-500 text-amber-400'
                     : 'border-transparent text-gray-400 hover:border-gray-700 hover:text-gray-200'
@@ -973,11 +1053,11 @@ export default function AdminMasterPage() {
       </div>
 
       {/* Content */}
-      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl px-4 py-4 sm:py-6 sm:px-6 lg:px-8">
         {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <Loader2 size={32} className="animate-spin text-amber-400" />
-            <span className="ml-3 text-gray-400">Carregando...</span>
+          <div className="flex items-center justify-center py-12 sm:py-20">
+            <Loader2 size={28} className="animate-spin text-amber-400" />
+            <span className="ml-3 text-sm text-gray-400">Carregando...</span>
           </div>
         ) : activeTab === 'settings' ? (
           /* ---------- Settings Tab ---------- */
@@ -1015,16 +1095,17 @@ export default function AdminMasterPage() {
         ) : (
           /* ---------- CRUD Tabs ---------- */
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-white">
+            <div className="flex items-center justify-between gap-2">
+              <h2 className="text-base sm:text-lg font-semibold text-white">
                 {TABS.find((t) => t.key === activeTab)?.label}
               </h2>
               <button
                 onClick={handleCreate}
-                className="flex items-center gap-2 rounded-lg bg-amber-600 px-4 py-2 text-sm font-medium text-white hover:bg-amber-500 transition-colors"
+                className="flex items-center gap-1.5 rounded-lg bg-amber-600 px-3 py-2 sm:px-4 text-xs sm:text-sm font-medium text-white hover:bg-amber-500 transition-colors flex-shrink-0"
               >
-                <Plus size={16} />
-                Criar Novo
+                <Plus size={14} />
+                <span className="hidden sm:inline">Criar Novo</span>
+                <span className="sm:hidden">Novo</span>
               </button>
             </div>
 

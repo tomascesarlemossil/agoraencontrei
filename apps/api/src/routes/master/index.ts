@@ -206,15 +206,17 @@ export default async function masterRoutes(app: FastifyInstance) {
       repasseFixedDay: z.number().int().min(1).max(31).optional(),
     }).parse(req.body)
 
-    const PLAN_PRICES: Record<string, number> = {
-      LITE: 450,
-      PRO: 1199,
-      ENTERPRISE: 2499,
-    }
-
     const updateData: any = { ...body }
+
+    // If changing plan without explicit price, read from PlanDefinition (never hardcode)
     if (body.plan && !body.planPrice) {
-      updateData.planPrice = PLAN_PRICES[body.plan]
+      const planDef = await (app.prisma as any).planDefinition.findFirst({
+        where: { slug: body.plan.toLowerCase(), isActive: true },
+        select: { priceMonthly: true },
+      }).catch(() => null)
+      if (planDef) {
+        updateData.planPrice = Number(planDef.priceMonthly)
+      }
     }
     if (body.planStatus === 'ACTIVE' && !updateData.activatedAt) {
       updateData.activatedAt = new Date()
