@@ -1018,12 +1018,12 @@ export default async function publicRoutes(app: FastifyInstance) {
     // BBOX filter — only apply when all 4 coords are provided
     const hasBbox = swLat && swLng && neLat && neLng
     const bboxStr = hasBbox ? `:${swLat},${swLng},${neLat},${neLng}` : ''
-    const cacheKey = `pub:map-clusters:v2:${company.id}:${purpose ?? ''}:${type ?? ''}${bboxStr}`
+    const cacheKey = `pub:map-clusters:v3:marketplace:${purpose ?? ''}:${type ?? ''}${bboxStr}`
     const cached = await cacheGet(app.redis, cacheKey)
     if (cached) return reply.send(cached)
 
+    // Show clusters from ALL companies (marketplace) — matches properties endpoint
     const where: any = {
-      companyId: company.id,
       status: 'ACTIVE',
       authorizedPublish: true,
       neighborhood: { not: null },
