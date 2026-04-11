@@ -26,6 +26,27 @@ const UpdateLeadBody = z.object({
   tags:        z.array(z.string()).optional(),
 })
 
+// Plan limits for lead views per month (-1 = unlimited)
+const PLAN_LEAD_LIMITS: Record<string, number> = {
+  LITE: 10,
+  START: 10,
+  MODERADO: 50,
+  PRIME: 50,
+  PRO: -1,
+  VIP: -1,
+  ENTERPRISE: -1,
+}
+
+function maskContact(value: string | null): string | null {
+  if (!value) return null
+  if (value.includes('@')) {
+    const [user, domain] = value.split('@')
+    return `${user.slice(0, 2)}***@${domain}`
+  }
+  // Phone: show first 4 digits + mask
+  return value.slice(0, 4) + '****' + value.slice(-2)
+}
+
 export default async function leadsRoutes(app: FastifyInstance) {
   app.addHook('preHandler', app.authenticate)
 
@@ -54,6 +75,41 @@ export default async function leadsRoutes(app: FastifyInstance) {
     const page  = parseInt(q.page  ?? '1',  10)
     const limit = parseInt(q.limit ?? '50', 10)
 
+    // ── Plan-based lead view gating ──
+    let planGated = false
+    let viewsUsed = 0
+    let viewsLimit = -1
+
+    // Only gate non-admin users
+    if (!['SUPER_ADMIN', 'ADMIN'].includes(req.user.role)) {
+      // Lookup user's plan via company tenant
+      const tenant = await (app.prisma as any).tenant?.findFirst?.({
+        where: { companyId: req.user.cid, isActive: true },
+        select: { plan: true },
+      }).catch(() => null)
+
+      const plan = tenant?.plan || 'LITE'
+      viewsLimit = PLAN_LEAD_LIMITS[plan] ?? PLAN_LEAD_LIMITS.LITE
+
+      if (viewsLimit !== -1) {
+        // Count lead views this month
+        const monthStart = new Date()
+        monthStart.setDate(1)
+        monthStart.setHours(0, 0, 0, 0)
+
+        viewsUsed = await app.prisma.auditLog.count({
+          where: {
+            companyId: req.user.cid,
+            action: 'lead.view' as any,
+            userId: req.user.sub,
+            createdAt: { gte: monthStart },
+          },
+        }).catch(() => 0)
+
+        planGated = viewsUsed >= viewsLimit
+      }
+    }
+
     const [total, items] = await Promise.all([
       app.prisma.lead.count({ where }),
       app.prisma.lead.findMany({
@@ -69,7 +125,21 @@ export default async function leadsRoutes(app: FastifyInstance) {
       }),
     ])
 
-    return reply.send({ data: items, meta: { total, page, limit, totalPages: Math.ceil(total / limit) } })
+    // If plan-gated, mask contact data for items beyond the limit
+    const maskedItems = planGated
+      ? items.map((item: any) => ({
+          ...item,
+          email: maskContact(item.email),
+          phone: maskContact(item.phone),
+          _planGated: true,
+        }))
+      : items
+
+    return reply.send({
+      data: maskedItems,
+      meta: { total, page, limit, totalPages: Math.ceil(total / limit) },
+      planQuota: viewsLimit !== -1 ? { used: viewsUsed, limit: viewsLimit, gated: planGated } : undefined,
+    })
   })
 
   // POST /api/v1/leads — create (also used by portal webhooks)
@@ -155,6 +225,20 @@ export default async function leadsRoutes(app: FastifyInstance) {
     })
 
     if (!lead) return reply.status(404).send({ error: 'NOT_FOUND' })
+
+    // Track lead view for plan quota
+    if (!['SUPER_ADMIN', 'ADMIN'].includes(req.user.role)) {
+      await app.prisma.auditLog.create({
+        data: {
+          companyId: req.user.cid,
+          userId: req.user.sub,
+          action: 'lead.view' as any,
+          resource: 'lead',
+          resourceId: id,
+        },
+      }).catch(() => {})
+    }
+
     return reply.send(lead)
   })
 

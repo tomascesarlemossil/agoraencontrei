@@ -231,6 +231,11 @@ export default function ProcessoDetailPage() {
         ))}
       </div>
 
+      {/* Timeline de Retomada — visual progress for property repossession cases */}
+      {(c.type === 'DESPEJO' || c.type === 'COBRANCA' || c.metadata?.isRepossession) && (
+        <RetomadaTimeline legalCase={c} />
+      )}
+
       {/* Tab: Informações */}
       {activeTab === 'info' && (
         <div className="space-y-4">
@@ -529,6 +534,120 @@ export default function ProcessoDetailPage() {
               {savingEdit ? 'Salvando...' : 'Salvar Alterações'}
             </button>
           </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── Retomada Timeline Component ─────────────────────────────────────────────
+
+const RETOMADA_STAGES = [
+  { key: 'arrematacao',    label: 'Arrematação',         icon: '🔨', description: 'Imóvel arrematado em leilão' },
+  { key: 'carta_arrem',   label: 'Carta de Arrematação', icon: '📜', description: 'Expedição da carta pelo juiz' },
+  { key: 'registro',      label: 'Registro em Cartório', icon: '🏛️', description: 'Transferência de titularidade' },
+  { key: 'notificacao',   label: 'Notificação',          icon: '📩', description: 'Notificação do ocupante para desocupação' },
+  { key: 'imissao_posse', label: 'Imissão na Posse',     icon: '🔑', description: 'Pedido judicial de posse' },
+  { key: 'desocupacao',   label: 'Desocupação',          icon: '🏠', description: 'Imóvel desocupado e disponível' },
+]
+
+function getRetomadaStage(legalCase: any): number {
+  const updates = (legalCase.updates ?? []).map((u: any) => u.description?.toLowerCase() ?? '')
+  const allText = [legalCase.observations, legalCase.internalNotes, ...updates]
+    .filter(Boolean).join(' ').toLowerCase()
+
+  if (allText.includes('desocup') || allText.includes('posse obtida') || allText.includes('entrega das chaves') || legalCase.status === 'ENCERRADO')
+    return 6
+  if (allText.includes('imissão') || allText.includes('imissao') || allText.includes('mandado de imissão'))
+    return 5
+  if (allText.includes('notificação') || allText.includes('notificado') || allText.includes('intimação'))
+    return 4
+  if (allText.includes('registr') || allText.includes('cartório') || allText.includes('cartorio') || allText.includes('matrícula'))
+    return 3
+  if (allText.includes('carta de arrematação') || allText.includes('carta arrematação') || allText.includes('expedição'))
+    return 2
+  if (allText.includes('arrematação') || allText.includes('arrematado') || allText.includes('leilão'))
+    return 1
+
+  return 0
+}
+
+function RetomadaTimeline({ legalCase }: { legalCase: any }) {
+  const currentStage = getRetomadaStage(legalCase)
+
+  return (
+    <div className="bg-gradient-to-r from-indigo-500/5 to-purple-500/5 rounded-xl border border-indigo-500/20 p-5">
+      <div className="flex items-center gap-2 mb-4">
+        <Scale className="w-4 h-4 text-indigo-400" />
+        <h3 className="text-sm font-bold text-indigo-300">Timeline de Retomada</h3>
+        <span className="text-xs bg-indigo-500/20 text-indigo-400 px-2 py-0.5 rounded-full ml-auto">
+          {currentStage}/{RETOMADA_STAGES.length} etapas
+        </span>
+      </div>
+
+      {/* Progress bar */}
+      <div className="relative mb-6">
+        <div className="h-2 bg-white/10 rounded-full">
+          <div
+            className="h-full bg-gradient-to-r from-indigo-500 to-emerald-500 rounded-full transition-all duration-700"
+            style={{ width: `${(currentStage / RETOMADA_STAGES.length) * 100}%` }}
+          />
+        </div>
+      </div>
+
+      {/* Stage cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        {RETOMADA_STAGES.map((stage, idx) => {
+          const stageNum = idx + 1
+          const isCompleted = stageNum <= currentStage
+          const isCurrent = stageNum === currentStage
+          const isPending = stageNum > currentStage
+
+          return (
+            <div
+              key={stage.key}
+              className={`relative rounded-xl p-3 text-center transition-all ${
+                isCurrent
+                  ? 'bg-indigo-500/20 border-2 border-indigo-500/50 ring-2 ring-indigo-500/20'
+                  : isCompleted
+                    ? 'bg-emerald-500/10 border border-emerald-500/30'
+                    : 'bg-white/5 border border-white/10 opacity-50'
+              }`}
+            >
+              <div className="text-2xl mb-1">{stage.icon}</div>
+              <div className={`text-xs font-bold mb-0.5 ${
+                isCurrent ? 'text-indigo-300' : isCompleted ? 'text-emerald-400' : 'text-white/40'
+              }`}>
+                {stage.label}
+              </div>
+              <div className="text-[10px] text-white/30 leading-tight">{stage.description}</div>
+
+              {/* Status indicator */}
+              <div className={`absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${
+                isCompleted
+                  ? 'bg-emerald-500 text-white'
+                  : isCurrent
+                    ? 'bg-indigo-500 text-white animate-pulse'
+                    : 'bg-white/20 text-white/40'
+              }`}>
+                {isCompleted ? '✓' : isPending ? stageNum : '●'}
+              </div>
+            </div>
+          )
+        })}
+      </div>
+
+      {currentStage > 0 && currentStage < RETOMADA_STAGES.length && (
+        <div className="mt-4 flex items-center gap-2 text-xs text-indigo-300/70">
+          <Clock className="w-3.5 h-3.5" />
+          Próximo passo: <span className="font-semibold text-indigo-300">{RETOMADA_STAGES[currentStage]?.label}</span>
+          — {RETOMADA_STAGES[currentStage]?.description}
+        </div>
+      )}
+      {currentStage >= RETOMADA_STAGES.length && (
+        <div className="mt-4 flex items-center gap-2 text-xs text-emerald-400">
+          <CheckCircle2 className="w-3.5 h-3.5" />
+          Retomada concluída — imóvel desocupado e disponível
         </div>
       )}
     </div>

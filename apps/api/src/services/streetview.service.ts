@@ -238,6 +238,8 @@ export async function batchGenerateStreetView(
     limit?: number
     type?: 'property' | 'auction'
     onlyWithCoords?: boolean
+    city?: string
+    state?: string
   },
 ): Promise<BatchResult> {
   const apiKey = getApiKey()
@@ -258,6 +260,8 @@ export async function batchGenerateStreetView(
       where.latitude = { not: null }
       where.longitude = { not: null }
     }
+    if (options?.city) where.city = { contains: options.city, mode: 'insensitive' }
+    if (options?.state) where.state = options.state.toUpperCase()
 
     const properties = await prisma.property.findMany({
       where,
@@ -289,14 +293,18 @@ export async function batchGenerateStreetView(
     }
   } else {
     // Auctions
+    const auctionWhere: any = {
+      streetViewUrl: { equals: null },
+    }
+    if (options?.onlyWithCoords) {
+      auctionWhere.latitude = { not: null }
+      auctionWhere.longitude = { not: null }
+    }
+    if (options?.city) auctionWhere.city = { contains: options.city, mode: 'insensitive' }
+    if (options?.state) auctionWhere.state = options.state.toUpperCase()
+
     const auctions = await prisma.auction.findMany({
-      where: {
-        streetViewUrl: { equals: null },
-        ...(options?.onlyWithCoords && {
-          latitude: { not: null },
-          longitude: { not: null },
-        }),
-      },
+      where: auctionWhere,
       select: {
         id: true, latitude: true, longitude: true,
         street: true, number: true, city: true, state: true,

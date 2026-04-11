@@ -282,6 +282,17 @@ export default function LeiloesClient() {
   const [sortOrder, setSortOrder] = useState('asc')
   const [showFilters, setShowFilters] = useState(false)
 
+  // Comparison mode
+  const [compareIds, setCompareIds] = useState<Set<string>>(new Set())
+  const toggleCompare = (id: string) => {
+    setCompareIds(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else if (next.size < 5) next.add(id)
+      return next
+    })
+  }
+
   // Lead modal
   const [showLeadModal, setShowLeadModal] = useState(false)
   const [selectedAuction, setSelectedAuction] = useState<Auction | null>(null)
@@ -974,8 +985,20 @@ export default function LeiloesClient() {
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {auctions.map(auction => (
-                <div key={auction.id} onClick={() => openLeadModal(auction)}
-                  className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-200 group cursor-pointer">
+                <div key={auction.id} className="relative bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-200 group cursor-pointer">
+                  {/* Compare checkbox */}
+                  <button
+                    onClick={(e) => { e.stopPropagation(); toggleCompare(auction.id) }}
+                    className={`absolute top-2 left-2 z-20 w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold transition-all ${
+                      compareIds.has(auction.id)
+                        ? 'bg-yellow-400 text-[#1B2B5B] shadow-lg scale-110'
+                        : 'bg-black/40 text-white/80 hover:bg-black/60'
+                    }`}
+                    title={compareIds.has(auction.id) ? 'Remover da comparação' : 'Adicionar à comparação'}
+                  >
+                    {compareIds.has(auction.id) ? '✓' : '⇔'}
+                  </button>
+                  <div onClick={() => openLeadModal(auction)}>
                   {/* Image — Real photo > AgoraEncontrei banner fallback */}
                   <div className="relative h-48 bg-gray-200 overflow-hidden">
                     <img
@@ -1094,9 +1117,31 @@ export default function LeiloesClient() {
                       )}
                     </div>
                   </div>
+                  </div>{/* close onClick wrapper */}
                 </div>
               ))}
             </div>
+
+            {/* Compare floating bar */}
+            {compareIds.size >= 2 && (
+              <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-[#1B2B5B] text-white px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-4 animate-bounce-once">
+                <BarChart3 className="w-5 h-5 text-yellow-400" />
+                <span className="text-sm font-semibold">{compareIds.size} leilões selecionados</span>
+                <a
+                  href={`/leiloes/comparativo?ids=${Array.from(compareIds).join(',')}`}
+                  className="px-4 py-2 bg-yellow-400 text-[#1B2B5B] rounded-lg text-sm font-bold hover:bg-yellow-300 transition-colors"
+                >
+                  Comparar ROI →
+                </a>
+                <button
+                  onClick={() => setCompareIds(new Set())}
+                  className="p-1.5 hover:bg-white/20 rounded-lg transition-colors"
+                  title="Limpar seleção"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            )}
 
             {/* Pagination */}
             {totalPages > 1 && (

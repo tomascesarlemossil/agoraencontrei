@@ -153,12 +153,16 @@ export default async function streetviewRoutes(app: FastifyInstance) {
         type: z.enum(['property', 'auction']).default('property'),
         limit: z.number().int().min(1).max(200).default(50),
         onlyWithCoords: z.boolean().default(true),
+        city: z.string().optional(),
+        state: z.string().optional(),
       }).parse(req.body || {})
 
       const result = await batchGenerateStreetView(app.prisma, {
         type: body.type,
         limit: body.limit,
         onlyWithCoords: body.onlyWithCoords,
+        city: body.city,
+        state: body.state,
       })
 
       return reply.send({ success: true, data: result })

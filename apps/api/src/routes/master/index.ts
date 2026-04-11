@@ -491,6 +491,104 @@ export default async function masterRoutes(app: FastifyInstance) {
     })
   })
 
+  // GET /plan-settings — Partner plan prices and limits
+  app.get('/plan-settings', {
+    schema: { tags: ['master'], summary: 'Partner plan pricing and limits' },
+  }, async (_req, reply) => {
+    // Load from SystemConfig or use defaults
+    const config = await app.prisma.systemConfig.findFirst({
+      where: { companyId: 'platform', key: 'plan_settings' },
+    }).catch(() => null)
+
+    const defaults = {
+      plans: {
+        LITE: {
+          name: 'Lite',
+          price: 79.90,
+          maxLeadViews: 10,
+          maxProperties: 5,
+          features: ['Listagem básica', 'Até 5 imóveis', '10 visualizações de lead/mês'],
+        },
+        MODERADO: {
+          name: 'Moderado',
+          price: 279.00,
+          maxLeadViews: 50,
+          maxProperties: 30,
+          features: ['Até 30 imóveis', '50 visualizações de lead/mês', 'Relatórios básicos', 'Suporte prioritário'],
+        },
+        PRO: {
+          name: 'Pro',
+          price: 499.00,
+          maxLeadViews: -1, // unlimited
+          maxProperties: -1,
+          features: ['Imóveis ilimitados', 'Leads ilimitados', 'IA completa', 'API dedicada', 'Suporte VIP'],
+        },
+      },
+    }
+
+    const settings = config?.value ? { ...defaults, ...(config.value as any) } : defaults
+
+    return reply.send({ success: true, data: settings })
+  })
+
+  // PUT /plan-settings — Update plan prices and limits
+  app.put('/plan-settings', {
+    schema: { tags: ['master'], summary: 'Update plan pricing and limits' },
+  }, async (req, reply) => {
+    const body = z.object({
+      plans: z.object({
+        LITE: z.object({
+          name: z.string().default('Lite'),
+          price: z.number().min(0),
+          maxLeadViews: z.number().int().min(-1),
+          maxProperties: z.number().int().min(-1),
+          features: z.array(z.string()).default([]),
+        }),
+        MODERADO: z.object({
+          name: z.string().default('Moderado'),
+          price: z.number().min(0),
+          maxLeadViews: z.number().int().min(-1),
+          maxProperties: z.number().int().min(-1),
+          features: z.array(z.string()).default([]),
+        }),
+        PRO: z.object({
+          name: z.string().default('Pro'),
+          price: z.number().min(0),
+          maxLeadViews: z.number().int().min(-1),
+          maxProperties: z.number().int().min(-1),
+          features: z.array(z.string()).default([]),
+        }),
+      }),
+    }).parse(req.body)
+
+    await app.prisma.systemConfig.upsert({
+      where: {
+        companyId_key: { companyId: 'platform', key: 'plan_settings' },
+      },
+      create: {
+        companyId: 'platform',
+        key: 'plan_settings',
+        value: body as any,
+      },
+      update: {
+        value: body as any,
+      },
+    })
+
+    await app.prisma.auditLog.create({
+      data: {
+        companyId: 'platform',
+        action: 'plan_settings.update' as any,
+        resource: 'platform',
+        resourceId: 'plan_settings',
+        userId: req.user.sub,
+        payload: body as any,
+      },
+    }).catch(() => {})
+
+    return reply.send({ success: true, data: body })
+  })
+
   // GET /activity — Recent platform activity
   app.get('/activity', {
     schema: { tags: ['master'], summary: 'Recent platform activity' },
