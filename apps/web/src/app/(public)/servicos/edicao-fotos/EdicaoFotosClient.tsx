@@ -149,7 +149,8 @@ export function EdicaoFotosClient() {
   function downloadImage(dataUrl: string, index: number) {
     const a = document.createElement('a')
     a.href = dataUrl
-    a.download = `foto-editada-${index + 1}.jpg`
+    // SEO-friendly naming: imovel-editado-franca-sp-{n}.jpg
+    a.download = `imovel-editado-agoraencontrei-franca-sp-${index + 1}.jpg`
     a.click()
   }
 

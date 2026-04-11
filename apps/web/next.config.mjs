@@ -5,6 +5,16 @@ const nextConfig = {
   output: 'standalone',
   // Compressão gzip/brotli automática
   compress: true,
+  // Production build: SWC minification with mangling for code protection
+  swcMinify: true,
+  // Remove console.log in production (keep errors/warns)
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production' ? { exclude: ['error', 'warn'] } : false,
+  },
+  // Disable source maps in production to protect business logic
+  productionBrowserSourceMaps: false,
+  // Disable X-Powered-By header (hides Next.js fingerprint)
+  poweredByHeader: false,
   // Skip type checking during build — types are checked in CI/dev
   // Next.js 15 async params break type checking on all dynamic routes
   typescript: { ignoreBuildErrors: true },
