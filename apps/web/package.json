@@ -29,7 +29,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "framer-motion": "^12.38.0",
-    "lucide-react": "^0.462.0",
+    "lucide-react": "^1.8.0",
     "maplibre-gl": "^5.22.0",
     "next": "15.5.15",
     "next-auth": "^5.0.0-beta.25",
