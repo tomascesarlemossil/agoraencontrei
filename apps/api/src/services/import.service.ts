@@ -208,14 +208,31 @@ export function buildCloudinaryUrl(
     }
   }
 
-  // If it's already a Cloudinary URL, insert transformation
-  if (imageUrl.includes('res.cloudinary.com')) {
-    return imageUrl.replace('/upload/', `/upload/${transformation}/`)
+  // Validate that imageUrl is a genuine Cloudinary URL using URL parsing
+  try {
+    const parsed = new URL(imageUrl)
+    if (parsed.hostname === 'res.cloudinary.com' && parsed.protocol === 'https:') {
+      return imageUrl.replace('/upload/', `/upload/${transformation}/`)
+    }
+  } catch {
+    // Invalid URL — fall through to Cloudinary fetch
   }
 
-  // For external images, use Cloudinary fetch
+  // For external images, use Cloudinary fetch with sanitized URL
   const cloudName = (env as any).CLOUDINARY_CLOUD_NAME || 'drrfzmwu8'
-  return `https://res.cloudinary.com/${cloudName}/image/fetch/${transformation}/${encodeURIComponent(imageUrl)}`
+  // Only allow http/https schemes to prevent SSRF via other protocols
+  let sanitizedUrl: string
+  try {
+    const parsed = new URL(imageUrl)
+    if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
+      throw new Error('Invalid protocol')
+    }
+    sanitizedUrl = parsed.href
+  } catch {
+    // If URL parsing fails, return original URL unchanged
+    return imageUrl
+  }
+  return `https://res.cloudinary.com/${cloudName}/image/fetch/${transformation}/${encodeURIComponent(sanitizedUrl)}`
 }
 
 // ── Helpers ─────────────────────────────────────────────────────────────────

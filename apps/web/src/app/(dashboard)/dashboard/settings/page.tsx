@@ -379,7 +379,7 @@ export default function SettingsPage() {
       const token = await getValidToken()
       return usersApi.create(token!, newUser as Parameters<typeof usersApi.create>[1])
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['users'] }); setShowNewUser(false); setNewUser({ name: '', email: '', password: '', role: 'BROKER', phone: '', creciNumber: '' }) },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['users'] }); setShowNewUser(false); setNewUser({ name: '', email: '', password: '', role: 'BROKER', phone: '', creciNumber: '', accessLevel: 'full' as const, moduleAccess: [], createIsolatedCompany: false, isolatedCompanyName: '' }) },
     onError: (e: Error) => { alert('Erro ao criar usuário: ' + e.message) },
   })
 

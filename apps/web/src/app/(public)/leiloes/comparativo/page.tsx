@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import {
@@ -106,7 +106,19 @@ function YieldBar({ label, value, max, color }: { label: string; value: number; 
   )
 }
 
-export default function ComparativoPage() {
+export default function ComparativoPageWrapper() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-yellow-400 animate-spin" />
+      </div>
+    }>
+      <ComparativoPage />
+    </Suspense>
+  )
+}
+
+function ComparativoPage() {
   const searchParams = useSearchParams()
   const ids = searchParams.get('ids')?.split(',') || []
   const [data, setData] = useState<AuctionComparison[] | null>(null)
