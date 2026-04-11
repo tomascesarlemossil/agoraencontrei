@@ -85,6 +85,7 @@ import importRoutes from './routes/import/index.js'
 import masterRoutes from './routes/master/index.js'
 import streetviewRoutes from './routes/streetview/index.js'
 import tomasRoutes from './routes/tomas/index.js'
+import notificationsRoutes from './routes/notifications/index.js'
 
 const app = Fastify({
   // No body size limit — accept any file size
@@ -784,6 +785,7 @@ async function bootstrap() {
   await app.register(masterRoutes,             { prefix: '/api/v1/master' })
   await app.register(streetviewRoutes,         { prefix: '/api/v1/streetview' })
   await app.register(tomasRoutes,             { prefix: '/api/v1/tomas' })
+  await app.register(notificationsRoutes,    { prefix: '/api/v1/notifications' })
 
   // ── Re-ativar leilões bancários fechados erroneamente pelo cleanup ────
   try {
