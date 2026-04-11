@@ -1310,3 +1310,94 @@ export const auctionsApi = {
   scraperStatus: () =>
     request<any>('/api/v1/auctions/scraper-status'),
 }
+
+// ── Hunter Mode ──────────────────────────────────────────────────────────────
+
+export const hunterApi = {
+  list: (token: string, params?: { status?: string; limit?: string; offset?: string }) => {
+    const qs = toQS(params)
+    return request<{ data: any[]; meta: { total: number; limit: number; offset: number } }>(`/api/v1/hunter/leads?${qs}`, { token })
+  },
+
+  create: (token: string, body: {
+    leadId?: string; contactId?: string; visitorId?: string;
+    name?: string; phone?: string; email?: string;
+    filters: Record<string, any>; source?: string
+  }) =>
+    request<{ data: any }>('/api/v1/hunter/leads', { method: 'POST', token, body: JSON.stringify(body) }),
+
+  update: (token: string, id: string, body: { status?: string; notes?: string }) =>
+    request<{ data: any }>(`/api/v1/hunter/leads/${id}`, { method: 'PUT', token, body: JSON.stringify(body) }),
+
+  stats: (token: string) =>
+    request<{ total: number; active: number; fulfilled: number; expired: number; contacted: number }>('/api/v1/hunter/stats', { token }),
+}
+
+// ── Affiliates ───────────────────────────────────────────────────────────────
+
+export const affiliateApi = {
+  list: (token: string, params?: { limit?: string; offset?: string; isActive?: string }) => {
+    const qs = toQS(params)
+    return request<{ data: any[]; meta: { total: number; limit: number; offset: number } }>(`/api/v1/affiliates?${qs}`, { token })
+  },
+
+  create: (token: string, body: { name: string; email: string; phone?: string }) =>
+    request<{ data: any }>('/api/v1/affiliates', { method: 'POST', token, body: JSON.stringify(body) }),
+
+  get: (token: string, id: string) =>
+    request<{ data: any }>(`/api/v1/affiliates/${id}`, { token }),
+
+  update: (token: string, id: string, body: { name?: string; phone?: string; level?: string; isActive?: boolean }) =>
+    request<{ data: any }>(`/api/v1/affiliates/${id}`, { method: 'PUT', token, body: JSON.stringify(body) }),
+
+  byCode: (code: string) =>
+    request<{ data: any }>(`/api/v1/affiliates/by-code/${code}`),
+
+  earnings: (token: string, id: string, params?: { limit?: string; status?: string }) => {
+    const qs = toQS(params)
+    return request<{ data: any[] }>(`/api/v1/affiliates/${id}/earnings?${qs}`, { token })
+  },
+
+  stats: (token: string, id: string) =>
+    request<{ totalEarnings: number; pendingEarnings: number; paidEarnings: number; totalClients: number; level: string; commissionRate: number; code: string }>(`/api/v1/affiliates/${id}/stats`, { token }),
+}
+
+// ── SaaS Finance ─────────────────────────────────────────────────────────────
+
+export const saasFinanceApi = {
+  transactions: (token: string, params?: { status?: string; type?: string; limit?: string; offset?: string }) => {
+    const qs = toQS(params)
+    return request<{ data: any[]; meta: { total: number; limit: number; offset: number } }>(`/api/v1/saas-finance/transactions?${qs}`, { token })
+  },
+
+  summary: (token: string) =>
+    request<{
+      totalReceived: number; totalPending: number; totalOverdue: number;
+      todayReceived: number; monthReceived: number; monthPending: number;
+      mrr: number; arr: number
+    }>('/api/v1/saas-finance/summary', { token }),
+
+  intelligence: (token: string) =>
+    request<{
+      revenue: { today: number; month: number; mrr: number; arr: number; forecast: number; dailyAvg: number };
+      tenants: { byStatus: Record<string, number>; byPlan: any[]; total: number; active: number };
+      affiliates: { active: number; monthCommissions: number; monthTransactions: number };
+      transactions: { byType: any[] }
+    }>('/api/v1/saas-finance/intelligence', { token }),
+
+  syncPayment: (token: string, body: {
+    asaasId: string; tenantId?: string; type: string; status: string; amount: number;
+    dueDate?: string; description?: string; externalRef?: string; billingType?: string;
+    pixCode?: string; bankSlipUrl?: string; affiliateId?: string; commissionAmount?: number
+  }) =>
+    request<{ data: any }>('/api/v1/saas-finance/sync-payment', { method: 'POST', token, body: JSON.stringify(body) }),
+}
+
+// ── Preview ──────────────────────────────────────────────────────────────────
+
+export const previewApi = {
+  generate: (siteName: string, theme?: string) => {
+    const qs = toQS({ theme })
+    return request<{ data: any }>(`/api/v1/preview/${encodeURIComponent(siteName)}?${qs}`)
+  },
+}

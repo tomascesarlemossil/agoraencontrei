@@ -48,6 +48,8 @@ import {
   Palette,
   ShoppingCart,
   ShieldAlert,
+  Crosshair,
+  Brain,
 } from 'lucide-react'
 import { useNotifications } from '@/stores/notifications.store'
 import { UserAvatar } from '@/components/ui/UserAvatar'
@@ -77,6 +79,10 @@ const midNavItems = [
   { href: '/dashboard/site-factory',         icon: Palette,          label: 'Site Factory',   highlight: true  },
   { href: '/dashboard/crescer',              icon: ShoppingCart,     label: 'Crescer',        highlight: true  },
   { href: '/dashboard/admin/master',         icon: ShieldAlert,     label: 'Admin Master',   highlight: true  },
+  { href: '/dashboard/hunter',              icon: Crosshair,       label: 'Hunter Mode',    highlight: true  },
+  { href: '/dashboard/afiliados',           icon: Users,           label: 'Afiliados',      highlight: true  },
+  { href: '/dashboard/saas-financeiro',     icon: Landmark,        label: 'Financeiro SaaS',highlight: true  },
+  { href: '/dashboard/master',             icon: Brain,           label: 'Master Intel',   highlight: true  },
 ]
 
 const corretorNavItem = { href: '/dashboard/corretor', icon: BriefcaseBusiness, label: 'Meu Painel', highlight: false }

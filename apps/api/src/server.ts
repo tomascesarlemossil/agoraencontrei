@@ -89,6 +89,10 @@ import { publicCatalogRoutes } from './routes/master/admin-config.js'
 import streetviewRoutes from './routes/streetview/index.js'
 import tomasRoutes from './routes/tomas/index.js'
 import notificationsRoutes from './routes/notifications/index.js'
+import hunterRoutes from './routes/hunter/index.js'
+import affiliateRoutes from './routes/affiliates/index.js'
+import saasFinanceRoutes from './routes/saas-finance/index.js'
+import previewRoutes from './routes/preview/index.js'
 
 const app = Fastify({
   // No body size limit — accept any file size
@@ -792,6 +796,10 @@ async function bootstrap() {
   await app.register(streetviewRoutes,         { prefix: '/api/v1/streetview' })
   await app.register(tomasRoutes,             { prefix: '/api/v1/tomas' })
   await app.register(notificationsRoutes,    { prefix: '/api/v1/notifications' })
+  await app.register(hunterRoutes,           { prefix: '/api/v1/hunter' })
+  await app.register(affiliateRoutes,        { prefix: '/api/v1/affiliates' })
+  await app.register(saasFinanceRoutes,      { prefix: '/api/v1/saas-finance' })
+  await app.register(previewRoutes,          { prefix: '/api/v1/preview' })
 
   // ── Re-ativar leilões bancários fechados erroneamente pelo cleanup ────
   try {
