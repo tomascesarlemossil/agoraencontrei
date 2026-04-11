@@ -1,11 +1,10 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import Link from 'next/link'
 import {
   CheckCircle, Crown, Star, Zap, ArrowRight, Shield, Sparkles,
   Bot, MessageCircle, BarChart3, Globe, Code, EyeOff, Users,
-  FileText, Lock,
+  FileText, Lock, Loader2, X,
 } from 'lucide-react'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
@@ -97,6 +96,12 @@ export function DynamicPlans() {
   const [niches, setNiches] = useState<NicheDef[]>([])
   const [loading, setLoading] = useState(true)
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly')
+  const [checkoutPlan, setCheckoutPlan] = useState<PlanDef | null>(null)
+  const [checkoutLoading, setCheckoutLoading] = useState(false)
+  const [checkoutForm, setCheckoutForm] = useState({
+    name: '', email: '', cpfCnpj: '', phone: '',
+    tenantName: '', subdomain: '', layoutType: 'clean', primaryColor: '#3b82f6',
+  })
 
   useEffect(() => {
     fetch(`${API_URL}/api/v1/public/catalog`)
@@ -218,12 +223,12 @@ export function DynamicPlans() {
                 )}
               </ul>
 
-              <Link
-                href={`/parceiros/cadastro?plan=${plan.slug.toUpperCase()}`}
-                className={`block text-center py-3 rounded-xl font-bold text-sm transition ${style.cta}`}
+              <button
+                onClick={() => setCheckoutPlan(plan)}
+                className={`block w-full text-center py-3 rounded-xl font-bold text-sm transition cursor-pointer ${style.cta}`}
               >
-                Começar Agora <ArrowRight className="inline w-4 h-4 ml-1" />
-              </Link>
+                Assinar Agora <ArrowRight className="inline w-4 h-4 ml-1" />
+              </button>
             </div>
           )
         })}
@@ -288,6 +293,238 @@ export function DynamicPlans() {
         <Lock className="w-4 h-4 ml-2" />
         <span>Protocolo Fort Knox</span>
       </div>
+
+      {/* ═══ Checkout Modal ═══ */}
+      {checkoutPlan && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm px-4">
+          <div className="relative bg-gray-900 border border-gray-700 rounded-2xl w-full max-w-lg p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+            {/* Close button */}
+            <button
+              onClick={() => { setCheckoutPlan(null); setCheckoutLoading(false) }}
+              className="absolute top-4 right-4 text-gray-400 hover:text-white transition"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <h3 className="text-xl font-bold text-white mb-1">
+              Assinar Plano {checkoutPlan.name}
+            </h3>
+            <p className="text-sm text-gray-400 mb-6">
+              R$ {formatPrice(
+                billingCycle === 'yearly' && checkoutPlan.priceYearly
+                  ? Math.round(Number(checkoutPlan.priceYearly) / 12)
+                  : Number(checkoutPlan.priceMonthly)
+              )}/mês
+              {billingCycle === 'yearly' && checkoutPlan.priceYearly && (
+                <span className="text-emerald-400 ml-1">(cobrança anual)</span>
+              )}
+            </p>
+
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault()
+                setCheckoutLoading(true)
+                try {
+                  const res = await fetch(`${API_URL}/api/v1/billing/saas/checkout`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      planSlug: checkoutPlan.slug,
+                      billingCycle: billingCycle === 'yearly' ? 'YEARLY' : 'MONTHLY',
+                      customer: {
+                        name: checkoutForm.name,
+                        email: checkoutForm.email,
+                        cpfCnpj: checkoutForm.cpfCnpj.replace(/\D/g, ''),
+                        phone: checkoutForm.phone.replace(/\D/g, ''),
+                      },
+                      tenantName: checkoutForm.tenantName,
+                      subdomain: checkoutForm.subdomain
+                        .toLowerCase()
+                        .replace(/[^a-z0-9-]/g, ''),
+                      layoutType: checkoutForm.layoutType,
+                      primaryColor: checkoutForm.primaryColor,
+                    }),
+                  })
+
+                  const data = await res.json()
+
+                  if (res.ok && data.success) {
+                    // Redirect to Asaas payment page
+                    window.location.href = data.data.paymentUrl
+                  } else {
+                    alert(data.message || data.error || 'Erro ao criar assinatura.')
+                    setCheckoutLoading(false)
+                  }
+                } catch {
+                  alert('Erro de conexão. Tente novamente.')
+                  setCheckoutLoading(false)
+                }
+              }}
+              className="space-y-4"
+            >
+              {/* Name */}
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">
+                  Nome completo *
+                </label>
+                <input
+                  required
+                  type="text"
+                  value={checkoutForm.name}
+                  onChange={(e) => setCheckoutForm(f => ({ ...f, name: e.target.value }))}
+                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2.5 text-white text-sm focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
+                  placeholder="João Silva"
+                />
+              </div>
+
+              {/* Email */}
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">
+                  E-mail *
+                </label>
+                <input
+                  required
+                  type="email"
+                  value={checkoutForm.email}
+                  onChange={(e) => setCheckoutForm(f => ({ ...f, email: e.target.value }))}
+                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2.5 text-white text-sm focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
+                  placeholder="joao@empresa.com"
+                />
+              </div>
+
+              {/* CPF/CNPJ */}
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">
+                  CPF ou CNPJ *
+                </label>
+                <input
+                  required
+                  type="text"
+                  value={checkoutForm.cpfCnpj}
+                  onChange={(e) => setCheckoutForm(f => ({ ...f, cpfCnpj: e.target.value }))}
+                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2.5 text-white text-sm focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
+                  placeholder="000.000.000-00"
+                />
+              </div>
+
+              {/* Phone */}
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">
+                  Telefone
+                </label>
+                <input
+                  type="text"
+                  value={checkoutForm.phone}
+                  onChange={(e) => setCheckoutForm(f => ({ ...f, phone: e.target.value }))}
+                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2.5 text-white text-sm focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
+                  placeholder="(11) 99999-0000"
+                />
+              </div>
+
+              <hr className="border-gray-700" />
+
+              {/* Tenant Name */}
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">
+                  Nome do seu site *
+                </label>
+                <input
+                  required
+                  type="text"
+                  value={checkoutForm.tenantName}
+                  onChange={(e) => setCheckoutForm(f => ({ ...f, tenantName: e.target.value }))}
+                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2.5 text-white text-sm focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
+                  placeholder="Imobiliária Premium"
+                />
+              </div>
+
+              {/* Subdomain */}
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">
+                  Subdomínio *
+                </label>
+                <div className="flex items-center gap-0">
+                  <input
+                    required
+                    type="text"
+                    value={checkoutForm.subdomain}
+                    onChange={(e) =>
+                      setCheckoutForm(f => ({
+                        ...f,
+                        subdomain: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''),
+                      }))
+                    }
+                    className="flex-1 bg-gray-800 border border-gray-700 rounded-l-lg px-3 py-2.5 text-white text-sm focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
+                    placeholder="minha-imobiliaria"
+                  />
+                  <span className="bg-gray-700 border border-gray-700 border-l-0 rounded-r-lg px-3 py-2.5 text-gray-400 text-sm">
+                    .agoraencontrei.com.br
+                  </span>
+                </div>
+              </div>
+
+              {/* Layout Type */}
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">
+                  Layout do site
+                </label>
+                <select
+                  value={checkoutForm.layoutType}
+                  onChange={(e) => setCheckoutForm(f => ({ ...f, layoutType: e.target.value }))}
+                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2.5 text-white text-sm focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
+                >
+                  <option value="clean">Clean — Moderno e Minimalista</option>
+                  <option value="classic">Classic — Tradicional e Elegante</option>
+                  <option value="bold">Bold — Vibrante e Impactante</option>
+                </select>
+              </div>
+
+              {/* Primary Color */}
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">
+                  Cor principal
+                </label>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="color"
+                    value={checkoutForm.primaryColor}
+                    onChange={(e) => setCheckoutForm(f => ({ ...f, primaryColor: e.target.value }))}
+                    className="w-10 h-10 rounded-lg border border-gray-700 bg-gray-800 cursor-pointer"
+                  />
+                  <span className="text-sm text-gray-400">{checkoutForm.primaryColor}</span>
+                </div>
+              </div>
+
+              {/* Submit */}
+              <button
+                type="submit"
+                disabled={checkoutLoading}
+                className="w-full py-3 rounded-xl font-bold text-sm transition bg-amber-600 hover:bg-amber-500 text-gray-950 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {checkoutLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Processando...
+                  </>
+                ) : (
+                  <>
+                    <Shield className="w-4 h-4" />
+                    Assinar e Pagar — R$ {formatPrice(
+                      billingCycle === 'yearly' && checkoutPlan.priceYearly
+                        ? Number(checkoutPlan.priceYearly)
+                        : Number(checkoutPlan.priceMonthly)
+                    )}{billingCycle === 'yearly' ? '/ano' : '/mês'}
+                  </>
+                )}
+              </button>
+
+              <p className="text-xs text-gray-500 text-center">
+                Pagamento seguro processado via Asaas. Você será redirecionado para a página de pagamento.
+              </p>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

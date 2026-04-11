@@ -332,3 +332,93 @@ export async function scheduleInvoice(paymentId: string): Promise<AsaasInvoice> 
     body: JSON.stringify({ payment: paymentId }),
   })
 }
+
+// ── Subscriptions (Assinaturas recorrentes) ────────────────────────────────
+
+export interface AsaasSubscriptionPayload {
+  customer: string
+  billingType: AsaasBillingType
+  value: number
+  nextDueDate: string               // YYYY-MM-DD (próximo vencimento)
+  cycle: 'MONTHLY' | 'YEARLY'
+  description?: string
+  externalReference?: string
+  discount?: { value: number; dueDateLimitDays: number; type: 'FIXED' | 'PERCENTAGE' }
+  interest?: { value: number }
+  fine?: { value: number }
+  maxPayments?: number              // null = indefinido
+}
+
+export interface AsaasSubscription {
+  id: string
+  customer: string
+  billingType: string
+  value: number
+  nextDueDate: string
+  cycle: string
+  status: string                    // ACTIVE | INACTIVE | EXPIRED
+  description?: string
+  externalReference?: string
+  dateCreated: string
+}
+
+export async function createSubscription(
+  payload: AsaasSubscriptionPayload,
+): Promise<AsaasSubscription> {
+  return asaasFetch<AsaasSubscription>('/subscriptions', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
+}
+
+export async function getSubscription(subscriptionId: string): Promise<AsaasSubscription> {
+  return asaasFetch<AsaasSubscription>(`/subscriptions/${subscriptionId}`)
+}
+
+export async function cancelSubscription(subscriptionId: string): Promise<{ deleted: boolean }> {
+  return asaasFetch(`/subscriptions/${subscriptionId}`, { method: 'DELETE' })
+}
+
+export async function updateSubscription(
+  subscriptionId: string,
+  data: Partial<AsaasSubscriptionPayload>,
+): Promise<AsaasSubscription> {
+  return asaasFetch<AsaasSubscription>(`/subscriptions/${subscriptionId}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  })
+}
+
+// ── Payment Links (Links de pagamento) ─────────────────────────────────────
+
+export interface AsaasPaymentLinkPayload {
+  name: string
+  value: number
+  billingType: AsaasBillingType
+  chargeType: 'DETACHED' | 'RECURRENT' | 'INSTALLMENT'
+  description?: string
+  externalReference?: string
+  maxInstallmentCount?: number
+  subscriptionCycle?: 'MONTHLY' | 'YEARLY'
+  dueDateLimitDays?: number
+  notificationEnabled?: boolean
+}
+
+export interface AsaasPaymentLink {
+  id: string
+  name: string
+  value: number
+  url: string
+  billingType: string
+  chargeType: string
+  status: string
+}
+
+export async function createPaymentLink(
+  payload: AsaasPaymentLinkPayload,
+): Promise<AsaasPaymentLink> {
+  return asaasFetch<AsaasPaymentLink>('/paymentLinks', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
+}

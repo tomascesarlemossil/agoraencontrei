@@ -157,8 +157,86 @@ export default function CrescerPage() {
       (p) => (PLAN_HIERARCHY[p.slug] ?? 0) > currentPlanLevel,
     ) ?? []
 
-  function handleContratar(itemName: string) {
-    alert('Em breve! Pagamento via Asaas será integrado.')
+  const [purchaseLoading, setPurchaseLoading] = useState<string | null>(null)
+
+  async function handleContratarModule(mod: CatalogModule) {
+    // Get tenantId from auth store or settings
+    const tenantId = useAuthStore.getState().user?.companyId
+    if (!tenantId) {
+      alert('Erro: Você precisa estar logado e vinculado a um tenant.')
+      return
+    }
+
+    setPurchaseLoading(mod.slug)
+    try {
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      }
+      if (accessToken) {
+        headers['Authorization'] = `Bearer ${accessToken}`
+      }
+
+      const res = await fetch(`${API_URL}/api/v1/billing/saas/module`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          tenantId,
+          moduleSlug: mod.slug,
+        }),
+      })
+
+      const data = await res.json()
+
+      if (res.ok && data.success) {
+        // Redirect to Asaas payment page
+        window.location.href = data.data.paymentUrl
+      } else {
+        alert(data.message || data.error || 'Erro ao gerar cobrança.')
+      }
+    } catch {
+      alert('Erro de conexão. Tente novamente.')
+    } finally {
+      setPurchaseLoading(null)
+    }
+  }
+
+  async function handleContratarService(svc: CatalogService) {
+    const tenantId = useAuthStore.getState().user?.companyId
+    if (!tenantId) {
+      alert('Erro: Você precisa estar logado e vinculado a um tenant.')
+      return
+    }
+
+    setPurchaseLoading(svc.slug)
+    try {
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      }
+      if (accessToken) {
+        headers['Authorization'] = `Bearer ${accessToken}`
+      }
+
+      const res = await fetch(`${API_URL}/api/v1/billing/saas/module`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          tenantId,
+          moduleSlug: svc.slug,
+        }),
+      })
+
+      const data = await res.json()
+
+      if (res.ok && data.success) {
+        window.location.href = data.data.paymentUrl
+      } else {
+        alert(data.message || data.error || 'Erro ao gerar cobrança.')
+      }
+    } catch {
+      alert('Erro de conexão. Tente novamente.')
+    } finally {
+      setPurchaseLoading(null)
+    }
   }
 
   // Loading state
@@ -479,11 +557,21 @@ export default function CrescerPage() {
                         </button>
                       ) : (
                         <button
-                          onClick={() => handleContratar(mod.name)}
-                          className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-semibold text-sm bg-[#d4a853] text-gray-950 hover:bg-[#c49a48] transition-colors shadow-md shadow-[#d4a853]/10"
+                          onClick={() => handleContratarModule(mod)}
+                          disabled={purchaseLoading === mod.slug}
+                          className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-semibold text-sm bg-[#d4a853] text-gray-950 hover:bg-[#c49a48] transition-colors shadow-md shadow-[#d4a853]/10 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                          <ShoppingCart className="h-4 w-4" />
-                          Contratar
+                          {purchaseLoading === mod.slug ? (
+                            <>
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                              Processando...
+                            </>
+                          ) : (
+                            <>
+                              <ShoppingCart className="h-4 w-4" />
+                              Contratar
+                            </>
+                          )}
                         </button>
                       )}
                     </div>
@@ -536,11 +624,21 @@ export default function CrescerPage() {
                       </div>
 
                       <button
-                        onClick={() => handleContratar(svc.name)}
-                        className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-semibold text-sm bg-gray-800 text-[#d4a853] border border-[#d4a853]/30 hover:bg-[#d4a853]/10 transition-colors"
+                        onClick={() => handleContratarService(svc)}
+                        disabled={purchaseLoading === svc.slug}
+                        className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-semibold text-sm bg-gray-800 text-[#d4a853] border border-[#d4a853]/30 hover:bg-[#d4a853]/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        <Sparkles className="h-4 w-4" />
-                        Solicitar
+                        {purchaseLoading === svc.slug ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            Processando...
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="h-4 w-4" />
+                            Solicitar
+                          </>
+                        )}
                       </button>
                     </div>
                   </div>

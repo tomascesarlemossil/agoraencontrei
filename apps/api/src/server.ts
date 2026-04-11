@@ -76,6 +76,8 @@ import leadScoringRoutes from './routes/lead-scoring/index.js'
 import maintenanceRoutes from './routes/maintenance/index.js'
 import ownerDashboardRoutes from './routes/owner-dashboard/index.js'
 import billingAutomationRoutes from './routes/billing/index.js'
+import saasBillingRoutes from './routes/billing/saas-checkout.js'
+import saasWebhookRoutes from './routes/billing/saas-webhook.js'
 import asaasWebhookRoutes from './routes/finance/webhook.js'
 import tenantRoutes from './routes/tenants/index.js'
 import repasseRoutes from './routes/repasse/index.js'
@@ -777,6 +779,8 @@ async function bootstrap() {
   await app.register(maintenanceRoutes,        { prefix: '/api/v1/maintenance' })
   await app.register(ownerDashboardRoutes,     { prefix: '/api/v1/owner-dashboard' })
   await app.register(billingAutomationRoutes,  { prefix: '/api/v1/billing' })
+  await app.register(saasBillingRoutes,        { prefix: '/api/v1/billing/saas' })
+  await app.register(saasWebhookRoutes,        { prefix: '/api/v1/webhooks' })
   await app.register(asaasWebhookRoutes,       { prefix: '/api/v1/finance/webhook' })
   await app.register(tenantRoutes,             { prefix: '/api/v1/tenants' })
   await app.register(repasseRoutes,            { prefix: '/api/v1/repasse' })
