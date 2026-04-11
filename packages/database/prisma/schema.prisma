@@ -2382,15 +2382,16 @@ model Tenant {
 
 /// Log de comissões/splits recebidos dos clones SaaS
 model SaasCommissionLog {
-  id            String    @id @default(cuid())
-  tenantId      String
-  transactionId String?   // ID da transação original
-  grossValue    Decimal   @db.Decimal(12, 2)
-  commission    Decimal   @db.Decimal(12, 2) // Sua fatia
-  netPartner    Decimal   @db.Decimal(12, 2) // Fatia do parceiro
-  status        String    @default("PENDING") // PENDING | RECEIVED | FAILED
-  asaasRef      String?   // Referência Asaas
-  createdAt     DateTime  @default(now())
+  id              String    @id @default(cuid())
+  tenantId        String
+  transactionId   String?   // ID do repasse que originou
+  originalValue   Decimal   @db.Decimal(14, 2) // Valor bruto da transação
+  splitPercent    Decimal   @db.Decimal(5, 2)  // % de split aplicado
+  commissionValue Decimal   @db.Decimal(14, 2) // Comissão da plataforma
+  tenantNetValue  Decimal   @db.Decimal(14, 2) // Valor líquido do tenant
+  status          String    @default("PENDING") // PENDING | COMPLETED | FAILED
+  processedAt     DateTime?
+  createdAt       DateTime  @default(now())
 
   @@index([tenantId])
   @@index([status])
@@ -2406,16 +2407,17 @@ model ScheduledRepasse {
   contractId      String?
   rentalId        String?
   landlordId      String
-  grossValue      Decimal   @db.Decimal(12, 2)
-  commissionValue Decimal   @db.Decimal(12, 2)
-  netValue        Decimal   @db.Decimal(12, 2)
+  grossValue      Decimal   @db.Decimal(14, 2)
+  commissionValue Decimal   @db.Decimal(14, 2) @default(0)
+  netValue        Decimal   @db.Decimal(14, 2)
   scheduledDate   DateTime  // Data programada para liberação
   status          String    @default("SCHEDULED") // SCHEDULED | PROCESSING | COMPLETED | FAILED
-  asaasPaymentId  String?
   asaasTransferId String?
   processedAt     DateTime?
-  errorMsg        String?
+  failureReason   String?
+  metadata        Json      @default("{}")
   createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
   @@index([companyId])
   @@index([tenantId])

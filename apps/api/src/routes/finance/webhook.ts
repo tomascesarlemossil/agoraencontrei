@@ -13,6 +13,7 @@
 import type { FastifyInstance } from 'fastify'
 import { env } from '../../utils/env.js'
 import type { AsaasWebhookEvent } from '../../services/asaas.service.js'
+import { scheduleRepasse } from '../../services/repasse.service.js'
 
 export default async function asaasWebhookRoutes(app: FastifyInstance) {
   // POST /api/v1/finance/webhook/asaas — Público (chamado pelo Asaas)
@@ -59,7 +60,7 @@ export default async function asaasWebhookRoutes(app: FastifyInstance) {
             // 2. Log the payment
             const rental = await app.prisma.rental.findUnique({
               where: { id: rentalId },
-              include: { contract: { select: { companyId: true, tenantName: true, propertyAddress: true, landlordName: true } } },
+              include: { contract: { select: { companyId: true, tenantName: true, propertyAddress: true, landlordName: true, landlordId: true, commission: true } } },
             })
 
             if (rental?.contract) {
@@ -80,6 +81,32 @@ export default async function asaasWebhookRoutes(app: FastifyInstance) {
                   },
                 },
               }).catch(() => {})
+
+              // 3. Schedule D+7 repasse to landlord
+              const contract = rental.contract as any
+              if (contract.landlordId && payment.value) {
+                // Check if this company has a tenant (SaaS clone) for commission split
+                const tenant = await (app.prisma as any).tenant?.findFirst?.({
+                  where: { companyId: contract.companyId, isActive: true },
+                  select: { id: true, splitPercent: true, repasseDelayDays: true, repasseFixedDay: true },
+                }).catch(() => null)
+
+                await scheduleRepasse(app.prisma as any, {
+                  tenantId: tenant?.id || undefined,
+                  companyId: contract.companyId,
+                  contractId: rental.contractId,
+                  rentalId,
+                  landlordId: contract.landlordId,
+                  grossValue: payment.value,
+                  commissionPercent: Number(contract.commission) || 10,
+                  delayDays: tenant?.repasseDelayDays || 7,
+                  fixedDay: tenant?.repasseFixedDay || undefined,
+                }).catch((e: any) => {
+                  app.log.warn(`[asaas-webhook] Repasse scheduling failed: ${e.message}`)
+                })
+
+                app.log.info(`[asaas-webhook] Repasse D+${tenant?.repasseDelayDays || 7} scheduled for rental ${rentalId} (R$ ${payment.value})`)
+              }
 
               app.log.info(`[asaas-webhook] Rental ${rentalId} marked as PAID (${payment.billingType}, R$ ${payment.value})`)
             }
