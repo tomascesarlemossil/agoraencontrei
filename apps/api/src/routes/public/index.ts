@@ -1753,4 +1753,46 @@ export default async function publicRoutes(app: FastifyInstance) {
       return reply.status(500).send({ error: 'INTERNAL_ERROR' })
     }
   })
+
+  // ── Tenant Public Routes (for subdomain/domain resolution) ──────────────
+
+  // GET /api/v1/public/tenant/:slug — Lookup tenant by subdomain
+  app.get('/tenant/:slug', async (req, reply) => {
+    const { slug } = req.params as { slug: string }
+
+    const tenant = await (app.prisma as any).tenant?.findUnique?.({
+      where: { subdomain: slug },
+      select: {
+        id: true, name: true, subdomain: true, customDomain: true,
+        layoutType: true, primaryColor: true, logoUrl: true, faviconUrl: true,
+        plan: true, planStatus: true, isActive: true, settings: true, companyId: true,
+      },
+    }).catch(() => null)
+
+    if (!tenant) {
+      return reply.status(404).send({ error: 'TENANT_NOT_FOUND' })
+    }
+
+    return reply.send({ success: true, data: tenant })
+  })
+
+  // GET /api/v1/public/tenant/by-domain/:domain — Lookup tenant by custom domain
+  app.get('/tenant/by-domain/:domain', async (req, reply) => {
+    const { domain } = req.params as { domain: string }
+
+    const tenant = await (app.prisma as any).tenant?.findFirst?.({
+      where: { customDomain: domain },
+      select: {
+        id: true, name: true, subdomain: true, customDomain: true,
+        layoutType: true, primaryColor: true, logoUrl: true, faviconUrl: true,
+        plan: true, planStatus: true, isActive: true, settings: true, companyId: true,
+      },
+    }).catch(() => null)
+
+    if (!tenant) {
+      return reply.status(404).send({ error: 'TENANT_NOT_FOUND' })
+    }
+
+    return reply.send({ success: true, data: tenant })
+  })
 }

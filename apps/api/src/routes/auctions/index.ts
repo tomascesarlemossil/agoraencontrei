@@ -891,4 +891,106 @@ export default async function auctionsRoutes(app: FastifyInstance) {
       topOpportunities,
     })
   })
+
+  // ── POST /compare — Compare 2-3 auctions side by side with ROI analysis ───
+  app.post('/compare', {
+    schema: { tags: ['auctions'], summary: 'Compare auctions side by side' },
+  }, async (req: FastifyRequest, reply: FastifyReply) => {
+    const body = z.object({
+      ids: z.array(z.string()).min(2).max(5),
+    }).parse(req.body)
+
+    const auctions = await app.prisma.auction.findMany({
+      where: { id: { in: body.ids } },
+      select: {
+        id: true, title: true, slug: true, source: true, status: true,
+        propertyType: true, city: true, state: true, neighborhood: true,
+        totalArea: true, builtArea: true, bedrooms: true, bathrooms: true, parkingSpaces: true,
+        appraisalValue: true, minimumBid: true, firstRoundBid: true, secondRoundBid: true,
+        discountPercent: true, opportunityScore: true, estimatedROI: true,
+        auctionDate: true, firstRoundDate: true, secondRoundDate: true,
+        occupation: true, hasDebts: true, financingAvailable: true, fgtsAllowed: true,
+        coverImage: true, streetViewUrl: true, bankName: true, auctioneerName: true,
+        processNumber: true, court: true, debtorName: true,
+      },
+    })
+
+    if (auctions.length < 2) {
+      return reply.status(400).send({ error: 'NOT_ENOUGH_AUCTIONS', message: 'Necessário pelo menos 2 leilões para comparar' })
+    }
+
+    // Current macro rates (approximate)
+    const SELIC = 14.25
+    const CDI = 14.15
+    const SAVINGS = 7.5
+
+    // Compute ROI analysis for each
+    const comparison = auctions.map((a: any) => {
+      const appraisal = Number(a.appraisalValue || 0)
+      const minBid = Number(a.minimumBid || 0)
+      const discount = Number(a.discountPercent || 0)
+      const area = Number(a.totalArea || 0)
+      const pricePerM2 = area > 0 && minBid > 0 ? minBid / area : null
+
+      // Acquisition costs estimate (SP defaults)
+      const itbi = minBid * 0.03
+      const registry = Math.min(minBid * 0.015, 8000)
+      const lawyer = Math.min(minBid * 0.02, 5000)
+      const eviction = a.occupation === 'OCUPADO' ? 15000 : 0
+      const totalCosts = itbi + registry + lawyer + eviction
+      const totalInvestment = minBid + totalCosts
+
+      // Profit potential
+      const potentialProfit = appraisal > 0 ? appraisal - totalInvestment : 0
+      const roiPercent = totalInvestment > 0 ? (potentialProfit / totalInvestment) * 100 : 0
+
+      // Yield comparisons (annual)
+      const selicYield = totalInvestment * (SELIC / 100)
+      const cdiYield = totalInvestment * (CDI / 100)
+      const savingsYield = totalInvestment * (SAVINGS / 100)
+
+      // Monthly rent estimate (0.4-0.5% of appraisal)
+      const monthlyRent = appraisal > 0 ? appraisal * 0.004 : 0
+      const annualRent = monthlyRent * 12
+      const capRate = totalInvestment > 0 ? (annualRent / totalInvestment) * 100 : 0
+
+      return {
+        ...a,
+        analysis: {
+          pricePerM2,
+          totalCosts,
+          totalInvestment,
+          potentialProfit,
+          roiPercent: Number(roiPercent.toFixed(1)),
+          monthlyRent: Number(monthlyRent.toFixed(0)),
+          capRate: Number(capRate.toFixed(1)),
+          yieldComparison: {
+            auction: Number(roiPercent.toFixed(1)),
+            selic: SELIC,
+            cdi: CDI,
+            savings: SAVINGS,
+            advantage: Number((roiPercent - CDI).toFixed(1)),
+          },
+          riskFactors: {
+            occupied: a.occupation === 'OCUPADO',
+            hasDebts: a.hasDebts === true,
+            lowScore: (a.opportunityScore ?? 0) < 40,
+            noFinancing: !a.financingAvailable,
+          },
+        },
+      }
+    })
+
+    // Sort by ROI descending
+    comparison.sort((a: any, b: any) => b.analysis.roiPercent - a.analysis.roiPercent)
+
+    return reply.send({
+      success: true,
+      data: {
+        auctions: comparison,
+        macroRates: { selic: SELIC, cdi: CDI, savings: SAVINGS },
+        comparedAt: new Date().toISOString(),
+      },
+    })
+  })
 }

@@ -26,6 +26,27 @@ const UpdateLeadBody = z.object({
   tags:        z.array(z.string()).optional(),
 })
 
+// Plan limits for lead views per month (-1 = unlimited)
+const PLAN_LEAD_LIMITS: Record<string, number> = {
+  LITE: 10,
+  START: 10,
+  MODERADO: 50,
+  PRIME: 50,
+  PRO: -1,
+  VIP: -1,
+  ENTERPRISE: -1,
+}
+
+function maskContact(value: string | null): string | null {
+  if (!value) return null
+  if (value.includes('@')) {
+    const [user, domain] = value.split('@')
+    return `${user.slice(0, 2)}***@${domain}`
+  }
+  // Phone: show first 4 digits + mask
+  return value.slice(0, 4) + '****' + value.slice(-2)
+}
+
 export default async function leadsRoutes(app: FastifyInstance) {
   app.addHook('preHandler', app.authenticate)
 
@@ -54,6 +75,41 @@ export default async function leadsRoutes(app: FastifyInstance) {
     const page  = parseInt(q.page  ?? '1',  10)
     const limit = parseInt(q.limit ?? '50', 10)
 
+    // ── Plan-based lead view gating ──
+    let planGated = false
+    let viewsUsed = 0
+    let viewsLimit = -1
+
+    // Only gate non-admin users
+    if (!['SUPER_ADMIN', 'ADMIN'].includes(req.user.role)) {
+      // Lookup user's plan via company tenant
+      const tenant = await (app.prisma as any).tenant?.findFirst?.({
+        where: { companyId: req.user.cid, isActive: true },
+        select: { plan: true },
+      }).catch(() => null)
+
+      const plan = tenant?.plan || 'LITE'
+      viewsLimit = PLAN_LEAD_LIMITS[plan] ?? PLAN_LEAD_LIMITS.LITE
+
+      if (viewsLimit !== -1) {
+        // Count lead views this month
+        const monthStart = new Date()
+        monthStart.setDate(1)
+        monthStart.setHours(0, 0, 0, 0)
+
+        viewsUsed = await app.prisma.auditLog.count({
+          where: {
+            companyId: req.user.cid,
+            action: 'lead.view' as any,
+            userId: req.user.sub,
+            createdAt: { gte: monthStart },
+          },
+        }).catch(() => 0)
+
+        planGated = viewsUsed >= viewsLimit
+      }
+    }
+
     const [total, items] = await Promise.all([
       app.prisma.lead.count({ where }),
       app.prisma.lead.findMany({
@@ -69,7 +125,21 @@ export default async function leadsRoutes(app: FastifyInstance) {
       }),
     ])
 
-    return reply.send({ data: items, meta: { total, page, limit, totalPages: Math.ceil(total / limit) } })
+    // If plan-gated, mask contact data for items beyond the limit
+    const maskedItems = planGated
+      ? items.map((item: any) => ({
+          ...item,
+          email: maskContact(item.email),
+          phone: maskContact(item.phone),
+          _planGated: true,
+        }))
+      : items
+
+    return reply.send({
+      data: maskedItems,
+      meta: { total, page, limit, totalPages: Math.ceil(total / limit) },
+      planQuota: viewsLimit !== -1 ? { used: viewsUsed, limit: viewsLimit, gated: planGated } : undefined,
+    })
   })
 
   // POST /api/v1/leads — create (also used by portal webhooks)
@@ -155,6 +225,20 @@ export default async function leadsRoutes(app: FastifyInstance) {
     })
 
     if (!lead) return reply.status(404).send({ error: 'NOT_FOUND' })
+
+    // Track lead view for plan quota
+    if (!['SUPER_ADMIN', 'ADMIN'].includes(req.user.role)) {
+      await app.prisma.auditLog.create({
+        data: {
+          companyId: req.user.cid,
+          userId: req.user.sub,
+          action: 'lead.view' as any,
+          resource: 'lead',
+          resourceId: id,
+        },
+      }).catch(() => {})
+    }
+
     return reply.send(lead)
   })
 
@@ -200,6 +284,102 @@ export default async function leadsRoutes(app: FastifyInstance) {
     })
 
     return reply.send(lead)
+  })
+
+  // POST /api/v1/leads/:id/start-deal — convert lead into a deal ("Iniciar Negócio")
+  app.post('/:id/start-deal', {
+    schema: { tags: ['leads'], summary: 'Convert lead into a deal' },
+  }, async (req, reply) => {
+    const { id } = req.params as { id: string }
+    const body = z.object({
+      title:       z.string().optional(),
+      type:        z.enum(['SALE', 'RENT']).optional(),
+      value:       z.number().positive().optional(),
+      commission:  z.number().min(0).max(100).optional(),
+      notes:       z.string().optional(),
+      propertyIds: z.array(z.string().cuid()).default([]),
+    }).parse(req.body || {})
+
+    const lead = await app.prisma.lead.findFirst({
+      where: { id, companyId: req.user.cid },
+      include: {
+        properties: { select: { propertyId: true } },
+        contact: { select: { id: true, name: true } },
+      },
+    })
+    if (!lead) return reply.status(404).send({ error: 'NOT_FOUND' })
+
+    // Auto-infer deal properties
+    const dealType = body.type || (lead.interest === 'rent' ? 'RENT' : 'SALE')
+    const dealTitle = body.title || `${dealType === 'RENT' ? 'Locação' : 'Venda'} — ${lead.name}`
+    const propertyIds = body.propertyIds.length > 0
+      ? body.propertyIds
+      : lead.properties.map(p => p.propertyId)
+
+    const deal = await app.prisma.deal.create({
+      data: {
+        companyId:  req.user.cid,
+        brokerId:   lead.assignedToId || req.user.sub,
+        leadId:     lead.id,
+        contactId:  lead.contactId || undefined,
+        title:      dealTitle,
+        type:       dealType as any,
+        status:     'OPEN',
+        value:      body.value || (lead.budget ? Number(lead.budget) : undefined),
+        commission: body.commission,
+        notes:      body.notes || lead.notes || undefined,
+        properties: {
+          create: propertyIds.map(propertyId => ({ propertyId })),
+        },
+      },
+      include: {
+        broker:     { select: { id: true, name: true } },
+        properties: { include: { property: { select: { id: true, title: true, coverImage: true } } } },
+      },
+    })
+
+    // Update lead status to NEGOTIATING
+    await app.prisma.lead.update({
+      where: { id },
+      data: { status: 'NEGOTIATING' },
+    })
+
+    // Create activity on both lead and deal
+    await app.prisma.activity.create({
+      data: {
+        companyId: req.user.cid,
+        userId:    req.user.sub,
+        leadId:    id,
+        dealId:    deal.id,
+        type:      'system',
+        title:     'Negócio iniciado',
+        description: `Lead convertido em negociação "${dealTitle}"`,
+      },
+    })
+
+    emitAutomation({
+      companyId: req.user.cid,
+      event: 'deal_created',
+      data: { id: deal.id, title: deal.title, status: deal.status, leadId: id, brokerId: deal.brokerId },
+    })
+    emitSSE({
+      type: 'deal_created',
+      companyId: req.user.cid,
+      payload: { id: deal.id, title: deal.title, leadId: id },
+    })
+
+    await createAuditLog({
+      prisma: app.prisma, req,
+      action: 'lead.start_deal',
+      resource: 'lead', resourceId: id,
+      after: { dealId: deal.id, dealTitle: deal.title, type: dealType } as any,
+    })
+
+    return reply.status(201).send({
+      deal,
+      lead: { id, status: 'NEGOTIATING' },
+      message: 'Negociação criada com sucesso a partir do lead.',
+    })
   })
 
   // POST /api/v1/leads/:id/activities — add activity to lead timeline
