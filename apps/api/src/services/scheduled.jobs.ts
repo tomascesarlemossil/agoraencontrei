@@ -320,4 +320,199 @@ export async function runScheduledJobs(app: FastifyInstance) {
       app.log.error({ err }, '[scheduled] social daily sync failed')
     }
   }
+
+  // ── 6. Robô de Cobrança: inadimplência > 5 dias → WhatsApp automático ────
+  try {
+    const fiveDaysAgo = new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000)
+    const overdueRentals = await app.prisma.rental.findMany({
+      where: {
+        status: { in: ['PENDING', 'LATE'] },
+        dueDate: { lt: fiveDaysAgo },
+      },
+      include: {
+        contract: {
+          select: {
+            companyId: true, tenantName: true, tenantId: true,
+            propertyAddress: true, landlordName: true,
+          },
+        },
+      },
+      take: 100,
+    })
+
+    let cobranças = 0
+    for (const rental of overdueRentals) {
+      const cid = rental.contract?.companyId ?? rental.companyId
+      const daysOverdue = Math.ceil((now.getTime() - (rental.dueDate?.getTime() || now.getTime())) / 86_400_000)
+
+      // Only send once per rental (check if already notified via audit log)
+      const alreadyNotified = await app.prisma.auditLog.findFirst({
+        where: {
+          resource: 'rental',
+          resourceId: rental.id,
+          action: 'cobranca.whatsapp.5d',
+        },
+      }).catch(() => null)
+
+      if (alreadyNotified) continue
+
+      // Get tenant phone from Client record
+      let tenantPhone = ''
+      if (rental.contract?.tenantId) {
+        const client = await app.prisma.client.findUnique({
+          where: { id: rental.contract.tenantId },
+          select: { phone: true, whatsapp: true },
+        }).catch(() => null)
+        tenantPhone = client?.whatsapp || client?.phone || ''
+      }
+
+      if (tenantPhone) {
+        // Send WhatsApp via automation system
+        emitAutomation({
+          companyId: cid,
+          event: 'cobranca_inadimplencia_5d',
+          data: {
+            rentalId: rental.id,
+            contractId: rental.contractId ?? '',
+            tenantName: rental.contract?.tenantName ?? 'Inquilino',
+            tenantPhone,
+            propertyAddress: rental.contract?.propertyAddress ?? '',
+            amount: rental.rentAmount?.toString() ?? '0',
+            dueDate: rental.dueDate?.toISOString() ?? '',
+            daysOverdue,
+            paymentLink: (rental as any).asaasInvoiceUrl || (rental as any).asaasBoletoUrl || '',
+          },
+        })
+
+        // Mark as notified to avoid duplicate sends
+        await app.prisma.auditLog.create({
+          data: {
+            companyId: cid,
+            action: 'cobranca.whatsapp.5d' as any,
+            resource: 'rental',
+            resourceId: rental.id,
+            payload: { daysOverdue, tenantPhone, sentAt: now.toISOString() },
+          },
+        }).catch(() => {})
+
+        cobranças++
+      }
+    }
+
+    if (cobranças > 0) {
+      app.log.info(`[scheduled] cobranca-5d: sent ${cobranças} WhatsApp notifications`)
+    }
+  } catch (err) {
+    app.log.error({ err }, '[scheduled] cobranca-5d failed')
+  }
+
+  // ── 7. Leilão Pérola → Instagram auto-post (diário, 09:00 BRT) ──────────
+  if (hour === 12 && minute < 30) {
+    try {
+      const pearlAuctions = await app.prisma.auction.findMany({
+        where: {
+          status: { in: ['UPCOMING', 'OPEN'] },
+          discountPercent: { gte: 40 },
+        },
+        orderBy: { discountPercent: 'desc' },
+        take: 3,
+        select: {
+          id: true, title: true, city: true, state: true, neighborhood: true,
+          minimumBid: true, appraisalValue: true, discountPercent: true,
+          coverImage: true, streetViewUrl: true, slug: true,
+          propertyType: true, totalArea: true, bedrooms: true,
+        },
+      })
+
+      if (pearlAuctions.length > 0) {
+        const igToken = env.INSTAGRAM_PAGE_ACCESS_TOKEN
+        const igAccountId = env.INSTAGRAM_BUSINESS_ACCOUNT_ID
+
+        if (igToken && igAccountId) {
+          const { publishPropertyToInstagram } = await import('./instagram-publisher.service.js')
+
+          for (const auction of pearlAuctions) {
+            // Check if already posted (avoid duplicates)
+            const alreadyPosted = await app.prisma.auditLog.findFirst({
+              where: { resource: 'auction', resourceId: auction.id, action: 'pearl.instagram.post' as any },
+            }).catch(() => null)
+
+            if (alreadyPosted) continue
+
+            const imageUrl = auction.coverImage || auction.streetViewUrl
+            if (!imageUrl) continue
+
+            const discount = Math.round(Number(auction.discountPercent) || 0)
+            const minBid = Number(auction.minimumBid || 0)
+            const appraisal = Number(auction.appraisalValue || 0)
+            const location = [auction.neighborhood, auction.city, auction.state].filter(Boolean).join(', ')
+
+            const caption = [
+              `🔥 OPORTUNIDADE PÉROLA — ${discount}% ABAIXO DO MERCADO`,
+              '',
+              `📍 ${location}`,
+              `🏠 ${auction.title}`,
+              auction.totalArea ? `📐 ${auction.totalArea}m²` : '',
+              auction.bedrooms ? `🛏️ ${auction.bedrooms} quartos` : '',
+              '',
+              `💰 Avaliação: R$ ${appraisal.toLocaleString('pt-BR')}`,
+              `🎯 Lance mínimo: R$ ${minBid.toLocaleString('pt-BR')}`,
+              `📉 Desconto: ${discount}%`,
+              '',
+              `Saiba mais: agoraencontrei.com.br/leiloes/${auction.slug}`,
+              '',
+              '#leilao #imoveis #oportunidade #investimento #leilaodeimóveis',
+              '#agoraencontrei #imobiliaria #francasp #pérola',
+            ].filter(Boolean).join('\n')
+
+            try {
+              const result = await publishPropertyToInstagram(imageUrl, caption, igAccountId, igToken)
+              if (result.success) {
+                const company = await app.prisma.company.findFirst({ where: { isActive: true } })
+                await app.prisma.auditLog.create({
+                  data: {
+                    companyId: company?.id || 'system',
+                    action: 'pearl.instagram.post' as any,
+                    resource: 'auction',
+                    resourceId: auction.id,
+                    payload: { postId: result.postId, permalink: result.permalink, discount },
+                  },
+                }).catch(() => {})
+                app.log.info(`[scheduled] pearl-post: Posted auction ${auction.id} to Instagram (${discount}% off)`)
+              }
+            } catch (postErr) {
+              app.log.warn({ postErr }, `[scheduled] pearl-post: Failed to post auction ${auction.id}`)
+            }
+          }
+        }
+      }
+    } catch (err) {
+      app.log.error({ err }, '[scheduled] pearl-instagram failed')
+    }
+  }
+
+  // ── 8. Street View batch: capture facades for auctions/properties missing images ──
+  if (hour === 13 && minute < 30) {
+    try {
+      const { batchGenerateStreetView } = await import('./streetview.service.js')
+
+      // Process auctions first (most likely to be missing images)
+      const auctionResult = await batchGenerateStreetView(app.prisma, {
+        type: 'auction', limit: 30, onlyWithCoords: false,
+      })
+      if (auctionResult.updated > 0) {
+        app.log.info(`[scheduled] streetview-batch: Updated ${auctionResult.updated}/${auctionResult.processed} auctions`)
+      }
+
+      // Then properties
+      const propResult = await batchGenerateStreetView(app.prisma, {
+        type: 'property', limit: 20, onlyWithCoords: true,
+      })
+      if (propResult.updated > 0) {
+        app.log.info(`[scheduled] streetview-batch: Updated ${propResult.updated}/${propResult.processed} properties`)
+      }
+    } catch (err) {
+      app.log.error({ err }, '[scheduled] streetview-batch failed')
+    }
+  }
 }
