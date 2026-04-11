@@ -293,6 +293,23 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
      // Only fetch if no SSR clusters provided
     if (!initialClusters || initialClusters.length === 0) {
       loadClusters()
+    } else {
+      // SSR clusters provided — still geocode those with missing coordinates
+      const needsGeocode = initialClusters.filter(c => !c.lat || !c.lng)
+      let delay = 0
+      for (const c of needsGeocode) {
+        setTimeout(async () => {
+          const coords = await geocodeNeighborhood(c.neighborhood, c.city ?? 'Franca')
+          if (coords) {
+            setClusters(prev => prev.map(p =>
+              p.neighborhood === c.neighborhood && p.city === c.city
+                ? { ...p, resolvedLat: coords[0], resolvedLng: coords[1] }
+                : p
+            ))
+          }
+        }, delay)
+        delay += NOMINATIM_DELAY
+      }
     }
   }, [initialPurpose]) // eslint-disable-line react-hooks/exhaustive-deps
   // Load owner-direct (green pins) properties from free-listing endpoint
@@ -366,7 +383,7 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
         return
       }
       try {
-        // OSM + Satellite + Terrain sources
+        // OSM + Satellite sources (terrain removed — demotiles.maplibre.org is offline)
         const mapStyle: any = {
           version: 8,
           sources: {
@@ -385,18 +402,11 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
               tileSize: 256,
               maxzoom: 20,
             },
-            'terrain-dem': {
-              type: 'raster-dem',
-              tiles: ['https://demotiles.maplibre.org/terrain/{z}/{x}/{y}.png'],
-              tileSize: 256,
-              encoding: 'mapbox',
-            },
           },
           layers: [
-            { id: 'osm-tiles', type: 'raster', source: 'osm', layout: { visibility: 'none' } },
-            { id: 'satellite-tiles', type: 'raster', source: 'satellite' },
+            { id: 'osm-tiles', type: 'raster', source: 'osm', layout: { visibility: isSatellite ? 'none' : 'visible' } },
+            { id: 'satellite-tiles', type: 'raster', source: 'satellite', layout: { visibility: isSatellite ? 'visible' : 'none' } },
           ],
-          terrain: { source: 'terrain-dem', exaggeration: 1.3 },
         }
 
         const map = new maplibregl.Map({
@@ -404,8 +414,7 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
           style: mapStyle,
           center: [FRANCA_CENTER[1], FRANCA_CENTER[0]],
           zoom: 14,
-          pitch: 50,
-          bearing: 30,
+          pitch: 0,
           maxPitch: 85,
           antialias: true,
         })
