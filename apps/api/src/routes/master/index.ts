@@ -627,6 +627,7 @@ export default async function masterRoutes(app: FastifyInstance) {
 
   // ── GET /intelligence — Master Intelligence (Dashboard Goldman Sachs) ───
   app.get('/intelligence', {
+    config: { rateLimit: { max: 10, timeWindow: '1 minute' } },
     schema: { tags: ['master'], summary: 'Full master intelligence — revenue, sales, channels, retention, forecast, advisor' },
   }, async (_req, reply) => {
     try {

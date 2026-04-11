@@ -9,6 +9,8 @@
 import type { FastifyInstance } from 'fastify'
 import { generateBranding, getAvailableThemes } from '../../services/preview-branding.service.js'
 import { createPreviewSession, resolvePreviewSession, isPreviewExpired } from '../../services/preview-token.service.js'
+import { updateFunnelStage } from '../../services/lead-ingestion.service.js'
+import { emitAutomation } from '../../services/automation.emitter.js'
 
 const MOCK_PROPERTIES = [
   { title: 'Casa 3 quartos - Jd. Petráglia', price: 'R$ 650.000', type: 'HOUSE', bedrooms: 3, area: 180 },
@@ -67,12 +69,16 @@ export default async function previewRoutes(app: FastifyInstance) {
   const prisma = app.prisma as any
 
   // ── GET /themes — Lista temas disponíveis ─────────────────────────────────
-  app.get('/themes', async (_req, reply) => {
+  app.get('/themes', {
+    config: { rateLimit: { max: 60, timeWindow: '1 minute' } },
+  }, async (_req, reply) => {
     return reply.send({ data: getAvailableThemes() })
   })
 
   // ── GET /session/:token — Resolve preview por token ───────────────────────
-  app.get('/session/:token', async (req, reply) => {
+  app.get('/session/:token', {
+    config: { rateLimit: { max: 60, timeWindow: '1 minute' } },
+  }, async (req, reply) => {
     const { token } = req.params as { token: string }
 
     const session = await prisma.previewSession.findFirst({
@@ -97,11 +103,41 @@ export default async function previewRoutes(app: FastifyInstance) {
       data: { viewCount: { increment: 1 } },
     }).catch(() => {})
 
+    // ── Track preview_clicked in SalesFunnel ────────────────────────────
+    try {
+      const funnelEntry = await prisma.salesFunnel.findFirst({
+        where: {
+          previewSiteName: session.siteName,
+          stage: 'preview_sent',
+        },
+        orderBy: { createdAt: 'desc' },
+      })
+
+      if (funnelEntry) {
+        await updateFunnelStage(prisma, funnelEntry.id, 'preview_clicked')
+
+        emitAutomation({
+          companyId: 'platform',
+          event: 'preview_clicked',
+          data: {
+            funnelId: funnelEntry.id,
+            siteName: session.siteName,
+            leadName: funnelEntry.name,
+            leadPhone: funnelEntry.phone || '',
+          },
+        })
+      }
+    } catch {
+      // Non-blocking
+    }
+
     return reply.send({ data: session })
   })
 
   // ── GET /:siteName — Gera preview do site ─────────────────────────────────
-  app.get('/:siteName', async (req, reply) => {
+  app.get('/:siteName', {
+    config: { rateLimit: { max: 30, timeWindow: '1 minute' } },
+  }, async (req, reply) => {
     const { siteName } = req.params as { siteName: string }
     const query = req.query as {
       theme?: string; segment?: string; tone?: string; city?: string; companyName?: string
@@ -160,6 +196,34 @@ export default async function previewRoutes(app: FastifyInstance) {
       viewCount: session?.viewCount || 0,
       isPreview: true,
       createdAt: new Date().toISOString(),
+    }
+
+    // ── Track preview_clicked in SalesFunnel ──────────────────────────────
+    try {
+      const funnelEntry = await prisma.salesFunnel.findFirst({
+        where: {
+          previewSiteName: slug,
+          stage: 'preview_sent',
+        },
+        orderBy: { createdAt: 'desc' },
+      })
+
+      if (funnelEntry) {
+        await updateFunnelStage(prisma, funnelEntry.id, 'preview_clicked')
+
+        emitAutomation({
+          companyId: 'platform',
+          event: 'preview_clicked',
+          data: {
+            funnelId: funnelEntry.id,
+            siteName: slug,
+            leadName: funnelEntry.name,
+            leadPhone: funnelEntry.phone || '',
+          },
+        })
+      }
+    } catch {
+      // Non-blocking — preview still works even if funnel tracking fails
     }
 
     // Audit

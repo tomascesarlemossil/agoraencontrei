@@ -494,7 +494,7 @@ export async function runScheduledJobs(app: FastifyInstance) {
 
   // ── 8. Follow-up automático: processa follow-ups agendados (D+1, D+3, D+7) ───
   try {
-    const followUpResult = await processDueFollowUps(app.prisma, app.automationQueue)
+    const followUpResult = await processDueFollowUps(app.prisma, app.outboundQueue)
     const total = followUpResult.sent + followUpResult.skipped + followUpResult.cancelled
     if (total > 0) {
       app.log.info(`[scheduled] follow-ups: sent=${followUpResult.sent} skipped=${followUpResult.skipped} cancelled=${followUpResult.cancelled}`)

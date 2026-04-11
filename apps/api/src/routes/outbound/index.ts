@@ -26,6 +26,7 @@ export default async function outboundRoutes(app: FastifyInstance) {
 
   // ── POST /send — Single outbound message ──────────────────────────────
   app.post('/send', {
+    config: { rateLimit: { max: 60, timeWindow: '1 minute' } },
     schema: { tags: ['outbound'], summary: 'Enqueue single outbound message' },
   }, async (req, reply) => {
     const body = z.object({
@@ -46,7 +47,7 @@ export default async function outboundRoutes(app: FastifyInstance) {
     })
 
     // Enqueue outbound
-    const result = await enqueueOutbound(app.prisma, app.automationQueue, {
+    const result = await enqueueOutbound(app.prisma, app.outboundQueue, {
       leadId: ingested.leadId ?? undefined,
       funnelId: ingested.funnelId,
       name: body.name,
@@ -80,6 +81,7 @@ export default async function outboundRoutes(app: FastifyInstance) {
 
   // ── POST /campaign — Batch outbound campaign ──────────────────────────
   app.post('/campaign', {
+    config: { rateLimit: { max: 10, timeWindow: '1 minute' } },
     schema: { tags: ['outbound'], summary: 'Enqueue batch outbound campaign' },
   }, async (req, reply) => {
     const body = z.object({
@@ -114,7 +116,7 @@ export default async function outboundRoutes(app: FastifyInstance) {
     // Enqueue batch
     const result = await enqueueBatchOutbound(
       app.prisma,
-      app.automationQueue,
+      app.outboundQueue,
       enrichedLeads,
       body.campaignId,
     )
@@ -253,6 +255,7 @@ export default async function outboundRoutes(app: FastifyInstance) {
 
   // ── POST /ingest — Manual lead ingestion endpoint ─────────────────────
   app.post('/ingest', {
+    config: { rateLimit: { max: 120, timeWindow: '1 minute' } },
     schema: { tags: ['outbound'], summary: 'Manually ingest a lead' },
   }, async (req, reply) => {
     const body = z.object({

@@ -16,6 +16,7 @@ declare module 'fastify' {
     automationQueue:  Queue | null
     visualAIQueue:    Queue | null
     campaignsQueue:   Queue | null
+    outboundQueue:    Queue | null
   }
 }
 
@@ -48,10 +49,12 @@ export default fp(async (app: FastifyInstance) => {
   const automationQueue = new Queue('automation',  { connection })
   const visualAIQueue   = new Queue('visual-ai',   { connection })
   const campaignsQueue  = new Queue('campaigns',   { connection })
+  const outboundQueue   = new Queue('outbound',    { connection })
 
   app.decorate('automationQueue', automationQueue)
   app.decorate('visualAIQueue',   visualAIQueue)
   app.decorate('campaignsQueue',  campaignsQueue)
+  app.decorate('outboundQueue',   outboundQueue)
 
   // ── Funnel domain events into automation queue ────────────────────────────
   automationEmitter.on('automation:event', async (payload: AutomationEventPayload) => {
@@ -86,15 +89,10 @@ export default fp(async (app: FastifyInstance) => {
     { connection, concurrency: 2 },
   )
 
-  // ── Outbound worker — processes queued outbound messages ─────────────────
+  // ── Outbound worker — dedicated queue for outbound messages ────────────
   const outboundWorker = new Worker(
-    'automation',
-    async (job) => {
-      if (job.name === 'outbound:send') {
-        return processOutboundJob(app.prisma, job.data)
-      }
-      return runAutomation(app, job.data as AutomationEventPayload)
-    },
+    'outbound',
+    async (job) => processOutboundJob(app.prisma, job.data),
     { connection, concurrency: 3 },
   )
 
@@ -129,9 +127,10 @@ export default fp(async (app: FastifyInstance) => {
       automationQueue.close(),
       visualAIQueue.close(),
       campaignsQueue.close(),
+      outboundQueue.close(),
     ])
     await connection.quit()
   })
 
-  app.log.info('✅ Automation engine started (queues: automation, visual-ai, campaigns)')
+  app.log.info('✅ Automation engine started (queues: automation, visual-ai, campaigns, outbound)')
 })

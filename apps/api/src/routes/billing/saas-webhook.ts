@@ -163,6 +163,49 @@ async function handleTenantEvent(
         },
       }).catch(() => {})
 
+      // ── Sales Funnel: mark as converted ─────────────────────────────────
+      try {
+        const { convertFunnelEntry } = await import('../../services/sales-funnel.service.js')
+        const customerEmail = (tenant.settings as any)?.customerEmail
+        const customerPhone = (tenant.settings as any)?.customerPhone
+        await convertFunnelEntry(prisma, {
+          phone: customerPhone,
+          email: customerEmail,
+        }, tenant.id)
+        app.log.info(`[saas-webhook] Funnel converted for tenant ${subdomain}`)
+      } catch (err: any) {
+        app.log.warn(`[saas-webhook] Funnel conversion failed: ${err.message}`)
+      }
+
+      // ── Affiliate Commission: create earning if affiliate linked ────────
+      try {
+        const { calculateAffiliateCommission, createAffiliateEarning } = await import('../../services/affiliate-commission.service.js')
+        // Check AffiliateReferral linked to this tenant
+        const referral = await prisma.affiliateReferral.findFirst({
+          where: { tenantId: tenant.id, status: 'converted' },
+        }).catch(() => null)
+
+        if (referral) {
+          const commission = calculateAffiliateCommission(prisma, {
+            affiliateId: referral.affiliateId,
+            grossAmount: Number(payment.value || 0),
+            transactionId: payment.id,
+          })
+          if (commission) {
+            await createAffiliateEarning(prisma, {
+              affiliateId: referral.affiliateId,
+              transactionId: payment.id,
+              grossAmount: Number(payment.value || 0),
+              commissionAmount: (await commission).commissionAmount,
+              description: `Comissão plano ${tenant.plan} — ${subdomain}`,
+            })
+            app.log.info(`[saas-webhook] Affiliate earning created for referral ${referral.affiliateId}`)
+          }
+        }
+      } catch (err: any) {
+        app.log.warn(`[saas-webhook] Affiliate commission failed: ${err.message}`)
+      }
+
       // TODO: Trigger Vercel domain deploy when VERCEL_TOKEN is available
       // await deploySubdomain(tenant.subdomain)
 

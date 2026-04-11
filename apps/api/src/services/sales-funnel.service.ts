@@ -78,7 +78,7 @@ export async function triggerPreviewForFunnel(
     await createPreviewSession(prisma, {
       siteName,
       companyName: branding.companyName,
-      theme: branding.theme.name,
+      theme: branding.theme.key,
       slogan: branding.slogan,
       segment: branding.segment,
     })
