@@ -129,6 +129,81 @@ export async function cancelCharge(asaasId: string): Promise<{ deleted: boolean 
   return asaasFetch(`/payments/${asaasId}`, { method: 'DELETE' })
 }
 
+// ── Split Payment (Repasse automático proprietário/imobiliária) ──────────────
+
+export interface AsaasSplitPayload {
+  walletId: string           // Wallet do proprietário (subconta Asaas)
+  fixedValue?: number        // Valor fixo para o proprietário
+  percentualValue?: number   // Percentual para o proprietário (ex: 90)
+}
+
+export interface AsaasChargeWithSplitPayload extends AsaasChargePayload {
+  split?: AsaasSplitPayload[]
+}
+
+/**
+ * Cria cobrança com split automático: ao receber, o Asaas separa
+ * automaticamente a comissão da imobiliária e o repasse do proprietário.
+ */
+export async function createChargeWithSplit(
+  payload: AsaasChargeWithSplitPayload,
+): Promise<AsaasCharge> {
+  return asaasFetch<AsaasCharge>('/payments', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
+}
+
+// ── Subaccounts (Subcontas para proprietários) ──────────────────────────────
+
+export interface AsaasSubaccountPayload {
+  name: string
+  cpfCnpj: string
+  email: string
+  phone?: string
+  mobilePhone?: string
+  address?: string
+  addressNumber?: string
+  province?: string
+  postalCode?: string
+  birthDate?: string       // YYYY-MM-DD
+  companyType?: 'MEI' | 'LIMITED' | 'INDIVIDUAL' | 'ASSOCIATION'
+}
+
+export interface AsaasSubaccount {
+  id: string
+  name: string
+  email: string
+  cpfCnpj: string
+  walletId: string         // ID usado no split
+  apiKey?: string
+}
+
+/**
+ * Cria uma subconta no Asaas para um proprietário.
+ * O walletId retornado é usado no split de pagamentos.
+ */
+export async function createSubaccount(
+  payload: AsaasSubaccountPayload,
+): Promise<AsaasSubaccount> {
+  return asaasFetch<AsaasSubaccount>('/accounts', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
+}
+
+/**
+ * Lista subcontas existentes (proprietários cadastrados).
+ */
+export async function listSubaccounts(
+  params?: { limit?: number; offset?: number },
+): Promise<{ data: AsaasSubaccount[]; totalCount: number }> {
+  const qs = new URLSearchParams()
+  if (params?.limit) qs.set('limit', String(params.limit))
+  if (params?.offset) qs.set('offset', String(params.offset))
+  return asaasFetch(`/accounts?${qs}`)
+}
+
 // ── Account / Balance ────────────────────────────────────────────────────────
 
 export interface AsaasBalance {

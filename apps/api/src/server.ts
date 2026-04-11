@@ -70,6 +70,12 @@ import { valuationRoutes } from './routes/public/valuation.js'
 import { publicPhotoEditorRoutes } from './routes/public/photo-editor.js'
 import seoProgramaticoRoutes from './routes/seo-programatico/index.js'
 import financialAnalysisRoutes from './routes/financial/index.js'
+import aiMarketingRoutes from './routes/ai-marketing/index.js'
+import leadScoringRoutes from './routes/lead-scoring/index.js'
+import maintenanceRoutes from './routes/maintenance/index.js'
+import ownerDashboardRoutes from './routes/owner-dashboard/index.js'
+import billingAutomationRoutes from './routes/billing/index.js'
+import asaasWebhookRoutes from './routes/finance/webhook.js'
 
 const app = Fastify({
   // No body size limit — accept any file size
@@ -373,6 +379,119 @@ async function runMigrations(prisma: any) {
     try { await prisma.$executeRawUnsafe(sql) } catch { /* already exists */ }
   }
 
+  // ── AI Marketing, Lead Scoring, Billing Automation tables ──────────────
+  const nexusImobiMigrations = [
+    `CREATE TABLE IF NOT EXISTS lead_interactions (
+      id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+      "leadId" TEXT,
+      "contactId" TEXT,
+      "sessionId" TEXT,
+      "eventType" TEXT NOT NULL,
+      "propertyId" TEXT,
+      metadata JSONB NOT NULL DEFAULT '{}',
+      "ipAddress" TEXT,
+      "userAgent" TEXT,
+      "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )`,
+    `CREATE INDEX IF NOT EXISTS lead_interactions_lead_idx ON lead_interactions("leadId")`,
+    `CREATE INDEX IF NOT EXISTS lead_interactions_session_idx ON lead_interactions("sessionId")`,
+    `CREATE INDEX IF NOT EXISTS lead_interactions_event_idx ON lead_interactions("eventType")`,
+    `CREATE INDEX IF NOT EXISTS lead_interactions_created_idx ON lead_interactions("createdAt")`,
+
+    `CREATE TABLE IF NOT EXISTS billing_rules (
+      id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+      "companyId" TEXT NOT NULL,
+      name TEXT NOT NULL,
+      "daysOffset" INTEGER NOT NULL,
+      channel TEXT NOT NULL DEFAULT 'whatsapp',
+      "templateKey" TEXT NOT NULL,
+      message TEXT,
+      "isActive" BOOLEAN NOT NULL DEFAULT true,
+      "isAutomated" BOOLEAN NOT NULL DEFAULT true,
+      "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )`,
+    `CREATE INDEX IF NOT EXISTS billing_rules_company_idx ON billing_rules("companyId")`,
+
+    `CREATE TABLE IF NOT EXISTS billing_notifications (
+      id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+      "companyId" TEXT NOT NULL,
+      "rentalId" TEXT NOT NULL,
+      "contractId" TEXT,
+      "ruleId" TEXT,
+      channel TEXT NOT NULL,
+      "templateKey" TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'SENT',
+      message TEXT,
+      "errorMsg" TEXT,
+      "sentAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )`,
+    `CREATE INDEX IF NOT EXISTS billing_notifications_company_idx ON billing_notifications("companyId")`,
+    `CREATE INDEX IF NOT EXISTS billing_notifications_rental_idx ON billing_notifications("rentalId")`,
+
+    `CREATE TABLE IF NOT EXISTS owner_repasses (
+      id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+      "companyId" TEXT NOT NULL,
+      "contractId" TEXT NOT NULL,
+      "landlordId" TEXT NOT NULL,
+      "rentalId" TEXT,
+      month INTEGER NOT NULL,
+      year INTEGER NOT NULL,
+      "grossValue" DECIMAL(12,2) NOT NULL,
+      "commissionValue" DECIMAL(12,2) NOT NULL,
+      "adminFeeValue" DECIMAL(12,2),
+      "netValue" DECIMAL(12,2) NOT NULL,
+      status TEXT NOT NULL DEFAULT 'PENDING',
+      "paidAt" TIMESTAMPTZ,
+      "paymentMethod" TEXT,
+      "paymentRef" TEXT,
+      notes TEXT,
+      "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )`,
+    `CREATE INDEX IF NOT EXISTS owner_repasses_company_idx ON owner_repasses("companyId")`,
+    `CREATE INDEX IF NOT EXISTS owner_repasses_landlord_idx ON owner_repasses("landlordId")`,
+    `CREATE INDEX IF NOT EXISTS owner_repasses_status_idx ON owner_repasses(status)`,
+
+    `CREATE TABLE IF NOT EXISTS property_valuations (
+      id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+      "propertyId" TEXT NOT NULL,
+      "valuatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      value DECIMAL(14,2) NOT NULL,
+      source TEXT NOT NULL DEFAULT 'ai',
+      "pricePerM2" DECIMAL(10,2),
+      methodology TEXT,
+      notes TEXT,
+      metadata JSONB NOT NULL DEFAULT '{}'
+    )`,
+    `CREATE INDEX IF NOT EXISTS property_valuations_property_idx ON property_valuations("propertyId")`,
+
+    `CREATE TABLE IF NOT EXISTS social_posts (
+      id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+      "companyId" TEXT NOT NULL,
+      "propertyId" TEXT,
+      platform TEXT NOT NULL,
+      caption TEXT NOT NULL,
+      hashtags TEXT,
+      "imageUrls" TEXT[] NOT NULL DEFAULT '{}',
+      "postId" TEXT,
+      "postUrl" TEXT,
+      status TEXT NOT NULL DEFAULT 'DRAFT',
+      "scheduledAt" TIMESTAMPTZ,
+      "publishedAt" TIMESTAMPTZ,
+      "errorMsg" TEXT,
+      metadata JSONB NOT NULL DEFAULT '{}',
+      "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )`,
+    `CREATE INDEX IF NOT EXISTS social_posts_company_idx ON social_posts("companyId")`,
+    `CREATE INDEX IF NOT EXISTS social_posts_property_idx ON social_posts("propertyId")`,
+    `CREATE INDEX IF NOT EXISTS social_posts_status_idx ON social_posts(status)`,
+  ]
+  for (const sql of nexusImobiMigrations) {
+    try { await prisma.$executeRawUnsafe(sql) } catch { /* already exists */ }
+  }
+
   for (const [col, type] of columns) {
     try {
       await prisma.$executeRawUnsafe(
@@ -513,6 +632,12 @@ async function bootstrap() {
   await app.register(specialistPaymentRoutes,  { prefix: '/api/v1/specialists/payments' })
   await app.register(seoProgramaticoRoutes,    { prefix: '/api/v1/seo' })
   await app.register(financialAnalysisRoutes,  { prefix: '/api/v1/financial' })
+  await app.register(aiMarketingRoutes,        { prefix: '/api/v1/ai-marketing' })
+  await app.register(leadScoringRoutes,        { prefix: '/api/v1/lead-scoring' })
+  await app.register(maintenanceRoutes,        { prefix: '/api/v1/maintenance' })
+  await app.register(ownerDashboardRoutes,     { prefix: '/api/v1/owner-dashboard' })
+  await app.register(billingAutomationRoutes,  { prefix: '/api/v1/billing' })
+  await app.register(asaasWebhookRoutes,       { prefix: '/api/v1/finance/webhook' })
 
   // ── Re-ativar leilões bancários fechados erroneamente pelo cleanup ────
   try {

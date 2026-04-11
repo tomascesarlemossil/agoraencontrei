@@ -73,6 +73,13 @@ const envSchema = z.object({
   INSTAGRAM_PAGE_ACCESS_TOKEN: z.string().optional(),   // Page access token (publish)
   FACEBOOK_PAGE_ID: z.string().optional(),              // 932688306232065
   META_PIXEL_ID: z.string().optional(),                 // 932688306232065
+
+  // Cloudinary — image optimization & watermark
+  CLOUDINARY_CLOUD_NAME: z.string().optional(),
+  CLOUDINARY_LOGO_ID: z.string().optional(),
+
+  // Gemini — vision & content generation (alternative to Anthropic)
+  GEMINI_API_KEY: z.string().optional(),
 })
 
 function parseEnv() {
@@ -117,6 +124,7 @@ export function logEnvWarnings(logger: { warn: (msg: string) => void }) {
     ['WHATSAPP_TOKEN',       'WhatsApp notifications and inbox will not work'],
     ['ASAAS_API_KEY',        'Boleto/cobrança via Asaas will not work'],
     ['APIFY_API_TOKEN',      'Apify scrapers (Caixa, Santander, OLX) will not run'],
+    ['CLOUDINARY_CLOUD_NAME','Cloudinary image presets and watermark will not work'],
   ]
   for (const [key, impact] of warnings) {
     if (!process.env[key]) {
