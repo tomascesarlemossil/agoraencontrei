@@ -2599,3 +2599,23 @@ model ProposalEvent {
   @@index([proposalId])
   @@map("proposal_events")
 }
+
+// =============================================================================
+// SEGURANÇA — Controle de Acesso Sensível (LGPD)
+// =============================================================================
+
+/// Grant temporário para visualizar dados sensíveis (telefone, CPF, email completo)
+model SensitiveAccessGrant {
+  id          String   @id @default(cuid())
+  userId      String
+  companyId   String
+  entityType  String   // "lead" | "contact"
+  entityId    String
+  reason      String   // "atendimento" | "proposta" | "visita" | "contrato"
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+
+  @@index([userId, entityType, entityId])
+  @@index([expiresAt])
+  @@map("sensitive_access_grants")
+}
