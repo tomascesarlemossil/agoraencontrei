@@ -1,7 +1,10 @@
-import { useCallback } from 'react'
+import { useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuthStore } from '@/stores/auth.store'
 import { authApi } from '@/lib/api'
+
+// Shared refresh lock — prevents concurrent refresh requests across all hook instances
+let refreshPromise: Promise<string | null> | null = null
 
 export function useAuth() {
   const router = useRouter()
@@ -10,14 +13,23 @@ export function useAuth() {
   const getValidToken = useCallback(async (): Promise<string | null> => {
     if (!isTokenExpired()) return accessToken
 
-    try {
-      const data = await authApi.refresh(refreshToken)
-      setAuth(data.user as any, data.accessToken, data.expiresIn, data.refreshToken)
-      return data.accessToken
-    } catch {
-      clearAuth()
-      return null
-    }
+    // If another refresh is already in flight, wait for it
+    if (refreshPromise) return refreshPromise
+
+    refreshPromise = (async () => {
+      try {
+        const data = await authApi.refresh(refreshToken)
+        setAuth(data.user as any, data.accessToken, data.expiresIn, data.refreshToken)
+        return data.accessToken
+      } catch {
+        clearAuth()
+        return null
+      } finally {
+        refreshPromise = null
+      }
+    })()
+
+    return refreshPromise
   }, [accessToken, refreshToken, isTokenExpired, setAuth, clearAuth])
 
   const login = useCallback(

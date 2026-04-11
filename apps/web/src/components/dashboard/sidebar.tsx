@@ -130,6 +130,9 @@ function NavContent({ onClose }: { onClose?: () => void }) {
     '/dashboard/blog': 'blog', '/dashboard/seo-programatico': 'seo',
     '/dashboard/leiloes': 'leiloes', '/dashboard/parceiros': 'parceiros',
     '/dashboard/documentos': 'documentos',
+    '/dashboard/site-factory': 'site-factory', '/dashboard/crescer': 'crescer',
+    '/dashboard/contratos': 'contratos', '/dashboard/clientes': 'clientes',
+    '/dashboard/lemosbank': 'financeiro',
   }
 
   function hasModuleAccess(href: string): boolean {
