@@ -178,6 +178,33 @@ async function processIncoming(app: FastifyInstance, msg: any, contacts: any[], 
 
   // Run bot if in bot mode
   if (conversation.status === 'bot') {
+    // ── Audio fallback: humanized response when audio can't be processed ──
+    if (type === 'audio' && (content === '[audio]' || !content.trim())) {
+      const audioFallbackMsg = 'Desculpe, não consegui entender o áudio. 😊\n\n' +
+        'Para te ajudar mais rápido, você pode:\n' +
+        '1️⃣ Digitar sua dúvida aqui\n' +
+        '2️⃣ Ver nosso Tour Virtual de imóveis\n' +
+        '3️⃣ Falar sobre valores e planos\n\n' +
+        'Como posso te ajudar?'
+
+      if (env.WHATSAPP_TOKEN) {
+        await whatsappService.sendText(phone, audioFallbackMsg).catch(() => {})
+      }
+
+      // Save bot response
+      await app.prisma.message.create({
+        data: {
+          conversationId: conversation.id,
+          direction: 'outbound',
+          type: 'text',
+          content: audioFallbackMsg,
+          status: 'sent',
+        },
+      }).catch(() => {})
+
+      return // Don't advance bot state on audio
+    }
+
     await runBot(app, conversation, phone, content, company.id)
   }
 }

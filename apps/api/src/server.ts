@@ -95,11 +95,14 @@ import saasFinanceRoutes from './routes/saas-finance/index.js'
 import previewRoutes from './routes/preview/index.js'
 import outboundRoutes from './routes/outbound/index.js'
 
+import { sensitiveSerializer } from './utils/log-sanitizer.js'
+
 const app = Fastify({
   // No body size limit — accept any file size
   bodyLimit: 1073741824, // 1GB — aceita qualquer arquivo
   logger: {
     level: env.LOG_LEVEL,
+    serializers: sensitiveSerializer as any,
     ...(env.NODE_ENV === 'development' && {
       transport: {
         target: 'pino-pretty',

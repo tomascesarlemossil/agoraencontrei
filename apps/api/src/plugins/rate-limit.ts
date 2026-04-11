@@ -40,9 +40,16 @@ export default fp(async (app: FastifyInstance) => {
       return
     }
 
-    // Add anti-scraping headers to all responses
+    // Add security + anti-scraping headers to all responses
     reply.header('X-Content-Type-Options', 'nosniff')
     reply.header('X-Frame-Options', 'DENY')
     reply.header('X-Robots-Tag', 'noai, noimageai')
+    reply.header('X-XSS-Protection', '1; mode=block')
+    reply.header('Referrer-Policy', 'strict-origin-when-cross-origin')
+    reply.header('Permissions-Policy', 'camera=(), microphone=(), geolocation=()')
+    // HSTS — enforce HTTPS in production
+    if (process.env.NODE_ENV === 'production') {
+      reply.header('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload')
+    }
   })
 })

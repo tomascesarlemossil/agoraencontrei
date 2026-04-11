@@ -90,10 +90,29 @@ export default async function previewRoutes(app: FastifyInstance) {
     }
 
     if (isPreviewExpired(session.expiresAt)) {
+      // ── Expired preview: re-enter funnel ──────────────────────────────
+      try {
+        const funnelEntry = await prisma.salesFunnel.findFirst({
+          where: { previewSiteName: session.siteName },
+          orderBy: { createdAt: 'desc' },
+        })
+        if (funnelEntry && funnelEntry.stage !== 'converted' && funnelEntry.stage !== 'lost') {
+          await updateFunnelStage(prisma, funnelEntry.id, 'engaged', {
+            expiredPreviewAccess: new Date().toISOString(),
+          })
+        }
+      } catch { /* non-blocking */ }
+
       return reply.send({
         error: 'Preview expirado',
         expired: true,
-        data: { siteName: session.siteName, companyName: session.companyName },
+        data: {
+          siteName: session.siteName,
+          companyName: session.companyName,
+          message: 'Este preview expirou. Fale com o Tomás para gerar uma nova versão atualizada do seu portal.',
+          ctaText: 'Falar com Tomás',
+          ctaUrl: `https://wa.me/5517996050017?text=Oi%20Tomás%2C%20meu%20preview%20expirou.%20Pode%20gerar%20um%20novo%3F`,
+        },
       })
     }
 

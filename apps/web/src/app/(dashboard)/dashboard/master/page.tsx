@@ -56,6 +56,26 @@ export default function MasterPage() {
     refetchInterval: 60000,
   })
 
+  const { data: healthData } = useQuery({
+    queryKey: ['system-health'],
+    queryFn: () => masterApi.systemHealth(),
+    refetchInterval: 30000,
+  })
+
+  const systemStatus = healthData?.status ?? 'yellow'
+  const statusLabel = systemStatus === 'green' ? 'Sistemas OK'
+    : systemStatus === 'yellow' ? 'Atenção'
+    : 'Erro Crítico'
+  const statusColor = systemStatus === 'green' ? 'bg-green-500'
+    : systemStatus === 'yellow' ? 'bg-yellow-500'
+    : 'bg-red-500'
+  const statusTextColor = systemStatus === 'green' ? 'text-green-700'
+    : systemStatus === 'yellow' ? 'text-yellow-700'
+    : 'text-red-700'
+  const statusBg = systemStatus === 'green' ? 'bg-green-50 border-green-200'
+    : systemStatus === 'yellow' ? 'bg-yellow-50 border-yellow-200'
+    : 'bg-red-50 border-red-200'
+
   const intel = res?.data
 
   if (isLoading || !intel) {
@@ -103,10 +123,17 @@ export default function MasterPage() {
           </h1>
           <p className="text-xs sm:text-sm text-gray-500 truncate">Centro de comando executivo — atualizado em tempo real</p>
         </div>
-        <button onClick={() => refetch()} className="flex items-center gap-2 px-3 py-2 text-sm bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors self-start sm:self-auto">
-          <RefreshCw className="h-4 w-4" />
-          <span className="hidden sm:inline">Atualizar</span>
-        </button>
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          {/* System Health Badge */}
+          <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-medium ${statusBg} ${statusTextColor}`}>
+            <span className={`h-2 w-2 rounded-full ${statusColor} animate-pulse`} />
+            {statusLabel}
+          </div>
+          <button onClick={() => refetch()} className="flex items-center gap-2 px-3 py-2 text-sm bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
+            <RefreshCw className="h-4 w-4" />
+            <span className="hidden sm:inline">Atualizar</span>
+          </button>
+        </div>
       </div>
 
       {/* ═══ F. TOM\u00c1S ADVISOR ═══ */}

@@ -7,7 +7,7 @@
 
 import crypto from 'crypto'
 
-const PREVIEW_EXPIRY_HOURS = 72
+const PREVIEW_EXPIRY_HOURS = 48
 
 export interface PreviewTokenData {
   token: string
