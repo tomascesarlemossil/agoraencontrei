@@ -1,88 +1,175 @@
 /**
- * Preview Mode Routes — Site temporário para demonstração de vendas
+ * Preview Engine Routes — Motor de conversão comercial instantânea
  *
- * GET /api/v1/preview/:siteName — Gera preview JSON sem persistência
+ * GET  /api/v1/preview/:siteName — Gera preview com sessão persistente (72h)
+ * GET  /api/v1/preview/session/:token — Resolve preview por token
+ * GET  /api/v1/preview/themes — Lista temas disponíveis
  */
 
 import type { FastifyInstance } from 'fastify'
+import { generateBranding, getAvailableThemes } from '../../services/preview-branding.service.js'
+import { createPreviewSession, resolvePreviewSession, isPreviewExpired } from '../../services/preview-token.service.js'
 
-const THEMES: Record<string, { name: string; primaryColor: string; style: string }> = {
-  urban_tech: {
-    name: 'Urban Tech',
-    primaryColor: '#d4a853',
-    style: 'Moderno e tecnológico',
-  },
-  luxury_gold: {
-    name: 'Luxury Gold',
-    primaryColor: '#c9a84c',
-    style: 'Luxuoso e elegante',
-  },
-  clean: {
-    name: 'Clean',
-    primaryColor: '#3b82f6',
-    style: 'Limpo e profissional',
-  },
-}
+const MOCK_PROPERTIES = [
+  { title: 'Casa 3 quartos - Jd. Petráglia', price: 'R$ 650.000', type: 'HOUSE', bedrooms: 3, area: 180 },
+  { title: 'Apartamento 2 quartos - Centro', price: 'R$ 320.000', type: 'APARTMENT', bedrooms: 2, area: 75 },
+  { title: 'Terreno 250m² - Damha III', price: 'R$ 180.000', type: 'LAND', bedrooms: 0, area: 250 },
+  { title: 'Sobrado 4 quartos - City Petrópolis', price: 'R$ 980.000', type: 'HOUSE', bedrooms: 4, area: 240 },
+  { title: 'Sala Comercial 50m² - Centro', price: 'R$ 450.000', type: 'COMMERCIAL', bedrooms: 0, area: 50 },
+  { title: 'Casa 2 quartos - Jd. Consolação', price: 'R$ 290.000', type: 'HOUSE', bedrooms: 2, area: 120 },
+]
 
-function generateSlogan(name: string): string {
-  const slogans = [
-    `${name} — Seu imóvel ideal está aqui`,
-    `${name} — Encontre o lar dos seus sonhos`,
-    `${name} — Referência em imóveis`,
-    `${name} — Tecnologia e tradição no mercado imobiliário`,
-    `${name} — Seu parceiro imobiliário de confiança`,
-  ]
-  return slogans[Math.floor(Math.random() * slogans.length)]
+const FEATURES = {
+  corretor: [
+    'Portal imobiliário completo',
+    'Atendimento IA 24h (Tomás)',
+    'CRM integrado',
+    'Leads direto no WhatsApp',
+    'Anúncio em portais',
+    'Tour Virtual',
+    'Fotos com IA',
+    'SEO automático',
+  ],
+  imobiliaria: [
+    'Portal imobiliário multi-corretor',
+    'IA Tomás para atendimento 24h',
+    'CRM com pipeline completo',
+    'Leads automáticos via WhatsApp',
+    'Publicação em 10+ portais',
+    'Tour Virtual integrado',
+    'Gestão financeira (Lemosbank)',
+    'Relatórios de performance',
+    'Automações de follow-up',
+  ],
+  loteadora: [
+    'Portal exclusivo do empreendimento',
+    'IA de atendimento personalizada',
+    'Mapa interativo de lotes',
+    'Tabela de preços dinâmica',
+    'Leads qualificados por IA',
+    'Tour Virtual 360°',
+    'Dashboard de vendas em tempo real',
+    'Integração com financiamento',
+  ],
+  construtora: [
+    'Portal premium por empreendimento',
+    'IA de vendas 24h (Tomás)',
+    'Galeria de imóveis com filtros',
+    'Simulador de financiamento',
+    'Pipeline de vendas integrado',
+    'Tour Virtual e fotos IA',
+    'Relatórios para investidores',
+    'CRM multi-equipe',
+  ],
 }
 
 export default async function previewRoutes(app: FastifyInstance) {
-  // ── GET /:siteName — Gera preview do site ──────────────────────────────────
+  const prisma = app.prisma as any
+
+  // ── GET /themes — Lista temas disponíveis ─────────────────────────────────
+  app.get('/themes', async (_req, reply) => {
+    return reply.send({ data: getAvailableThemes() })
+  })
+
+  // ── GET /session/:token — Resolve preview por token ───────────────────────
+  app.get('/session/:token', async (req, reply) => {
+    const { token } = req.params as { token: string }
+
+    const session = await prisma.previewSession.findFirst({
+      where: { previewToken: token },
+    }).catch(() => null)
+
+    if (!session) {
+      return reply.status(404).send({ error: 'Preview não encontrado', expired: false })
+    }
+
+    if (isPreviewExpired(session.expiresAt)) {
+      return reply.send({
+        error: 'Preview expirado',
+        expired: true,
+        data: { siteName: session.siteName, companyName: session.companyName },
+      })
+    }
+
+    // Increment view count
+    await prisma.previewSession.update({
+      where: { id: session.id },
+      data: { viewCount: { increment: 1 } },
+    }).catch(() => {})
+
+    return reply.send({ data: session })
+  })
+
+  // ── GET /:siteName — Gera preview do site ─────────────────────────────────
   app.get('/:siteName', async (req, reply) => {
     const { siteName } = req.params as { siteName: string }
-    const query = req.query as { theme?: string }
+    const query = req.query as {
+      theme?: string; segment?: string; tone?: string; city?: string; companyName?: string
+    }
 
-    const name = decodeURIComponent(siteName)
+    const slug = siteName.toLowerCase().replace(/[^a-z0-9-]/g, '-')
+
+    // Check for existing non-expired session
+    const existingSession = await resolvePreviewSession(prisma, slug)
+
+    // Generate branding
+    const name = query.companyName || decodeURIComponent(siteName)
       .replace(/-/g, ' ')
       .replace(/\b\w/g, c => c.toUpperCase())
 
-    const themeKey = query.theme && THEMES[query.theme] ? query.theme : 'urban_tech'
-    const theme = THEMES[themeKey]
+    const branding = generateBranding({
+      companyName: name,
+      theme: query.theme || existingSession?.theme,
+      segment: query.segment || existingSession?.segment || 'corretor',
+      tone: query.tone,
+    })
+
+    // Create or reuse session
+    let session = existingSession
+    if (!session) {
+      session = await createPreviewSession(prisma, {
+        siteName: slug,
+        companyName: name,
+        theme: branding.theme.key,
+        slogan: branding.slogan,
+        segment: branding.segment,
+        city: query.city,
+      }).catch(() => null)
+    }
+
+    const segment = branding.segment as keyof typeof FEATURES
+    const features = FEATURES[segment] || FEATURES.corretor
+
+    // Select mock properties (shuffle a subset)
+    const shuffled = [...MOCK_PROPERTIES].sort(() => Math.random() - 0.5)
+    const mockProperties = shuffled.slice(0, 4)
 
     const preview = {
       name,
-      slogan: generateSlogan(name),
-      subdomain: siteName.toLowerCase().replace(/[^a-z0-9-]/g, '-'),
-      theme: {
-        key: themeKey,
-        ...theme,
-      },
+      slogan: branding.slogan,
+      subdomain: slug,
+      theme: branding.theme,
+      segment: branding.segment,
+      tone: branding.tone,
       logoUrl: null,
       faviconUrl: null,
-      features: [
-        'Portal imobiliário completo',
-        'Atendimento IA 24h (Tomás)',
-        'CRM integrado',
-        'Leads direto no WhatsApp',
-        'Anúncio em portais',
-        'Tour Virtual',
-      ],
-      mockProperties: [
-        { title: 'Casa 3 quartos - Jd. Petráglia', price: 'R$ 650.000', type: 'HOUSE', bedrooms: 3 },
-        { title: 'Apartamento 2 quartos - Centro', price: 'R$ 320.000', type: 'APARTMENT', bedrooms: 2 },
-        { title: 'Terreno 250m² - Damha III', price: 'R$ 180.000', type: 'LAND', bedrooms: 0 },
-      ],
+      features,
+      mockProperties,
+      previewToken: session?.previewToken || null,
+      expiresAt: session?.expiresAt || null,
+      viewCount: session?.viewCount || 0,
       isPreview: true,
       createdAt: new Date().toISOString(),
     }
 
     // Audit
-    await (app.prisma as any).auditLog.create({
+    await prisma.auditLog.create({
       data: {
         companyId: 'platform',
         action: 'preview.generated',
         resource: 'preview',
-        resourceId: siteName,
-        payload: { name, theme: themeKey },
+        resourceId: slug,
+        payload: { name, theme: branding.theme.key, segment: branding.segment },
       },
     }).catch(() => {})
 

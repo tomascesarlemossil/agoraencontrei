@@ -12,6 +12,8 @@
 
 import type { FastifyInstance } from 'fastify'
 import crypto from 'crypto'
+import { resolveAffiliateFromCode, trackAffiliateReferral } from '../../services/affiliate-tracking.service.js'
+import { recalculateAffiliateLevel } from '../../services/affiliate-level.service.js'
 
 // Gamification: comissão por nível
 const LEVEL_RATES: Record<string, number> = {
@@ -191,5 +193,71 @@ export default async function affiliateRoutes(app: FastifyInstance) {
     })
 
     return reply.send({ data: updated })
+  })
+
+  // ── POST /track — Registrar tracking de indicação ────────────────────────��─
+  app.post('/track', async (req, reply) => {
+    const body = req.body as { code: string; source?: string; leadId?: string }
+
+    if (!body.code) {
+      return reply.status(400).send({ error: 'Código de afiliado obrigatório' })
+    }
+
+    const affiliate = await resolveAffiliateFromCode(prisma, body.code)
+    if (!affiliate) {
+      return reply.status(404).send({ error: 'Afiliado não encontrado ou inativo' })
+    }
+
+    const referral = await trackAffiliateReferral(prisma, {
+      affiliateId: affiliate.affiliateId,
+      referralCode: affiliate.code,
+      source: body.source || 'link',
+      leadId: body.leadId,
+    })
+
+    return reply.send({ data: { tracked: true, affiliateId: affiliate.affiliateId, referralId: referral.id } })
+  })
+
+  // ── GET /referral-link/:id — Gerar link de indicação ───────────────────────
+  app.get('/referral-link/:id', async (req, reply) => {
+    const { id } = req.params as { id: string }
+    const affiliate = await prisma.affiliate.findUnique({
+      where: { id },
+      select: { code: true, isActive: true },
+    }).catch(() => null)
+
+    if (!affiliate) return reply.status(404).send({ error: 'Afiliado não encontrado' })
+
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://agoraencontrei.com.br'
+    const link = `${baseUrl}/?ref=${affiliate.code}`
+
+    return reply.send({ data: { code: affiliate.code, link, isActive: affiliate.isActive } })
+  })
+
+  // ── GET /:id/referrals — Lista de indicações do afiliado ─────────────────��─
+  app.get('/:id/referrals', async (req, reply) => {
+    const { id } = req.params as { id: string }
+    const query = req.query as { limit?: string; status?: string }
+    const limit = Math.min(parseInt(query.limit || '50'), 100)
+
+    const where: any = { affiliateId: id }
+    if (query.status) where.status = query.status
+
+    const referrals = await prisma.affiliateReferral.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+    })
+
+    return reply.send({ data: referrals })
+  })
+
+  // ── POST /:id/recalculate-level — Recalcular nível ────────────────────────
+  app.post('/:id/recalculate-level', async (req, reply) => {
+    const { id } = req.params as { id: string }
+
+    const result = await recalculateAffiliateLevel(prisma, id)
+
+    return reply.send({ data: result })
   })
 }

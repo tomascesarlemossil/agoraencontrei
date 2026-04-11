@@ -2853,6 +2853,7 @@ model Affiliate {
   updatedAt       DateTime  @updatedAt
 
   earnings        AffiliateEarning[]
+  referrals       AffiliateReferral[]
 
   @@index([code])
   @@index([email])
@@ -2915,4 +2916,47 @@ model SaasFinancialTransaction {
   @@index([type])
   @@index([createdAt])
   @@map("saas_financial_transactions")
+}
+
+/// Rastreio de indicação de afiliado — tracking, conversão, vínculo com tenant
+model AffiliateReferral {
+  id            String    @id @default(cuid())
+  affiliateId   String
+  affiliate     Affiliate @relation(fields: [affiliateId], references: [id])
+  tenantId      String?   // Preenchido quando lead converte em tenant
+  leadId        String?   // Lead associado à indicação
+  referralCode  String    // Código usado na indicação
+  source        String    @default("link")  // link | checkout | whatsapp | manual
+  status        String    @default("tracked")  // tracked | converted | cancelled
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([affiliateId])
+  @@index([tenantId])
+  @@index([leadId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("affiliate_referrals")
+}
+
+/// Preview session — site temporário para demonstração comercial
+model PreviewSession {
+  id           String    @id @default(cuid())
+  siteName     String    // slug do preview (ex: joao-imoveis)
+  companyName  String    // Nome da empresa/corretor
+  theme        String    @default("urban_tech")
+  slogan       String?
+  segment      String    @default("corretor")  // corretor | imobiliaria | loteadora | construtora
+  city         String?
+  logoUrl      String?
+  previewToken String    @unique  // Token seguro para acesso
+  expiresAt    DateTime  // Expiração (default 72h)
+  viewCount    Int       @default(0)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([siteName])
+  @@index([previewToken])
+  @@index([expiresAt])
+  @@map("preview_sessions")
 }

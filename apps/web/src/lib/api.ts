@@ -1360,6 +1360,20 @@ export const affiliateApi = {
 
   stats: (token: string, id: string) =>
     request<{ totalEarnings: number; pendingEarnings: number; paidEarnings: number; totalClients: number; level: string; commissionRate: number; code: string }>(`/api/v1/affiliates/${id}/stats`, { token }),
+
+  track: (body: { code: string; source?: string; leadId?: string }) =>
+    request<{ data: { tracked: boolean; affiliateId: string; referralId: string } }>('/api/v1/affiliates/track', { method: 'POST', body: JSON.stringify(body) }),
+
+  referralLink: (token: string, id: string) =>
+    request<{ data: { code: string; link: string; isActive: boolean } }>(`/api/v1/affiliates/referral-link/${id}`, { token }),
+
+  referrals: (token: string, id: string, params?: { limit?: string; status?: string }) => {
+    const qs = toQS(params)
+    return request<{ data: any[] }>(`/api/v1/affiliates/${id}/referrals?${qs}`, { token })
+  },
+
+  recalculateLevel: (token: string, id: string) =>
+    request<{ data: { level: string; rate: number; changed: boolean } }>(`/api/v1/affiliates/${id}/recalculate-level`, { method: 'POST', token }),
 }
 
 // ── SaaS Finance ─────────────────────────────────────────────────────────────
@@ -1396,8 +1410,36 @@ export const saasFinanceApi = {
 // ── Preview ──────────────────────────────────────────────────────────────────
 
 export const previewApi = {
-  generate: (siteName: string, theme?: string) => {
-    const qs = toQS({ theme })
+  generate: (siteName: string, params?: { theme?: string; segment?: string; companyName?: string; city?: string }) => {
+    const qs = toQS(params)
     return request<{ data: any }>(`/api/v1/preview/${encodeURIComponent(siteName)}?${qs}`)
   },
+
+  session: (token: string) =>
+    request<{ data: any }>(`/api/v1/preview/session/${token}`),
+
+  themes: () =>
+    request<{ data: any[] }>('/api/v1/preview/themes'),
+}
+
+// ── Master Intelligence ──────────────────────────────────────────────────────
+
+export const masterApi = {
+  intelligence: (token: string) =>
+    request<{ success: boolean; data: any }>('/api/v1/master/intelligence', { token }),
+
+  overview: (token: string) =>
+    request<{ success: boolean; data: any }>('/api/v1/master/overview', { token }),
+
+  tenants: (token: string) =>
+    request<{ success: boolean; data: any[] }>('/api/v1/master/tenants', { token }),
+
+  revenue: (token: string) =>
+    request<{ success: boolean; data: any }>('/api/v1/master/revenue', { token }),
+
+  activity: (token: string) =>
+    request<{ success: boolean; data: any }>('/api/v1/master/activity', { token }),
+
+  health: (token: string) =>
+    request<{ success: boolean; data: any }>('/api/v1/master/health', { token }),
 }

@@ -16,6 +16,7 @@ import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 import { calculateMRR } from '../../services/tenant.service.js'
 import { getRepasseSummary } from '../../services/repasse.service.js'
+import { buildMasterIntelligence } from '../../services/master/intelligence.service.js'
 import adminConfigRoutes from './admin-config.js'
 
 export default async function masterRoutes(app: FastifyInstance) {
@@ -622,5 +623,18 @@ export default async function masterRoutes(app: FastifyInstance) {
         recentLeads,
       },
     })
+  })
+
+  // ── GET /intelligence — Master Intelligence (Dashboard Goldman Sachs) ───
+  app.get('/intelligence', {
+    schema: { tags: ['master'], summary: 'Full master intelligence — revenue, sales, channels, retention, forecast, advisor' },
+  }, async (_req, reply) => {
+    try {
+      const intelligence = await buildMasterIntelligence(app.prisma as any)
+      return reply.send({ success: true, data: intelligence })
+    } catch (err: any) {
+      app.log.error(`[master/intelligence] ${err.message}`)
+      return reply.status(500).send({ error: 'Erro ao gerar inteligência master', details: err.message })
+    }
   })
 }

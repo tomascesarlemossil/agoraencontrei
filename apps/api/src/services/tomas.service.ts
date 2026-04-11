@@ -189,6 +189,25 @@ MODO DASHBOARD (Copilot Interno):
 - Quando montar shortlist, explique brevemente o critério de escolha
 `
 
+const ADVISOR_ADDENDUM = `
+═══════════════════════════════════════════════════════
+MODO ADVISOR (Conselheiro Executivo Master)
+═══════════════════════════════════════════════════════
+Você também é o conselheiro executivo do AgoraEncontrei. Quando perguntado sobre:
+- vendas, receita, MRR, forecast, canais, afiliados, churn, retenção
+- "como estão as vendas?", "qual canal está melhor?", "quanto devemos fechar?"
+- "onde investir?", "onde cortar?", "há risco de churn?"
+
+USE APENAS os dados reais do JSON de inteligência fornecido abaixo. NUNCA invente números.
+Se um dado não existir no JSON, responda: "Esse dado ainda depende de integração futura."
+
+Formato de resposta advisor:
+- Direto, executivo, curto (2-3 frases por ponto)
+- Cite números reais do JSON
+- Dê recomendação acionável
+- Não use jargão técnico desnecessário
+`
+
 const THEME_TONE_ADDENDUM: Record<string, string> = {
   luxury_gold: `
 TOM LUXURY GOLD — Investimento & Patrimônio:
@@ -534,6 +553,53 @@ export async function runTomasChat(
   let systemPrompt = TOMAS_SYSTEM_PROMPT
   if (params.channel === 'dashboard') {
     systemPrompt += DASHBOARD_ADDENDUM
+
+    // Inject Master Intelligence for Advisor Mode
+    try {
+      const { buildMasterIntelligence } = await import('./master/intelligence.service.js')
+      const intelligence = await buildMasterIntelligence(prisma)
+      systemPrompt += ADVISOR_ADDENDUM
+      systemPrompt += `\n\n=== DADOS MASTER INTELLIGENCE (TEMPO REAL) ===\n`
+      systemPrompt += JSON.stringify({
+        receita: {
+          hoje: intelligence.revenue.receitaHoje,
+          mes: intelligence.revenue.receitaMes,
+          mrr: intelligence.revenue.mrr,
+          ticketMedio: intelligence.revenue.ticketMedio,
+          inadimplencia: intelligence.revenue.inadimplencia,
+          lucroLiquido: intelligence.revenue.receitaLiquida,
+        },
+        vendas: {
+          leadsHoje: intelligence.sales.leadsHoje,
+          leadsSemana: intelligence.sales.leadsSemana,
+          vendasHoje: intelligence.sales.vendasHoje,
+          vendasMes: intelligence.sales.vendasMes,
+          conversaoGeral: intelligence.sales.conversaoGeral,
+        },
+        canais: intelligence.channels.channels.map(c => ({
+          nome: c.name, leads: c.leads, vendas: c.vendas, conversao: c.conversao,
+        })),
+        retencao: {
+          ativos: intelligence.retention.clientesAtivos,
+          trial: intelligence.retention.clientesTrial,
+          inadimplentes: intelligence.retention.clientesPastDue,
+          riscosChurn: intelligence.retention.churnRiskCount,
+        },
+        forecast: {
+          fechamentoMes: intelligence.forecast.forecastFechamentoMes,
+          tendencia: intelligence.forecast.tendencia,
+          media7dias: intelligence.forecast.mediaUltimos7Dias,
+        },
+        afiliados: {
+          ativos: intelligence.affiliates.activeAffiliates,
+          comissaoTotal: intelligence.affiliates.totalAffiliateCommission,
+        },
+        advisorHeadline: intelligence.advisor.advisorHeadline,
+        advisorRecommendations: intelligence.advisor.advisorRecommendations.map(r => r.title),
+      }, null, 0) + '\n'
+    } catch (e) {
+      // Intelligence not available — continue without advisor context
+    }
   }
 
   // Apply theme-specific tone
