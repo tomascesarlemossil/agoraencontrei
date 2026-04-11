@@ -25,7 +25,20 @@ export default async function saasWebhookRoutes(app: FastifyInstance) {
 
   app.post('/asaas', {
     config: { rateLimit: { max: 200, timeWindow: '1 minute' } },
-    schema: { tags: ['saas-webhook'], summary: 'Asaas webhook for SaaS billing' },
+    schema: {
+      tags: ['saas-webhook'],
+      summary: 'Asaas webhook for SaaS billing',
+      body: {
+        type: 'object',
+        properties: {
+          event: { type: 'string', maxLength: 100 },
+          payment: { type: 'object' },
+        },
+        required: ['event', 'payment'],
+        additionalProperties: true,
+      },
+    },
+    bodyLimit: 65536, // 64KB max payload
   }, async (req, reply) => {
     // 1. Validate webhook secret
     const webhookToken = (req.headers['asaas-access-token'] as string) || ''

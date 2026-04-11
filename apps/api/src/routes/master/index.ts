@@ -508,102 +508,84 @@ export default async function masterRoutes(app: FastifyInstance) {
     })
   })
 
-  // GET /plan-settings — Partner plan prices and limits
+  // GET /plan-settings — Partner plan prices and limits (reads from PlanDefinition)
   app.get('/plan-settings', {
     schema: { tags: ['master'], summary: 'Partner plan pricing and limits' },
   }, async (_req, reply) => {
-    // Load from SystemConfig or use defaults
-    const config = await app.prisma.systemConfig.findFirst({
-      where: { companyId: 'platform', key: 'plan_settings' },
-    }).catch(() => null)
-
-    const defaults = {
-      plans: {
-        LITE: {
-          name: 'Lite',
-          price: 79.90,
-          maxLeadViews: 10,
-          maxProperties: 5,
-          features: ['Listagem básica', 'Até 5 imóveis', '10 visualizações de lead/mês'],
-        },
-        MODERADO: {
-          name: 'Moderado',
-          price: 279.00,
-          maxLeadViews: 50,
-          maxProperties: 30,
-          features: ['Até 30 imóveis', '50 visualizações de lead/mês', 'Relatórios básicos', 'Suporte prioritário'],
-        },
-        PRO: {
-          name: 'Pro',
-          price: 499.00,
-          maxLeadViews: -1, // unlimited
-          maxProperties: -1,
-          features: ['Imóveis ilimitados', 'Leads ilimitados', 'IA completa', 'API dedicada', 'Suporte VIP'],
-        },
+    // Read from PlanDefinition — single source of truth, no hardcoded defaults
+    const planDefs = await (app.prisma as any).planDefinition.findMany({
+      where: { isActive: true },
+      orderBy: { sortOrder: 'asc' },
+      select: {
+        slug: true, name: true, priceMonthly: true, priceYearly: true,
+        maxProperties: true, maxLeadViews: true, maxUsers: true,
+        features: true, modules: true, highlighted: true,
       },
+    }).catch(() => [])
+
+    const plans: Record<string, any> = {}
+    for (const p of planDefs) {
+      plans[p.slug.toUpperCase()] = {
+        name: p.name,
+        price: Number(p.priceMonthly),
+        priceYearly: p.priceYearly ? Number(p.priceYearly) : null,
+        maxLeadViews: p.maxLeadViews,
+        maxProperties: p.maxProperties,
+        maxUsers: p.maxUsers,
+        features: p.features ?? [],
+        modules: p.modules ?? [],
+        highlighted: p.highlighted,
+      }
     }
 
-    const settings = config?.value ? { ...defaults, ...(config.value as any) } : defaults
-
-    return reply.send({ success: true, data: settings })
+    return reply.send({ success: true, data: { plans } })
   })
 
-  // PUT /plan-settings — Update plan prices and limits
+  // PUT /plan-settings — Update plan prices via PlanDefinition (single source of truth)
   app.put('/plan-settings', {
-    schema: { tags: ['master'], summary: 'Update plan pricing and limits' },
+    schema: { tags: ['master'], summary: 'Bulk update plan pricing and limits' },
   }, async (req, reply) => {
     const body = z.object({
-      plans: z.object({
-        LITE: z.object({
-          name: z.string().default('Lite'),
-          price: z.number().min(0),
-          maxLeadViews: z.number().int().min(-1),
-          maxProperties: z.number().int().min(-1),
-          features: z.array(z.string()).default([]),
-        }),
-        MODERADO: z.object({
-          name: z.string().default('Moderado'),
-          price: z.number().min(0),
-          maxLeadViews: z.number().int().min(-1),
-          maxProperties: z.number().int().min(-1),
-          features: z.array(z.string()).default([]),
-        }),
-        PRO: z.object({
-          name: z.string().default('Pro'),
-          price: z.number().min(0),
-          maxLeadViews: z.number().int().min(-1),
-          maxProperties: z.number().int().min(-1),
-          features: z.array(z.string()).default([]),
-        }),
-      }),
+      plans: z.record(z.object({
+        name: z.string().optional(),
+        price: z.number().min(0),
+        priceYearly: z.number().min(0).nullable().optional(),
+        maxLeadViews: z.number().int().min(-1),
+        maxProperties: z.number().int().min(-1),
+        maxUsers: z.number().int().min(-1).optional(),
+        features: z.array(z.string()).default([]),
+      })),
     }).parse(req.body)
 
-    await app.prisma.systemConfig.upsert({
-      where: {
-        companyId_key: { companyId: 'platform', key: 'plan_settings' },
-      },
-      create: {
-        companyId: 'platform',
-        key: 'plan_settings',
-        value: body as any,
-      },
-      update: {
-        value: body as any,
-      },
-    })
+    const results: any[] = []
+    for (const [slug, planData] of Object.entries(body.plans)) {
+      const updated = await (app.prisma as any).planDefinition.updateMany({
+        where: { slug: slug.toLowerCase() },
+        data: {
+          ...(planData.name && { name: planData.name }),
+          priceMonthly: planData.price,
+          ...(planData.priceYearly !== undefined && { priceYearly: planData.priceYearly }),
+          maxLeadViews: planData.maxLeadViews,
+          maxProperties: planData.maxProperties,
+          ...(planData.maxUsers !== undefined && { maxUsers: planData.maxUsers }),
+          features: planData.features,
+        },
+      }).catch(() => ({ count: 0 }))
+      results.push({ slug, updated: updated.count })
+    }
 
     await app.prisma.auditLog.create({
       data: {
         companyId: 'platform',
         action: 'plan_settings.update' as any,
         resource: 'platform',
-        resourceId: 'plan_settings',
+        resourceId: 'plan_definitions',
         userId: req.user.sub,
-        payload: body as any,
+        payload: { plans: Object.keys(body.plans), results } as any,
       },
     }).catch(() => {})
 
-    return reply.send({ success: true, data: body })
+    return reply.send({ success: true, data: { results } })
   })
 
   // GET /activity — Recent platform activity

@@ -37,10 +37,13 @@ export interface TenantSummary {
 
 // ── Constants ───────────────────────────────────────────────────────────────
 
-const PLAN_PRICES: Record<string, number> = {
-  LITE: 450.00,
-  PRO: 1199.00,
-  ENTERPRISE: 2499.00,
+// Plan prices are read from PlanDefinition at runtime — no hardcoded values
+async function getPlanPrice(prisma: any, planSlug: string): Promise<number> {
+  const planDef = await prisma.planDefinition?.findFirst?.({
+    where: { slug: planSlug.toLowerCase(), isActive: true },
+    select: { priceMonthly: true },
+  }).catch(() => null)
+  return planDef ? Number(planDef.priceMonthly) : 0
 }
 
 const RESERVED_SUBDOMAINS = [
@@ -99,8 +102,8 @@ export async function createTenant(
       plan: plan.toLowerCase(),
       settings: {
         isTenant: true,
-        layoutType: input.layoutType || 'clean',
-        primaryColor: input.primaryColor || '#3b82f6',
+        layoutType: input.layoutType || 'urban_tech',
+        primaryColor: input.primaryColor || '#d4a853',
       },
       isActive: true,
     },
@@ -118,7 +121,7 @@ export async function createTenant(
       logoUrl: input.logoUrl || null,
       plan,
       planStatus: 'TRIAL',
-      planPrice: PLAN_PRICES[plan] || 450.00,
+      planPrice: await getPlanPrice(prisma, plan),
       splitPercent: 2.00,
       repasseDelayDays: 7,
       companyId: company.id,

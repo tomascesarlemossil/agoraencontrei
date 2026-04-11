@@ -13,13 +13,28 @@ import { findOrCreateCustomer } from '../../services/asaas.service.js'
 const ASAAS_BASE_URL = env.ASAAS_BASE_URL ?? 'https://www.asaas.com/api/v3'
 const ASAAS_API_KEY  = env.ASAAS_API_KEY  ?? ''
 
-const PLAN_PRICES: Record<string, number> = {
+// Specialist plan prices — read from ModuleDefinition or fallback to defaults
+// These are separate from SaaS tenant plans (PlanDefinition)
+const SPECIALIST_PLAN_DEFAULTS: Record<string, number> = {
   PRIME: 197,
   VIP:   497,
 }
+const PREMIUM_CATEGORY_DEFAULT = 350
 
-// Imobiliárias e Loteadoras pagam R$350/mês (preço premium)
-const PREMIUM_CATEGORY_PRICE = 350
+async function getSpecialistPlanPrice(db: any, plan: string, isPremium: boolean): Promise<number> {
+  if (isPremium) {
+    const mod = await db.moduleDefinition?.findFirst?.({
+      where: { slug: 'specialist_premium', isActive: true },
+      select: { priceMonthly: true },
+    }).catch(() => null)
+    return mod ? Number(mod.priceMonthly) : PREMIUM_CATEGORY_DEFAULT
+  }
+  const mod = await db.moduleDefinition?.findFirst?.({
+    where: { slug: `specialist_${plan.toLowerCase()}`, isActive: true },
+    select: { priceMonthly: true },
+  }).catch(() => null)
+  return mod ? Number(mod.priceMonthly) : (SPECIALIST_PLAN_DEFAULTS[plan] ?? 0)
+}
 
 const PLAN_DESCRIPTIONS: Record<string, string> = {
   PRIME: 'AgoraEncontrei Parceiros — Plano Prime (Mensal)',
@@ -75,7 +90,7 @@ export async function specialistPaymentRoutes(app: FastifyInstance) {
       return reply.status(400).send({ error: 'specialistId e plan são obrigatórios' })
     }
 
-    if (!PLAN_PRICES[plan]) {
+    if (!['PRIME', 'VIP'].includes(plan)) {
       return reply.status(400).send({ error: 'Plano inválido. Use PRIME ou VIP.' })
     }
 
@@ -113,9 +128,9 @@ export async function specialistPaymentRoutes(app: FastifyInstance) {
       nextDueDate.setDate(nextDueDate.getDate() + 1)
       const dueDateStr = nextDueDate.toISOString().split('T')[0]
 
-      // Determine price: Imobiliárias/Loteadoras pay R$350, others use plan prices
+      // Determine price: read from DB (ModuleDefinition) with fallback
       const isPremiumCategory = ['IMOBILIARIA', 'LOTEADORA'].includes((specialist as any).category ?? '')
-      const price = isPremiumCategory ? PREMIUM_CATEGORY_PRICE : PLAN_PRICES[plan]
+      const price = await getSpecialistPlanPrice(prisma, plan, isPremiumCategory)
       const desc = isPremiumCategory ? PLAN_DESCRIPTIONS.PREMIUM_CATEGORY : PLAN_DESCRIPTIONS[plan]
 
       // Criar assinatura recorrente no Asaas
