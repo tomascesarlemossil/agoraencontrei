@@ -2960,3 +2960,88 @@ model PreviewSession {
   @@index([expiresAt])
   @@map("preview_sessions")
 }
+
+/// Mensagem outbound enviada — tracking de disparo, A/B, taxa de resposta
+model OutboundMessage {
+  id              String    @id @default(cuid())
+  leadId          String?
+  phone           String    // Telefone destino
+  senderNumber    String    // Número remetente (rotação)
+  templateVersion String    @default("A") // A | B | C — para A/B testing
+  campaignId      String?   // Identificador de campanha
+  channel         String    @default("whatsapp") // whatsapp | sms | email
+  message         String    @db.Text // Conteúdo enviado
+  previewLink     String?   // Link de preview se incluído
+  status          String    @default("queued") // queued | sent | delivered | read | replied | failed
+  sentAt          DateTime?
+  deliveredAt     DateTime?
+  readAt          DateTime?
+  repliedAt       DateTime?
+  errorMessage    String?
+  metadata        Json      @default("{}")
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([leadId])
+  @@index([phone])
+  @@index([senderNumber])
+  @@index([campaignId])
+  @@index([status])
+  @@index([templateVersion])
+  @@index([createdAt])
+  @@map("outbound_messages")
+}
+
+/// Follow-up agendado — D+1, D+3, D+7 automáticos para leads
+model FollowUpSchedule {
+  id              String    @id @default(cuid())
+  leadId          String
+  outboundId      String?   // OutboundMessage original que gerou o follow-up
+  phone           String
+  step            String    // d1 | d3 | d7
+  scheduledAt     DateTime  // Quando disparar
+  templateVersion String    @default("A")
+  status          String    @default("pending") // pending | sent | skipped | cancelled
+  sentAt          DateTime?
+  skipReason      String?   // "replied" | "converted" | "unsubscribed"
+  metadata        Json      @default("{}")
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([leadId])
+  @@index([status])
+  @@index([scheduledAt])
+  @@index([step])
+  @@map("followup_schedules")
+}
+
+/// Funil de vendas SaaS — tracking de conversão do lead ao cliente
+model SalesFunnel {
+  id              String    @id @default(cuid())
+  leadId          String?
+  phone           String?
+  email           String?
+  name            String?
+  source          String    // whatsapp_outbound | meta_ads | google_ads | seo | affiliate | organic
+  campaign        String?
+  affiliateCode   String?
+  stage           String    @default("captured") // captured | engaged | preview_sent | preview_clicked | checkout_sent | converted | lost
+  previewSiteName String?   // preview gerado para este lead
+  checkoutUrl     String?   // link de checkout gerado
+  convertedAt     DateTime?
+  tenantId        String?   // Tenant criado após conversão
+  score           Int       @default(0)
+  tags            String[]
+  metadata        Json      @default("{}")
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([phone])
+  @@index([email])
+  @@index([source])
+  @@index([stage])
+  @@index([campaign])
+  @@index([affiliateCode])
+  @@index([createdAt])
+  @@map("sales_funnels")
+}

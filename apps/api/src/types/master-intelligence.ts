@@ -191,6 +191,59 @@ export interface TopAffiliate {
   activeClients: number
 }
 
+// ── Growth Engine / Funnel ──────────────────────────────────────────────────
+
+export interface GrowthEngineMetrics {
+  funnel: FunnelStageCount[]
+  outbound: OutboundStats
+  followUp: FollowUpStats
+  channelPerformance: ChannelFunnelPerformance[]
+  dailyTrend: DailyTrendPoint[]
+}
+
+export interface FunnelStageCount {
+  stage: string
+  count: number
+}
+
+export interface OutboundStats {
+  sentToday: number
+  sentMonth: number
+  deliveredMonth: number
+  repliedMonth: number
+  failedMonth: number
+  deliveryRate: number
+  replyRate: number
+  templatePerformance: TemplatePerformance[]
+}
+
+export interface TemplatePerformance {
+  version: string
+  sent: number
+  replied: number
+  replyRate: number
+}
+
+export interface FollowUpStats {
+  pending: number
+  sentMonth: number
+  skippedMonth: number
+  byStep: Array<{ step: string; count: number }>
+}
+
+export interface ChannelFunnelPerformance {
+  source: string
+  total: number
+  converted: number
+  conversionRate: number
+}
+
+export interface DailyTrendPoint {
+  date: string
+  captured: number
+  converted: number
+}
+
 // ── Response consolidada ────────────────────────────────────────────────────
 
 export interface MasterIntelligenceResponse {
@@ -203,5 +256,6 @@ export interface MasterIntelligenceResponse {
   affiliates: AffiliateMetrics
   geo: GeoMetrics
   advisor: AdvisorInsights
+  growthEngine: GrowthEngineMetrics
   generatedAt: string
 }

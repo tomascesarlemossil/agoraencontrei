@@ -7,6 +7,7 @@ import { runAutomation } from '../services/automation.worker.js'
 import { runScheduledJobs } from '../services/scheduled.jobs.js'
 import { processVisualAIJob } from '../workers/visual-ai.worker.js'
 import { processCampaignJob } from '../workers/campaign.worker.js'
+import { processOutboundJob } from '../services/outbound-queue.service.js'
 import type { AutomationEventPayload } from '../services/automation.types.js'
 import { env } from '../utils/env.js'
 
@@ -85,10 +86,23 @@ export default fp(async (app: FastifyInstance) => {
     { connection, concurrency: 2 },
   )
 
+  // ── Outbound worker — processes queued outbound messages ─────────────────
+  const outboundWorker = new Worker(
+    'automation',
+    async (job) => {
+      if (job.name === 'outbound:send') {
+        return processOutboundJob(app.prisma, job.data)
+      }
+      return runAutomation(app, job.data as AutomationEventPayload)
+    },
+    { connection, concurrency: 3 },
+  )
+
   for (const [name, worker] of [
     ['automation', automationWorker],
     ['visual-ai',  visualAIWorker],
     ['campaigns',  campaignsWorker],
+    ['outbound',   outboundWorker],
   ] as const) {
     worker.on('failed', (job, err) => {
       app.log.error({ queue: name, jobId: job?.id, err }, `${name} job failed`)
@@ -109,6 +123,7 @@ export default fp(async (app: FastifyInstance) => {
       automationWorker.close(),
       visualAIWorker.close(),
       campaignsWorker.close(),
+      outboundWorker.close(),
     ])
     await Promise.all([
       automationQueue.close(),

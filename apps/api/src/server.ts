@@ -93,6 +93,7 @@ import hunterRoutes from './routes/hunter/index.js'
 import affiliateRoutes from './routes/affiliates/index.js'
 import saasFinanceRoutes from './routes/saas-finance/index.js'
 import previewRoutes from './routes/preview/index.js'
+import outboundRoutes from './routes/outbound/index.js'
 
 const app = Fastify({
   // No body size limit — accept any file size
@@ -800,6 +801,7 @@ async function bootstrap() {
   await app.register(affiliateRoutes,        { prefix: '/api/v1/affiliates' })
   await app.register(saasFinanceRoutes,      { prefix: '/api/v1/saas-finance' })
   await app.register(previewRoutes,          { prefix: '/api/v1/preview' })
+  await app.register(outboundRoutes,         { prefix: '/api/v1/outbound' })
 
   // ── Re-ativar leilões bancários fechados erroneamente pelo cleanup ────
   try {

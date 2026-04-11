@@ -9,6 +9,7 @@
 import type { FastifyInstance } from 'fastify'
 import { emitAutomation } from './automation.emitter.js'
 import { syncYouTubeToBlog, syncInstagramToBlog } from './social-sync.service.js'
+import { processDueFollowUps } from './followup.service.js'
 import { env } from '../utils/env.js'
 
 export async function runScheduledJobs(app: FastifyInstance) {
@@ -491,7 +492,18 @@ export async function runScheduledJobs(app: FastifyInstance) {
     }
   }
 
-  // ── 8. Street View batch: capture facades for auctions/properties missing images ──
+  // ── 8. Follow-up automático: processa follow-ups agendados (D+1, D+3, D+7) ───
+  try {
+    const followUpResult = await processDueFollowUps(app.prisma, app.automationQueue)
+    const total = followUpResult.sent + followUpResult.skipped + followUpResult.cancelled
+    if (total > 0) {
+      app.log.info(`[scheduled] follow-ups: sent=${followUpResult.sent} skipped=${followUpResult.skipped} cancelled=${followUpResult.cancelled}`)
+    }
+  } catch (err) {
+    app.log.error({ err }, '[scheduled] follow-ups failed')
+  }
+
+  // ── 9. Street View batch: capture facades for auctions/properties missing images ──
   if (hour === 13 && minute < 30) {
     try {
       const { batchGenerateStreetView } = await import('./streetview.service.js')

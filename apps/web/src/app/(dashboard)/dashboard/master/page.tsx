@@ -12,7 +12,7 @@ import {
   Brain, TrendingUp, DollarSign, Users, Zap, Target,
   ArrowUpRight, Building2, Crown, RefreshCw, AlertTriangle,
   Shield, Crosshair, Globe, MessageCircle, ChevronDown, ChevronUp,
-  Clock, Phone, Lightbulb, BarChart3, MapPin,
+  Clock, Phone, Lightbulb, BarChart3, MapPin, Send, Rocket,
 } from 'lucide-react'
 
 const CHART_COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16']
@@ -69,7 +69,7 @@ export default function MasterPage() {
     )
   }
 
-  const { revenue, sales, channels, retention, forecast, unitEconomics, affiliates, geo, advisor } = intel
+  const { revenue, sales, channels, retention, forecast, unitEconomics, affiliates, geo, advisor, growthEngine } = intel
 
   // Chart data
   const planChartData = (revenue?.receitaPorPlano || []).map((p: any) => ({
@@ -392,6 +392,129 @@ export default function MasterPage() {
             ))}
           </div>
         )}
+      </CollapsibleSection>
+
+      {/* ═══ GROWTH ENGINE ═══ */}
+      <CollapsibleSection
+        id="growth" title="Growth Engine" icon={<Rocket className="h-4 w-4 text-pink-600" />}
+        expanded={expandedSection === 'growth'} onToggle={() => toggleSection('growth')}
+        summary={`${growthEngine?.outbound?.sentToday ?? 0} disparos hoje | ${growthEngine?.outbound?.replyRate ?? 0}% reply | ${growthEngine?.followUp?.pending ?? 0} follow-ups`}
+      >
+        {/* Outbound Stats */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
+          {[
+            { label: 'Enviados Hoje', value: growthEngine?.outbound?.sentToday ?? 0, color: 'text-blue-600' },
+            { label: 'Enviados Mês', value: growthEngine?.outbound?.sentMonth ?? 0, color: 'text-blue-600' },
+            { label: 'Taxa Resposta', value: `${growthEngine?.outbound?.replyRate ?? 0}%`, color: 'text-green-600' },
+            { label: 'Taxa Entrega', value: `${growthEngine?.outbound?.deliveryRate ?? 0}%`, color: 'text-emerald-600' },
+          ].map(s => (
+            <div key={s.label} className="bg-gray-50 rounded-lg p-2 text-center">
+              <p className="text-[10px] text-gray-400">{s.label}</p>
+              <p className={`text-lg font-bold ${s.color}`}>{s.value}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* A/B Template Performance */}
+        {(growthEngine?.outbound?.templatePerformance || []).length > 0 && (
+          <div className="mb-3">
+            <p className="text-xs font-semibold text-gray-600 mb-1.5">A/B Performance</p>
+            <div className="grid grid-cols-3 gap-2">
+              {growthEngine.outbound.templatePerformance.map((t: any) => (
+                <div key={t.version} className="bg-gray-50 rounded-lg p-2 text-center">
+                  <p className="text-xs font-bold text-gray-700">Template {t.version}</p>
+                  <p className="text-sm font-bold text-blue-600">{t.replyRate}%</p>
+                  <p className="text-[10px] text-gray-400">{t.sent} enviados · {t.replied} respostas</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Funnel Stages */}
+        {(growthEngine?.funnel || []).length > 0 && (
+          <div className="mb-3">
+            <p className="text-xs font-semibold text-gray-600 mb-1.5">Funil de Conversão</p>
+            <div className="space-y-1">
+              {growthEngine.funnel.map((s: any, i: number) => {
+                const maxCount = Math.max(...growthEngine.funnel.map((f: any) => f.count), 1)
+                const width = Math.max((s.count / maxCount) * 100, 5)
+                const stageLabels: Record<string, string> = {
+                  captured: 'Capturado', engaged: 'Engajado', preview_sent: 'Preview Enviado',
+                  preview_clicked: 'Preview Clicado', checkout_sent: 'Checkout Enviado',
+                  converted: 'Convertido', lost: 'Perdido',
+                }
+                return (
+                  <div key={s.stage} className="flex items-center gap-2">
+                    <span className="text-[10px] text-gray-500 w-24 shrink-0 text-right">{stageLabels[s.stage] || s.stage}</span>
+                    <div className="flex-1 bg-gray-100 rounded-full h-4 relative overflow-hidden">
+                      <div
+                        className="h-full rounded-full transition-all"
+                        style={{
+                          width: `${width}%`,
+                          backgroundColor: s.stage === 'converted' ? '#10b981' : s.stage === 'lost' ? '#ef4444' : CHART_COLORS[i % CHART_COLORS.length],
+                        }}
+                      />
+                    </div>
+                    <span className="text-xs font-bold text-gray-700 w-10 text-right">{s.count}</span>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Channel Performance */}
+        {(growthEngine?.channelPerformance || []).length > 0 && (
+          <div className="mb-3">
+            <p className="text-xs font-semibold text-gray-600 mb-1.5">Performance por Canal</p>
+            <div className="space-y-1.5">
+              {growthEngine.channelPerformance.map((ch: any) => (
+                <div key={ch.source} className="flex items-center justify-between bg-gray-50 rounded-lg p-2 text-sm">
+                  <span className="font-medium text-gray-700">{ch.source}</span>
+                  <div className="flex items-center gap-3 text-xs text-gray-500">
+                    <span>{ch.total} leads</span>
+                    <span className="text-green-600 font-semibold">{ch.converted} conv.</span>
+                    <span className="font-bold text-gray-700">{ch.conversionRate}%</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Daily Trend Chart */}
+        {(growthEngine?.dailyTrend || []).length > 0 && (
+          <div>
+            <p className="text-xs font-semibold text-gray-600 mb-1.5">Tendência 7 Dias</p>
+            <div className="h-40">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={growthEngine.dailyTrend} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                  <XAxis dataKey="date" tick={{ fontSize: 10 }} tickFormatter={(v) => v.slice(5)} />
+                  <YAxis tick={{ fontSize: 10 }} />
+                  <Tooltip />
+                  <Line type="monotone" dataKey="captured" stroke="#3b82f6" strokeWidth={2} dot={{ r: 3 }} name="Capturados" />
+                  <Line type="monotone" dataKey="converted" stroke="#10b981" strokeWidth={2} dot={{ r: 3 }} name="Convertidos" />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        )}
+
+        {/* Follow-up Stats */}
+        <div className="mt-3 grid grid-cols-3 gap-2">
+          {[
+            { label: 'Follow-ups Pendentes', value: growthEngine?.followUp?.pending ?? 0 },
+            { label: 'Enviados Mês', value: growthEngine?.followUp?.sentMonth ?? 0 },
+            { label: 'Pulados', value: growthEngine?.followUp?.skippedMonth ?? 0 },
+          ].map(s => (
+            <div key={s.label} className="bg-gray-50 rounded-lg p-2 text-center">
+              <p className="text-[10px] text-gray-400">{s.label}</p>
+              <p className="text-sm font-bold text-gray-900">{s.value}</p>
+            </div>
+          ))}
+        </div>
       </CollapsibleSection>
 
       {/* ═══ CAC/LTV (aguardando integra\u00e7\u00e3o) ═══ */}

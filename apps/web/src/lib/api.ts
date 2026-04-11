@@ -1443,3 +1443,31 @@ export const masterApi = {
   health: (token: string) =>
     request<{ success: boolean; data: any }>('/api/v1/master/health', { token }),
 }
+
+// ── Outbound / Growth Engine ────────────────────────────────────────────────
+
+export const outboundApi = {
+  send: (token: string, data: { name: string; phone: string; previewSiteName?: string; campaignId?: string; templateVersion?: string }) =>
+    request<{ success: boolean; data: any }>('/api/v1/outbound/send', { method: 'POST', body: JSON.stringify(data), token }),
+
+  campaign: (token: string, data: { campaignId: string; leads: Array<{ name: string; phone: string; previewSiteName?: string }> }) =>
+    request<{ success: boolean; data: any }>('/api/v1/outbound/campaign', { method: 'POST', body: JSON.stringify(data), token }),
+
+  metrics: (token: string) =>
+    request<{ success: boolean; data: any }>('/api/v1/outbound/metrics', { token }),
+
+  messages: (token: string, params?: { status?: string; campaignId?: string; page?: number; limit?: number }) =>
+    request<{ success: boolean; data: any }>(`/api/v1/outbound/messages?${toQS(params)}`, { token }),
+
+  updateStatus: (token: string, id: string, status: string) =>
+    request<{ success: boolean }>(`/api/v1/outbound/message/${id}/status`, { method: 'POST', body: JSON.stringify({ status }), token }),
+
+  followups: (token: string, params?: { status?: string; step?: string }) =>
+    request<{ success: boolean; data: any[] }>(`/api/v1/outbound/followups?${toQS(params)}`, { token }),
+
+  funnel: (token: string, params?: { stage?: string; source?: string; page?: number }) =>
+    request<{ success: boolean; data: any }>(`/api/v1/outbound/funnel?${toQS(params)}`, { token }),
+
+  ingest: (token: string, data: { name: string; phone?: string; email?: string; source?: string; campaign?: string }) =>
+    request<{ success: boolean; data: any }>('/api/v1/outbound/ingest', { method: 'POST', body: JSON.stringify(data), token }),
+}

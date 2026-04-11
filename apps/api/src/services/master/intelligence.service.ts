@@ -11,12 +11,16 @@ import type {
   ChannelMetrics,
   AffiliateMetrics,
   GeoMetrics,
+  GrowthEngineMetrics,
   MasterIntelligenceResponse,
 } from '../../types/master-intelligence.js'
 import { buildForecast } from './forecast.service.js'
 import { buildRetention } from './retention.service.js'
 import { buildChannelAttribution } from './channel-attribution.service.js'
 import { generateAdvisorInsights } from './advisor.service.js'
+import { getOutboundMetrics } from '../outbound-queue.service.js'
+import { getFollowUpMetrics } from '../followup.service.js'
+import { getFunnelConversionMetrics } from '../sales-funnel.service.js'
 
 // ── Revenue Metrics ─────────────────────────────────────────────────────────
 
@@ -242,14 +246,40 @@ async function buildGeo(prisma: any): Promise<GeoMetrics> {
 
 // ── Consolidação ────────────────────────────────────────────────────────────
 
+// ── Growth Engine Metrics ───────────────────────────────────────────────────
+
+async function buildGrowthEngine(prisma: any): Promise<GrowthEngineMetrics> {
+  const [outbound, followUp, funnelConversion] = await Promise.all([
+    getOutboundMetrics(prisma).catch(() => ({
+      sentToday: 0, sentMonth: 0, deliveredMonth: 0, repliedMonth: 0,
+      failedMonth: 0, deliveryRate: 0, replyRate: 0, templatePerformance: [],
+    })),
+    getFollowUpMetrics(prisma).catch(() => ({
+      pending: 0, sentMonth: 0, skippedMonth: 0, byStep: [],
+    })),
+    getFunnelConversionMetrics(prisma).catch(() => ({
+      stages: [], channelPerformance: [], dailyTrend: [],
+    })),
+  ])
+
+  return {
+    funnel: funnelConversion.stages,
+    outbound,
+    followUp,
+    channelPerformance: funnelConversion.channelPerformance,
+    dailyTrend: funnelConversion.dailyTrend,
+  }
+}
+
 export async function buildMasterIntelligence(prisma: any): Promise<MasterIntelligenceResponse> {
-  const [revenue, sales, retention, forecast, affiliates, geo] = await Promise.all([
+  const [revenue, sales, retention, forecast, affiliates, geo, growthEngine] = await Promise.all([
     buildRevenue(prisma),
     buildSales(prisma),
     buildRetention(prisma),
     buildForecast(prisma),
     buildAffiliateMetrics(prisma),
     buildGeo(prisma),
+    buildGrowthEngine(prisma),
   ])
 
   const channels = await buildChannelAttribution(prisma)
@@ -287,6 +317,7 @@ export async function buildMasterIntelligence(prisma: any): Promise<MasterIntell
     affiliates,
     geo,
     advisor,
+    growthEngine,
     generatedAt: new Date().toISOString(),
   }
 }
