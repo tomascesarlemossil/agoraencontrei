@@ -202,6 +202,102 @@ export default async function leadsRoutes(app: FastifyInstance) {
     return reply.send(lead)
   })
 
+  // POST /api/v1/leads/:id/start-deal — convert lead into a deal ("Iniciar Negócio")
+  app.post('/:id/start-deal', {
+    schema: { tags: ['leads'], summary: 'Convert lead into a deal' },
+  }, async (req, reply) => {
+    const { id } = req.params as { id: string }
+    const body = z.object({
+      title:       z.string().optional(),
+      type:        z.enum(['SALE', 'RENT']).optional(),
+      value:       z.number().positive().optional(),
+      commission:  z.number().min(0).max(100).optional(),
+      notes:       z.string().optional(),
+      propertyIds: z.array(z.string().cuid()).default([]),
+    }).parse(req.body || {})
+
+    const lead = await app.prisma.lead.findFirst({
+      where: { id, companyId: req.user.cid },
+      include: {
+        properties: { select: { propertyId: true } },
+        contact: { select: { id: true, name: true } },
+      },
+    })
+    if (!lead) return reply.status(404).send({ error: 'NOT_FOUND' })
+
+    // Auto-infer deal properties
+    const dealType = body.type || (lead.interest === 'rent' ? 'RENT' : 'SALE')
+    const dealTitle = body.title || `${dealType === 'RENT' ? 'Locação' : 'Venda'} — ${lead.name}`
+    const propertyIds = body.propertyIds.length > 0
+      ? body.propertyIds
+      : lead.properties.map(p => p.propertyId)
+
+    const deal = await app.prisma.deal.create({
+      data: {
+        companyId:  req.user.cid,
+        brokerId:   lead.assignedToId || req.user.sub,
+        leadId:     lead.id,
+        contactId:  lead.contactId || undefined,
+        title:      dealTitle,
+        type:       dealType as any,
+        status:     'OPEN',
+        value:      body.value || (lead.budget ? Number(lead.budget) : undefined),
+        commission: body.commission,
+        notes:      body.notes || lead.notes || undefined,
+        properties: {
+          create: propertyIds.map(propertyId => ({ propertyId })),
+        },
+      },
+      include: {
+        broker:     { select: { id: true, name: true } },
+        properties: { include: { property: { select: { id: true, title: true, coverImage: true } } } },
+      },
+    })
+
+    // Update lead status to NEGOTIATING
+    await app.prisma.lead.update({
+      where: { id },
+      data: { status: 'NEGOTIATING' },
+    })
+
+    // Create activity on both lead and deal
+    await app.prisma.activity.create({
+      data: {
+        companyId: req.user.cid,
+        userId:    req.user.sub,
+        leadId:    id,
+        dealId:    deal.id,
+        type:      'system',
+        title:     'Negócio iniciado',
+        description: `Lead convertido em negociação "${dealTitle}"`,
+      },
+    })
+
+    emitAutomation({
+      companyId: req.user.cid,
+      event: 'deal_created',
+      data: { id: deal.id, title: deal.title, status: deal.status, leadId: id, brokerId: deal.brokerId },
+    })
+    emitSSE({
+      type: 'deal_created',
+      companyId: req.user.cid,
+      payload: { id: deal.id, title: deal.title, leadId: id },
+    })
+
+    await createAuditLog({
+      prisma: app.prisma, req,
+      action: 'lead.start_deal',
+      resource: 'lead', resourceId: id,
+      after: { dealId: deal.id, dealTitle: deal.title, type: dealType } as any,
+    })
+
+    return reply.status(201).send({
+      deal,
+      lead: { id, status: 'NEGOTIATING' },
+      message: 'Negociação criada com sucesso a partir do lead.',
+    })
+  })
+
   // POST /api/v1/leads/:id/activities — add activity to lead timeline
   app.post('/:id/activities', {
     schema: { tags: ['leads'] },

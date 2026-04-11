@@ -107,6 +107,47 @@ export async function executeAction(
       })
     }
 
+    case 'create_deal': {
+      const leadId = String(p.leadId ?? data['leadId'] ?? data['id'] ?? '')
+      if (!leadId) throw new Error('create_deal: no leadId resolved')
+      const lead = await app.prisma.lead.findUnique({
+        where: { id: leadId },
+        include: { properties: { select: { propertyId: true } } },
+      })
+      if (!lead) throw new Error(`create_deal: lead ${leadId} not found`)
+
+      const dealType = p.type ?? (lead.interest === 'rent' ? 'RENT' : 'SALE')
+      const title = p.title
+        ? interpolate(String(p.title), data)
+        : `${dealType === 'RENT' ? 'Locação' : 'Venda'} — ${lead.name}`
+
+      const deal = await app.prisma.deal.create({
+        data: {
+          companyId: companyId,
+          brokerId:  lead.assignedToId || String(p.brokerId ?? data['brokerId'] ?? ''),
+          leadId:    lead.id,
+          contactId: lead.contactId || undefined,
+          title,
+          type:   dealType as any,
+          status: 'OPEN',
+          value:  lead.budget ? Number(lead.budget) : undefined,
+          properties: {
+            create: lead.properties.map(lp => ({ propertyId: lp.propertyId })),
+          },
+        },
+      })
+
+      await app.prisma.lead.update({ where: { id: leadId }, data: { status: 'NEGOTIATING' } })
+      await app.prisma.activity.create({
+        data: {
+          companyId, leadId: lead.id, dealId: deal.id,
+          type: 'system', title: 'Negócio criado via automação',
+          description: `Deal "${title}" criado automaticamente`,
+        },
+      })
+      return deal
+    }
+
     default:
       throw new Error(`Unknown action type: ${(action as any).type}`)
   }

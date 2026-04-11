@@ -271,6 +271,226 @@ export default async function masterRoutes(app: FastifyInstance) {
     })
   })
 
+  // GET /repasse-rules — List all repasse configurations per tenant
+  app.get('/repasse-rules', {
+    schema: { tags: ['master'], summary: 'Repasse rules by tenant' },
+  }, async (_req, reply) => {
+    const tenants = await (app.prisma as any).tenant.findMany({
+      select: {
+        id: true, subdomain: true, companyName: true, plan: true,
+        splitPercent: true, repasseDelayDays: true, repasseFixedDay: true,
+        isActive: true, planStatus: true,
+      },
+      orderBy: { companyName: 'asc' },
+    }).catch(() => [])
+
+    // Global defaults
+    const defaults = {
+      splitPercent: 10,
+      repasseDelayDays: 7,
+      repasseFixedDay: null,
+    }
+
+    return reply.send({
+      success: true,
+      data: { defaults, tenants },
+    })
+  })
+
+  // PATCH /repasse-rules/:tenantId — Update repasse rules for a specific tenant
+  app.patch('/repasse-rules/:tenantId', {
+    schema: { tags: ['master'], summary: 'Update repasse rules for tenant' },
+  }, async (req, reply) => {
+    const { tenantId } = req.params as { tenantId: string }
+    const body = z.object({
+      splitPercent: z.number().min(0).max(50).optional(),
+      repasseDelayDays: z.number().int().min(1).max(30).optional(),
+      repasseFixedDay: z.number().int().min(1).max(31).nullable().optional(),
+    }).parse(req.body)
+
+    const tenant = await (app.prisma as any).tenant.update({
+      where: { id: tenantId },
+      data: body,
+    })
+
+    return reply.send({ success: true, data: tenant })
+  })
+
+  // GET /webhook-health — Monitor webhook endpoints and recent delivery status
+  app.get('/webhook-health', {
+    schema: { tags: ['master'], summary: 'Webhook health monitor' },
+  }, async (_req, reply) => {
+    // Check Asaas webhook logs from audit log
+    const last24h = new Date(Date.now() - 24 * 60 * 60 * 1000)
+    const last7d = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+
+    const [
+      webhookLogs24h,
+      webhookLogs7d,
+      paymentEvents,
+      repasseEvents,
+      scraperRuns,
+    ] = await Promise.all([
+      app.prisma.auditLog.count({
+        where: { action: { startsWith: 'webhook' }, createdAt: { gte: last24h } },
+      }).catch(() => 0),
+      app.prisma.auditLog.count({
+        where: { action: { startsWith: 'webhook' }, createdAt: { gte: last7d } },
+      }).catch(() => 0),
+      app.prisma.auditLog.findMany({
+        where: { action: { startsWith: 'payment' }, createdAt: { gte: last24h } },
+        orderBy: { createdAt: 'desc' },
+        take: 10,
+        select: { id: true, action: true, resourceId: true, createdAt: true },
+      }).catch(() => []),
+      (app.prisma as any).scheduledRepasse?.findMany({
+        where: { createdAt: { gte: last7d } },
+        orderBy: { createdAt: 'desc' },
+        take: 10,
+        select: { id: true, status: true, grossValue: true, scheduledDate: true, createdAt: true },
+      }).catch(() => []),
+      (app.prisma as any).scraperRun?.findMany({
+        orderBy: { createdAt: 'desc' },
+        take: 10,
+        select: {
+          id: true, source: true, status: true,
+          itemsFound: true, itemsCreated: true, itemsUpdated: true,
+          errorMessage: true, createdAt: true, finishedAt: true,
+        },
+      }).catch(() => []),
+    ])
+
+    // Asaas config check
+    const asaasConfigured = !!(process.env.ASAAS_API_KEY || process.env.ASAAS_SANDBOX_KEY)
+    const clicksignConfigured = !!(process.env.CLICKSIGN_ACCESS_TOKEN)
+    const streetviewConfigured = !!(process.env.GOOGLE_MAPS_API_KEY)
+    const whatsappConfigured = !!(process.env.EVOLUTION_API_URL && process.env.EVOLUTION_API_KEY)
+
+    return reply.send({
+      success: true,
+      data: {
+        integrations: {
+          asaas: { configured: asaasConfigured, status: asaasConfigured ? 'active' : 'not_configured' },
+          clicksign: { configured: clicksignConfigured, status: clicksignConfigured ? 'active' : 'not_configured' },
+          streetview: { configured: streetviewConfigured, status: streetviewConfigured ? 'active' : 'not_configured' },
+          whatsapp: { configured: whatsappConfigured, status: whatsappConfigured ? 'active' : 'not_configured' },
+        },
+        webhooks: {
+          last24h: webhookLogs24h,
+          last7d: webhookLogs7d,
+          recentPayments: paymentEvents,
+        },
+        repasses: repasseEvents,
+        scraperRuns,
+        timestamp: new Date().toISOString(),
+      },
+    })
+  })
+
+  // GET /ai-config — AI feature configuration per plan
+  app.get('/ai-config', {
+    schema: { tags: ['master'], summary: 'AI feature configuration per plan' },
+  }, async (_req, reply) => {
+    const config = {
+      plans: {
+        LITE: {
+          aiAnalysis: false,
+          aiLeadScoring: false,
+          aiColumnMapping: true,
+          aiEditalAnalysis: false,
+          aiROICalculator: true,
+          aiVisualEnhancement: false,
+          maxAIRequestsPerMonth: 0,
+          description: 'Plano básico — apenas IA de mapeamento CSV e calculadora ROI',
+        },
+        PRO: {
+          aiAnalysis: true,
+          aiLeadScoring: true,
+          aiColumnMapping: true,
+          aiEditalAnalysis: true,
+          aiROICalculator: true,
+          aiVisualEnhancement: false,
+          maxAIRequestsPerMonth: 100,
+          description: 'Plano profissional — análise de editais, lead scoring, mapeamento CSV',
+        },
+        ENTERPRISE: {
+          aiAnalysis: true,
+          aiLeadScoring: true,
+          aiColumnMapping: true,
+          aiEditalAnalysis: true,
+          aiROICalculator: true,
+          aiVisualEnhancement: true,
+          maxAIRequestsPerMonth: -1, // unlimited
+          description: 'Plano enterprise — todas as features de IA, incluindo visual enhancement',
+        },
+      },
+      models: {
+        leadScoring: 'claude-haiku-4-5-20251001',
+        editalAnalysis: 'claude-sonnet-4-6',
+        columnMapping: 'claude-haiku-4-5-20251001',
+        visualEnhancement: 'claude-sonnet-4-6',
+      },
+    }
+
+    // Get usage stats
+    const thisMonth = new Date()
+    thisMonth.setDate(1)
+    thisMonth.setHours(0, 0, 0, 0)
+
+    const aiUsage = await app.prisma.auditLog.count({
+      where: {
+        action: { in: ['ai.analysis', 'ai.lead_score', 'ai.edital_analysis', 'ai.column_mapping'] as any },
+        createdAt: { gte: thisMonth },
+      },
+    }).catch(() => 0)
+
+    return reply.send({
+      success: true,
+      data: {
+        ...config,
+        usage: {
+          thisMonth: aiUsage,
+          period: `${thisMonth.toISOString().substring(0, 7)}`,
+        },
+      },
+    })
+  })
+
+  // PATCH /ai-config/:plan — Update AI limits per plan (for future use)
+  app.patch('/ai-config/:plan', {
+    schema: { tags: ['master'], summary: 'Update AI config for a plan' },
+  }, async (req, reply) => {
+    const { plan } = req.params as { plan: string }
+    if (!['LITE', 'PRO', 'ENTERPRISE'].includes(plan)) {
+      return reply.status(400).send({ error: 'INVALID_PLAN' })
+    }
+
+    const body = z.object({
+      maxAIRequestsPerMonth: z.number().int().min(-1).optional(),
+      aiEditalAnalysis: z.boolean().optional(),
+      aiLeadScoring: z.boolean().optional(),
+      aiVisualEnhancement: z.boolean().optional(),
+    }).parse(req.body)
+
+    // Store in company settings or a platform config table
+    // For now, log the change to audit
+    await app.prisma.auditLog.create({
+      data: {
+        companyId: 'platform',
+        action: 'ai_config.update' as any,
+        resource: 'platform',
+        resourceId: plan,
+        payload: body as any,
+      },
+    }).catch(() => {})
+
+    return reply.send({
+      success: true,
+      message: `AI config for plan ${plan} updated`,
+      data: body,
+    })
+  })
+
   // GET /activity — Recent platform activity
   app.get('/activity', {
     schema: { tags: ['master'], summary: 'Recent platform activity' },

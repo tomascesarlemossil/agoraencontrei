@@ -10,6 +10,7 @@ export type TriggerEvent =
   | 'lead_sem_resposta_48h'
   | 'visita_agendada'
   | 'contrato_vencendo_30d'
+  | 'cobranca_inadimplencia_5d'
 
 export type ActionType =
   | 'send_whatsapp'
@@ -18,6 +19,7 @@ export type ActionType =
   | 'score_lead'
   | 'notify_webhook'
   | 'assign_broker'
+  | 'create_deal'
 
 export interface AutomationEventPayload {
   companyId: string
