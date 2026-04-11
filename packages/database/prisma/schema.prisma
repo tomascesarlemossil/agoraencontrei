@@ -385,6 +385,7 @@ model Property {
   videoUrl        String?
   videos          String[]         // uploaded video URLs (mp4, mov, webm)
   virtualTourUrl  String?
+  streetViewUrl   String?          // Google Street View static image URL
 
   // Features & amenities
   features        String[]         // ["pool", "gym", "barbecue", ...]

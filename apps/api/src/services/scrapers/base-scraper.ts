@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client'
 import crypto from 'crypto'
+import { getStreetViewForProperty } from '../streetview.service.js'
 
 export interface ScrapedAuction {
   externalId: string
@@ -237,6 +238,22 @@ export abstract class BaseScraper {
               })
             })
             created++
+
+            // Auto-capture Street View facade for new auctions without cover image
+            if (!item.coverImage && (item.street || item.city)) {
+              try {
+                const sv = await getStreetViewForProperty({
+                  street: item.street, number: item.number,
+                  city: item.city, state: item.state,
+                })
+                if (sv.available && sv.imageUrl) {
+                  await this.prisma.auction.updateMany({
+                    where: { externalId: item.externalId, source: item.source as any },
+                    data: { coverImage: sv.imageUrl, streetViewUrl: sv.imageUrl } as any,
+                  }).catch(() => {})
+                }
+              } catch { /* Street View is best-effort */ }
+            }
           }
         } catch (err: any) {
           errors.push(`Item ${item.externalId}: ${err.message}`)

@@ -80,6 +80,17 @@ const envSchema = z.object({
 
   // Gemini — vision & content generation (alternative to Anthropic)
   GEMINI_API_KEY: z.string().optional(),
+
+  // Google Maps / Street View
+  GOOGLE_MAPS_API_KEY: z.string().optional(),
+
+  // Vercel Domains API
+  VERCEL_TOKEN: z.string().optional(),
+  VERCEL_PROJECT_ID: z.string().optional(),
+
+  // Clicksign — digital signatures
+  CLICKSIGN_ACCESS_TOKEN: z.string().optional(),
+  CLICKSIGN_BASE_URL: z.string().optional(),
 })
 
 function parseEnv() {

@@ -83,6 +83,7 @@ import signatureRoutes from './routes/signatures/index.js'
 import auctionAIRoutes from './routes/auction-ai/index.js'
 import importRoutes from './routes/import/index.js'
 import masterRoutes from './routes/master/index.js'
+import streetviewRoutes from './routes/streetview/index.js'
 
 const app = Fastify({
   // No body size limit — accept any file size
@@ -167,6 +168,7 @@ async function runMigrations(prisma: any) {
     ['keyLocation',              'TEXT'],
     ['totalFloors',              'INTEGER'],
     ['showExactLocation',        'BOOLEAN NOT NULL DEFAULT false'],
+    ['streetViewUrl',            'TEXT'],
   ]
 
   // ── Auction tables migration ─────────────────────────────────────────────
@@ -226,6 +228,7 @@ async function runMigrations(prisma: any) {
     `CREATE INDEX IF NOT EXISTS auctions_city_state_idx ON auctions(city, state)`,
     `CREATE INDEX IF NOT EXISTS auctions_discount_idx ON auctions("discountPercent")`,
     `CREATE INDEX IF NOT EXISTS auctions_created_idx ON auctions("createdAt" DESC)`,
+    `ALTER TABLE auctions ADD COLUMN IF NOT EXISTS "streetViewUrl" TEXT`,
     `CREATE INDEX IF NOT EXISTS scraper_runs_source_idx ON scraper_runs(source)`,
     `CREATE INDEX IF NOT EXISTS scraper_runs_started_idx ON scraper_runs("startedAt")`,
   ]
@@ -778,6 +781,7 @@ async function bootstrap() {
   await app.register(auctionAIRoutes,          { prefix: '/api/v1/auction-ai' })
   await app.register(importRoutes,             { prefix: '/api/v1/import' })
   await app.register(masterRoutes,             { prefix: '/api/v1/master' })
+  await app.register(streetviewRoutes,         { prefix: '/api/v1/streetview' })
 
   // ── Re-ativar leilões bancários fechados erroneamente pelo cleanup ────
   try {
