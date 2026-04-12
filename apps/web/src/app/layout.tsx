@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Analytics } from '@vercel/analytics/next'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import { Providers } from '@/components/providers'
@@ -10,6 +10,14 @@ import './globals.css'
 
 const META_PIXEL_ID = '932688306232065'
 const WEB_URL = 'https://www.agoraencontrei.com.br'
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  userScalable: true,
+  viewportFit: 'cover',
+}
 
 export const metadata: Metadata = {
   // ── Título: combina AgoraEncontrei + Imobiliária Lemos para unir as marcas ──

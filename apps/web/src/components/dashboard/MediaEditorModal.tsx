@@ -82,41 +82,57 @@ const LOGO_POSITIONS = [
  * Uses /api/proxy-image to serve external images as same-origin.
  */
 async function loadImageForCanvas(url: string): Promise<HTMLImageElement> {
-  return new Promise(async (resolve, reject) => {
-    const img = new window.Image()
-
-    // If it's already a data URL or blob URL, load directly
-    if (url.startsWith('data:') || url.startsWith('blob:')) {
+  // If it's already a data URL or blob URL, load directly
+  if (url.startsWith('data:') || url.startsWith('blob:')) {
+    return new Promise((resolve, reject) => {
+      const img = new window.Image()
       img.onload = () => resolve(img)
-      img.onerror = () => reject(new Error('Não foi possível carregar a imagem'))
+      img.onerror = () => reject(new Error('Não foi possível carregar a imagem local'))
       img.src = url
-      return
-    }
+    })
+  }
 
-    // For external URLs, proxy through our server to avoid CORS canvas tainting
-    try {
-      const proxyUrl = `/api/proxy-image?url=${encodeURIComponent(url)}`
-      const res = await fetch(proxyUrl)
-      if (!res.ok) throw new Error(`Proxy error: ${res.status}`)
-      const blob = await res.blob()
-      const objectUrl = URL.createObjectURL(blob)
-      img.onload = () => {
-        URL.revokeObjectURL(objectUrl)
-        resolve(img)
-      }
-      img.onerror = () => {
-        URL.revokeObjectURL(objectUrl)
-        reject(new Error('Não foi possível processar a imagem'))
-      }
+  // For external URLs, proxy through our server to avoid CORS canvas tainting
+  // Try proxy first, then direct with crossOrigin as fallback
+  async function tryProxy(): Promise<HTMLImageElement> {
+    const proxyUrl = `/api/proxy-image?url=${encodeURIComponent(url)}`
+    const res = await fetch(proxyUrl, { signal: AbortSignal.timeout(20000) })
+    if (!res.ok) {
+      const detail = await res.text().catch(() => '')
+      throw new Error(`Proxy retornou ${res.status}: ${detail.slice(0, 100)}`)
+    }
+    const blob = await res.blob()
+    if (blob.size < 100) throw new Error('Imagem vazia recebida do proxy')
+    const objectUrl = URL.createObjectURL(blob)
+    return new Promise<HTMLImageElement>((resolve, reject) => {
+      const img = new window.Image()
+      img.onload = () => { URL.revokeObjectURL(objectUrl); resolve(img) }
+      img.onerror = () => { URL.revokeObjectURL(objectUrl); reject(new Error('Falha ao decodificar imagem do proxy')) }
       img.src = objectUrl
-    } catch {
-      // Fallback: try direct load with crossOrigin (works if CDN has CORS)
+    })
+  }
+
+  async function tryDirect(): Promise<HTMLImageElement> {
+    return new Promise<HTMLImageElement>((resolve, reject) => {
+      const img = new window.Image()
       img.crossOrigin = 'anonymous'
       img.onload = () => resolve(img)
-      img.onerror = () => reject(new Error('Não foi possível carregar a imagem. Verifique a conexão.'))
+      img.onerror = () => reject(new Error('Não foi possível carregar a imagem diretamente'))
       img.src = url
+    })
+  }
+
+  try {
+    return await tryProxy()
+  } catch (proxyErr) {
+    // Fallback: try direct load with crossOrigin (works if CDN has CORS headers)
+    try {
+      return await tryDirect()
+    } catch {
+      // Re-throw the proxy error which has more detail
+      throw proxyErr
     }
-  })
+  }
 }
 
 async function applyPhotoEffects(
@@ -237,7 +253,15 @@ export function MediaEditorModal({
       const result = await applyPhotoEffects(currentPhoto, selectedFilter, applyLogo, logoUrl, logoPosition)
       setPreviewDataUrl(result)
     } catch (e: any) {
-      setError('Erro ao gerar preview: ' + (e.message ?? 'desconhecido'))
+      const msg = e?.message ?? 'desconhecido'
+      // Provide actionable error messages
+      if (msg.includes('Proxy retornou') || msg.includes('proxy')) {
+        setError('Erro ao carregar imagem — o servidor de proxy não conseguiu buscar a imagem. Tente novamente.')
+      } else if (msg.includes('carregar') || msg.includes('decodificar')) {
+        setError('Não foi possível carregar a imagem para o editor. A imagem pode estar corrompida ou inacessível.')
+      } else {
+        setError('Erro ao gerar preview: ' + msg)
+      }
     } finally {
       setLoadingPreview(false)
     }
@@ -362,7 +386,7 @@ export function MediaEditorModal({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4">
-      <div className="bg-[#1a2744] border border-white/10 rounded-2xl w-full max-w-6xl max-h-[95vh] overflow-hidden flex flex-col">
+      <div className="bg-[#1a2744] border border-white/10 rounded-2xl w-full max-w-6xl max-h-[95dvh] overflow-hidden flex flex-col">
 
         {/* ── Header ──────────────────────────────────────────────────────── */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-white/10 flex-shrink-0">

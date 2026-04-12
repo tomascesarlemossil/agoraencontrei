@@ -159,3 +159,24 @@ html.dark input[type="datetime-local"] {
   --popover: 222.2 84% 6%;
   --popover-foreground: 210 40% 98%;
 }
+
+/* ── iOS Safari: prevent auto-zoom on input focus ─────────────────────────── */
+/* iOS Safari zooms the viewport when a focused input has font-size < 16px.   */
+/* This global rule ensures ALL interactive fields are at least 16px on       */
+/* mobile screens, preventing unwanted zoom. Desktop keeps original sizes.    */
+@media screen and (max-width: 767px) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  textarea,
+  select,
+  [role="combobox"],
+  [contenteditable="true"] {
+    font-size: 16px !important;
+  }
+}
+
+/* ── iOS Safari: smooth viewport transitions ──────────────────────────────── */
+/* Ensure html/body don't break with dynamic viewport on iOS                  */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}

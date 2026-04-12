@@ -66,7 +66,7 @@ export const MoneyInput = forwardRef<HTMLInputElement, MoneyInputProps>(
           type="text"
           inputMode="decimal"
           className={cn(
-            'flex h-9 w-full rounded-md border border-input bg-transparent pl-9 pr-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50',
+            'flex h-9 w-full rounded-md border border-input bg-transparent pl-9 pr-3 py-1 text-base sm:text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50',
             error && 'border-red-400 focus-visible:ring-red-400',
             className,
           )}
@@ -164,7 +164,7 @@ export const CepInput = forwardRef<HTMLInputElement, CepInputProps>(
           inputMode="numeric"
           maxLength={9}
           className={cn(
-            'flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50',
+            'flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base sm:text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50',
             error && 'border-red-400 focus-visible:ring-red-400',
             className,
           )}

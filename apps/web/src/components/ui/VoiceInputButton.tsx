@@ -171,7 +171,7 @@ export function VoiceInputButton({ onResult, onFilters, className, dark = false 
                         'Buscar por voz'
       }
       className={cn(
-        'flex-shrink-0 flex items-center justify-center w-7 h-7 rounded-full transition-all duration-200 select-none',
+        'flex-shrink-0 flex items-center justify-center w-8 h-8 min-w-[44px] min-h-[44px] rounded-full transition-all duration-200 select-none',
         isRecording
           ? 'bg-red-500 shadow-[0_0_0_4px_rgba(239,68,68,0.25)] animate-pulse'
           : isProcessing

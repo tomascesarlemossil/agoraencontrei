@@ -413,12 +413,12 @@ export function Sidebar() {
   return (
     <>
       {/* ── Desktop sidebar ─────────────────────────────────────────── */}
-      <aside className="hidden md:flex flex-col w-60 h-screen bg-sidebar text-sidebar-foreground border-r border-white/10 flex-shrink-0">
+      <aside className="hidden md:flex flex-col w-60 h-[100dvh] bg-sidebar text-sidebar-foreground border-r border-white/10 flex-shrink-0">
         <NavContent />
       </aside>
 
       {/* ── Mobile: top bar ─────────────────────────────────────────── */}
-      <div className="md:hidden fixed top-0 left-0 right-0 z-40 flex items-center gap-3 px-4 py-3 bg-gray-900 border-b border-white/10">
+      <div className="md:hidden fixed top-0 left-0 right-0 z-40 flex items-center gap-3 px-4 bg-gray-900 border-b border-white/10" style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top, 0px))', paddingBottom: '0.75rem' }}>
         <button
           onClick={() => setMobileOpen(true)}
           className="text-white/70 hover:text-white p-1"

@@ -17,7 +17,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     <AuthGuard>
       <SSEProvider>
         <RealTimeProvider>
-          <div className="dark flex flex-col md:flex-row h-screen overflow-hidden bg-gray-950">
+          <div className="dark flex flex-col md:flex-row h-[100dvh] overflow-hidden bg-gray-950">
             <Sidebar />
             <main className="flex-1 overflow-y-auto bg-gray-950 pt-14 md:pt-0">
               <UnattendedLeadTicker />

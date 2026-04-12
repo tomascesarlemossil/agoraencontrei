@@ -16,6 +16,9 @@ const ALLOWED_HOSTS = [
   '.cloudfront.net',
   'res.cloudinary.com',
   'agoraencontrei.com.br',
+  'cdnuso.com',
+  'cdn2.uso.com.br',
+  'lh3.googleusercontent.com',
   'localhost',
 ]
 
