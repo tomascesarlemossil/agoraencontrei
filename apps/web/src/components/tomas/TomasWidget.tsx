@@ -170,8 +170,8 @@ export default function TomasWidget({ propertyContext }: TomasWidgetProps) {
   useEffect(() => {
     if (open && messages.length === 0) {
       const greeting = propertyContext?.title
-        ? `Olá! Sou o Tomás, da equipe AgoraEncontrei. Vi que você está olhando o "${propertyContext.title}". Posso te explicar os detalhes, comparar com opções parecidas ou já organizar uma visita. Como prefere seguir?`
-        : 'Olá! Sou o Tomás, da equipe AgoraEncontrei. Posso te ajudar a encontrar imóveis, tirar dúvidas sobre documentação, financiamento ou leilões. O que você está procurando?'
+        ? `Muito prazer. Eu sou o Tomás, a inteligência imobiliária da AgoraEncontrei — construída a partir da experiência real de Tomas Lemos e do legado da Imobiliária Lemos, fundada por Noemia Lemos em 2002 em Franca/SP. Vi que você está olhando o "${propertyContext.title}". Posso explicar os detalhes, comparar com imóveis semelhantes da carteira ou organizar uma visita. Como prefere seguir?`
+        : 'Muito prazer. Eu sou o Tomás, a inteligência imobiliária da AgoraEncontrei — construída a partir da experiência real de Tomas Lemos e do legado da Imobiliária Lemos, fundada por Noemia Lemos em 2002 em Franca/SP. Posso te ajudar a encontrar, avaliar ou vender imóveis com leitura local de verdade. O que você procura?'
 
       setMessages([{ role: 'assistant', content: greeting }])
     }
