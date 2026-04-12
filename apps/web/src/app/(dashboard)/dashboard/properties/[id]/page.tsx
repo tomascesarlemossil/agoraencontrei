@@ -212,7 +212,6 @@ export default function PropertyDetailPage() {
   const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN'
   const [editing, setEditing] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
-  const [quickStatusUpdating, setQuickStatusUpdating] = useState(false)
   const [activeTab, setActiveTab] = useState('cadastro')
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
 
@@ -369,14 +368,6 @@ export default function PropertyDetailPage() {
     onError: (err: any) => {
       setSaveError(err?.message ?? 'Erro ao salvar. Tente novamente.')
     },
-  })
-
-  const deleteMutation = useMutation({
-    mutationFn: async () => {
-      const token = await getValidToken()
-      return propertiesApi.delete(token!, id)
-    },
-    onSuccess: () => router.push('/dashboard/properties'),
   })
 
   const quickStatusMutation = useMutation({
