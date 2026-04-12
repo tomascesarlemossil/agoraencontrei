@@ -271,38 +271,50 @@ export function MediaEditorModal({
     if (activeTab === 'photos' && currentPhoto) {
       generatePreview()
     }
-  }, [selectedFilter, applyLogo, logoPosition, previewIndex, activeTab])
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- generatePreview is stable via useCallback
+  }, [selectedFilter, applyLogo, logoUrl, logoPosition, previewIndex, activeTab, generatePreview])
 
-  // Upload de arquivo processado para S3
+  // Upload de arquivo processado para S3 (via same-origin proxy to avoid CORS)
   const uploadProcessed = useCallback(async (dataUrl: string, filename: string): Promise<string> => {
     const blob = await fetch(dataUrl).then(r => r.blob())
     const formData = new FormData()
     formData.append('file', blob, filename)
-    const res = await fetch(`${API_URL}/api/v1/upload`, {
+
+    // Use the same-origin upload proxy to avoid cross-origin "Failed to fetch" errors
+    const res = await fetch('/api/upload-proxy', {
       method: 'POST',
       headers: { Authorization: `Bearer ${token}` },
       body: formData,
     })
-    if (!res.ok) throw new Error('Erro ao fazer upload da imagem processada')
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: 'unknown' }))
+      throw new Error(err.message || err.details || `Upload falhou (${res.status})`)
+    }
+
     const { url } = await res.json()
     return url
   }, [token])
 
   // Aplicar efeito em 1 foto
   const handleApplyOne = useCallback(async () => {
-    if (!currentPhoto || selectedFilter === 'none' && !applyLogo) return
+    if (!currentPhoto || (selectedFilter === 'none' && !applyLogo)) return
     setProcessing(true)
     setError(null)
     try {
       const result = await applyPhotoEffects(currentPhoto, selectedFilter, applyLogo, logoUrl, logoPosition)
-      const url = await uploadProcessed(result, `edited_${Date.now()}.jpg`)
-      const newPhotos = [...localPhotos]
-      newPhotos[previewIndex] = url
-      setLocalPhotos(newPhotos)
-      setPreviewDataUrl(null)
-      setDone(true)
+      try {
+        const url = await uploadProcessed(result, `edited_${Date.now()}.jpg`)
+        const newPhotos = [...localPhotos]
+        newPhotos[previewIndex] = url
+        setLocalPhotos(newPhotos)
+        setPreviewDataUrl(null)
+        setDone(true)
+      } catch (uploadErr: any) {
+        setError('Erro ao salvar imagem: ' + (uploadErr.message || 'Verifique sua conexão e tente novamente.'))
+      }
     } catch (e: any) {
-      setError(e.message)
+      setError('Erro ao processar imagem: ' + (e.message || 'desconhecido'))
     } finally {
       setProcessing(false)
     }
@@ -326,7 +338,9 @@ export function MediaEditorModal({
       setPreviewDataUrl(null)
       setDone(true)
     } catch (e: any) {
-      setError(e.message)
+      const msg = e?.message ?? 'desconhecido'
+      const prefix = msg.includes('Upload') || msg.includes('salvar') ? 'Erro ao salvar: ' : 'Erro ao processar: '
+      setError(prefix + msg)
     } finally {
       setProcessing(false)
     }
