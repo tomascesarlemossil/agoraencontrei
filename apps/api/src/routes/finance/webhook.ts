@@ -39,26 +39,27 @@ export default async function asaasWebhookRoutes(app: FastifyInstance) {
     app.log.info(`[asaas-webhook] Event: ${event}, Payment: ${payment.id}, Status: ${payment.status}`)
 
     try {
-      // Idempotency guard: skip if this exact (event, paymentId) was already processed
-      const idempotencyKey = `asaas:${event}:${payment.id}`
-      const alreadyProcessed = await app.prisma.auditLog.findFirst({
-        where: { action: 'webhook.asaas', resourceId: idempotencyKey },
-        select: { id: true },
-      })
-      if (alreadyProcessed) {
-        app.log.info(`[asaas-webhook] Duplicate event skipped: ${idempotencyKey}`)
-        return reply.send({ success: true, skipped: true })
+      // Idempotency guard — uses DB UNIQUE constraint on eventKey to handle
+      // concurrent re-deliveries atomically (no race window between check and insert).
+      const eventKey = `asaas:${event}:${payment.id}`
+      try {
+        await (app.prisma as any).webhookProcessedEvent.create({
+          data: {
+            eventKey,
+            provider: 'asaas',
+            eventType: event,
+            externalId: payment.id,
+            payload: { event, paymentId: payment.id, status: payment.status },
+          },
+        })
+      } catch (uniqueErr: any) {
+        // P2002 = Prisma unique constraint violation → duplicate delivery
+        if (uniqueErr?.code === 'P2002') {
+          app.log.info(`[asaas-webhook] Duplicate event skipped: ${eventKey}`)
+          return reply.send({ success: true, skipped: true })
+        }
+        throw uniqueErr
       }
-
-      // Record the event immediately to prevent concurrent duplicates
-      await app.prisma.auditLog.create({
-        data: {
-          action: 'webhook.asaas',
-          resource: 'payment',
-          resourceId: idempotencyKey,
-          payload: { event, paymentId: payment.id, status: payment.status },
-        },
-      })
 
       // Extract rentalId from externalReference (format: "rental:clxxxxxx")
       const externalRef = (payment as any).externalReference as string | undefined

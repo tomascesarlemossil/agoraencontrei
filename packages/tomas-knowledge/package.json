@@ -1,0 +1,21 @@
+{
+  "name": "@agoraencontrei/tomas-knowledge",
+  "version": "1.0.0",
+  "description": "Shared Tomás AI knowledge base — system prompt, local market data, and inventory comparables",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc --project tsconfig.json",
+    "typecheck": "tsc --project tsconfig.json --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.0"
+  }
+}
