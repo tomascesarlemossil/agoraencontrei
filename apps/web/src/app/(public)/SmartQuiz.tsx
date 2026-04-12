@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, createContext, useContext } from 'react'
 import { useRouter } from 'next/navigation'
 import { ChevronLeft, Sparkles, CheckCircle2, Loader2, X } from 'lucide-react'
+import { useBodyScrollLock } from '@/lib/use-body-scroll-lock'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 
@@ -244,15 +245,7 @@ export function SmartQuiz({ children }: { children?: React.ReactNode }) {
     setFormData({ name: '', phone: '', email: '' })
   }
 
-  // Prevent scroll when open
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden'
-    } else {
-      document.body.style.overflow = ''
-    }
-    return () => { document.body.style.overflow = '' }
-  }, [isOpen])
+  useBodyScrollLock(isOpen)
 
   return (
     <SmartQuizContext.Provider value={{ open }}>

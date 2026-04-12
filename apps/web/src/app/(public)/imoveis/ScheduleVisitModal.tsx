@@ -213,7 +213,7 @@ export function ScheduleVisitModal({ propertyId, propertyTitle, propertySlug }: 
                         value={name}
                         onChange={e => setName(e.target.value)}
                         placeholder="Seu nome completo"
-                        className="w-full border rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2"
+                        className="w-full border rounded-xl px-3 py-2.5 text-base outline-none focus:ring-2"
                         style={{ borderColor: '#e8e4dc' }}
                       />
                     </div>
@@ -226,7 +226,7 @@ export function ScheduleVisitModal({ propertyId, propertyTitle, propertySlug }: 
                         onChange={e => setPhone(e.target.value)}
                         placeholder="(16) 9 9999-9999"
                         type="tel"
-                        className="w-full border rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2"
+                        className="w-full border rounded-xl px-3 py-2.5 text-base outline-none focus:ring-2"
                         style={{ borderColor: '#e8e4dc' }}
                       />
                     </div>
@@ -239,7 +239,7 @@ export function ScheduleVisitModal({ propertyId, propertyTitle, propertySlug }: 
                         onChange={e => setEmail(e.target.value)}
                         placeholder="seu@email.com"
                         type="email"
-                        className="w-full border rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2"
+                        className="w-full border rounded-xl px-3 py-2.5 text-base outline-none focus:ring-2"
                         style={{ borderColor: '#e8e4dc' }}
                       />
                     </div>
@@ -252,7 +252,7 @@ export function ScheduleVisitModal({ propertyId, propertyTitle, propertySlug }: 
                         onChange={e => setNotes(e.target.value)}
                         placeholder="Algum detalhe especial para a visita?"
                         rows={2}
-                        className="w-full border rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 resize-none"
+                        className="w-full border rounded-xl px-3 py-2.5 text-base outline-none focus:ring-2 resize-none"
                         style={{ borderColor: '#e8e4dc' }}
                       />
                     </div>

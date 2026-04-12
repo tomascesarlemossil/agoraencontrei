@@ -8,6 +8,7 @@
  * - PAYMENT_REFUNDED: Pagamento estornado
  *
  * Segurança: Valida assinatura do webhook via ASAAS_WEBHOOK_SECRET
+ * Idempotência: Verifica AuditLog antes de processar para evitar double-credit
  */
 
 import type { FastifyInstance } from 'fastify'
@@ -38,6 +39,27 @@ export default async function asaasWebhookRoutes(app: FastifyInstance) {
     app.log.info(`[asaas-webhook] Event: ${event}, Payment: ${payment.id}, Status: ${payment.status}`)
 
     try {
+      // Idempotency guard: skip if this exact (event, paymentId) was already processed
+      const idempotencyKey = `asaas:${event}:${payment.id}`
+      const alreadyProcessed = await app.prisma.auditLog.findFirst({
+        where: { action: 'webhook.asaas', resourceId: idempotencyKey },
+        select: { id: true },
+      })
+      if (alreadyProcessed) {
+        app.log.info(`[asaas-webhook] Duplicate event skipped: ${idempotencyKey}`)
+        return reply.send({ success: true, skipped: true })
+      }
+
+      // Record the event immediately to prevent concurrent duplicates
+      await app.prisma.auditLog.create({
+        data: {
+          action: 'webhook.asaas',
+          resource: 'payment',
+          resourceId: idempotencyKey,
+          payload: { event, paymentId: payment.id, status: payment.status },
+        },
+      })
+
       // Extract rentalId from externalReference (format: "rental:clxxxxxx")
       const externalRef = (payment as any).externalReference as string | undefined
       const rentalId = externalRef?.startsWith('rental:') ? externalRef.replace('rental:', '') : null

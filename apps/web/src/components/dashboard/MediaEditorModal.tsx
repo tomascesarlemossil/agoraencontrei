@@ -227,6 +227,11 @@ export function MediaEditorModal({
   const [activeTab, setActiveTab] = useState<'photos' | 'videos'>('photos')
   const [selectedFilter, setSelectedFilter] = useState('none')
   const [applyLogo, setApplyLogo] = useState(!!logoUrl)
+
+  // Auto-disable logo toggle when there is no logo URL configured
+  useEffect(() => {
+    if (!logoUrl) setApplyLogo(false)
+  }, [logoUrl])
   const [logoPosition, setLogoPosition] = useState('bottom-right')
   const [previewIndex, setPreviewIndex] = useState(0)
   const [previewDataUrl, setPreviewDataUrl] = useState<string | null>(null)
@@ -314,6 +319,8 @@ export function MediaEditorModal({
     setProcessing(true)
     setProcessedCount(0)
     setError(null)
+    // Snapshot of originals so we can roll back if the batch fails mid-way
+    const originalPhotos = [...localPhotos]
     const newPhotos = [...localPhotos]
     try {
       for (let i = 0; i < localPhotos.length; i++) {
@@ -326,7 +333,9 @@ export function MediaEditorModal({
       setPreviewDataUrl(null)
       setDone(true)
     } catch (e: any) {
-      setError(e.message)
+      // Roll back to originals so the user doesn't lose their untouched photos
+      setLocalPhotos(originalPhotos)
+      setError(`Falha ao processar fotos: ${e.message}. As fotos originais foram restauradas.`)
     } finally {
       setProcessing(false)
     }
