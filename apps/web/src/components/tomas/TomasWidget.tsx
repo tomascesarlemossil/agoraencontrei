@@ -1,7 +1,19 @@
 'use client'
 
+/**
+ * TomasWidget — Chat flutuante com IA para site público
+ *
+ * Fixes aplicados para mobile/iPhone/Safari:
+ * - Input com font-size 16px (text-base) para evitar auto-zoom iOS
+ * - Layout com dvh + visualViewport para teclado virtual
+ * - Body scroll lock quando chat está aberto
+ * - Safe-area-inset-bottom respeitada
+ * - Botão de microfone funcional com gravação real (MediaRecorder)
+ * - Estados claros de gravação com feedback visual
+ */
+
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { MessageCircle, X, Send, Mic, Loader2, MapPin, Bed, Car, ChevronRight } from 'lucide-react'
+import { MessageCircle, X, Send, Mic, MicOff, Loader2, MapPin, Bed, Car, ChevronRight, AlertCircle } from 'lucide-react'
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -59,6 +71,10 @@ const QUICK_REPLIES = [
   { text: 'Quero agendar uma visita', icon: '📅' },
 ]
 
+// ── Audio Recording States ──────────────────────────────────────────────────
+
+type AudioState = 'idle' | 'requesting' | 'recording' | 'stopping' | 'uploading' | 'error'
+
 // ── Component ───────────────────────────────────────────────────────────────
 
 export default function TomasWidget({ propertyContext }: TomasWidgetProps) {
@@ -71,17 +87,83 @@ export default function TomasWidget({ propertyContext }: TomasWidgetProps) {
   const [actions, setActions] = useState<TomasAction[]>([])
   const [shortlist, setShortlist] = useState<ShortlistItem[]>([])
   const [showQuickReplies, setShowQuickReplies] = useState(true)
+  const [chatHeight, setChatHeight] = useState<number | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const chatContainerRef = useRef<HTMLDivElement>(null)
+
+  // ── Audio state ───────────────────────────────────────────────────────────
+  const [audioState, setAudioState] = useState<AudioState>('idle')
+  const [audioError, setAudioError] = useState<string | null>(null)
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null)
+  const audioChunksRef = useRef<Blob[]>([])
+  const audioStreamRef = useRef<MediaStream | null>(null)
+  const audioTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // ── Viewport height fix for mobile keyboard ───────────────────────────────
+  useEffect(() => {
+    if (!open) return
+
+    function updateHeight() {
+      // Use visualViewport when available (accounts for virtual keyboard)
+      const vh = window.visualViewport?.height ?? window.innerHeight
+      setChatHeight(Math.min(vh - 20, 600)) // 20px margin, max 600
+    }
+
+    updateHeight()
+
+    // Listen for visualViewport resize (keyboard open/close)
+    const vv = window.visualViewport
+    if (vv) {
+      vv.addEventListener('resize', updateHeight)
+      vv.addEventListener('scroll', updateHeight)
+    }
+    window.addEventListener('resize', updateHeight)
+
+    return () => {
+      if (vv) {
+        vv.removeEventListener('resize', updateHeight)
+        vv.removeEventListener('scroll', updateHeight)
+      }
+      window.removeEventListener('resize', updateHeight)
+    }
+  }, [open])
+
+  // ── Body scroll lock ──────────────────────────────────────────────────────
+  useEffect(() => {
+    if (!open) return
+
+    // Save current scroll position and lock body
+    const scrollY = window.scrollY
+    const originalStyle = document.body.style.cssText
+
+    document.body.style.cssText = `
+      overflow: hidden;
+      position: fixed;
+      top: -${scrollY}px;
+      left: 0;
+      right: 0;
+      width: 100%;
+    `
+
+    return () => {
+      document.body.style.cssText = originalStyle
+      window.scrollTo(0, scrollY)
+    }
+  }, [open])
 
   // Auto-scroll to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, shortlist])
 
-  // Focus input when opened
+  // Focus input when opened (with delay for mobile keyboard)
   useEffect(() => {
-    if (open) inputRef.current?.focus()
+    if (open) {
+      // Small delay to let the layout settle before focusing
+      const timer = setTimeout(() => inputRef.current?.focus(), 300)
+      return () => clearTimeout(timer)
+    }
   }, [open])
 
   // Initial greeting
@@ -94,6 +176,16 @@ export default function TomasWidget({ propertyContext }: TomasWidgetProps) {
       setMessages([{ role: 'assistant', content: greeting }])
     }
   }, [open, messages.length, propertyContext])
+
+  // ── Audio cleanup on unmount ──────────────────────────────────────────────
+  useEffect(() => {
+    return () => {
+      stopAudioStream()
+      if (audioTimeoutRef.current) clearTimeout(audioTimeoutRef.current)
+    }
+  }, [])
+
+  // ── Send message ──────────────────────────────────────────────────────────
 
   const sendMessage = useCallback(async (prefilled?: string) => {
     const content = (prefilled ?? input).trim()
@@ -140,16 +232,164 @@ export default function TomasWidget({ propertyContext }: TomasWidgetProps) {
     }
   }, [input, loading, messages, chatId, visitorId, propertyContext])
 
+  // ── Audio recording functions ─────────────────────────────────────────────
+
+  function stopAudioStream() {
+    if (audioStreamRef.current) {
+      audioStreamRef.current.getTracks().forEach(t => t.stop())
+      audioStreamRef.current = null
+    }
+  }
+
+  const stopRecording = useCallback(() => {
+    if (audioTimeoutRef.current) clearTimeout(audioTimeoutRef.current)
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      setAudioState('stopping')
+      mediaRecorderRef.current.stop()
+    }
+  }, [])
+
+  const startRecording = useCallback(async () => {
+    // Toggle off if already recording
+    if (audioState === 'recording') {
+      stopRecording()
+      return
+    }
+
+    setAudioError(null)
+    setAudioState('requesting')
+
+    // Check for MediaRecorder support
+    if (typeof window === 'undefined' || !navigator.mediaDevices?.getUserMedia) {
+      setAudioError('Seu navegador não suporta gravação de áudio.')
+      setAudioState('error')
+      setTimeout(() => setAudioState('idle'), 3000)
+      return
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      audioStreamRef.current = stream
+      audioChunksRef.current = []
+
+      // Find best supported MIME type
+      const mimeTypes = [
+        'audio/webm;codecs=opus',
+        'audio/webm',
+        'audio/ogg;codecs=opus',
+        'audio/ogg',
+        'audio/mp4',
+        '',
+      ]
+      const mimeType = mimeTypes.find(t =>
+        !t || (typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported(t))
+      ) ?? ''
+
+      const recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined)
+      mediaRecorderRef.current = recorder
+
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) audioChunksRef.current.push(e.data)
+      }
+
+      recorder.onstop = async () => {
+        stopAudioStream()
+        setAudioState('uploading')
+
+        try {
+          const audioBlob = new Blob(audioChunksRef.current, { type: mimeType || 'audio/webm' })
+          if (audioBlob.size < 100) {
+            setAudioState('idle')
+            return
+          }
+
+          // Determine file extension
+          const ext = mimeType.includes('mp4') ? 'm4a'
+            : mimeType.includes('ogg') ? 'ogg'
+            : 'webm'
+
+          const formData = new FormData()
+          formData.append('audio', audioBlob, `voice.${ext}`)
+
+          const res = await fetch(`${API_URL}/api/v1/public/voice-search`, {
+            method: 'POST',
+            body: formData,
+          })
+
+          if (!res.ok) {
+            setAudioError('Erro ao processar o áudio. Tente novamente.')
+            setAudioState('error')
+            setTimeout(() => { setAudioState('idle'); setAudioError(null) }, 3000)
+            return
+          }
+
+          const data = await res.json() as { transcript: string }
+
+          if (data.transcript?.trim()) {
+            // Send the transcribed text as a chat message
+            sendMessage(data.transcript)
+          } else {
+            setAudioError('Não consegui entender o áudio. Tente novamente.')
+            setAudioState('error')
+            setTimeout(() => { setAudioState('idle'); setAudioError(null) }, 3000)
+          }
+
+          setAudioState('idle')
+        } catch {
+          setAudioError('Falha ao enviar áudio. Verifique sua conexão.')
+          setAudioState('error')
+          setTimeout(() => { setAudioState('idle'); setAudioError(null) }, 3000)
+        }
+      }
+
+      recorder.onerror = () => {
+        stopAudioStream()
+        setAudioError('Erro na gravação de áudio.')
+        setAudioState('error')
+        setTimeout(() => { setAudioState('idle'); setAudioError(null) }, 3000)
+      }
+
+      recorder.start()
+      setAudioState('recording')
+
+      // Auto-stop after 15 seconds
+      audioTimeoutRef.current = setTimeout(() => {
+        if (mediaRecorderRef.current?.state === 'recording') {
+          mediaRecorderRef.current.stop()
+        }
+      }, 15000)
+
+    } catch (err: unknown) {
+      stopAudioStream()
+      const isPermission = err instanceof Error && (
+        err.name === 'NotAllowedError' ||
+        err.name === 'PermissionDeniedError' ||
+        err.message.toLowerCase().includes('permission')
+      )
+
+      if (isPermission) {
+        setAudioError('Permissão de microfone negada. Habilite nas configurações do navegador.')
+      } else {
+        setAudioError('Seu navegador não suporta gravação de áudio.')
+      }
+      setAudioState('error')
+      setTimeout(() => { setAudioState('idle'); setAudioError(null) }, 4000)
+    }
+  }, [audioState, stopRecording, sendMessage])
+
   const formatPrice = (price: number | null) => {
     if (!price) return 'Consulte'
     return `R$ ${price.toLocaleString('pt-BR')}`
   }
+
+  // ── Closed state: floating button ─────────────────────────────────────────
 
   if (!open) {
     return (
       <button
         onClick={() => setOpen(true)}
         className="fixed bottom-5 right-5 z-50 flex items-center gap-2 rounded-full bg-gradient-to-r from-yellow-600 to-yellow-500 px-5 py-3.5 text-sm font-semibold text-black shadow-2xl transition-all hover:scale-105 hover:shadow-yellow-500/25"
+        style={{ paddingBottom: 'calc(0.875rem + env(safe-area-inset-bottom, 0px))' }}
         aria-label="Falar com Tomás"
       >
         <MessageCircle className="h-5 w-5" />
@@ -158,10 +398,24 @@ export default function TomasWidget({ propertyContext }: TomasWidgetProps) {
     )
   }
 
+  // ── Open state: chat panel ────────────────────────────────────────────────
+
+  const isRecording = audioState === 'recording'
+  const isAudioBusy = audioState === 'requesting' || audioState === 'stopping' || audioState === 'uploading'
+  const isAudioError = audioState === 'error'
+
   return (
-    <div className="fixed bottom-5 right-5 z-50 flex h-[600px] w-[380px] max-w-[calc(100vw-40px)] flex-col overflow-hidden rounded-2xl border border-gray-800 bg-gray-950 shadow-2xl">
+    <div
+      ref={chatContainerRef}
+      className="fixed inset-x-0 bottom-0 z-50 flex flex-col overflow-hidden rounded-t-2xl border border-gray-800 bg-gray-950 shadow-2xl sm:inset-x-auto sm:bottom-5 sm:right-5 sm:rounded-2xl sm:w-[380px]"
+      style={{
+        height: chatHeight ? `${chatHeight}px` : '600px',
+        maxHeight: '100dvh',
+        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+      }}
+    >
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-gray-800 bg-gradient-to-r from-gray-900 to-gray-950 px-4 py-3">
+      <div className="flex items-center justify-between border-b border-gray-800 bg-gradient-to-r from-gray-900 to-gray-950 px-4 py-3 flex-shrink-0">
         <div className="flex items-center gap-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-yellow-500 to-yellow-600 text-sm font-bold text-black">
             T
@@ -183,7 +437,7 @@ export default function TomasWidget({ propertyContext }: TomasWidgetProps) {
       </div>
 
       {/* Messages */}
-      <div className="flex-1 space-y-3 overflow-y-auto p-4">
+      <div className="flex-1 min-h-0 space-y-3 overflow-y-auto overscroll-contain p-4">
         {messages.map((m, i) => (
           <div
             key={i}
@@ -286,15 +540,56 @@ export default function TomasWidget({ propertyContext }: TomasWidgetProps) {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input */}
-      <div className="border-t border-gray-800 bg-gray-900/50 p-3">
+      {/* Audio error feedback */}
+      {audioError && (
+        <div className="mx-3 mb-1 flex items-center gap-2 rounded-lg bg-red-500/10 border border-red-500/20 px-3 py-2 flex-shrink-0">
+          <AlertCircle className="h-3.5 w-3.5 text-red-400 flex-shrink-0" />
+          <span className="text-xs text-red-400/80">{audioError}</span>
+        </div>
+      )}
+
+      {/* Recording indicator */}
+      {isRecording && (
+        <div className="mx-3 mb-1 flex items-center gap-2 rounded-lg bg-red-500/10 border border-red-500/20 px-3 py-2 flex-shrink-0">
+          <span className="inline-block h-2 w-2 rounded-full bg-red-500 animate-pulse" />
+          <span className="text-xs text-red-400">Gravando... toque no mic para parar</span>
+        </div>
+      )}
+
+      {/* Input Footer */}
+      <div className="border-t border-gray-800 bg-gray-900/50 p-3 flex-shrink-0">
         <div className="flex items-center gap-2">
+          {/* Microphone button — FUNCTIONAL */}
           <button
-            className="rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-800 hover:text-yellow-500"
-            title="Enviar áudio (em breve)"
+            type="button"
+            onClick={isRecording ? stopRecording : startRecording}
+            disabled={isAudioBusy || loading}
+            className={`rounded-lg p-2 transition-all flex-shrink-0 ${
+              isRecording
+                ? 'bg-red-500 text-white shadow-[0_0_0_3px_rgba(239,68,68,0.3)] animate-pulse'
+                : isAudioBusy
+                ? 'text-gray-600 cursor-wait'
+                : isAudioError
+                ? 'text-red-400 hover:bg-red-500/10'
+                : 'text-gray-500 hover:bg-gray-800 hover:text-yellow-500'
+            }`}
+            title={
+              isRecording ? 'Parar gravação'
+                : isAudioBusy ? 'Processando...'
+                : isAudioError ? 'Erro — toque para tentar novamente'
+                : 'Enviar mensagem por voz'
+            }
+            aria-label={isRecording ? 'Parar gravação' : 'Gravar mensagem de voz'}
           >
-            <Mic className="h-4 w-4" />
+            {isAudioBusy
+              ? <Loader2 className="h-4 w-4 animate-spin" />
+              : isRecording
+              ? <MicOff className="h-4 w-4" />
+              : <Mic className="h-4 w-4" />
+            }
           </button>
+
+          {/* Text input — font-size 16px to prevent iOS auto-zoom */}
           <input
             ref={inputRef}
             value={input}
@@ -306,13 +601,18 @@ export default function TomasWidget({ propertyContext }: TomasWidgetProps) {
               }
             }}
             placeholder="Digite sua mensagem..."
-            className="flex-1 rounded-xl border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-white placeholder-gray-500 outline-none transition-colors focus:border-yellow-600/60"
-            disabled={loading}
+            className="flex-1 rounded-xl border border-gray-700 bg-gray-800 px-3 py-2 text-base text-white placeholder-gray-500 outline-none transition-colors focus:border-yellow-600/60"
+            style={{ fontSize: '16px' }}
+            disabled={loading || isRecording}
+            autoComplete="off"
+            autoCorrect="on"
           />
+
+          {/* Send button */}
           <button
             onClick={() => sendMessage()}
-            disabled={loading || !input.trim()}
-            className="rounded-lg bg-yellow-600 p-2 text-black transition-colors hover:bg-yellow-500 disabled:opacity-40"
+            disabled={loading || !input.trim() || isRecording}
+            className="rounded-lg bg-yellow-600 p-2 text-black transition-colors hover:bg-yellow-500 disabled:opacity-40 flex-shrink-0"
           >
             <Send className="h-4 w-4" />
           </button>
