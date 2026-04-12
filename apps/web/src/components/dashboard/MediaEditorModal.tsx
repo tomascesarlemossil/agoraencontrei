@@ -76,6 +76,49 @@ const LOGO_POSITIONS = [
 ]
 
 // ── Canvas helpers ─────────────────────────────────────────────────────────────
+
+/**
+ * Load an image for canvas operations, bypassing CORS issues.
+ * Uses /api/proxy-image to serve external images as same-origin.
+ */
+async function loadImageForCanvas(url: string): Promise<HTMLImageElement> {
+  return new Promise(async (resolve, reject) => {
+    const img = new window.Image()
+
+    // If it's already a data URL or blob URL, load directly
+    if (url.startsWith('data:') || url.startsWith('blob:')) {
+      img.onload = () => resolve(img)
+      img.onerror = () => reject(new Error('Não foi possível carregar a imagem'))
+      img.src = url
+      return
+    }
+
+    // For external URLs, proxy through our server to avoid CORS canvas tainting
+    try {
+      const proxyUrl = `/api/proxy-image?url=${encodeURIComponent(url)}`
+      const res = await fetch(proxyUrl)
+      if (!res.ok) throw new Error(`Proxy error: ${res.status}`)
+      const blob = await res.blob()
+      const objectUrl = URL.createObjectURL(blob)
+      img.onload = () => {
+        URL.revokeObjectURL(objectUrl)
+        resolve(img)
+      }
+      img.onerror = () => {
+        URL.revokeObjectURL(objectUrl)
+        reject(new Error('Não foi possível processar a imagem'))
+      }
+      img.src = objectUrl
+    } catch {
+      // Fallback: try direct load with crossOrigin (works if CDN has CORS)
+      img.crossOrigin = 'anonymous'
+      img.onload = () => resolve(img)
+      img.onerror = () => reject(new Error('Não foi possível carregar a imagem. Verifique a conexão.'))
+      img.src = url
+    }
+  })
+}
+
 async function applyPhotoEffects(
   imageUrl: string,
   filterId: string,
@@ -84,83 +127,73 @@ async function applyPhotoEffects(
   logoPosition: string,
   outputWidth = 1200,
 ): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const img = new window.Image()
-    img.crossOrigin = 'anonymous'
-    img.onload = async () => {
-      const scale = outputWidth / img.naturalWidth
-      const w = outputWidth
-      const h = Math.round(img.naturalHeight * scale)
+  const img = await loadImageForCanvas(imageUrl)
 
-      const canvas = document.createElement('canvas')
-      canvas.width = w
-      canvas.height = h
-      const ctx = canvas.getContext('2d')!
+  const scale = outputWidth / img.naturalWidth
+  const w = outputWidth
+  const h = Math.round(img.naturalHeight * scale)
 
-      // Apply CSS filter via canvas filter
-      const filter = FILTERS.find(f => f.id === filterId)
-      if (filter && filter.css) {
-        ctx.filter = filter.css
-      }
-      ctx.drawImage(img, 0, 0, w, h)
-      ctx.filter = 'none'
+  const canvas = document.createElement('canvas')
+  canvas.width = w
+  canvas.height = h
+  const ctx = canvas.getContext('2d')!
 
-      // Apply logo overlay AFTER filter (filter doesn't affect logo)
-      if (applyLogo && logoUrl) {
-        await new Promise<void>((res) => {
-          const logo = new window.Image()
-          logo.crossOrigin = 'anonymous'
-          logo.onload = () => {
-            // Logo proportional to the SMALLER dimension of the image
-            // ~8% of min(width, height) — professional standard for real estate
-            const minDim = Math.min(w, h)
-            const targetSize = Math.max(50, Math.min(160, Math.round(minDim * 0.08)))
-            const logoRatio = Math.min(targetSize / logo.naturalWidth, targetSize / logo.naturalHeight)
-            const lw = Math.round(logo.naturalWidth * logoRatio)
-            const lh = Math.round(logo.naturalHeight * logoRatio)
-            const margin = Math.max(12, Math.round(minDim * 0.02))
+  // Apply CSS filter via canvas filter
+  const filter = FILTERS.find(f => f.id === filterId)
+  if (filter && filter.css) {
+    ctx.filter = filter.css
+  }
+  ctx.drawImage(img, 0, 0, w, h)
+  ctx.filter = 'none'
 
-            let x = 0, y = 0
-            switch (logoPosition) {
-              case 'top-left':     x = margin;          y = margin; break
-              case 'top-right':    x = w - lw - margin; y = margin; break
-              case 'bottom-left':  x = margin;          y = h - lh - margin; break
-              case 'bottom-right': x = w - lw - margin; y = h - lh - margin; break
-              case 'center':       x = (w - lw) / 2;   y = (h - lh) / 2; break
-              default:             x = w - lw - margin; y = h - lh - margin
-            }
+  // Apply logo overlay AFTER filter (filter doesn't affect logo)
+  if (applyLogo && logoUrl) {
+    try {
+      const logo = await loadImageForCanvas(logoUrl)
+      // Logo proportional to the SMALLER dimension of the image
+      // ~8% of min(width, height) — professional standard for real estate
+      const minDim = Math.min(w, h)
+      const targetSize = Math.max(50, Math.min(160, Math.round(minDim * 0.08)))
+      const logoRatio = Math.min(targetSize / logo.naturalWidth, targetSize / logo.naturalHeight)
+      const lw = Math.round(logo.naturalWidth * logoRatio)
+      const lh = Math.round(logo.naturalHeight * logoRatio)
+      const margin = Math.max(12, Math.round(minDim * 0.02))
 
-            // Subtle white background behind logo (rounded rect)
-            const pad = Math.max(4, Math.round(lw * 0.06))
-            ctx.globalAlpha = 0.7
-            ctx.fillStyle = '#ffffff'
-            ctx.beginPath()
-            const rx = x - pad, ry = y - pad, rw = lw + pad * 2, rh = lh + pad * 2, r = Math.round(pad * 0.8)
-            ctx.moveTo(rx + r, ry)
-            ctx.lineTo(rx + rw - r, ry)
-            ctx.quadraticCurveTo(rx + rw, ry, rx + rw, ry + r)
-            ctx.lineTo(rx + rw, ry + rh - r)
-            ctx.quadraticCurveTo(rx + rw, ry + rh, rx + rw - r, ry + rh)
-            ctx.lineTo(rx + r, ry + rh)
-            ctx.quadraticCurveTo(rx, ry + rh, rx, ry + rh - r)
-            ctx.lineTo(rx, ry + r)
-            ctx.quadraticCurveTo(rx, ry, rx + r, ry)
-            ctx.closePath()
-            ctx.fill()
-            ctx.globalAlpha = 1.0
-            ctx.drawImage(logo, x, y, lw, lh)
-            res()
-          }
-          logo.onerror = () => res()
-          logo.src = logoUrl
-        })
+      let x = 0, y = 0
+      switch (logoPosition) {
+        case 'top-left':     x = margin;          y = margin; break
+        case 'top-right':    x = w - lw - margin; y = margin; break
+        case 'bottom-left':  x = margin;          y = h - lh - margin; break
+        case 'bottom-right': x = w - lw - margin; y = h - lh - margin; break
+        case 'center':       x = (w - lw) / 2;   y = (h - lh) / 2; break
+        default:             x = w - lw - margin; y = h - lh - margin
       }
 
-      resolve(canvas.toDataURL('image/jpeg', 0.92))
+      // Subtle white background behind logo (rounded rect)
+      const pad = Math.max(4, Math.round(lw * 0.06))
+      ctx.globalAlpha = 0.7
+      ctx.fillStyle = '#ffffff'
+      ctx.beginPath()
+      const rx = x - pad, ry = y - pad, rw = lw + pad * 2, rh = lh + pad * 2, r = Math.round(pad * 0.8)
+      ctx.moveTo(rx + r, ry)
+      ctx.lineTo(rx + rw - r, ry)
+      ctx.quadraticCurveTo(rx + rw, ry, rx + rw, ry + r)
+      ctx.lineTo(rx + rw, ry + rh - r)
+      ctx.quadraticCurveTo(rx + rw, ry + rh, rx + rw - r, ry + rh)
+      ctx.lineTo(rx + r, ry + rh)
+      ctx.quadraticCurveTo(rx, ry + rh, rx, ry + rh - r)
+      ctx.lineTo(rx, ry + r)
+      ctx.quadraticCurveTo(rx, ry, rx + r, ry)
+      ctx.closePath()
+      ctx.fill()
+      ctx.globalAlpha = 1.0
+      ctx.drawImage(logo, x, y, lw, lh)
+    } catch {
+      // Logo failed to load — continue without logo (graceful degradation)
     }
-    img.onerror = reject
-    img.src = imageUrl
-  })
+  }
+
+  return canvas.toDataURL('image/jpeg', 0.92)
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
