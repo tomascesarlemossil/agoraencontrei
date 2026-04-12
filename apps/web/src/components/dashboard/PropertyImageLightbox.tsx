@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { X, ChevronLeft, ChevronRight } from 'lucide-react'
+import { useBodyScrollLock } from '@/lib/use-body-scroll-lock'
 
 interface LightboxProps {
   images: string[]
@@ -28,10 +29,8 @@ export function PropertyImageLightbox({ images, startIndex, title, onClose }: Li
     return () => window.removeEventListener('keydown', handler)
   }, [prev, next, onClose])
 
-  useEffect(() => {
-    document.body.style.overflow = 'hidden'
-    return () => { document.body.style.overflow = '' }
-  }, [])
+  // Mounted only when open — lock unconditionally while mounted
+  useBodyScrollLock(true)
 
   const onTouchStart = (e: React.TouchEvent) => {
     touchStartX.current = e.touches[0].clientX

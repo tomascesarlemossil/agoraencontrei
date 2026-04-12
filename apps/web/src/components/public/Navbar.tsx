@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { useEffect, useRef, useState } from 'react'
+import { useBodyScrollLock } from '@/lib/use-body-scroll-lock'
 import {
   Menu, X, ChevronDown, ChevronRight,
   LayoutDashboard, UserCheck, Users, CreditCard,
@@ -84,27 +85,7 @@ export function Navbar() {
   }, [])
 
   // Bloquear scroll do body completamente quando menu mobile está aberto
-  useEffect(() => {
-    if (menuOpen) {
-      document.body.style.overflow = 'hidden'
-      document.body.style.position = 'fixed'
-      document.body.style.width = '100%'
-      document.body.style.top = `-${window.scrollY}px`
-    } else {
-      const scrollY = document.body.style.top
-      document.body.style.overflow = ''
-      document.body.style.position = ''
-      document.body.style.width = ''
-      document.body.style.top = ''
-      if (scrollY) window.scrollTo(0, parseInt(scrollY || '0', 10) * -1)
-    }
-    return () => {
-      document.body.style.overflow = ''
-      document.body.style.position = ''
-      document.body.style.width = ''
-      document.body.style.top = ''
-    }
-  }, [menuOpen])
+  useBodyScrollLock(menuOpen)
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {

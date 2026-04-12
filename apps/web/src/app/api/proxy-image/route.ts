@@ -19,8 +19,11 @@ const ALLOWED_HOSTS = [
   'cdnuso.com',
   'cdn2.uso.com.br',
   'lh3.googleusercontent.com',
-  'localhost',
 ]
+
+/** Block SSRF via private / loopback / link-local addresses */
+const PRIVATE_IP_RE =
+  /^(localhost|127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|169\.254\.|0\.|::1|fc00:|fe80:)/i
 
 const MAX_SIZE = 15 * 1024 * 1024 // 15MB
 
@@ -36,6 +39,11 @@ export async function GET(request: NextRequest) {
     parsed = new URL(url)
   } catch {
     return NextResponse.json({ error: 'Invalid URL' }, { status: 400 })
+  }
+
+  // Block private / loopback / link-local addresses (SSRF prevention)
+  if (PRIVATE_IP_RE.test(parsed.hostname)) {
+    return NextResponse.json({ error: 'Host not allowed' }, { status: 403 })
   }
 
   // Only allow known image hosts

@@ -3045,3 +3045,24 @@ model SalesFunnel {
   @@index([createdAt])
   @@map("sales_funnels")
 }
+
+// =============================================================================
+// WEBHOOK IDEMPOTENCY
+// =============================================================================
+
+/// Prevents double-processing of webhook events from external providers (Asaas, etc.)
+/// A record is inserted atomically before processing; re-delivered events are skipped.
+model WebhookProcessedEvent {
+  id         String   @id @default(cuid())
+  /// Composite key: "<provider>:<eventType>:<externalId>"  e.g. "asaas:PAYMENT_RECEIVED:pay_xyz"
+  eventKey   String   @unique
+  provider   String   // "asaas" | "clicksign" | "meta"
+  eventType  String
+  externalId String
+  payload    Json     @default("{}")
+  processedAt DateTime @default(now())
+
+  @@index([provider, eventType])
+  @@index([processedAt])
+  @@map("webhook_processed_events")
+}
