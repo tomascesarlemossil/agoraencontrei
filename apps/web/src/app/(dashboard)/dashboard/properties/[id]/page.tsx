@@ -1320,7 +1320,6 @@ export default function PropertyDetailPage() {
               </Button>
             </div>
           </div>
-          </div>
         </div>
       ) : (
         /* ── VIEW MODE ───────────────────────────────────────────────────── */
