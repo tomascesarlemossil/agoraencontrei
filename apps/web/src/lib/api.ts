@@ -349,7 +349,9 @@ export interface PropertyDetail extends PropertySummary {
   virtualTourUrl?: string
   metaTitle?: string
   metaDescription?: string
+  priceNegotiable?: boolean
   user: { id: string; name: string; avatarUrl?: string; phone?: string; creciNumber?: string }
+  company?: { id: string; name: string; logoUrl?: string }
   owners?: Array<{ contact: { id: string; name: string; phone?: string; email?: string; cpf?: string; cnpj?: string } }>
 }
 
