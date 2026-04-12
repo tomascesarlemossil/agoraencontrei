@@ -6,6 +6,7 @@ import { HeroSearchForm } from './HeroSearchForm'
 import { HeroBackground } from './HeroBackground'
 import { SmartQuizButton, SmartQuizModal } from './SmartQuiz'
 import { PresentationSection } from './PresentationSection'
+import { getThemeById } from './themes/site-themes'
 
 export const metadata: Metadata = {
   title: 'AgoraEncontrei — Marketplace Imobiliário de Franca/SP | Imobiliária Lemos',
@@ -331,8 +332,34 @@ export default async function HomePage() {
     fetchSiteSettings(),
   ])
 
+  // Resolve the active theme from site settings. The public API returns
+  // `siteTheme` (e.g. "nature-green", "classic-blue"). We inject its colors as
+  // CSS variables so the page picks them up via `var(--site-*-color)`.
+  const theme = getThemeById(siteSettings.siteTheme || 'classic-blue')
+  const themeCss = `:root {
+    --site-primary-color: ${theme.colors.primary};
+    --site-secondary-color: ${theme.colors.secondary};
+    --site-accent-color: ${theme.colors.accent};
+    --site-accent-hover: ${theme.colors.accentHover};
+    --site-background-color: ${theme.colors.background};
+    --site-text-color: ${theme.colors.text};
+    --site-text-muted: ${theme.colors.textMuted};
+    --site-card-bg: ${theme.colors.cardBg};
+    --site-card-border: ${theme.colors.cardBorder};
+    --site-footer-bg: ${theme.colors.footerBg};
+    --site-badge-bg: ${theme.colors.badge};
+    --site-badge-text: ${theme.colors.badgeText};
+    --site-badge-border: ${theme.colors.badgeBorder};
+    --site-button-bg: ${theme.colors.buttonBg};
+    --site-button-text: ${theme.colors.buttonText};
+    --site-wave: ${theme.colors.wave};
+  }`
+
   return (
     <>
+      {/* Theme CSS variables — injected server-side from the active theme */}
+      <style dangerouslySetInnerHTML={{ __html: themeCss }} />
+
       {/* Schema.org */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(WEBSITE_SCHEMA) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(FAQ_SCHEMA) }} />
@@ -341,7 +368,7 @@ export default async function HomePage() {
       {/* ── 1. HERO ──────────────────────────────────────────────────────── */}
       <section
         className="relative flex items-center justify-center overflow-hidden"
-        style={{ background: '#0f1c3a', minHeight: 'max(85vh, 600px)' }}
+        style={{ background: theme.colors.primary, minHeight: 'max(85vh, 600px)' }}
       >
         <HeroBackground videoUrl={siteSettings.heroVideoUrl} videoType={siteSettings.heroVideoType} />
 
@@ -386,15 +413,15 @@ export default async function HomePage() {
 
       {/* ── 2. SMART QUIZ + CTA AVALIAÇÃO (primeiro após hero) ────────── */}
       <SmartQuizModal>
-      <section style={{ backgroundColor: '#f0ede6' }} className="py-14">
+      <section style={{ backgroundColor: theme.colors.secondary }} className="py-14">
         <div className="max-w-5xl mx-auto px-4 sm:px-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 rounded-3xl overflow-hidden shadow-xl border border-gray-200/60">
-            <div className="bg-[#f0ede6] px-8 py-10 flex flex-col justify-center">
-              <div className="inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-bold mb-5 w-fit" style={{ backgroundColor: 'rgba(201,168,76,0.2)', color: '#C9A84C' }}>
+            <div className="px-8 py-10 flex flex-col justify-center" style={{ backgroundColor: theme.colors.secondary }}>
+              <div className="inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-bold mb-5 w-fit" style={{ backgroundColor: theme.colors.badge, color: theme.colors.badgeText }}>
                 <Sparkles className="w-3.5 h-3.5" />
                 Busca Inteligente com IA
               </div>
-              <h2 className="text-2xl sm:text-3xl font-bold mb-3" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>
+              <h2 className="text-2xl sm:text-3xl font-bold mb-3" style={{ color: theme.colors.sectionTitle, fontFamily: theme.typography.heroFont }}>
                 Não sabe por onde começar?
               </h2>
               <p className="text-gray-500 text-sm mb-8 max-w-sm leading-relaxed">
@@ -426,19 +453,19 @@ export default async function HomePage() {
       </SmartQuizModal>
 
       {/* ── 3. LEILÕES ────────────────────────────────────────────────────── */}
-      <section className="py-12" style={{ backgroundColor: '#1B2B5B' }}>
+      <section className="py-12" style={{ backgroundColor: theme.colors.primary }}>
         <div className="max-w-6xl mx-auto px-4 text-center">
-          <h2 className="text-3xl font-bold text-white mb-3" style={{ fontFamily: 'Georgia, serif' }}>
+          <h2 className="text-3xl font-bold text-white mb-3" style={{ fontFamily: theme.typography.heroFont }}>
             Leilões de Imóveis com até 70% de Desconto
           </h2>
           <p className="text-white/60 text-lg mb-6 max-w-2xl mx-auto">
             Dados reais cruzados de Caixa, Santander, ZAP e QuintoAndar. Calculadora de ROI, score jurídico e alertas inteligentes.
           </p>
           <div className="flex flex-wrap items-center justify-center gap-4 mb-8">
-            <Link href="/leiloes" className="px-8 py-4 rounded-xl font-bold text-lg transition-all hover:scale-105" style={{ backgroundColor: '#C9A84C', color: '#1B2B5B' }}>
+            <Link href="/leiloes" className="px-8 py-4 rounded-xl font-bold text-lg transition-all hover:scale-105" style={{ backgroundColor: theme.colors.accent, color: theme.colors.primary }}>
               Ver Leilões Ativos
             </Link>
-            <Link href="/oportunidades/melhores-alugueis-brasil" className="px-8 py-4 rounded-xl font-bold text-lg border-2 text-white transition-all hover:bg-white/10" style={{ borderColor: '#C9A84C' }}>
+            <Link href="/oportunidades/melhores-alugueis-brasil" className="px-8 py-4 rounded-xl font-bold text-lg border-2 text-white transition-all hover:bg-white/10" style={{ borderColor: theme.colors.accent }}>
               Ranking de Yield Nacional
             </Link>
             <Link href="/investor" className="px-8 py-4 rounded-xl font-bold text-lg border-2 text-white transition-all hover:bg-white/10" style={{ borderColor: '#4ade80' }}>
@@ -453,7 +480,7 @@ export default async function HomePage() {
               { label: 'Fontes de Dados', value: '12' },
             ].map(s => (
               <div key={s.label} className="bg-white/10 rounded-xl px-4 py-3 text-center">
-                <div className="text-xl font-bold" style={{ color: '#C9A84C' }}>{s.value}</div>
+                <div className="text-xl font-bold" style={{ color: theme.colors.accent }}>{s.value}</div>
                 <div className="text-[11px] text-white/50">{s.label}</div>
               </div>
             ))}
@@ -642,7 +669,7 @@ export default async function HomePage() {
             </p>
             <span
               className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold transition-all group-hover:brightness-110"
-              style={{ backgroundColor: '#C9A84C', color: '#1B2B5B' }}
+              style={{ backgroundColor: theme.colors.accent, color: theme.colors.primary }}
             >
               Entrar em contato <ArrowRight className="w-3.5 h-3.5" />
             </span>

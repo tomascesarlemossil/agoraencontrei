@@ -276,24 +276,47 @@ export function MediaEditorModal({
 
   // Upload de arquivo processado para S3 (via same-origin proxy to avoid CORS)
   const uploadProcessed = useCallback(async (dataUrl: string, filename: string): Promise<string> => {
-    const blob = await fetch(dataUrl).then(r => r.blob())
+    // Convert dataUrl (produced by canvas.toDataURL) to a Blob.
+    // Using fetch() on a data URL is supported by all modern browsers but can
+    // throw a TypeError ("Failed to fetch") in rare cases. Surface a clearer
+    // message for the user.
+    let blob: Blob
+    try {
+      blob = await fetch(dataUrl).then(r => r.blob())
+    } catch (e: any) {
+      throw new Error('Não foi possível preparar a imagem processada. Tente novamente.')
+    }
+
     const formData = new FormData()
     formData.append('file', blob, filename)
 
-    // Use the same-origin upload proxy to avoid cross-origin "Failed to fetch" errors
-    const res = await fetch('/api/upload-proxy', {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${token}` },
-      body: formData,
-    })
+    // Use the same-origin upload proxy to avoid cross-origin "Failed to fetch" errors.
+    // If the network itself fails (e.g. user offline, server unreachable), fetch
+    // throws a TypeError with message "Failed to fetch" — catch it and produce a
+    // helpful error instead of surfacing the raw browser error.
+    let res: Response
+    try {
+      res = await fetch('/api/upload-proxy', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      })
+    } catch (networkErr: any) {
+      throw new Error(
+        'Falha de conexão ao enviar a foto. Verifique sua internet e tente novamente.',
+      )
+    }
 
     if (!res.ok) {
       const err = await res.json().catch(() => ({ error: 'unknown' }))
       throw new Error(err.message || err.details || `Upload falhou (${res.status})`)
     }
 
-    const { url } = await res.json()
-    return url
+    const data = await res.json().catch(() => null)
+    if (!data || !data.url) {
+      throw new Error('Resposta inválida do servidor de upload.')
+    }
+    return data.url
   }, [token])
 
   // Aplicar efeito em 1 foto
@@ -562,49 +585,55 @@ export function MediaEditorModal({
                 {/* Logo */}
                 <div>
                   <h3 className="text-white/60 text-xs font-semibold uppercase tracking-wider mb-2">Logo da Imobiliária</h3>
-                  <label className="flex items-center gap-2 cursor-pointer mb-2">
-                    <div
-                      onClick={() => setApplyLogo(v => !v)}
-                      className={cn(
-                        'w-10 h-5 rounded-full transition-colors relative',
-                        applyLogo ? 'bg-yellow-400' : 'bg-white/20',
-                      )}
-                    >
-                      <div className={cn(
-                        'absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform',
-                        applyLogo ? 'translate-x-5' : 'translate-x-0.5',
-                      )} />
+                  {!logoUrl ? (
+                    // No logo configured — disable the feature entirely and guide the user
+                    <div className="bg-yellow-400/5 border border-yellow-400/20 rounded-lg p-3">
+                      <p className="text-yellow-400/90 text-xs font-semibold mb-1">Logo não configurado</p>
+                      <p className="text-white/50 text-[11px] leading-relaxed">
+                        Configure o logo em <span className="text-yellow-400/80">Configurações → Sistema → Empresa → Logotipos</span> para poder aplicá-lo nas fotos.
+                      </p>
                     </div>
-                    <span className="text-white/70 text-xs">Aplicar logo</span>
-                  </label>
-
-                  {applyLogo && (
+                  ) : (
                     <>
-                      {logoUrl ? (
-                        <div className="bg-white/5 rounded-lg p-2 mb-2">
-                          <img src={logoUrl} alt="Logo" className="h-8 object-contain mx-auto" />
+                      <label className="flex items-center gap-2 cursor-pointer mb-2">
+                        <div
+                          onClick={() => setApplyLogo(v => !v)}
+                          className={cn(
+                            'w-10 h-5 rounded-full transition-colors relative',
+                            applyLogo ? 'bg-yellow-400' : 'bg-white/20',
+                          )}
+                        >
+                          <div className={cn(
+                            'absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform',
+                            applyLogo ? 'translate-x-5' : 'translate-x-0.5',
+                          )} />
                         </div>
-                      ) : (
-                        <p className="text-yellow-400/70 text-xs mb-2">
-                          Configure o logo em Configurações → Sistema
-                        </p>
+                        <span className="text-white/70 text-xs">Aplicar logo</span>
+                      </label>
+
+                      {applyLogo && (
+                        <>
+                          <div className="bg-white/5 rounded-lg p-2 mb-2">
+                            <img src={logoUrl} alt="Logo" className="h-8 object-contain mx-auto" />
+                          </div>
+                          <div className="grid grid-cols-2 gap-1">
+                            {LOGO_POSITIONS.map(p => (
+                              <button
+                                key={p.id}
+                                onClick={() => setLogoPosition(p.id)}
+                                className={cn(
+                                  'px-2 py-1.5 rounded-lg text-xs transition-colors',
+                                  logoPosition === p.id
+                                    ? 'bg-yellow-400/20 text-yellow-400 border border-yellow-400/40'
+                                    : 'bg-white/5 text-white/50 hover:bg-white/10',
+                                )}
+                              >
+                                {p.name}
+                              </button>
+                            ))}
+                          </div>
+                        </>
                       )}
-                      <div className="grid grid-cols-2 gap-1">
-                        {LOGO_POSITIONS.map(p => (
-                          <button
-                            key={p.id}
-                            onClick={() => setLogoPosition(p.id)}
-                            className={cn(
-                              'px-2 py-1.5 rounded-lg text-xs transition-colors',
-                              logoPosition === p.id
-                                ? 'bg-yellow-400/20 text-yellow-400 border border-yellow-400/40'
-                                : 'bg-white/5 text-white/50 hover:bg-white/10',
-                            )}
-                          >
-                            {p.name}
-                          </button>
-                        ))}
-                      </div>
                     </>
                   )}
                 </div>
