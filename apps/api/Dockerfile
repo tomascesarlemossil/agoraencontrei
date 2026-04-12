@@ -11,20 +11,25 @@ WORKDIR /app
 # Copy workspace files
 COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
 COPY packages/database/package.json ./packages/database/
+COPY packages/tomas-knowledge/package.json ./packages/tomas-knowledge/
 COPY apps/api/package.json ./apps/api/
 
 # Install dependencies (pnpm.onlyBuiltDependencies in package.json allows build scripts)
 RUN pnpm install --frozen-lockfile
 
-# Cache bust — increment to force rebuild: v8
-ARG CACHE_BUST=9
+# Cache bust — increment to force rebuild: v10
+ARG CACHE_BUST=10
 
 # Copy source
 COPY packages/database ./packages/database
+COPY packages/tomas-knowledge ./packages/tomas-knowledge
 COPY apps/api ./apps/api
 
 # Generate Prisma client
 RUN pnpm --filter @agoraencontrei/database generate
+
+# Build shared knowledge package first (API depends on it)
+RUN pnpm --filter @agoraencontrei/tomas-knowledge build
 
 # Build API
 RUN pnpm --filter @agoraencontrei/api build

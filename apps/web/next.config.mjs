@@ -3,6 +3,8 @@ const nextConfig = {
   reactStrictMode: true,
   // Standalone output for Docker/Railway deployment
   output: 'standalone',
+  // Transpile local workspace packages that ship TypeScript source
+  transpilePackages: ['@agoraencontrei/tomas-knowledge'],
   // Compressão gzip/brotli automática
   compress: true,
   // Production build: SWC minification with mangling for code protection
