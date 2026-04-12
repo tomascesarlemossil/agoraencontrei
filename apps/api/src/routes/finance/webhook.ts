@@ -28,7 +28,7 @@ export default async function asaasWebhookRoutes(app: FastifyInstance) {
       return reply.status(401).send({ error: 'UNAUTHORIZED' })
     }
 
-    const body = req.body as AsaasWebhookEvent
+    const body = req.body as AsaasWebhookEvent & { id?: string; dateCreated?: string }
     const { event, payment } = body
 
     if (!event || !payment?.id) {
@@ -37,10 +37,50 @@ export default async function asaasWebhookRoutes(app: FastifyInstance) {
 
     app.log.info(`[asaas-webhook] Event: ${event}, Payment: ${payment.id}, Status: ${payment.status}`)
 
+    // Declarado fora do try/catch principal para que o catch externo consiga
+    // marcar o registro como erro quando o processamento falhar.
+    let eventRecordId: string | null = null
+
     try {
       // Extract rentalId from externalReference (format: "rental:clxxxxxx")
       const externalRef = (payment as any).externalReference as string | undefined
       const rentalId = externalRef?.startsWith('rental:') ? externalRef.replace('rental:', '') : null
+
+      // ─── Idempotency gate ───────────────────────────────────────────────────
+      // Asaas pode reentregar eventos em caso de timeout / retry.
+      // Primeiro tentamos inserir um registro na tabela de dedup com UNIQUE
+      // em dedupKey. Se falhar (P2002), é duplicata — pulamos com 200 OK.
+      const eventTimestamp =
+        (payment as any).confirmedDate ||
+        (payment as any).clientPaymentDate ||
+        body.dateCreated ||
+        ''
+      const dedupKey = body.id
+        ? `asaas:${body.id}`
+        : `asaas:${event}:${payment.id}:${payment.status ?? 'unknown'}:${eventTimestamp}`
+
+      try {
+        const record = await (app.prisma as any).asaasWebhookEvent.create({
+          data: {
+            dedupKey,
+            event,
+            paymentId: payment.id,
+            rentalId,
+            status: payment.status ?? null,
+            payload: body as any,
+          },
+          select: { id: true },
+        })
+        eventRecordId = record.id
+      } catch (err: any) {
+        // P2002 unique constraint violation = duplicate webhook, já processamos
+        if (err?.code === 'P2002') {
+          app.log.info(`[asaas-webhook] Duplicate event ignored: ${dedupKey}`)
+          return reply.send({ success: true, duplicate: true, event, paymentId: payment.id })
+        }
+        // Tabela pode não existir ainda em alguns ambientes — continua sem dedup
+        app.log.warn(`[asaas-webhook] Dedup record creation failed (continuing): ${err?.message ?? err}`)
+      }
 
       switch (event) {
         case 'PAYMENT_RECEIVED':
@@ -149,9 +189,29 @@ export default async function asaasWebhookRoutes(app: FastifyInstance) {
           app.log.info(`[asaas-webhook] Unhandled event: ${event}`)
       }
 
+      // Marca o evento de dedup como processado com sucesso
+      if (eventRecordId) {
+        await (app.prisma as any).asaasWebhookEvent
+          .update({
+            where: { id: eventRecordId },
+            data: { processedAt: new Date(), result: 'ok' },
+          })
+          .catch((err: any) =>
+            app.log.warn(`[asaas-webhook] Failed to mark event ${eventRecordId} as processed: ${err?.message ?? err}`),
+          )
+      }
       return reply.send({ success: true, event, paymentId: payment.id })
     } catch (error: any) {
       app.log.error(`[asaas-webhook] Error processing event ${event}:`, error.message)
+      // Marca dedup record como erro para auditoria — útil para replay manual
+      if (eventRecordId) {
+        await (app.prisma as any).asaasWebhookEvent
+          .update({
+            where: { id: eventRecordId },
+            data: { processedAt: new Date(), result: 'error', errorMessage: error?.message ?? String(error) },
+          })
+          .catch(() => {})
+      }
       // Return 200 to prevent Asaas from retrying (log the error)
       return reply.send({ success: false, error: error.message })
     }

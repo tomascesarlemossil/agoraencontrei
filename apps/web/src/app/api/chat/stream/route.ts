@@ -1,20 +1,16 @@
 import { NextRequest } from 'next/server'
+import { buildTomasSystemPrompt } from '@agoraencontrei/tomas-knowledge'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 const MODEL = process.env.OPENAI_CHAT_MODEL || 'gpt-5'
 
-const SYSTEM_PROMPT = `Você é o Tomás, a inteligência imobiliária local da AgoraEncontrei.
-Sua base foi construída a partir da experiência real de Tomas Lemos, de Franca/SP, unindo tecnologia com o legado da Imobiliária Lemos, fundada por Noemia Lemos em 2002.
-
-REGRAS:
-- Nunca use um único m² para toda Franca.
-- Nunca trate preço pedido como preço fechado.
-- Sempre classifique o imóvel por tipologia e submercado antes de estimar faixa.
-- Quando faltarem comparáveis suficientes, responda em faixa com cautela e sinalize confiança.
-- Seja local, seguro, humano e técnico.
-`
+/**
+ * System prompt unificado — carregado do pacote compartilhado
+ * @agoraencontrei/tomas-knowledge para evitar duplicação entre Fastify e Next.
+ */
+const SYSTEM_PROMPT = buildTomasSystemPrompt()
 
 /**
  * app/api/chat/stream/route.ts

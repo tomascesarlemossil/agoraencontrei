@@ -1,6 +1,6 @@
 "use client";
 
-import React, { FormEvent, useMemo, useRef, useState } from "react";
+import React, { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { TomasVoiceProvider } from "./TomasVoiceProvider";
 import { useTomasVoice } from "./useTomasVoice";
 
@@ -169,6 +169,53 @@ function ChatSurface() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const viewportRef = useRef<HTMLDivElement | null>(null);
+  const rafRef = useRef<number | null>(null);
+  // Altura dinâmica da área de rolagem — evita que o teclado virtual do iOS
+  // Safari cubra a conversa. Usa visualViewport quando disponível.
+  const [chatHeight, setChatHeight] = useState<string>("58vh");
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const vv = window.visualViewport;
+
+    const compute = () => {
+      const vh = vv?.height ?? window.innerHeight;
+      // Reserva ~42% do viewport para header + prompts + textarea + aside,
+      // sem descer abaixo de 280px (mobile landscape / teclado aberto).
+      const usable = Math.max(280, vh * 0.58);
+      setChatHeight(`${Math.round(usable)}px`);
+    };
+
+    compute();
+    if (vv) {
+      vv.addEventListener("resize", compute);
+      return () => vv.removeEventListener("resize", compute);
+    }
+    window.addEventListener("resize", compute);
+    return () => window.removeEventListener("resize", compute);
+  }, []);
+
+  // Cancela qualquer rAF pendente no unmount — defesa extra contra update
+  // em componente desmontado durante streaming rápido.
+  useEffect(() => {
+    return () => {
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
+    };
+  }, []);
+
+  const scrollToBottom = () => {
+    if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
+    rafRef.current = requestAnimationFrame(() => {
+      rafRef.current = null;
+      viewportRef.current?.scrollTo({
+        top: viewportRef.current.scrollHeight,
+        behavior: "smooth",
+      });
+    });
+  };
 
   const canSend = useMemo(() => input.trim().length > 0 && !isLoading, [input, isLoading]);
 
@@ -191,12 +238,7 @@ function ChatSurface() {
 
     setMessages((prev) => [...prev, userMessage, assistantMessage]);
 
-    requestAnimationFrame(() => {
-      viewportRef.current?.scrollTo({
-        top: viewportRef.current.scrollHeight,
-        behavior: "smooth",
-      });
-    });
+    scrollToBottom();
 
     try {
       const response = await fetch("/api/chat/stream", {
@@ -237,12 +279,7 @@ function ChatSurface() {
           ),
         );
 
-        requestAnimationFrame(() => {
-          viewportRef.current?.scrollTo({
-            top: viewportRef.current.scrollHeight,
-            behavior: "smooth",
-          });
-        });
+        scrollToBottom();
       }
 
       flushPendingText();
@@ -280,7 +317,8 @@ function ChatSurface() {
 
         <div
           ref={viewportRef}
-          className="h-[58vh] space-y-4 overflow-y-auto px-5 py-5 lg:px-6"
+          className="space-y-4 overflow-y-auto overscroll-contain px-5 py-5 lg:px-6"
+          style={{ height: chatHeight }}
         >
           {messages.map((message) => (
             <MessageBubble key={message.id} message={message} />

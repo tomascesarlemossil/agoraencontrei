@@ -10,6 +10,9 @@
  */
 import { NextRequest, NextResponse } from 'next/server'
 
+// Whitelist de hosts de imagens externas. IMPORTANTE: não incluir hosts
+// internos (localhost, 127.0.0.1, *.internal, 10.*, 172.16-31.*, 192.168.*)
+// para evitar SSRF de rede privada.
 const ALLOWED_HOSTS = [
   '.amazonaws.com',
   '.cloudinary.com',
@@ -19,10 +22,30 @@ const ALLOWED_HOSTS = [
   'cdnuso.com',
   'cdn2.uso.com.br',
   'lh3.googleusercontent.com',
-  'localhost',
 ]
 
 const MAX_SIZE = 15 * 1024 * 1024 // 15MB
+
+// Bloqueia ranges privados / loopback / link-local — defesa SSRF adicional,
+// mesmo que a whitelist já proteja (defense in depth).
+function isPrivateOrLoopback(hostname: string): boolean {
+  if (hostname === 'localhost' || hostname === '0.0.0.0') return true
+  if (hostname.endsWith('.local') || hostname.endsWith('.internal')) return true
+  // IPv4
+  const ipv4 = hostname.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/)
+  if (ipv4) {
+    const [, a, b] = ipv4.map(Number)
+    if (a === 10) return true
+    if (a === 127) return true
+    if (a === 169 && b === 254) return true
+    if (a === 172 && b >= 16 && b <= 31) return true
+    if (a === 192 && b === 168) return true
+    if (a === 0) return true
+  }
+  // IPv6 loopback / link-local
+  if (hostname === '::1' || hostname.startsWith('[::1') || hostname.startsWith('[fc') || hostname.startsWith('[fd') || hostname.startsWith('[fe80')) return true
+  return false
+}
 
 export async function GET(request: NextRequest) {
   const url = request.nextUrl.searchParams.get('url')
@@ -36,6 +59,16 @@ export async function GET(request: NextRequest) {
     parsed = new URL(url)
   } catch {
     return NextResponse.json({ error: 'Invalid URL' }, { status: 400 })
+  }
+
+  // Só HTTP(S) — bloqueia file:, gopher:, etc
+  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+    return NextResponse.json({ error: 'Protocol not allowed' }, { status: 400 })
+  }
+
+  // Bloqueia ranges privados / loopback antes mesmo de olhar a whitelist
+  if (isPrivateOrLoopback(parsed.hostname)) {
+    return NextResponse.json({ error: 'Host not allowed' }, { status: 403 })
   }
 
   // Only allow known image hosts

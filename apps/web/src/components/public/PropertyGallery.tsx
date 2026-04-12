@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import Image from 'next/image'
 import { X, ChevronLeft, ChevronRight, Images, ZoomIn } from 'lucide-react'
+import { useBodyScrollLock } from '@/lib/use-body-scroll-lock'
 
 interface PropertyGalleryProps {
   images: string[]
@@ -44,11 +45,8 @@ function Lightbox({
     return () => window.removeEventListener('keydown', handler)
   }, [prev, next, onClose])
 
-  // Prevent body scroll
-  useEffect(() => {
-    document.body.style.overflow = 'hidden'
-    return () => { document.body.style.overflow = '' }
-  }, [])
+  // Scroll-lock empilhável
+  useBodyScrollLock(true)
 
   // Touch swipe
   const onTouchStart = (e: React.TouchEvent) => {

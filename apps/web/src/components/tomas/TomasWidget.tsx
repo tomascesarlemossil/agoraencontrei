@@ -14,6 +14,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { MessageCircle, X, Send, Mic, MicOff, Loader2, MapPin, Bed, Car, ChevronRight, AlertCircle } from 'lucide-react'
+import { useBodyScrollLock } from '@/lib/use-body-scroll-lock'
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -112,45 +113,25 @@ export default function TomasWidget({ propertyContext }: TomasWidgetProps) {
 
     updateHeight()
 
-    // Listen for visualViewport resize (keyboard open/close)
+    // Listen for visualViewport resize (keyboard open/close).
+    // `scroll` foi removido: no contexto de teclado, `resize` já cobre o caso
+    // e o scroll interno do widget é controlado localmente.
     const vv = window.visualViewport
     if (vv) {
       vv.addEventListener('resize', updateHeight)
-      vv.addEventListener('scroll', updateHeight)
     }
     window.addEventListener('resize', updateHeight)
 
     return () => {
       if (vv) {
         vv.removeEventListener('resize', updateHeight)
-        vv.removeEventListener('scroll', updateHeight)
       }
       window.removeEventListener('resize', updateHeight)
     }
   }, [open])
 
-  // ── Body scroll lock ──────────────────────────────────────────────────────
-  useEffect(() => {
-    if (!open) return
-
-    // Save current scroll position and lock body
-    const scrollY = window.scrollY
-    const originalStyle = document.body.style.cssText
-
-    document.body.style.cssText = `
-      overflow: hidden;
-      position: fixed;
-      top: -${scrollY}px;
-      left: 0;
-      right: 0;
-      width: 100%;
-    `
-
-    return () => {
-      document.body.style.cssText = originalStyle
-      window.scrollTo(0, scrollY)
-    }
-  }, [open])
+  // ── Body scroll lock (empilhável via hook compartilhado) ──────────────────
+  useBodyScrollLock(open)
 
   // Auto-scroll to bottom
   useEffect(() => {

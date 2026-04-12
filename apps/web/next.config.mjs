@@ -1,6 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  // Transpile workspace packages (TS sources imported via exports.ts)
+  transpilePackages: ['@agoraencontrei/tomas-knowledge'],
   // Standalone output for Docker/Railway deployment
   output: 'standalone',
   // Compressão gzip/brotli automática

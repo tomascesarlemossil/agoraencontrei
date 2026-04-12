@@ -344,26 +344,52 @@ export function MediaEditorModal({
   }, [currentPhoto, selectedFilter, applyLogo, logoUrl, logoPosition, localPhotos, previewIndex, uploadProcessed])
 
   // Aplicar efeito em todas as fotos
+  // Estratégia de resiliência: processa uma de cada vez, commita cada sucesso
+  // no estado antes de seguir. Se falhar no meio, o usuário mantém o progresso
+  // parcial (fotos já processadas ficam salvas) e vê mensagem clara indicando
+  // qual foto falhou, podendo tentar novamente só as restantes.
   const handleApplyAll = useCallback(async () => {
     if (localPhotos.length === 0) return
     setProcessing(true)
     setProcessedCount(0)
     setError(null)
-    const newPhotos = [...localPhotos]
+    const working = [...localPhotos]
+    let failedIndex = -1
+    let failureMessage = ''
     try {
       for (let i = 0; i < localPhotos.length; i++) {
-        const result = await applyPhotoEffects(localPhotos[i], selectedFilter, applyLogo, logoUrl, logoPosition)
-        const url = await uploadProcessed(result, `edited_${Date.now()}_${i}.jpg`)
-        newPhotos[i] = url
-        setProcessedCount(i + 1)
+        try {
+          const result = await applyPhotoEffects(localPhotos[i], selectedFilter, applyLogo, logoUrl, logoPosition)
+          const url = await uploadProcessed(result, `edited_${Date.now()}_${i}.jpg`)
+          working[i] = url
+          setProcessedCount(i + 1)
+          // Commit progressivo — se falhar depois, o que já subiu não se perde.
+          setLocalPhotos([...working])
+        } catch (stepErr: any) {
+          failedIndex = i
+          failureMessage = stepErr?.message ?? 'desconhecido'
+          break
+        }
       }
-      setLocalPhotos(newPhotos)
-      setPreviewDataUrl(null)
-      setDone(true)
+
+      if (failedIndex >= 0) {
+        const successCount = failedIndex
+        const totalCount = localPhotos.length
+        const prefix =
+          failureMessage.includes('Upload') || failureMessage.includes('salvar')
+            ? 'Erro ao salvar foto'
+            : 'Erro ao processar foto'
+        setError(
+          `${prefix} ${failedIndex + 1} de ${totalCount}: ${failureMessage}. ` +
+            `${successCount} foto${successCount === 1 ? '' : 's'} já ${successCount === 1 ? 'foi salva' : 'foram salvas'} — você pode tentar novamente nas restantes.`,
+        )
+      } else {
+        setPreviewDataUrl(null)
+        setDone(true)
+      }
     } catch (e: any) {
-      const msg = e?.message ?? 'desconhecido'
-      const prefix = msg.includes('Upload') || msg.includes('salvar') ? 'Erro ao salvar: ' : 'Erro ao processar: '
-      setError(prefix + msg)
+      // Fallback defensivo — não deveria chegar aqui já que o inner try captura tudo
+      setError('Erro inesperado: ' + (e?.message ?? 'desconhecido'))
     } finally {
       setProcessing(false)
     }

@@ -3045,3 +3045,33 @@ model SalesFunnel {
   @@index([createdAt])
   @@map("sales_funnels")
 }
+
+// =============================================================================
+// WEBHOOK IDEMPOTENCY — tabela de dedup para webhooks Asaas (evita double-process)
+// =============================================================================
+
+/// Log de eventos de webhook processados — garante idempotência via UNIQUE.
+/// Cada evento Asaas é registrado aqui antes de ser processado; uma tentativa
+/// de re-inserir com o mesmo dedupKey falha com P2002 e o handler pula o
+/// processamento. Isso protege contra retries, duplicate delivery e race
+/// conditions (dois workers recebendo o mesmo POST).
+model AsaasWebhookEvent {
+  id           String   @id @default(cuid())
+  /// Chave de deduplicação — UNIQUE. Formato: "<event>:<paymentId>:<status>:<eventHash>".
+  dedupKey     String   @unique
+  event        String   // PAYMENT_RECEIVED | PAYMENT_OVERDUE | ...
+  paymentId    String?  // Asaas payment id (payment.id no payload)
+  rentalId     String?  // Rental extraído do externalReference
+  status       String?  // status do pagamento no momento do evento
+  payload      Json     // payload completo recebido
+  receivedAt   DateTime @default(now())
+  processedAt  DateTime?
+  result       String?  // ok | error
+  errorMessage String?
+
+  @@index([event])
+  @@index([paymentId])
+  @@index([rentalId])
+  @@index([receivedAt])
+  @@map("asaas_webhook_events")
+}
