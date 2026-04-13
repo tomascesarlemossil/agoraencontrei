@@ -29,6 +29,7 @@ export function PropertyImageLightbox({ images, startIndex, title, onClose }: Li
     return () => window.removeEventListener('keydown', handler)
   }, [prev, next, onClose])
 
+  // Mounted only when open — lock unconditionally while mounted
   useBodyScrollLock(true)
 
   const onTouchStart = (e: React.TouchEvent) => {

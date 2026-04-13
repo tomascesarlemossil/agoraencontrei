@@ -137,6 +137,11 @@ const CreatePropertyBody = z.object({
   commercialConditions: z.string().optional(),
   yearLastReformed: coerceNum,
   keyLocation:  z.string().optional(),
+  // Pricing flags
+  priceNegotiable: z.boolean().optional(),
+  // Additional DB fields not previously exposed
+  floor:        coerceInt.optional(),
+  country:      z.string().optional(),
   // Additional property fields
   totalFloors:  coerceInt.optional(),
   isPremium:    z.boolean().optional(),
@@ -490,6 +495,7 @@ export default async function propertiesRoutes(app: FastifyInstance) {
           },
         },
         user: { select: { id: true, name: true, avatarUrl: true, phone: true, creciNumber: true } },
+        company: { select: { id: true, name: true, logoUrl: true } },
         contracts: {
           select: {
             id: true, status: true, rentValue: true, startDate: true, rescissionDate: true,

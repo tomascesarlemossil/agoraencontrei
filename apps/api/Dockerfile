@@ -28,7 +28,7 @@ COPY apps/api ./apps/api
 # Generate Prisma client
 RUN pnpm --filter @agoraencontrei/database generate
 
-# Build shared packages (tomas-knowledge compiles to dist/*.js)
+# Build shared knowledge package first (API depends on it)
 RUN pnpm --filter @agoraencontrei/tomas-knowledge build
 
 # Build API

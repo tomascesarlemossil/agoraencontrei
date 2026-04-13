@@ -227,6 +227,11 @@ export function MediaEditorModal({
   const [activeTab, setActiveTab] = useState<'photos' | 'videos'>('photos')
   const [selectedFilter, setSelectedFilter] = useState('none')
   const [applyLogo, setApplyLogo] = useState(!!logoUrl)
+
+  // Auto-disable logo toggle when there is no logo URL configured
+  useEffect(() => {
+    if (!logoUrl) setApplyLogo(false)
+  }, [logoUrl])
   const [logoPosition, setLogoPosition] = useState('bottom-right')
   const [previewIndex, setPreviewIndex] = useState(0)
   const [previewDataUrl, setPreviewDataUrl] = useState<string | null>(null)

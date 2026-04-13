@@ -16,6 +16,7 @@ import {
   ArrowLeft, Edit, Save, X, MapPin, BedDouble, Bath, Car, Ruler, Eye,
   Calendar, ImagePlus, Trash2, Star, Upload, Phone, Mail, User as UserIcon, ZoomIn,
   Home, Globe, Settings, Shield, Briefcase, Building2, Search, MessageSquare, Clock, Wand2, Film, Download,
+  AlertCircle, Power,
 } from 'lucide-react'
 import Link from 'next/link'
 import { useState, useRef, useEffect, useCallback } from 'react'
@@ -210,6 +211,7 @@ export default function PropertyDetailPage() {
   // Somente ADMIN e SUPER_ADMIN podem marcar imóveis como destaque da página inicial
   const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN'
   const [editing, setEditing] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState('cadastro')
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
 
@@ -357,18 +359,30 @@ export default function PropertyDetailPage() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['property', id] })
+      qc.invalidateQueries({ queryKey: ['properties'] })
       setEditing(false)
+      setSaveError(null)
       // Revalidar páginas públicas imediatamente
       revalidatePublicPages([`/imoveis/${property?.slug || id}`, ...PAGES.properties])
     },
+    onError: (err: any) => {
+      setSaveError(err?.message ?? 'Erro ao salvar. Tente novamente.')
+    },
   })
 
-  const deleteMutation = useMutation({
-    mutationFn: async () => {
+  const quickStatusMutation = useMutation({
+    mutationFn: async (newStatus: string) => {
       const token = await getValidToken()
-      return propertiesApi.delete(token!, id)
+      return propertiesApi.update(token!, id, { status: newStatus })
     },
-    onSuccess: () => router.push('/dashboard/properties'),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['property', id] })
+      qc.invalidateQueries({ queryKey: ['properties'] })
+      revalidatePublicPages([`/imoveis/${property?.slug || id}`, ...PAGES.properties])
+    },
+    onError: (err: any) => {
+      setSaveError(err?.message ?? 'Erro ao alterar status. Tente novamente.')
+    },
   })
 
   // Auto-save draft every 30 seconds when editing
@@ -513,17 +527,28 @@ export default function PropertyDetailPage() {
                   <Eye className="h-3.5 w-3.5" /> Ver no site
                 </Button>
               </Link>
-              <Button variant="ghost" size="sm" onClick={() => { if (confirm('Desativar este imóvel?')) deleteMutation.mutate() }}
-                className="text-red-400 hover:bg-red-500/10 hover:text-red-300 h-8"
-                disabled={deleteMutation.isPending}>
-                <X className="h-4 w-4" />
-              </Button>
+              {/* Quick status toggle: Inativar / Ativar */}
+              {p.status === 'ACTIVE' ? (
+                <Button variant="ghost" size="sm"
+                  onClick={() => { if (confirm('Inativar este imóvel? Ele ficará oculto no site.')) quickStatusMutation.mutate('INACTIVE') }}
+                  className="text-orange-400 hover:bg-orange-500/10 hover:text-orange-300 gap-1.5 h-8"
+                  disabled={quickStatusMutation.isPending}>
+                  <Power className="h-3.5 w-3.5" /> {quickStatusMutation.isPending ? '...' : 'Inativar'}
+                </Button>
+              ) : (
+                <Button variant="ghost" size="sm"
+                  onClick={() => { if (confirm('Ativar este imóvel? Ele ficará visível no site.')) quickStatusMutation.mutate('ACTIVE') }}
+                  className="text-emerald-400 hover:bg-emerald-500/10 hover:text-emerald-300 gap-1.5 h-8"
+                  disabled={quickStatusMutation.isPending}>
+                  <Power className="h-3.5 w-3.5" /> {quickStatusMutation.isPending ? '...' : 'Ativar'}
+                </Button>
+              )}
             </>
           ) : (
             <>
               {autoSaveStatus === 'saving' && <span className="text-xs text-yellow-400 animate-pulse">Salvando...</span>}
               {autoSaveStatus === 'saved' && <span className="text-xs text-green-400">Salvo automaticamente</span>}
-              <Button variant="ghost" size="sm" onClick={() => { setEditing(false); setAutoSaveStatus('idle'); reset() }}
+              <Button variant="ghost" size="sm" onClick={() => { setEditing(false); setAutoSaveStatus('idle'); setSaveError(null); reset() }}
                 className="text-white/60 h-8">Cancelar</Button>
               <Button size="sm" onClick={handleSubmit((d) => updateMutation.mutate(d))}
                 disabled={updateMutation.isPending} className="gap-2 h-8">
@@ -534,6 +559,17 @@ export default function PropertyDetailPage() {
           )}
         </div>
       </div>
+
+      {/* Error banner */}
+      {saveError && (
+        <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">
+          <AlertCircle className="h-4 w-4 text-red-400 flex-shrink-0" />
+          <p className="text-red-400/90 text-sm flex-1">{saveError}</p>
+          <button onClick={() => setSaveError(null)} className="text-red-400/60 hover:text-red-400 ml-2">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
 
       {/* ── PHOTOS & VIDEOS section (always visible) ─────────────────────── */}
       <div className="bg-white/5 rounded-xl border border-white/10 p-4 space-y-3">
@@ -673,7 +709,7 @@ export default function PropertyDetailPage() {
           propertyId={id}
           photos={allPhotos}
           videos={(p as any)?.videos ?? []}
-          logoUrl={(p as any)?.company?.logoUrl ?? null}
+          logoUrl={property?.company?.logoUrl ?? null}
           token={mediaEditorToken}
           newMediaUrls={newUploadedMedia?.urls}
           newMediaTypes={newUploadedMedia?.types}
@@ -1268,13 +1304,21 @@ export default function PropertyDetailPage() {
           )}
 
           {/* Bottom save bar */}
-          <div className="flex justify-end gap-3 pt-2 border-t border-white/10">
-            <Button variant="ghost" onClick={() => { setEditing(false); reset() }} className="text-white/60">Cancelar</Button>
-            <Button onClick={handleSubmit((d) => updateMutation.mutate(d))}
-              disabled={updateMutation.isPending} className="gap-2 min-w-[120px]">
-              <Save className="h-3.5 w-3.5" />
-              {updateMutation.isPending ? 'Salvando...' : 'Salvar Alterações'}
-            </Button>
+          <div className="flex flex-col gap-2 pt-2 border-t border-white/10">
+            {saveError && (
+              <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">
+                <AlertCircle className="h-4 w-4 text-red-400 flex-shrink-0" />
+                <p className="text-red-400/90 text-sm flex-1">{saveError}</p>
+              </div>
+            )}
+            <div className="flex justify-end gap-3">
+              <Button variant="ghost" onClick={() => { setEditing(false); setSaveError(null); reset() }} className="text-white/60">Cancelar</Button>
+              <Button onClick={handleSubmit((d) => updateMutation.mutate(d))}
+                disabled={updateMutation.isPending} className="gap-2 min-w-[120px]">
+                <Save className="h-3.5 w-3.5" />
+                {updateMutation.isPending ? 'Salvando...' : 'Salvar Alterações'}
+              </Button>
+            </div>
           </div>
         </div>
       ) : (

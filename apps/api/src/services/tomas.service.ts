@@ -76,7 +76,7 @@ export interface TomasChatParams {
   }
 }
 
-// ── System Prompt ───────────────────────────────────────────────────────────
+// ── System Prompt — built from @agoraencontrei/tomas-knowledge ─────────────
 
 /**
  * Prompt base do Tomás — vem de @agoraencontrei/tomas-knowledge (constantes TS).

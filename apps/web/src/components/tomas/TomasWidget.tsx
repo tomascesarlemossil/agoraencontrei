@@ -108,7 +108,10 @@ export default function TomasWidget({ propertyContext }: TomasWidgetProps) {
     function updateHeight() {
       // Use visualViewport when available (accounts for virtual keyboard)
       const vh = window.visualViewport?.height ?? window.innerHeight
-      setChatHeight(Math.min(vh - 20, 600)) // 20px margin, max 600
+      // On mobile, cap at full viewport minus safe-area insets (env() not available in JS,
+      // so we use a conservative 50px margin that covers most notch + home indicator heights)
+      const safeMargin = window.screen?.height > window.screen?.width ? 50 : 20
+      setChatHeight(Math.min(vh - safeMargin, 600))
     }
 
     updateHeight()
@@ -130,7 +133,7 @@ export default function TomasWidget({ propertyContext }: TomasWidgetProps) {
     }
   }, [open])
 
-  // ── Body scroll lock (empilhável via hook compartilhado) ──────────────────
+  // ── Body scroll lock (empilhável via hook compartilhado — safe with stacked modals) ──
   useBodyScrollLock(open)
 
   // Auto-scroll to bottom
@@ -369,8 +372,10 @@ export default function TomasWidget({ propertyContext }: TomasWidgetProps) {
     return (
       <button
         onClick={() => setOpen(true)}
-        className="fixed bottom-5 right-5 z-50 flex items-center gap-2 rounded-full bg-gradient-to-r from-yellow-600 to-yellow-500 px-5 py-3.5 text-sm font-semibold text-black shadow-2xl transition-all hover:scale-105 hover:shadow-yellow-500/25"
-        style={{ paddingBottom: 'calc(0.875rem + env(safe-area-inset-bottom, 0px))' }}
+        className="fixed right-5 z-50 flex items-center gap-2 rounded-full bg-gradient-to-r from-yellow-600 to-yellow-500 px-5 py-3.5 text-sm font-semibold text-black shadow-2xl transition-all hover:scale-105 hover:shadow-yellow-500/25"
+        style={{
+          bottom: 'calc(1.25rem + env(safe-area-inset-bottom, 0px))',
+        }}
         aria-label="Falar com Tomás"
       >
         <MessageCircle className="h-5 w-5" />
@@ -391,7 +396,7 @@ export default function TomasWidget({ propertyContext }: TomasWidgetProps) {
       className="fixed inset-x-0 bottom-0 z-50 flex flex-col overflow-hidden rounded-t-2xl border border-gray-800 bg-gray-950 shadow-2xl sm:inset-x-auto sm:bottom-5 sm:right-5 sm:rounded-2xl sm:w-[380px]"
       style={{
         height: chatHeight ? `${chatHeight}px` : '600px',
-        maxHeight: '100dvh',
+        maxHeight: 'calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px))',
         paddingBottom: 'env(safe-area-inset-bottom, 0px)',
       }}
     >
