@@ -74,37 +74,62 @@ function normalizePhone(phone: string): string {
 // ── Main Functions ──────────────────────────────────────────────────────────
 
 /**
+ * Opções de escopo para ingestLead.
+ *
+ * IMPORTANTE — distinção de domínio:
+ * - `tenantId` escopa o dedup do SalesFunnel (funil SaaS multi-tenant).
+ *   SalesFunnel.tenantId só fica populado após conversão, então pré-conversão
+ *   o dedup é global por design (não há tenant para "vazar para").
+ * - `companyId` é ortogonal ao funil — controla se o lead também é gravado
+ *   na tabela `Lead` (CRM da imobiliária). Nenhuma relação com tenantId.
+ *
+ * Histórico: a assinatura anterior aceitava `companyId?: string` e tentava
+ * aplicá-lo ao where do SalesFunnel. Isso era um bug semântico — SalesFunnel
+ * não tem coluna `companyId`. A regressão não chegou a ativar em produção
+ * porque nenhum call site passava o argumento, mas a correção aqui previne
+ * futuras regressões e alinha com a migration UNIQUE parcial sobre
+ * (phone, tenantId) do Sprint 3.
+ */
+export interface IngestLeadOptions {
+  /** Escopa dedup do SalesFunnel por tenant SaaS (apenas para leads já pós-conversão). */
+  tenantId?: string
+  /** Se fornecido, também cria/atualiza um registro em `Lead` para o CRM dessa company. */
+  companyId?: string
+}
+
+/**
  * Ingest a lead from any source. Deduplicates, scores, creates funnel entry.
  */
 export async function ingestLead(
   prisma: PrismaClient,
   input: IngestLeadInput,
-  companyId?: string,
+  opts: IngestLeadOptions = {},
 ): Promise<IngestResult> {
+  const { tenantId, companyId } = opts
   const normalizedPhone = input.phone ? normalizePhone(input.phone) : undefined
   const score = calculateInitialScore(input)
 
   // ── Deduplication: check by phone first, then email ───────────────────
-  // Escopo: quando ingest vem com companyId, o dedup DEVE ser por company
+  // Escopo: quando ingest vem com tenantId, o dedup DEVE ser por tenant
   // — senão um lead do tenant A atualizaria o funnel do tenant B que tem
-  // o mesmo phone. Quando companyId é undefined (ingestão SaaS pré-tenant,
+  // o mesmo phone. Quando tenantId é undefined (ingestão pré-tenant,
   // ex.: assinatura inicial), o dedup global é aceitável porque ainda não
-  // há isolamento de tenant sendo cruzado.
+  // há isolamento de tenant sendo cruzado (tenantId só existe pós-conversão).
   let existingFunnel: any = null
   let isDuplicate = false
 
-  const scopeByCompany = companyId ? { companyId } : {}
+  const scopeByTenant = tenantId ? { tenantId } : {}
 
   if (normalizedPhone) {
     existingFunnel = await prisma.salesFunnel.findFirst({
-      where: { phone: normalizedPhone, ...scopeByCompany },
+      where: { phone: normalizedPhone, ...scopeByTenant },
       orderBy: { createdAt: 'desc' },
     }).catch(() => null) as any
   }
 
   if (!existingFunnel && input.email) {
     existingFunnel = await prisma.salesFunnel.findFirst({
-      where: { email: input.email.toLowerCase(), ...scopeByCompany },
+      where: { email: input.email.toLowerCase(), ...scopeByTenant },
       orderBy: { createdAt: 'desc' },
     }).catch(() => null) as any
   }
@@ -119,11 +144,11 @@ export async function ingestLead(
       isDuplicate = true
       // Update score if higher, update metadata.
       // Defense-in-depth: ainda que o findFirst já tenha filtrado por
-      // companyId, re-afirmamos aqui via updateMany para garantir que
+      // tenantId, re-afirmamos aqui via updateMany para garantir que
       // nenhum race-condition pule o scope do tenant.
       const newScore = Math.max(existingFunnel.score, score)
       await prisma.salesFunnel.updateMany({
-        where: { id: existingFunnel.id, ...scopeByCompany },
+        where: { id: existingFunnel.id, ...scopeByTenant },
         data: {
           score: newScore,
           metadata: {
@@ -146,6 +171,9 @@ export async function ingestLead(
   }
 
   // ── Create SalesFunnel entry ──────────────────────────────────────────
+  // Persiste tenantId quando fornecido. Isso é condição necessária para a
+  // UNIQUE constraint parcial sobre (phone, tenantId) funcionar como dedup
+  // de última linha de defesa contra races.
   const funnel = await prisma.salesFunnel.create({
     data: {
       name: input.name,
@@ -154,6 +182,7 @@ export async function ingestLead(
       source: input.source,
       campaign: input.campaign,
       affiliateCode: input.affiliateCode,
+      tenantId: tenantId ?? null,
       score,
       stage: 'captured',
       metadata: {
