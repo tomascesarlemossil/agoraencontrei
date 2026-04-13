@@ -85,19 +85,26 @@ export async function ingestLead(
   const score = calculateInitialScore(input)
 
   // ── Deduplication: check by phone first, then email ───────────────────
+  // Escopo: quando ingest vem com companyId, o dedup DEVE ser por company
+  // — senão um lead do tenant A atualizaria o funnel do tenant B que tem
+  // o mesmo phone. Quando companyId é undefined (ingestão SaaS pré-tenant,
+  // ex.: assinatura inicial), o dedup global é aceitável porque ainda não
+  // há isolamento de tenant sendo cruzado.
   let existingFunnel: any = null
   let isDuplicate = false
 
+  const scopeByCompany = companyId ? { companyId } : {}
+
   if (normalizedPhone) {
     existingFunnel = await prisma.salesFunnel.findFirst({
-      where: { phone: normalizedPhone },
+      where: { phone: normalizedPhone, ...scopeByCompany },
       orderBy: { createdAt: 'desc' },
     }).catch(() => null) as any
   }
 
   if (!existingFunnel && input.email) {
     existingFunnel = await prisma.salesFunnel.findFirst({
-      where: { email: input.email.toLowerCase() },
+      where: { email: input.email.toLowerCase(), ...scopeByCompany },
       orderBy: { createdAt: 'desc' },
     }).catch(() => null) as any
   }
@@ -110,10 +117,13 @@ export async function ingestLead(
 
     if (daysSinceCreated < 30) {
       isDuplicate = true
-      // Update score if higher, update metadata
+      // Update score if higher, update metadata.
+      // Defense-in-depth: ainda que o findFirst já tenha filtrado por
+      // companyId, re-afirmamos aqui via updateMany para garantir que
+      // nenhum race-condition pule o scope do tenant.
       const newScore = Math.max(existingFunnel.score, score)
-      await prisma.salesFunnel.update({
-        where: { id: existingFunnel.id },
+      await prisma.salesFunnel.updateMany({
+        where: { id: existingFunnel.id, ...scopeByCompany },
         data: {
           score: newScore,
           metadata: {

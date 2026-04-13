@@ -510,13 +510,38 @@ export async function runScheduledJobs(app: FastifyInstance) {
   //   Idempotência: processDueRepasses marca status = PROCESSING antes
   //   de tentar, e COMPLETED/FAILED ao terminar. Re-runs só pegam
   //   registros em SCHEDULED.
+  //
+  //   LOCK DISTRIBUÍDO — pg_try_advisory_lock:
+  //   Em deploy com múltiplas instâncias API, dois pods rodariam esta
+  //   rotina no mesmo minuto e competiriam pelo mesmo ScheduledRepasse.
+  //   pg_try_advisory_lock é não-bloqueante: retorna true se conseguiu o
+  //   lock (→ drena), false se outra instância já tem (→ pula). O lock é
+  //   automaticamente liberado quando a sessão Postgres fecha, mesmo em
+  //   crash — sem risco de lock órfão como com Redis SETNX.
+  //   Chave arbitrária 0x5A43_4C4B_4F42_1234 ("ZCLKOB1234") — basta ser
+  //   estável entre pods e única dentro deste schema.
   try {
-    const { processDueRepasses } = await import('./repasse.service.js')
-    const repasseResult = await processDueRepasses(app.prisma as any)
-    if (repasseResult.processed > 0) {
-      app.log.info(
-        `[scheduled] repasse-outbox: processed=${repasseResult.processed} succeeded=${repasseResult.succeeded} failed=${repasseResult.failed}`,
-      )
+    const REPASSE_DRAIN_LOCK_KEY = BigInt('6503216717815693876')
+    const lockRows: Array<{ locked: boolean }> = await app.prisma.$queryRaw`
+      SELECT pg_try_advisory_lock(${REPASSE_DRAIN_LOCK_KEY}::bigint) AS locked
+    `
+    const gotLock = lockRows?.[0]?.locked === true
+    if (!gotLock) {
+      app.log.info('[scheduled] repasse-outbox: lock held by other instance, skipping')
+    } else {
+      try {
+        const { processDueRepasses } = await import('./repasse.service.js')
+        const repasseResult = await processDueRepasses(app.prisma as any)
+        if (repasseResult.processed > 0) {
+          app.log.info(
+            `[scheduled] repasse-outbox: processed=${repasseResult.processed} succeeded=${repasseResult.succeeded} failed=${repasseResult.failed}`,
+          )
+        }
+      } finally {
+        await app.prisma.$queryRaw`SELECT pg_advisory_unlock(${REPASSE_DRAIN_LOCK_KEY}::bigint)`.catch(
+          (err) => app.log.warn({ err }, '[scheduled] repasse-outbox: failed to release advisory lock (will auto-release on session close)'),
+        )
+      }
     }
   } catch (err) {
     app.log.error({ err }, '[scheduled] repasse-outbox failed')

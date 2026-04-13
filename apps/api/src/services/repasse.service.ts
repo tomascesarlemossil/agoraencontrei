@@ -349,6 +349,13 @@ export async function getTenantCommissions(
 
 // ── Asaas Transfer Helper ──────────────────────────────────────────────────
 
+// Timeout defensivo para chamada externa Asaas. Sem isso, uma chamada
+// pendurada travaria o drainer até o read-timeout default do Node (que
+// é infinito em várias versões) — fazendo o worker não avançar para os
+// próximos repasses da janela. 10s é folgado para uma PIX síncrona; se
+// estourar, processDueRepasses marca o item como FAILED e segue.
+const ASAAS_TRANSFER_TIMEOUT_MS = 10_000
+
 async function executeAsaasTransfer(
   value: number,
   walletId: string,
@@ -369,15 +376,20 @@ async function executeAsaasTransfer(
         operationType: 'PIX',
         description,
       }),
+      signal: AbortSignal.timeout(ASAAS_TRANSFER_TIMEOUT_MS),
     })
 
     if (!res.ok) {
       const err = await res.json().catch(() => ({}))
-      throw new Error((err as any).errors?.[0]?.description || 'Asaas transfer failed')
+      throw new Error((err as any).errors?.[0]?.description || `Asaas transfer failed (HTTP ${res.status})`)
     }
 
     return res.json() as Promise<{ id: string }>
   } catch (error: any) {
+    // AbortError vira mensagem explícita para aparecer nos logs/alertas.
+    if (error?.name === 'TimeoutError' || error?.name === 'AbortError') {
+      throw new Error(`Asaas transfer timeout after ${ASAAS_TRANSFER_TIMEOUT_MS}ms`)
+    }
     throw new Error(`Asaas transfer error: ${error.message}`)
   }
 }

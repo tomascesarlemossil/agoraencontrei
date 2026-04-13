@@ -181,26 +181,48 @@ export async function enqueueOutbound(
     },
   })
 
-  // Enqueue to BullMQ with random delay
+  // Enqueue to BullMQ with random delay.
+  // jobId = outbound.id garante idempotência: se o mesmo outbound
+  // for re-enfileirado (retry manual, race em chamadas concorrentes),
+  // BullMQ descarta o duplicado. Sem isso, 2 calls concorrentes com
+  // a mesma mensagem resultariam em 2 envios.
   if (queue) {
     const delay = randomDelay()
-    await queue.add(
-      'outbound:send',
-      {
-        outboundId: outbound.id,
-        phone: input.phone,
-        message,
-        senderNumber,
-        previewLink: previewLink || undefined,
-      } as OutboundJobData,
-      {
-        delay,
-        attempts: 3,
-        backoff: { type: 'exponential', delay: 5000 },
-        removeOnComplete: { count: 500 },
-        removeOnFail: { count: 200 },
-      },
-    )
+    try {
+      await queue.add(
+        'outbound:send',
+        {
+          outboundId: outbound.id,
+          phone: input.phone,
+          message,
+          senderNumber,
+          previewLink: previewLink || undefined,
+        } as OutboundJobData,
+        {
+          jobId: outbound.id,
+          delay,
+          attempts: 3,
+          backoff: { type: 'exponential', delay: 5000 },
+          removeOnComplete: { count: 500 },
+          removeOnFail: { count: 200 },
+        },
+      )
+    } catch (err: any) {
+      // Compensação: se a fila falhou (Redis down, payload reject),
+      // marca o registro como failed para não ficar eternamente "queued"
+      // órfão no banco. Sem isso, dashboard de outbound contabilizaria
+      // mensagem como "pendente de envio" que nunca sairá.
+      await (prisma as any).outboundMessage.update({
+        where: { id: outbound.id },
+        data: {
+          status: 'failed',
+          errorMessage: `Queue enqueue failed: ${err?.message?.slice(0, 480) ?? 'unknown'}`,
+        },
+      }).catch(() => {
+        // best-effort — se DB também falhou, o erro original propaga
+      })
+      throw err
+    }
   }
 
   return { outboundId: outbound.id, template: template.version }

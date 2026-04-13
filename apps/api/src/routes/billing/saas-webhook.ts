@@ -105,8 +105,12 @@ export default async function saasWebhookRoutes(app: FastifyInstance) {
         },
       }).catch(() => {})
 
-      // Return 200 to Asaas to prevent retries for processing errors
-      return reply.send({ success: false, error: err.message })
+      // Erros de negócio não-transientes (tenant não encontrado, ref inválida)
+      // são no-ops silenciosos dentro dos handlers (apenas log.warn + return).
+      // Se chegou aqui, é falha inesperada — 500 → Asaas retenta com
+      // backoff. Os handlers já têm idempotência (checa planStatus==='ACTIVE'
+      // antes de reativar), então replay é seguro.
+      return reply.status(500).send({ success: false, error: err.message })
     }
   })
 }

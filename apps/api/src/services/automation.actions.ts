@@ -28,6 +28,24 @@ export async function executeAction(
       const leadId = String(p.leadId ?? data['leadId'] ?? data['id'] ?? '')
       const dealId = String(p.dealId ?? data['dealId'] ?? '')
       const title = interpolate(String(p.title ?? 'Automação executada'), data)
+      // Valida ownership antes de criar activity — evita vincular activity
+      // com leadId/dealId de outro tenant (Prisma aceitaria o FK, mas o
+      // registro ficaria cross-tenant porque activity.companyId é definido
+      // pelo contexto e não pelo lead).
+      if (leadId) {
+        const lead = await app.prisma.lead.findFirst({
+          where: { id: leadId, companyId },
+          select: { id: true },
+        })
+        if (!lead) throw new Error(`create_activity: lead ${leadId} not found in company ${companyId}`)
+      }
+      if (dealId) {
+        const deal = await app.prisma.deal.findFirst({
+          where: { id: dealId, companyId },
+          select: { id: true },
+        })
+        if (!deal) throw new Error(`create_activity: deal ${dealId} not found in company ${companyId}`)
+      }
       return app.prisma.activity.create({
         data: {
           companyId,
@@ -45,26 +63,35 @@ export async function executeAction(
     case 'update_lead': {
       const leadId = String(p.leadId ?? data['id'] ?? '')
       if (!leadId) throw new Error('update_lead: no leadId resolved')
-      return app.prisma.lead.update({
-        where: { id: leadId },
+      // Scope por companyId: updateMany com filtro composto retorna count=0
+      // se o lead não pertence ao tenant, em vez de update silencioso
+      // cross-tenant. Erro explícito quando não encontrado.
+      const result = await app.prisma.lead.updateMany({
+        where: { id: leadId, companyId },
         data: {
           ...(p.status        !== undefined && { status:       p.status as any }),
           ...(p.score         !== undefined && { score:        Number(p.score) }),
           ...(p.assignedToId  !== undefined && { assignedToId: String(p.assignedToId) }),
         },
       })
+      if (result.count === 0) {
+        throw new Error(`update_lead: lead ${leadId} not found in company ${companyId}`)
+      }
+      return result
     }
 
     case 'score_lead': {
       const leadId = String(p.leadId ?? data['id'] ?? '')
-      const lead = await app.prisma.lead.findUnique({
-        where: { id: leadId },
+      // findFirst com companyId impede leak cross-tenant — findUnique por id
+      // isolado retornaria lead de qualquer company.
+      const lead = await app.prisma.lead.findFirst({
+        where: { id: leadId, companyId },
         include: {
           _count: { select: { activities: true, deals: true } },
           contact: { select: { id: true } },
         },
       })
-      if (!lead) throw new Error(`score_lead: lead ${leadId} not found`)
+      if (!lead) throw new Error(`score_lead: lead ${leadId} not found in company ${companyId}`)
       const result = await scoreLead({
         lead: {
           source:        lead.source    ?? undefined,
@@ -81,7 +108,10 @@ export async function executeAction(
         hasEmail:        !!lead.email,
         hasContact:      !!lead.contact,
       })
-      await app.prisma.lead.update({ where: { id: leadId }, data: { score: result.score } })
+      await app.prisma.lead.updateMany({
+        where: { id: leadId, companyId },
+        data:  { score: result.score },
+      })
       return result
     }
 
@@ -101,20 +131,32 @@ export async function executeAction(
       const leadId   = String(p.leadId   ?? data['id'] ?? '')
       const brokerId = String(p.brokerId ?? '')
       if (!leadId || !brokerId) throw new Error('assign_broker: missing leadId or brokerId')
-      return app.prisma.lead.update({
-        where: { id: leadId },
+      // Valida broker pertence à mesma company para evitar atribuir
+      // corretor cross-tenant (vazaria PII e lead pipeline).
+      const broker = await app.prisma.user.findFirst({
+        where: { id: brokerId, companyId },
+        select: { id: true },
+      })
+      if (!broker) throw new Error(`assign_broker: broker ${brokerId} not found in company ${companyId}`)
+      const result = await app.prisma.lead.updateMany({
+        where: { id: leadId, companyId },
         data:  { assignedToId: brokerId },
       })
+      if (result.count === 0) {
+        throw new Error(`assign_broker: lead ${leadId} not found in company ${companyId}`)
+      }
+      return result
     }
 
     case 'create_deal': {
       const leadId = String(p.leadId ?? data['leadId'] ?? data['id'] ?? '')
       if (!leadId) throw new Error('create_deal: no leadId resolved')
-      const lead = await app.prisma.lead.findUnique({
-        where: { id: leadId },
+      // findFirst com companyId — findUnique por id cruzaria tenants.
+      const lead = await app.prisma.lead.findFirst({
+        where: { id: leadId, companyId },
         include: { properties: { select: { propertyId: true } } },
       })
-      if (!lead) throw new Error(`create_deal: lead ${leadId} not found`)
+      if (!lead) throw new Error(`create_deal: lead ${leadId} not found in company ${companyId}`)
 
       const dealType = p.type ?? (lead.interest === 'rent' ? 'RENT' : 'SALE')
       const title = p.title
@@ -137,7 +179,10 @@ export async function executeAction(
         },
       })
 
-      await app.prisma.lead.update({ where: { id: leadId }, data: { status: 'NEGOTIATING' } })
+      await app.prisma.lead.updateMany({
+        where: { id: leadId, companyId },
+        data:  { status: 'NEGOTIATING' },
+      })
       await app.prisma.activity.create({
         data: {
           companyId, leadId: lead.id, dealId: deal.id,
