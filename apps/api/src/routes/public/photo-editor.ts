@@ -1,12 +1,19 @@
 /**
- * Public photo editing endpoint — no auth required.
- * Used by the public photo editing service (/servicos/edicao-fotos).
+ * Public photo editing endpoint — no JWT required on this side, mas
+ * o microserviço Python continua autenticado via X-Processor-Token
+ * (fail-closed). Propagamos o token a partir do env da API.
+ *
+ * Nota de segurança: como este endpoint é público, ele ainda está
+ * sujeito ao rate limit global do Fastify. O rate limit adicional
+ * do Python (por IP de origem = a API) funciona como defesa em
+ * profundidade contra abuse interno.
  */
 import type { FastifyInstance } from 'fastify'
 import fetch from 'node-fetch'
 import FormData from 'form-data'
 
 const IMAGE_PROCESSOR_URL = process.env.IMAGE_PROCESSOR_URL ?? 'http://localhost:3200'
+const IMAGE_PROCESSOR_TOKEN = process.env.IMAGE_PROCESSOR_TOKEN ?? ''
 
 export async function publicPhotoEditorRoutes(app: FastifyInstance) {
   // POST /api/v1/public/photo-editor/apply — process photo with filter (no auth)
@@ -30,10 +37,12 @@ export async function publicPhotoEditorRoutes(app: FastifyInstance) {
       form.append('apply_logo', applyLogo ? 'true' : 'false')
       form.append('logo_position', logoPosition)
 
+      const headers: Record<string, string> = { ...form.getHeaders() }
+      if (IMAGE_PROCESSOR_TOKEN) headers['X-Processor-Token'] = IMAGE_PROCESSOR_TOKEN
       const res = await fetch(`${IMAGE_PROCESSOR_URL}/preview/upload`, {
         method: 'POST',
         body: form as any,
-        headers: form.getHeaders(),
+        headers,
       })
 
       if (!res.ok) {

@@ -17,6 +17,14 @@ import type { PrismaClient } from '@prisma/client'
 import { getBalance, WALLET_ID } from './asaas.service.js'
 import { env } from '../utils/env.js'
 
+// ── Executor ────────────────────────────────────────────────────────────────
+// scheduleRepasse pode ser chamado tanto standalone (PrismaClient) quanto
+// dentro de um $transaction (TransactionClient). Tipamos como `any` para
+// permitir ambos sem batalha de tipos — as chamadas reais usam `(exec as any)`
+// porque o schema exige `scheduledRepasse`/`saasCommissionLog` que estão
+// tipados dinamicamente em partes do projeto.
+type PrismaExecutor = PrismaClient | any
+
 // ── Types ───────────────────────────────────────────────────────────────────
 
 export interface ScheduleRepasseInput {
@@ -75,9 +83,16 @@ function calculateScheduledDate(delayDays: number, fixedDay?: number): Date {
 /**
  * Schedules a new repasse (escrow transfer).
  * Calculates commission split and net value for the landlord.
+ *
+ * O primeiro parâmetro aceita tanto `PrismaClient` quanto um
+ * `TransactionClient` (passado de dentro de `prisma.$transaction`). Quando
+ * chamado dentro de uma transação, QUALQUER falha aqui — inclusive no log
+ * de comissão SaaS — reverte a transação inteira, garantindo que nenhum
+ * pagamento seja marcado como PAID sem o repasse e o log financeiro
+ * correspondentes.
  */
 export async function scheduleRepasse(
-  prisma: PrismaClient,
+  exec: PrismaExecutor,
   input: ScheduleRepasseInput,
 ): Promise<any> {
   const delayDays = input.delayDays ?? DEFAULT_DELAY_DAYS
@@ -86,7 +101,7 @@ export async function scheduleRepasse(
   const netValue = Math.round((input.grossValue - commissionValue) * 100) / 100
   const scheduledDate = calculateScheduledDate(delayDays, input.fixedDay)
 
-  const repasse = await (prisma as any).scheduledRepasse.create({
+  const repasse = await (exec as any).scheduledRepasse.create({
     data: {
       tenantId: input.tenantId || null,
       companyId: input.companyId,
@@ -106,16 +121,18 @@ export async function scheduleRepasse(
     },
   })
 
-  // If tenant has SaaS split, also log the platform commission
+  // Se o tenant tiver split SaaS, registra a comissão da plataforma.
+  // IMPORTANTE: não engolimos mais a falha. Comissão SaaS é obrigatória
+  // para auditoria financeira; perder silenciosamente = perda real de receita.
   if (input.tenantId) {
-    const tenant = await (prisma as any).tenant?.findUnique?.({
+    const tenant = await (exec as any).tenant.findUnique({
       where: { id: input.tenantId },
       select: { splitPercent: true },
-    }).catch(() => null)
+    })
 
-    if (tenant?.splitPercent > 0) {
+    if (tenant?.splitPercent && Number(tenant.splitPercent) > 0) {
       const platformCommission = Math.round(input.grossValue * Number(tenant.splitPercent) / 100 * 100) / 100
-      await (prisma as any).saasCommissionLog.create({
+      await (exec as any).saasCommissionLog.create({
         data: {
           tenantId: input.tenantId,
           transactionId: repasse.id,
@@ -125,7 +142,7 @@ export async function scheduleRepasse(
           tenantNetValue: input.grossValue - platformCommission,
           status: 'PENDING',
         },
-      }).catch(() => {})
+      })
     }
   }
 

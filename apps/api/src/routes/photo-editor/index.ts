@@ -1,6 +1,10 @@
 /**
  * Rota proxy para o microserviço Python de edição de fotos.
  * Todos os endpoints requerem autenticação JWT.
+ *
+ * O microserviço Python exige `X-Processor-Token` igual a
+ * IMAGE_PROCESSOR_TOKEN (fail-closed). Aqui injetamos o header em
+ * todas as chamadas downstream.
  */
 import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
@@ -8,9 +12,20 @@ import fetch from 'node-fetch'
 import FormData from 'form-data'
 
 const IMAGE_PROCESSOR_URL = process.env.IMAGE_PROCESSOR_URL ?? 'http://localhost:3200'
+const IMAGE_PROCESSOR_TOKEN = process.env.IMAGE_PROCESSOR_TOKEN ?? ''
+
+function withProcessorAuth(extra: Record<string, string> = {}): Record<string, string> {
+  return IMAGE_PROCESSOR_TOKEN
+    ? { 'X-Processor-Token': IMAGE_PROCESSOR_TOKEN, ...extra }
+    : { ...extra }
+}
 
 async function proxyToProcessor(path: string, options: RequestInit = {}) {
-  const res = await fetch(`${IMAGE_PROCESSOR_URL}${path}`, options as any)
+  const headers = {
+    ...(options.headers as Record<string, string> | undefined),
+    ...withProcessorAuth(),
+  }
+  const res = await fetch(`${IMAGE_PROCESSOR_URL}${path}`, { ...(options as any), headers })
   if (!res.ok) {
     const text = await res.text()
     throw new Error(`Image processor error ${res.status}: ${text}`)
@@ -79,7 +94,7 @@ export default async function photoEditorRoutes(app: FastifyInstance) {
       const res = await fetch(`${IMAGE_PROCESSOR_URL}/preview/upload`, {
         method: 'POST',
         body: form as any,
-        headers: form.getHeaders(),
+        headers: withProcessorAuth(form.getHeaders()),
       })
 
       if (!res.ok) {
@@ -152,7 +167,7 @@ export default async function photoEditorRoutes(app: FastifyInstance) {
       const res = await fetch(`${IMAGE_PROCESSOR_URL}/upload-logo`, {
         method: 'POST',
         body: form as any,
-        headers: form.getHeaders(),
+        headers: withProcessorAuth(form.getHeaders()),
       })
 
       if (!res.ok) {
@@ -187,7 +202,7 @@ export default async function photoEditorRoutes(app: FastifyInstance) {
       const res = await fetch(`${IMAGE_PROCESSOR_URL}/import-filter`, {
         method: 'POST',
         body: form as any,
-        headers: form.getHeaders(),
+        headers: withProcessorAuth(form.getHeaders()),
       })
 
       if (!res.ok) {

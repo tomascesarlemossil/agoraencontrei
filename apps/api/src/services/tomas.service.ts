@@ -283,7 +283,14 @@ async function executeTool(
 ): Promise<string> {
   switch (toolName) {
     case 'buscar_imoveis': {
-      const where: Record<string, unknown> = { status: 'ACTIVE' }
+      // Tomás só pode enxergar imóveis publicamente autorizados.
+      // Drafts, rascunhos internos ou imóveis de outra empresa NÃO
+      // devem vazar pelo agente — mesmo em modo dashboard, a UI
+      // interna é quem permite visualizar não-publicados.
+      const where: Record<string, unknown> = {
+        status: 'ACTIVE',
+        authorizedPublish: true,
+      }
       if (companyId) where.companyId = companyId
 
       const city = toolInput.city as string | undefined
@@ -344,14 +351,23 @@ async function executeTool(
     }
 
     case 'detalhar_imovel': {
-      const propWhere: Record<string, unknown> = {}
-      if (toolInput.propertyId) propWhere.id = toolInput.propertyId as string
-      else if (toolInput.reference && companyId) {
-        propWhere.companyId = companyId
-        propWhere.reference = toolInput.reference as string
+      // Sempre exigimos status ACTIVE + authorizedPublish true para
+      // impedir que drafts, rascunhos ou imóveis de OUTRA empresa
+      // vazem por chamada pública (ou mesmo dashboard) do Tomás.
+      // Um propertyId arbitrário agora só retorna se o imóvel for
+      // verdadeiramente público; quando companyId estiver presente
+      // aplicamos também o escopo multi-tenant.
+      const propWhere: Record<string, unknown> = {
+        status: 'ACTIVE',
+        authorizedPublish: true,
       }
+      if (companyId) propWhere.companyId = companyId
 
-      if (!Object.keys(propWhere).length) {
+      if (toolInput.propertyId) {
+        propWhere.id = toolInput.propertyId as string
+      } else if (toolInput.reference) {
+        propWhere.reference = toolInput.reference as string
+      } else {
         return JSON.stringify({ error: 'Informe propertyId ou reference.' })
       }
 

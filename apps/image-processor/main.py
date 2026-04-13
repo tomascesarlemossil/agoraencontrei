@@ -2,12 +2,13 @@
 Microservico de processamento de imagens para o AgoraEncontrei.
 Porta padrao: 3200
 """
-import os, io, json, base64, ipaddress, socket, tempfile
+import os, io, json, base64, ipaddress, socket, tempfile, secrets, time, threading
+from collections import deque
 from urllib.parse import urlparse
 import requests
 from pathlib import Path
-from typing import Optional, List
-from fastapi import FastAPI, HTTPException, UploadFile, File, Form
+from typing import Optional, List, Deque, Dict
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Header, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from filters import (
@@ -20,6 +21,63 @@ app = FastAPI(title="AgoraEncontrei Image Processor", version="1.0.0")
 _cors_env = os.environ.get("IMAGE_PROCESSOR_CORS_ORIGINS", "*")
 _cors_origins = [o.strip() for o in _cors_env.split(",")] if _cors_env != "*" else ["*"]
 app.add_middleware(CORSMiddleware, allow_origins=_cors_origins, allow_methods=["*"], allow_headers=["*"])
+
+# ─── AUTH + RATE LIMIT ────────────────────────────────────────────────────
+# Todos os endpoints de mutação/processamento exigem o header
+# `X-Processor-Token` igual ao env `IMAGE_PROCESSOR_TOKEN`.
+#
+# FAIL-CLOSED: se IMAGE_PROCESSOR_TOKEN não estiver definido, o serviço
+# REJEITA qualquer chamada autenticada. Isso evita o cenário atual de
+# bucket aberto em produção. Para dev local, basta setar um token curto.
+#
+# Rate limit: janela deslizante por token (ou IP quando sem token) —
+# default 60 req/min, ajustável via IMAGE_PROCESSOR_RL_MAX.
+_PROCESSOR_TOKEN = os.environ.get("IMAGE_PROCESSOR_TOKEN", "").strip()
+_RL_WINDOW_SEC = float(os.environ.get("IMAGE_PROCESSOR_RL_WINDOW_SEC", "60"))
+_RL_MAX_REQ = int(os.environ.get("IMAGE_PROCESSOR_RL_MAX", "60"))
+
+_rl_buckets: Dict[str, Deque[float]] = {}
+_rl_lock = threading.Lock()
+
+
+def _rl_check(key: str) -> bool:
+    now = time.time()
+    cutoff = now - _RL_WINDOW_SEC
+    with _rl_lock:
+        q = _rl_buckets.setdefault(key, deque())
+        while q and q[0] < cutoff:
+            q.popleft()
+        if len(q) >= _RL_MAX_REQ:
+            return False
+        q.append(now)
+        return True
+
+
+def verify_token(
+    request: Request,
+    x_processor_token: Optional[str] = Header(default=None, alias="X-Processor-Token"),
+) -> str:
+    """Valida token via header X-Processor-Token + rate limit.
+
+    Fail-closed: sem IMAGE_PROCESSOR_TOKEN no env → 503.
+    """
+    if not _PROCESSOR_TOKEN:
+        raise HTTPException(
+            status_code=503,
+            detail="image-processor sem token configurado (IMAGE_PROCESSOR_TOKEN).",
+        )
+    provided = (x_processor_token or "").strip()
+    # Constant-time compare defeats timing oracle
+    if not provided or not secrets.compare_digest(provided, _PROCESSOR_TOKEN):
+        raise HTTPException(status_code=401, detail="Token invalido.")
+    # Rate limit por IP (token é compartilhado entre workers da API)
+    rl_key = request.client.host if request.client else "unknown"
+    if not _rl_check(rl_key):
+        raise HTTPException(
+            status_code=429,
+            detail=f"Rate limit excedido ({_RL_MAX_REQ}/{int(_RL_WINDOW_SEC)}s).",
+        )
+    return provided
 
 # ─── SSRF hardening ────────────────────────────────────────────────────────
 # Lista de hosts permitidos (sufixos). Mantém paridade com o proxy-image
@@ -105,7 +163,7 @@ def health():
 
 
 @app.get("/filters")
-def list_filters():
+def list_filters(_token: str = Depends(verify_token)):
     all_filters = load_all_filters()
     return {
         "filters": [
@@ -129,7 +187,7 @@ class PreviewRequest(BaseModel):
 
 
 @app.post("/preview")
-async def preview_filter(req: PreviewRequest):
+async def preview_filter(req: PreviewRequest, _token: str = Depends(verify_token)):
     """Gera preview com filtro. Retorna base64 para exibicao imediata."""
     try:
         image_bytes = fetch_image_bytes(req.image_url)
@@ -154,6 +212,7 @@ async def preview_filter_upload(
     apply_logo: bool = Form(True),
     logo_position: str = Form("bottom-right"),
     preview_width: int = Form(800),
+    _token: str = Depends(verify_token),
 ):
     """Preview a partir de arquivo enviado diretamente."""
     try:
@@ -181,7 +240,7 @@ class ProcessRequest(BaseModel):
 
 
 @app.post("/process")
-async def process_single(req: ProcessRequest):
+async def process_single(req: ProcessRequest, _token: str = Depends(verify_token)):
     """Processa uma imagem em qualidade completa."""
     try:
         image_bytes = fetch_image_bytes(req.image_url)
@@ -208,7 +267,7 @@ class BatchProcessRequest(BaseModel):
 
 
 @app.post("/process/batch")
-async def process_batch(req: BatchProcessRequest):
+async def process_batch(req: BatchProcessRequest, _token: str = Depends(verify_token)):
     """Processa multiplas imagens em lote."""
     results = []
     errors = []
@@ -243,7 +302,7 @@ async def process_batch(req: BatchProcessRequest):
 
 
 @app.post("/upload-logo")
-async def upload_logo(file: UploadFile = File(...)):
+async def upload_logo(file: UploadFile = File(...), _token: str = Depends(verify_token)):
     """Faz upload do logo da imobiliaria."""
     ext = file.filename.split(".")[-1].lower()
     if ext not in ["png", "jpg", "jpeg", "webp"]:
@@ -259,6 +318,7 @@ async def upload_logo(file: UploadFile = File(...)):
 async def import_filter_from_dng(
     file: UploadFile = File(...),
     filter_name: str = Form(None),
+    _token: str = Depends(verify_token),
 ):
     """Importa novo filtro a partir de arquivo DNG do Lightroom."""
     if not file.filename.lower().endswith(".dng"):
@@ -288,7 +348,7 @@ async def import_filter_from_dng(
 
 
 @app.get("/filters/{filter_id}")
-def get_filter(filter_id: str):
+def get_filter(filter_id: str, _token: str = Depends(verify_token)):
     all_filters = load_all_filters()
     if filter_id not in all_filters:
         raise HTTPException(status_code=404, detail="Filtro nao encontrado")
@@ -303,7 +363,7 @@ def get_filter(filter_id: str):
 
 
 @app.delete("/filters/{filter_id}")
-def delete_filter(filter_id: str):
+def delete_filter(filter_id: str, _token: str = Depends(verify_token)):
     if filter_id in FILTERS:
         raise HTTPException(status_code=400, detail="Nao e possivel remover filtros padrao.")
     custom_path = Path(__file__).parent / "custom_filters.json"

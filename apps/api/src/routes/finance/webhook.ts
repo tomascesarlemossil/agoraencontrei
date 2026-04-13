@@ -52,79 +52,89 @@ export default async function asaasWebhookRoutes(app: FastifyInstance) {
 
     app.log.info(`[asaas-webhook] Event: ${event}, Payment: ${payment.id}, Status: ${payment.status}`)
 
-    // Declarado fora do try/catch principal para que o catch externo consiga
-    // marcar o registro como erro quando o processamento falhar.
+    // ─────────────────────────────────────────────────────────────────────
+    // Ordem de operações:
+    //   1. asaasWebhookEvent (rastro/audit trail, UNIQUE dedupKey). Se já
+    //      existe → 200 OK duplicate (fast-path).
+    //   2. $transaction:
+    //      2a. webhookProcessedEvent (UNIQUE eventKey) — gate primário; se
+    //          P2002 duplicado, a tx é revertida e retornamos skipped.
+    //      2b. rental.update (PAID/LATE/PENDING) + auditLog.create +
+    //          scheduleRepasse (ScheduledRepasse + SaasCommissionLog).
+    //   3. Em caso de falha intermediária, a tx reverte TUDO e retornamos
+    //      500 para o Asaas retentar — é seguro reprocessar porque o
+    //      webhookProcessedEvent também foi revertido.
+    // ─────────────────────────────────────────────────────────────────────
     let eventRecordId: string | null = null
+    const externalRef = (payment as any).externalReference as string | undefined
+    const rentalId = externalRef?.startsWith('rental:') ? externalRef.replace('rental:', '') : null
+    const eventKey = `asaas:${event}:${payment.id}`
+    const eventTimestamp =
+      (payment as any).confirmedDate ||
+      (payment as any).clientPaymentDate ||
+      body.dateCreated ||
+      ''
+    const dedupKey = body.id
+      ? `asaas:${body.id}`
+      : `asaas:${event}:${payment.id}:${payment.status ?? 'unknown'}:${eventTimestamp}`
+
+    // 1. Audit trail fora da tx (best-effort)
+    try {
+      const record = await (app.prisma as any).asaasWebhookEvent.create({
+        data: {
+          dedupKey,
+          event,
+          paymentId: payment.id,
+          rentalId,
+          status: payment.status ?? null,
+          payload: body as any,
+        },
+        select: { id: true },
+      })
+      eventRecordId = record.id
+    } catch (err: any) {
+      if (err?.code === 'P2002') {
+        app.log.info(`[asaas-webhook] Duplicate event (asaasWebhookEvent): ${dedupKey}`)
+        return reply.send({ success: true, duplicate: true, event, paymentId: payment.id })
+      }
+      app.log.warn(`[asaas-webhook] Dedup record creation failed (continuing): ${err?.message ?? err}`)
+    }
 
     try {
-      // Idempotency guard — uses DB UNIQUE constraint on eventKey to handle
-      // concurrent re-deliveries atomically (no race window between check and insert).
-      const eventKey = `asaas:${event}:${payment.id}`
-      try {
-        await (app.prisma as any).webhookProcessedEvent.create({
-          data: {
-            eventKey,
-            provider: 'asaas',
-            eventType: event,
-            externalId: payment.id,
-            payload: { event, paymentId: payment.id, status: payment.status },
-          },
-        })
-      } catch (uniqueErr: any) {
-        // P2002 = Prisma unique constraint violation → duplicate delivery
-        if (uniqueErr?.code === 'P2002') {
-          app.log.info(`[asaas-webhook] Duplicate event skipped: ${eventKey}`)
-          return reply.send({ success: true, skipped: true })
+      let duplicateSkipped = false
+
+      // 2. Transação atômica cobrindo side-effects financeiros
+      await app.prisma.$transaction(async (tx) => {
+        // 2a. Gate de idempotência primário — UNIQUE eventKey atômico.
+        //     Se duplicado (P2002), levantamos um erro marcador para que
+        //     o .catch() fora da tx reconheça como duplicata (não falha).
+        try {
+          await (tx as any).webhookProcessedEvent.create({
+            data: {
+              eventKey,
+              provider: 'asaas',
+              eventType: event,
+              externalId: payment.id,
+              payload: { event, paymentId: payment.id, status: payment.status },
+            },
+          })
+        } catch (uniqueErr: any) {
+          if (uniqueErr?.code === 'P2002') {
+            throw Object.assign(new Error('__DUPLICATE__'), { __duplicate: true })
+          }
+          throw uniqueErr
         }
-        throw uniqueErr
-      }
 
-      // Extract rentalId from externalReference (format: "rental:clxxxxxx")
-      const externalRef = (payment as any).externalReference as string | undefined
-      const rentalId = externalRef?.startsWith('rental:') ? externalRef.replace('rental:', '') : null
+        // 2b. Side-effects específicos por tipo de evento
+        switch (event) {
+          case 'PAYMENT_RECEIVED':
+          case 'PAYMENT_CONFIRMED': {
+            if (!rentalId) {
+              app.log.info(`[asaas-webhook] ${event} sem rentalId — nada a atualizar`)
+              return
+            }
 
-      // ─── Idempotency gate ───────────────────────────────────────────────────
-      // Asaas pode reentregar eventos em caso de timeout / retry.
-      // Primeiro tentamos inserir um registro na tabela de dedup com UNIQUE
-      // em dedupKey. Se falhar (P2002), é duplicata — pulamos com 200 OK.
-      const eventTimestamp =
-        (payment as any).confirmedDate ||
-        (payment as any).clientPaymentDate ||
-        body.dateCreated ||
-        ''
-      const dedupKey = body.id
-        ? `asaas:${body.id}`
-        : `asaas:${event}:${payment.id}:${payment.status ?? 'unknown'}:${eventTimestamp}`
-
-      try {
-        const record = await (app.prisma as any).asaasWebhookEvent.create({
-          data: {
-            dedupKey,
-            event,
-            paymentId: payment.id,
-            rentalId,
-            status: payment.status ?? null,
-            payload: body as any,
-          },
-          select: { id: true },
-        })
-        eventRecordId = record.id
-      } catch (err: any) {
-        // P2002 unique constraint violation = duplicate webhook, já processamos
-        if (err?.code === 'P2002') {
-          app.log.info(`[asaas-webhook] Duplicate event ignored: ${dedupKey}`)
-          return reply.send({ success: true, duplicate: true, event, paymentId: payment.id })
-        }
-        // Tabela pode não existir ainda em alguns ambientes — continua sem dedup
-        app.log.warn(`[asaas-webhook] Dedup record creation failed (continuing): ${err?.message ?? err}`)
-      }
-
-      switch (event) {
-        case 'PAYMENT_RECEIVED':
-        case 'PAYMENT_CONFIRMED': {
-          // 1. Atualiza o rental para PAID
-          if (rentalId) {
-            await app.prisma.rental.update({
+            await tx.rental.update({
               where: { id: rentalId },
               data: {
                 status: 'PAID',
@@ -132,83 +142,94 @@ export default async function asaasWebhookRoutes(app: FastifyInstance) {
                 paidAmount: payment.value ? { set: payment.value } : undefined,
                 paymentMethod: payment.billingType || 'UNDEFINED',
               },
-            }).catch((e: any) => app.log.warn(`[asaas-webhook] Rental update failed: ${e.message}`))
-
-            // 2. Log the payment
-            const rental = await app.prisma.rental.findUnique({
-              where: { id: rentalId },
-              include: { contract: { select: { companyId: true, tenantName: true, propertyAddress: true, landlordName: true, landlordId: true, commission: true } } },
             })
 
-            if (rental?.contract) {
-              await app.prisma.auditLog.create({
-                data: {
-                  companyId: rental.contract.companyId,
-                  action: 'rental.pay',
-                  resource: 'rental',
-                  resourceId: rentalId,
-                  payload: {
-                    asaasId: payment.id,
-                    value: payment.value,
-                    netValue: payment.netValue,
-                    billingType: payment.billingType,
-                    tenantName: rental.contract.tenantName,
-                    propertyAddress: rental.contract.propertyAddress,
-                    source: 'asaas_webhook',
+            const rental = await tx.rental.findUnique({
+              where: { id: rentalId },
+              include: {
+                contract: {
+                  select: {
+                    companyId: true,
+                    tenantName: true,
+                    propertyAddress: true,
+                    landlordName: true,
+                    landlordId: true,
+                    commission: true,
                   },
                 },
-              }).catch(() => {})
+              },
+            })
 
-              // 3. Schedule D+7 repasse to landlord
-              const contract = rental.contract as any
-              if (contract.landlordId && payment.value) {
-                // Check if this company has a tenant (SaaS clone) for commission split
-                const tenant = await (app.prisma as any).tenant?.findFirst?.({
-                  where: { companyId: contract.companyId, isActive: true },
-                  select: { id: true, splitPercent: true, repasseDelayDays: true, repasseFixedDay: true },
-                }).catch(() => null)
-
-                await scheduleRepasse(app.prisma as any, {
-                  tenantId: tenant?.id || undefined,
-                  companyId: contract.companyId,
-                  contractId: rental.contractId,
-                  rentalId,
-                  landlordId: contract.landlordId,
-                  grossValue: payment.value,
-                  // ?? em vez de || para preservar 0% de comissão (|| colapsaria 0 para o default)
-                  commissionPercent: contract.commission != null ? Number(contract.commission) : 10,
-                  // idem para atraso — tenant pode configurar D+0 (repasse imediato)
-                  delayDays: tenant?.repasseDelayDays ?? 7,
-                  fixedDay: tenant?.repasseFixedDay ?? undefined,
-                }).catch((e: any) => {
-                  app.log.warn(`[asaas-webhook] Repasse scheduling failed: ${e.message}`)
-                })
-
-                app.log.info(`[asaas-webhook] Repasse D+${tenant?.repasseDelayDays ?? 7} scheduled for rental ${rentalId} (R$ ${payment.value})`)
-              }
-
-              app.log.info(`[asaas-webhook] Rental ${rentalId} marked as PAID (${payment.billingType}, R$ ${payment.value})`)
+            if (!rental?.contract) {
+              app.log.warn(`[asaas-webhook] Rental ${rentalId} sem contrato — sem audit/repasse`)
+              return
             }
-          }
-          break
-        }
+            const contract = rental.contract as any
 
-        case 'PAYMENT_OVERDUE': {
-          if (rentalId) {
-            await app.prisma.rental.update({
+            // Audit log OBRIGATÓRIO — sem silent catch. Qualquer falha reverte a tx.
+            await tx.auditLog.create({
+              data: {
+                companyId: contract.companyId,
+                action: 'rental.pay',
+                resource: 'rental',
+                resourceId: rentalId,
+                payload: {
+                  asaasId: payment.id,
+                  value: payment.value,
+                  netValue: payment.netValue,
+                  billingType: payment.billingType,
+                  tenantName: contract.tenantName,
+                  propertyAddress: contract.propertyAddress,
+                  source: 'asaas_webhook',
+                },
+              },
+            })
+
+            // Outbox: ScheduledRepasse (+ SaasCommissionLog via service).
+            // processDueRepasses drena a fila periodicamente
+            // (wired em scheduled.jobs.ts).
+            if (contract.landlordId && payment.value) {
+              const tenant = await (tx as any).tenant.findFirst({
+                where: { companyId: contract.companyId, isActive: true },
+                select: { id: true, splitPercent: true, repasseDelayDays: true, repasseFixedDay: true },
+              })
+
+              await scheduleRepasse(tx as any, {
+                tenantId: tenant?.id || undefined,
+                companyId: contract.companyId,
+                contractId: rental.contractId || undefined,
+                rentalId,
+                landlordId: contract.landlordId,
+                grossValue: Number(payment.value),
+                // ?? preserva 0% de comissão (|| colapsaria para o default 10)
+                commissionPercent: contract.commission != null ? Number(contract.commission) : 10,
+                delayDays: tenant?.repasseDelayDays ?? 7,
+                fixedDay: tenant?.repasseFixedDay ?? undefined,
+              })
+
+              app.log.info(
+                `[asaas-webhook] Repasse D+${tenant?.repasseDelayDays ?? 7} agendado para rental ${rentalId} (R$ ${payment.value})`,
+              )
+            }
+
+            app.log.info(`[asaas-webhook] Rental ${rentalId} marcado como PAID (${payment.billingType}, R$ ${payment.value})`)
+            break
+          }
+
+          case 'PAYMENT_OVERDUE': {
+            if (!rentalId) break
+            await tx.rental.update({
               where: { id: rentalId },
               data: { status: 'LATE' },
-            }).catch((e: any) => app.log.warn(`[asaas-webhook] Rental overdue update failed: ${e.message}`))
-
-            app.log.info(`[asaas-webhook] Rental ${rentalId} marked as LATE`)
+            })
+            app.log.info(`[asaas-webhook] Rental ${rentalId} marcado como LATE`)
+            break
           }
-          break
-        }
 
-        case 'PAYMENT_DELETED':
-        case 'PAYMENT_REFUNDED': {
-          if (rentalId) {
-            await app.prisma.rental.update({
+          case 'PAYMENT_DELETED':
+          case 'PAYMENT_REFUNDED': {
+            if (!rentalId) break
+            await tx.rental.update({
               where: { id: rentalId },
               data: {
                 status: 'PENDING',
@@ -217,18 +238,35 @@ export default async function asaasWebhookRoutes(app: FastifyInstance) {
                 reversedAt: new Date(),
                 reversalReason: event === 'PAYMENT_REFUNDED' ? 'Estorno via Asaas' : 'Cancelamento via Asaas',
               },
-            }).catch((e: any) => app.log.warn(`[asaas-webhook] Rental reversal update failed: ${e.message}`))
-
-            app.log.info(`[asaas-webhook] Rental ${rentalId} reversed (${event})`)
+            })
+            app.log.info(`[asaas-webhook] Rental ${rentalId} revertido (${event})`)
+            break
           }
-          break
-        }
 
-        default:
-          app.log.info(`[asaas-webhook] Unhandled event: ${event}`)
+          default:
+            app.log.info(`[asaas-webhook] Evento não tratado: ${event}`)
+        }
+      }, {
+        timeout: 20_000,
+        maxWait: 5_000,
+      }).catch((err: any) => {
+        if (err?.__duplicate) {
+          duplicateSkipped = true
+          return
+        }
+        throw err
+      })
+
+      if (duplicateSkipped) {
+        app.log.info(`[asaas-webhook] Duplicate event skipped (tx rollback): ${eventKey}`)
+        if (eventRecordId) {
+          await (app.prisma as any).asaasWebhookEvent
+            .update({ where: { id: eventRecordId }, data: { processedAt: new Date(), result: 'duplicate' } })
+            .catch(() => {})
+        }
+        return reply.send({ success: true, skipped: true, reason: 'duplicate', event, paymentId: payment.id })
       }
 
-      // Marca o evento de dedup como processado com sucesso
       if (eventRecordId) {
         await (app.prisma as any).asaasWebhookEvent
           .update({
@@ -236,13 +274,12 @@ export default async function asaasWebhookRoutes(app: FastifyInstance) {
             data: { processedAt: new Date(), result: 'ok' },
           })
           .catch((err: any) =>
-            app.log.warn(`[asaas-webhook] Failed to mark event ${eventRecordId} as processed: ${err?.message ?? err}`),
+            app.log.warn(`[asaas-webhook] Falha ao marcar evento ${eventRecordId} como processado: ${err?.message ?? err}`),
           )
       }
       return reply.send({ success: true, event, paymentId: payment.id })
     } catch (error: any) {
-      app.log.error(`[asaas-webhook] Error processing event ${event}:`, error.message)
-      // Marca dedup record como erro para auditoria — útil para replay manual
+      app.log.error(`[asaas-webhook] Erro processando evento ${event}: ${error?.message ?? error}`)
       if (eventRecordId) {
         await (app.prisma as any).asaasWebhookEvent
           .update({
@@ -251,8 +288,9 @@ export default async function asaasWebhookRoutes(app: FastifyInstance) {
           })
           .catch(() => {})
       }
-      // Return 200 to prevent Asaas from retrying (log the error)
-      return reply.send({ success: false, error: error.message })
+      // 500 → Asaas retenta. O rollback da tx garante que nada foi
+      // persistido parcialmente, então replay é seguro.
+      return reply.status(500).send({ success: false, error: error?.message ?? String(error) })
     }
   })
 }

@@ -503,6 +503,25 @@ export async function runScheduledJobs(app: FastifyInstance) {
     app.log.error({ err }, '[scheduled] follow-ups failed')
   }
 
+  // ── 8b. OUTBOX DRAIN: processa ScheduledRepasse vencidos ─────────────────
+  //   Esta é a contraparte do finance/webhook.ts — o webhook enfileira
+  //   o repasse como outbox entry (dentro da $transaction), e este job
+  //   periódico drena a fila executando as transferências Asaas.
+  //   Idempotência: processDueRepasses marca status = PROCESSING antes
+  //   de tentar, e COMPLETED/FAILED ao terminar. Re-runs só pegam
+  //   registros em SCHEDULED.
+  try {
+    const { processDueRepasses } = await import('./repasse.service.js')
+    const repasseResult = await processDueRepasses(app.prisma as any)
+    if (repasseResult.processed > 0) {
+      app.log.info(
+        `[scheduled] repasse-outbox: processed=${repasseResult.processed} succeeded=${repasseResult.succeeded} failed=${repasseResult.failed}`,
+      )
+    }
+  } catch (err) {
+    app.log.error({ err }, '[scheduled] repasse-outbox failed')
+  }
+
   // ── 9. Street View batch: capture facades for auctions/properties missing images ──
   if (hour === 13 && minute < 30) {
     try {

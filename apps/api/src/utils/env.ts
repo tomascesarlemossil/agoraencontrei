@@ -91,6 +91,10 @@ const envSchema = z.object({
   // Clicksign — digital signatures
   CLICKSIGN_ACCESS_TOKEN: z.string().optional(),
   CLICKSIGN_BASE_URL: z.string().optional(),
+
+  // Image Processor — Python microservice (apps/image-processor)
+  IMAGE_PROCESSOR_URL: z.string().default('http://localhost:3200'),
+  IMAGE_PROCESSOR_TOKEN: z.string().optional(),
 })
 
 function parseEnv() {
@@ -136,6 +140,7 @@ export function logEnvWarnings(logger: { warn: (msg: string) => void }) {
     ['ASAAS_API_KEY',        'Boleto/cobrança via Asaas will not work'],
     ['APIFY_API_TOKEN',      'Apify scrapers (Caixa, Santander, OLX) will not run'],
     ['CLOUDINARY_CLOUD_NAME','Cloudinary image presets and watermark will not work'],
+    ['IMAGE_PROCESSOR_TOKEN','image-processor (Python) rejects all requests until set (fail-closed)'],
   ]
   for (const [key, impact] of warnings) {
     if (!process.env[key]) {
