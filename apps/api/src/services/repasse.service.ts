@@ -157,6 +157,20 @@ export async function processDueRepasses(
   prisma: PrismaClient,
 ): Promise<{ processed: number; succeeded: number; failed: number }> {
   const now = new Date()
+
+  // Staleness sweep: se algum repasse ficou preso em PROCESSING por >15 min
+  // (processo crashou entre a marcação PROCESSING e o resultado do
+  // Asaas), rebaixa para SCHEDULED com pequeno atraso para retomar na
+  // próxima rodada. Impede o deadlock "for-ever PROCESSING".
+  const STALE_MS = 15 * 60 * 1000
+  const staleCutoff = new Date(now.getTime() - STALE_MS)
+  await (prisma as any).scheduledRepasse.updateMany({
+    where: { status: 'PROCESSING', updatedAt: { lt: staleCutoff } },
+    data: { status: 'SCHEDULED', scheduledDate: new Date(now.getTime() + 60_000) },
+  }).catch(() => {
+    /* best-effort — se a coluna updatedAt não existir, o sweep é no-op */
+  })
+
   const dueRepasses = await (prisma as any).scheduledRepasse.findMany({
     where: {
       status: 'SCHEDULED',
@@ -198,12 +212,15 @@ export async function processDueRepasses(
         },
       })
 
-      // Also mark SaaS commission as processed
+      // Also mark SaaS commission as processed. Falha aqui cai no catch
+      // externo → repasse vai para FAILED, e saasCommissionLog fica PENDING
+      // para reconciliação manual. Sem silent catch: nada de comissão
+      // "fantasma" em COMPLETED sem evidência.
       if (repasse.tenantId) {
         await (prisma as any).saasCommissionLog.updateMany({
           where: { transactionId: repasse.id, status: 'PENDING' },
           data: { status: 'COMPLETED', processedAt: new Date() },
-        }).catch(() => {})
+        })
       }
 
       succeeded++

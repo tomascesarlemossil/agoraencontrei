@@ -189,8 +189,12 @@ export default async function asaasWebhookRoutes(app: FastifyInstance) {
             // processDueRepasses drena a fila periodicamente
             // (wired em scheduled.jobs.ts).
             if (contract.landlordId && payment.value) {
+              // Ordem determinística por createdAt evita selecionar tenant
+              // arbitrário quando a company tem múltiplos tenants ativos
+              // (cenário raro, mas possível em SaaS multi-filial).
               const tenant = await (tx as any).tenant.findFirst({
                 where: { companyId: contract.companyId, isActive: true },
+                orderBy: { createdAt: 'asc' },
                 select: { id: true, splitPercent: true, repasseDelayDays: true, repasseFixedDay: true },
               })
 

@@ -509,7 +509,7 @@ export default async function publicRoutes(app: FastifyInstance) {
     if (cached) return reply.send(cached)
 
     const items = await app.prisma.property.findMany({
-      where:   { status: 'ACTIVE', authorizedPublish: true, isFeatured: true },
+      where:   { companyId: company.id, status: 'ACTIVE', authorizedPublish: true, isFeatured: true },
       select:  PUBLIC_PROPERTY_SELECT,
       orderBy: [{ createdAt: 'desc' }, { updatedAt: 'desc' }],
       take:    8,
