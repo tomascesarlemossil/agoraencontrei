@@ -123,6 +123,26 @@ const app = Fastify({
     }),
   },
   trustProxy: true,
+  // Observabilidade: propagação de request-id ────────────────────────────
+  // Se a request chega com x-request-id (vindo de um gateway, cliente que
+  // correlaciona logs, Railway/Vercel edge), usamos esse mesmo id como
+  // req.id. O pino então inclui ele em TODOS os logs da request, e clientes
+  // podem correlacionar traces entre API, workers BullMQ (que já usam
+  // req.id em jobs), e logs agregados. Sem essa propagação, cada camada
+  // gera um id independente e quebra o trace.
+  //
+  // Limitamos o tamanho/charset para evitar log-injection (ex.: newline em
+  // header que quebra parser de logs). Regex defensiva: só alfanumérico,
+  // hífen, underline, ponto; max 64 chars.
+  requestIdHeader: 'x-request-id',
+  genReqId(req) {
+    const incoming = req.headers['x-request-id']
+    if (typeof incoming === 'string' && /^[A-Za-z0-9._-]{1,64}$/.test(incoming)) {
+      return incoming
+    }
+    // Fallback — gera UUID v4 curto. Math.random é OK aqui (não é chave de segurança).
+    return `req_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`
+  },
   ajv: {
     customOptions: {
       removeAdditional: 'all',
@@ -130,6 +150,12 @@ const app = Fastify({
       useDefaults: true,
     },
   },
+})
+
+// Echo do request-id no response header — permite que clientes/loadbalancers
+// capturem o id e correlacionem com os logs do servidor.
+app.addHook('onSend', async (req, reply) => {
+  reply.header('x-request-id', req.id)
 })
 
 async function runMigrations(prisma: any) {

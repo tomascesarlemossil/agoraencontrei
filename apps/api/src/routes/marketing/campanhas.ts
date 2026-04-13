@@ -117,17 +117,34 @@ export default async function campanhasRoutes(app: FastifyInstance) {
       ? Math.max(0, campanha.agendadoPara.getTime() - Date.now())
       : 0
 
-    await campaignsQueue.add(
-      'send',
-      { campanhaId: id, companyId: cid },
-      {
-        delay: delayMs,
-        attempts: 2,
-        backoff: { type: 'exponential', delay: 5000 },
-        removeOnComplete: { count: 100 },
-        removeOnFail:     { count: 200 },
-      },
-    )
+    // jobId = 'campaign:<id>' garante idempotência forte no BullMQ.
+    // Cenário protegido: double-click no botão "Enviar", retry do cliente,
+    // ou reenvio concorrente. O check `status === 'SENDING'` acima já
+    // fornece uma primeira camada, mas entre o check e o add há janela
+    // de corrida — o jobId fecha essa janela no nível da fila.
+    try {
+      await campaignsQueue.add(
+        'send',
+        { campanhaId: id, companyId: cid },
+        {
+          jobId: `campaign:${id}`,
+          delay: delayMs,
+          attempts: 2,
+          backoff: { type: 'exponential', delay: 5000 },
+          removeOnComplete: { count: 100 },
+          removeOnFail:     { count: 200 },
+        },
+      )
+    } catch (err: any) {
+      // Compensação: se o enqueue falhar (Redis down, payload reject),
+      // o status não deve avançar para SENDING/SCHEDULED — o usuário
+      // precisa saber que a campanha NÃO foi despachada.
+      app.log.warn({ err, campanhaId: id }, 'campaign: failed to enqueue')
+      return reply.status(503).send({
+        error: 'ENQUEUE_FAILED',
+        message: `Não foi possível enfileirar a campanha: ${err?.message?.slice(0, 200) ?? 'erro desconhecido'}`,
+      })
+    }
 
     const status = delayMs > 0 ? 'SCHEDULED' : 'SENDING'
     await app.prisma.marketingCampaign.update({ where: { id }, data: { status } })

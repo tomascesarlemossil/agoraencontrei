@@ -1,5 +1,27 @@
 import type { FastifyInstance } from 'fastify'
 
+// ── Response shapes dos provedores públicos de CEP ─────────────────────────
+// ViaCEP: https://viacep.com.br/ws/{cep}/json/  — campos em português
+// BrasilAPI v2: https://brasilapi.com.br/api/cep/v2/{cep} — campos em inglês
+interface ViaCepResponse {
+  cep?: string
+  logradouro?: string
+  bairro?: string
+  localidade?: string
+  uf?: string
+  erro?: boolean
+  [k: string]: unknown
+}
+
+interface BrasilApiResponse {
+  cep?: string
+  street?: string
+  neighborhood?: string
+  city?: string
+  state?: string
+  [k: string]: unknown
+}
+
 export default async function cepRoutes(app: FastifyInstance) {
   // GET /api/v1/cep/:cep — Proxy para ViaCEP (evita CORS no browser)
   app.get('/:cep', async (req, reply) => {
@@ -24,7 +46,7 @@ export default async function cepRoutes(app: FastifyInstance) {
         }).catch(() => null)
 
         if (res2 && res2.ok) {
-          const data2 = await res2.json()
+          const data2 = await res2.json() as BrasilApiResponse
           return reply.send({
             cep: data2.cep,
             logradouro: data2.street || '',
@@ -38,7 +60,7 @@ export default async function cepRoutes(app: FastifyInstance) {
         return reply.status(404).send({ error: 'CEP_NOT_FOUND' })
       }
 
-      const data = await res.json()
+      const data = await res.json() as ViaCepResponse
 
       if (data.erro) {
         // Fallback: tentar BrasilAPI
@@ -48,7 +70,7 @@ export default async function cepRoutes(app: FastifyInstance) {
         }).catch(() => null)
 
         if (res2 && res2.ok) {
-          const data2 = await res2.json()
+          const data2 = await res2.json() as BrasilApiResponse
           return reply.send({
             cep: data2.cep,
             logradouro: data2.street || '',
@@ -72,7 +94,7 @@ export default async function cepRoutes(app: FastifyInstance) {
         })
 
         if (res2.ok) {
-          const data2 = await res2.json()
+          const data2 = await res2.json() as BrasilApiResponse
           return reply.send({
             cep: data2.cep,
             logradouro: data2.street || '',

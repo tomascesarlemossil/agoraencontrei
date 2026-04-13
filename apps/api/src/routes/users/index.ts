@@ -571,6 +571,7 @@ export default async function usersRoutes(app: FastifyInstance) {
           await app.prisma.property.create({
             data: {
               companyId,
+              userId: req.user.sub, // Property exige o usuário responsável — usa quem fez o import.
               title: title || `${type} em ${city || 'N/A'}`,
               slug,
               type: (['HOUSE','APARTMENT','LAND','FARM','WAREHOUSE','OFFICE','STORE','STUDIO','PENTHOUSE','CONDO','KITNET'].includes(type) ? type : 'HOUSE') as any,

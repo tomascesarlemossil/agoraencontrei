@@ -423,6 +423,9 @@ async function executeTool(
                 where: { id: existingContact.id },
                 data: {
                   notes: [existingContact.notes, `[${tag}] ${toolInput.notes || ''}`].filter(Boolean).join('\n'),
+                  // Prisma espera InputJsonValue — toolInput é tipado como
+                  // unknown (vem do LLM). Cast para any aqui é aceitável
+                  // porque validação de forma foi feita no schema do tool.
                   metadata: {
                     ...(existingContact.metadata as object || {}),
                     tag,
@@ -430,7 +433,7 @@ async function executeTool(
                     intent: toolInput.intent,
                     budgetMax: toolInput.budgetMax,
                     neighborhoods: toolInput.neighborhoods,
-                  },
+                  } as any,
                 },
               })
             }
@@ -458,13 +461,15 @@ async function executeTool(
               notes: isHunterMode
                 ? `[URGENTE_BUSCA_EXTERNA] ${toolInput.notes || ''}`
                 : (toolInput.notes as string || undefined),
+              // Cast para any: toolInput vem do LLM (unknown). Validação de
+              // forma é feita a montante pelo JSON schema do tool.
               metadata: {
                 intent: toolInput.intent,
                 budgetMax: toolInput.budgetMax,
                 city: toolInput.city,
                 neighborhoods: toolInput.neighborhoods,
                 ...(tag ? { tag } : {}),
-              },
+              } as any,
             },
           })
 
@@ -757,7 +762,10 @@ export async function persistMessages(
         chatId,
         role: 'assistant',
         content: response.message,
-        actions: response.actions.length ? response.actions : undefined,
+        // TomasAction[] é JSON-serializável, mas o tipo do Prisma é
+        // InputJsonValue (estrutural). Cast explícito: seguro porque
+        // TomasAction contém apenas strings/nums/bools/arrays.
+        actions: (response.actions.length ? response.actions : undefined) as any,
       },
     ],
   })

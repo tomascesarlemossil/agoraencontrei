@@ -191,13 +191,18 @@ export async function processDueRepasses(
     })
 
     try {
-      // Attempt Asaas transfer if API key is configured
+      // Attempt Asaas transfer if API key is configured.
+      // idempotencyKey = repasse.id garante que reenvios (worker reiniciado
+      // entre request e resposta do Asaas, retry manual, race) NÃO resultem
+      // em transferência duplicada — Asaas honra a mesma chave retornando
+      // o recurso original em vez de criar novo.
       let asaasTransferId: string | null = null
       if (ASAAS_API_KEY) {
         const transferResult = await executeAsaasTransfer(
           repasse.netValue,
           repasse.landlordId,
           `Repasse ${repasse.id}`,
+          repasse.id,
         )
         asaasTransferId = transferResult?.id || null
       }
@@ -356,20 +361,44 @@ export async function getTenantCommissions(
 // estourar, processDueRepasses marca o item como FAILED e segue.
 const ASAAS_TRANSFER_TIMEOUT_MS = 10_000
 
+/**
+ * Executa transferência via Asaas API v3.
+ *
+ * idempotencyKey (opcional mas fortemente recomendado): chave estável passada
+ * no header `idempotency-key` — Asaas usa isso para deduplificar requests
+ * que chegam 2x (retry de rede, worker re-processando, crash entre request
+ * e resposta). Sem isso, um retry-storm pode resultar em N transferências
+ * reais para o mesmo repasse. Com isso, Asaas retorna o recurso original.
+ *
+ * Ref: https://docs.asaas.com/reference/idempotencia (header oficial).
+ *
+ * A chave deve ser:
+ *   - Estável para a mesma operação lógica (usamos repasse.id — id interno imutável).
+ *   - Única por operação distinta (repasses diferentes = chaves diferentes).
+ *   - Com TTL aceitável na Asaas (padrão 24h é suficiente para nosso D+7).
+ */
 async function executeAsaasTransfer(
   value: number,
   walletId: string,
   description: string,
+  idempotencyKey?: string,
 ): Promise<{ id: string } | null> {
   if (!ASAAS_API_KEY) return null
+
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    'access_token': ASAAS_API_KEY,
+  }
+  if (idempotencyKey) {
+    // Prefixo evita colisão caso alguma outra parte do sistema use o mesmo id
+    // bruto para outra operação Asaas (ex.: cobrança vs transferência).
+    headers['idempotency-key'] = `repasse:${idempotencyKey}`
+  }
 
   try {
     const res = await fetch(`${ASAAS_BASE_URL}/transfers`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'access_token': ASAAS_API_KEY,
-      },
+      headers,
       body: JSON.stringify({
         value,
         walletId,

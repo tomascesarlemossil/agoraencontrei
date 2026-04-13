@@ -266,7 +266,8 @@ export async function addDomainToVercel(
       },
     )
 
-    const data = await res.json()
+    // Vercel API response — apenas `error.message` é consumido quando !ok.
+    const data = await res.json() as { error?: { message?: string } } & Record<string, unknown>
 
     if (!res.ok) {
       return { success: false, error: data.error?.message || 'Vercel API error' }

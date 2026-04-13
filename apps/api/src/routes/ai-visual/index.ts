@@ -47,7 +47,11 @@ export default async function aiVisualRoutes(app: FastifyInstance) {
       },
     })
 
-    // Enqueue via shared BullMQ queue (decorated by automation plugin)
+    // Enqueue via shared BullMQ queue (decorated by automation plugin).
+    // jobId = job.id garante idempotência no BullMQ — se a rota for chamada
+    // 2x simultâneas (retry do cliente, double-click), o segundo add é
+    // descartado silenciosamente pelo Bull e não resulta em processamento
+    // duplicado (que gastaria créditos Veras/mnml/Imagen).
     const visualAIQueue = (app as any).visualAIQueue
     if (visualAIQueue) {
       try {
@@ -59,13 +63,25 @@ export default async function aiVisualRoutes(app: FastifyInstance) {
           propertyId: body.propertyId,
           companyId:  cid,
         }, {
+          jobId: job.id,
           attempts: 2,
           backoff: { type: 'fixed', delay: 5000 },
           removeOnComplete: { count: 100 },
           removeOnFail:     { count: 200 },
         })
-      } catch (err) {
-        app.log.warn({ err }, 'visual-ai: failed to enqueue (non-fatal)')
+      } catch (err: any) {
+        // Compensação: marca o job como ERROR para não ficar PENDING
+        // indefinidamente no dashboard caso o enqueue falhe (Redis down,
+        // payload reject). Sem isso, o usuário vê o job "preso" em PENDING
+        // sem nenhuma pista do motivo.
+        app.log.warn({ err, jobId: job.id }, 'visual-ai: failed to enqueue')
+        await app.prisma.visualAIJob.update({
+          where: { id: job.id },
+          data: {
+            status: 'ERROR',
+            errorMsg: `Queue enqueue failed: ${err?.message?.slice(0, 480) ?? 'unknown'}`,
+          },
+        }).catch(() => { /* best-effort */ })
       }
     }
 

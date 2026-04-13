@@ -1,5 +1,6 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 import { z } from 'zod'
+import type { Prisma, AuctionStatus } from '@prisma/client'
 import { calculateAcquisitionCosts, getStateCosts, validateDocument } from '../../utils/brazil-costs.js'
 import { CaixaScraper } from '../../services/scrapers/caixa-scraper.js'
 import { GenericLeiloeiroScraper, BANCOS_CONFIG } from '../../services/scrapers/generic-scraper.js'
@@ -351,7 +352,11 @@ export default async function auctionsRoutes(app: FastifyInstance) {
 
   // ── GET /auctions/stats — Estatísticas completas para dashboard ─────────────
   app.get('/stats', async (_req: FastifyRequest, reply: FastifyReply) => {
-    const activeWhere = { status: { notIn: ['CANCELLED', 'CLOSED'] as string[] } }
+    // AuctionStatus é um enum do Prisma, não string — tipagem explícita
+    // evita erro TS2322 ao fazer notIn com strings genéricas.
+    const activeWhere: Prisma.AuctionWhereInput = {
+      status: { notIn: ['CANCELLED', 'CLOSED'] as AuctionStatus[] },
+    }
 
     const [total, bySource, byStatus, avgDiscount, topCities, maxDiscountAuction, recentRuns, latestAuctions] = await Promise.all([
       app.prisma.auction.count({ where: activeWhere }),
@@ -421,21 +426,23 @@ export default async function auctionsRoutes(app: FastifyInstance) {
 
     return reply.send({
       total,
+      // Prisma tipa _count / _avg como possivelmente undefined quando a query
+      // combina select customizado — defensive access com ?. + ?? 0.
       bySource: bySource.map(s => ({
         source: s.source,
-        count: s._count.id,
-        avgDiscount: s._avg.discountPercent ? Number(Number(s._avg.discountPercent).toFixed(1)) : 0,
+        count: s._count?.id ?? 0,
+        avgDiscount: s._avg?.discountPercent ? Number(Number(s._avg.discountPercent).toFixed(1)) : 0,
       })),
-      byStatus: byStatus.map(s => ({ status: s.status, count: s._count.id })),
-      averageDiscount: avgDiscount._avg.discountPercent
+      byStatus: byStatus.map(s => ({ status: s.status, count: s._count?.id ?? 0 })),
+      averageDiscount: avgDiscount._avg?.discountPercent
         ? Number(avgDiscount._avg.discountPercent.toFixed(1))
         : 0,
       topCities: topCities.map(c => ({
         city: c.city,
         state: c.state,
-        count: c._count.id,
-        avgDiscount: c._avg.discountPercent ? Number(Number(c._avg.discountPercent).toFixed(1)) : 0,
-        avgScore: c._avg.opportunityScore ? Number(Number(c._avg.opportunityScore).toFixed(0)) : 0,
+        count: c._count?.id ?? 0,
+        avgDiscount: c._avg?.discountPercent ? Number(Number(c._avg.discountPercent).toFixed(1)) : 0,
+        avgScore: c._avg?.opportunityScore ? Number(Number(c._avg.opportunityScore).toFixed(0)) : 0,
       })),
       maxDiscount: maxDiscountAuction ? {
         percent: maxDiscountAuction.discountPercent ? Number(Number(maxDiscountAuction.discountPercent).toFixed(1)) : 0,
@@ -910,7 +917,8 @@ export default async function auctionsRoutes(app: FastifyInstance) {
         discountPercent: true, opportunityScore: true, estimatedROI: true,
         auctionDate: true, firstRoundDate: true, secondRoundDate: true,
         occupation: true, hasDebts: true, financingAvailable: true, fgtsAllowed: true,
-        coverImage: true, streetViewUrl: true, bankName: true, auctioneerName: true,
+        // streetViewUrl não existe no model Auction (só em Property) — removido.
+        coverImage: true, bankName: true, auctioneerName: true,
         processNumber: true, court: true, debtorName: true,
       },
     })
