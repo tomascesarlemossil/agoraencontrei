@@ -84,7 +84,7 @@ export function Navbar() {
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
-  // Bloquear scroll do body completamente quando menu mobile está aberto
+  // Scroll-lock empilhável (hook compartilhado — seguro com múltiplos modais)
   useBodyScrollLock(menuOpen)
 
   useEffect(() => {

@@ -245,6 +245,7 @@ export function SmartQuiz({ children }: { children?: React.ReactNode }) {
     setFormData({ name: '', phone: '', email: '' })
   }
 
+  // Scroll-lock empilhável
   useBodyScrollLock(isOpen)
 
   return (

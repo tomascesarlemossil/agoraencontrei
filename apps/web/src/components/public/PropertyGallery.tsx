@@ -45,7 +45,7 @@ function Lightbox({
     return () => window.removeEventListener('keydown', handler)
   }, [prev, next, onClose])
 
-  // Lightbox is mounted only when open — lock unconditionally while mounted
+  // Scroll-lock empilhável — lightbox is mounted only when open
   useBodyScrollLock(true)
 
   // Touch swipe

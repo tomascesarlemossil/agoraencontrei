@@ -10,22 +10,56 @@
  */
 import { NextRequest, NextResponse } from 'next/server'
 
+// Whitelist de hosts de imagens externas. IMPORTANTE: não incluir hosts
+// internos (localhost, 127.0.0.1, *.internal, 10.*, 172.16-31.*, 192.168.*)
+// para evitar SSRF de rede privada.
+//
+// Cobre os provedores de storage usados pelo sistema:
+// - AWS S3 (qualquer região) via .amazonaws.com
+// - Cloudinary via .cloudinary.com
+// - AWS CloudFront via .cloudfront.net
+// - Supabase Storage (legacy) via .supabase.co / .supabase.in
+// - Google Cloud Storage via storage.googleapis.com
+// - Google Photos / avatars via lh3.googleusercontent.com
+// - CDN próprio / parceiro (cdnuso.com, cdn2.uso.com.br)
+// - Logos/imagens hospedadas em agoraencontrei.com.br
 const ALLOWED_HOSTS = [
   '.amazonaws.com',
   '.cloudinary.com',
   '.cloudfront.net',
+  '.supabase.co',
+  '.supabase.in',
   'res.cloudinary.com',
+  'storage.googleapis.com',
   'agoraencontrei.com.br',
+  '.agoraencontrei.com.br',
   'cdnuso.com',
   'cdn2.uso.com.br',
   'lh3.googleusercontent.com',
 ]
 
-/** Block SSRF via private / loopback / link-local addresses */
-const PRIVATE_IP_RE =
-  /^(localhost|127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|169\.254\.|0\.|::1|fc00:|fe80:)/i
-
 const MAX_SIZE = 15 * 1024 * 1024 // 15MB
+
+// Bloqueia ranges privados / loopback / link-local — defesa SSRF adicional,
+// mesmo que a whitelist já proteja (defense in depth).
+function isPrivateOrLoopback(hostname: string): boolean {
+  if (hostname === 'localhost' || hostname === '0.0.0.0') return true
+  if (hostname.endsWith('.local') || hostname.endsWith('.internal')) return true
+  // IPv4
+  const ipv4 = hostname.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/)
+  if (ipv4) {
+    const [, a, b] = ipv4.map(Number)
+    if (a === 10) return true
+    if (a === 127) return true
+    if (a === 169 && b === 254) return true
+    if (a === 172 && b >= 16 && b <= 31) return true
+    if (a === 192 && b === 168) return true
+    if (a === 0) return true
+  }
+  // IPv6 loopback / link-local
+  if (hostname === '::1' || hostname.startsWith('[::1') || hostname.startsWith('[fc') || hostname.startsWith('[fd') || hostname.startsWith('[fe80')) return true
+  return false
+}
 
 export async function GET(request: NextRequest) {
   const url = request.nextUrl.searchParams.get('url')
@@ -41,8 +75,13 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid URL' }, { status: 400 })
   }
 
-  // Block private / loopback / link-local addresses (SSRF prevention)
-  if (PRIVATE_IP_RE.test(parsed.hostname)) {
+  // Só HTTP(S) — bloqueia file:, gopher:, etc
+  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+    return NextResponse.json({ error: 'Protocol not allowed' }, { status: 400 })
+  }
+
+  // Bloqueia ranges privados / loopback antes mesmo de olhar a whitelist
+  if (isPrivateOrLoopback(parsed.hostname)) {
     return NextResponse.json({ error: 'Host not allowed' }, { status: 403 })
   }
 

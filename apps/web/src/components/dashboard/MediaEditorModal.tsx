@@ -276,66 +276,164 @@ export function MediaEditorModal({
     if (activeTab === 'photos' && currentPhoto) {
       generatePreview()
     }
-  }, [selectedFilter, applyLogo, logoPosition, previewIndex, activeTab])
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- generatePreview is stable via useCallback
+  }, [selectedFilter, applyLogo, logoUrl, logoPosition, previewIndex, activeTab, generatePreview])
 
-  // Upload de arquivo processado para S3
+  // Upload de arquivo processado para S3 (via same-origin proxy to avoid CORS)
+  // Estratégia: tenta o proxy same-origin até 3x com backoff (resiste a cold-start
+  // de serverless, 502 transitório, rede flaky). Se tudo falhar, tenta direto
+  // contra a API como último recurso — diagnóstico claro para o usuário.
   const uploadProcessed = useCallback(async (dataUrl: string, filename: string): Promise<string> => {
-    const blob = await fetch(dataUrl).then(r => r.blob())
-    const formData = new FormData()
-    formData.append('file', blob, filename)
-    const res = await fetch(`${API_URL}/api/v1/upload`, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${token}` },
-      body: formData,
-    })
-    if (!res.ok) throw new Error('Erro ao fazer upload da imagem processada')
-    const { url } = await res.json()
-    return url
+    // Convert dataUrl (produced by canvas.toDataURL) to a Blob.
+    // Using fetch() on a data URL is supported by all modern browsers but can
+    // throw a TypeError ("Failed to fetch") in rare cases. Surface a clearer
+    // message for the user.
+    let blob: Blob
+    try {
+      blob = await fetch(dataUrl).then(r => r.blob())
+    } catch (e: any) {
+      throw new Error('Não foi possível preparar a imagem processada. Tente novamente.')
+    }
+
+    const buildFormData = () => {
+      const fd = new FormData()
+      fd.append('file', blob, filename)
+      return fd
+    }
+
+    // ── Attempt 1-3: same-origin /api/upload-proxy com retry ─────────────────
+    // Retry resolve: cold-start Vercel (timeout 1ª req), 502 gateway transitório,
+    // e TypeError "Failed to fetch" por jitter de rede móvel.
+    const MAX_RETRIES = 3
+    let lastError: any = null
+    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+      try {
+        const res = await fetch('/api/upload-proxy', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` },
+          body: buildFormData(),
+          signal: AbortSignal.timeout(45000),
+        })
+        if (res.ok) {
+          const data = await res.json().catch(() => null)
+          if (data && data.url) return data.url
+          lastError = new Error('Resposta inválida do servidor de upload.')
+        } else {
+          const err = await res.json().catch(() => ({ error: 'unknown' }))
+          // 5xx é transitório → retry. 4xx é erro do cliente → não retry.
+          if (res.status >= 500 && attempt < MAX_RETRIES) {
+            lastError = new Error(err.message || err.details || `Upload falhou (${res.status})`)
+            await new Promise(r => setTimeout(r, 400 * attempt))
+            continue
+          }
+          throw new Error(err.message || err.details || `Upload falhou (${res.status})`)
+        }
+      } catch (networkErr: any) {
+        lastError = networkErr
+        // AbortError / TypeError → retry com backoff
+        if (attempt < MAX_RETRIES) {
+          await new Promise(r => setTimeout(r, 400 * attempt))
+          continue
+        }
+      }
+    }
+
+    // ── Último recurso: direto contra a API (cross-origin). Se upload-proxy
+    // estiver indisponível por deploy/config, isso ainda sobe a foto.
+    try {
+      const res = await fetch(`${API_URL}/api/v1/upload`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: buildFormData(),
+        signal: AbortSignal.timeout(45000),
+      })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: 'unknown' }))
+        throw new Error(err.message || err.details || `Upload falhou (${res.status})`)
+      }
+      const data = await res.json().catch(() => null)
+      if (!data || !data.url) throw new Error('Resposta inválida do servidor de upload.')
+      return data.url
+    } catch (directErr: any) {
+      // Surface proxy error if it's more informative, else the direct error
+      const msg = lastError?.message || directErr?.message || 'Falha de conexão'
+      throw new Error(
+        `Falha ao enviar foto após ${MAX_RETRIES} tentativas: ${msg}. Verifique sua internet e tente novamente.`,
+      )
+    }
   }, [token])
 
   // Aplicar efeito em 1 foto
   const handleApplyOne = useCallback(async () => {
-    if (!currentPhoto || selectedFilter === 'none' && !applyLogo) return
+    if (!currentPhoto || (selectedFilter === 'none' && !applyLogo)) return
     setProcessing(true)
     setError(null)
     try {
       const result = await applyPhotoEffects(currentPhoto, selectedFilter, applyLogo, logoUrl, logoPosition)
-      const url = await uploadProcessed(result, `edited_${Date.now()}.jpg`)
-      const newPhotos = [...localPhotos]
-      newPhotos[previewIndex] = url
-      setLocalPhotos(newPhotos)
-      setPreviewDataUrl(null)
-      setDone(true)
+      try {
+        const url = await uploadProcessed(result, `edited_${Date.now()}.jpg`)
+        const newPhotos = [...localPhotos]
+        newPhotos[previewIndex] = url
+        setLocalPhotos(newPhotos)
+        setPreviewDataUrl(null)
+        setDone(true)
+      } catch (uploadErr: any) {
+        setError('Erro ao salvar imagem: ' + (uploadErr.message || 'Verifique sua conexão e tente novamente.'))
+      }
     } catch (e: any) {
-      setError(e.message)
+      setError('Erro ao processar imagem: ' + (e.message || 'desconhecido'))
     } finally {
       setProcessing(false)
     }
   }, [currentPhoto, selectedFilter, applyLogo, logoUrl, logoPosition, localPhotos, previewIndex, uploadProcessed])
 
   // Aplicar efeito em todas as fotos
+  // Estratégia de resiliência: processa uma de cada vez, commita cada sucesso
+  // no estado antes de seguir. Se falhar no meio, o usuário mantém o progresso
+  // parcial (fotos já processadas ficam salvas) e vê mensagem clara indicando
+  // qual foto falhou, podendo tentar novamente só as restantes.
   const handleApplyAll = useCallback(async () => {
     if (localPhotos.length === 0) return
     setProcessing(true)
     setProcessedCount(0)
     setError(null)
-    // Snapshot of originals so we can roll back if the batch fails mid-way
-    const originalPhotos = [...localPhotos]
-    const newPhotos = [...localPhotos]
+    const working = [...localPhotos]
+    let failedIndex = -1
+    let failureMessage = ''
     try {
       for (let i = 0; i < localPhotos.length; i++) {
-        const result = await applyPhotoEffects(localPhotos[i], selectedFilter, applyLogo, logoUrl, logoPosition)
-        const url = await uploadProcessed(result, `edited_${Date.now()}_${i}.jpg`)
-        newPhotos[i] = url
-        setProcessedCount(i + 1)
+        try {
+          const result = await applyPhotoEffects(localPhotos[i], selectedFilter, applyLogo, logoUrl, logoPosition)
+          const url = await uploadProcessed(result, `edited_${Date.now()}_${i}.jpg`)
+          working[i] = url
+          setProcessedCount(i + 1)
+          // Commit progressivo — se falhar depois, o que já subiu não se perde.
+          setLocalPhotos([...working])
+        } catch (stepErr: any) {
+          failedIndex = i
+          failureMessage = stepErr?.message ?? 'desconhecido'
+          break
+        }
       }
-      setLocalPhotos(newPhotos)
-      setPreviewDataUrl(null)
-      setDone(true)
+
+      if (failedIndex >= 0) {
+        const successCount = failedIndex
+        const totalCount = localPhotos.length
+        const prefix =
+          failureMessage.includes('Upload') || failureMessage.includes('salvar')
+            ? 'Erro ao salvar foto'
+            : 'Erro ao processar foto'
+        setError(
+          `${prefix} ${failedIndex + 1} de ${totalCount}: ${failureMessage}. ` +
+            `${successCount} foto${successCount === 1 ? '' : 's'} já ${successCount === 1 ? 'foi salva' : 'foram salvas'} — você pode tentar novamente nas restantes.`,
+        )
+      } else {
+        setPreviewDataUrl(null)
+        setDone(true)
+      }
     } catch (e: any) {
-      // Roll back to originals so the user doesn't lose their untouched photos
-      setLocalPhotos(originalPhotos)
-      setError(`Falha ao processar fotos: ${e.message}. As fotos originais foram restauradas.`)
+      // Fallback defensivo — não deveria chegar aqui já que o inner try captura tudo
+      setError('Erro inesperado: ' + (e?.message ?? 'desconhecido'))
     } finally {
       setProcessing(false)
     }
@@ -557,49 +655,55 @@ export function MediaEditorModal({
                 {/* Logo */}
                 <div>
                   <h3 className="text-white/60 text-xs font-semibold uppercase tracking-wider mb-2">Logo da Imobiliária</h3>
-                  <label className="flex items-center gap-2 cursor-pointer mb-2">
-                    <div
-                      onClick={() => setApplyLogo(v => !v)}
-                      className={cn(
-                        'w-10 h-5 rounded-full transition-colors relative',
-                        applyLogo ? 'bg-yellow-400' : 'bg-white/20',
-                      )}
-                    >
-                      <div className={cn(
-                        'absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform',
-                        applyLogo ? 'translate-x-5' : 'translate-x-0.5',
-                      )} />
+                  {!logoUrl ? (
+                    // No logo configured — disable the feature entirely and guide the user
+                    <div className="bg-yellow-400/5 border border-yellow-400/20 rounded-lg p-3">
+                      <p className="text-yellow-400/90 text-xs font-semibold mb-1">Logo não configurado</p>
+                      <p className="text-white/50 text-[11px] leading-relaxed">
+                        Configure o logo em <span className="text-yellow-400/80">Configurações → Sistema → Empresa → Logotipos</span> para poder aplicá-lo nas fotos.
+                      </p>
                     </div>
-                    <span className="text-white/70 text-xs">Aplicar logo</span>
-                  </label>
-
-                  {applyLogo && (
+                  ) : (
                     <>
-                      {logoUrl ? (
-                        <div className="bg-white/5 rounded-lg p-2 mb-2">
-                          <img src={logoUrl} alt="Logo" className="h-8 object-contain mx-auto" />
+                      <label className="flex items-center gap-2 cursor-pointer mb-2">
+                        <div
+                          onClick={() => setApplyLogo(v => !v)}
+                          className={cn(
+                            'w-10 h-5 rounded-full transition-colors relative',
+                            applyLogo ? 'bg-yellow-400' : 'bg-white/20',
+                          )}
+                        >
+                          <div className={cn(
+                            'absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform',
+                            applyLogo ? 'translate-x-5' : 'translate-x-0.5',
+                          )} />
                         </div>
-                      ) : (
-                        <p className="text-yellow-400/70 text-xs mb-2">
-                          Configure o logo em Configurações → Sistema
-                        </p>
+                        <span className="text-white/70 text-xs">Aplicar logo</span>
+                      </label>
+
+                      {applyLogo && (
+                        <>
+                          <div className="bg-white/5 rounded-lg p-2 mb-2">
+                            <img src={logoUrl} alt="Logo" className="h-8 object-contain mx-auto" />
+                          </div>
+                          <div className="grid grid-cols-2 gap-1">
+                            {LOGO_POSITIONS.map(p => (
+                              <button
+                                key={p.id}
+                                onClick={() => setLogoPosition(p.id)}
+                                className={cn(
+                                  'px-2 py-1.5 rounded-lg text-xs transition-colors',
+                                  logoPosition === p.id
+                                    ? 'bg-yellow-400/20 text-yellow-400 border border-yellow-400/40'
+                                    : 'bg-white/5 text-white/50 hover:bg-white/10',
+                                )}
+                              >
+                                {p.name}
+                              </button>
+                            ))}
+                          </div>
+                        </>
                       )}
-                      <div className="grid grid-cols-2 gap-1">
-                        {LOGO_POSITIONS.map(p => (
-                          <button
-                            key={p.id}
-                            onClick={() => setLogoPosition(p.id)}
-                            className={cn(
-                              'px-2 py-1.5 rounded-lg text-xs transition-colors',
-                              logoPosition === p.id
-                                ? 'bg-yellow-400/20 text-yellow-400 border border-yellow-400/40'
-                                : 'bg-white/5 text-white/50 hover:bg-white/10',
-                            )}
-                          >
-                            {p.name}
-                          </button>
-                        ))}
-                      </div>
                     </>
                   )}
                 </div>
