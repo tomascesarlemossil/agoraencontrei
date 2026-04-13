@@ -13,12 +13,26 @@ import { NextRequest, NextResponse } from 'next/server'
 // Whitelist de hosts de imagens externas. IMPORTANTE: não incluir hosts
 // internos (localhost, 127.0.0.1, *.internal, 10.*, 172.16-31.*, 192.168.*)
 // para evitar SSRF de rede privada.
+//
+// Cobre os provedores de storage usados pelo sistema:
+// - AWS S3 (qualquer região) via .amazonaws.com
+// - Cloudinary via .cloudinary.com
+// - AWS CloudFront via .cloudfront.net
+// - Supabase Storage (legacy) via .supabase.co / .supabase.in
+// - Google Cloud Storage via storage.googleapis.com
+// - Google Photos / avatars via lh3.googleusercontent.com
+// - CDN próprio / parceiro (cdnuso.com, cdn2.uso.com.br)
+// - Logos/imagens hospedadas em agoraencontrei.com.br
 const ALLOWED_HOSTS = [
   '.amazonaws.com',
   '.cloudinary.com',
   '.cloudfront.net',
+  '.supabase.co',
+  '.supabase.in',
   'res.cloudinary.com',
+  'storage.googleapis.com',
   'agoraencontrei.com.br',
+  '.agoraencontrei.com.br',
   'cdnuso.com',
   'cdn2.uso.com.br',
   'lh3.googleusercontent.com',
