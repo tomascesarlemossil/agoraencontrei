@@ -12,9 +12,23 @@
  */
 
 import type { FastifyInstance } from 'fastify'
+import { timingSafeEqual } from 'node:crypto'
 import { env } from '../../utils/env.js'
 import type { AsaasWebhookEvent } from '../../services/asaas.service.js'
 import { scheduleRepasse } from '../../services/repasse.service.js'
+
+/** Constant-time comparison of two strings — returns false on length mismatch
+ *  without leaking length via short-circuit. */
+function safeStringEqual(a: string, b: string): boolean {
+  const aBuf = Buffer.from(a, 'utf8')
+  const bBuf = Buffer.from(b, 'utf8')
+  if (aBuf.length !== bBuf.length) {
+    // Still do a constant-time op to keep timing roughly stable
+    timingSafeEqual(aBuf, aBuf)
+    return false
+  }
+  return timingSafeEqual(aBuf, bBuf)
+}
 
 export default async function asaasWebhookRoutes(app: FastifyInstance) {
   // POST /api/v1/finance/webhook/asaas — Público (chamado pelo Asaas)
@@ -22,9 +36,9 @@ export default async function asaasWebhookRoutes(app: FastifyInstance) {
     config: { rateLimit: { max: 100, timeWindow: '1 minute' } },
     schema: { tags: ['finance-webhook'] },
   }, async (req, reply) => {
-    // Validate webhook secret if configured
+    // Validate webhook secret if configured (constant-time to defeat token oracle)
     const webhookToken = (req.headers['asaas-access-token'] as string) || ''
-    if (env.ASAAS_WEBHOOK_SECRET && webhookToken !== env.ASAAS_WEBHOOK_SECRET) {
+    if (env.ASAAS_WEBHOOK_SECRET && !safeStringEqual(webhookToken, env.ASAAS_WEBHOOK_SECRET)) {
       app.log.warn('[asaas-webhook] Invalid webhook token')
       return reply.status(401).send({ error: 'UNAUTHORIZED' })
     }

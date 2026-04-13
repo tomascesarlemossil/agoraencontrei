@@ -258,7 +258,13 @@ export function FloatingChatbot() {
           </div>
 
           {/* Input */}
-          <div className="bg-white border-t flex items-center gap-2 p-3" style={{ borderColor: '#f0ece4' }}>
+          <div
+            className="bg-white border-t flex items-center gap-2 p-3"
+            style={{
+              borderColor: '#f0ece4',
+              paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom, 0px))',
+            }}
+          >
             <input
               ref={inputRef}
               value={input}

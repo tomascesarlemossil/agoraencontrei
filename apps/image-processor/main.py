@@ -2,7 +2,8 @@
 Microservico de processamento de imagens para o AgoraEncontrei.
 Porta padrao: 3200
 """
-import os, io, json, base64, tempfile
+import os, io, json, base64, ipaddress, socket, tempfile
+from urllib.parse import urlparse
 import requests
 from pathlib import Path
 from typing import Optional, List
@@ -15,13 +16,79 @@ from filters import (
 )
 
 app = FastAPI(title="AgoraEncontrei Image Processor", version="1.0.0")
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+# CORS: em produção, restringir via env IMAGE_PROCESSOR_CORS_ORIGINS (CSV).
+_cors_env = os.environ.get("IMAGE_PROCESSOR_CORS_ORIGINS", "*")
+_cors_origins = [o.strip() for o in _cors_env.split(",")] if _cors_env != "*" else ["*"]
+app.add_middleware(CORSMiddleware, allow_origins=_cors_origins, allow_methods=["*"], allow_headers=["*"])
+
+# ─── SSRF hardening ────────────────────────────────────────────────────────
+# Lista de hosts permitidos (sufixos). Mantém paridade com o proxy-image
+# do Next.js (apps/web/src/app/api/proxy-image/route.ts).
+_ALLOWED_HOST_SUFFIXES = [
+    ".amazonaws.com",
+    ".cloudinary.com",
+    ".cloudfront.net",
+    ".supabase.co",
+    ".supabase.in",
+    "storage.googleapis.com",
+    "agoraencontrei.com.br",
+    ".agoraencontrei.com.br",
+    "cdnuso.com",
+    "cdn2.uso.com.br",
+    "lh3.googleusercontent.com",
+]
+_MAX_IMAGE_BYTES = 20 * 1024 * 1024  # 20 MB
+
+
+def _is_public_ip(host: str) -> bool:
+    """Resolve hostname e confirma que TODOS os IPs retornados são públicos.
+    Bloqueia loopback, link-local, privados, multicast e reservados."""
+    try:
+        infos = socket.getaddrinfo(host, None)
+    except socket.gaierror:
+        return False
+    for info in infos:
+        addr = info[4][0]
+        try:
+            ip = ipaddress.ip_address(addr)
+        except ValueError:
+            return False
+        if ip.is_private or ip.is_loopback or ip.is_link_local or \
+           ip.is_multicast or ip.is_reserved or ip.is_unspecified:
+            return False
+    return True
+
+
+def _assert_url_safe(url: str) -> None:
+    parsed = urlparse(url)
+    if parsed.scheme not in ("http", "https"):
+        raise HTTPException(status_code=400, detail="URL scheme nao permitido")
+    host = (parsed.hostname or "").lower()
+    if not host:
+        raise HTTPException(status_code=400, detail="URL sem host")
+    allowed = any(host == s.lstrip(".") or host.endswith(s) for s in _ALLOWED_HOST_SUFFIXES)
+    if not allowed:
+        raise HTTPException(status_code=403, detail="Host nao autorizado")
+    if not _is_public_ip(host):
+        raise HTTPException(status_code=403, detail="Host resolve para rede privada")
 
 
 def fetch_image_bytes(url: str) -> bytes:
-    resp = requests.get(url, timeout=30)
-    resp.raise_for_status()
-    return resp.content
+    _assert_url_safe(url)
+    # stream=True para inspecionar Content-Length antes de baixar tudo
+    with requests.get(url, timeout=30, stream=True, allow_redirects=False) as resp:
+        resp.raise_for_status()
+        clen = resp.headers.get("Content-Length")
+        if clen and int(clen) > _MAX_IMAGE_BYTES:
+            raise HTTPException(status_code=413, detail="Imagem maior que 20MB")
+        buf = bytearray()
+        for chunk in resp.iter_content(chunk_size=65536):
+            if not chunk:
+                continue
+            buf.extend(chunk)
+            if len(buf) > _MAX_IMAGE_BYTES:
+                raise HTTPException(status_code=413, detail="Imagem maior que 20MB")
+        return bytes(buf)
 
 
 def get_logo_path() -> Optional[str]:

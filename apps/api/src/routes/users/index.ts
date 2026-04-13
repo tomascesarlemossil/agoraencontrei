@@ -326,7 +326,16 @@ export default async function usersRoutes(app: FastifyInstance) {
       }
     }
 
-    const existingUser = await app.prisma.user.findUnique({ where: { id }, select: { id: true, name: true, role: true, phone: true, bio: true, creciNumber: true, settings: true } })
+    // Tenant-isolated lookup: users may only modify themselves OR another user
+    // within the same company. SUPER_ADMIN editing across tenants must do so
+    // explicitly through a separate admin route — here we always scope to req.user.cid.
+    const existingUser = await app.prisma.user.findFirst({
+      where: { id, companyId: req.user.cid },
+      select: { id: true, name: true, role: true, phone: true, bio: true, creciNumber: true, settings: true },
+    })
+    if (!existingUser) {
+      return reply.status(404).send({ error: 'NOT_FOUND' })
+    }
 
     // Extract permission fields that go into settings JSON
     const { accessLevel, moduleAccess, hasDataAccess, welcomeMessage, welcomeDuration, ...directFields } = body
@@ -378,7 +387,7 @@ export default async function usersRoutes(app: FastifyInstance) {
     }
 
     const user = await app.prisma.user.update({
-      where: { id },
+      where: { id: existingUser.id },
       data: updateData,
       select: {
         id: true, name: true, email: true, phone: true,
@@ -427,8 +436,9 @@ export default async function usersRoutes(app: FastifyInstance) {
     const argon2 = await import('argon2')
     const passwordHash = await argon2.hash(newPassword, { type: argon2.argon2id })
 
+    // Use targetUser.id (already tenant-scoped via findFirst above) — defense in depth
     await app.prisma.user.update({
-      where: { id },
+      where: { id: targetUser.id },
       data: { passwordHash },
     })
 
