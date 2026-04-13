@@ -258,8 +258,23 @@ export default async function leadsRoutes(app: FastifyInstance) {
       return reply.status(403).send({ error: 'FORBIDDEN' })
     }
 
+    // Impede atribuir o lead a um usuário de OUTRA empresa.
+    // Sem esta validação, um admin da empresa A podia setar
+    // assignedToId = <userId da empresa B> e leaks cross-tenant surge.
+    if (body.assignedToId) {
+      const assignee = await app.prisma.user.findFirst({
+        where: { id: body.assignedToId, companyId: req.user.cid },
+        select: { id: true },
+      })
+      if (!assignee) {
+        return reply.status(400).send({ error: 'INVALID_ASSIGNEE' })
+      }
+    }
+
     const old = existing.status
-    const lead = await app.prisma.lead.update({ where: { id }, data: body })
+    // `where: { id: existing.id }` — defesa em profundidade: o lead já foi
+    // validado com findFirst + companyId, então reutilizamos o id saneado.
+    const lead = await app.prisma.lead.update({ where: { id: existing.id }, data: body })
 
     if (body.status && body.status !== old) {
       await app.prisma.activity.create({

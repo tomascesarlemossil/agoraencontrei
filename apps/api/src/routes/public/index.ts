@@ -1112,9 +1112,19 @@ export default async function publicRoutes(app: FastifyInstance) {
         return reply.send({ transcript: '', filters: {} })
       }
 
-      // Ler buffer do áudio
+      // Ler buffer do áudio com cap de 25MB (limite do Whisper é 25MB).
+      // Sem isso, um atacante consegue inundar a API (bodyLimit=1GB) e gerar
+      // custo arbitrário no OpenAI — classe de DoS econômico.
+      const MAX_AUDIO_BYTES = 25 * 1024 * 1024
       const chunks: Buffer[] = []
-      for await (const chunk of data.file) chunks.push(chunk)
+      let totalSize = 0
+      for await (const chunk of data.file) {
+        totalSize += chunk.length
+        if (totalSize > MAX_AUDIO_BYTES) {
+          return reply.status(413).send({ error: 'AUDIO_TOO_LARGE', message: 'Áudio acima de 25MB' })
+        }
+        chunks.push(chunk)
+      }
       const audioBuffer = Buffer.concat(chunks)
 
       if (audioBuffer.length < 100) {

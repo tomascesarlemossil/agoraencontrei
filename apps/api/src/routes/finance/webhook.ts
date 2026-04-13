@@ -175,14 +175,16 @@ export default async function asaasWebhookRoutes(app: FastifyInstance) {
                   rentalId,
                   landlordId: contract.landlordId,
                   grossValue: payment.value,
-                  commissionPercent: Number(contract.commission) || 10,
-                  delayDays: tenant?.repasseDelayDays || 7,
-                  fixedDay: tenant?.repasseFixedDay || undefined,
+                  // ?? em vez de || para preservar 0% de comissão (|| colapsaria 0 para o default)
+                  commissionPercent: contract.commission != null ? Number(contract.commission) : 10,
+                  // idem para atraso — tenant pode configurar D+0 (repasse imediato)
+                  delayDays: tenant?.repasseDelayDays ?? 7,
+                  fixedDay: tenant?.repasseFixedDay ?? undefined,
                 }).catch((e: any) => {
                   app.log.warn(`[asaas-webhook] Repasse scheduling failed: ${e.message}`)
                 })
 
-                app.log.info(`[asaas-webhook] Repasse D+${tenant?.repasseDelayDays || 7} scheduled for rental ${rentalId} (R$ ${payment.value})`)
+                app.log.info(`[asaas-webhook] Repasse D+${tenant?.repasseDelayDays ?? 7} scheduled for rental ${rentalId} (R$ ${payment.value})`)
               }
 
               app.log.info(`[asaas-webhook] Rental ${rentalId} marked as PAID (${payment.billingType}, R$ ${payment.value})`)

@@ -1,7 +1,19 @@
 import 'dotenv/config'
 import Fastify from 'fastify'
 import { ZodError } from 'zod'
+import { timingSafeEqual } from 'node:crypto'
 import { env, logEnvWarnings } from './utils/env.js'
+
+/** Constant-time compare — defeats byte-by-byte timing oracle. */
+function safeStringEqual(a: string, b: string): boolean {
+  const aBuf = Buffer.from(a, 'utf8')
+  const bBuf = Buffer.from(b, 'utf8')
+  if (aBuf.length !== bBuf.length) {
+    timingSafeEqual(aBuf, aBuf)
+    return false
+  }
+  return timingSafeEqual(aBuf, bBuf)
+}
 
 // ── v2026.04.01 ────────────────────────────────────────────────────────────
 // ── Plugins ────────────────────────────────────────────────────────────────
@@ -722,8 +734,8 @@ async function bootstrap() {
   // POST /api/v1/admin/reset-role — Reset user role (protegido por JWT_SECRET)
   app.post('/api/v1/admin/reset-role', async (req, reply) => {
     const body = req.body as any
-    const secret = body?.secret
-    if (secret !== env.JWT_SECRET) {
+    const secret = String(body?.secret ?? '')
+    if (!env.JWT_SECRET || !safeStringEqual(secret, env.JWT_SECRET)) {
       return reply.status(403).send({ error: 'Forbidden' })
     }
     const email = body?.email || 'tomas@agoraencontrei.com.br'

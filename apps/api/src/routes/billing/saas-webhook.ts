@@ -17,8 +17,20 @@
  */
 
 import type { FastifyInstance } from 'fastify'
+import { timingSafeEqual } from 'node:crypto'
 import { env } from '../../utils/env.js'
 import type { AsaasWebhookEvent } from '../../services/asaas.service.js'
+
+/** Constant-time string comparison — defeats timing-oracle attacks. */
+function safeStringEqual(a: string, b: string): boolean {
+  const aBuf = Buffer.from(a, 'utf8')
+  const bBuf = Buffer.from(b, 'utf8')
+  if (aBuf.length !== bBuf.length) {
+    timingSafeEqual(aBuf, aBuf)
+    return false
+  }
+  return timingSafeEqual(aBuf, bBuf)
+}
 
 export default async function saasWebhookRoutes(app: FastifyInstance) {
   const prisma = app.prisma as any
@@ -42,7 +54,7 @@ export default async function saasWebhookRoutes(app: FastifyInstance) {
   }, async (req, reply) => {
     // 1. Validate webhook secret
     const webhookToken = (req.headers['asaas-access-token'] as string) || ''
-    if (env.ASAAS_WEBHOOK_SECRET && webhookToken !== env.ASAAS_WEBHOOK_SECRET) {
+    if (env.ASAAS_WEBHOOK_SECRET && !safeStringEqual(webhookToken, env.ASAAS_WEBHOOK_SECRET)) {
       app.log.warn('[saas-webhook] Invalid webhook token')
 
       await app.prisma.auditLog.create({
