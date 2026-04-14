@@ -400,57 +400,72 @@ export default function LeiloesClient() {
       if (minDiscount) params.set('minDiscount', minDiscount)
       if (maxPrice) params.set('maxPrice', maxPrice)
 
-      const res = await fetch(`${API_URL}/api/v1/auctions?${params}`)
-      if (res.ok) {
-        const data = await res.json()
-        const internalItems = (data.data || []) as Auction[]
-        const internalTotal = data.pagination?.total || 0
-
-        if (internalItems.length > 0 || internalTotal > 0) {
-          // Apply Franca-first geographic priority
-          internalItems.sort((a: Auction, b: Auction) => {
-            const geoA = cityPriority(a.city, a.state)
-            const geoB = cityPriority(b.city, b.state)
-            if (geoA !== geoB) return geoA - geoB
-            return 0 // keep DB sort order as secondary
-          })
-          setAuctions(internalItems)
-          setTotal(internalTotal)
-          setTotalPages(data.pagination?.totalPages || 1)
-          setLoading(false)
-          return
-        }
-      }
-
-      // Fetch from Railway API AND Vercel CSV proxy in parallel
+      // Dispara os 3 feeds em paralelo — nunca dependemos de um único para
+      // renderizar. Se a API Railway estiver instável (502/timeout), o proxy
+      // Vercel da Caixa garante que a página ainda mostra inventário.
       const fallbackParams = new URLSearchParams()
       if (state) fallbackParams.set('state', state)
       const fallbackUrl = `${PUBLIC_AUCTIONS_URL}${fallbackParams.toString() ? '?' + fallbackParams : ''}`
 
-      const [railwayRes, caixaRes] = await Promise.allSettled([
-        fetch(fallbackUrl),
-        fetch(CAIXA_CSV_URL),
+      const withTimeout = (p: Promise<Response>, ms = 12000) =>
+        Promise.race([
+          p,
+          new Promise<Response>((_, reject) =>
+            setTimeout(() => reject(new Error('timeout')), ms)
+          ),
+        ])
+
+      const [internalRes, railwayRes, caixaRes] = await Promise.allSettled([
+        withTimeout(fetch(`${API_URL}/api/v1/auctions?${params}`)),
+        withTimeout(fetch(fallbackUrl)),
+        withTimeout(fetch(CAIXA_CSV_URL)),
       ])
 
-      let allItems: any[] = []
-
-      // Railway API items (Apify Santander + any cached Caixa)
-      if (railwayRes.status === 'fulfilled' && railwayRes.value.ok) {
-        const railwayData = await railwayRes.value.json()
-        allItems.push(...(railwayData.items || []))
+      // 1) Tenta primeiro os dados internos (DB com opportunityScore, ROI etc).
+      let internalItems: Auction[] = []
+      let internalTotal = 0
+      let internalTotalPages = 1
+      if (internalRes.status === 'fulfilled' && internalRes.value.ok) {
+        try {
+          const data = await internalRes.value.json()
+          internalItems = (data.data || []) as Auction[]
+          internalTotal = data.pagination?.total || 0
+          internalTotalPages = data.pagination?.totalPages || 1
+        } catch { /* payload inválido — ignora e segue para os feeds públicos */ }
       }
 
-      // Vercel CSV proxy items (Caixa SP — always works, no geo-block)
+      if (internalItems.length > 0) {
+        internalItems.sort((a: Auction, b: Auction) => {
+          const geoA = cityPriority(a.city, a.state)
+          const geoB = cityPriority(b.city, b.state)
+          if (geoA !== geoB) return geoA - geoB
+          return 0
+        })
+        setAuctions(internalItems)
+        setTotal(internalTotal)
+        setTotalPages(internalTotalPages)
+        setLoading(false)
+        return
+      }
+
+      // 2) Mescla Railway + Caixa CSV (Vercel). Cada fonte é tolerada de
+      // forma independente — qualquer uma que tenha dados já é suficiente.
+      const allItems: any[] = []
+      if (railwayRes.status === 'fulfilled' && railwayRes.value.ok) {
+        try {
+          const railwayData = await railwayRes.value.json()
+          allItems.push(...(railwayData.items || []))
+        } catch { /* ignore malformed response */ }
+      }
       if (caixaRes.status === 'fulfilled' && caixaRes.value.ok) {
-        const caixaData = await caixaRes.value.json()
-        const caixaItems = caixaData.items || []
-        // Deduplicate: don't add items that already exist from Railway
-        const existingIds = new Set(allItems.map((i: any) => i.id))
-        for (const item of caixaItems) {
-          if (!existingIds.has(item.id)) {
-            allItems.push(item)
+        try {
+          const caixaData = await caixaRes.value.json()
+          const caixaItems = caixaData.items || []
+          const existingIds = new Set(allItems.map((i: any) => i.id))
+          for (const item of caixaItems) {
+            if (!existingIds.has(item.id)) allItems.push(item)
           }
-        }
+        } catch { /* ignore malformed response */ }
       }
 
       if (allItems.length === 0) throw new Error('Nenhum dado disponível')

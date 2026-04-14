@@ -25,11 +25,16 @@ class ApiError extends Error {
   }
 }
 
+// Default request timeout. Without this, a stalled API connection (Railway
+// rebooting, DNS hiccup) leaves the user staring at a spinner forever and
+// produces an indistinguishable "connection error" message at the UI layer.
+const DEFAULT_REQUEST_TIMEOUT_MS = 15_000
+
 async function request<T>(
   path: string,
-  options: RequestInit & { token?: string } = {},
+  options: RequestInit & { token?: string; timeoutMs?: number } = {},
 ): Promise<T> {
-  const { token, ...fetchOptions } = options
+  const { token, timeoutMs = DEFAULT_REQUEST_TIMEOUT_MS, ...fetchOptions } = options
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -37,11 +42,28 @@ async function request<T>(
     ...(fetchOptions.headers as Record<string, string>),
   }
 
-  const res = await fetch(`${API_URL}${path}`, {
-    ...fetchOptions,
-    headers,
-    credentials: 'include',
-  })
+  let res: Response
+  try {
+    res = await fetch(`${API_URL}${path}`, {
+      ...fetchOptions,
+      headers,
+      credentials: 'include',
+      signal: AbortSignal.timeout(timeoutMs),
+    })
+  } catch (err: any) {
+    // Network-layer failure — DNS, CORS, mixed-content, offline, timeout.
+    // The browser's `fetch` rejects with `TypeError: Failed to fetch` (or
+    // `AbortError` when our timeout hits). Surface a structured ApiError
+    // with status 0 so callers can show actionable copy instead of a
+    // generic "erro de conexão".
+    const code = err?.name === 'TimeoutError' || err?.name === 'AbortError'
+      ? 'TIMEOUT'
+      : 'NETWORK_ERROR'
+    const message = code === 'TIMEOUT'
+      ? `Tempo esgotado tentando falar com o servidor (${timeoutMs / 1000}s).`
+      : 'Não foi possível conectar ao servidor. Verifique sua internet ou tente novamente em alguns segundos.'
+    throw new ApiError(0, code, message)
+  }
 
   if (!res.ok) {
     const body = await res.json().catch(() => ({}))
