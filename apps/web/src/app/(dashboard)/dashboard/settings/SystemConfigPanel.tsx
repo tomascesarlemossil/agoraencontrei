@@ -257,16 +257,29 @@ export function SystemConfigPanel() {
   const isAdmin = ['SUPER_ADMIN', 'ADMIN'].includes(user?.role ?? '')
 
   return (
-    <div className="flex gap-6">
-      {/* Sub-nav lateral */}
-      <div className="w-44 flex-shrink-0">
-        <div className="space-y-1 sticky top-4">
+    <div className="flex flex-col md:flex-row gap-4 md:gap-6">
+      {/* Sub-nav:
+          - Mobile (<md): tabs horizontais com rolagem, não engolem a tela
+          - Desktop (md+): sidebar vertical fixa de 176px como antes */}
+      <div className="md:w-44 flex-shrink-0">
+        <div
+          className={cn(
+            // mobile: scroll horizontal com snap
+            'flex md:flex-col gap-1 md:gap-1 overflow-x-auto md:overflow-visible',
+            '-mx-4 md:mx-0 px-4 md:px-0 pb-2 md:pb-0',
+            'md:sticky md:top-4',
+            'snap-x snap-mandatory md:snap-none',
+          )}
+        >
           {SUB_TABS.map(tab => (
             <button
               key={tab.id}
               onClick={() => setSubTab(tab.id)}
               className={cn(
-                'w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-all text-left',
+                'flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium transition-all text-left',
+                'flex-shrink-0 md:w-full',                 // mobile: tamanho automático; desktop: full
+                'whitespace-nowrap md:whitespace-normal',  // mobile: uma linha só
+                'snap-start md:snap-align-none',
                 subTab === tab.id
                   ? 'bg-yellow-400/20 text-yellow-400 border border-yellow-400/30'
                   : 'text-white/50 hover:text-white/80 hover:bg-white/5'
@@ -1193,9 +1206,9 @@ export function SystemConfigPanel() {
                 </div>
 
                 <div className="border-t border-white/10 pt-4">
-                  <div className="flex items-baseline justify-between mb-3">
+                  <div className="flex flex-col gap-1 mb-3">
                     <h4 className="text-sm font-semibold text-white">Biblioteca de logos para fotos de imóveis</h4>
-                    <span className="text-[10px] text-white/40">Aceita PDF, PNG, JPG, WEBP e mais</span>
+                    <span className="text-[10px] text-white/40">Aceita PDF, PNG, JPG, WEBP e mais formatos</span>
                   </div>
                   {apiToken ? (
                     <LogoLibraryPanel token={apiToken} />
