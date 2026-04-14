@@ -258,6 +258,20 @@ export default async function leadsRoutes(app: FastifyInstance) {
       return reply.status(403).send({ error: 'FORBIDDEN' })
     }
 
+    // Cross-tenant guard: if the caller wants to assign this lead to another
+    // user, that target user MUST belong to the same company. Without this
+    // check, a malicious client (or a compromised dashboard) could move leads
+    // across tenants by supplying an arbitrary user id in the body.
+    if (body.assignedToId && body.assignedToId !== existing.assignedToId) {
+      const target = await app.prisma.user.findFirst({
+        where: { id: body.assignedToId, companyId: req.user.cid },
+        select: { id: true },
+      })
+      if (!target) {
+        return reply.status(400).send({ error: 'INVALID_ASSIGNEE' })
+      }
+    }
+
     const old = existing.status
     const lead = await app.prisma.lead.update({ where: { id }, data: body })
 

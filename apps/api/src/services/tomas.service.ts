@@ -280,11 +280,20 @@ async function executeTool(
   toolName: string,
   toolInput: Record<string, unknown>,
   companyId?: string,
+  channel: 'site' | 'dashboard' = 'site',
 ): Promise<string> {
+  // Public (site) chats must never expose drafts or cross-tenant inventory.
+  // Dashboard (authenticated corretor/admin) queries already carry companyId
+  // and legitimately need to see the full catalogue.
+  const isPublic = channel === 'site'
   switch (toolName) {
     case 'buscar_imoveis': {
       const where: Record<string, unknown> = { status: 'ACTIVE' }
       if (companyId) where.companyId = companyId
+      if (isPublic) {
+        // Only return listings the owner explicitly authorized for public display.
+        where.authorizedPublish = true
+      }
 
       const city = toolInput.city as string | undefined
       const neighborhood = toolInput.neighborhood as string | undefined
@@ -353,6 +362,13 @@ async function executeTool(
 
       if (!Object.keys(propWhere).length) {
         return JSON.stringify({ error: 'Informe propertyId ou reference.' })
+      }
+
+      // Same guardrails as buscar_imoveis — public chats must not expose
+      // drafts or inactive listings, even when the id is known.
+      if (isPublic) {
+        propWhere.status = 'ACTIVE'
+        propWhere.authorizedPublish = true
       }
 
       const property = await prisma.property.findFirst({
@@ -633,6 +649,7 @@ export async function runTomasChat(
           tb.name,
           tb.input as Record<string, unknown>,
           params.companyId,
+          params.channel,
         )
 
         // Track consecutive zero results from buscar_imoveis
