@@ -3,6 +3,7 @@ import { whatsappService, BOT_STEPS, type BotState } from '../../services/whatsa
 import { env } from '../../utils/env.js'
 import { emitAutomation } from '../../services/automation.emitter.js'
 import { emitSSE } from '../../services/sse.emitter.js'
+import { safeStringEqual } from '../../utils/crypto-safe.js'
 
 // ── Bot state helpers ────────────────────────────────────────────────────────
 
@@ -33,7 +34,10 @@ export default async function whatsappRoutes(app: FastifyInstance) {
     schema: { tags: ['whatsapp'] },
   }, async (req, reply) => {
     const q = req.query as any
-    if (q['hub.verify_token'] === env.WHATSAPP_VERIFY_TOKEN) {
+    const provided = typeof q['hub.verify_token'] === 'string' ? q['hub.verify_token'] : ''
+    // Timing-safe comparison — avoids leaking the verify token via response
+    // time when Meta's infra (or an attacker) probes the endpoint.
+    if (env.WHATSAPP_VERIFY_TOKEN && safeStringEqual(provided, env.WHATSAPP_VERIFY_TOKEN)) {
       return reply.send(q['hub.challenge'])
     }
     return reply.status(403).send('Forbidden')

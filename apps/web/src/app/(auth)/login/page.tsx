@@ -58,11 +58,14 @@ export default function LoginPage() {
     } catch (err) {
       if (err instanceof ApiError) {
         setError(
+          err.code === 'NETWORK_ERROR' ? 'Servidor indisponível no momento. Tente novamente em alguns instantes.' :
+          err.code === 'TIMEOUT' ? 'O servidor demorou demais para responder. Tente novamente.' :
           err.status === 403 ? 'Conta inativa. Contate o suporte.' :
+          err.status >= 500 ? 'Erro interno do servidor. A equipe foi notificada.' :
           'Erro ao entrar com Google. Tente novamente.',
         )
       } else {
-        setError('Erro de conexão. Verifique sua internet.')
+        setError('Erro inesperado. Recarregue a página e tente novamente.')
       }
     } finally {
       setGoogleLoading(false)
@@ -104,13 +107,19 @@ export default function LoginPage() {
     } catch (err) {
       if (err instanceof ApiError) {
         setError(
+          // Network/timeout (status 0) come first — they look the same to a
+          // user as "wrong password" if we don't differentiate them.
+          err.code === 'NETWORK_ERROR' ? 'Servidor indisponível no momento. Tente novamente em alguns instantes.' :
+          err.code === 'TIMEOUT' ? 'O servidor demorou demais para responder. Verifique sua internet ou tente novamente.' :
           err.code === 'PENDING_VERIFICATION' ? 'Verifique seu e-mail antes de fazer login. Cheque sua caixa de entrada e spam.' :
           err.status === 401 ? 'E-mail ou senha incorretos' :
           err.status === 403 ? 'Conta inativa ou suspensa. Contate o administrador.' :
+          err.status === 429 ? 'Muitas tentativas. Aguarde alguns minutos e tente novamente.' :
+          err.status >= 500 ? 'Erro interno do servidor. A equipe foi notificada — tente novamente em instantes.' :
           'Erro ao fazer login. Tente novamente.',
         )
       } else {
-        setError('Erro de conexão. Verifique sua internet.')
+        setError('Erro inesperado. Recarregue a página e tente novamente.')
       }
     }
   }

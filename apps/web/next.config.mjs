@@ -5,12 +5,10 @@ const nextConfig = {
   transpilePackages: ['@agoraencontrei/tomas-knowledge'],
   // Standalone output for Docker/Railway deployment
   output: 'standalone',
-  // Transpile local workspace packages that ship TypeScript source
-  transpilePackages: ['@agoraencontrei/tomas-knowledge'],
   // Compressão gzip/brotli automática
   compress: true,
-  // Production build: SWC minification with mangling for code protection
-  swcMinify: true,
+  // swcMinify is the default on Next 15 and the key itself is deprecated —
+  // leaving it set emits a fatal-looking build warning, so we drop it.
   // Remove console.log in production (keep errors/warns)
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production' ? { exclude: ['error', 'warn'] } : false,

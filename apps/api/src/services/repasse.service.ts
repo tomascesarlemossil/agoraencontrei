@@ -106,12 +106,15 @@ export async function scheduleRepasse(
     },
   })
 
-  // If tenant has SaaS split, also log the platform commission
+  // If tenant has SaaS split, also log the platform commission.
+  // NOTE: we intentionally do NOT swallow errors here. A missing commission
+  // log means we would later compute wrong platform revenue — failing loudly
+  // forces the webhook/caller to retry the whole unit of work.
   if (input.tenantId) {
     const tenant = await (prisma as any).tenant?.findUnique?.({
       where: { id: input.tenantId },
       select: { splitPercent: true },
-    }).catch(() => null)
+    })
 
     if (tenant?.splitPercent > 0) {
       const platformCommission = Math.round(input.grossValue * Number(tenant.splitPercent) / 100 * 100) / 100
@@ -125,7 +128,7 @@ export async function scheduleRepasse(
           tenantNetValue: input.grossValue - platformCommission,
           status: 'PENDING',
         },
-      }).catch(() => {})
+      })
     }
   }
 
@@ -135,10 +138,42 @@ export async function scheduleRepasse(
 /**
  * Processes all due repasses (scheduled date has passed).
  * Attempts Asaas transfer for each, updating status accordingly.
+ *
+ * Multi-pod safety:
+ * - A PG advisory lock (key = 9234871) ensures only one worker drains the
+ *   scheduled queue at a time. If another pod already holds the lock, this
+ *   call becomes a no-op.
+ * - A staleness sweep rolls repasses stuck in PROCESSING for more than
+ *   STALE_PROCESSING_MS back to SCHEDULED so they get retried instead of
+ *   hanging forever.
  */
+const STALE_PROCESSING_MS = 15 * 60 * 1000 // 15 minutes
+const DRAIN_ADVISORY_LOCK_KEY = 9234871 // arbitrary, app-wide constant
+
 export async function processDueRepasses(
   prisma: PrismaClient,
 ): Promise<{ processed: number; succeeded: number; failed: number }> {
+  // Try to take the advisory lock. If we don't get it another pod is draining.
+  const lockRows = await (prisma as any).$queryRawUnsafe(
+    `SELECT pg_try_advisory_lock(${DRAIN_ADVISORY_LOCK_KEY}) AS locked`,
+  ).catch(() => null) as Array<{ locked: boolean }> | null
+  const gotLock = Array.isArray(lockRows) && lockRows[0]?.locked === true
+  if (!gotLock) {
+    return { processed: 0, succeeded: 0, failed: 0 }
+  }
+
+  try {
+    // Staleness sweep — rescue repasses stuck in PROCESSING (e.g. a pod crash
+    // right after the status was flipped but before the transfer completed).
+    const staleCutoff = new Date(Date.now() - STALE_PROCESSING_MS)
+    await (prisma as any).scheduledRepasse.updateMany({
+      where: {
+        status: 'PROCESSING',
+        updatedAt: { lt: staleCutoff },
+      },
+      data: { status: 'SCHEDULED' },
+    }).catch(() => {})
+
   const now = new Date()
   const dueRepasses = await (prisma as any).scheduledRepasse.findMany({
     where: {
@@ -167,6 +202,7 @@ export async function processDueRepasses(
           repasse.netValue,
           repasse.landlordId,
           `Repasse ${repasse.id}`,
+          `repasse:${repasse.id}`,
         )
         asaasTransferId = transferResult?.id || null
       }
@@ -203,6 +239,12 @@ export async function processDueRepasses(
   }
 
   return { processed: dueRepasses.length, succeeded, failed }
+  } finally {
+    // Release the advisory lock regardless of outcome.
+    await (prisma as any).$queryRawUnsafe(
+      `SELECT pg_advisory_unlock(${DRAIN_ADVISORY_LOCK_KEY})`,
+    ).catch(() => {})
+  }
 }
 
 /**
@@ -319,6 +361,7 @@ async function executeAsaasTransfer(
   value: number,
   walletId: string,
   description: string,
+  idempotencyKey?: string,
 ): Promise<{ id: string } | null> {
   if (!ASAAS_API_KEY) return null
 
@@ -328,6 +371,9 @@ async function executeAsaasTransfer(
       headers: {
         'Content-Type': 'application/json',
         'access_token': ASAAS_API_KEY,
+        // Idempotency-key prevents Asaas from executing the transfer twice
+        // when our retry logic fires after a network timeout.
+        ...(idempotencyKey ? { 'idempotency-key': idempotencyKey } : {}),
       },
       body: JSON.stringify({
         value,
@@ -335,6 +381,9 @@ async function executeAsaasTransfer(
         operationType: 'PIX',
         description,
       }),
+      // 10s cap — without a timeout a hung TCP connection would leave the
+      // repasse in PROCESSING forever.
+      signal: AbortSignal.timeout(10_000),
     })
 
     if (!res.ok) {

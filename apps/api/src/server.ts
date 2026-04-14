@@ -96,10 +96,17 @@ import previewRoutes from './routes/preview/index.js'
 import outboundRoutes from './routes/outbound/index.js'
 
 import { sensitiveSerializer } from './utils/log-sanitizer.js'
+import { safeStringEqual } from './utils/crypto-safe.js'
+
+// ── Body limits ───────────────────────────────────────────────────────────
+// JSON / url-encoded bodies stay small (protects every route from DoS
+// amplification via huge request bodies). Large file uploads have their own
+// multipart limit, set on the @fastify/multipart plugin below.
+const JSON_BODY_LIMIT = 2 * 1024 * 1024             // 2 MB
+const MULTIPART_FILE_LIMIT = 50 * 1024 * 1024       // 50 MB per file
 
 const app = Fastify({
-  // No body size limit — accept any file size
-  bodyLimit: 1073741824, // 1GB — aceita qualquer arquivo
+  bodyLimit: JSON_BODY_LIMIT,
   logger: {
     level: env.LOG_LEVEL,
     serializers: sensitiveSerializer as any,
@@ -680,8 +687,10 @@ async function bootstrap() {
   }
   await app.register(redisPlugin)
   await app.register(automationPlugin)
-  // No file size limit — accept any file type and size
-  await app.register(multipart, { limits: { fileSize: Infinity } })
+  // File uploads: bound per-file size so a malicious client cannot exhaust
+  // memory/disk on the API box. Routes that legitimately need bigger files
+  // should upload directly to S3 via pre-signed URLs.
+  await app.register(multipart, { limits: { fileSize: MULTIPART_FILE_LIMIT } })
   // Compressão gzip/brotli automática para todas as respostas
   await app.register(compress, {
     global: true,
@@ -719,29 +728,42 @@ async function bootstrap() {
     })
   })
 
-  // POST /api/v1/admin/reset-role — Reset user role (protegido por JWT_SECRET)
-  app.post('/api/v1/admin/reset-role', async (req, reply) => {
-    const body = req.body as any
-    const secret = body?.secret
-    if (secret !== env.JWT_SECRET) {
-      return reply.status(403).send({ error: 'Forbidden' })
+  // POST /api/v1/admin/reset-role — emergency privilege escalation endpoint.
+  //
+  // This is a deliberately privileged maintenance endpoint. It is gated by a
+  // dedicated secret (ADMIN_RESET_TOKEN) — NOT JWT_SECRET, which would turn
+  // JWT_SECRET into a shared admin password. The endpoint is disabled unless
+  // ADMIN_RESET_TOKEN is explicitly configured (deny-by-default), and uses a
+  // constant-time comparison so attackers cannot learn the secret via timing.
+  app.post('/api/v1/admin/reset-role', {
+    config: { rateLimit: { max: 5, timeWindow: '15 minutes' } },
+  }, async (req, reply) => {
+    const resetToken = process.env.ADMIN_RESET_TOKEN
+    if (!resetToken || resetToken.length < 32) {
+      return reply.status(404).send({ error: 'NOT_FOUND' })
     }
-    const email = body?.email || 'tomas@agoraencontrei.com.br'
-    const role = body?.role || 'SUPER_ADMIN'
+    const body = req.body as any
+    const provided = typeof body?.secret === 'string' ? body.secret : ''
+    if (!safeStringEqual(provided, resetToken)) {
+      return reply.status(403).send({ error: 'FORBIDDEN' })
+    }
+    const email = typeof body?.email === 'string' ? body.email : ''
+    const role = typeof body?.role === 'string' ? body.role : 'SUPER_ADMIN'
+    if (!email) {
+      return reply.status(400).send({ error: 'EMAIL_REQUIRED' })
+    }
     try {
       const user = await app.prisma.user.findUnique({ where: { email } })
-      if (!user) {
-        // List all users
-        const all = await app.prisma.user.findMany({ select: { email: true, name: true, role: true, status: true }, take: 20 })
-        return reply.status(404).send({ error: 'User not found', users: all })
-      }
+      if (!user) return reply.status(404).send({ error: 'USER_NOT_FOUND' })
       await app.prisma.user.update({
         where: { email },
         data: { role: role as any, status: 'ACTIVE', emailVerifiedAt: new Date() },
       })
-      return reply.send({ ok: true, message: `${user.name} atualizado para ${role} + ACTIVE`, previousRole: user.role })
+      app.log.warn(`[admin.reset-role] ${email} promoted to ${role} via maintenance endpoint`)
+      return reply.send({ ok: true, email, role, previousRole: user.role })
     } catch (err: any) {
-      return reply.status(500).send({ error: err.message })
+      app.log.error({ err }, '[admin.reset-role] failed')
+      return reply.status(500).send({ error: 'INTERNAL_ERROR' })
     }
   })
   await app.register(agentsRoutes,    { prefix: '/api/v1/agents' })
