@@ -10,13 +10,14 @@
  * - Preview em tempo real antes de salvar
  * - Aplicar em 1 mídia ou em todas
  */
-import { useState, useRef, useCallback, useEffect } from 'react'
+import { useState, useRef, useCallback, useEffect, useMemo } from 'react'
 import {
   X, Upload, Wand2, Image as ImageIcon, Video, Loader2,
   CheckCircle2, AlertCircle, ChevronLeft, ChevronRight,
   Layers, Star, Trash2, Play, Pause, Film,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useLogoLibrary, type LogoRecord } from '@/hooks/useLogoLibrary'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 
@@ -135,12 +136,22 @@ async function loadImageForCanvas(url: string): Promise<HTMLImageElement> {
   }
 }
 
+interface LogoOverlayOptions {
+  url: string | null | undefined
+  position: string
+  /** Largura alvo do logo como % da menor dimensão da foto. Range 2-25. */
+  sizePercent: number
+  /** Opacidade do logo (0-1). */
+  opacity: number
+  /** Mostrar o retângulo branco atrás do logo. */
+  showBackdrop: boolean
+}
+
 async function applyPhotoEffects(
   imageUrl: string,
   filterId: string,
   applyLogo: boolean,
-  logoUrl: string | null | undefined,
-  logoPosition: string,
+  logoOpts: LogoOverlayOptions,
   outputWidth = 1200,
 ): Promise<string> {
   const img = await loadImageForCanvas(imageUrl)
@@ -163,20 +174,20 @@ async function applyPhotoEffects(
   ctx.filter = 'none'
 
   // Apply logo overlay AFTER filter (filter doesn't affect logo)
-  if (applyLogo && logoUrl) {
+  if (applyLogo && logoOpts.url) {
     try {
-      const logo = await loadImageForCanvas(logoUrl)
-      // Logo proportional to the SMALLER dimension of the image
-      // ~8% of min(width, height) — professional standard for real estate
+      const logo = await loadImageForCanvas(logoOpts.url)
+      // Clamp size percent to the same 2-25% range the backend accepts.
+      const sizePercent = Math.max(2, Math.min(25, logoOpts.sizePercent))
       const minDim = Math.min(w, h)
-      const targetSize = Math.max(50, Math.min(160, Math.round(minDim * 0.08)))
+      const targetSize = Math.max(20, Math.round(minDim * sizePercent / 100))
       const logoRatio = Math.min(targetSize / logo.naturalWidth, targetSize / logo.naturalHeight)
       const lw = Math.round(logo.naturalWidth * logoRatio)
       const lh = Math.round(logo.naturalHeight * logoRatio)
-      const margin = Math.max(12, Math.round(minDim * 0.02))
+      const margin = Math.max(8, Math.round(minDim * 0.02))
 
       let x = 0, y = 0
-      switch (logoPosition) {
+      switch (logoOpts.position) {
         case 'top-left':     x = margin;          y = margin; break
         case 'top-right':    x = w - lw - margin; y = margin; break
         case 'bottom-left':  x = margin;          y = h - lh - margin; break
@@ -185,25 +196,33 @@ async function applyPhotoEffects(
         default:             x = w - lw - margin; y = h - lh - margin
       }
 
-      // Subtle white background behind logo (rounded rect)
-      const pad = Math.max(4, Math.round(lw * 0.06))
-      ctx.globalAlpha = 0.7
-      ctx.fillStyle = '#ffffff'
-      ctx.beginPath()
-      const rx = x - pad, ry = y - pad, rw = lw + pad * 2, rh = lh + pad * 2, r = Math.round(pad * 0.8)
-      ctx.moveTo(rx + r, ry)
-      ctx.lineTo(rx + rw - r, ry)
-      ctx.quadraticCurveTo(rx + rw, ry, rx + rw, ry + r)
-      ctx.lineTo(rx + rw, ry + rh - r)
-      ctx.quadraticCurveTo(rx + rw, ry + rh, rx + rw - r, ry + rh)
-      ctx.lineTo(rx + r, ry + rh)
-      ctx.quadraticCurveTo(rx, ry + rh, rx, ry + rh - r)
-      ctx.lineTo(rx, ry + r)
-      ctx.quadraticCurveTo(rx, ry, rx + r, ry)
-      ctx.closePath()
-      ctx.fill()
-      ctx.globalAlpha = 1.0
+      // Subtle white background behind logo (rounded rect) — optional,
+      // off by default so PDF/transparent logos don't get a white plate
+      // where it isn't wanted.
+      if (logoOpts.showBackdrop) {
+        const pad = Math.max(4, Math.round(lw * 0.06))
+        ctx.globalAlpha = 0.7
+        ctx.fillStyle = '#ffffff'
+        ctx.beginPath()
+        const rx = x - pad, ry = y - pad, rw = lw + pad * 2, rh = lh + pad * 2, r = Math.round(pad * 0.8)
+        ctx.moveTo(rx + r, ry)
+        ctx.lineTo(rx + rw - r, ry)
+        ctx.quadraticCurveTo(rx + rw, ry, rx + rw, ry + r)
+        ctx.lineTo(rx + rw, ry + rh - r)
+        ctx.quadraticCurveTo(rx + rw, ry + rh, rx + rw - r, ry + rh)
+        ctx.lineTo(rx + r, ry + rh)
+        ctx.quadraticCurveTo(rx, ry + rh, rx, ry + rh - r)
+        ctx.lineTo(rx, ry + r)
+        ctx.quadraticCurveTo(rx, ry, rx + r, ry)
+        ctx.closePath()
+        ctx.fill()
+        ctx.globalAlpha = 1.0
+      }
+
+      // Actual logo draw — respects the configured opacity.
+      ctx.globalAlpha = Math.max(0, Math.min(1, logoOpts.opacity))
       ctx.drawImage(logo, x, y, lw, lh)
+      ctx.globalAlpha = 1.0
     } catch {
       // Logo failed to load — continue without logo (graceful degradation)
     }
@@ -226,12 +245,47 @@ export function MediaEditorModal({
 }: MediaEditorModalProps) {
   const [activeTab, setActiveTab] = useState<'photos' | 'videos'>('photos')
   const [selectedFilter, setSelectedFilter] = useState('none')
-  const [applyLogo, setApplyLogo] = useState(!!logoUrl)
 
-  // Auto-disable logo toggle when there is no logo URL configured
+  // ── Logo library ────────────────────────────────────────────────────────
+  // Replaces the old single-logo flow. The user can now pick ANY logo from
+  // the library configured in Settings and adjust size/opacity/position.
+  const logoLib = useLogoLibrary(token)
+  const [selectedLogoId, setSelectedLogoId] = useState<string | null>(null)
+  const [logoSizePercent, setLogoSizePercent] = useState(8)       // 2-25
+  const [logoOpacity, setLogoOpacity] = useState(0.85)            // 0-1
+  const [logoShowBackdrop, setLogoShowBackdrop] = useState(false) // white plate behind logo
+
+  // When the library loads, pre-select the user's default. If no library
+  // is configured yet but the legacy `logoUrl` prop is present, fall back
+  // to the old single-logo behaviour — the toggle "aplicar logo" stays
+  // meaningful in both cases.
   useEffect(() => {
-    if (!logoUrl) setApplyLogo(false)
-  }, [logoUrl])
+    if (!selectedLogoId && logoLib.defaultLogo) {
+      setSelectedLogoId(logoLib.defaultLogo.id)
+    }
+  }, [logoLib.defaultLogo, selectedLogoId])
+
+  const hasLogoSource = logoLib.logos.length > 0 || !!logoUrl
+  const [applyLogo, setApplyLogo] = useState<boolean>(hasLogoSource)
+
+  // Auto-disable the toggle when there's nothing to apply.
+  useEffect(() => {
+    if (!hasLogoSource) setApplyLogo(false)
+  }, [hasLogoSource])
+
+  const selectedLogoRecord: LogoRecord | undefined = useMemo(
+    () => logoLib.logos.find(l => l.id === selectedLogoId),
+    [logoLib.logos, selectedLogoId],
+  )
+
+  // Resolves the URL the canvas should actually load. Priority:
+  //   1) Selected library logo → /api/v1/photo-editor/logos/:id/file
+  //   2) Legacy logoUrl prop (Company.logoUrl)
+  const activeLogoUrl = useMemo<string | null>(() => {
+    if (selectedLogoRecord) return logoLib.fileUrl(selectedLogoRecord.id)
+    return logoUrl ?? null
+  }, [selectedLogoRecord, logoUrl, logoLib])
+
   const [logoPosition, setLogoPosition] = useState('bottom-right')
   const [previewIndex, setPreviewIndex] = useState(0)
   const [previewDataUrl, setPreviewDataUrl] = useState<string | null>(null)
@@ -249,13 +303,23 @@ export function MediaEditorModal({
   const currentVideos = localVideos
   const currentPhoto = currentPhotos[previewIndex]
 
-  // Gerar preview quando filtro/logo/posição muda
+  // Single source of truth for the watermark config — every call to
+  // applyPhotoEffects (preview, apply-single, apply-all) reads from here.
+  const logoOpts = useMemo(() => ({
+    url: activeLogoUrl,
+    position: logoPosition,
+    sizePercent: logoSizePercent,
+    opacity: logoOpacity,
+    showBackdrop: logoShowBackdrop,
+  }), [activeLogoUrl, logoPosition, logoSizePercent, logoOpacity, logoShowBackdrop])
+
+  // Gerar preview quando filtro/logo/posição/tamanho/opacidade muda
   const generatePreview = useCallback(async () => {
     if (!currentPhoto) return
     setLoadingPreview(true)
     setError(null)
     try {
-      const result = await applyPhotoEffects(currentPhoto, selectedFilter, applyLogo, logoUrl, logoPosition)
+      const result = await applyPhotoEffects(currentPhoto, selectedFilter, applyLogo, logoOpts)
       setPreviewDataUrl(result)
     } catch (e: any) {
       const msg = e?.message ?? 'desconhecido'
@@ -270,14 +334,14 @@ export function MediaEditorModal({
     } finally {
       setLoadingPreview(false)
     }
-  }, [currentPhoto, selectedFilter, applyLogo, logoUrl, logoPosition])
+  }, [currentPhoto, selectedFilter, applyLogo, logoOpts])
 
   useEffect(() => {
     if (activeTab === 'photos' && currentPhoto) {
       generatePreview()
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps -- generatePreview is stable via useCallback
-  }, [selectedFilter, applyLogo, logoUrl, logoPosition, previewIndex, activeTab, generatePreview])
+  }, [selectedFilter, applyLogo, logoOpts, previewIndex, activeTab, generatePreview])
 
   // Upload de arquivo processado para S3 (via same-origin proxy to avoid CORS)
   // Estratégia: tenta o proxy same-origin até 3x com backoff (resiste a cold-start
@@ -369,7 +433,7 @@ export function MediaEditorModal({
     setProcessing(true)
     setError(null)
     try {
-      const result = await applyPhotoEffects(currentPhoto, selectedFilter, applyLogo, logoUrl, logoPosition)
+      const result = await applyPhotoEffects(currentPhoto, selectedFilter, applyLogo, logoOpts)
       try {
         const url = await uploadProcessed(result, `edited_${Date.now()}.jpg`)
         const newPhotos = [...localPhotos]
@@ -385,7 +449,7 @@ export function MediaEditorModal({
     } finally {
       setProcessing(false)
     }
-  }, [currentPhoto, selectedFilter, applyLogo, logoUrl, logoPosition, localPhotos, previewIndex, uploadProcessed])
+  }, [currentPhoto, selectedFilter, applyLogo, logoOpts, localPhotos, previewIndex, uploadProcessed])
 
   // Aplicar efeito em todas as fotos
   // Estratégia de resiliência: processa uma de cada vez, commita cada sucesso
@@ -403,7 +467,7 @@ export function MediaEditorModal({
     try {
       for (let i = 0; i < localPhotos.length; i++) {
         try {
-          const result = await applyPhotoEffects(localPhotos[i], selectedFilter, applyLogo, logoUrl, logoPosition)
+          const result = await applyPhotoEffects(localPhotos[i], selectedFilter, applyLogo, logoOpts)
           const url = await uploadProcessed(result, `edited_${Date.now()}_${i}.jpg`)
           working[i] = url
           setProcessedCount(i + 1)
@@ -437,26 +501,30 @@ export function MediaEditorModal({
     } finally {
       setProcessing(false)
     }
-  }, [localPhotos, selectedFilter, applyLogo, logoUrl, logoPosition, uploadProcessed])
+  }, [localPhotos, selectedFilter, applyLogo, logoOpts, uploadProcessed])
 
   // Aplicar logo em 1 vídeo (overlay via canvas frame-by-frame — client-side)
   const handleApplyLogoToVideo = useCallback(async (videoUrl: string, idx: number) => {
-    if (!logoUrl) {
+    if (!hasLogoSource) {
       setError('Nenhum logo configurado. Configure o logo nas Configurações do sistema.')
       return
     }
     setProcessing(true)
     setError(null)
     try {
-      // Para vídeos, usamos o endpoint do photo-editor (microserviço) se disponível
-      // Caso contrário, apenas adicionamos o vídeo sem processamento
+      // Para vídeos, usamos o endpoint do photo-editor (microserviço) se disponível.
+      // Repassa todas as opções novas (logo_id, size_percent, opacity) para
+      // que o vídeo use o mesmo logo configurado no painel.
       const res = await fetch(`${API_URL}/api/v1/photo-editor/process/video`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
           video_url: videoUrl,
           apply_logo: true,
+          logo_id: selectedLogoId ?? undefined,
           logo_position: logoPosition,
+          logo_size_percent: logoSizePercent,
+          logo_opacity: logoOpacity,
         }),
       })
       if (res.ok) {
@@ -466,7 +534,6 @@ export function MediaEditorModal({
         setLocalVideos(newVideos)
         setDone(true)
       } else {
-        // Microserviço indisponível — salvar vídeo original com nota
         setError('Processamento de vídeo requer o microserviço de imagens (porta 3200). O vídeo foi salvo sem o logo.')
         setDone(true)
       }
@@ -476,7 +543,7 @@ export function MediaEditorModal({
     } finally {
       setProcessing(false)
     }
-  }, [logoUrl, logoPosition, token, localVideos])
+  }, [hasLogoSource, selectedLogoId, logoPosition, logoSizePercent, logoOpacity, token, localVideos])
 
   // Salvar tudo
   const handleSave = useCallback(async () => {
@@ -655,16 +722,18 @@ export function MediaEditorModal({
                 {/* Logo */}
                 <div>
                   <h3 className="text-white/60 text-xs font-semibold uppercase tracking-wider mb-2">Logo da Imobiliária</h3>
-                  {!logoUrl ? (
-                    // No logo configured — disable the feature entirely and guide the user
+                  {!hasLogoSource ? (
+                    // No library entry AND no legacy URL — guide the user to Settings
                     <div className="bg-yellow-400/5 border border-yellow-400/20 rounded-lg p-3">
-                      <p className="text-yellow-400/90 text-xs font-semibold mb-1">Logo não configurado</p>
+                      <p className="text-yellow-400/90 text-xs font-semibold mb-1">Nenhum logo cadastrado</p>
                       <p className="text-white/50 text-[11px] leading-relaxed">
-                        Configure o logo em <span className="text-yellow-400/80">Configurações → Sistema → Empresa → Logotipos</span> para poder aplicá-lo nas fotos.
+                        Envie um logo em <span className="text-yellow-400/80">Configurações → Empresa → Logotipos</span>.
+                        Aceita PDF, PNG, JPG, WEBP e outros.
                       </p>
                     </div>
                   ) : (
                     <>
+                      {/* Master on/off — same UX as before */}
                       <label className="flex items-center gap-2 cursor-pointer mb-2">
                         <div
                           onClick={() => setApplyLogo(v => !v)}
@@ -683,10 +752,54 @@ export function MediaEditorModal({
 
                       {applyLogo && (
                         <>
-                          <div className="bg-white/5 rounded-lg p-2 mb-2">
-                            <img src={logoUrl} alt="Logo" className="h-8 object-contain mx-auto" />
-                          </div>
-                          <div className="grid grid-cols-2 gap-1">
+                          {/* Selector — lists every logo from the library.
+                              The legacy single-URL logo still shows up as a
+                              non-removable fallback entry so existing users
+                              don't lose the feature before migrating. */}
+                          {logoLib.logos.length > 0 ? (
+                            <div className="mb-2">
+                              <label className="block text-[10px] text-white/50 uppercase tracking-wider mb-1">
+                                Qual logo usar
+                              </label>
+                              <select
+                                value={selectedLogoId ?? ''}
+                                onChange={(e) => setSelectedLogoId(e.target.value || null)}
+                                className="w-full bg-white/5 border border-white/10 rounded-lg px-2 py-1.5 text-xs text-white outline-none focus:border-yellow-400/50"
+                              >
+                                {logoLib.logos.map((l) => (
+                                  <option key={l.id} value={l.id} className="bg-zinc-800">
+                                    {l.name}{l.isDefault ? ' (padrão)' : ''}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                          ) : logoUrl ? (
+                            <div className="mb-2 text-[10px] text-white/40">
+                              Usando logo legado configurado como URL. Envie para a biblioteca em Configurações para ter mais controle.
+                            </div>
+                          ) : null}
+
+                          {/* Live preview of the selected logo (checkered bg
+                              so transparent PNGs stay visible). */}
+                          {activeLogoUrl && (
+                            <div
+                              className="rounded-lg p-2 mb-2 flex items-center justify-center"
+                              style={{
+                                backgroundImage:
+                                  'linear-gradient(45deg,#222 25%,transparent 25%),linear-gradient(-45deg,#222 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#222 75%),linear-gradient(-45deg,transparent 75%,#222 75%)',
+                                backgroundSize: '12px 12px',
+                                backgroundPosition: '0 0, 0 6px, 6px -6px, -6px 0',
+                                backgroundColor: '#222',
+                              }}
+                            >
+                              {/* eslint-disable-next-line @next/next/no-img-element -- API-gated bytes, next/image can't proxy */}
+                              <img src={activeLogoUrl} alt="Logo" className="h-10 object-contain" />
+                            </div>
+                          )}
+
+                          {/* Position */}
+                          <label className="block text-[10px] text-white/50 uppercase tracking-wider mb-1">Posição</label>
+                          <div className="grid grid-cols-2 gap-1 mb-3">
                             {LOGO_POSITIONS.map(p => (
                               <button
                                 key={p.id}
@@ -702,6 +815,54 @@ export function MediaEditorModal({
                               </button>
                             ))}
                           </div>
+
+                          {/* Size slider — % of min(width, height) */}
+                          <div className="mb-2">
+                            <div className="flex items-center justify-between mb-1">
+                              <label className="text-[10px] text-white/50 uppercase tracking-wider">Tamanho</label>
+                              <span className="text-[10px] text-white/70 font-mono">{logoSizePercent.toFixed(1)}%</span>
+                            </div>
+                            <input
+                              type="range"
+                              min={2}
+                              max={25}
+                              step={0.5}
+                              value={logoSizePercent}
+                              onChange={(e) => setLogoSizePercent(parseFloat(e.target.value))}
+                              className="w-full accent-yellow-400"
+                            />
+                          </div>
+
+                          {/* Opacity slider */}
+                          <div className="mb-2">
+                            <div className="flex items-center justify-between mb-1">
+                              <label className="text-[10px] text-white/50 uppercase tracking-wider">Opacidade</label>
+                              <span className="text-[10px] text-white/70 font-mono">{Math.round(logoOpacity * 100)}%</span>
+                            </div>
+                            <input
+                              type="range"
+                              min={0}
+                              max={1}
+                              step={0.05}
+                              value={logoOpacity}
+                              onChange={(e) => setLogoOpacity(parseFloat(e.target.value))}
+                              className="w-full accent-yellow-400"
+                            />
+                          </div>
+
+                          {/* Optional white backdrop — useful for dark logos
+                              over busy photos, but off by default so crisp
+                              transparent logos don't get a plate they don't
+                              need. */}
+                          <label className="flex items-center gap-2 cursor-pointer text-[11px] text-white/60 mt-1">
+                            <input
+                              type="checkbox"
+                              checked={logoShowBackdrop}
+                              onChange={(e) => setLogoShowBackdrop(e.target.checked)}
+                              className="accent-yellow-400"
+                            />
+                            Fundo branco atrás do logo
+                          </label>
                         </>
                       )}
                     </>
@@ -826,7 +987,7 @@ export function MediaEditorModal({
                         <div className="flex gap-2">
                           <button
                             onClick={() => handleApplyLogoToVideo(url, idx)}
-                            disabled={processing || !logoUrl}
+                            disabled={processing || !hasLogoSource}
                             className="flex-1 flex items-center justify-center gap-1.5 bg-yellow-400/10 hover:bg-yellow-400/20 text-yellow-400 border border-yellow-400/20 py-2 rounded-lg text-xs font-semibold transition-colors disabled:opacity-40"
                           >
                             {processing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Wand2 className="h-3.5 w-3.5" />}
