@@ -146,7 +146,11 @@ export default async function ClusterPage(props: { params: Promise<{ estado: str
         name: `Quantos ${meta.title.toLowerCase()} existem em ${city.name}?`,
         acceptedAnswer: {
           '@type': 'Answer',
-          text: `O AgoraEncontrei lista ${properties.length > 0 ? `${properties.length}+` : 'diversos'} ${meta.title.toLowerCase()} em ${city.name}/${city.state}. Novos imóveis são adicionados diariamente.`,
+          // Be honest about an empty catalogue — a misleading FAQ can trigger
+          // Google's "deceptive content" penalty for FAQPage rich results.
+          text: properties.length > 0
+            ? `O AgoraEncontrei lista ${properties.length}+ ${meta.title.toLowerCase()} em ${city.name}/${city.state}. Novos imóveis são adicionados diariamente.`
+            : `Ainda não temos ${meta.title.toLowerCase()} ativos em ${city.name}/${city.state}, mas você pode cadastrar um alerta gratuito e receberá um aviso assim que novos imóveis chegarem.`,
         },
       },
       {

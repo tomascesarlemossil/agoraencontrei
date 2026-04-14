@@ -279,20 +279,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     changeFrequency: 'weekly' as const,
     priority: 0.8,
   }))
-  // Venda em todos os bairros
+  // Venda/aluguel por bairro — usa a rota indexável /imoveis/em/franca/{bairro}
+  // (page.tsx existente). A versão antiga `/imoveis-a-venda/franca-sp?bairro=`
+  // canibaliza /imoveis-a-venda/franca-sp e nunca vira página única no índice.
   const vendaBairrosFranca = BAIRROS_FRANCA.map(b => ({
-    url: `${WEB_URL}/imoveis-a-venda/franca-sp?bairro=${b}`,
+    url: `${WEB_URL}/imoveis/em/franca/${b}`,
     lastModified: now,
     changeFrequency: 'weekly' as const,
     priority: 0.75,
   }))
-  // Aluguel em todos os bairros
-  const aluguelBairrosFranca = BAIRROS_FRANCA.map(b => ({
-    url: `${WEB_URL}/imoveis-para-alugar/franca-sp?bairro=${b}`,
-    lastModified: now,
-    changeFrequency: 'weekly' as const,
-    priority: 0.75,
-  }))
+  // Mantém uma única entrada genérica de aluguel — a divisão por bairro acima
+  // já cobre as variações; URLs com query string em sitemap diluem ranking.
+  const aluguelBairrosFranca: MetadataRoute.Sitemap = []
   // Leilão em todos os condomínios
   const leilaoCondominios = CONDOMINIOS.map(c => ({
     url: `${WEB_URL}/leilao-imoveis/${c.replace('condominio-', '')}-franca-sp`,
