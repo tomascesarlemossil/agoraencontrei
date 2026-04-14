@@ -675,45 +675,58 @@ def apply_filter(img: Image.Image, filter_id: str, custom_params: dict = None) -
 
 # ── Marca d'água (Logo) ───────────────────────────────────────────────────────
 
-def apply_watermark(img: Image.Image, logo_path: str, position: str = 'bottom-right', opacity: float = 0.85) -> Image.Image:
+def apply_watermark(
+    img: Image.Image,
+    logo_path: str,
+    position: str = 'bottom-right',
+    opacity: float = 0.85,
+    size_percent: float = 8.0,
+    margin_percent: float = 2.0,
+) -> Image.Image:
     """
-    Aplica logo como marca d'água na foto do imóvel.
-    
-    O logo é redimensionado para ~6% da menor dimensão da foto (nunca muito grande/pequeno).
-    Posição padrão: canto inferior direito com margem.
+    Aplica logo como marca d'agua na foto do imovel.
+
+    Parametros configuraveis (controlados pelo caller, nao mais hardcoded):
+      - position: bottom-right | bottom-left | top-right | top-left | center
+      - opacity:  0.0-1.0 (default 0.85)
+      - size_percent:   largura alvo do logo como % da menor dimensao
+                         da foto. Default 8.0 (= 8%). Range seguro 2-25.
+      - margin_percent: margem ate a borda em % da menor dimensao.
+                         Default 2.0. Range seguro 0.5-10.
     """
     if not os.path.exists(logo_path):
         return img
-    
+
     # Carregar logo
     logo = Image.open(logo_path).convert('RGBA')
-    
-    # Calcular tamanho ideal do logo
-    # Regra: logo ocupa ~8% da menor dimensão da foto (padrão profissional imobiliário)
+
+    # Clamp parametros para evitar extremos absurdos
+    size_percent = max(2.0, min(25.0, float(size_percent)))
+    margin_percent = max(0.5, min(10.0, float(margin_percent)))
+    opacity = max(0.0, min(1.0, float(opacity)))
+
     img_w, img_h = img.size
     min_dim = min(img_w, img_h)
-    target_size = int(min_dim * 0.08)  # 8% da menor dimensão
+    target_size = int(min_dim * (size_percent / 100.0))
+    # Floor minimo absoluto para logos muito pequenos ficarem visiveis
+    target_size = max(20, target_size)
 
-    # Limitar: mínimo 50px, máximo 160px (proporcional mas nunca excessivo)
-    target_size = max(50, min(160, target_size))
-    
-    # Redimensionar logo mantendo proporção
+    # Redimensionar logo mantendo proporcao
     logo_w, logo_h = logo.size
     ratio = min(target_size / logo_w, target_size / logo_h)
-    new_w = int(logo_w * ratio)
-    new_h = int(logo_h * ratio)
+    new_w = max(1, int(logo_w * ratio))
+    new_h = max(1, int(logo_h * ratio))
     logo = logo.resize((new_w, new_h), Image.LANCZOS)
-    
+
     # Aplicar opacidade
     if opacity < 1.0:
         logo_arr = np.array(logo).astype(np.float32)
         logo_arr[:, :, 3] = logo_arr[:, :, 3] * opacity
         logo = Image.fromarray(logo_arr.astype(np.uint8))
-    
-    # Calcular posição
-    margin = int(min_dim * 0.02)  # 2% de margem
-    margin = max(10, min(30, margin))
-    
+
+    # Margem configuravel
+    margin = max(4, int(min_dim * (margin_percent / 100.0)))
+
     positions = {
         'bottom-right': (img_w - new_w - margin, img_h - new_h - margin),
         'bottom-left':  (margin, img_h - new_h - margin),
@@ -722,37 +735,41 @@ def apply_watermark(img: Image.Image, logo_path: str, position: str = 'bottom-ri
         'center':       ((img_w - new_w) // 2, (img_h - new_h) // 2),
     }
     pos = positions.get(position, positions['bottom-right'])
-    
+
     # Compor imagem
     result = img.convert('RGBA')
     result.paste(logo, pos, logo)
     return result.convert('RGB')
 
 
-# ── Funções de preview e processamento ───────────────────────────────────────
+# ── Funcoes de preview e processamento ───────────────────────────────────────
 
 def generate_preview(image_bytes: bytes, filter_id: str, custom_params: dict = None,
                      logo_path: str = None, logo_position: str = 'bottom-right',
+                     logo_opacity: float = 0.85, logo_size_percent: float = 8.0,
                      preview_width: int = 800) -> bytes:
     """
     Gera um preview da imagem com o filtro aplicado.
     Retorna bytes JPEG do resultado.
     """
     img = Image.open(io.BytesIO(image_bytes)).convert('RGB')
-    
-    # Redimensionar para preview (mais rápido)
+
+    # Redimensionar para preview (mais rapido)
     w, h = img.size
     if w > preview_width:
         ratio = preview_width / w
         img = img.resize((preview_width, int(h * ratio)), Image.LANCZOS)
-    
+
     # Aplicar filtro
     img = apply_filter(img, filter_id, custom_params)
-    
+
     # Aplicar logo se fornecido
     if logo_path:
-        img = apply_watermark(img, logo_path, logo_position)
-    
+        img = apply_watermark(
+            img, logo_path, logo_position,
+            opacity=logo_opacity, size_percent=logo_size_percent,
+        )
+
     # Salvar como JPEG
     output = io.BytesIO()
     img.save(output, format='JPEG', quality=85, optimize=True)
@@ -761,20 +778,24 @@ def generate_preview(image_bytes: bytes, filter_id: str, custom_params: dict = N
 
 def process_image(image_bytes: bytes, filter_id: str, custom_params: dict = None,
                   logo_path: str = None, logo_position: str = 'bottom-right',
+                  logo_opacity: float = 0.85, logo_size_percent: float = 8.0,
                   output_quality: int = 92) -> bytes:
     """
     Processa uma imagem em qualidade completa com o filtro e logo.
     Retorna bytes JPEG do resultado.
     """
     img = Image.open(io.BytesIO(image_bytes)).convert('RGB')
-    
+
     # Aplicar filtro
     img = apply_filter(img, filter_id, custom_params)
-    
+
     # Aplicar logo se fornecido
     if logo_path:
-        img = apply_watermark(img, logo_path, logo_position)
-    
+        img = apply_watermark(
+            img, logo_path, logo_position,
+            opacity=logo_opacity, size_percent=logo_size_percent,
+        )
+
     # Salvar como JPEG de alta qualidade
     output = io.BytesIO()
     img.save(output, format='JPEG', quality=output_quality, optimize=True)

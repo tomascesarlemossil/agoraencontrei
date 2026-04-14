@@ -25,9 +25,15 @@ COPY apps/web ./apps/web
 # Generate Prisma client (needed by some web imports)
 RUN pnpm --filter @agoraencontrei/database generate
 
-# Build Next.js (standalone output). tomas-knowledge is transpiled from
-# source via next.config.mjs `transpilePackages`, so no explicit dist build
-# is needed here.
+# Build the shared knowledge package first. Even though next.config.mjs
+# lists it in `transpilePackages`, Next's module resolver still uses the
+# package's `main` / `exports` (./dist/index.js) to locate it, so the
+# build fails with "Can't resolve '@agoraencontrei/tomas-knowledge'"
+# when dist/ is missing. Building it here is cheap (pure tsc) and keeps
+# the resolver happy.
+RUN pnpm --filter @agoraencontrei/tomas-knowledge build
+
+# Build Next.js (standalone output).
 RUN pnpm --filter @agoraencontrei/web build
 
 # ── Production stage (smaller image) ──────────────────────────────────────────

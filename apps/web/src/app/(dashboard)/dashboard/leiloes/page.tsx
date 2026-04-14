@@ -159,16 +159,26 @@ export default function LeiloesAdminPage() {
     setScraping(true)
     setScrapeMsg(null)
     try {
+      // Send an empty JSON object as the body. Fastify (with ajv strict)
+      // rejects requests that declare `Content-Type: application/json`
+      // without any payload — the previous version only sent the header
+      // and produced "Body cannot be empty when content-type is set to
+      // 'application/json'".
       const res = await fetch(`${API_URL}/api/v1/auctions/force-scrape`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: '{}',
       })
-      const data = await res.json()
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        setScrapeMsg(data?.message || data?.error || `Erro ${res.status} ao iniciar varredura`)
+        return
+      }
       setScrapeMsg(data.message || 'Varredura iniciada!')
       setTimeout(() => fetchStats(), 5000)
       setTimeout(() => fetchStats(), 15000)
-    } catch {
-      setScrapeMsg('Erro ao iniciar varredura')
+    } catch (err: any) {
+      setScrapeMsg(err?.message ? `Erro: ${err.message}` : 'Erro ao iniciar varredura')
     } finally {
       setScraping(false)
     }

@@ -4,3 +4,6 @@ pillow==12.1.1
 numpy==1.26.4
 requests==2.33.0
 python-multipart==0.0.22
+# PyMuPDF provides first-page PDF rasterisation for the logo library
+# upload endpoint. Ships as a pre-built wheel, no poppler needed.
+PyMuPDF==1.24.13

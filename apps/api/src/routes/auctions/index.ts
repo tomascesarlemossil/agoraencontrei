@@ -1,5 +1,6 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 import { z } from 'zod'
+import { env } from '../../utils/env.js'
 import { calculateAcquisitionCosts, getStateCosts, validateDocument } from '../../utils/brazil-costs.js'
 import { CaixaScraper } from '../../services/scrapers/caixa-scraper.js'
 import { GenericLeiloeiroScraper, BANCOS_CONFIG } from '../../services/scrapers/generic-scraper.js'
@@ -477,7 +478,21 @@ export default async function auctionsRoutes(app: FastifyInstance) {
   })
 
   // ── POST /auctions/force-scrape — Forçar varredura (admin) ────────────────
-  app.post('/force-scrape', async (_req: FastifyRequest, reply: FastifyReply) => {
+  //
+  // Accepts an empty JSON body (`{}`) — the route used to fail with
+  // "Body cannot be empty when content-type is set to 'application/json'"
+  // because the frontend sent the content-type header without a payload
+  // and Fastify's AJV in strict mode refused to parse. The schema below
+  // declares the body as an empty object so an empty `{}` succeeds.
+  app.post('/force-scrape', {
+    schema: {
+      body: {
+        type: 'object',
+        additionalProperties: false,
+        properties: {},
+      },
+    },
+  }, async (_req: FastifyRequest, reply: FastifyReply) => {
     try {
       // Re-activate bank auctions that were incorrectly closed by aggressive cleanup
       const reactivated = await app.prisma.auction.updateMany({
@@ -489,40 +504,137 @@ export default async function auctionsRoutes(app: FastifyInstance) {
         data: { status: 'OPEN' },
       })
       if (reactivated.count > 0) {
-        console.log(`[force-scrape] Reativados ${reactivated.count} leilões bancários que estavam CLOSED`)
+        app.log.info(`[force-scrape] Reativados ${reactivated.count} leilões bancários que estavam CLOSED`)
       }
 
-      // Run Caixa scraper in background (don't block the response)
+      // Run scrapers in the background so the HTTP request returns fast.
+      // The response also tells the operator which sources are wired up
+      // so "nada chegou" stops looking like a silent failure.
       const prisma = app.prisma
+      const sourcesQueued: string[] = []
+      const sourcesSkipped: Array<{ source: string; reason: string }> = []
+
       setImmediate(async () => {
+        const summary: Record<string, { found: number; created: number; updated?: number; error?: string }> = {}
+
+        // 1. Caixa (CSV official — most reliable)
         try {
-          console.log('[force-scrape] Iniciando varredura forçada...')
+          app.log.info('[force-scrape] Caixa scraper starting')
           const caixa = new CaixaScraper(prisma)
           const result = await caixa.run()
-          console.log(`[force-scrape] Caixa: ${result.found} encontrados, ${result.created} novos, ${result.updated} atualizados`)
-
-          // Also run bank scrapers
-          for (const config of BANCOS_CONFIG) {
-            try {
-              const scraper = new GenericLeiloeiroScraper(prisma, config)
-              const r = await scraper.run()
-              console.log(`[force-scrape] ${config.name}: ${r.found} encontrados, ${r.created} novos`)
-            } catch (e: any) {
-              console.error(`[force-scrape] ${config.name} erro:`, e.message)
-            }
-            await new Promise(resolve => setTimeout(resolve, 2000))
-          }
-          console.log('[force-scrape] Varredura completa!')
+          summary.CAIXA = { found: result.found, created: result.created, updated: (result as any).updated ?? 0 }
+          app.log.info(`[force-scrape] Caixa: ${result.found} encontrados, ${result.created} novos`)
         } catch (e: any) {
-          console.error('[force-scrape] Erro:', e.message)
+          summary.CAIXA = { found: 0, created: 0, error: e.message }
+          app.log.error({ err: e }, '[force-scrape] Caixa failed')
         }
+
+        // 2. Apify-backed scrapers (Santander, Caixa-enriched). These
+        //    actually work against SPAs where the raw HTML fetch does not —
+        //    previously the force-scrape only called GenericLeiloeiroScraper
+        //    which cannot render JS, so bancos returned 0 every time.
+        if ((env as any).APIFY_API_TOKEN) {
+          try {
+            const { fetchSantanderApifyLastRun } = await import('../../services/apify-santander.service.js')
+            const santanderItems = await fetchSantanderApifyLastRun()
+            let saved = 0
+            for (const item of santanderItems) {
+              try {
+                await (prisma as any).auction.upsert({
+                  where: { slug: `santander-${(item as any).externalId ?? (item as any).id ?? saved}` },
+                  update: { updatedAt: new Date() },
+                  create: {
+                    slug: `santander-${(item as any).externalId ?? (item as any).id ?? `apify-${Date.now()}-${saved}`}`,
+                    source: 'SANTANDER',
+                    title: (item as any).title || 'Imóvel Santander',
+                    propertyType: (item as any).propertyType || 'HOUSE',
+                    status: 'OPEN',
+                    modality: 'ONLINE',
+                    city: (item as any).city || null,
+                    state: (item as any).state || null,
+                    neighborhood: (item as any).neighborhood || null,
+                    minimumBid: (item as any).price || null,
+                    appraisalValue: (item as any).appraisalValue || null,
+                    discountPercent: (item as any).discount || null,
+                    bankName: 'Santander',
+                    auctioneerName: 'Santander Imóveis',
+                    sourceUrl: (item as any).url || null,
+                  },
+                })
+                saved++
+              } catch {
+                /* one bad row shouldn't stop the rest */
+              }
+            }
+            summary.SANTANDER = { found: santanderItems.length, created: saved }
+            app.log.info(`[force-scrape] Santander (Apify): ${santanderItems.length} encontrados, ${saved} novos`)
+          } catch (e: any) {
+            summary.SANTANDER = { found: 0, created: 0, error: e.message }
+            app.log.error({ err: e }, '[force-scrape] Santander Apify failed')
+          }
+        } else {
+          summary.SANTANDER = { found: 0, created: 0, error: 'APIFY_API_TOKEN not configured' }
+          app.log.warn('[force-scrape] Santander skipped — APIFY_API_TOKEN not configured')
+        }
+
+        // 3. Generic HTML scrapers for the banks that don't have an Apify
+        //    actor. These only work when the target site returns server-
+        //    rendered listings — if a bank turns into a SPA the scraper
+        //    records 0 and logs the reason, but never throws past this
+        //    point so one bad bank doesn't stop the rest.
+        for (const config of BANCOS_CONFIG) {
+          // Skip Santander here when Apify already handled it.
+          if (config.source === 'SANTANDER' && summary.SANTANDER && summary.SANTANDER.found > 0) continue
+          try {
+            const scraper = new GenericLeiloeiroScraper(prisma, config)
+            const r = await scraper.run()
+            summary[config.source] = { found: r.found, created: r.created }
+            app.log.info(`[force-scrape] ${config.name}: ${r.found} encontrados, ${r.created} novos`)
+          } catch (e: any) {
+            summary[config.source] = { found: 0, created: 0, error: e.message }
+            app.log.error({ err: e, source: config.source }, '[force-scrape] generic scraper failed')
+          }
+          await new Promise(resolve => setTimeout(resolve, 2000))
+        }
+
+        // Persist summary on the scraper_runs table so /stats and admins
+        // can see what actually happened on the last force-scrape.
+        try {
+          await (prisma as any).scraperRun.create({
+            data: {
+              source: 'FORCE_SCRAPE',
+              status: 'SUCCESS',
+              finishedAt: new Date(),
+              itemsFound: Object.values(summary).reduce((a, b) => a + (b.found || 0), 0),
+              itemsCreated: Object.values(summary).reduce((a, b) => a + (b.created || 0), 0),
+              metadata: summary as any,
+            },
+          })
+        } catch { /* scraper_runs table is optional in some envs */ }
+
+        app.log.info({ summary }, '[force-scrape] Varredura completa')
       })
+
+      // Figure out which sources were actually queued so the response is
+      // honest about scope: the UI no longer has to guess whether a bank
+      // is wired up.
+      sourcesQueued.push('CAIXA')
+      if ((env as any).APIFY_API_TOKEN) sourcesQueued.push('SANTANDER')
+      else sourcesSkipped.push({ source: 'SANTANDER', reason: 'APIFY_API_TOKEN not configured' })
+      for (const config of BANCOS_CONFIG) {
+        if (config.source === 'SANTANDER' && sourcesQueued.includes('SANTANDER')) continue
+        sourcesQueued.push(config.source)
+      }
 
       return reply.send({
-        message: 'Varredura iniciada! Os robôs estão buscando novos imóveis. Atualize em 30-60 segundos para ver resultados.',
+        message: `Varredura iniciada — ${sourcesQueued.length} fonte(s) em execução. Atualize em 30-60 segundos para ver os resultados.`,
+        reactivated: reactivated.count,
+        sourcesQueued,
+        sourcesSkipped,
       })
     } catch (err: any) {
-      return reply.status(500).send({ error: err.message })
+      app.log.error({ err }, '[force-scrape] failed to enqueue')
+      return reply.status(500).send({ error: 'FORCE_SCRAPE_FAILED', message: err.message })
     }
   })
 

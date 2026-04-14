@@ -24,6 +24,16 @@ from filters import (
     FILTERS, generate_preview, process_image,
     extract_filter_from_dng, load_all_filters, save_custom_filter
 )
+from logos import (
+    list_logos as logos_list,
+    get_logo as logos_get,
+    get_logo_path as logos_get_path,
+    get_default_logo as logos_get_default,
+    save_logo as logos_save,
+    delete_logo as logos_delete,
+    set_default_logo as logos_set_default,
+    rename_logo as logos_rename,
+)
 
 app = FastAPI(title="AgoraEncontrei Image Processor", version="1.1.0")
 
@@ -126,12 +136,35 @@ async def _read_upload(file: UploadFile) -> bytes:
     return bytes(buf)
 
 
-def get_logo_path() -> Optional[str]:
+def resolve_logo_path(logo_id: Optional[str]) -> Optional[str]:
+    """
+    Returns the filesystem path of a given logo id, or the default logo when
+    `logo_id` is empty/None. Falls back to the legacy single-file layout
+    (logo.png / logo.jpg / ...) when nothing has been migrated to the new
+    library yet, so old installs keep working until the user uploads
+    something new.
+    """
+    if logo_id:
+        p = logos_get_path(logo_id)
+        if p:
+            return p
+        # Fall through: ignore unknown ids instead of raising — matches the
+        # previous "best-effort" behaviour of the legacy helper.
+    default = logos_get_default()
+    if default:
+        return logos_get_path(default["id"])
+    # Legacy fallback — look for the hard-coded single-file logo left over
+    # from before the logo library existed.
     for ext in ['png', 'jpg', 'jpeg', 'webp']:
         p = Path(__file__).parent / f"logo.{ext}"
         if p.exists():
             return str(p)
     return None
+
+
+# Backwards-compat shim — older callers (import-filter et al) still use this.
+def get_logo_path() -> Optional[str]:
+    return resolve_logo_path(None)
 
 
 @app.get("/health")
@@ -159,7 +192,10 @@ class PreviewRequest(BaseModel):
     image_url: str
     filter_id: str
     apply_logo: bool = True
+    logo_id: Optional[str] = None          # None => use default logo
     logo_position: str = "bottom-right"
+    logo_size_percent: float = 8.0         # % da menor dimensao da foto
+    logo_opacity: float = 0.85             # 0.0 - 1.0
     preview_width: int = 800
 
 
@@ -168,12 +204,14 @@ async def preview_filter(req: PreviewRequest):
     """Gera preview com filtro. Retorna base64 para exibicao imediata."""
     try:
         image_bytes = fetch_image_bytes(req.image_url)
-        logo_path = get_logo_path() if req.apply_logo else None
+        logo_path = resolve_logo_path(req.logo_id) if req.apply_logo else None
         result = generate_preview(
             image_bytes=image_bytes,
             filter_id=req.filter_id,
             logo_path=logo_path,
             logo_position=req.logo_position,
+            logo_opacity=req.logo_opacity,
+            logo_size_percent=req.logo_size_percent,
             preview_width=req.preview_width,
         )
         b64 = base64.b64encode(result).decode("utf-8")
@@ -189,18 +227,23 @@ async def preview_filter_upload(
     file: UploadFile = File(...),
     filter_id: str = Form(...),
     apply_logo: bool = Form(True),
+    logo_id: Optional[str] = Form(None),
     logo_position: str = Form("bottom-right"),
+    logo_size_percent: float = Form(8.0),
+    logo_opacity: float = Form(0.85),
     preview_width: int = Form(800),
 ):
     """Preview a partir de arquivo enviado diretamente."""
     try:
         image_bytes = await _read_upload(file)
-        logo_path = get_logo_path() if apply_logo else None
+        logo_path = resolve_logo_path(logo_id) if apply_logo else None
         result = generate_preview(
             image_bytes=image_bytes,
             filter_id=filter_id,
             logo_path=logo_path,
             logo_position=logo_position,
+            logo_opacity=logo_opacity,
+            logo_size_percent=logo_size_percent,
             preview_width=preview_width,
         )
         b64 = base64.b64encode(result).decode("utf-8")
@@ -215,7 +258,10 @@ class ProcessRequest(BaseModel):
     image_url: str
     filter_id: str
     apply_logo: bool = True
+    logo_id: Optional[str] = None
     logo_position: str = "bottom-right"
+    logo_size_percent: float = 8.0
+    logo_opacity: float = 0.85
     output_quality: int = 92
 
 
@@ -224,12 +270,14 @@ async def process_single(req: ProcessRequest):
     """Processa uma imagem em qualidade completa."""
     try:
         image_bytes = fetch_image_bytes(req.image_url)
-        logo_path = get_logo_path() if req.apply_logo else None
+        logo_path = resolve_logo_path(req.logo_id) if req.apply_logo else None
         result = process_image(
             image_bytes=image_bytes,
             filter_id=req.filter_id,
             logo_path=logo_path,
             logo_position=req.logo_position,
+            logo_opacity=req.logo_opacity,
+            logo_size_percent=req.logo_size_percent,
             output_quality=req.output_quality,
         )
         b64 = base64.b64encode(result).decode("utf-8")
@@ -244,7 +292,10 @@ class BatchProcessRequest(BaseModel):
     image_urls: List[str]
     filter_id: str
     apply_logo: bool = True
+    logo_id: Optional[str] = None
     logo_position: str = "bottom-right"
+    logo_size_percent: float = 8.0
+    logo_opacity: float = 0.85
     output_quality: int = 92
 
 
@@ -255,7 +306,7 @@ async def process_batch(req: BatchProcessRequest):
         raise HTTPException(status_code=400, detail=f"Maximo {MAX_BATCH_ITEMS} URLs por lote")
     results = []
     errors = []
-    logo_path = get_logo_path() if req.apply_logo else None
+    logo_path = resolve_logo_path(req.logo_id) if req.apply_logo else None
 
     for i, url in enumerate(req.image_urls):
         try:
@@ -265,6 +316,8 @@ async def process_batch(req: BatchProcessRequest):
                 filter_id=req.filter_id,
                 logo_path=logo_path,
                 logo_position=req.logo_position,
+                logo_opacity=req.logo_opacity,
+                logo_size_percent=req.logo_size_percent,
                 output_quality=req.output_quality,
             )
             b64 = base64.b64encode(result).decode("utf-8")
@@ -287,21 +340,132 @@ async def process_batch(req: BatchProcessRequest):
     }
 
 
-@app.post("/upload-logo", dependencies=[Depends(verify_token)])
-async def upload_logo(file: UploadFile = File(...)):
-    """Faz upload do logo da imobiliaria."""
+# ── Logo library (multi-logo CRUD) ────────────────────────────────────────
+#
+# Any format Pillow can open is accepted (PNG, JPG, WEBP, AVIF, BMP, TIFF,
+# GIF) plus PDF (first page). The file is always stored internally as PNG
+# with transparency so the watermark pipeline stays uniform.
+
+# MIME allow-list for logo uploads. Vector SVG is deliberately NOT allowed
+# here — it can carry inline <script> and XSS downstream. Raster vector
+# formats (PNG/WebP) should be used instead.
+ALLOWED_LOGO_MIMES = {
+    "image/png", "image/jpeg", "image/jpg", "image/webp",
+    "image/avif", "image/bmp", "image/tiff", "image/gif",
+    "application/pdf",
+}
+
+
+def _serialize_logo(rec: dict) -> dict:
+    """Shape a logo record for the public JSON response. Exposes a URL the
+    web UI can use directly as <img src>."""
+    return {
+        "id": rec["id"],
+        "name": rec["name"],
+        "mime": rec["mime"],
+        "originalMime": rec.get("original_mime"),
+        "width": rec.get("width"),
+        "height": rec.get("height"),
+        "bytes": rec.get("bytes"),
+        "isDefault": bool(rec.get("is_default")),
+        "createdAt": rec.get("created_at"),
+        "url": f"/logos/{rec['id']}/file",
+    }
+
+
+@app.get("/logos", dependencies=[Depends(verify_token)])
+def logos_list_endpoint():
+    """Returns the library of registered logos."""
+    return {"logos": [_serialize_logo(r) for r in logos_list()]}
+
+
+@app.post("/logos", dependencies=[Depends(verify_token)])
+async def logos_upload_endpoint(
+    file: UploadFile = File(...),
+    name: Optional[str] = Form(None),
+):
+    """Uploads a new logo. Accepts any image format Pillow handles, plus PDF.
+    The file is normalised to PNG-RGBA on disk regardless of input format."""
     filename = (file.filename or "").strip()
     if "/" in filename or "\\" in filename or ".." in filename:
         raise HTTPException(status_code=400, detail="Nome de arquivo invalido")
-    parts = filename.rsplit(".", 1)
-    ext = parts[1].lower() if len(parts) == 2 else ""
-    if ext not in ["png", "jpg", "jpeg", "webp"]:
-        raise HTTPException(status_code=400, detail="Formato invalido. Use PNG, JPG ou WebP.")
+
+    mime = (file.content_type or "").lower()
+    # Accept when either the declared MIME is on the allow-list OR the
+    # extension suggests a supported type. Browsers sometimes send empty
+    # content-type for .avif / .bmp, so relying purely on MIME is fragile.
+    ext = filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
+    ext_allowed = ext in {"png", "jpg", "jpeg", "webp", "avif", "bmp", "tiff", "tif", "gif", "pdf"}
+    if mime not in ALLOWED_LOGO_MIMES and not ext_allowed:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Formato nao suportado ({mime or ext or 'desconhecido'}). "
+                   "Use PNG, JPG, WEBP, BMP, TIFF, GIF ou PDF."
+        )
+
     content = await _read_upload(file)
-    logo_path = Path(__file__).parent / f"logo.{ext}"
-    with open(logo_path, "wb") as f:
-        f.write(content)
-    return {"message": "Logo salvo com sucesso", "path": str(logo_path)}
+    display_name = (name or filename or "Logo sem nome").rsplit(".", 1)[0]
+    try:
+        rec = logos_save(display_name, content, mime or f"image/{ext}")
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    return _serialize_logo(rec)
+
+
+@app.get("/logos/{logo_id}", dependencies=[Depends(verify_token)])
+def logos_get_endpoint(logo_id: str):
+    rec = logos_get(logo_id)
+    if rec is None:
+        raise HTTPException(status_code=404, detail="Logo nao encontrado")
+    return _serialize_logo(rec)
+
+
+@app.get("/logos/{logo_id}/file", dependencies=[Depends(verify_token)])
+def logos_file_endpoint(logo_id: str):
+    """Serves the raw PNG bytes of a logo. Used by the web UI as a
+    thumbnail source; also handy for debugging."""
+    from fastapi.responses import Response
+    path = logos_get_path(logo_id)
+    if not path:
+        raise HTTPException(status_code=404, detail="Logo nao encontrado")
+    with open(path, "rb") as f:
+        data = f.read()
+    return Response(content=data, media_type="image/png")
+
+
+@app.delete("/logos/{logo_id}", dependencies=[Depends(verify_token)])
+def logos_delete_endpoint(logo_id: str):
+    removed = logos_delete(logo_id)
+    if not removed:
+        raise HTTPException(status_code=404, detail="Logo nao encontrado")
+    return {"ok": True}
+
+
+class LogoPatchRequest(BaseModel):
+    name: Optional[str] = None
+    is_default: Optional[bool] = None
+
+
+@app.patch("/logos/{logo_id}", dependencies=[Depends(verify_token)])
+def logos_patch_endpoint(logo_id: str, req: LogoPatchRequest):
+    """Renames a logo and/or toggles the default flag."""
+    updated = None
+    if req.name is not None:
+        updated = logos_rename(logo_id, req.name)
+    if req.is_default is True:
+        updated = logos_set_default(logo_id)
+    if updated is None and logos_get(logo_id) is None:
+        raise HTTPException(status_code=404, detail="Logo nao encontrado")
+    final = logos_get(logo_id)
+    return _serialize_logo(final) if final else {"ok": True}
+
+
+# ── Backwards-compat: old single-logo endpoint still works ───────────────
+@app.post("/upload-logo", dependencies=[Depends(verify_token)])
+async def upload_logo_legacy(file: UploadFile = File(...)):
+    """Legacy single-file upload. Creates a new entry in the logo library
+    (marked as default when it's the first one). Prefer POST /logos."""
+    return await logos_upload_endpoint(file=file, name=None)
 
 
 @app.post("/import-filter", dependencies=[Depends(verify_token)])
