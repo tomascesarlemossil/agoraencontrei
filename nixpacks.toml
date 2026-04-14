@@ -8,8 +8,13 @@ cmds = [
 ]
 
 [phases.build]
+# tomas-knowledge must build first — its `main`/`exports` point at
+# ./dist/index.js, which the API imports at runtime. Without this step
+# the container throws ERR_MODULE_NOT_FOUND: @agoraencontrei/tomas-knowledge
+# the moment tomas.service.js is first required.
 cmds = [
   "pnpm --filter @agoraencontrei/database generate",
+  "pnpm --filter @agoraencontrei/tomas-knowledge build",
   "pnpm --filter @agoraencontrei/api build"
 ]
 

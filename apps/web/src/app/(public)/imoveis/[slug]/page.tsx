@@ -9,7 +9,6 @@ import {
 } from 'lucide-react'
 import { LeadCaptureForm } from './LeadCaptureForm'
 import { BankButton } from './BankButton'
-import { JsonLdScript } from './JsonLdScript'
 import { PrintButton } from './PrintButton'
 import { CopyLinkButton } from './CopyLinkButton'
 import { PropostaOnline } from './PropostaOnline'
@@ -393,8 +392,10 @@ export default async function PropertyDetailPage(props: { params: Promise<{ slug
 
   return (
     <div style={{ backgroundColor: '#f5f3ef' }} className="min-h-screen">
-      {/* JSON-LD Structured Data — client component to avoid React 18 script hoisting hydration mismatch */}
-      <JsonLdScript data={jsonLd} />
+      {/* JSON-LD Structured Data — emitted server-side so that crawlers
+          which don't execute JS (Facebook OG, WhatsApp link preview,
+          Twitter card, Bingbot, GPTBot, etc.) still see the schema. */}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
 
       {/* ── Breadcrumb ─────────────────────────────────────── */}

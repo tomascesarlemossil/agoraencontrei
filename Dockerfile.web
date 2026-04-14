@@ -5,22 +5,29 @@ RUN corepack enable && corepack prepare pnpm@10.0.0 --activate
 
 WORKDIR /app
 
-# Copy workspace files
+# Copy workspace manifests. Every workspace package.json has to be in
+# place before `pnpm install` so the `workspace:*` symlinks get created —
+# apps/web depends on @agoraencontrei/tomas-knowledge and imports it from
+# the app/api/chat/stream route.
 COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
 COPY packages/database/package.json ./packages/database/
+COPY packages/tomas-knowledge/package.json ./packages/tomas-knowledge/
 COPY apps/web/package.json ./apps/web/
 
 # Install dependencies
 RUN pnpm install --frozen-lockfile
 
-# Copy source
+# Copy source (include every workspace package the web app transpiles).
 COPY packages/database ./packages/database
+COPY packages/tomas-knowledge ./packages/tomas-knowledge
 COPY apps/web ./apps/web
 
 # Generate Prisma client (needed by some web imports)
 RUN pnpm --filter @agoraencontrei/database generate
 
-# Build Next.js (standalone output)
+# Build Next.js (standalone output). tomas-knowledge is transpiled from
+# source via next.config.mjs `transpilePackages`, so no explicit dist build
+# is needed here.
 RUN pnpm --filter @agoraencontrei/web build
 
 # ── Production stage (smaller image) ──────────────────────────────────────────

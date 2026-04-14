@@ -6,8 +6,11 @@ export default async function uploadRoutes(app: FastifyInstance) {
   app.addHook('preHandler', app.authenticate)
 
   // ── Allowed file types and size limits ─────────────────────────────────
+  // SVG is intentionally NOT allowed — SVG files can carry inline <script>
+  // that executes in the user's browser when the file is rendered or opened
+  // directly (stored XSS / CWE-79). Use PNG/WebP/AVIF for vector-style logos.
   const ALLOWED_MIMETYPES = new Set([
-    'image/jpeg', 'image/png', 'image/webp', 'image/avif', 'image/gif', 'image/svg+xml',
+    'image/jpeg', 'image/png', 'image/webp', 'image/avif', 'image/gif',
     'application/pdf',
     'video/mp4', 'video/webm',
     'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
@@ -16,8 +19,30 @@ export default async function uploadRoutes(app: FastifyInstance) {
   ])
   const MAX_FILE_SIZE = 25 * 1024 * 1024 // 25MB
 
+  /**
+   * Sanitize the filename supplied by the client before using it inside an
+   * S3 key. Strips path separators (defence-in-depth against traversal),
+   * non-ASCII chars and shell metacharacters. Falls back to a generated
+   * name if everything got stripped.
+   */
+  function sanitizeFilename(name: string | undefined): string {
+    const raw = (name || '').trim()
+    // Keep only the basename — block any "../" attempt up front.
+    const base = raw.split(/[\\/]/).pop() || ''
+    const cleaned = base
+      .normalize('NFKD')
+      .replace(/[^\w.\-]+/g, '_')   // letters, digits, _, ., -
+      .replace(/_+/g, '_')
+      .replace(/^[._-]+|[._-]+$/g, '')
+      .slice(0, 120)
+    return cleaned || `file-${nanoid(8)}`
+  }
+
   // POST /api/v1/upload — upload file to S3 or fallback to base64 inline
   app.post('/', {
+    // Dedicated rate-limit: uploads are far more expensive than typical
+    // requests, so they get a tighter cap independent of the global one.
+    config: { rateLimit: { max: 60, timeWindow: '1 minute' } },
     schema: { tags: ['upload'] },
   }, async (req, reply) => {
     const data = await req.file({ limits: { fileSize: MAX_FILE_SIZE } })
@@ -28,7 +53,7 @@ export default async function uploadRoutes(app: FastifyInstance) {
     if (!ALLOWED_MIMETYPES.has(mimetype)) {
       return reply.status(400).send({
         error: 'INVALID_FILE_TYPE',
-        message: `Tipo de arquivo não permitido: ${mimetype}. Permitidos: imagens, PDFs, vídeos e documentos Office.`,
+        message: `Tipo de arquivo não permitido: ${mimetype}. Permitidos: imagens (exceto SVG), PDFs, vídeos e documentos Office.`,
       })
     }
 
@@ -46,9 +71,11 @@ export default async function uploadRoutes(app: FastifyInstance) {
     }
     const buffer = Buffer.concat(chunks)
 
+    const safeName = sanitizeFilename(data.filename)
+
     // If S3 is configured, use it (no size limit)
     if (s3Service.isConfigured()) {
-      const key = `${req.user.cid}/${nanoid()}/${data.filename}`
+      const key = `${req.user.cid}/${nanoid()}/${safeName}`
       const url = await s3Service.upload(key, buffer, mimetype)
       return reply.send({ url, key, size: buffer.length, contentType: mimetype })
     }
@@ -63,6 +90,7 @@ export default async function uploadRoutes(app: FastifyInstance) {
 
   // POST /api/v1/upload/presign — get presigned URL for direct browser upload
   app.post('/presign', {
+    config: { rateLimit: { max: 120, timeWindow: '1 minute' } },
     schema: { tags: ['upload'] },
   }, async (req, reply) => {
     if (!s3Service.isConfigured()) {
@@ -75,8 +103,23 @@ export default async function uploadRoutes(app: FastifyInstance) {
       })
     }
 
-    const { filename, contentType } = req.body as { filename: string; contentType: string }
-    const key = `${req.user.cid}/${nanoid()}/${filename}`
+    const body = (req.body || {}) as { filename?: string; contentType?: string }
+    const filename = typeof body.filename === 'string' ? body.filename : ''
+    const contentType = typeof body.contentType === 'string' ? body.contentType : ''
+
+    // Validate the requested content-type against the same allowlist used by
+    // the direct-upload endpoint. Without this the presigned URL would
+    // happily mint a slot for `image/svg+xml`, `text/html`, etc., letting a
+    // malicious client bypass the SVG/exec block by going straight to S3.
+    if (!ALLOWED_MIMETYPES.has(contentType)) {
+      return reply.status(400).send({
+        error: 'INVALID_CONTENT_TYPE',
+        message: `Tipo de arquivo não permitido: ${contentType || '(vazio)'}.`,
+      })
+    }
+
+    const safeName = sanitizeFilename(filename)
+    const key = `${req.user.cid}/${nanoid()}/${safeName}`
     const url = await s3Service.presignPut(key, contentType)
 
     return reply.send({ uploadUrl: url, key })

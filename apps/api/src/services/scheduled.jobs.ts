@@ -18,6 +18,10 @@ export async function runScheduledJobs(app: FastifyInstance) {
   // ── 1. boleto_vencendo: rentals que vencem em ≤ 3 dias e ainda PENDING ───
   try {
     const dueInThreeDays = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000)
+    // `take` limit + deterministic ordering — without these the job would
+    // load every PENDING rental in the window and emit one automation per
+    // row. On a busy multi-tenant DB that easily means tens of thousands of
+    // objects in memory plus a flood of queued jobs every 30 minutes.
     const boletosVencendo = await app.prisma.rental.findMany({
       where: {
         status: 'PENDING',
@@ -33,6 +37,8 @@ export async function runScheduledJobs(app: FastifyInstance) {
           },
         },
       },
+      orderBy: { dueDate: 'asc' },
+      take: 500,
     })
 
     for (const boleto of boletosVencendo) {
@@ -64,6 +70,9 @@ export async function runScheduledJobs(app: FastifyInstance) {
   // ── 2. lead_sem_resposta_48h: leads NEW/CONTACTED sem atividade em 48h ───
   try {
     const cutoff48h = new Date(now.getTime() - 48 * 60 * 60 * 1000)
+    // Same rationale as boletosVencendo: bound the result set and process
+    // oldest first so progress is monotonic instead of revisiting recent
+    // rows on every tick.
     const staleLeads = await app.prisma.lead.findMany({
       where: {
         status: { in: ['NEW', 'CONTACTED'] },
@@ -72,6 +81,8 @@ export async function runScheduledJobs(app: FastifyInstance) {
       include: {
         assignedTo: { select: { id: true, name: true } },
       },
+      orderBy: { updatedAt: 'asc' },
+      take: 200,
     })
 
     for (const lead of staleLeads) {
