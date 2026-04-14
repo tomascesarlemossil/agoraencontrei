@@ -19,6 +19,7 @@
 import type { FastifyInstance } from 'fastify'
 import { env } from '../../utils/env.js'
 import type { AsaasWebhookEvent } from '../../services/asaas.service.js'
+import { safeStringEqual } from '../../utils/crypto-safe.js'
 
 export default async function saasWebhookRoutes(app: FastifyInstance) {
   const prisma = app.prisma as any
@@ -42,7 +43,7 @@ export default async function saasWebhookRoutes(app: FastifyInstance) {
   }, async (req, reply) => {
     // 1. Validate webhook secret
     const webhookToken = (req.headers['asaas-access-token'] as string) || ''
-    if (env.ASAAS_WEBHOOK_SECRET && webhookToken !== env.ASAAS_WEBHOOK_SECRET) {
+    if (env.ASAAS_WEBHOOK_SECRET && !safeStringEqual(webhookToken, env.ASAAS_WEBHOOK_SECRET)) {
       app.log.warn('[saas-webhook] Invalid webhook token')
 
       await app.prisma.auditLog.create({

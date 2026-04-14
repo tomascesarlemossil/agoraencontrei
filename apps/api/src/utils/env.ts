@@ -91,35 +91,66 @@ const envSchema = z.object({
   // Clicksign — digital signatures
   CLICKSIGN_ACCESS_TOKEN: z.string().optional(),
   CLICKSIGN_BASE_URL: z.string().optional(),
+
+  // Image processor (FastAPI microservice) — shared secret used in the
+  // `x-image-processor-token` header. Required for any call to /preview,
+  // /process, /upload-logo etc. See apps/image-processor/main.py.
+  IMAGE_PROCESSOR_URL: z.string().optional(),
+  IMAGE_PROCESSOR_TOKEN: z.string().optional(),
+
+  // Maintenance endpoints (e.g. /api/v1/admin/reset-role). Deny-by-default:
+  // if unset, the endpoint returns 404. Must be >=32 chars when configured.
+  ADMIN_RESET_TOKEN: z.string().min(32).optional(),
 })
 
 function parseEnv() {
   const result = envSchema.safeParse(process.env)
-  if (!result.success) {
-    const errors = result.error.flatten().fieldErrors
-    console.error('⚠️ Missing/invalid environment variables (server will start with defaults):')
+  if (result.success) return result.data
+
+  const errors = result.error.flatten().fieldErrors
+  const nodeEnv = process.env.NODE_ENV
+  const isProduction = nodeEnv === 'production'
+
+  // ── Production: fail fast on missing secrets ─────────────────────────────
+  // Falling back to hard-coded placeholders for JWT_SECRET / COOKIE_SECRET in
+  // production allows tokens to be forged by anyone who knows the placeholder
+  // value. That is non-negotiable — refuse to boot.
+  const secretsMissingInProd =
+    isProduction &&
+    (!process.env.JWT_SECRET || !process.env.COOKIE_SECRET || !process.env.DATABASE_URL)
+
+  if (secretsMissingInProd) {
+    console.error('❌ FATAL: production boot refused — required secrets are missing:')
     for (const [key, messages] of Object.entries(errors)) {
       console.error(`  ${key}: ${messages?.join(', ')}`)
     }
-    // Don't exit — start with defaults so healthcheck passes on Railway
-    // Required vars get safe fallbacks; features that need them will fail gracefully
-    const fallback = {
-      ...process.env,
-      DATABASE_URL: process.env.DATABASE_URL || 'postgresql://placeholder:placeholder@localhost:5432/placeholder',
-      JWT_SECRET: process.env.JWT_SECRET || 'development-jwt-secret-placeholder-min-32-chars!!',
-      COOKIE_SECRET: process.env.COOKIE_SECRET || 'development-cookie-secret-placeholder-32-chars!',
-    }
-    const retryResult = envSchema.safeParse(fallback)
-    if (retryResult.success) return retryResult.data
-    // If still fails, return whatever we can
-    console.error('⚠️ Could not parse env even with fallbacks, using raw process.env')
-    return envSchema.parse({
-      ...fallback,
-      NODE_ENV: 'production',
-      PORT: parseInt(process.env.PORT || '3100', 10),
-    })
+    console.error('Set JWT_SECRET (>=32 chars), COOKIE_SECRET (>=32 chars) and DATABASE_URL.')
+    process.exit(1)
   }
-  return result.data
+
+  // ── Dev/test fallback ─────────────────────────────────────────────────────
+  // Only dev/test get the placeholder secrets, so healthcheck passes on a
+  // fresh local checkout without forcing every contributor to set up a full
+  // .env before `pnpm dev`.
+  console.error('⚠️ Missing/invalid environment variables (dev fallback — DO NOT USE IN PROD):')
+  for (const [key, messages] of Object.entries(errors)) {
+    console.error(`  ${key}: ${messages?.join(', ')}`)
+  }
+  const fallback = {
+    ...process.env,
+    DATABASE_URL: process.env.DATABASE_URL || 'postgresql://placeholder:placeholder@localhost:5432/placeholder',
+    JWT_SECRET: process.env.JWT_SECRET || 'development-jwt-secret-placeholder-min-32-chars!!',
+    COOKIE_SECRET: process.env.COOKIE_SECRET || 'development-cookie-secret-placeholder-32-chars!',
+  }
+  const retryResult = envSchema.safeParse(fallback)
+  if (retryResult.success) return retryResult.data
+
+  console.error('⚠️ Could not parse env even with fallbacks; using raw process.env')
+  return envSchema.parse({
+    ...fallback,
+    NODE_ENV: nodeEnv === 'production' ? 'production' : 'development',
+    PORT: parseInt(process.env.PORT || '3100', 10),
+  })
 }
 
 export const env = parseEnv()

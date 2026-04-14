@@ -15,6 +15,7 @@ import type { FastifyInstance } from 'fastify'
 import { env } from '../../utils/env.js'
 import type { AsaasWebhookEvent } from '../../services/asaas.service.js'
 import { scheduleRepasse } from '../../services/repasse.service.js'
+import { safeStringEqual } from '../../utils/crypto-safe.js'
 
 export default async function asaasWebhookRoutes(app: FastifyInstance) {
   // POST /api/v1/finance/webhook/asaas — Público (chamado pelo Asaas)
@@ -22,9 +23,10 @@ export default async function asaasWebhookRoutes(app: FastifyInstance) {
     config: { rateLimit: { max: 100, timeWindow: '1 minute' } },
     schema: { tags: ['finance-webhook'] },
   }, async (req, reply) => {
-    // Validate webhook secret if configured
+    // Validate webhook secret if configured — timing-safe comparison so an
+    // attacker cannot learn the token byte-by-byte via response latency.
     const webhookToken = (req.headers['asaas-access-token'] as string) || ''
-    if (env.ASAAS_WEBHOOK_SECRET && webhookToken !== env.ASAAS_WEBHOOK_SECRET) {
+    if (env.ASAAS_WEBHOOK_SECRET && !safeStringEqual(webhookToken, env.ASAAS_WEBHOOK_SECRET)) {
       app.log.warn('[asaas-webhook] Invalid webhook token')
       return reply.status(401).send({ error: 'UNAUTHORIZED' })
     }
@@ -154,6 +156,14 @@ export default async function asaasWebhookRoutes(app: FastifyInstance) {
                   select: { id: true, splitPercent: true, repasseDelayDays: true, repasseFixedDay: true },
                 }).catch(() => null)
 
+                // `??` (not `||`) so commission=0 and delay=0 survive — `||`
+                // would silently replace a zero with the default 10% / 7 days.
+                const commissionRaw = contract.commission != null ? Number(contract.commission) : null
+                const commissionPercent = (commissionRaw != null && Number.isFinite(commissionRaw))
+                  ? commissionRaw
+                  : 10
+                const delayDays = tenant?.repasseDelayDays ?? 7
+
                 await scheduleRepasse(app.prisma as any, {
                   tenantId: tenant?.id || undefined,
                   companyId: contract.companyId,
@@ -161,14 +171,12 @@ export default async function asaasWebhookRoutes(app: FastifyInstance) {
                   rentalId,
                   landlordId: contract.landlordId,
                   grossValue: payment.value,
-                  commissionPercent: Number(contract.commission) || 10,
-                  delayDays: tenant?.repasseDelayDays || 7,
+                  commissionPercent,
+                  delayDays,
                   fixedDay: tenant?.repasseFixedDay || undefined,
-                }).catch((e: any) => {
-                  app.log.warn(`[asaas-webhook] Repasse scheduling failed: ${e.message}`)
                 })
 
-                app.log.info(`[asaas-webhook] Repasse D+${tenant?.repasseDelayDays || 7} scheduled for rental ${rentalId} (R$ ${payment.value})`)
+                app.log.info(`[asaas-webhook] Repasse D+${delayDays} scheduled for rental ${rentalId} (R$ ${payment.value})`)
               }
 
               app.log.info(`[asaas-webhook] Rental ${rentalId} marked as PAID (${payment.billingType}, R$ ${payment.value})`)
@@ -235,8 +243,15 @@ export default async function asaasWebhookRoutes(app: FastifyInstance) {
           })
           .catch(() => {})
       }
-      // Return 200 to prevent Asaas from retrying (log the error)
-      return reply.send({ success: false, error: error.message })
+      // Clear the hard-dedup record so Asaas's retry can re-enter and
+      // reprocess the event; otherwise the first idempotency guard would
+      // short-circuit every retry and the payment would never settle.
+      const eventKey = `asaas:${event}:${payment.id}`
+      await (app.prisma as any).webhookProcessedEvent
+        .delete({ where: { eventKey } })
+        .catch(() => {})
+      // Return 5xx so Asaas retries — financial events must not be dropped.
+      return reply.status(500).send({ success: false, error: 'PROCESSING_FAILED' })
     }
   })
 }
