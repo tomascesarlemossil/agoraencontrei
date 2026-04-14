@@ -13,6 +13,7 @@ import {
   Building2, Paintbrush, FormInput, Share2, History, CreditCard, Banknote,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { LogoLibraryPanel } from '@/components/dashboard/LogoLibraryPanel'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 
@@ -180,6 +181,17 @@ export function SystemConfigPanel() {
   const qc = useQueryClient()
   const [subTab, setSubTab] = useState('empresa')
   const [saved, setSaved] = useState(false)
+
+  // Keep a current access token in local state so child components that
+  // don't know about `getValidToken` (e.g. the new LogoLibraryPanel) can
+  // authenticate against /api/v1/photo-editor/logos. Refreshed on mount
+  // and whenever `getValidToken` changes.
+  const [apiToken, setApiToken] = useState<string | null>(null)
+  useEffect(() => {
+    let mounted = true
+    getValidToken().then((t) => { if (mounted) setApiToken(t) })
+    return () => { mounted = false }
+  }, [getValidToken])
 
   // ── Fetch config ────────────────────────────────────────────────────────────
   const { data, isLoading } = useQuery({
@@ -1171,9 +1183,28 @@ export function SystemConfigPanel() {
               </div>
             </Section>
             <Section title="Logotipos" icon={ImageIcon}>
-              <div className="space-y-3">
-                <DarkInput label="URL do Logo (fundo escuro)" value={cfg.company?.logoUrl ?? ''} onChange={e => updateCfg('company','logoUrl',e.target.value)} placeholder="https://..." />
-                <DarkInput label="URL do Logo Branco (fundo escuro)" value={cfg.company?.logoWhiteUrl ?? ''} onChange={e => updateCfg('company','logoWhiteUrl',e.target.value)} placeholder="https://..." />
+              <div className="space-y-4">
+                {/* Legacy URL fields — kept for public site header / emails etc.
+                    (they populate Company.logoUrl in the database). The
+                    watermark-on-photos pipeline now uses the library below. */}
+                <div className="space-y-3">
+                  <DarkInput label="URL do Logo (uso geral — site público, e-mails)" value={cfg.company?.logoUrl ?? ''} onChange={e => updateCfg('company','logoUrl',e.target.value)} placeholder="https://..." />
+                  <DarkInput label="URL do Logo Branco (fundo escuro)" value={cfg.company?.logoWhiteUrl ?? ''} onChange={e => updateCfg('company','logoWhiteUrl',e.target.value)} placeholder="https://..." />
+                </div>
+
+                <div className="border-t border-white/10 pt-4">
+                  <div className="flex items-baseline justify-between mb-3">
+                    <h4 className="text-sm font-semibold text-white">Biblioteca de logos para fotos de imóveis</h4>
+                    <span className="text-[10px] text-white/40">Aceita PDF, PNG, JPG, WEBP e mais</span>
+                  </div>
+                  {apiToken ? (
+                    <LogoLibraryPanel token={apiToken} />
+                  ) : (
+                    <div className="flex items-center justify-center py-8 text-white/50 text-sm">
+                      <Loader2 className="w-4 h-4 animate-spin mr-2" /> Autenticando…
+                    </div>
+                  )}
+                </div>
               </div>
             </Section>
             <Section title="Dados Bancários" icon={Banknote}>
