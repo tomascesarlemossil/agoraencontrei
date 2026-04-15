@@ -15,6 +15,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import {
   ArrowLeft, Save, Home, MapPin, Settings, Globe, Briefcase, Shield, Search,
+  Sparkles, Loader2, Check, Copy,
 } from 'lucide-react'
 import Link from 'next/link'
 import { useState, useCallback } from 'react'
@@ -239,7 +240,7 @@ export default function NewPropertyPage() {
     },
   })
 
-  const { register, handleSubmit, control, watch, setValue, formState: { errors } } = useForm<FormData>({
+  const { register, handleSubmit, control, watch, setValue, getValues, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
       title: '', type: '', purpose: '', category: 'RESIDENTIAL', status: 'ACTIVE',
@@ -323,9 +324,12 @@ export default function NewPropertyPage() {
         {activeTab === 'cadastro' && (
           <div className="space-y-4">
             <Section title="Identificação">
-              <Field label="Título do imóvel *" error={errors.title?.message} span="col-span-full">
-                <Input {...register('title')} className={inputCls} placeholder="Ex: Apartamento 3 quartos no Itaim" />
-              </Field>
+              {/* O campo "Título do imóvel" foi movido para a seção
+                  "Título e descrição (sugerido por IA)" mais abaixo.
+                  Motivo: preenchendo tipo/finalidade/localização/detalhes
+                  PRIMEIRO, a IA consegue gerar um título já vendável
+                  quando chegamos nele — em vez de o corretor ter que
+                  inventar um título antes de ter os dados do imóvel. */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <Field label="Tipo *" error={errors.type?.message}>
                   <Controller name="type" control={control} render={({ field }) => (
@@ -436,9 +440,23 @@ export default function NewPropertyPage() {
               </div>
             </Section>
 
-            <Section title="Descrição Pública">
-              <textarea {...register('description')} rows={5} className={textareaCls}
-                placeholder="Descrição que será publicada no site e portais..." />
+            {/* ── SEÇÃO INTERMEDIÁRIA: TÍTULO + DESCRIÇÃO (IA) ────────
+                A IA lê todos os campos já preenchidos acima (tipo,
+                finalidade, bairro, cidade, quartos, banheiros, vagas,
+                áreas, features, preço, descrição interna) e devolve
+                título + descrição + hashtags prontos para publicação
+                no site e redes sociais. */}
+            <Section title="Título e descrição (sugestão por IA)">
+              <AITitleHelper
+                getValues={getValues}
+                setValue={setValue}
+                getToken={getValidToken}
+                inputCls={inputCls}
+                textareaCls={textareaCls}
+                titleError={errors.title?.message}
+                titleRegister={register('title')}
+                descriptionRegister={register('description')}
+              />
             </Section>
 
             <Section title="Descrição Interna (não publicada)">
@@ -966,6 +984,183 @@ export default function NewPropertyPage() {
           </div>
         </div>
       </form>
+    </div>
+  )
+}
+
+// ── AITitleHelper ────────────────────────────────────────────────────────────
+//
+// Componente interno que substituiu o antigo input cru "Título do imóvel"
+// na identificação. Posicionado no MEIO do cadastro (depois de tipo/
+// finalidade/localização/detalhes mas antes da descrição interna), lê
+// TUDO que o corretor preencheu até o momento via `getValues()` e pede
+// ao endpoint /api/v1/ai-marketing/suggest-title para gerar:
+//   • Título pronto para publicação
+//   • Descrição pública pronta (copy vendável, sem emoji, sem hashtag)
+//   • Hashtags para Instagram/Facebook/WhatsApp
+//
+// A cópia dos 3 é feita direto via `setValue`, então o corretor pode
+// revisar e ajustar antes de salvar — nada vai para o banco
+// automaticamente.
+
+const API_URL_FOR_AI = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
+
+interface AITitleHelperProps {
+  getValues: () => any
+  setValue: (name: any, value: any, options?: any) => void
+  getToken: () => Promise<string | null>
+  inputCls: string
+  textareaCls: string
+  titleError?: string
+  titleRegister: any
+  descriptionRegister: any
+}
+
+function AITitleHelper({
+  getValues, setValue, getToken,
+  inputCls, textareaCls, titleError, titleRegister, descriptionRegister,
+}: AITitleHelperProps) {
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [hashtags, setHashtags] = useState<string[]>([])
+  const [copied, setCopied] = useState(false)
+  const [sourceLabel, setSourceLabel] = useState<'ai' | 'template' | null>(null)
+
+  const suggest = useCallback(async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const token = await getToken()
+      if (!token) throw new Error('Sessão expirada, faça login novamente.')
+      const v = getValues()
+      // Só envia para a AI o que fizer sentido — campos numéricos vazios
+      // viram undefined para não poluir o prompt.
+      const body: Record<string, any> = {
+        type: v.type || 'HOUSE',
+        purpose: v.purpose || 'SALE',
+        city: v.city || 'Franca',
+        state: v.state,
+        neighborhood: v.neighborhood,
+        bedrooms: v.bedrooms ? Number(v.bedrooms) : undefined,
+        bathrooms: v.bathrooms ? Number(v.bathrooms) : undefined,
+        parkingSpaces: v.parkingSpaces ? Number(v.parkingSpaces) : undefined,
+        totalArea: v.totalArea ? Number(v.totalArea) : undefined,
+        builtArea: v.builtArea ? Number(v.builtArea) : undefined,
+        price: v.price ? Number(v.price) : undefined,
+        priceRent: v.priceRent ? Number(v.priceRent) : undefined,
+        features: Array.isArray(v.features) ? v.features : undefined,
+        description: v.descriptionInternal || v.description || undefined,
+        title: v.title || undefined,
+      }
+
+      const res = await fetch(`${API_URL_FOR_AI}/api/v1/ai-marketing/suggest-title`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(body),
+      })
+      if (!res.ok) {
+        const payload = await res.json().catch(() => ({})) as { message?: string; error?: string }
+        throw new Error(payload.message || payload.error || `HTTP ${res.status}`)
+      }
+      const { data } = await res.json() as {
+        data: { title: string; description: string; hashtags: string[]; source: 'ai' | 'template' }
+      }
+      setValue('title', data.title, { shouldDirty: true, shouldValidate: true })
+      setValue('description', data.description, { shouldDirty: true })
+      setHashtags(data.hashtags || [])
+      setSourceLabel(data.source)
+    } catch (e: any) {
+      setError(e?.message || 'Erro ao gerar sugestão')
+    } finally {
+      setLoading(false)
+    }
+  }, [getValues, setValue, getToken])
+
+  const copyHashtags = useCallback(async () => {
+    if (hashtags.length === 0) return
+    try {
+      await navigator.clipboard.writeText(hashtags.join(' '))
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1500)
+    } catch { /* ignore */ }
+  }, [hashtags])
+
+  return (
+    <div className="space-y-3">
+      {/* CTA principal — lê o form e chama a IA */}
+      <div className="flex flex-col sm:flex-row gap-2 sm:items-start">
+        <button
+          type="button"
+          onClick={suggest}
+          disabled={loading}
+          className={cn(
+            'inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition',
+            'bg-gradient-to-r from-purple-500 to-blue-500 text-white',
+            'hover:from-purple-400 hover:to-blue-400',
+            loading && 'opacity-60 cursor-not-allowed',
+          )}
+        >
+          {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+          {loading ? 'Gerando sugestão…' : 'Sugerir título + descrição com IA'}
+        </button>
+        <p className="text-xs text-white/50 sm:flex-1">
+          A IA lê os dados que você preencheu acima (tipo, localização, quartos, features, preço, descrição interna) e
+          devolve título, descrição pública e hashtags prontas. Você pode editar livremente antes de salvar.
+        </p>
+      </div>
+
+      {error && (
+        <div className="text-xs text-red-300 bg-red-500/10 border border-red-500/30 rounded-lg px-3 py-2">
+          {error}
+        </div>
+      )}
+      {sourceLabel === 'template' && !error && (
+        <div className="text-xs text-amber-300 bg-amber-500/10 border border-amber-500/30 rounded-lg px-3 py-2">
+          IA indisponível — sugestão gerada por template. Verifique se ANTHROPIC_API_KEY está configurada no servidor.
+        </div>
+      )}
+
+      {/* Campo Título — movido pra cá, no meio do cadastro */}
+      <Field label="Título do imóvel *" error={titleError} span="col-span-full">
+        <Input {...titleRegister} className={inputCls} placeholder="Clique em 'Sugerir com IA' acima, ou escreva manualmente." />
+      </Field>
+
+      {/* Descrição pública — ex-Section "Descrição Pública" */}
+      <div>
+        <Label className="text-xs text-white/60 mb-1 block">Descrição pública (para site e portais)</Label>
+        <textarea {...descriptionRegister} rows={5} className={textareaCls}
+          placeholder="Descrição que será publicada. Clique em 'Sugerir com IA' acima para preencher automaticamente." />
+      </div>
+
+      {/* Hashtags — aparece só quando a IA retorna */}
+      {hashtags.length > 0 && (
+        <div className="rounded-xl border border-white/10 bg-white/5 p-3 space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-white/80">Hashtags sugeridas</span>
+            <button
+              type="button"
+              onClick={copyHashtags}
+              className="text-xs inline-flex items-center gap-1 px-2 py-1 rounded border border-white/10 hover:border-white/30 text-white/70 hover:text-white"
+            >
+              {copied ? <Check className="w-3 h-3 text-green-400" /> : <Copy className="w-3 h-3" />}
+              {copied ? 'Copiado!' : 'Copiar tudo'}
+            </button>
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {hashtags.map(h => (
+              <span
+                key={h}
+                className="text-[11px] px-2 py-0.5 rounded-full bg-purple-500/15 text-purple-300 border border-purple-500/30"
+              >
+                {h}
+              </span>
+            ))}
+          </div>
+          <p className="text-[10px] text-white/40">
+            Use ao publicar no Instagram, Facebook ou WhatsApp.
+          </p>
+        </div>
+      )}
     </div>
   )
 }
