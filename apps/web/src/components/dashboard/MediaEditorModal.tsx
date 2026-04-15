@@ -147,6 +147,27 @@ interface LogoOverlayOptions {
   showBackdrop: boolean
 }
 
+/**
+ * Converte uma data URL em Blob manualmente via atob().
+ *
+ * Substitui o padrão `await fetch(dataUrl).then(r => r.blob())`, que
+ * é elegante mas quebra em alguns navegadores para data URLs grandes
+ * (>~2 MB) com um TypeError genérico — a foto de um imóvel a 1200 px
+ * JPEG já estoura esse limite com frequência. A implementação manual
+ * não tem o mesmo limite e deixa claro *por que* falhou.
+ */
+function dataUrlToBlob(dataUrl: string): Blob {
+  const match = /^data:([^;]+);base64,(.*)$/.exec(dataUrl)
+  if (!match) throw new Error('data URL inválida')
+  const mime = match[1]
+  const b64 = match[2]
+  const binary = atob(b64)
+  const len = binary.length
+  const bytes = new Uint8Array(len)
+  for (let i = 0; i < len; i++) bytes[i] = binary.charCodeAt(i)
+  return new Blob([bytes], { type: mime })
+}
+
 async function applyPhotoEffects(
   imageUrl: string,
   filterId: string,
@@ -349,14 +370,20 @@ export function MediaEditorModal({
   // contra a API como último recurso — diagnóstico claro para o usuário.
   const uploadProcessed = useCallback(async (dataUrl: string, filename: string): Promise<string> => {
     // Convert dataUrl (produced by canvas.toDataURL) to a Blob.
-    // Using fetch() on a data URL is supported by all modern browsers but can
-    // throw a TypeError ("Failed to fetch") in rare cases. Surface a clearer
-    // message for the user.
+    // We used to do `fetch(dataUrl).then(r => r.blob())`, which is
+    // elegant but fails with a cryptic TypeError on large data URLs
+    // (>~2 MB) on Chrome/Safari — the user saw "Não foi possível
+    // preparar a imagem processada" for a perfectly normal 2560x1920
+    // photo. The manual atob path below is slower but has no size
+    // limit and surfaces a real reason when it does fail.
     let blob: Blob
     try {
-      blob = await fetch(dataUrl).then(r => r.blob())
+      blob = dataUrlToBlob(dataUrl)
     } catch (e: any) {
-      throw new Error('Não foi possível preparar a imagem processada. Tente novamente.')
+      throw new Error(
+        `Não foi possível preparar a imagem processada: ${e?.message ?? 'formato inválido'}. ` +
+        `Tente reduzir o tamanho da foto ou gravar uma nova.`,
+      )
     }
 
     const buildFormData = () => {
