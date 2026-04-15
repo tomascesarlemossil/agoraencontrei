@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { LogoLibraryPanel } from '@/components/dashboard/LogoLibraryPanel'
+import { MediaUploadInput } from '@/components/dashboard/MediaUploadInput'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 
@@ -311,33 +312,55 @@ export function SystemConfigPanel() {
             </Section>
             <Section title="Vídeo / Imagem de Fundo do Hero" icon={ImageIcon}>
               <div className="space-y-3">
-                <p className="text-xs text-white/40">O vídeo ou imagem aparece como fundo da seção principal do site.</p>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-xs font-semibold text-white/70 mb-1.5 block">Tipo de fundo</label>
-                    <select
-                      value={cfg.site?.heroVideoType ?? 'youtube'}
-                      onChange={e => updateCfg('site', 'heroVideoType', e.target.value)}
-                      className="bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white outline-none focus:border-yellow-400/50 w-full"
-                    >
-                      <option value="youtube">YouTube</option>
-                      <option value="upload">Vídeo enviado</option>
-                      <option value="image">Imagem</option>
-                      <option value="none">Sem fundo (cor sólida)</option>
-                    </select>
-                  </div>
-                  <DarkInput
-                    label="URL do vídeo/imagem"
-                    value={cfg.site?.heroVideoUrl ?? ''}
-                    onChange={e => updateCfg('site', 'heroVideoUrl', e.target.value)}
-                    placeholder="https://youtube.com/watch?v=..."
-                  />
+                <p className="text-xs text-white/40">
+                  O vídeo ou imagem aparece como fundo da seção principal do site. Você pode colar uma URL (YouTube, link externo)
+                  <span className="text-white/60"> ou enviar um arquivo direto</span> — aceita PNG, JPG, WEBP, GIF, MP4, WEBM, MOV e outros formatos.
+                </p>
+                <div>
+                  <label className="text-xs font-semibold text-white/70 mb-1.5 block">Tipo de fundo</label>
+                  <select
+                    value={cfg.site?.heroVideoType ?? 'youtube'}
+                    onChange={e => updateCfg('site', 'heroVideoType', e.target.value)}
+                    className="bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white outline-none focus:border-yellow-400/50 w-full"
+                  >
+                    <option value="youtube">YouTube</option>
+                    <option value="upload">Vídeo enviado</option>
+                    <option value="image">Imagem</option>
+                    <option value="none">Sem fundo (cor sólida)</option>
+                  </select>
+                  <p className="text-[10px] text-white/40 mt-1">
+                    Dica: selecione &quot;Vídeo enviado&quot; ou &quot;Imagem&quot; antes de enviar um arquivo para que o site use o upload em vez do link.
+                  </p>
                 </div>
-                <DarkInput
-                  label="URL de imagem de fundo alternativa"
+                {/* Campo principal: URL + upload. Aceita o tipo correto
+                    automaticamente baseado no heroVideoType selecionado
+                    acima — assim uploads de vídeo filtram vídeos, e
+                    uploads de imagem filtram imagens. */}
+                <MediaUploadInput
+                  label="Vídeo ou imagem de fundo"
+                  value={cfg.site?.heroVideoUrl ?? ''}
+                  onChange={v => updateCfg('site', 'heroVideoUrl', v)}
+                  onUploaded={(info) => {
+                    // Quando o upload termina, ajusta o tipo automaticamente
+                    // para "upload" (vídeo) ou "image" conforme o mime,
+                    // evitando que o operador esqueça de trocar o tipo.
+                    if (info.contentType.startsWith('video/')) {
+                      updateCfg('site', 'heroVideoType', 'upload')
+                    } else if (info.contentType.startsWith('image/')) {
+                      updateCfg('site', 'heroVideoType', 'image')
+                    }
+                  }}
+                  kind={cfg.site?.heroVideoType === 'image' ? 'image' : cfg.site?.heroVideoType === 'upload' ? 'video' : 'any'}
+                  token={apiToken}
+                  placeholder="Cole URL do YouTube, link de vídeo ou de imagem"
+                />
+                <MediaUploadInput
+                  label="Imagem de fundo alternativa (fallback quando o vídeo não carrega)"
                   value={cfg.site?.heroImageUrl ?? ''}
-                  onChange={e => updateCfg('site', 'heroImageUrl', e.target.value)}
-                  placeholder="https://..."
+                  onChange={v => updateCfg('site', 'heroImageUrl', v)}
+                  kind="image"
+                  token={apiToken}
+                  placeholder="Cole URL ou envie uma imagem"
                 />
                 <SaveButton onClick={() => save('site')} isPending={saveMutation.isPending} saved={saved} />
               </div>
@@ -350,32 +373,41 @@ export function SystemConfigPanel() {
                   Escolha entre um <strong className="text-white/60">vídeo</strong> (com autoplay silencioso) ou um <strong className="text-white/60">banner/imagem</strong>.
                   Deixe em branco para usar o vídeo padrão de apresentação do novo site.
                 </p>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-xs font-semibold text-white/70 mb-1.5 block">Tipo de conteúdo</label>
-                    <select
-                      value={cfg.site?.presentationMediaType ?? 'video'}
-                      onChange={e => updateCfg('site', 'presentationMediaType', e.target.value)}
-                      className="bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white outline-none focus:border-yellow-400/50 w-full"
-                    >
-                      <option value="video">Vídeo (autoplay)</option>
-                      <option value="banner">Banner / Imagem</option>
-                      <option value="none">Ocultar seção</option>
-                    </select>
-                  </div>
-                  <DarkInput
-                    label="URL do vídeo ou banner"
-                    value={cfg.site?.presentationVideoUrl ?? ''}
-                    onChange={e => updateCfg('site', 'presentationVideoUrl', e.target.value)}
-                    placeholder="https://... (MP4 ou imagem)"
-                    hint="Cole a URL do arquivo de vídeo (.mp4) ou imagem"
-                  />
+                <div>
+                  <label className="text-xs font-semibold text-white/70 mb-1.5 block">Tipo de conteúdo</label>
+                  <select
+                    value={cfg.site?.presentationMediaType ?? 'video'}
+                    onChange={e => updateCfg('site', 'presentationMediaType', e.target.value)}
+                    className="bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white outline-none focus:border-yellow-400/50 w-full"
+                  >
+                    <option value="video">Vídeo (autoplay)</option>
+                    <option value="banner">Banner / Imagem</option>
+                    <option value="none">Ocultar seção</option>
+                  </select>
                 </div>
-                <DarkInput
-                  label="URL do banner (se tipo = Banner)"
+                <MediaUploadInput
+                  label="Vídeo ou banner"
+                  value={cfg.site?.presentationVideoUrl ?? ''}
+                  onChange={v => updateCfg('site', 'presentationVideoUrl', v)}
+                  onUploaded={(info) => {
+                    if (info.contentType.startsWith('video/')) {
+                      updateCfg('site', 'presentationMediaType', 'video')
+                    } else if (info.contentType.startsWith('image/')) {
+                      updateCfg('site', 'presentationMediaType', 'banner')
+                    }
+                  }}
+                  kind={cfg.site?.presentationMediaType === 'banner' ? 'image' : cfg.site?.presentationMediaType === 'video' ? 'video' : 'any'}
+                  token={apiToken}
+                  placeholder="Cole URL (MP4 ou imagem) ou envie um arquivo"
+                  hint="Vídeo toca em autoplay silencioso. Banner é uma imagem clicável."
+                />
+                <MediaUploadInput
+                  label="Banner alternativo (se tipo = Banner)"
                   value={cfg.site?.presentationBannerUrl ?? ''}
-                  onChange={e => updateCfg('site', 'presentationBannerUrl', e.target.value)}
-                  placeholder="https://... (JPG, PNG, WebP)"
+                  onChange={v => updateCfg('site', 'presentationBannerUrl', v)}
+                  kind="image"
+                  token={apiToken}
+                  placeholder="Cole URL ou envie uma imagem"
                 />
                 <DarkInput
                   label="Link do banner (opcional)"

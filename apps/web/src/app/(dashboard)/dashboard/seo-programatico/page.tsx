@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useAuth } from '@/hooks/useAuth'
 
 const API = process.env.NEXT_PUBLIC_API_URL || ''
 
@@ -15,16 +16,30 @@ interface SeoStats {
 }
 
 export default function SeoProgramaticoPage() {
+  // Every call on this page is an authenticated admin action (import IBGE,
+  // publish with AI, etc). The old implementation sent no Authorization
+  // header, so the backend always answered with 401 "Invalid or expired
+  // token". Now we pull the token from useAuth and attach it to every
+  // fetch — stats + actions.
+  const { getValidToken } = useAuth()
+
   const [stats, setStats] = useState<SeoStats | null>(null)
   const [loading, setLoading] = useState<string | null>(null)
   const [result, setResult] = useState<string | null>(null)
 
+  const authHeaders = useCallback(async (): Promise<Record<string, string>> => {
+    const token = await getValidToken()
+    return token ? { Authorization: `Bearer ${token}` } : {}
+  }, [getValidToken])
+
   const fetchStats = useCallback(async () => {
     try {
-      const res = await fetch(`${API}/api/v1/seo/stats`)
+      const res = await fetch(`${API}/api/v1/seo/stats`, {
+        headers: await authHeaders(),
+      })
       if (res.ok) setStats(await res.json())
     } catch {}
-  }, [])
+  }, [authHeaders])
 
   useEffect(() => {
     fetchStats()
@@ -34,12 +49,31 @@ export default function SeoProgramaticoPage() {
     setLoading(label)
     setResult(null)
     try {
-      const res = await fetch(`${API}${url}`, { method: 'POST' })
-      const data = await res.json()
-      setResult(`${label}: ${JSON.stringify(data, null, 2)}`)
-      fetchStats()
+      const res = await fetch(`${API}${url}`, {
+        method: 'POST',
+        headers: await authHeaders(),
+      })
+      const data = await res.json().catch(() => ({ raw: 'no body' }))
+      if (!res.ok) {
+        // Surface the status + the exact backend message so the operator
+        // knows if it's a 401 (session expired → precisa relogar), 403
+        // (sem permissão), 500 (erro interno), etc., instead of all of
+        // them looking like a generic "Erro".
+        setResult(
+          `${label} — HTTP ${res.status} ${res.statusText || ''}\n` +
+          JSON.stringify(data, null, 2) + '\n\n' +
+          (res.status === 401
+            ? '→ Sua sessão expirou. Recarregue a página e faça login novamente.'
+            : res.status === 403
+            ? '→ Seu usuário não tem permissão para executar esta ação.'
+            : '')
+        )
+      } else {
+        setResult(`${label}: ${JSON.stringify(data, null, 2)}`)
+        fetchStats()
+      }
     } catch (err: any) {
-      setResult(`Erro: ${err.message}`)
+      setResult(`Erro de rede: ${err.message}`)
     } finally {
       setLoading(null)
     }

@@ -6,8 +6,9 @@ import { useAuthStore } from '@/stores/auth.store'
 import {
   Sparkles, Image, Sofa, Wand2, Plus, X, CheckCircle,
   XCircle, Clock, Loader2, Download, Trash2, Building2,
-  AlertTriangle,
+  AlertTriangle, Search,
 } from 'lucide-react'
+import { PropertyPicker } from '@/components/dashboard/PropertyPicker'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 
@@ -69,6 +70,10 @@ export default function AIVisualPage() {
     inputUrl: '',
     style: '',
   })
+  // Human-readable labels for the selected property + photo, so the
+  // form doesn't force the user to read the cuid/URL after picking.
+  const [pickedLabel, setPickedLabel] = useState<{ property?: string; photo?: string }>({})
+  const [pickerOpen, setPickerOpen] = useState(false)
   const [msg, setMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [activeTab, setActiveTab] = useState<'render' | 'staging' | 'enhance_batch'>('render')
 
@@ -105,6 +110,7 @@ export default function AIVisualPage() {
       qc.invalidateQueries({ queryKey: ['ai-visual-stats'] })
       setShowForm(false)
       setForm({ tipo: 'render', propertyId: '', inputUrl: '', style: '' })
+      setPickedLabel({})
       setMsg({ type: 'success', text: 'Job enfileirado! Acompanhe o status abaixo.' })
     },
     onError: (e: any) => setMsg({ type: 'error', text: e.message }),
@@ -330,25 +336,58 @@ export default function AIVisualPage() {
                 <p className="text-xs text-gray-400 mt-1">{TIPO_CONFIG[form.tipo].desc}</p>
               </div>
 
+              {/* Seletor humano de imóvel + foto.
+                  Substitui os dois inputs manuais (cuid + URL) por uma
+                  busca de imóvel (código/endereço/bairro/título) que
+                  abre um grid das fotos já publicadas. A URL/ID são
+                  preenchidas automaticamente no form quando o operador
+                  confirma. */}
               <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1.5">ID do Imóvel</label>
-                <input
-                  value={form.propertyId}
-                  onChange={e => setForm(f => ({ ...f, propertyId: e.target.value }))}
-                  placeholder="cuid do imóvel (ex: cma...)"
-                  className="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 focus:outline-none font-mono"
-                />
+                <label className="block text-xs font-medium text-gray-500 mb-1.5">Imóvel</label>
+                <button
+                  type="button"
+                  onClick={() => setPickerOpen(true)}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-lg border border-gray-200 hover:border-gray-300 text-left"
+                >
+                  <Search className="w-4 h-4 text-gray-400" />
+                  {pickedLabel.property ? (
+                    <span className="flex-1 truncate text-gray-800">{pickedLabel.property}</span>
+                  ) : (
+                    <span className="flex-1 text-gray-400">Buscar imóvel (código, endereço, bairro…)</span>
+                  )}
+                </button>
+                {form.propertyId && (
+                  <p className="text-[11px] text-gray-400 mt-1 font-mono truncate">ID: {form.propertyId}</p>
+                )}
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1.5">URL da foto de entrada</label>
-                <input
-                  value={form.inputUrl}
-                  onChange={e => setForm(f => ({ ...f, inputUrl: e.target.value }))}
-                  placeholder="https://..."
-                  type="url"
-                  className="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 focus:outline-none"
-                />
+                <label className="block text-xs font-medium text-gray-500 mb-1.5">Foto para processar</label>
+                {pickedLabel.photo ? (
+                  <div className="flex items-center gap-2">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={form.inputUrl} alt="" className="w-16 h-16 rounded-lg object-cover border border-gray-200" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-gray-600 truncate">{pickedLabel.photo}</p>
+                      <button
+                        type="button"
+                        onClick={() => setPickerOpen(true)}
+                        className="text-xs text-blue-600 hover:underline"
+                      >
+                        Trocar foto
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setPickerOpen(true)}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-lg border border-gray-200 hover:border-gray-300 text-left text-gray-400"
+                  >
+                    <Image className="w-4 h-4" />
+                    Selecionar uma foto já publicada do imóvel
+                  </button>
+                )}
               </div>
 
               {TIPO_CONFIG[form.tipo].styles.length > 0 && (
@@ -383,6 +422,27 @@ export default function AIVisualPage() {
             </form>
           </div>
         </div>
+      )}
+
+      {pickerOpen && (
+        <PropertyPicker
+          token={token ?? null}
+          multiple={false}
+          onClose={() => setPickerOpen(false)}
+          onPick={({ property, photoUrls }) => {
+            const photoUrl = photoUrls[0] ?? ''
+            const addressParts = [property.street, property.number, property.neighborhood, property.city].filter(Boolean).join(', ')
+            const label = [
+              property.reference,
+              property.title ?? 'Sem título',
+              addressParts && `(${addressParts})`,
+            ].filter(Boolean).join(' · ')
+            setForm(f => ({ ...f, propertyId: property.id, inputUrl: photoUrl }))
+            setPickedLabel({ property: label, photo: photoUrl ? photoUrl.split('/').pop() || photoUrl : undefined })
+            setPickerOpen(false)
+          }}
+          confirmLabel="Usar imóvel + foto"
+        />
       )}
     </div>
   )

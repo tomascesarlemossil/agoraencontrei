@@ -10,13 +10,63 @@
 
 import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
-import { generateMarketingContent, analyzePropertyImages } from '../../services/ai-marketing.service.js'
+import { generateMarketingContent, analyzePropertyImages, suggestTitleAndDescription } from '../../services/ai-marketing.service.js'
 import { getOptimizedImageUrl, processBatchImages, getAllImageVariants, type ImagePreset } from '../../services/cloudinary.service.js'
 import { publishToAllPlatforms, getNextBestPostingTime } from '../../services/social-publisher.service.js'
 import { createAuditLog } from '../../services/audit.service.js'
 
 export default async function aiMarketingRoutes(app: FastifyInstance) {
   app.addHook('preHandler', app.authenticate)
+
+  // POST /suggest-title — Versão leve do /generate, usada pelo botão
+  // "Sugerir com IA" no cadastro de imóveis. Recebe os campos que o
+  // corretor já preencheu (sem exigir título) e devolve title +
+  // description + hashtags prontos para colar no formulário.
+  //
+  // Custo: 1 chamada a Claude Haiku (~800 tokens). Rate-limit dedicado
+  // para conter abuso caso alguém clique repetidamente.
+  app.post('/suggest-title', {
+    config: { rateLimit: { max: 30, timeWindow: '1 minute' } },
+    schema: { tags: ['ai-marketing'], summary: 'Sugerir título, descrição e hashtags para cadastro de imóvel' },
+  }, async (req, reply) => {
+    const body = z.object({
+      type: z.string().optional(),
+      purpose: z.string().optional(),
+      city: z.string().optional(),
+      state: z.string().optional(),
+      neighborhood: z.string().optional(),
+      bedrooms: z.number().optional(),
+      bathrooms: z.number().optional(),
+      parkingSpaces: z.number().optional(),
+      totalArea: z.number().optional(),
+      builtArea: z.number().optional(),
+      price: z.number().optional(),
+      priceRent: z.number().optional(),
+      features: z.array(z.string()).optional(),
+      description: z.string().optional(),
+      title: z.string().optional(),
+    }).parse(req.body ?? {})
+
+    const suggestion = await suggestTitleAndDescription({
+      type: body.type || 'HOUSE',
+      purpose: body.purpose || 'SALE',
+      city: body.city || 'Franca',
+      state: body.state,
+      neighborhood: body.neighborhood,
+      bedrooms: body.bedrooms,
+      bathrooms: body.bathrooms,
+      parkingSpaces: body.parkingSpaces,
+      totalArea: body.totalArea,
+      builtArea: body.builtArea,
+      price: body.price,
+      priceRent: body.priceRent,
+      features: body.features,
+      description: body.description,
+      title: body.title,
+    })
+
+    return reply.send({ success: true, data: suggestion })
+  })
 
   // POST /generate — Gera conteúdo de marketing completo para um imóvel
   app.post('/generate', {

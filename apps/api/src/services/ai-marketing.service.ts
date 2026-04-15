@@ -42,6 +42,18 @@ export interface MarketingContent {
   slug: string
 }
 
+/**
+ * Lightweight output of `suggestTitleAndDescription` — used by the
+ * "Sugerir com IA" button no cadastro de imóveis. Só os campos que o
+ * formulário precisa para preencher direto; sem SEO/slug/etc.
+ */
+export interface TitleSuggestion {
+  title: string           // pronto para usar no campo "Título do imóvel"
+  description: string     // pronto para o campo "Descrição Pública"
+  hashtags: string[]      // hashtags separadas para redes sociais
+  source: 'ai' | 'template'
+}
+
 // ── Constants ────────────────────────────────────────────────────────────────
 
 const TYPE_PT: Record<string, string> = {
@@ -275,5 +287,112 @@ function generateTemplateContent(
       ...(property.features?.slice(0, 2) || []),
     ].filter(Boolean),
     slug: slugify(`${typePt}-${purposePt}-${neighborhood}-${city}`),
+  }
+}
+
+// ── Title / description / hashtags suggestion ────────────────────────────────
+//
+// Usado pelo botão "Sugerir com IA" no cadastro de imóveis: recebe o que
+// o corretor já preencheu (tipo, localização, quartos, preço, features,
+// notas) e devolve um título, descrição e hashtags prontos para colar
+// no formulário. O cadastro não precisa esperar uma foto ou um título já
+// existente — por isso essa API é separada da `generateMarketingContent`
+// (que pressupõe um imóvel já existente).
+
+/**
+ * Devolve um título vendável + descrição humanizada + hashtags.
+ * Usa Claude quando ANTHROPIC_API_KEY está setada. Caso contrário,
+ * gera um template simples para o corretor editar.
+ */
+export async function suggestTitleAndDescription(
+  input: Omit<PropertyMarketingInput, 'title'> & { title?: string },
+): Promise<TitleSuggestion> {
+  const typePt = TYPE_PT[input.type?.toUpperCase() ?? 'HOUSE'] ?? 'Imóvel'
+  const purposePt = PURPOSE_PT[input.purpose?.toUpperCase() ?? 'SALE'] ?? 'à venda'
+  const location = [input.neighborhood, input.city, input.state].filter(Boolean).join(', ')
+  const priceStr = formatPrice(input.price || input.priceRent)
+
+  // Template fallback — usado quando não tem AI key ou quando Claude falha.
+  const templateFallback = (): TitleSuggestion => {
+    const rooms = input.bedrooms ? `${input.bedrooms} quartos` : ''
+    const area = input.builtArea ? `${input.builtArea}m²` : (input.totalArea ? `${input.totalArea}m²` : '')
+    const bits = [rooms, area].filter(Boolean).join(' · ')
+    const title = `${typePt} ${purposePt}${location ? ' em ' + location : ''}${bits ? ' — ' + bits : ''}`
+    const description = [
+      `${typePt} ${purposePt}${location ? ' localizado em ' + location : ''}.`,
+      bits && `Conta com ${bits}.`,
+      input.features?.length ? `Destaques: ${input.features.slice(0, 4).join(', ')}.` : '',
+      input.description ? input.description : '',
+      priceStr !== 'Consulte' ? `Valor: ${priceStr}.` : '',
+      'Entre em contato para agendar uma visita.',
+    ].filter(Boolean).join(' ')
+    const hashtags = [
+      `#${typePt.toLowerCase().replace(/\s+/g, '')}`,
+      `#${purposePt.replace(/\s+/g, '')}`,
+      input.city ? `#${slugify(input.city).replace(/-/g, '')}` : '',
+      '#imobiliarialemos',
+      '#agoraencontrei',
+      '#imoveis',
+    ].filter(Boolean).slice(0, 10)
+    return { title: title.slice(0, 80), description, hashtags, source: 'template' }
+  }
+
+  if (!env.ANTHROPIC_API_KEY) return templateFallback()
+
+  try {
+    const client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY })
+    const prompt = `Você é um redator especialista em imóveis. Com base nos dados abaixo, gere título e descrição prontos para publicação no site do AgoraEncontrei e no Instagram/Facebook/WhatsApp da Imobiliária Lemos.
+
+DADOS DO IMÓVEL:
+- Tipo: ${typePt}
+- Finalidade: ${purposePt}
+- Cidade: ${input.city || 'Franca'}/${input.state || 'SP'}
+${input.neighborhood ? `- Bairro: ${input.neighborhood}` : ''}
+${input.bedrooms != null ? `- Quartos: ${input.bedrooms}` : ''}
+${input.bathrooms != null ? `- Banheiros: ${input.bathrooms}` : ''}
+${input.parkingSpaces != null ? `- Vagas: ${input.parkingSpaces}` : ''}
+${input.builtArea != null ? `- Área construída: ${input.builtArea}m²` : ''}
+${input.totalArea != null ? `- Área total: ${input.totalArea}m²` : ''}
+${input.features?.length ? `- Features: ${input.features.join(', ')}` : ''}
+${input.price ? `- Preço venda: ${formatPrice(input.price)}` : ''}
+${input.priceRent ? `- Preço aluguel: ${formatPrice(input.priceRent)}` : ''}
+${input.description ? `- Descrição que o corretor escreveu: ${input.description}` : ''}
+
+REGRAS:
+1. TÍTULO (máx 80 caracteres): vendável, específico, inclui tipo + finalidade + bairro/cidade + um diferencial. Sem adjetivos vazios ("maravilhoso", "incrível"). Ex: "Casa 3 quartos com piscina no Jardim América — Franca/SP".
+2. DESCRIÇÃO (180-400 caracteres): tom humano, fluido, pronto para publicar no site. Destaque o que realmente diferencia. Sem emojis. Sem hashtags.
+3. HASHTAGS (6-12): lowercase, sem espaços. Use: tipo+finalidade, bairro, cidade, features principais, 1-2 institucionais (#imobiliarialemos, #agoraencontrei). Sem caracteres especiais.
+
+Responda APENAS com JSON válido:
+{
+  "title": "...",
+  "description": "...",
+  "hashtags": ["#casaavenda", "#jardimamerica", ...]
+}`
+
+    const response = await client.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 800,
+      messages: [{ role: 'user', content: prompt }],
+    })
+
+    const text = response.content[0].type === 'text' ? response.content[0].text.trim() : ''
+    const jsonStr = text.replace(/^```json?\s*/i, '').replace(/```\s*$/i, '').trim()
+    const parsed = JSON.parse(jsonStr) as { title?: string; description?: string; hashtags?: string[] }
+
+    // Sanidade mínima — se a AI devolver lixo, cai no template.
+    if (!parsed.title || parsed.title.length < 10) return templateFallback()
+
+    return {
+      title: String(parsed.title).slice(0, 120),
+      description: String(parsed.description ?? '').slice(0, 800),
+      hashtags: Array.isArray(parsed.hashtags)
+        ? parsed.hashtags.filter(h => typeof h === 'string').slice(0, 12)
+        : [],
+      source: 'ai',
+    }
+  } catch (error) {
+    console.error('[ai-marketing] suggestTitleAndDescription failed, using template:', error)
+    return templateFallback()
   }
 }

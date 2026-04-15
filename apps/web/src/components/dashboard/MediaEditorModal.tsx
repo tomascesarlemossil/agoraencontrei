@@ -780,20 +780,30 @@ export function MediaEditorModal({
                           ) : null}
 
                           {/* Live preview of the selected logo (checkered bg
-                              so transparent PNGs stay visible). */}
+                              so transparent PNGs stay visible) + its name,
+                              so the user knows *which* logo is being baked
+                              into the watermark. Fixes the "minha foto de
+                              perfil apareceu como logo" confusion — if the
+                              wrong file is selected the name makes it
+                              immediately obvious. */}
                           {activeLogoUrl && (
-                            <div
-                              className="rounded-lg p-2 mb-2 flex items-center justify-center"
-                              style={{
-                                backgroundImage:
-                                  'linear-gradient(45deg,#222 25%,transparent 25%),linear-gradient(-45deg,#222 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#222 75%),linear-gradient(-45deg,transparent 75%,#222 75%)',
-                                backgroundSize: '12px 12px',
-                                backgroundPosition: '0 0, 0 6px, 6px -6px, -6px 0',
-                                backgroundColor: '#222',
-                              }}
-                            >
-                              {/* eslint-disable-next-line @next/next/no-img-element -- API-gated bytes, next/image can't proxy */}
-                              <img src={activeLogoUrl} alt="Logo" className="h-10 object-contain" />
+                            <div className="mb-2">
+                              <div
+                                className="rounded-lg p-2 flex items-center justify-center"
+                                style={{
+                                  backgroundImage:
+                                    'linear-gradient(45deg,#222 25%,transparent 25%),linear-gradient(-45deg,#222 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#222 75%),linear-gradient(-45deg,transparent 75%,#222 75%)',
+                                  backgroundSize: '12px 12px',
+                                  backgroundPosition: '0 0, 0 6px, 6px -6px, -6px 0',
+                                  backgroundColor: '#222',
+                                }}
+                              >
+                                {/* eslint-disable-next-line @next/next/no-img-element -- API-gated bytes, next/image can't proxy */}
+                                <img src={activeLogoUrl} alt="Logo" className="h-10 object-contain" />
+                              </div>
+                              <p className="text-[10px] text-white/50 text-center mt-1 truncate">
+                                Usando: <span className="text-white/80 font-medium">{selectedLogoRecord?.name ?? 'Logo legado (URL)'}</span>
+                              </p>
                             </div>
                           )}
 
