@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useAuthStore } from '@/stores/auth.store';
+import { useAuth } from '@/hooks/useAuth';
 import {
   Settings,
   Plus,
@@ -711,7 +711,12 @@ function SettingsSection({
 // ---------------------------------------------------------------------------
 
 export default function AdminMasterPage() {
-  const token = useAuthStore((s) => s.accessToken);
+  // Use the refresh-aware `getValidToken` instead of reading the raw
+  // accessToken from the store. The raw token expires after 15 min and
+  // doesn't auto-refresh, which produced "HTTP 401 Invalid or expired
+  // token" on every action as soon as the session aged out. Every call
+  // below now awaits a fresh token right before hitting the API.
+  const { getValidToken } = useAuth();
   const { toasts, addToast } = useToast();
 
   const [activeTab, setActiveTab] = useState<Tab>('plans');
@@ -734,6 +739,7 @@ export default function AdminMasterPage() {
   // -----------------------------------------------------------------------
 
   const fetchItems = useCallback(async () => {
+    const token = await getValidToken();
     if (!token) return;
     setLoading(true);
     try {
@@ -760,7 +766,7 @@ export default function AdminMasterPage() {
     } finally {
       setLoading(false);
     }
-  }, [activeTab, token, addToast]);
+  }, [activeTab, getValidToken, addToast]);
 
   useEffect(() => {
     fetchItems();
@@ -820,6 +826,7 @@ export default function AdminMasterPage() {
   const handleDeactivate = async (row: Record<string, any>) => {
     const confirmMsg = `Deseja realmente desativar "${row.name ?? row.slug ?? 'este item'}"?`;
     if (!window.confirm(confirmMsg)) return;
+    const token = await getValidToken();
     if (!token) return;
 
     try {
@@ -838,7 +845,9 @@ export default function AdminMasterPage() {
   };
 
   const handleSave = async () => {
-    if (!editing || !token) return;
+    if (!editing) return;
+    const token = await getValidToken();
+    if (!token) return;
     setSaving(true);
 
     try {
@@ -928,6 +937,7 @@ export default function AdminMasterPage() {
   // -----------------------------------------------------------------------
 
   const handleSaveSettings = async () => {
+    const token = await getValidToken();
     if (!token) return;
     setSavingSettings(true);
 
