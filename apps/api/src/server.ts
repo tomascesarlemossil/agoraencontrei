@@ -36,6 +36,7 @@ import eventsRoutes from './routes/events/index.js'
 import publicRoutes from './routes/public/index.js'
 import financeRoutes from './routes/finance/index.js'
 import invoiceRoutes from './routes/finance/invoices.js'
+import batchSettleRoutes from './routes/finance/batch-settle.js'
 import fiscalRoutes from './routes/fiscal/index.js'
 import corretorRoutes from './routes/users/corretor.js'
 import aiVisualRoutes from './routes/ai-visual/index.js'
@@ -773,6 +774,7 @@ async function bootstrap() {
   await app.register(publicRoutes,      { prefix: '/api/v1/public' })
   await app.register(financeRoutes,     { prefix: '/api/v1/finance' })
   await app.register(invoiceRoutes,     { prefix: '/api/v1/finance/invoices' })
+  await app.register(batchSettleRoutes, { prefix: '/api/v1/finance' })
   await app.register(fiscalRoutes,      { prefix: '/api/v1/fiscal' })
   await app.register(corretorRoutes,    { prefix: '/api/v1/corretor' })
   await app.register(aiVisualRoutes,    { prefix: '/api/v1/ai-visual' })
