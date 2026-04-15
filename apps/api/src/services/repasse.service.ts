@@ -52,20 +52,43 @@ const ASAAS_API_KEY = (env as any).ASAAS_API_KEY ?? ''
 
 /**
  * Calculates the scheduled date for a repasse based on configuration.
- * - If fixedDay is set, uses the next occurrence of that day
- * - Otherwise, adds delayDays to current date
+ * - If fixedDay is set, uses the next occurrence of that day of month.
+ * - Otherwise, adds delayDays to current date.
+ *
+ * Regras de negócio importantes para a Imobiliária Lemos (Uniloc):
+ *   • Cada contrato pode ter seu próprio dia de repasse (campo
+ *     `Contract.landlordDueDay`, tipicamente 02, 12, 17, 22 ou 27).
+ *   • Se o pagamento chega no PRÓPRIO dia do repasse, o repasse deve
+ *     ser agendado para o final desse mesmo dia (não empurrado para o
+ *     mês seguinte). O bug antigo comparava `targetDate <= now` usando
+ *     as horas atuais, então um pagamento recebido às 10h no dia 2
+ *     caía para 02 do mês SEGUINTE. Agora comparamos só o dia.
+ *   • Se `fixedDay` for maior que o número de dias do mês-alvo
+ *     (ex: dia 31 em fevereiro), usa o último dia real do mês.
  */
 function calculateScheduledDate(delayDays: number, fixedDay?: number): Date {
   if (fixedDay && fixedDay >= 1 && fixedDay <= 31) {
     const now = new Date()
-    let targetDate = new Date(now.getFullYear(), now.getMonth(), fixedDay)
+    const today = now.getDate()
+    const currentMonth = now.getMonth()
+    const currentYear = now.getFullYear()
 
-    // If the fixed day has already passed this month, schedule for next month
-    if (targetDate <= now) {
-      targetDate = new Date(now.getFullYear(), now.getMonth() + 1, fixedDay)
-    }
+    // Determine target month: this month if fixedDay is today or in the
+    // future, otherwise next month. Comparing calendar days only avoids
+    // the "lost this month because it's already 10am" bug.
+    const useNextMonth = today > fixedDay
+    const targetYear = useNextMonth && currentMonth === 11 ? currentYear + 1 : currentYear
+    const targetMonth = useNextMonth ? (currentMonth + 1) % 12 : currentMonth
 
-    return targetDate
+    // Clamp to the month's actual last day — protects against day=31 in
+    // months that only have 28/29/30 days.
+    const lastDayOfTargetMonth = new Date(targetYear, targetMonth + 1, 0).getDate()
+    const clampedDay = Math.min(fixedDay, lastDayOfTargetMonth)
+
+    // Schedule at 09:00 local time on the target day so it's safely in
+    // the future (even for same-day payments) but still inside business
+    // hours for downstream notifications.
+    return new Date(targetYear, targetMonth, clampedDay, 9, 0, 0, 0)
   }
 
   // Default: D+N days from now

@@ -122,10 +122,26 @@ export default async function asaasWebhookRoutes(app: FastifyInstance) {
               },
             }).catch((e: any) => app.log.warn(`[asaas-webhook] Rental update failed: ${e.message}`))
 
-            // 2. Log the payment
+            // 2. Log the payment — pull landlordDueDay (c_venc_pro do Uniloc)
+            // junto, porque cada contrato da Imobiliária Lemos tem sua própria
+            // data mensal de repasse (normalmente 02, 12, 17, 22 ou 27). Sem
+            // isso, o scheduler cairia no `tenant.repasseFixedDay` global e
+            // pagaria todo mundo no mesmo dia — regra de negócio incorreta.
             const rental = await app.prisma.rental.findUnique({
               where: { id: rentalId },
-              include: { contract: { select: { companyId: true, tenantName: true, propertyAddress: true, landlordName: true, landlordId: true, commission: true } } },
+              include: {
+                contract: {
+                  select: {
+                    companyId: true,
+                    tenantName: true,
+                    propertyAddress: true,
+                    landlordName: true,
+                    landlordId: true,
+                    commission: true,
+                    landlordDueDay: true,
+                  },
+                },
+              },
             })
 
             if (rental?.contract) {
@@ -147,7 +163,7 @@ export default async function asaasWebhookRoutes(app: FastifyInstance) {
                 },
               }).catch(() => {})
 
-              // 3. Schedule D+7 repasse to landlord
+              // 3. Schedule repasse ao proprietário
               const contract = rental.contract as any
               if (contract.landlordId && payment.value) {
                 // Check if this company has a tenant (SaaS clone) for commission split
@@ -164,6 +180,21 @@ export default async function asaasWebhookRoutes(app: FastifyInstance) {
                   : 10
                 const delayDays = tenant?.repasseDelayDays ?? 7
 
+                // PRIORIDADE para o dia de repasse do proprietário:
+                //   1. contract.landlordDueDay — dia REAL do contrato (Uniloc
+                //      c_venc_pro: 02/12/17/22/27 para Lemos).
+                //   2. tenant.repasseFixedDay — default global do SaaS.
+                //   3. undefined → scheduleRepasse usa D+delayDays.
+                // Validação: só aceita dias 1-31 (Prisma guarda como Int?).
+                const landlordDueDay = contract.landlordDueDay
+                const contractFixedDay = (typeof landlordDueDay === 'number' && landlordDueDay >= 1 && landlordDueDay <= 31)
+                  ? landlordDueDay
+                  : undefined
+                const tenantFixedDay = (typeof tenant?.repasseFixedDay === 'number' && tenant.repasseFixedDay >= 1 && tenant.repasseFixedDay <= 31)
+                  ? tenant.repasseFixedDay
+                  : undefined
+                const fixedDay = contractFixedDay ?? tenantFixedDay
+
                 await scheduleRepasse(app.prisma as any, {
                   tenantId: tenant?.id || undefined,
                   companyId: contract.companyId,
@@ -173,10 +204,14 @@ export default async function asaasWebhookRoutes(app: FastifyInstance) {
                   grossValue: payment.value,
                   commissionPercent,
                   delayDays,
-                  fixedDay: tenant?.repasseFixedDay || undefined,
+                  fixedDay,
                 })
 
-                app.log.info(`[asaas-webhook] Repasse D+${delayDays} scheduled for rental ${rentalId} (R$ ${payment.value})`)
+                app.log.info(
+                  `[asaas-webhook] Repasse scheduled for rental ${rentalId} ` +
+                  `(R$ ${payment.value}, landlordDueDay=${contractFixedDay ?? 'n/a'}, ` +
+                  `tenantFixedDay=${tenantFixedDay ?? 'n/a'}, delayDays=${delayDays})`
+                )
               }
 
               app.log.info(`[asaas-webhook] Rental ${rentalId} marked as PAID (${payment.billingType}, R$ ${payment.value})`)
