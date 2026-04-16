@@ -472,6 +472,8 @@ export const themeGrafitePremium: SiteTheme = {
 }
 
 // ── Registro de todos os temas ────────────────────────────────────────────────
+// NOTA: 12 temas adicionais (Rose Gold, Midnight Purple, Ocean Breeze, etc.)
+// serão adicionados em follow-up separado. Por enquanto só os 6 originais.
 export const ALL_THEMES: SiteTheme[] = [
   themeClassicBlue,
   themeLuxuryDark,
