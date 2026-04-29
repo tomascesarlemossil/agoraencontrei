@@ -535,42 +535,25 @@ export default async function auctionsRoutes(app: FastifyInstance) {
         //    which cannot render JS, so bancos returned 0 every time.
         if ((env as any).APIFY_API_TOKEN) {
           try {
-            const { fetchSantanderApifyLastRun } = await import('../../services/apify-santander.service.js')
+            const [{ fetchSantanderApifyLastRun, persistApifySantanderItems }, { fetchCaixaApifyLastRun, persistApifyCaixaItems }] = await Promise.all([
+              import('../../services/apify-santander.service.js'),
+              import('../../services/apify-caixa.service.js'),
+            ])
+
             const santanderItems = await fetchSantanderApifyLastRun()
-            let saved = 0
-            for (const item of santanderItems) {
-              try {
-                await (prisma as any).auction.upsert({
-                  where: { slug: `santander-${(item as any).externalId ?? (item as any).id ?? saved}` },
-                  update: { updatedAt: new Date() },
-                  create: {
-                    slug: `santander-${(item as any).externalId ?? (item as any).id ?? `apify-${Date.now()}-${saved}`}`,
-                    source: 'SANTANDER',
-                    title: (item as any).title || 'Imóvel Santander',
-                    propertyType: (item as any).propertyType || 'HOUSE',
-                    status: 'OPEN',
-                    modality: 'ONLINE',
-                    city: (item as any).city || null,
-                    state: (item as any).state || null,
-                    neighborhood: (item as any).neighborhood || null,
-                    minimumBid: (item as any).price || null,
-                    appraisalValue: (item as any).appraisalValue || null,
-                    discountPercent: (item as any).discount || null,
-                    bankName: 'Santander',
-                    auctioneerName: 'Santander Imóveis',
-                    sourceUrl: (item as any).url || null,
-                  },
-                })
-                saved++
-              } catch {
-                /* one bad row shouldn't stop the rest */
-              }
+            const sant = await persistApifySantanderItems(prisma, santanderItems)
+            summary.SANTANDER = { found: sant.found, created: sant.created, updated: sant.updated }
+            app.log.info(`[force-scrape] Santander (Apify): ${sant.found} encontrados, ${sant.created} novos, ${sant.updated} atualizados`)
+
+            const caixaApify = await fetchCaixaApifyLastRun()
+            if (caixaApify.length > 0) {
+              const cx = await persistApifyCaixaItems(prisma, caixaApify)
+              summary.CAIXA_APIFY = { found: cx.found, created: cx.created, updated: cx.updated }
+              app.log.info(`[force-scrape] Caixa (Apify): ${cx.found} encontrados, ${cx.created} novos, ${cx.updated} atualizados`)
             }
-            summary.SANTANDER = { found: santanderItems.length, created: saved }
-            app.log.info(`[force-scrape] Santander (Apify): ${santanderItems.length} encontrados, ${saved} novos`)
           } catch (e: any) {
             summary.SANTANDER = { found: 0, created: 0, error: e.message }
-            app.log.error({ err: e }, '[force-scrape] Santander Apify failed')
+            app.log.error({ err: e }, '[force-scrape] Apify enrichment failed')
           }
         } else {
           summary.SANTANDER = { found: 0, created: 0, error: 'APIFY_API_TOKEN not configured' }

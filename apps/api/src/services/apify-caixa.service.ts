@@ -11,6 +11,7 @@
  * Falls back to CSV scraper if Apify is unavailable or token not configured.
  */
 
+import type { PrismaClient } from '@prisma/client'
 import { env } from '../utils/env.js'
 
 const APIFY_ACTOR_ID = 'brasil-scrapers~caixa-leiloes-api'
@@ -241,4 +242,72 @@ export async function fetchCaixaFromDataset(datasetId: string): Promise<CaixaApi
     console.error('[Apify Caixa] Dataset fetch error:', err)
     return []
   }
+}
+
+function mapPropertyType(raw: string): 'HOUSE' | 'APARTMENT' | 'LAND' | 'WAREHOUSE' | 'OFFICE' | 'STORE' {
+  const t = (raw || '').toLowerCase()
+  if (t.includes('apartamento') || t.includes('apto')) return 'APARTMENT'
+  if (t.includes('terreno') || t.includes('lote')) return 'LAND'
+  if (t.includes('galp')) return 'WAREHOUSE'
+  if (t.includes('sala') || t.includes('comercial')) return 'OFFICE'
+  if (t.includes('loja')) return 'STORE'
+  return 'HOUSE'
+}
+
+/**
+ * Persist Caixa Apify items into the auctions table. Used by the scheduler
+ * to enrich the CSV-based ingest with extra fields (images, edital, rooms)
+ * the Apify actor exposes that the public CSV does not.
+ */
+export async function persistApifyCaixaItems(
+  prisma: PrismaClient,
+  items: CaixaApifyItem[],
+): Promise<{ found: number; created: number; updated: number; errors: string[] }> {
+  let created = 0
+  let updated = 0
+  const errors: string[] = []
+
+  for (const item of items) {
+    const externalId = item.propertyNumber || item.id.replace(/^caixa-/, '')
+    const slug = `caixa-${externalId}`
+    try {
+      const data = {
+        source: 'CAIXA' as const,
+        externalId,
+        title: item.description?.slice(0, 200) || `Imóvel Caixa em ${item.city || 'BR'}`,
+        propertyType: mapPropertyType(item.propertyType),
+        status: 'OPEN' as const,
+        modality: 'ONLINE' as const,
+        city: item.city || null,
+        state: item.state || null,
+        neighborhood: item.neighborhood || null,
+        street: item.address || null,
+        bedrooms: item.bedrooms || 0,
+        parkingSpaces: item.parkingSpots || 0,
+        minimumBid: item.price || null,
+        appraisalValue: item.appraisalValue || null,
+        discountPercent: item.discount || null,
+        bankName: 'Caixa Econômica Federal',
+        auctioneerName: 'Caixa Econômica Federal',
+        sourceUrl: item.link || null,
+        coverImage: item.coverImageUrl || null,
+        editalUrl: item.edital || null,
+        financingAvailable: item.financeable,
+        fgtsAllowed: item.fgtsAllowed,
+        lastScrapedAt: new Date(),
+      }
+
+      const result = await prisma.auction.upsert({
+        where: { slug },
+        create: { slug, ...data },
+        update: { ...data, updatedAt: new Date() },
+      })
+      if (result.createdAt.getTime() === result.updatedAt.getTime()) created++
+      else updated++
+    } catch (err: any) {
+      errors.push(`${slug}: ${err.message}`)
+    }
+  }
+
+  return { found: items.length, created, updated, errors }
 }
