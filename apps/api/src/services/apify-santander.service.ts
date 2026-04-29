@@ -10,6 +10,7 @@
  * - Cartório (registry office) info
  */
 
+import type { PrismaClient } from '@prisma/client'
 import { env } from '../utils/env.js'
 
 const APIFY_ACTOR_ID = 'gqjg9RZsLWXjy9c3u' // Santander Imóveis API
@@ -210,4 +211,69 @@ export async function fetchSantanderViaApify(): Promise<SantanderAuctionItem[]> 
     console.error('[Apify Santander] Error:', err)
     return []
   }
+}
+
+function mapPropertyType(raw: string): 'HOUSE' | 'APARTMENT' | 'LAND' | 'WAREHOUSE' | 'OFFICE' | 'STORE' {
+  const t = (raw || '').toLowerCase()
+  if (t.includes('apartamento')) return 'APARTMENT'
+  if (t.includes('terreno') || t.includes('lote')) return 'LAND'
+  if (t.includes('galp')) return 'WAREHOUSE'
+  if (t.includes('sala')) return 'OFFICE'
+  if (t.includes('loja')) return 'STORE'
+  return 'HOUSE'
+}
+
+/**
+ * Persist Santander Apify items into the auctions table.
+ * Returns counts so callers (scheduler, force-scrape) can report metrics.
+ */
+export async function persistApifySantanderItems(
+  prisma: PrismaClient,
+  items: SantanderAuctionItem[],
+): Promise<{ found: number; created: number; updated: number; errors: string[] }> {
+  let created = 0
+  let updated = 0
+  const errors: string[] = []
+
+  for (const item of items) {
+    const externalId = item.id.replace(/^santander-/, '')
+    const slug = `santander-${externalId}`
+    try {
+      const data = {
+        source: 'SANTANDER' as const,
+        externalId,
+        title: item.description?.slice(0, 200) || `Imóvel Santander em ${item.city || 'BR'}`,
+        propertyType: mapPropertyType(item.propertyType),
+        status: 'OPEN' as const,
+        modality: 'ONLINE' as const,
+        city: item.city || null,
+        state: item.state || null,
+        neighborhood: item.neighborhood || null,
+        street: item.address || null,
+        minimumBid: item.price || null,
+        appraisalValue: item.appraisalValue || null,
+        discountPercent: item.discount || null,
+        bankName: 'Santander',
+        auctioneerName: item.leiloeiro || 'Santander Imóveis',
+        sourceUrl: item.link || null,
+        coverImage: item.coverImageUrl || null,
+        images: item.photos?.length ? item.photos : [],
+        occupation: item.occupation || null,
+        registryNumber: item.matriculas || null,
+        lastScrapedAt: new Date(),
+      }
+
+      const result = await prisma.auction.upsert({
+        where: { slug },
+        create: { slug, ...data },
+        update: { ...data, updatedAt: new Date() },
+      })
+      if (result.createdAt.getTime() === result.updatedAt.getTime()) created++
+      else updated++
+    } catch (err: any) {
+      errors.push(`${slug}: ${err.message}`)
+    }
+  }
+
+  return { found: items.length, created, updated, errors }
 }

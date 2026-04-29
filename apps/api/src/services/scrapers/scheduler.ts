@@ -2,6 +2,9 @@ import { PrismaClient } from '@prisma/client'
 import { CaixaScraper } from './caixa-scraper.js'
 import { GenericLeiloeiroScraper, LEILOEIROS_CONFIG, BANCOS_CONFIG } from './generic-scraper.js'
 import { AiNewsroomService } from '../ai-newsroom.service.js'
+import { env } from '../../utils/env.js'
+import { fetchSantanderApifyLastRun, persistApifySantanderItems } from '../apify-santander.service.js'
+import { fetchCaixaApifyLastRun, persistApifyCaixaItems } from '../apify-caixa.service.js'
 
 /**
  * Scheduler de Scrapers — roda 24/7, varrendo todas as fontes
@@ -118,9 +121,32 @@ export class ScraperScheduler {
 
     try {
       const result = await scraper.run()
+      let merged = { ...result }
+
+      // Apify-enriched Caixa data complements the official CSV with photos,
+      // edital URLs and room counts the CSV does not expose. Skipped silently
+      // when APIFY_API_TOKEN is not configured.
+      if (env.APIFY_API_TOKEN) {
+        try {
+          const apifyItems = await fetchCaixaApifyLastRun()
+          if (apifyItems.length > 0) {
+            const apifyResult = await persistApifyCaixaItems(this.prisma, apifyItems)
+            merged = {
+              found: result.found + apifyResult.found,
+              created: result.created + apifyResult.created,
+              updated: result.updated + apifyResult.updated,
+              errors: [...(result.errors || []), ...apifyResult.errors],
+            }
+            console.log(`[ScraperScheduler] Caixa+Apify: +${apifyResult.found} encontrados, +${apifyResult.created} novos`)
+          }
+        } catch (err: any) {
+          console.error('[ScraperScheduler] Caixa Apify falhou:', err.message)
+        }
+      }
+
       const duration = Date.now() - start
-      console.log(`[ScraperScheduler] Caixa: ${result.found} encontrados, ${result.created} novos, ${result.updated} atualizados (${duration}ms)`)
-      return { source: 'CAIXA', ...result, duration }
+      console.log(`[ScraperScheduler] Caixa: ${merged.found} encontrados, ${merged.created} novos, ${merged.updated} atualizados (${duration}ms)`)
+      return { source: 'CAIXA', ...merged, duration }
     } catch (err: any) {
       console.error('[ScraperScheduler] Caixa falhou:', err.message)
       return { source: 'CAIXA', found: 0, created: 0, updated: 0, errors: [err.message], duration: Date.now() - start }
@@ -130,8 +156,37 @@ export class ScraperScheduler {
   async runBancos(): Promise<ScraperResult[]> {
     console.log('[ScraperScheduler] Rodando scrapers de Bancos...')
     const results: ScraperResult[] = []
+    const apifyEnabled = !!env.APIFY_API_TOKEN
+    let santanderHandledByApify = false
+
+    // Santander via Apify — the bank's site is a SPA that returns blank HTML
+    // to raw fetch, so the GenericLeiloeiroScraper always recorded zero. The
+    // Apify actor renders the page and returns enriched listings.
+    if (apifyEnabled) {
+      const start = Date.now()
+      try {
+        const items = await fetchSantanderApifyLastRun()
+        if (items.length > 0) {
+          const r = await persistApifySantanderItems(this.prisma, items)
+          const duration = Date.now() - start
+          console.log(`[ScraperScheduler] Santander (Apify): ${r.found} encontrados, ${r.created} novos (${duration}ms)`)
+          results.push({ source: 'SANTANDER', ...r, duration })
+          santanderHandledByApify = true
+        } else {
+          console.warn('[ScraperScheduler] Santander Apify: nenhum item no último run')
+        }
+      } catch (err: any) {
+        console.error('[ScraperScheduler] Santander Apify falhou:', err.message)
+        results.push({ source: 'SANTANDER', found: 0, created: 0, updated: 0, errors: [err.message], duration: Date.now() - start })
+      }
+    } else {
+      console.warn('[ScraperScheduler] APIFY_API_TOKEN ausente — Santander cairá no scraper genérico (que falha em SPA)')
+    }
 
     for (const config of BANCOS_CONFIG) {
+      // Skip Santander generic scraper when Apify already filled the DB.
+      if (config.source === 'SANTANDER' && santanderHandledByApify) continue
+
       const start = Date.now()
       try {
         const scraper = new GenericLeiloeiroScraper(this.prisma, config)
