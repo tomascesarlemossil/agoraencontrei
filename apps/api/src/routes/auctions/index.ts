@@ -535,9 +535,14 @@ export default async function auctionsRoutes(app: FastifyInstance) {
         //    which cannot render JS, so bancos returned 0 every time.
         if ((env as any).APIFY_API_TOKEN) {
           try {
-            const [{ fetchSantanderApifyLastRun, persistApifySantanderItems }, { fetchCaixaApifyLastRun, persistApifyCaixaItems }] = await Promise.all([
+            const [
+              { fetchSantanderApifyLastRun, persistApifySantanderItems },
+              { fetchCaixaApifyLastRun, persistApifyCaixaItems },
+              { fetchZukApifyLastRun, persistApifyZukItems },
+            ] = await Promise.all([
               import('../../services/apify-santander.service.js'),
               import('../../services/apify-caixa.service.js'),
+              import('../../services/apify-zuk.service.js'),
             ])
 
             const santanderItems = await fetchSantanderApifyLastRun()
@@ -551,13 +556,24 @@ export default async function auctionsRoutes(app: FastifyInstance) {
               summary.CAIXA_APIFY = { found: cx.found, created: cx.created, updated: cx.updated }
               app.log.info(`[force-scrape] Caixa (Apify): ${cx.found} encontrados, ${cx.created} novos, ${cx.updated} atualizados`)
             }
+
+            const zukItems = await fetchZukApifyLastRun()
+            if (zukItems.length > 0) {
+              const zk = await persistApifyZukItems(prisma, zukItems)
+              summary.ZUK = { found: zk.found, created: zk.created, updated: zk.updated }
+              app.log.info(`[force-scrape] Zuk (Apify): ${zk.found} encontrados, ${zk.created} novos, ${zk.updated} atualizados`)
+            } else {
+              summary.ZUK = { found: 0, created: 0 }
+              app.log.warn('[force-scrape] Zuk: nenhum item no último run Apify')
+            }
           } catch (e: any) {
             summary.SANTANDER = { found: 0, created: 0, error: e.message }
             app.log.error({ err: e }, '[force-scrape] Apify enrichment failed')
           }
         } else {
           summary.SANTANDER = { found: 0, created: 0, error: 'APIFY_API_TOKEN not configured' }
-          app.log.warn('[force-scrape] Santander skipped — APIFY_API_TOKEN not configured')
+          summary.ZUK = { found: 0, created: 0, error: 'APIFY_API_TOKEN not configured' }
+          app.log.warn('[force-scrape] Santander/Zuk skipped — APIFY_API_TOKEN not configured')
         }
 
         // 3. Generic HTML scrapers for the banks that don't have an Apify
@@ -595,6 +611,19 @@ export default async function auctionsRoutes(app: FastifyInstance) {
           })
         } catch { /* scraper_runs table is optional in some envs */ }
 
+        // Disparar alertas WhatsApp para os novos matches dos usuários
+        // cadastrados. Sem isto a varredura criava leilões mas ninguém
+        // recebia notificação.
+        try {
+          const { AuctionAlertService } = await import('../../services/auction-alerts.service.js')
+          const alerts = new AuctionAlertService(prisma)
+          const alertSummary = await alerts.processAlerts()
+          summary.ALERTS = { found: alertSummary.matched, created: alertSummary.sent }
+          app.log.info(`[force-scrape] Alertas: ${alertSummary.matched} matches, ${alertSummary.sent} WhatsApps enviados`)
+        } catch (e: any) {
+          app.log.error({ err: e }, '[force-scrape] processAlerts failed')
+        }
+
         app.log.info({ summary }, '[force-scrape] Varredura completa')
       })
 
@@ -602,8 +631,13 @@ export default async function auctionsRoutes(app: FastifyInstance) {
       // honest about scope: the UI no longer has to guess whether a bank
       // is wired up.
       sourcesQueued.push('CAIXA')
-      if ((env as any).APIFY_API_TOKEN) sourcesQueued.push('SANTANDER')
-      else sourcesSkipped.push({ source: 'SANTANDER', reason: 'APIFY_API_TOKEN not configured' })
+      if ((env as any).APIFY_API_TOKEN) {
+        sourcesQueued.push('SANTANDER')
+        sourcesQueued.push('ZUK')
+      } else {
+        sourcesSkipped.push({ source: 'SANTANDER', reason: 'APIFY_API_TOKEN not configured' })
+        sourcesSkipped.push({ source: 'ZUK', reason: 'APIFY_API_TOKEN not configured' })
+      }
       for (const config of BANCOS_CONFIG) {
         if (config.source === 'SANTANDER' && sourcesQueued.includes('SANTANDER')) continue
         sourcesQueued.push(config.source)
@@ -762,10 +796,88 @@ export default async function auctionsRoutes(app: FastifyInstance) {
       },
     })
 
+    // Confirmação imediata por WhatsApp + dispara match com leilões já no
+    // banco. Antes a rota só gravava o alerta e o usuário só recebia algo
+    // depois da próxima varredura — o que parecia um bug de ativação.
+    let whatsappStatus: 'sent' | 'skipped' | 'failed' = 'skipped'
+    let whatsappError: string | undefined
+
+    if (alert.phone) {
+      try {
+        const cleanPhone = alert.phone.replace(/\D/g, '')
+        const formattedPhone = cleanPhone.startsWith('55') ? cleanPhone : `55${cleanPhone}`
+        const WHATSAPP_TOKEN = process.env.WHATSAPP_TOKEN || process.env.WHATSAPP_ACCESS_TOKEN || process.env.META_WHATSAPP_TOKEN
+        const WHATSAPP_PHONE_ID = process.env.WHATSAPP_PHONE_ID || process.env.WHATSAPP_PHONE_NUMBER_ID
+
+        if (!WHATSAPP_TOKEN || !WHATSAPP_PHONE_ID) {
+          whatsappStatus = 'skipped'
+          whatsappError = 'WhatsApp não configurado no servidor'
+          app.log.warn('[alerts] WhatsApp credentials missing — skipping confirmation')
+        } else {
+          const filters = [
+            data.city && `📍 Cidade: ${data.city}`,
+            data.minDiscount && `🔥 Desconto mín: ${data.minDiscount}%`,
+            data.maxPrice && `💰 Preço máx: R$ ${Number(data.maxPrice).toLocaleString('pt-BR')}`,
+            data.propertyType && `🏠 Tipo: ${data.propertyType}`,
+          ].filter(Boolean).join('\n')
+
+          const confirmationMsg =
+            `🏠 *AgoraEncontrei — Alerta ativado!*\n\n` +
+            `Você receberá oportunidades de leilão por aqui assim que aparecerem.\n\n` +
+            (filters ? `Filtros:\n${filters}\n\n` : '') +
+            `Para cancelar, responda CANCELAR ou acesse o link no painel.\n` +
+            `_Token: ${alert.token?.slice(0, 8)}_`
+
+          const waRes = await fetch(`https://graph.facebook.com/v19.0/${WHATSAPP_PHONE_ID}/messages`, {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${WHATSAPP_TOKEN}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              messaging_product: 'whatsapp',
+              to: formattedPhone,
+              type: 'text',
+              text: { body: confirmationMsg, preview_url: false },
+            }),
+            signal: AbortSignal.timeout(15_000),
+          })
+
+          if (!waRes.ok) {
+            const body = await waRes.text().catch(() => '')
+            whatsappStatus = 'failed'
+            whatsappError = `WhatsApp API ${waRes.status}: ${body.slice(0, 200)}`
+            app.log.error({ status: waRes.status, body }, '[alerts] WhatsApp confirmation failed')
+          } else {
+            whatsappStatus = 'sent'
+            app.log.info(`[alerts] WhatsApp de confirmação enviado para ${formattedPhone}`)
+          }
+        }
+      } catch (err: any) {
+        whatsappStatus = 'failed'
+        whatsappError = err.message
+        app.log.error({ err }, '[alerts] WhatsApp confirmation threw')
+      }
+    }
+
+    // Dispara match contra leilões já indexados (sem esperar próxima varredura)
+    setImmediate(async () => {
+      try {
+        const { AuctionAlertService } = await import('../../services/auction-alerts.service.js')
+        const svc = new AuctionAlertService(app.prisma)
+        await svc.processAlerts()
+      } catch (e: any) {
+        app.log.error({ err: e }, '[alerts] processAlerts after create failed')
+      }
+    })
+
     return reply.status(201).send({
       id: alert.id,
-      message: 'Alerta criado com sucesso! Você receberá notificações de novos leilões.',
+      message: whatsappStatus === 'sent'
+        ? 'Alerta criado! Acabamos de enviar uma confirmação no seu WhatsApp.'
+        : 'Alerta criado com sucesso! Você receberá notificações de novos leilões.',
       token: alert.token,
+      whatsapp: { status: whatsappStatus, error: whatsappError },
     })
   })
 

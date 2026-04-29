@@ -5,6 +5,8 @@ import { AiNewsroomService } from '../ai-newsroom.service.js'
 import { env } from '../../utils/env.js'
 import { fetchSantanderApifyLastRun, persistApifySantanderItems } from '../apify-santander.service.js'
 import { fetchCaixaApifyLastRun, persistApifyCaixaItems } from '../apify-caixa.service.js'
+import { fetchZukApifyLastRun, persistApifyZukItems } from '../apify-zuk.service.js'
+import { AuctionAlertService } from '../auction-alerts.service.js'
 
 /**
  * Scheduler de Scrapers — roda 24/7, varrendo todas as fontes
@@ -101,7 +103,27 @@ export class ScraperScheduler {
       console.error('[ScraperScheduler] Erro nos Leiloeiros:', err.message)
     }
 
+    await new Promise(resolve => setTimeout(resolve, 5000))
+
+    try {
+      const zukResult = await this.runZuk()
+      results.push(zukResult)
+    } catch (err: any) {
+      console.error('[ScraperScheduler] Erro no Zuk:', err.message)
+    }
+
     console.log(`[ScraperScheduler] Concluído. ${results.length} fontes processadas.`)
+
+    // Após varrer todas as fontes, dispara alertas WhatsApp para os
+    // matches novos. Isto fechava o ciclo: até aqui o alerta era criado no
+    // banco mas nunca era processado, então o usuário nunca recebia nada.
+    try {
+      const alerts = new AuctionAlertService(this.prisma)
+      const r = await alerts.processAlerts()
+      console.log(`[ScraperScheduler] Alertas processados: ${r.matched} matches, ${r.sent} enviados`)
+    } catch (err: any) {
+      console.error('[ScraperScheduler] Alertas falharam:', err.message)
+    }
 
     // IA Newsroom — gerar posts para leilões "joia"
     try {
@@ -204,6 +226,32 @@ export class ScraperScheduler {
     }
 
     return results
+  }
+
+  /**
+   * Zuk Leilões via Apify — agregador multi-banco (Bradesco, Santander,
+   * Sicoob, Creditas, judicial). Sem isto o portal SPA retorna HTML vazio.
+   */
+  async runZuk(): Promise<ScraperResult> {
+    console.log('[ScraperScheduler] Rodando scraper Zuk (Apify)...')
+    const start = Date.now()
+    if (!env.APIFY_API_TOKEN) {
+      return { source: 'ZUK', found: 0, created: 0, updated: 0, errors: ['APIFY_API_TOKEN não configurado'], duration: Date.now() - start }
+    }
+    try {
+      const items = await fetchZukApifyLastRun()
+      if (items.length === 0) {
+        console.warn('[ScraperScheduler] Zuk Apify: nenhum item no último run')
+        return { source: 'ZUK', found: 0, created: 0, updated: 0, errors: [], duration: Date.now() - start }
+      }
+      const r = await persistApifyZukItems(this.prisma, items)
+      const duration = Date.now() - start
+      console.log(`[ScraperScheduler] Zuk: ${r.found} encontrados, ${r.created} novos, ${r.updated} atualizados (${duration}ms)`)
+      return { source: 'ZUK', ...r, duration }
+    } catch (err: any) {
+      console.error('[ScraperScheduler] Zuk falhou:', err.message)
+      return { source: 'ZUK', found: 0, created: 0, updated: 0, errors: [err.message], duration: Date.now() - start }
+    }
   }
 
   async runLeiloeiros(): Promise<ScraperResult[]> {
