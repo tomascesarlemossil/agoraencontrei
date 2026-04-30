@@ -11,6 +11,8 @@
 
 import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
+import argon2 from 'argon2'
+import { randomBytes } from 'node:crypto'
 import { env } from '../../utils/env.js'
 import {
   findOrCreateCustomer,
@@ -18,6 +20,17 @@ import {
   createCharge,
   type AsaasBillingType,
 } from '../../services/asaas.service.js'
+
+/**
+ * Gera senha temporária legível (ex: "Onda7-Mar9-Lua") — fácil de copiar
+ * via WhatsApp e ainda assim com entropia razoável (>40 bits).
+ */
+function generateTempPassword(): string {
+  const words = ['Onda', 'Mar', 'Lua', 'Sol', 'Vento', 'Rio', 'Pico', 'Brisa', 'Fogo', 'Areia', 'Pedra', 'Ouro']
+  const w = () => words[randomBytes(1)[0] % words.length]
+  const n = () => randomBytes(1)[0] % 90 + 10 // 10..99
+  return `${w()}${n()}-${w()}${n()}-${w()}`
+}
 
 export default async function saasBillingRoutes(app: FastifyInstance) {
   const prisma = app.prisma as any
@@ -51,6 +64,7 @@ export default async function saasBillingRoutes(app: FastifyInstance) {
           subdomain: { type: 'string' },
           layoutType: { type: 'string' },
           primaryColor: { type: 'string' },
+          nicheSlug: { type: 'string' },
         },
         required: ['planSlug', 'customer', 'tenantName', 'subdomain'],
       },
@@ -71,6 +85,7 @@ export default async function saasBillingRoutes(app: FastifyInstance) {
       subdomain: string
       layoutType?: string
       primaryColor?: string
+      nicheSlug?: string
     }
 
     // Sanity-check obrigatórios antes de bater no Asaas — devolve o motivo
@@ -123,6 +138,19 @@ export default async function saasBillingRoutes(app: FastifyInstance) {
       })
     }
 
+    // Bloqueia checkout duplicado — se o e-mail já tem conta, manda logar
+    // em vez de criar uma segunda Company silenciosamente.
+    const existingUser = await app.prisma.user.findUnique({
+      where: { email: body.customer.email.toLowerCase().trim() },
+    }).catch(() => null)
+    if (existingUser) {
+      return reply.status(409).send({
+        error: 'EMAIL_IN_USE',
+        message: `Já existe uma conta com o e-mail ${body.customer.email}. Faça login no painel ou use outro e-mail.`,
+        hint: 'Se esqueceu a senha, use "Recuperar senha" na tela de login.',
+      })
+    }
+
     // 3. Price from DB — never trust frontend
     const cycle = body.billingCycle || 'MONTHLY'
     const price = cycle === 'YEARLY' && plan.priceYearly
@@ -157,33 +185,80 @@ export default async function saasBillingRoutes(app: FastifyInstance) {
         externalReference: `tenant:${body.subdomain}`,
       })
 
-      // 7. Create tenant in TRIAL status (activated after payment)
-      const tenant = await prisma.tenant.create({
-        data: {
-          name: body.tenantName,
-          subdomain: body.subdomain,
-          layoutType: body.layoutType || 'urban_tech',
-          primaryColor: body.primaryColor || '#d4a853',
-          plan: plan.slug.toUpperCase(),
-          planStatus: 'TRIAL',
-          planPrice: price,
-          asaasSubscriptionId: subscription.id,
-          trialEndsAt: nextDue,
-          settings: {
-            asaasCustomerId: customer.id,
-            planSlug: plan.slug,
-            billingCycle: cycle,
+      // 7. Cria Company + Tenant + User admin em transação. Antes só
+      //    criava Tenant; o parceiro pagava e ficava sem CRM e sem login.
+      //    Agora nasce tudo em TRIAL e o webhook só precisa marcar ACTIVE.
+      const tempPassword = generateTempPassword()
+      const passwordHash = await argon2.hash(tempPassword, { type: argon2.argon2id })
+
+      const { tenant, company, user } = await app.prisma.$transaction(async (tx: any) => {
+        const company = await tx.company.create({
+          data: {
+            name: body.tenantName,
+            plan: plan.slug.toLowerCase(),
+            isActive: true,
+            settings: {
+              isTenant: true,
+              layoutType: body.layoutType || 'urban_tech',
+              primaryColor: body.primaryColor || '#d4a853',
+              nicheSlug: body.nicheSlug || 'imobiliaria',
+              subdomain: body.subdomain,
+            },
           },
-        },
+        })
+
+        const user = await tx.user.create({
+          data: {
+            companyId: company.id,
+            name: body.customer.name,
+            email: body.customer.email.toLowerCase().trim(),
+            phone: body.customer.phone || null,
+            passwordHash,
+            role: 'ADMIN' as any,
+            status: 'ACTIVE' as any,
+          },
+        })
+
+        const tenant = await tx.tenant.create({
+          data: {
+            name: body.tenantName,
+            subdomain: body.subdomain,
+            layoutType: body.layoutType || 'urban_tech',
+            primaryColor: body.primaryColor || '#d4a853',
+            plan: plan.slug.toUpperCase(),
+            planStatus: 'TRIAL',
+            planPrice: price,
+            asaasSubscriptionId: subscription.id,
+            companyId: company.id,
+            ownerId: user.id,
+            trialEndsAt: nextDue,
+            settings: {
+              asaasCustomerId: customer.id,
+              planSlug: plan.slug,
+              billingCycle: cycle,
+              nicheSlug: body.nicheSlug || 'imobiliaria',
+              customerEmail: body.customer.email,
+              customerPhone: body.customer.phone || null,
+              // Marcamos a senha como temporária para o webhook saber que
+              // ele deve incluí-la no e-mail/WhatsApp de boas-vindas. Após
+              // o primeiro login bem-sucedido a flag deve sair.
+              tempPasswordIssued: true,
+              tempPasswordPlain: tempPassword,
+            },
+          },
+        })
+
+        return { tenant, company, user }
       })
 
       // 8. Audit log
       await app.prisma.auditLog.create({
         data: {
-          companyId: 'platform',
+          companyId: company.id,
           action: 'saas.checkout' as any,
           resource: 'tenant',
           resourceId: tenant.id,
+          userId: user.id,
           payload: {
             planSlug: plan.slug,
             price,
@@ -204,9 +279,15 @@ export default async function saasBillingRoutes(app: FastifyInstance) {
           price,
           cycle,
           asaasSubscriptionId: subscription.id,
-          // Client should redirect to Asaas payment page
+          // Client deve redirecionar para a página de sucesso (que mostra
+          // próximos passos) e em paralelo abrir o link do Asaas.
           paymentUrl: `https://www.asaas.com/c/${subscription.id}`,
-          message: 'Assinatura criada! Complete o pagamento para ativar seu site.',
+          successUrl: `/checkout/sucesso?ref=${encodeURIComponent(body.subdomain)}`,
+          loginUrl: '/login',
+          // Não devolvemos a senha — ela vai pelo e-mail/WhatsApp do
+          // webhook de pagamento confirmado, evitando vazar em logs do
+          // cliente / paywall.
+          message: 'Assinatura criada! Você receberá os dados de acesso por e-mail e WhatsApp assim que o pagamento for confirmado.',
         },
       })
     } catch (err: any) {

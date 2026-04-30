@@ -181,6 +181,9 @@ export function HeroSearchForm() {
         <a href="/leiloes" className="px-4 py-2.5 rounded-full text-sm font-bold transition-all hover:scale-105" style={{ background: 'linear-gradient(135deg, #C9A84C, #e6c96a)', color: '#1B2B5B' }}>
           🏛️ Leilões
         </a>
+        <a href="/parceiros/planos" className="px-4 py-2.5 rounded-full text-sm font-bold transition-all hover:scale-105" style={{ backgroundColor: 'rgba(34,197,94,0.18)', color: 'white', border: '1px solid rgba(34,197,94,0.45)' }}>
+          🤝 Seja um Parceiro
+        </a>
       </div>
 
       {/* Mode toggle */}
