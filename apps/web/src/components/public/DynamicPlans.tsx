@@ -105,7 +105,35 @@ export function DynamicPlans() {
   const [checkoutForm, setCheckoutForm] = useState({
     name: '', email: '', cpfCnpj: '', phone: '',
     tenantName: '', subdomain: '', layoutType: 'urban_tech', primaryColor: '#d4a853',
+    nicheSlug: 'imobiliaria',
   })
+  // Check de disponibilidade do subdomínio em tempo real (debounce 400ms).
+  // Mostra ✓ verde se livre, X vermelho se ocupado/inválido.
+  const [subdomainStatus, setSubdomainStatus] = useState<
+    { state: 'idle' | 'checking' | 'available' | 'taken'; reason?: string }
+  >({ state: 'idle' })
+
+  useEffect(() => {
+    const sd = checkoutForm.subdomain
+    if (!sd || sd.length < 3) {
+      setSubdomainStatus({ state: 'idle' })
+      return
+    }
+    setSubdomainStatus({ state: 'checking' })
+    const t = setTimeout(async () => {
+      try {
+        const r = await fetch(
+          `${API_URL}/api/v1/tenants/check-subdomain?subdomain=${encodeURIComponent(sd)}`,
+        )
+        const d = await r.json()
+        if (d.available) setSubdomainStatus({ state: 'available' })
+        else setSubdomainStatus({ state: 'taken', reason: d.reason })
+      } catch {
+        setSubdomainStatus({ state: 'idle' })
+      }
+    }, 400)
+    return () => clearTimeout(t)
+  }, [checkoutForm.subdomain])
 
   useEffect(() => {
     fetch(`${API_URL}/api/v1/public/catalog`)
@@ -331,6 +359,13 @@ export function DynamicPlans() {
             <form
               onSubmit={async (e) => {
                 e.preventDefault()
+                if (subdomainStatus.state === 'taken') {
+                  setCheckoutError({
+                    message: subdomainStatus.reason || 'Subdomínio indisponível.',
+                    hint: 'Escolha outro subdomínio antes de continuar.',
+                  })
+                  return
+                }
                 setCheckoutLoading(true)
                 setCheckoutError(null)
                 try {
@@ -352,14 +387,22 @@ export function DynamicPlans() {
                         .replace(/[^a-z0-9-]/g, ''),
                       layoutType: checkoutForm.layoutType,
                       primaryColor: checkoutForm.primaryColor,
+                      nicheSlug: checkoutForm.nicheSlug,
                     }),
                   })
 
                   const data = await res.json()
 
                   if (res.ok && data.success) {
-                    // Redirect to Asaas payment page
-                    window.location.href = data.data.paymentUrl
+                    // Abre o pagamento Asaas em nova aba e leva o parceiro
+                    // pra página de sucesso com instruções (e-mail/whats já
+                    // entregam credenciais quando o pagamento confirmar).
+                    if (data.data.paymentUrl) {
+                      window.open(data.data.paymentUrl, '_blank', 'noopener,noreferrer')
+                    }
+                    const ref = encodeURIComponent(checkoutForm.subdomain.toLowerCase().replace(/[^a-z0-9-]/g, ''))
+                    const pay = encodeURIComponent(data.data.asaasSubscriptionId || '')
+                    window.location.href = `/checkout/sucesso?ref=${ref}${pay ? `&payment=${pay}` : ''}`
                   } else {
                     setCheckoutError({
                       message: data.message || data.error || 'Erro ao criar assinatura.',
@@ -475,7 +518,41 @@ export function DynamicPlans() {
                     .agoraencontrei.com.br
                   </span>
                 </div>
+                {subdomainStatus.state === 'checking' && (
+                  <p className="mt-1 text-[11px] text-gray-400">Verificando disponibilidade…</p>
+                )}
+                {subdomainStatus.state === 'available' && (
+                  <p className="mt-1 text-[11px] text-emerald-400">
+                    ✓ {checkoutForm.subdomain}.agoraencontrei.com.br está livre.
+                  </p>
+                )}
+                {subdomainStatus.state === 'taken' && (
+                  <p className="mt-1 text-[11px] text-red-400">
+                    ✕ {subdomainStatus.reason || 'Indisponível.'} Tente outro nome.
+                  </p>
+                )}
               </div>
+
+              {/* Nicho */}
+              {niches.length > 0 && (
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">
+                    Nicho do seu negócio
+                  </label>
+                  <select
+                    value={checkoutForm.nicheSlug}
+                    onChange={(e) => setCheckoutForm(f => ({ ...f, nicheSlug: e.target.value }))}
+                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 sm:py-2.5 text-white text-sm focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
+                  >
+                    {niches.map(n => (
+                      <option key={n.id} value={n.slug}>{n.name}</option>
+                    ))}
+                  </select>
+                  <p className="mt-1 text-[11px] text-gray-500">
+                    Define como o Tomás IA conversa e quais filtros aparecem no seu site.
+                  </p>
+                </div>
+              )}
 
               {/* Layout + Color side by side */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -536,7 +613,7 @@ export function DynamicPlans() {
               {/* Submit */}
               <button
                 type="submit"
-                disabled={checkoutLoading}
+                disabled={checkoutLoading || subdomainStatus.state === 'taken' || subdomainStatus.state === 'checking'}
                 className="w-full py-2.5 sm:py-3 rounded-lg sm:rounded-xl font-bold text-xs sm:text-sm transition bg-amber-600 hover:bg-amber-500 text-gray-950 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {checkoutLoading ? (

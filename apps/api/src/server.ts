@@ -60,6 +60,7 @@ import { specialistPaymentRoutes } from './routes/specialists/payments.js'
 import { ScraperScheduler } from './services/scrapers/scheduler.js'
 import { AuctionMonitorService } from './services/auction-monitor.service.js'
 import { PredatoryProtocol } from './services/predatory/protocol.js'
+import { bootstrapDefaultPlans } from './services/bootstrap-plans.js'
 import { AutoHealingService } from './services/auto-healing.service.js'
 // Manus auctionsRoute desativada — conflita com publicRoutes no mesmo prefix
 // import { auctionsRoute } from './routes/public/auctions.js'
@@ -844,6 +845,15 @@ async function bootstrap() {
       app.log.info(`[boot] Reativados ${reactivated.count} leilões bancários que estavam CLOSED`)
     }
   } catch (e: any) { app.log.warn('Auction reactivation skip:', e.message) }
+
+  // ── Bootstrap idempotente de planos + nichos ───────────────────────────
+  // Sem isto o checkout falhava com PLAN_NOT_FOUND porque a tabela vinha
+  // vazia em produção. Roda em todo boot, só insere o que falta.
+  try {
+    await bootstrapDefaultPlans(app.prisma)
+  } catch (e: any) {
+    app.log.warn('bootstrapDefaultPlans skip:', e.message)
+  }
 
   // ── Scraper Scheduler (robôs 24/7 de leilões) ─────────────────────────
   if (env.NODE_ENV === 'production') {

@@ -129,21 +129,118 @@ async function handleTenantEvent(
         return
       }
 
-      // Activate tenant
-      await prisma.tenant.update({
-        where: { id: tenant.id },
-        data: {
-          planStatus: 'ACTIVE',
-          isActive: true,
-          activatedAt: new Date(),
-          suspendedAt: null,
-          settings: {
-            ...(tenant.settings as any || {}),
-            lastPaymentId: payment.id,
-            lastPaymentDate: new Date().toISOString(),
+      const settings = (tenant.settings as any) || {}
+      const tempPasswordPlain: string | undefined = settings.tempPasswordPlain
+      const customerEmail: string | undefined = settings.customerEmail
+      const customerPhone: string | undefined = settings.customerPhone
+
+      // Limpa a senha temporária do settings na hora da ativação — uma vez
+      // que vai ser enviada por e-mail/WhatsApp não pode ficar parada no
+      // banco indefinidamente.
+      const cleanedSettings = { ...settings }
+      delete cleanedSettings.tempPasswordPlain
+
+      // Activate tenant + Company (mesma transação para não deixar Tenant
+      // ACTIVE com Company isActive=false em caso de falha)
+      await prisma.$transaction(async (tx: any) => {
+        await tx.tenant.update({
+          where: { id: tenant.id },
+          data: {
+            planStatus: 'ACTIVE',
+            isActive: true,
+            activatedAt: new Date(),
+            suspendedAt: null,
+            settings: {
+              ...cleanedSettings,
+              lastPaymentId: payment.id,
+              lastPaymentDate: new Date().toISOString(),
+              tempPasswordIssued: false,
+            },
           },
-        },
+        })
+        if (tenant.companyId) {
+          await tx.company.update({
+            where: { id: tenant.companyId },
+            data: { isActive: true },
+          }).catch(() => null)
+        }
       })
+
+      // Envia credenciais ao parceiro (e-mail + WhatsApp em paralelo).
+      // Tudo feito em try/catch independentes pra um canal falhar sem
+      // travar a ativação.
+      if (tempPasswordPlain && customerEmail) {
+        try {
+          const { sendEmail, isEmailConfigured } = await import('../../services/email.service.js')
+          if (isEmailConfigured()) {
+            const siteUrl = `https://${subdomain}.agoraencontrei.com.br`
+            const html = `
+              <div style="font-family:system-ui,-apple-system,sans-serif;max-width:560px;margin:0 auto;padding:32px;background:#f8f6f1;color:#1B2B5B">
+                <h1 style="color:#1B2B5B;margin:0 0 8px">Bem-vindo(a) ao AgoraEncontrei!</h1>
+                <p style="margin:0 0 16px;color:#475569">Pagamento confirmado. Seu site está no ar 🎉</p>
+                <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:20px;margin:16px 0">
+                  <p style="margin:0 0 8px"><strong>Painel administrativo:</strong></p>
+                  <p style="margin:0 0 12px"><a href="https://agoraencontrei.com.br/login" style="color:#C9A84C">https://agoraencontrei.com.br/login</a></p>
+                  <p style="margin:0 0 8px"><strong>Seu site:</strong></p>
+                  <p style="margin:0 0 12px"><a href="${siteUrl}" style="color:#C9A84C">${siteUrl}</a></p>
+                  <p style="margin:0 0 8px"><strong>E-mail:</strong> ${customerEmail}</p>
+                  <p style="margin:0"><strong>Senha temporária:</strong> <code style="background:#f1f5f9;padding:2px 6px;border-radius:4px">${tempPasswordPlain}</code></p>
+                </div>
+                <p style="margin:16px 0;color:#475569">No primeiro acesso troque a senha em <em>Perfil → Segurança</em>.</p>
+                <p style="margin:24px 0 0;font-size:13px;color:#64748b">Qualquer dúvida, responda este e-mail.</p>
+              </div>`
+            await sendEmail({
+              to: customerEmail,
+              subject: '🎉 Seu site no AgoraEncontrei está ativo — credenciais de acesso',
+              html,
+            })
+            app.log.info(`[saas-webhook] Welcome e-mail enviado para ${customerEmail}`)
+          } else {
+            app.log.warn('[saas-webhook] SMTP não configurado — credenciais não enviadas por e-mail')
+          }
+        } catch (e: any) {
+          app.log.error({ err: e }, '[saas-webhook] welcome email failed')
+        }
+
+        if (customerPhone) {
+          try {
+            const cleanPhone = customerPhone.replace(/\D/g, '')
+            const formattedPhone = cleanPhone.startsWith('55') ? cleanPhone : `55${cleanPhone}`
+            const WHATSAPP_TOKEN = process.env.WHATSAPP_TOKEN || process.env.WHATSAPP_ACCESS_TOKEN
+            const WHATSAPP_PHONE_ID = process.env.WHATSAPP_PHONE_ID || process.env.WHATSAPP_PHONE_NUMBER_ID
+            if (WHATSAPP_TOKEN && WHATSAPP_PHONE_ID) {
+              const siteUrl = `https://${subdomain}.agoraencontrei.com.br`
+              const msg =
+                `🎉 *AgoraEncontrei — Pagamento confirmado!*\n\n` +
+                `Seu site está no ar:\n${siteUrl}\n\n` +
+                `*Acesso ao painel:*\nhttps://agoraencontrei.com.br/login\n\n` +
+                `*E-mail:* ${customerEmail}\n` +
+                `*Senha temporária:* ${tempPasswordPlain}\n\n` +
+                `Troque a senha no primeiro acesso (Perfil → Segurança).`
+              await fetch(`https://graph.facebook.com/v19.0/${WHATSAPP_PHONE_ID}/messages`, {
+                method: 'POST',
+                headers: {
+                  Authorization: `Bearer ${WHATSAPP_TOKEN}`,
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  messaging_product: 'whatsapp',
+                  to: formattedPhone,
+                  type: 'text',
+                  text: { body: msg, preview_url: false },
+                }),
+              })
+              app.log.info(`[saas-webhook] Welcome WhatsApp enviado para ${formattedPhone}`)
+            } else {
+              app.log.warn('[saas-webhook] WhatsApp não configurado — credenciais não enviadas por WhatsApp')
+            }
+          } catch (e: any) {
+            app.log.error({ err: e }, '[saas-webhook] welcome whatsapp failed')
+          }
+        }
+      } else {
+        app.log.warn(`[saas-webhook] Tenant ${subdomain} sem tempPasswordPlain — credenciais NÃO enviadas (provavelmente checkout antigo)`)
+      }
 
       app.log.info(`[saas-webhook] Tenant ${subdomain} ACTIVATED (plan: ${tenant.plan})`)
 
