@@ -606,7 +606,12 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ── 3. PARCEIROS OFICIAIS ─────────────────────────────────────────── */}
+      {/* ── 3. PARCEIROS OFICIAIS — temporariamente oculto ───────────────────
+          Layout, conteúdo e estilo foram preservados. Para reexibir,
+          ativar a flag SiteSettings.partnersShowcaseEnabled no admin
+          (campo opcional; default = oculto).
+      */}
+      {siteSettings.partnersShowcaseEnabled === true && (
       <section className="max-w-6xl mx-auto px-4 sm:px-6 py-16">
         <div className="text-center mb-10">
           <p className="text-sm font-semibold uppercase tracking-widest mb-2" style={{ color: 'var(--site-accent-color, #C9A84C)' }}>
@@ -682,6 +687,7 @@ export default async function HomePage() {
           </Link>
         </div>
       </section>
+      )}
 
       {/* ── 4. CATEGORIAS (tipos de imóvel com ícones SVG profissionais) ──── */}
       <section style={{ backgroundColor: 'var(--site-background-color, #f8f6f1)' }} className="py-16">
@@ -878,8 +884,48 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ── VÍDEO DE APRESENTAÇÃO (último antes do rodapé) ──────────────── */}
-      {(siteSettings.presentationVideoUrl || siteSettings.presentationBannerUrl) && (
+      {/* ── CTA SEJA UM PARCEIRO (antes do rodapé) ─────────────────────── */}
+      <section className="py-14 px-4 sm:px-6" style={{ backgroundColor: 'var(--site-primary-color, #1B2B5B)' }}>
+        <div className="max-w-4xl mx-auto rounded-3xl p-8 sm:p-12 text-center" style={{ background: 'linear-gradient(135deg, rgba(201,168,76,0.18), rgba(201,168,76,0.05))', border: '1px solid rgba(201,168,76,0.35)' }}>
+          <p className="text-xs sm:text-sm font-semibold uppercase tracking-widest mb-2" style={{ color: 'var(--site-accent-color, #C9A84C)' }}>
+            Para imobiliárias e corretores
+          </p>
+          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3" style={{ fontFamily: 'Georgia, serif' }}>
+            Seja um Parceiro do AgoraEncontrei
+          </h2>
+          <p className="text-white/70 text-sm sm:text-base mb-6 max-w-2xl mx-auto leading-relaxed">
+            Tenha seu site profissional, CRM, IA do Tomás e marketplace integrado.
+            Anuncie seus imóveis com tecnologia de ponta e ganhe presença regional.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Link
+              href="/parceiros/planos"
+              className="px-7 py-3 rounded-xl text-sm font-bold transition-all hover:brightness-110 inline-flex items-center justify-center gap-2"
+              style={{ backgroundColor: 'var(--site-accent-color, #C9A84C)', color: 'var(--site-primary-color, #1B2B5B)' }}
+            >
+              Ver Planos e Assinar <ArrowRight className="w-4 h-4" />
+            </Link>
+            <a
+              href="https://wa.me/5516981010004?text=Olá! Gostaria de ser um parceiro do AgoraEncontrei e anunciar meus imóveis."
+              target="_blank"
+              rel="noreferrer"
+              className="px-7 py-3 rounded-xl text-sm font-bold border-2 text-white transition-all hover:bg-white/10 inline-flex items-center justify-center gap-2"
+              style={{ borderColor: 'rgba(201,168,76,0.5)' }}
+            >
+              Falar pelo WhatsApp
+            </a>
+          </div>
+        </div>
+      </section>
+
+      {/* ── VÍDEO DE APRESENTAÇÃO — temporariamente oculto ──────────────────
+          Toda a configuração (vídeo, título, subtítulo, banner, link)
+          continua sendo lida do SiteSettings. Para reexibir, ative
+          SiteSettings.presentationEnabled no admin (default = oculto).
+          O fallback hardcoded da Imobiliária Lemos também é exibido só
+          quando a flag estiver ligada.
+      */}
+      {siteSettings.presentationEnabled === true && (siteSettings.presentationVideoUrl || siteSettings.presentationBannerUrl) && (
         <PresentationSection
           videoUrl={siteSettings.presentationVideoUrl ?? null}
           bannerUrl={siteSettings.presentationBannerUrl ?? null}
@@ -888,7 +934,7 @@ export default async function HomePage() {
           subtitle={siteSettings.presentationSubtitle ?? null}
         />
       )}
-      {!siteSettings.presentationVideoUrl && !siteSettings.presentationBannerUrl && (
+      {siteSettings.presentationEnabled === true && !siteSettings.presentationVideoUrl && !siteSettings.presentationBannerUrl && (
         <PresentationSection
           videoUrl="https://files.manuscdn.com/user_upload_by_module/session_file/310519663481419273/MbhJNDOYKAGxseOh.mp4"
           bannerUrl={null}
