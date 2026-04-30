@@ -57,7 +57,10 @@ export default async function saasBillingRoutes(app: FastifyInstance) {
     },
   }, async (req, reply) => {
     if (!env.ASAAS_API_KEY) {
-      return reply.status(503).send({ error: 'ASAAS_NOT_CONFIGURED', message: 'Billing integration not configured' })
+      return reply.status(503).send({
+        error: 'ASAAS_NOT_CONFIGURED',
+        message: 'A integração de pagamento (Asaas) ainda não foi configurada no servidor. Avise o administrador.',
+      })
     }
 
     const body = req.body as {
@@ -70,13 +73,42 @@ export default async function saasBillingRoutes(app: FastifyInstance) {
       primaryColor?: string
     }
 
+    // Sanity-check obrigatórios antes de bater no Asaas — devolve o motivo
+    // exato pro front em vez do "Erro ao criar assinatura. Tente novamente."
+    // genérico que escondia o problema real.
+    const cpfClean = (body.customer.cpfCnpj || '').replace(/\D/g, '')
+    if (cpfClean.length !== 11 && cpfClean.length !== 14) {
+      return reply.status(400).send({
+        error: 'INVALID_CPF_CNPJ',
+        message: 'CPF deve ter 11 dígitos ou CNPJ 14 dígitos.',
+      })
+    }
+    if (!/^[a-z0-9-]{3,}$/.test(body.subdomain || '')) {
+      return reply.status(400).send({
+        error: 'INVALID_SUBDOMAIN',
+        message: 'Subdomínio deve ter pelo menos 3 caracteres (letras, números e hífen).',
+      })
+    }
+
     // 1. Validate plan exists and is active — price from DB, never frontend
     const plan = await prisma.planDefinition.findUnique({
       where: { slug: body.planSlug },
+    }).catch((e: any) => {
+      app.log.error({ err: e, planSlug: body.planSlug }, '[saas-billing] planDefinition lookup failed')
+      return null
     })
 
-    if (!plan || !plan.isActive) {
-      return reply.status(404).send({ error: 'PLAN_NOT_FOUND', message: 'Plano não encontrado ou inativo' })
+    if (!plan) {
+      return reply.status(404).send({
+        error: 'PLAN_NOT_FOUND',
+        message: `Plano "${body.planSlug}" não encontrado. Verifique se ele foi cadastrado em PlanDefinition.`,
+      })
+    }
+    if (!plan.isActive) {
+      return reply.status(409).send({
+        error: 'PLAN_INACTIVE',
+        message: `Plano "${plan.name}" está marcado como inativo.`,
+      })
     }
 
     // 2. Validate subdomain uniqueness
@@ -85,7 +117,10 @@ export default async function saasBillingRoutes(app: FastifyInstance) {
     }).catch(() => null)
 
     if (existingTenant) {
-      return reply.status(409).send({ error: 'SUBDOMAIN_TAKEN', message: 'Subdomínio já está em uso' })
+      return reply.status(409).send({
+        error: 'SUBDOMAIN_TAKEN',
+        message: `O subdomínio "${body.subdomain}" já está em uso. Escolha outro.`,
+      })
     }
 
     // 3. Price from DB — never trust frontend
@@ -175,7 +210,7 @@ export default async function saasBillingRoutes(app: FastifyInstance) {
         },
       })
     } catch (err: any) {
-      app.log.error(`[saas-billing] Checkout failed: ${err.message}`)
+      app.log.error({ err }, `[saas-billing] Checkout failed: ${err.message}`)
 
       await app.prisma.auditLog.create({
         data: {
@@ -187,9 +222,39 @@ export default async function saasBillingRoutes(app: FastifyInstance) {
         },
       }).catch(() => {})
 
-      return reply.status(500).send({
-        error: 'CHECKOUT_FAILED',
-        message: 'Erro ao criar assinatura. Tente novamente.',
+      // Tenta extrair o motivo real do Asaas — o serviço lança
+      // "Asaas API <status>: <body json>" e o body costuma trazer
+      // { errors: [{ code, description }] } — vale ouro pra mostrar.
+      const raw: string = err?.message || ''
+      let errorCode = 'CHECKOUT_FAILED'
+      let humanMsg = 'Não conseguimos criar a assinatura agora.'
+
+      const asaasMatch = raw.match(/Asaas API (\d+):\s*(.*)$/s)
+      if (asaasMatch) {
+        const status = parseInt(asaasMatch[1], 10)
+        const bodyText = asaasMatch[2]
+        try {
+          const parsed = JSON.parse(bodyText)
+          const first = Array.isArray(parsed?.errors) && parsed.errors[0]
+          if (first?.description) humanMsg = first.description
+          if (first?.code) errorCode = `ASAAS_${first.code}`
+        } catch {
+          if (bodyText) humanMsg = bodyText.slice(0, 200)
+        }
+        if (status === 401) {
+          errorCode = 'ASAAS_AUTH'
+          humanMsg = 'A chave do Asaas é inválida ou expirou. Avise o administrador.'
+        }
+      } else if (/CPF|CNPJ|cpfCnpj/i.test(raw)) {
+        errorCode = 'INVALID_CPF_CNPJ'
+        humanMsg = 'CPF/CNPJ inválido para o gateway de pagamento.'
+      }
+
+      return reply.status(502).send({
+        error: errorCode,
+        message: humanMsg,
+        // hint usado pelo front pra orientar o usuário
+        hint: 'Confira CPF/CNPJ, e-mail e tente novamente. Se persistir, fale com o suporte.',
       })
     }
   })

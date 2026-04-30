@@ -32,6 +32,7 @@ interface TomasAction {
 interface ShortlistItem {
   propertyId: string
   reference?: string | null
+  slug?: string | null
   title: string
   city: string | null
   neighborhood: string | null
@@ -41,6 +42,8 @@ interface ShortlistItem {
   type: string
   score: number
   reason: string
+  coverImage?: string | null
+  photos?: string[]
 }
 
 interface TomasResponse {
@@ -456,54 +459,94 @@ export default function TomasWidget({ propertyContext }: TomasWidgetProps) {
             <div className="text-xs font-medium text-yellow-500/80">
               Imóveis selecionados pelo Tomás
             </div>
-            {shortlist.map((item) => (
-              <div
-                key={item.propertyId}
-                className="rounded-xl border border-gray-800 bg-gray-900/80 p-3 transition-colors hover:border-yellow-600/40"
-              >
-                <div className="text-sm font-medium text-white">{item.title}</div>
-                <div className="mt-1 flex items-center gap-1 text-xs text-gray-400">
-                  <MapPin className="h-3 w-3" />
-                  {item.neighborhood}{item.city ? `, ${item.city}` : ''}
-                </div>
-                <div className="mt-1.5 flex items-center justify-between">
-                  <span className="text-sm font-semibold text-yellow-500">
-                    {formatPrice(item.price)}
-                  </span>
-                  <div className="flex items-center gap-2 text-xs text-gray-500">
-                    {item.bedrooms > 0 && (
-                      <span className="flex items-center gap-0.5">
-                        <Bed className="h-3 w-3" /> {item.bedrooms}
+            {shortlist.map((item) => {
+              const href = item.slug
+                ? `/imoveis/${item.slug}`
+                : `/imoveis/${item.propertyId}`
+              return (
+                <a
+                  key={item.propertyId}
+                  href={href}
+                  className="block overflow-hidden rounded-xl border border-gray-800 bg-gray-900/80 transition-colors hover:border-yellow-600/40"
+                >
+                  {item.coverImage && (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img
+                      src={item.coverImage}
+                      alt={item.title}
+                      loading="lazy"
+                      className="h-32 w-full object-cover"
+                    />
+                  )}
+                  <div className="p-3">
+                    <div className="text-sm font-medium text-white">{item.title}</div>
+                    <div className="mt-1 flex items-center gap-1 text-xs text-gray-400">
+                      <MapPin className="h-3 w-3" />
+                      {item.neighborhood}{item.city ? `, ${item.city}` : ''}
+                    </div>
+                    <div className="mt-1.5 flex items-center justify-between">
+                      <span className="text-sm font-semibold text-yellow-500">
+                        {formatPrice(item.price)}
                       </span>
+                      <div className="flex items-center gap-2 text-xs text-gray-500">
+                        {item.bedrooms > 0 && (
+                          <span className="flex items-center gap-0.5">
+                            <Bed className="h-3 w-3" /> {item.bedrooms}
+                          </span>
+                        )}
+                        {item.parkingSpaces > 0 && (
+                          <span className="flex items-center gap-0.5">
+                            <Car className="h-3 w-3" /> {item.parkingSpaces}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    {item.reason && (
+                      <div className="mt-1.5 text-xs text-gray-500">{item.reason}</div>
                     )}
-                    {item.parkingSpaces > 0 && (
-                      <span className="flex items-center gap-0.5">
-                        <Car className="h-3 w-3" /> {item.parkingSpaces}
-                      </span>
-                    )}
+                    <div className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-yellow-500">
+                      Ver imóvel <ChevronRight className="h-3 w-3" />
+                    </div>
                   </div>
-                </div>
-                {item.reason && (
-                  <div className="mt-1.5 text-xs text-gray-500">{item.reason}</div>
-                )}
-              </div>
-            ))}
+                </a>
+              )
+            })}
           </div>
         )}
 
         {/* Action Buttons */}
         {actions.length > 0 && !loading && (
           <div className="flex flex-wrap gap-2 pt-1">
-            {actions.map((action, i) => (
-              <button
-                key={`${action.label}-${i}`}
-                onClick={() => sendMessage(action.label)}
-                className="flex items-center gap-1 rounded-full border border-gray-700 bg-gray-800/50 px-3 py-1.5 text-xs text-gray-300 transition-colors hover:border-yellow-600/50 hover:text-yellow-500"
-              >
-                {action.label}
-                <ChevronRight className="h-3 w-3" />
-              </button>
-            ))}
+            {actions.map((action, i) => {
+              // open_property → navega direto ao imóvel; demais botões
+              // continuam mandando o label como mensagem.
+              if (action.type === 'open_property') {
+                const payload = action.payload as { propertyId?: string; slug?: string } | undefined
+                const slugOrId = payload?.slug || payload?.propertyId
+                if (slugOrId) {
+                  return (
+                    <a
+                      key={`${action.label}-${i}`}
+                      href={`/imoveis/${slugOrId}`}
+                      className="flex items-center gap-1 rounded-full border border-yellow-600/50 bg-yellow-600/10 px-3 py-1.5 text-xs font-medium text-yellow-500 transition-colors hover:bg-yellow-600/20"
+                    >
+                      {action.label}
+                      <ChevronRight className="h-3 w-3" />
+                    </a>
+                  )
+                }
+              }
+              return (
+                <button
+                  key={`${action.label}-${i}`}
+                  onClick={() => sendMessage(action.label)}
+                  className="flex items-center gap-1 rounded-full border border-gray-700 bg-gray-800/50 px-3 py-1.5 text-xs text-gray-300 transition-colors hover:border-yellow-600/50 hover:text-yellow-500"
+                >
+                  {action.label}
+                  <ChevronRight className="h-3 w-3" />
+                </button>
+              )
+            })}
           </div>
         )}
 
