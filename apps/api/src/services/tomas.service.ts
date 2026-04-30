@@ -30,6 +30,7 @@ export interface TomasAction {
 export interface ShortlistItem {
   propertyId: string
   reference?: string | null
+  slug?: string | null
   title: string
   city: string | null
   neighborhood: string | null
@@ -39,6 +40,8 @@ export interface ShortlistItem {
   type: string
   score: number
   reason: string
+  coverImage?: string | null
+  photos?: string[]
 }
 
 export interface TomasResponse {
@@ -125,15 +128,21 @@ FORMATO DE RESPOSTA (JSON ESTRUTURADO)
 Responda SEMPRE com JSON válido no formato:
 {
   "message": "sua resposta humanizada aqui",
-  "actions": [{"type": "tipo_acao", "label": "Texto do botão"}],
-  "shortlist": [],
+  "actions": [{"type": "tipo_acao", "label": "Texto do botão", "payload": {"propertyId": "<id>"}}],
+  "shortlist": [{"propertyId": "<id real do tool result>", "title": "...", "price": 0, "reason": "..."}],
   "leadUpdate": {"intent": "buy", "city": "Franca"},
   "summary": "resumo breve para o CRM"
 }
 
-Tipos de ação válidos: open_property, schedule_visit, open_proposal, send_whatsapp, open_tour, show_shortlist, capture_lead
-Se a shortlist estiver vazia, use []. Se não houver ações, use [].
-Se não houver atualização de lead, omita leadUpdate.
+REGRAS DURAS PARA SHORTLIST E ACTIONS (NÃO QUEBRE):
+- shortlist[].propertyId DEVE ser um id que veio do tool_result de buscar_imoveis OU detalhar_imovel.
+- NUNCA invente propertyId, reference, AP00XXX, LEM-XXXX ou códigos. Se não tiver id real, deixe shortlist=[].
+- NUNCA invente título, preço, bairro, cidade ou foto de imóvel. Use SOMENTE os campos retornados pelo tool.
+- Se buscar_imoveis retornar found=0, NÃO crie shortlist com itens fictícios — siga o Hunter Mode.
+- actions com type="open_property" DEVEM ter payload.propertyId = id real do tool result.
+- Os botões NÃO são para o usuário "digitar de volta" — o front lê o type e o payload e navega.
+- Tipos válidos: open_property, schedule_visit, open_proposal, send_whatsapp, open_tour, show_shortlist, capture_lead
+- Se shortlist vazia, use []. Se não houver ações, use []. Se não houver atualização de lead, omita leadUpdate.
 `
 
 const TOMAS_SYSTEM_PROMPT = `${TOMAS_KNOWLEDGE_BASE}\n${TOMAS_OPERATIONAL_ADDENDUM}`
@@ -702,6 +711,25 @@ export async function runTomasChat(
     // Parse structured JSON response
     const parsed = parseTomasResponse(finalText)
 
+    // Enriquece a shortlist com slug + foto a partir do banco e descarta
+    // qualquer item alucinado (propertyId que não existe). Antes a shortlist
+    // vinha "limpa" do LLM, sem foto e às vezes com ids fictícios — o card
+    // virava um bloco morto, sem clique e sem imagem.
+    parsed.shortlist = await enrichShortlist(prisma, parsed.shortlist, params.channel)
+
+    // Garante que action.open_property tenha um propertyId/slug válido — se
+    // o LLM gerou um botão sem payload, o front ainda consegue navegar pelo
+    // primeiro item da shortlist.
+    if (parsed.actions.length && parsed.shortlist.length) {
+      const first = parsed.shortlist[0]
+      parsed.actions = parsed.actions.map(a => {
+        if (a.type === 'open_property' && (!a.payload || !a.payload.propertyId)) {
+          return { ...a, payload: { propertyId: first.propertyId, slug: first.slug ?? undefined } }
+        }
+        return a
+      })
+    }
+
     // Mark chat for handoff if hunter mode lead was captured
     if (hunterLeadCaptured && params.chatId) {
       await markHunterHandoff(prisma, params.chatId, parsed.summary)
@@ -794,6 +822,66 @@ async function markHunterHandoff(prisma: PrismaClient, chatId: string, summary?:
 }
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
+
+/**
+ * Drop hallucinated propertyIds and enrich each surviving item with
+ * canonical fields from the DB (slug, coverImage, photos[0]). The LLM is
+ * sometimes loose with reference codes ("AP00762") so we re-resolve every
+ * card against the real catalogue before sending it to the client.
+ */
+async function enrichShortlist(
+  prisma: PrismaClient,
+  shortlist: ShortlistItem[],
+  channel: 'site' | 'dashboard',
+): Promise<ShortlistItem[]> {
+  if (!shortlist || shortlist.length === 0) return []
+
+  const ids = shortlist
+    .map(s => (typeof s.propertyId === 'string' ? s.propertyId.trim() : ''))
+    .filter(Boolean)
+  if (ids.length === 0) return []
+
+  const where: Record<string, unknown> = { id: { in: ids } }
+  if (channel === 'site') {
+    where.status = 'ACTIVE'
+    where.authorizedPublish = true
+  }
+
+  const props = await prisma.property.findMany({
+    where: where as any,
+    select: {
+      id: true, slug: true, reference: true, title: true,
+      city: true, neighborhood: true, price: true, type: true,
+      bedrooms: true, parkingSpaces: true,
+      coverImage: true, images: true,
+    },
+  })
+
+  const byId = new Map(props.map((p: any) => [p.id, p]))
+
+  return shortlist
+    .map(item => {
+      const p = byId.get(item.propertyId)
+      if (!p) return null
+      const photos = Array.isArray(p.images) ? (p.images as string[]) : []
+      return {
+        ...item,
+        propertyId: p.id,
+        slug: p.slug ?? null,
+        reference: p.reference ?? item.reference ?? null,
+        title: p.title || item.title,
+        city: p.city ?? item.city,
+        neighborhood: p.neighborhood ?? item.neighborhood,
+        price: p.price ? Number(p.price) : item.price,
+        type: p.type || item.type,
+        bedrooms: typeof p.bedrooms === 'number' ? p.bedrooms : item.bedrooms,
+        parkingSpaces: typeof p.parkingSpaces === 'number' ? p.parkingSpaces : item.parkingSpaces,
+        coverImage: p.coverImage ?? photos[0] ?? null,
+        photos: photos.slice(0, 3),
+      } as ShortlistItem
+    })
+    .filter((s): s is ShortlistItem => s !== null)
+}
 
 function parseTomasResponse(text: string): TomasResponse {
   // Try to extract JSON from the response

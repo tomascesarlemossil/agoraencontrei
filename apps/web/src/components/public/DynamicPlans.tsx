@@ -98,6 +98,10 @@ export function DynamicPlans() {
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly')
   const [checkoutPlan, setCheckoutPlan] = useState<PlanDef | null>(null)
   const [checkoutLoading, setCheckoutLoading] = useState(false)
+  // Erro inline do checkout — substitui o alert() opaco por um aviso visível
+  // dentro do modal, com o motivo real devolvido pela API (CPF inválido,
+  // subdomínio em uso, Asaas auth, etc.).
+  const [checkoutError, setCheckoutError] = useState<{ message: string; hint?: string } | null>(null)
   const [checkoutForm, setCheckoutForm] = useState({
     name: '', email: '', cpfCnpj: '', phone: '',
     tenantName: '', subdomain: '', layoutType: 'urban_tech', primaryColor: '#d4a853',
@@ -304,7 +308,7 @@ export function DynamicPlans() {
           <div className="relative bg-gray-900 border border-gray-700 rounded-t-2xl sm:rounded-2xl w-full sm:max-w-lg p-4 sm:p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
             {/* Close button */}
             <button
-              onClick={() => { setCheckoutPlan(null); setCheckoutLoading(false) }}
+              onClick={() => { setCheckoutPlan(null); setCheckoutLoading(false); setCheckoutError(null) }}
               className="absolute top-3 right-3 sm:top-4 sm:right-4 text-gray-400 hover:text-white transition"
             >
               <X className="w-5 h-5" />
@@ -328,6 +332,7 @@ export function DynamicPlans() {
               onSubmit={async (e) => {
                 e.preventDefault()
                 setCheckoutLoading(true)
+                setCheckoutError(null)
                 try {
                   const res = await fetch(`${API_URL}/api/v1/billing/saas/checkout`, {
                     method: 'POST',
@@ -356,11 +361,16 @@ export function DynamicPlans() {
                     // Redirect to Asaas payment page
                     window.location.href = data.data.paymentUrl
                   } else {
-                    alert(data.message || data.error || 'Erro ao criar assinatura.')
+                    setCheckoutError({
+                      message: data.message || data.error || 'Erro ao criar assinatura.',
+                      hint: data.hint,
+                    })
                     setCheckoutLoading(false)
                   }
                 } catch {
-                  alert('Erro de conexão. Tente novamente.')
+                  setCheckoutError({
+                    message: 'Erro de conexão. Verifique sua internet e tente novamente.',
+                  })
                   setCheckoutLoading(false)
                 }
               }}
@@ -499,6 +509,29 @@ export function DynamicPlans() {
                   </div>
                 </div>
               </div>
+
+              {/* Erro inline (substitui o alert opaco) */}
+              {checkoutError && (
+                <div className="rounded-lg border border-red-500/40 bg-red-500/10 p-3 text-xs sm:text-sm">
+                  <div className="flex items-start gap-2">
+                    <X className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <div className="font-semibold text-red-300">{checkoutError.message}</div>
+                      {checkoutError.hint && (
+                        <div className="mt-1 text-red-300/70">{checkoutError.hint}</div>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setCheckoutError(null)}
+                      className="text-red-300/60 hover:text-red-300"
+                      aria-label="Fechar erro"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {/* Submit */}
               <button
