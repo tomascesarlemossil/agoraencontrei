@@ -17,6 +17,19 @@ import type { AsaasWebhookEvent } from '../../services/asaas.service.js'
 import { scheduleRepasse } from '../../services/repasse.service.js'
 import { safeStringEqual } from '../../utils/crypto-safe.js'
 
+function isUniqueConstraintError(err: any): boolean {
+  return err?.code === 'P2002'
+}
+
+function isMissingModelOrTableError(err: any): boolean {
+  return err?.code === 'P2021' || err?.code === 'P2022' || /Cannot read properties of undefined|does not exist|doesn't exist/i.test(err?.message ?? '')
+}
+
+function getPrismaDelegate(prisma: any, name: string) {
+  const delegate = prisma?.[name]
+  return delegate && typeof delegate.create === 'function' ? delegate : null
+}
+
 export default async function asaasWebhookRoutes(app: FastifyInstance) {
   // POST /api/v1/finance/webhook/asaas — Público (chamado pelo Asaas)
   app.post('/asaas', {
@@ -48,23 +61,32 @@ export default async function asaasWebhookRoutes(app: FastifyInstance) {
       // Idempotency guard — uses DB UNIQUE constraint on eventKey to handle
       // concurrent re-deliveries atomically (no race window between check and insert).
       const eventKey = `asaas:${event}:${payment.id}`
+      const processedEventDelegate = getPrismaDelegate(app.prisma as any, 'webhookProcessedEvent')
       try {
-        await (app.prisma as any).webhookProcessedEvent.create({
-          data: {
-            eventKey,
-            provider: 'asaas',
-            eventType: event,
-            externalId: payment.id,
-            payload: { event, paymentId: payment.id, status: payment.status },
-          },
-        })
+        if (processedEventDelegate) {
+          await processedEventDelegate.create({
+            data: {
+              eventKey,
+              provider: 'asaas',
+              eventType: event,
+              externalId: payment.id,
+              payload: { event, paymentId: payment.id, status: payment.status },
+            },
+          })
+        } else {
+          app.log.warn('[asaas-webhook] webhookProcessedEvent delegate unavailable; continuing without hard idempotency')
+        }
       } catch (uniqueErr: any) {
         // P2002 = Prisma unique constraint violation → duplicate delivery
-        if (uniqueErr?.code === 'P2002') {
+        if (isUniqueConstraintError(uniqueErr)) {
           app.log.info(`[asaas-webhook] Duplicate event skipped: ${eventKey}`)
           return reply.send({ success: true, skipped: true })
         }
-        throw uniqueErr
+        if (isMissingModelOrTableError(uniqueErr)) {
+          app.log.warn(`[asaas-webhook] Hard idempotency unavailable (continuing): ${uniqueErr?.message ?? uniqueErr}`)
+        } else {
+          throw uniqueErr
+        }
       }
 
       // Extract rentalId from externalReference (format: "rental:clxxxxxx")
@@ -84,27 +106,32 @@ export default async function asaasWebhookRoutes(app: FastifyInstance) {
         ? `asaas:${body.id}`
         : `asaas:${event}:${payment.id}:${payment.status ?? 'unknown'}:${eventTimestamp}`
 
+      const asaasEventDelegate = getPrismaDelegate(app.prisma as any, 'asaasWebhookEvent')
       try {
-        const record = await (app.prisma as any).asaasWebhookEvent.create({
-          data: {
-            dedupKey,
-            event,
-            paymentId: payment.id,
-            rentalId,
-            status: payment.status ?? null,
-            payload: body as any,
-          },
-          select: { id: true },
-        })
-        eventRecordId = record.id
+        if (asaasEventDelegate) {
+          const record = await asaasEventDelegate.create({
+            data: {
+              dedupKey,
+              event,
+              paymentId: payment.id,
+              rentalId,
+              status: payment.status ?? null,
+              payload: body as any,
+            },
+            select: { id: true },
+          })
+          eventRecordId = record.id
+        }
       } catch (err: any) {
         // P2002 unique constraint violation = duplicate webhook, já processamos
-        if (err?.code === 'P2002') {
+        if (isUniqueConstraintError(err)) {
           app.log.info(`[asaas-webhook] Duplicate event ignored: ${dedupKey}`)
           return reply.send({ success: true, duplicate: true, event, paymentId: payment.id })
         }
         // Tabela pode não existir ainda em alguns ambientes — continua sem dedup
-        app.log.warn(`[asaas-webhook] Dedup record creation failed (continuing): ${err?.message ?? err}`)
+        if (!isMissingModelOrTableError(err)) {
+          app.log.warn(`[asaas-webhook] Dedup record creation failed (continuing): ${err?.message ?? err}`)
+        }
       }
 
       switch (event) {
@@ -257,8 +284,8 @@ export default async function asaasWebhookRoutes(app: FastifyInstance) {
 
       // Marca o evento de dedup como processado com sucesso
       if (eventRecordId) {
-        await (app.prisma as any).asaasWebhookEvent
-          .update({
+        await getPrismaDelegate(app.prisma as any, 'asaasWebhookEvent')
+          ?.update({
             where: { id: eventRecordId },
             data: { processedAt: new Date(), result: 'ok' },
           })
@@ -271,8 +298,8 @@ export default async function asaasWebhookRoutes(app: FastifyInstance) {
       app.log.error(`[asaas-webhook] Error processing event ${event}:`, error.message)
       // Marca dedup record como erro para auditoria — útil para replay manual
       if (eventRecordId) {
-        await (app.prisma as any).asaasWebhookEvent
-          .update({
+        await getPrismaDelegate(app.prisma as any, 'asaasWebhookEvent')
+          ?.update({
             where: { id: eventRecordId },
             data: { processedAt: new Date(), result: 'error', errorMessage: error?.message ?? String(error) },
           })
@@ -282,8 +309,8 @@ export default async function asaasWebhookRoutes(app: FastifyInstance) {
       // reprocess the event; otherwise the first idempotency guard would
       // short-circuit every retry and the payment would never settle.
       const eventKey = `asaas:${event}:${payment.id}`
-      await (app.prisma as any).webhookProcessedEvent
-        .delete({ where: { eventKey } })
+      await getPrismaDelegate(app.prisma as any, 'webhookProcessedEvent')
+        ?.delete({ where: { eventKey } })
         .catch(() => {})
       // Return 5xx so Asaas retries — financial events must not be dropped.
       return reply.status(500).send({ success: false, error: 'PROCESSING_FAILED' })
