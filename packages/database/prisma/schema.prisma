@@ -154,6 +154,7 @@ model Company {
   invoices        Invoice[]
   fiscalNotes       FiscalNote[]
   visualAIJobs      VisualAIJob[]
+  videoEditorJobs   VideoEditorJob[]
   marketingCampaigns MarketingCampaign[]
   blogPosts         BlogPost[]
   blogCategories    BlogCategory[]
@@ -200,6 +201,7 @@ model User {
   refreshTokens         RefreshToken[]
   assignedConversations Conversation[]
   visualAIJobs          VisualAIJob[]
+  videoEditorJobs       VideoEditorJob[]
   documents             Document[]
 
   @@index([companyId])
@@ -1481,6 +1483,56 @@ model VisualAIJob {
   @@index([propertyId])
   @@index([status])
   @@map("visual_ai_jobs")
+}
+
+// ── Video Editor Jobs (AI Video Editing tool — Nível Máximo plan) ──────────
+// Outputs are not stored long-term: `expiresAt` (24h after DONE) drives the
+// S3 lifecycle / cleanup job. Premium feature, gated by tenant module flag.
+
+model VideoEditorJob {
+  id               String    @id @default(cuid())
+  companyId        String
+  company          Company   @relation(fields: [companyId], references: [id])
+  userId           String
+  user             User      @relation(fields: [userId], references: [id])
+
+  // Lifecycle
+  status           String    @default("PENDING") // PENDING | UPLOADED | PROCESSING | DONE | ERROR | EXPIRED
+  errorMsg         String?
+  expiresAt        DateTime?
+  creditsUsed      Int       @default(0)
+
+  // Inputs (S3 keys for the source clips and audio track)
+  inputClips       Json      @default("[]")   // [{ key, durationSec?, mimeType?, label? }]
+  audioKey         String?
+  audioSource      String?                   // "upload" | "extracted_from_video" | "none"
+
+  // Configuration chosen by the user
+  presetId         String?                   // see services/video-editor/presets.ts
+  transitionId     String?                   // see services/video-editor/transitions.ts
+  resolution       String    @default("1080p")  // 1080p | 2k | 4k
+  outputFormat     String    @default("mp4")    // mp4 | mov | webm
+  captionsEnabled  Boolean   @default(false)
+  captionsLanguage String?   @default("pt-BR")
+  captionsStyle    Json?                     // { font, color, highlight, position, ... }
+  brollEnabled     Boolean   @default(false)  // Luma Ray 2 — bills extra credits
+  brollPrompts     Json?                     // [{ promptText, durationSec, atSec }]
+  config           Json      @default("{}") // catch-all for advanced options
+
+  // Outputs
+  outputKey        String?                   // S3 key of the final render
+  thumbnailKey     String?
+  durationSec      Int?
+  fileSizeBytes    BigInt?
+
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@index([companyId])
+  @@index([userId])
+  @@index([status])
+  @@index([expiresAt])
+  @@map("video_editor_jobs")
 }
 
 // ── Marketing Campanhas ────────────────────────────────────────────────────

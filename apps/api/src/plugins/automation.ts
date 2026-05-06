@@ -7,6 +7,7 @@ import { runAutomation } from '../services/automation.worker.js'
 import { runScheduledJobs } from '../services/scheduled.jobs.js'
 import { processVisualAIJob } from '../workers/visual-ai.worker.js'
 import { processCampaignJob } from '../workers/campaign.worker.js'
+import { processVideoEditorJob } from '../workers/video-editor.worker.js'
 import { processOutboundJob } from '../services/outbound-queue.service.js'
 import type { AutomationEventPayload } from '../services/automation.types.js'
 import { env } from '../utils/env.js'
@@ -17,15 +18,18 @@ declare module 'fastify' {
     visualAIQueue:    Queue | null
     campaignsQueue:   Queue | null
     outboundQueue:    Queue | null
+    videoEditorQueue: Queue | null
   }
 }
 
 export default fp(async (app: FastifyInstance) => {
   if (!env.REDIS_URL) {
     app.log.warn('REDIS_URL not set — automation engine disabled')
-    app.decorate('automationQueue', null)
-    app.decorate('visualAIQueue',   null)
-    app.decorate('campaignsQueue',  null)
+    app.decorate('automationQueue',  null)
+    app.decorate('visualAIQueue',    null)
+    app.decorate('campaignsQueue',   null)
+    app.decorate('outboundQueue',    null)
+    app.decorate('videoEditorQueue', null)
     return
   }
 
@@ -46,15 +50,17 @@ export default fp(async (app: FastifyInstance) => {
   }
 
   // ── Queues ────────────────────────────────────────────────────────────────
-  const automationQueue = new Queue('automation',  { connection })
-  const visualAIQueue   = new Queue('visual-ai',   { connection })
-  const campaignsQueue  = new Queue('campaigns',   { connection })
-  const outboundQueue   = new Queue('outbound',    { connection })
+  const automationQueue  = new Queue('automation',   { connection })
+  const visualAIQueue    = new Queue('visual-ai',    { connection })
+  const campaignsQueue   = new Queue('campaigns',    { connection })
+  const outboundQueue    = new Queue('outbound',     { connection })
+  const videoEditorQueue = new Queue('video-editor', { connection })
 
-  app.decorate('automationQueue', automationQueue)
-  app.decorate('visualAIQueue',   visualAIQueue)
-  app.decorate('campaignsQueue',  campaignsQueue)
-  app.decorate('outboundQueue',   outboundQueue)
+  app.decorate('automationQueue',  automationQueue)
+  app.decorate('visualAIQueue',    visualAIQueue)
+  app.decorate('campaignsQueue',   campaignsQueue)
+  app.decorate('outboundQueue',    outboundQueue)
+  app.decorate('videoEditorQueue', videoEditorQueue)
 
   // ── Funnel domain events into automation queue ────────────────────────────
   automationEmitter.on('automation:event', async (payload: AutomationEventPayload) => {
@@ -96,11 +102,19 @@ export default fp(async (app: FastifyInstance) => {
     { connection, concurrency: 3 },
   )
 
+  // ── Video editor worker — FFmpeg renders are CPU-heavy, keep concurrency low
+  const videoEditorWorker = new Worker(
+    'video-editor',
+    async (job) => processVideoEditorJob(job as any, app.prisma),
+    { connection, concurrency: 1 },
+  )
+
   for (const [name, worker] of [
-    ['automation', automationWorker],
-    ['visual-ai',  visualAIWorker],
-    ['campaigns',  campaignsWorker],
-    ['outbound',   outboundWorker],
+    ['automation',   automationWorker],
+    ['visual-ai',    visualAIWorker],
+    ['campaigns',    campaignsWorker],
+    ['outbound',     outboundWorker],
+    ['video-editor', videoEditorWorker],
   ] as const) {
     worker.on('failed', (job, err) => {
       app.log.error({ queue: name, jobId: job?.id, err }, `${name} job failed`)
@@ -122,15 +136,17 @@ export default fp(async (app: FastifyInstance) => {
       visualAIWorker.close(),
       campaignsWorker.close(),
       outboundWorker.close(),
+      videoEditorWorker.close(),
     ])
     await Promise.all([
       automationQueue.close(),
       visualAIQueue.close(),
       campaignsQueue.close(),
       outboundQueue.close(),
+      videoEditorQueue.close(),
     ])
     await connection.quit()
   })
 
-  app.log.info('✅ Automation engine started (queues: automation, visual-ai, campaigns, outbound)')
+  app.log.info('✅ Automation engine started (queues: automation, visual-ai, campaigns, outbound, video-editor)')
 })
