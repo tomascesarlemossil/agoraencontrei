@@ -17,6 +17,11 @@ import { z } from 'zod'
 import { calculateMRR } from '../../services/tenant.service.js'
 import { getRepasseSummary } from '../../services/repasse.service.js'
 import { buildMasterIntelligence } from '../../services/master/intelligence.service.js'
+import {
+  provisionQuota as provisionVideoQuota,
+  topUpBrollCredits,
+  snapshot as videoQuotaSnapshot,
+} from '../../services/video-editor/quota.service.js'
 import adminConfigRoutes from './admin-config.js'
 
 export default async function masterRoutes(app: FastifyInstance) {
@@ -637,5 +642,85 @@ export default async function masterRoutes(app: FastifyInstance) {
       app.log.error(`[master/intelligence] ${err.message}`)
       return reply.status(500).send({ error: 'Erro ao gerar inteligência master', details: err.message })
     }
+  })
+
+  // ════════════════════════════════════════════════════════════════════════
+  // Video Editor Quota — admin provisioning + B-roll credit top-up
+  // ════════════════════════════════════════════════════════════════════════
+
+  // GET /master/video-editor/quota/:companyId — read snapshot
+  app.get('/video-editor/quota/:companyId', {
+    schema: { tags: ['master'], summary: 'Read video editor quota for a company' },
+  }, async (req, reply) => {
+    const { companyId } = req.params as { companyId: string }
+    const snap = await videoQuotaSnapshot(app.prisma, companyId)
+    if (!snap) return reply.status(404).send({ error: 'NOT_PROVISIONED' })
+    return reply.send(snap)
+  })
+
+  // POST /master/video-editor/quota/:companyId/provision — create the row
+  // (used when a partner upgraded outside the checkout, e.g. manual contract).
+  app.post('/video-editor/quota/:companyId/provision', {
+    schema: { tags: ['master'], summary: 'Provision the video editor quota for a company' },
+  }, async (req, reply) => {
+    const { companyId } = req.params as { companyId: string }
+    const body = z.object({
+      dailyLimit:   z.number().int().min(1).max(1000).optional(),
+      brollCredits: z.number().int().min(0).max(10000).optional(),
+    }).parse(req.body ?? {})
+
+    const company = await app.prisma.company.findUnique({ where: { id: companyId } })
+    if (!company) return reply.status(404).send({ error: 'COMPANY_NOT_FOUND' })
+
+    await provisionVideoQuota(app.prisma, companyId, body)
+    await app.prisma.auditLog.create({
+      data: {
+        companyId, action: 'video_editor.quota.provision' as any,
+        resource: 'video_editor_quota', resourceId: companyId,
+        userId: (req.user as any)?.sub ?? 'unknown', payload: body as any,
+      },
+    }).catch(() => {})
+    const snap = await videoQuotaSnapshot(app.prisma, companyId)
+    return reply.send({ ok: true, quota: snap })
+  })
+
+  // POST /master/video-editor/quota/:companyId/topup — add B-roll credits
+  app.post('/video-editor/quota/:companyId/topup', {
+    schema: { tags: ['master'], summary: 'Top up B-roll credits for a company' },
+  }, async (req, reply) => {
+    const { companyId } = req.params as { companyId: string }
+    const body = z.object({
+      credits: z.number().int().min(1).max(10000),
+      reason:  z.string().max(500).optional(),
+    }).parse(req.body)
+
+    const company = await app.prisma.company.findUnique({ where: { id: companyId } })
+    if (!company) return reply.status(404).send({ error: 'COMPANY_NOT_FOUND' })
+
+    const after = await topUpBrollCredits(app.prisma, companyId, body.credits)
+    await app.prisma.auditLog.create({
+      data: {
+        companyId, action: 'video_editor.quota.topup' as any,
+        resource: 'video_editor_quota', resourceId: companyId,
+        userId: (req.user as any)?.sub ?? 'unknown',
+        payload: { credits: body.credits, reason: body.reason ?? null } as any,
+      },
+    }).catch(() => {})
+    return reply.send({ ok: true, quota: after })
+  })
+
+  // PATCH /master/video-editor/quota/:companyId/limit — change daily limit
+  app.patch('/video-editor/quota/:companyId/limit', {
+    schema: { tags: ['master'], summary: 'Update daily render limit for a company' },
+  }, async (req, reply) => {
+    const { companyId } = req.params as { companyId: string }
+    const body = z.object({ dailyLimit: z.number().int().min(1).max(1000) }).parse(req.body)
+    const updated = await app.prisma.videoEditorQuota.update({
+      where: { companyId },
+      data:  { dailyLimit: body.dailyLimit },
+    }).catch(() => null)
+    if (!updated) return reply.status(404).send({ error: 'NOT_PROVISIONED' })
+    const snap = await videoQuotaSnapshot(app.prisma, companyId)
+    return reply.send({ ok: true, quota: snap })
   })
 }

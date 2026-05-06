@@ -43,7 +43,16 @@ export async function generateBRoll(req: BRollRequest): Promise<BRollResult | nu
   })
   if (!submitRes.ok) {
     const txt = await submitRes.text()
-    throw new Error(`Luma submit failed: ${submitRes.status} ${txt}`)
+    // Luma returns 403 "Not authenticated" when the key is valid but the
+    // account has no billing/credits configured. Surface a friendlier
+    // message so the partner knows what to do.
+    if (submitRes.status === 401 || submitRes.status === 403) {
+      throw new Error(
+        `Luma rejected the API key (${submitRes.status}). Verify billing is active at ` +
+        `https://lumalabs.ai/dream-machine/api and that the key has not been revoked.`,
+      )
+    }
+    throw new Error(`Luma submit failed: ${submitRes.status} ${txt.slice(0, 200)}`)
   }
   const submit = await submitRes.json() as { id: string }
 

@@ -1,0 +1,11 @@
+{
+  "Rules": [
+    {
+      "ID": "expire-video-editor-objects-24h",
+      "Status": "Enabled",
+      "Filter": { "Prefix": "" },
+      "Expiration": { "Days": 1 },
+      "AbortIncompleteMultipartUpload": { "DaysAfterInitiation": 1 }
+    }
+  ]
+}

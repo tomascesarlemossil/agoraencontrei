@@ -248,6 +248,24 @@ export default async function saasBillingRoutes(app: FastifyInstance) {
           },
         })
 
+        // Provision the video editor quota when the chosen plan unlocks the
+        // module. Only Nível Máximo includes `video_editor` today; future
+        // plans that bundle it just need the same string in their modules
+        // array — no code changes required.
+        const planModules = (plan.modules as string[] | null) ?? []
+        if (planModules.includes('video_editor')) {
+          await tx.videoEditorQuota.upsert({
+            where:  { companyId: company.id },
+            create: {
+              companyId:    company.id,
+              dailyLimit:   50,
+              brollCredits: 0,
+              dailyResetAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+            },
+            update: {},
+          })
+        }
+
         return { tenant, company, user }
       })
 

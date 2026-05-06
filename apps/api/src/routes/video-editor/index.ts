@@ -23,7 +23,7 @@ import os from 'node:os'
 import {
   PRESETS, TRANSITIONS, RESOLUTIONS, SUPPORTED_OUTPUT_FORMATS,
   videoS3, buildVideoKey,
-  snapshot as quotaSnapshot, assertCanRender, consumeDaily, QuotaError,
+  snapshot as quotaSnapshot, assertCanRender, consumeDaily, getQuota, QuotaError,
 } from '../../services/video-editor/index.js'
 import { extractAudio, probeMedia } from '../../services/video-editor/ffmpeg.service.js'
 
@@ -65,7 +65,25 @@ const RenderConfigSchema = z.object({
 export default async function videoEditorRoutes(app: FastifyInstance) {
   app.addHook('preHandler', app.authenticate)
 
-  // ── Catalog (UI populates pickers) ─────────────────────────────────────
+  /**
+   * Gate every endpoint *except* `/catalog` behind a provisioned quota row.
+   * The catalog stays open so an unprovisioned partner can still see what
+   * they'd unlock if they upgraded.
+   */
+  app.addHook('preHandler', async (req, reply) => {
+    if (req.url.endsWith('/catalog')) return
+    const user = (req as any).user as { companyId?: string } | undefined
+    if (!user?.companyId) return // route's own auth will reject
+    const quota = await getQuota(app.prisma, user.companyId)
+    if (!quota) {
+      return reply.status(403).send({
+        error:   'NOT_PROVISIONED',
+        message: 'Editor de Vídeo IA não disponível neste plano. Faça upgrade para o Nível Máximo.',
+      })
+    }
+  })
+
+  // ── Catalog (UI populates pickers; open to all authenticated users) ────
   app.get('/catalog', async (_req, reply) => {
     return reply.send({
       presets:     PRESETS,
@@ -78,7 +96,8 @@ export default async function videoEditorRoutes(app: FastifyInstance) {
   // ── Quota snapshot ─────────────────────────────────────────────────────
   app.get('/quota', async (req, reply) => {
     const user = (req as any).user as { companyId: string }
-    return reply.send(await quotaSnapshot(app.prisma, user.companyId))
+    const snap = await quotaSnapshot(app.prisma, user.companyId)
+    return reply.send(snap)
   })
 
   // ── Extract audio from a video upload (multipart) ──────────────────────

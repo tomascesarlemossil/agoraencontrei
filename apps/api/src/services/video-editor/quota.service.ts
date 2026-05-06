@@ -21,20 +21,28 @@ export interface QuotaSnapshot {
 }
 
 export class QuotaError extends Error {
-  constructor(public readonly code: 'DAILY_LIMIT_REACHED' | 'INSUFFICIENT_BROLL_CREDITS', message: string) {
+  constructor(
+    public readonly code: 'NOT_PROVISIONED' | 'DAILY_LIMIT_REACHED' | 'INSUFFICIENT_BROLL_CREDITS',
+    message: string,
+  ) {
     super(message)
     this.name = 'QuotaError'
   }
 }
 
-/** Read or create the quota row for a company; never throws. */
-export async function getOrCreateQuota(prisma: PrismaClient, companyId: string) {
+/**
+ * Read the quota row for a company. Returns null if the company has not
+ * been provisioned yet — callers (routes) should treat that as 403.
+ *
+ * Provisioning is explicit: it happens at checkout (for plans that include
+ * the `video_editor` module) or via the admin top-up endpoint. We do NOT
+ * auto-create here, otherwise any logged-in user could exercise the editor
+ * regardless of plan.
+ */
+export async function getQuota(prisma: PrismaClient, companyId: string) {
   const existing = await prisma.videoEditorQuota.findUnique({ where: { companyId } })
-  if (existing) return rollDailyIfNeeded(prisma, existing)
-  return prisma.videoEditorQuota.create({
-    data: { companyId, dailyLimit: 50, dailyUsed: 0, brollCredits: 0, brollUsed: 0,
-            dailyResetAt: nextResetAt() },
-  })
+  if (!existing) return null
+  return rollDailyIfNeeded(prisma, existing)
 }
 
 async function rollDailyIfNeeded(prisma: PrismaClient, q: { id: string; dailyResetAt: Date }) {
@@ -49,17 +57,42 @@ function nextResetAt(): Date {
   return new Date(Date.now() + 24 * 60 * 60 * 1000)
 }
 
-export async function snapshot(prisma: PrismaClient, companyId: string): Promise<QuotaSnapshot> {
-  const q = await getOrCreateQuota(prisma, companyId)
+/** Read-only snapshot. Returns null when the company isn't provisioned. */
+export async function snapshot(prisma: PrismaClient, companyId: string): Promise<QuotaSnapshot | null> {
+  const q = await getQuota(prisma, companyId)
+  if (!q) return null
   return {
-    dailyLimit:   q.dailyLimit,
-    dailyUsed:    q.dailyUsed,
+    dailyLimit:     q.dailyLimit,
+    dailyUsed:      q.dailyUsed,
     dailyRemaining: Math.max(0, q.dailyLimit - q.dailyUsed),
-    dailyResetAt: q.dailyResetAt,
-    brollCredits: q.brollCredits,
-    brollUsed:    q.brollUsed,
+    dailyResetAt:   q.dailyResetAt,
+    brollCredits:   q.brollCredits,
+    brollUsed:      q.brollUsed,
     brollRemaining: Math.max(0, q.brollCredits - q.brollUsed),
   }
+}
+
+/**
+ * Provision a quota row for a company. Idempotent — returns the existing
+ * row if one already exists. Used by:
+ *   - the SaaS checkout flow when the plan includes `video_editor`;
+ *   - the admin endpoint when a partner upgrades after the fact.
+ */
+export async function provisionQuota(
+  prisma: PrismaClient,
+  companyId: string,
+  opts: { dailyLimit?: number; brollCredits?: number } = {},
+) {
+  return prisma.videoEditorQuota.upsert({
+    where:  { companyId },
+    create: {
+      companyId,
+      dailyLimit:   opts.dailyLimit   ?? 50,
+      brollCredits: opts.brollCredits ?? 0,
+      dailyResetAt: nextResetAt(),
+    },
+    update: {},
+  })
 }
 
 /**
@@ -72,6 +105,12 @@ export async function assertCanRender(
   opts: { brollSeconds?: number },
 ): Promise<QuotaSnapshot> {
   const snap = await snapshot(prisma, companyId)
+  if (!snap) {
+    throw new QuotaError(
+      'NOT_PROVISIONED',
+      'Editor de Vídeo IA não disponível neste plano. Faça upgrade para o Nível Máximo.',
+    )
+  }
   if (snap.dailyRemaining <= 0) {
     throw new QuotaError(
       'DAILY_LIMIT_REACHED',
@@ -94,11 +133,12 @@ export async function assertCanRender(
  * finishes (since cost is known precisely then).
  */
 export async function consumeDaily(prisma: PrismaClient, companyId: string): Promise<void> {
-  await prisma.videoEditorQuota.upsert({
-    where:  { companyId },
-    create: { companyId, dailyLimit: 50, dailyUsed: 1, dailyResetAt: nextResetAt() },
-    update: { dailyUsed: { increment: 1 } },
-  })
+  // Caller must have already passed `assertCanRender`, which provisions
+  // implicitly via 402. We only increment here.
+  await prisma.videoEditorQuota.update({
+    where: { companyId },
+    data:  { dailyUsed: { increment: 1 } },
+  }).catch(() => {/* missing row → silently skip; assertCanRender guards entry */})
 }
 
 export async function consumeBrollCredits(prisma: PrismaClient, companyId: string, credits: number): Promise<void> {
@@ -106,12 +146,12 @@ export async function consumeBrollCredits(prisma: PrismaClient, companyId: strin
   await prisma.videoEditorQuota.update({
     where: { companyId },
     data:  { brollUsed: { increment: credits } },
-  })
+  }).catch(() => {})
 }
 
 /**
  * Admin top-up — used by the billing system when a partner buys extra
- * credits. Returns the new snapshot.
+ * credits. Idempotent (upsert); returns the post-top-up snapshot.
  */
 export async function topUpBrollCredits(prisma: PrismaClient, companyId: string, addCredits: number): Promise<QuotaSnapshot> {
   await prisma.videoEditorQuota.upsert({
@@ -119,5 +159,7 @@ export async function topUpBrollCredits(prisma: PrismaClient, companyId: string,
     create: { companyId, dailyLimit: 50, brollCredits: addCredits, dailyResetAt: nextResetAt() },
     update: { brollCredits: { increment: addCredits } },
   })
-  return snapshot(prisma, companyId)
+  const s = await snapshot(prisma, companyId)
+  if (!s) throw new Error('Quota row missing after top-up — should be impossible')
+  return s
 }

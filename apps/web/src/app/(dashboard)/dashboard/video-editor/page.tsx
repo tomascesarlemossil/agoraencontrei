@@ -61,7 +61,10 @@ export default function VideoEditorPage() {
   const [outputFormat, setOutputFormat] = useState<'mp4'|'mov'|'webm'>('mp4')
   const [captionsEnabled, setCaptionsEnabled] = useState(true)
   const [brollEnabled, setBrollEnabled]       = useState(false)
-  const [brollPrompt, setBrollPrompt]         = useState('')
+  type BrollPrompt = { promptText: string; durationSec: number; atSec: number }
+  const [brollPrompts, setBrollPrompts]       = useState<BrollPrompt[]>([
+    { promptText: '', durationSec: 5, atSec: 0 },
+  ])
 
   // ── Job state ──
   const [job, setJob]           = useState<JobStatus | null>(null)
@@ -149,7 +152,9 @@ export default function VideoEditorPage() {
           captionsEnabled,
           captionsLanguage: 'pt-BR',
           brollEnabled,
-          brollPrompts: brollEnabled && brollPrompt ? [{ promptText: brollPrompt, durationSec: 5, atSec: 0 }] : undefined,
+          brollPrompts: brollEnabled
+            ? brollPrompts.filter(p => p.promptText.trim().length > 0)
+            : undefined,
         }),
       })
       if (!renderRes.ok) throw new Error('Falha ao iniciar render')
@@ -271,13 +276,74 @@ export default function VideoEditorPage() {
             Gerar B-roll por IA (Luma Ray 2 — cobra créditos extras)
           </label>
           {brollEnabled && (
-            <input
-              type="text"
-              placeholder="Descreva a cena que a IA deve gerar (ex: drone shot over a beach at sunset)"
-              value={brollPrompt}
-              onChange={(e) => setBrollPrompt(e.target.value)}
-              className="border rounded px-2 py-1 text-sm w-full"
-            />
+            <div className="space-y-3 border-l-2 border-amber-300 pl-3">
+              <p className="text-xs text-muted-foreground">
+                Cada segundo gerado custa 1 crédito. Crédito disponível: <strong>{quota?.brollRemaining ?? 0}</strong>.
+                Adicione um prompt por inserção. <code>atSec</code> define o ponto da timeline em que o B-roll entra.
+              </p>
+              {brollPrompts.map((p, i) => (
+                <div key={i} className="grid grid-cols-12 gap-2 items-end">
+                  <div className="col-span-7">
+                    <label className="block text-xs">Prompt {i + 1}</label>
+                    <input
+                      type="text"
+                      placeholder="ex: aerial drone shot of a beach at sunset"
+                      value={p.promptText}
+                      onChange={(e) => {
+                        const next = [...brollPrompts]
+                        next[i] = { ...next[i], promptText: e.target.value }
+                        setBrollPrompts(next)
+                      }}
+                      className="border rounded px-2 py-1 text-sm w-full"
+                    />
+                  </div>
+                  <div className="col-span-2">
+                    <label className="block text-xs">Duração (s)</label>
+                    <select
+                      value={p.durationSec}
+                      onChange={(e) => {
+                        const next = [...brollPrompts]
+                        next[i] = { ...next[i], durationSec: Number(e.target.value) }
+                        setBrollPrompts(next)
+                      }}
+                      className="border rounded px-2 py-1 text-sm w-full"
+                    >
+                      <option value={5}>5s</option>
+                      <option value={10}>10s</option>
+                    </select>
+                  </div>
+                  <div className="col-span-2">
+                    <label className="block text-xs">atSec</label>
+                    <input
+                      type="number" min={0} step={1}
+                      value={p.atSec}
+                      onChange={(e) => {
+                        const next = [...brollPrompts]
+                        next[i] = { ...next[i], atSec: Number(e.target.value) }
+                        setBrollPrompts(next)
+                      }}
+                      className="border rounded px-2 py-1 text-sm w-full"
+                    />
+                  </div>
+                  <div className="col-span-1">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setBrollPrompts(brollPrompts.filter((_, j) => j !== i))}
+                      disabled={brollPrompts.length <= 1}
+                    >−</Button>
+                  </div>
+                </div>
+              ))}
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setBrollPrompts([...brollPrompts, { promptText: '', durationSec: 5, atSec: 0 }])}
+              >+ Adicionar prompt</Button>
+              <p className="text-xs text-muted-foreground">
+                Total estimado: <strong>{brollPrompts.reduce((s, p) => s + p.durationSec, 0)}s</strong> ({brollPrompts.reduce((s, p) => s + p.durationSec, 0)} créditos).
+              </p>
+            </div>
           )}
         </CardContent>
       </Card>
