@@ -1,0 +1,123 @@
+/**
+ * Video editor — quota & billing helpers.
+ *
+ * Two counters per company:
+ *   - dailyUsed / dailyLimit  → resets every 24h. Default 50/day.
+ *   - brollUsed  / brollCredits → consumable balance for Luma Ray 2 seconds.
+ *
+ * Quotas are auto-provisioned on first use. The Nível Máximo plan upgrade
+ * flow should set `dailyLimit` and top-up `brollCredits` there.
+ */
+import type { PrismaClient } from '@prisma/client'
+
+export interface QuotaSnapshot {
+  dailyLimit:   number
+  dailyUsed:    number
+  dailyRemaining: number
+  dailyResetAt: Date
+  brollCredits: number
+  brollUsed:    number
+  brollRemaining: number
+}
+
+export class QuotaError extends Error {
+  constructor(public readonly code: 'DAILY_LIMIT_REACHED' | 'INSUFFICIENT_BROLL_CREDITS', message: string) {
+    super(message)
+    this.name = 'QuotaError'
+  }
+}
+
+/** Read or create the quota row for a company; never throws. */
+export async function getOrCreateQuota(prisma: PrismaClient, companyId: string) {
+  const existing = await prisma.videoEditorQuota.findUnique({ where: { companyId } })
+  if (existing) return rollDailyIfNeeded(prisma, existing)
+  return prisma.videoEditorQuota.create({
+    data: { companyId, dailyLimit: 50, dailyUsed: 0, brollCredits: 0, brollUsed: 0,
+            dailyResetAt: nextResetAt() },
+  })
+}
+
+async function rollDailyIfNeeded(prisma: PrismaClient, q: { id: string; dailyResetAt: Date }) {
+  if (q.dailyResetAt > new Date()) return prisma.videoEditorQuota.findUniqueOrThrow({ where: { id: q.id } })
+  return prisma.videoEditorQuota.update({
+    where: { id: q.id },
+    data:  { dailyUsed: 0, dailyResetAt: nextResetAt() },
+  })
+}
+
+function nextResetAt(): Date {
+  return new Date(Date.now() + 24 * 60 * 60 * 1000)
+}
+
+export async function snapshot(prisma: PrismaClient, companyId: string): Promise<QuotaSnapshot> {
+  const q = await getOrCreateQuota(prisma, companyId)
+  return {
+    dailyLimit:   q.dailyLimit,
+    dailyUsed:    q.dailyUsed,
+    dailyRemaining: Math.max(0, q.dailyLimit - q.dailyUsed),
+    dailyResetAt: q.dailyResetAt,
+    brollCredits: q.brollCredits,
+    brollUsed:    q.brollUsed,
+    brollRemaining: Math.max(0, q.brollCredits - q.brollUsed),
+  }
+}
+
+/**
+ * Pre-flight check before enqueueing a render. Throws QuotaError when the
+ * caller can't afford the requested operation. Pure — does NOT decrement.
+ */
+export async function assertCanRender(
+  prisma: PrismaClient,
+  companyId: string,
+  opts: { brollSeconds?: number },
+): Promise<QuotaSnapshot> {
+  const snap = await snapshot(prisma, companyId)
+  if (snap.dailyRemaining <= 0) {
+    throw new QuotaError(
+      'DAILY_LIMIT_REACHED',
+      `Limite diário atingido (${snap.dailyLimit} vídeos/dia). Reseta em ${snap.dailyResetAt.toISOString()}.`,
+    )
+  }
+  if ((opts.brollSeconds ?? 0) > snap.brollRemaining) {
+    throw new QuotaError(
+      'INSUFFICIENT_BROLL_CREDITS',
+      `Créditos de B-roll insuficientes: precisa de ${opts.brollSeconds}, disponível ${snap.brollRemaining}.`,
+    )
+  }
+  return snap
+}
+
+/**
+ * Increment counters atomically. Called by the route AFTER a render is
+ * successfully enqueued. We charge daily up front so a user can't game it
+ * by spamming requests; B-roll credits are charged after the worker
+ * finishes (since cost is known precisely then).
+ */
+export async function consumeDaily(prisma: PrismaClient, companyId: string): Promise<void> {
+  await prisma.videoEditorQuota.upsert({
+    where:  { companyId },
+    create: { companyId, dailyLimit: 50, dailyUsed: 1, dailyResetAt: nextResetAt() },
+    update: { dailyUsed: { increment: 1 } },
+  })
+}
+
+export async function consumeBrollCredits(prisma: PrismaClient, companyId: string, credits: number): Promise<void> {
+  if (credits <= 0) return
+  await prisma.videoEditorQuota.update({
+    where: { companyId },
+    data:  { brollUsed: { increment: credits } },
+  })
+}
+
+/**
+ * Admin top-up — used by the billing system when a partner buys extra
+ * credits. Returns the new snapshot.
+ */
+export async function topUpBrollCredits(prisma: PrismaClient, companyId: string, addCredits: number): Promise<QuotaSnapshot> {
+  await prisma.videoEditorQuota.upsert({
+    where:  { companyId },
+    create: { companyId, dailyLimit: 50, brollCredits: addCredits, dailyResetAt: nextResetAt() },
+    update: { brollCredits: { increment: addCredits } },
+  })
+  return snapshot(prisma, companyId)
+}

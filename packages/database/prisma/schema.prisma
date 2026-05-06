@@ -155,6 +155,7 @@ model Company {
   fiscalNotes       FiscalNote[]
   visualAIJobs      VisualAIJob[]
   videoEditorJobs   VideoEditorJob[]
+  videoEditorQuota  VideoEditorQuota?
   marketingCampaigns MarketingCampaign[]
   blogPosts         BlogPost[]
   blogCategories    BlogCategory[]
@@ -1483,6 +1484,26 @@ model VisualAIJob {
   @@index([propertyId])
   @@index([status])
   @@map("visual_ai_jobs")
+}
+
+// ── Video Editor Quota — daily limit + B-roll credits per company ──────────
+// Created on demand the first time a company uses the editor. The plan
+// "Nível Máximo" provisions `dailyLimit=50` and `brollCredits` purchased
+// on top. Daily counters reset whenever `dailyResetAt` is in the past.
+
+model VideoEditorQuota {
+  id            String   @id @default(cuid())
+  companyId     String   @unique
+  company       Company  @relation(fields: [companyId], references: [id])
+  dailyLimit    Int      @default(50)
+  dailyUsed     Int      @default(0)
+  dailyResetAt  DateTime @default(now())
+  brollCredits  Int      @default(0)
+  brollUsed     Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("video_editor_quotas")
 }
 
 // ── Video Editor Jobs (AI Video Editing tool — Nível Máximo plan) ──────────

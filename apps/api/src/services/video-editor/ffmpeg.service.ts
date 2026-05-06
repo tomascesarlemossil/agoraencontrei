@@ -101,3 +101,17 @@ export async function extractAudio(srcPath: string, outPath: string): Promise<vo
     outPath,
   ], { timeoutMs: 5 * 60_000 })
 }
+
+/**
+ * Capture a single frame at `atSec` and save it as a JPEG thumbnail.
+ * Used by the worker to give partners a preview image.
+ */
+export async function captureThumbnail(srcPath: string, outPath: string, atSec = 1): Promise<void> {
+  await runFfmpeg([
+    '-ss', String(atSec),
+    '-i', srcPath,
+    '-frames:v', '1',
+    '-q:v', '3',
+    outPath,
+  ], { timeoutMs: 60_000 })
+}

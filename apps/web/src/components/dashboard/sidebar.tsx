@@ -50,6 +50,7 @@ import {
   ShieldAlert,
   Crosshair,
   Brain,
+  Clapperboard,
 } from 'lucide-react'
 import { useNotifications } from '@/stores/notifications.store'
 import { UserAvatar } from '@/components/ui/UserAvatar'
@@ -62,6 +63,7 @@ const topNavItems = [
 const midNavItems = [
   { href: '/dashboard/properties',          icon: Building2,        label: 'Imóveis',       highlight: false },
   { href: '/dashboard/ai-visual',           icon: Sparkles,         label: 'IA Visual',     highlight: false },
+  { href: '/dashboard/video-editor',        icon: Clapperboard,     label: 'Editor de Vídeo IA', highlight: true  },
   { href: '/dashboard/leads',               icon: UserCheck,        label: 'Leads',         highlight: false },
   { href: '/dashboard/contacts',            icon: Users,            label: 'Contatos',      highlight: false },
   { href: '/dashboard/deals',               icon: TrendingUp,       label: 'Negócios',      highlight: false },

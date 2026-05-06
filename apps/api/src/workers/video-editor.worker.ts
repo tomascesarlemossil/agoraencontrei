@@ -6,13 +6,14 @@
  *   2. Download all input clips + audio (if any) from S3 to a temp dir.
  *   3. If captions enabled: pre-sign the audio key, send to AssemblyAI/Whisper,
  *      render to .ass.
- *   4. If B-roll enabled: call Luma Ray 2 once per prompt, download the result
- *      into the temp dir, accumulate `creditsUsed`.
- *   5. Run FFmpeg via render.service to produce the final file.
- *   6. Upload to S3 (video bucket), set `expiresAt = now + 24h`, mark DONE.
- *   7. Always cleanup temp dir + delete input keys.
+ *   4. If B-roll enabled: call Luma Ray 2 once per prompt, download each
+ *      result, accumulate `creditsUsed`.
+ *   5. Run FFmpeg via render.service to produce final + thumbnail.
+ *   6. Upload outputs to S3 (video bucket), set `expiresAt = now + 24h`,
+ *      mark DONE, charge B-roll credits to the company quota.
+ *   7. Always cleanup temp dir.
  *
- * The worker degrades gracefully when integrations are missing:
+ * Graceful degradation:
  *   - No AWS keys              → fail fast (we need somewhere to read/write)
  *   - No AssemblyAI/OpenAI key → captions skipped (warning logged)
  *   - No Luma key              → B-roll skipped, no credits charged
@@ -27,12 +28,13 @@ import os from 'node:os'
 import { pipeline } from 'node:stream/promises'
 
 import { videoS3, buildVideoKey } from '../services/video-editor/s3.service.js'
-import { renderProject }   from '../services/video-editor/render.service.js'
+import { renderProject, type BRollInsertion } from '../services/video-editor/render.service.js'
 import { transcribe, renderCaptionsToAss } from '../services/video-editor/captions.service.js'
 import { generateBRoll, LUMA_CREDIT_COST_PER_SECOND } from '../services/video-editor/luma.service.js'
 import { getPreset }       from '../services/video-editor/presets.js'
 import { getResolution }   from '../services/video-editor/resolutions.js'
 import type { OutputFormat } from '../services/video-editor/resolutions.js'
+import { consumeBrollCredits } from '../services/video-editor/quota.service.js'
 
 export interface VideoEditorJobData {
   jobId:     string
@@ -98,18 +100,18 @@ export async function processVideoEditorJob(
     }
 
     // ── 3) B-roll (Luma Ray 2) ───────────────────────────────────────────
-    let brollPath: string | null = null
+    const brollClips: BRollInsertion[] = []
     let creditsUsed = 0
     if (record.brollEnabled) {
       const prompts = (record.brollPrompts as Array<{ promptText: string; durationSec: number; atSec: number }>) ?? []
-      // v1: only the first prompt is rendered; multi-clip splice comes later.
-      if (prompts[0]) {
-        const broll = await generateBRoll(prompts[0])
-        if (broll) {
-          brollPath = path.join(tmp, 'broll.mp4')
-          await downloadTo(broll.videoUrl, brollPath)
-          creditsUsed += Math.ceil(broll.durationSec) * LUMA_CREDIT_COST_PER_SECOND
-        }
+      for (let i = 0; i < prompts.length; i++) {
+        const p = prompts[i]
+        const broll = await generateBRoll(p)
+        if (!broll) continue
+        const dst = path.join(tmp, `broll-${i}.mp4`)
+        await downloadTo(broll.videoUrl, dst)
+        brollClips.push({ path: dst, atSec: p.atSec, durationSec: broll.durationSec })
+        creditsUsed += Math.ceil(broll.durationSec) * LUMA_CREDIT_COST_PER_SECOND
       }
     }
 
@@ -119,14 +121,14 @@ export async function processVideoEditorJob(
       clipPaths,
       audioPath,
       captionsPath,
-      brollPath,
+      brollClips,
       presetId:     record.presetId,
       transitionId: record.transitionId,
       resolution:   record.resolution,
       outputFormat: (record.outputFormat as OutputFormat) ?? 'mp4',
     })
 
-    // ── 5) Upload result ─────────────────────────────────────────────────
+    // ── 5) Upload outputs ────────────────────────────────────────────────
     const outputKey = buildVideoKey({
       companyId: record.companyId,
       jobId,
@@ -140,19 +142,38 @@ export async function processVideoEditorJob(
                                        'video/mp4'
     await videoS3.putBuffer(outputKey, buffer, contentType)
 
-    // ── 6) Mark DONE with 24h TTL ────────────────────────────────────────
+    let thumbnailKey: string | null = null
+    try {
+      const thumb = await fs.readFile(result.thumbnailPath)
+      thumbnailKey = buildVideoKey({
+        companyId: record.companyId,
+        jobId,
+        kind:      'thumbnail',
+        filename:  'thumbnail.jpg',
+      })
+      await videoS3.putBuffer(thumbnailKey, thumb, 'image/jpeg')
+    } catch {
+      // Thumbnail is best-effort — don't fail the whole job if it's missing.
+    }
+
+    // ── 6) Mark DONE + charge B-roll credits ─────────────────────────────
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000)
     await prisma.videoEditorJob.update({
       where: { id: jobId },
       data: {
         status:        'DONE',
         outputKey,
+        thumbnailKey,
         durationSec:   result.durationSec,
         fileSizeBytes: BigInt(result.fileSizeBytes),
         expiresAt,
         creditsUsed,
       },
     })
+
+    if (creditsUsed > 0) {
+      await consumeBrollCredits(prisma, record.companyId, creditsUsed)
+    }
   } catch (err: any) {
     await prisma.videoEditorJob.update({
       where: { id: jobId },

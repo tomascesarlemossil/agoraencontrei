@@ -68,8 +68,9 @@ export default function VideoEditorPage() {
   const [loading, setLoading]   = useState(false)
   const [error, setError]       = useState<string | null>(null)
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null)
+  const [quota, setQuota]       = useState<{ dailyRemaining: number; dailyLimit: number; brollRemaining: number } | null>(null)
 
-  // ── Load catalog once ──
+  // ── Load catalog + quota ──
   useEffect(() => {
     if (!accessToken) return
     fetch(`${API_URL}/api/v1/video-editor/catalog`, { headers: auth })
@@ -80,6 +81,8 @@ export default function VideoEditorPage() {
         setResolutions(d.resolutions ?? [])
       })
       .catch(() => setError('Falha ao carregar catálogo do editor.'))
+    fetch(`${API_URL}/api/v1/video-editor/quota`, { headers: auth })
+      .then(r => r.json()).then(setQuota).catch(() => {})
   }, [accessToken, auth])
 
   // ── Poll job status ──
@@ -170,11 +173,19 @@ export default function VideoEditorPage() {
 
   return (
     <div className="space-y-6 p-6">
-      <div>
-        <h1 className="text-2xl font-bold">Editor de Vídeo IA</h1>
-        <p className="text-sm text-muted-foreground">
-          Edite vídeos automaticamente com presets, transições e legendas. Disponível no plano Nível Máximo.
-        </p>
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold">Editor de Vídeo IA</h1>
+          <p className="text-sm text-muted-foreground">
+            Edite vídeos automaticamente com presets, transições e legendas. Disponível no plano Nível Máximo.
+          </p>
+        </div>
+        {quota && (
+          <div className="text-xs text-muted-foreground border rounded px-3 py-2">
+            <div><strong>{quota.dailyRemaining}</strong> / {quota.dailyLimit} renders restantes hoje</div>
+            <div>{quota.brollRemaining} créditos de B-roll disponíveis</div>
+          </div>
+        )}
       </div>
 
       <Card>

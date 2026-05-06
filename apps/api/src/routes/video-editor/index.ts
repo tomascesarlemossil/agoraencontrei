@@ -2,22 +2,30 @@
  * Video Editor — REST routes.
  *
  * All endpoints require auth. Renders are billed against the Nível Máximo
- * plan; a separate quota/credit ledger will be wired in a later iteration.
+ * plan via the per-company quota in `videoEditorQuota` (50/day default,
+ * Luma B-roll seconds charged from `brollCredits`).
  *
  * Endpoint map:
- *   GET    /api/v1/video-editor/catalog           → presets + transitions + resolutions
- *   POST   /api/v1/video-editor/projects          → create draft job (returns jobId + presigned PUT URLs)
- *   POST   /api/v1/video-editor/projects/:id/render → enqueue render with chosen config
- *   GET    /api/v1/video-editor/projects/:id      → job status
- *   GET    /api/v1/video-editor/projects/:id/download → signed GET URL for the final render
- *   DELETE /api/v1/video-editor/projects/:id      → mark job EXPIRED + best-effort S3 cleanup
+ *   GET    /api/v1/video-editor/catalog                presets + transitions + resolutions
+ *   GET    /api/v1/video-editor/quota                  current quota snapshot
+ *   POST   /api/v1/video-editor/extract-audio          extract audio from a video upload
+ *   POST   /api/v1/video-editor/projects               create draft + presigned PUT URLs
+ *   POST   /api/v1/video-editor/projects/:id/render    enqueue render
+ *   GET    /api/v1/video-editor/projects/:id           job status
+ *   GET    /api/v1/video-editor/projects/:id/download  signed GET URL
+ *   DELETE /api/v1/video-editor/projects/:id           cancel + S3 cleanup
  */
 import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
+import fs from 'node:fs/promises'
+import path from 'node:path'
+import os from 'node:os'
 import {
   PRESETS, TRANSITIONS, RESOLUTIONS, SUPPORTED_OUTPUT_FORMATS,
   videoS3, buildVideoKey,
+  snapshot as quotaSnapshot, assertCanRender, consumeDaily, QuotaError,
 } from '../../services/video-editor/index.js'
+import { extractAudio, probeMedia } from '../../services/video-editor/ffmpeg.service.js'
 
 declare module 'fastify' {
   interface FastifyInstance {
@@ -67,6 +75,56 @@ export default async function videoEditorRoutes(app: FastifyInstance) {
     })
   })
 
+  // ── Quota snapshot ─────────────────────────────────────────────────────
+  app.get('/quota', async (req, reply) => {
+    const user = (req as any).user as { companyId: string }
+    return reply.send(await quotaSnapshot(app.prisma, user.companyId))
+  })
+
+  // ── Extract audio from a video upload (multipart) ──────────────────────
+  // Returns the S3 key the caller can pass back as `audioKey` in /render.
+  // We deliberately stream-to-disk first so FFmpeg can probe + transcode
+  // without holding the full file in RAM.
+  app.post('/extract-audio', async (req, reply) => {
+    if (!videoS3.isConfigured()) {
+      return reply.status(503).send({ error: 'VIDEO_BUCKET_UNCONFIGURED' })
+    }
+    const user = (req as any).user as { sub: string; companyId: string }
+
+    const file = await req.file()
+    if (!file) return reply.status(400).send({ error: 'NO_FILE' })
+
+    const tmp = await fs.mkdtemp(path.join(os.tmpdir(), `vidaudio-${user.sub}-`))
+    try {
+      const inPath  = path.join(tmp, file.filename || 'input')
+      const outPath = path.join(tmp, 'audio.m4a')
+      const chunks: Buffer[] = []
+      for await (const c of file.file) chunks.push(c)
+      await fs.writeFile(inPath, Buffer.concat(chunks))
+
+      const probe = await probeMedia(inPath).catch(() => null)
+      if (!probe?.hasAudio) {
+        return reply.status(400).send({ error: 'NO_AUDIO_TRACK' })
+      }
+
+      await extractAudio(inPath, outPath)
+      const audio = await fs.readFile(outPath)
+
+      const key = buildVideoKey({
+        companyId: user.companyId,
+        jobId:     `extracted-${Date.now()}`,
+        kind:      'audio',
+        filename:  'extracted.m4a',
+      })
+      await videoS3.putBuffer(key, audio, 'audio/mp4')
+      return reply.send({ key, durationSec: Math.round(probe.durationSec) })
+    } catch (e: any) {
+      return reply.status(500).send({ error: 'EXTRACTION_FAILED', detail: e?.message ?? String(e) })
+    } finally {
+      await fs.rm(tmp, { recursive: true, force: true }).catch(() => {})
+    }
+  })
+
   // ── Create draft job + return presigned PUT URLs for direct browser upload
   app.post('/projects', async (req, reply) => {
     const body = z.object({
@@ -114,6 +172,19 @@ export default async function videoEditorRoutes(app: FastifyInstance) {
     if (job.status === 'PROCESSING') return reply.status(409).send({ error: 'ALREADY_PROCESSING' })
     if (job.status === 'DONE')       return reply.status(409).send({ error: 'ALREADY_DONE' })
 
+    // Quota check — daily limit + B-roll credit balance.
+    const brollSeconds = body.brollEnabled
+      ? (body.brollPrompts ?? []).reduce((sum, p) => sum + p.durationSec, 0)
+      : 0
+    try {
+      await assertCanRender(app.prisma, user.companyId, { brollSeconds })
+    } catch (e) {
+      if (e instanceof QuotaError) {
+        return reply.status(402).send({ error: e.code, message: e.message })
+      }
+      throw e
+    }
+
     // Verify each declared key actually exists in S3 (uploads completed).
     for (const clip of body.inputClips) {
       const head = await videoS3.head(clip.key)
@@ -156,6 +227,9 @@ export default async function videoEditorRoutes(app: FastifyInstance) {
       removeOnComplete: { count: 50 },
       removeOnFail:     { count: 100 },
     })
+
+    // Charge the daily counter only after the job is successfully enqueued.
+    await consumeDaily(app.prisma, user.companyId)
 
     return reply.send({ id: updated.id, status: updated.status })
   })

@@ -25,18 +25,24 @@ export interface CaptionResult {
 
 async function transcribeAssemblyAI(audioUrl: string, language: string): Promise<CaptionResult> {
   const key = env.ASSEMBLYAI_API_KEY!
-  // 1) Submit transcription job
+  // 1) Submit transcription job. Universal-2 is multilingual and gives
+  // word-level timestamps; the explicit `language_code` keeps PT-BR output
+  // stable rather than relying on auto-detect.
   const submitRes = await fetch('https://api.assemblyai.com/v2/transcript', {
     method: 'POST',
     headers: { authorization: key, 'content-type': 'application/json' },
     body: JSON.stringify({
       audio_url:        audioUrl,
       language_code:    language || 'pt',
+      speech_models:    ['universal-2'],
       punctuate:        true,
       format_text:      true,
     }),
   })
-  if (!submitRes.ok) throw new Error(`AssemblyAI submit failed: ${submitRes.status}`)
+  if (!submitRes.ok) {
+    const detail = await submitRes.text().catch(() => '')
+    throw new Error(`AssemblyAI submit failed: ${submitRes.status} ${detail.slice(0, 300)}`)
+  }
   const submit = await submitRes.json() as { id: string }
 
   // 2) Poll until complete (up to 5 minutes)
