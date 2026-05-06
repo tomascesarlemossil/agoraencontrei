@@ -29,6 +29,12 @@ const envSchema = z.object({
   MNML_API_KEY: z.string().optional(),
   GOOGLE_IMAGEN_API_KEY: z.string().optional(),
 
+  // Video editor (Nível Máximo plan)
+  ASSEMBLYAI_API_KEY: z.string().optional(),       // legendas com timestamps por palavra
+  LUMA_API_KEY: z.string().optional(),             // B-roll AI (cobrado em créditos)
+  AWS_S3_VIDEO_BUCKET: z.string().optional(),      // bucket separado, lifecycle 24h
+  VIDEO_EDITOR_SIGNED_URL_TTL: z.coerce.number().default(900), // 15 min default
+
   // WhatsApp Cloud API
   WHATSAPP_TOKEN: z.string().optional(),
   WHATSAPP_PHONE_ID: z.string().optional(),
@@ -167,6 +173,9 @@ export function logEnvWarnings(logger: { warn: (msg: string) => void }) {
     ['ASAAS_API_KEY',        'Boleto/cobrança via Asaas will not work'],
     ['APIFY_API_TOKEN',      'Apify scrapers (Caixa, Santander, OLX) will not run'],
     ['CLOUDINARY_CLOUD_NAME','Cloudinary image presets and watermark will not work'],
+    ['ASSEMBLYAI_API_KEY',   'Video editor auto-captions disabled (Whisper fallback if OPENAI_API_KEY set)'],
+    ['LUMA_API_KEY',         'Video editor AI B-roll generation disabled (extra-credit feature)'],
+    ['AWS_S3_VIDEO_BUCKET',  'Video editor cannot store renders — uploads/downloads will fail'],
   ]
   for (const [key, impact] of warnings) {
     if (!process.env[key]) {

@@ -1,7 +1,7 @@
 FROM node:22-slim AS base
 
-# Install OpenSSL (required by Prisma) and other deps
-RUN apt-get update -y && apt-get install -y openssl ca-certificates && rm -rf /var/lib/apt/lists/*
+# Install OpenSSL (Prisma), ffmpeg (video editor) and other deps
+RUN apt-get update -y && apt-get install -y openssl ca-certificates ffmpeg && rm -rf /var/lib/apt/lists/*
 
 # Install pnpm (pinned version to avoid breaking changes)
 RUN corepack enable && corepack prepare pnpm@10.0.0 --activate

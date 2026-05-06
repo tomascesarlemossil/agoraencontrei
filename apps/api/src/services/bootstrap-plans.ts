@@ -103,6 +103,31 @@ const DEFAULT_PLANS: PlanSeed[] = [
     highlighted: false,
     sortOrder: 30,
   },
+  {
+    slug: 'nivel-maximo',
+    name: 'Nível Máximo',
+    description: 'Tudo do Enterprise + Editor de Vídeo IA com legendas automáticas, presets, transições e B-roll por IA.',
+    priceMonthly: 3500,
+    priceYearly: 35000,
+    maxProperties: -1,
+    maxLeadViews: -1,
+    maxUsers: -1,
+    maxAIRequests: -1,
+    themes: ['urban_tech', 'classic_trust', 'luxury_gold', 'fast_sales_pro', 'landscape_living'],
+    modules: ['site_basico', 'crm_avancado', 'ia_tomas', 'whatsapp', 'leiloes', 'dominio_proprio', 'split_pagamentos', 'video_editor'],
+    features: [
+      'Tudo do Enterprise',
+      'Editor de Vídeo IA — 50 renders/dia',
+      'Legendas automáticas PT-BR (palavra-a-palavra)',
+      'Presets para imobiliário, social, e-commerce, tutorial',
+      'Transições, color grade e thumbnails automáticas',
+      '1080p, 2K e 4K em MP4, MOV ou WebM',
+      'B-roll por IA (Luma Ray 2) sob créditos',
+      'Atendimento prioritário 24/7',
+    ],
+    highlighted: true,
+    sortOrder: 40,
+  },
 ]
 
 interface NicheSeed {
