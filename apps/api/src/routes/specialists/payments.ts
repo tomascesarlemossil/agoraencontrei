@@ -9,6 +9,7 @@ import type { FastifyInstance } from 'fastify'
 import { prisma } from '../../lib/prisma.js'
 import { env } from '../../utils/env.js'
 import { findOrCreateCustomer } from '../../services/asaas.service.js'
+import { safeStringEqual } from '../../utils/crypto-safe.js'
 
 const ASAAS_BASE_URL = env.ASAAS_BASE_URL ?? 'https://www.asaas.com/api/v3'
 const ASAAS_API_KEY  = env.ASAAS_API_KEY  ?? ''
@@ -74,6 +75,12 @@ async function createSubscription(payload: {
 
 async function cancelSubscription(subscriptionId: string) {
   return asaasFetch(`/subscriptions/${subscriptionId}`, { method: 'DELETE' })
+}
+
+async function getSubscription(subscriptionId: string) {
+  if (!ASAAS_API_KEY) return null
+  return asaasFetch<{ id: string; externalReference?: string; status?: string }>(`/subscriptions/${subscriptionId}`)
+    .catch(() => null)
 }
 
 export async function specialistPaymentRoutes(app: FastifyInstance) {
@@ -170,17 +177,32 @@ export async function specialistPaymentRoutes(app: FastifyInstance) {
   app.post('/webhook', {
     config: { rawBody: true },
   }, async (req, reply) => {
+    const webhookToken = (req.headers['asaas-access-token'] as string) || ''
+    if (env.ASAAS_WEBHOOK_SECRET && !safeStringEqual(webhookToken, env.ASAAS_WEBHOOK_SECRET)) {
+      app.log.warn('Asaas specialist webhook token inválido')
+      return reply.status(401).send({ error: 'UNAUTHORIZED' })
+    }
+
     const event = req.body as {
       event: string
-      payment?: { externalReference?: string; status?: string; subscription?: string }
+      payment?: { id?: string; externalReference?: string; status?: string; subscription?: string }
       subscription?: { id?: string; externalReference?: string; status?: string }
     }
 
-    app.log.info({ event: event.event }, 'Asaas webhook recebido')
+    app.log.info({ event: event.event, paymentId: event.payment?.id, subscriptionId: event.payment?.subscription || event.subscription?.id }, 'Asaas webhook recebido')
 
     try {
-      const externalRef = event.payment?.externalReference || event.subscription?.externalReference
       const subscriptionId = event.payment?.subscription || event.subscription?.id
+      let externalRef = event.payment?.externalReference || event.subscription?.externalReference
+
+      // Alguns eventos PAYMENT_* do Asaas enviados para assinaturas trazem apenas
+      // payment.subscription, sem externalReference. Nesse caso buscamos a
+      // assinatura no Asaas para recuperar `specialist:<id>:<plan>`; sem isso,
+      // pagamentos VIP poderiam cair no fallback PRIME.
+      if (!externalRef && subscriptionId) {
+        const subscription = await getSubscription(subscriptionId)
+        externalRef = subscription?.externalReference
+      }
 
       if (!externalRef && !subscriptionId) {
         return reply.send({ received: true })
@@ -206,6 +228,7 @@ export async function specialistPaymentRoutes(app: FastifyInstance) {
         })
         if (found) {
           specialistId = found.id
+          targetPlan = found.plan
         }
       }
 
@@ -215,7 +238,7 @@ export async function specialistPaymentRoutes(app: FastifyInstance) {
         case 'PAYMENT_RECEIVED':
         case 'PAYMENT_CONFIRMED': {
           // Pagamento confirmado — ativar plano
-          const plan = (targetPlan as 'START' | 'PRIME' | 'VIP') || 'PRIME'
+          const plan = (['PRIME', 'VIP'].includes(String(targetPlan)) ? targetPlan : 'PRIME') as 'PRIME' | 'VIP'
           await prisma.specialist.update({
             where: { id: specialistId },
             data: {

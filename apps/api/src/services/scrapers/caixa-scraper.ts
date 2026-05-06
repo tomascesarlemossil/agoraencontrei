@@ -19,6 +19,7 @@ const CAIXA_CITIES_URL = 'https://venda-imoveis.caixa.gov.br/sistema/carregaList
 const CAIXA_SEARCH_URL = 'https://venda-imoveis.caixa.gov.br/sistema/carregaPesquisaImoveis.asp'
 const CAIXA_DETAIL_URL = 'https://venda-imoveis.caixa.gov.br/sistema/detalhe-imovel.asp'
 const CAIXA_API_URL = 'https://venda-imoveis.caixa.gov.br/sistema/api/pesquisa-imoveis' // Backup
+const CAIXA_CSV_URL = 'https://venda-imoveis.caixa.gov.br/listaweb/Lista_imoveis_{UF}.csv'
 
 // Todos os estados brasileiros
 const ESTADOS = [
@@ -71,6 +72,68 @@ function safeParseInt(val: any): number {
   return isNaN(num) ? 0 : num
 }
 
+function normalizeCsvKey(value: string): string {
+  return String(value || '')
+    .replace(/^\uFEFF/, '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[º°]/g, '')
+    .toLowerCase()
+    .trim()
+}
+
+function getCsvValue(row: Record<string, string>, ...names: string[]): string | undefined {
+  const normalized: Record<string, string> = {}
+  for (const [key, value] of Object.entries(row)) normalized[normalizeCsvKey(key)] = value
+  for (const name of names) {
+    const value = normalized[normalizeCsvKey(name)]
+    if (value !== undefined && value !== '') return value.trim()
+  }
+  return undefined
+}
+
+function parseCsvLine(line: string): string[] {
+  const out: string[] = []
+  let cur = ''
+  let quoted = false
+
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i]
+    const next = line[i + 1]
+    if (ch === '"') {
+      if (quoted && next === '"') {
+        cur += '"'
+        i++
+      } else {
+        quoted = !quoted
+      }
+    } else if (ch === ';' && !quoted) {
+      out.push(cur.trim())
+      cur = ''
+    } else {
+      cur += ch
+    }
+  }
+  out.push(cur.trim())
+  return out
+}
+
+function parseCsvRows(text: string): Record<string, string>[] {
+  const lines = text.split(/\r?\n/).filter(line => line.trim().length > 0)
+  const headerIndex = lines.findIndex(line => normalizeCsvKey(line).includes('n do imovel') && normalizeCsvKey(line).includes('cidade'))
+  if (headerIndex < 0) return []
+
+  const headers = parseCsvLine(lines[headerIndex])
+  const rows: Record<string, string>[] = []
+  for (const line of lines.slice(headerIndex + 1)) {
+    const values = parseCsvLine(line)
+    const row: Record<string, string> = {}
+    headers.forEach((header, idx) => { row[header] = values[idx] || '' })
+    rows.push(row)
+  }
+  return rows
+}
+
 export class CaixaScraper extends BaseScraper {
   constructor(prisma: PrismaClient) {
     super(prisma, 'CAIXA', 'https://venda-imoveis.caixa.gov.br/')
@@ -119,6 +182,7 @@ export class CaixaScraper extends BaseScraper {
 
     // Tentar múltiplas abordagens para contornar bloqueio 403
     const approaches = [
+      () => this.fetchViaCsv(estado),
       () => this.fetchViaApi(estado),
       () => this.fetchViaAlternateApi(estado),
       () => this.fetchEstadoHtml(estado),
@@ -129,6 +193,85 @@ export class CaixaScraper extends BaseScraper {
         const result = await approach()
         if (result.length > 0) return result
       } catch {}
+    }
+
+    return auctions
+  }
+
+  // Abordagem 0: CSV oficial por estado (fonte mais estável da Caixa)
+  private async fetchViaCsv(estado: string): Promise<ScrapedAuction[]> {
+    const auctions: ScrapedAuction[] = []
+
+    try {
+      const response = await fetch(CAIXA_CSV_URL.replace('{UF}', estado), {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 AgoraEncontreiBot',
+          'Accept': 'text/csv,text/plain,*/*',
+          'Referer': 'https://venda-imoveis.caixa.gov.br/sistema/busca-imovel.asp',
+        },
+      })
+
+      if (!response.ok) {
+        console.warn(`[CaixaScraper] CSV retornou ${response.status} para ${estado}`)
+        return auctions
+      }
+
+      const buffer = await response.arrayBuffer()
+      const text = new TextDecoder('iso-8859-1').decode(buffer)
+      const rows = parseCsvRows(text)
+
+      for (const row of rows) {
+        try {
+          const uf = (getCsvValue(row, 'UF') || estado).toUpperCase()
+          if (uf !== estado) continue
+
+          const id = getCsvValue(row, 'N° do imóvel', 'Nº do imóvel', 'N do imóvel')
+          const cidade = getCsvValue(row, 'Cidade')
+          const bairro = getCsvValue(row, 'Bairro')
+          const endereco = getCsvValue(row, 'Endereço', 'Endereco')
+          const modalidade = getCsvValue(row, 'Modalidade de venda')
+          const tipo = getCsvValue(row, 'Tipo de imóvel', 'Tipo de imovel')
+          const descricao = getCsvValue(row, 'Descrição', 'Descricao')
+          const valorVenda = safeParseFloat(getCsvValue(row, 'Preço', 'Preco'))
+          const valorAvaliacao = safeParseFloat(getCsvValue(row, 'Valor de avaliação', 'Valor de avaliacao'))
+          const financiamento = (getCsvValue(row, 'Financiamento') || '').toUpperCase()
+
+          if (!id || !cidade || (!valorVenda && !valorAvaliacao)) continue
+
+          auctions.push({
+            externalId: `CAIXA-${id.replace(/\D/g, '') || id}`,
+            source: 'CAIXA',
+            sourceUrl: `${CAIXA_DETAIL_URL}?hdnimovel=${id.replace(/\D/g, '')}`,
+            auctioneerName: 'Caixa Econômica Federal',
+            auctioneerUrl: 'https://venda-imoveis.caixa.gov.br',
+            title: `${tipo || 'Imóvel Caixa'} em ${cidade}/${estado}${bairro ? ` - ${bairro}` : ''}`,
+            description: descricao || endereco || undefined,
+            propertyType: parseCaixaType(tipo),
+            category: 'RESIDENTIAL',
+            status: 'OPEN',
+            modality: parseCaixaModality(modalidade),
+            street: endereco,
+            neighborhood: bairro,
+            city: cidade,
+            state: estado,
+            appraisalValue: valorAvaliacao,
+            minimumBid: valorVenda,
+            bankName: 'Caixa Econômica Federal',
+            financingAvailable: financiamento.includes('SIM'),
+            fgtsAllowed: financiamento.includes('SIM'),
+            metadata: {
+              raw_id: id,
+              raw_modalidade: modalidade,
+              raw_tipo: tipo,
+              source_format: 'caixa_csv',
+            },
+          })
+        } catch {
+          // Skip malformed CSV row
+        }
+      }
+    } catch (err: any) {
+      console.warn(`[CaixaScraper] CSV falhou para ${estado}: ${err.message}`)
     }
 
     return auctions
