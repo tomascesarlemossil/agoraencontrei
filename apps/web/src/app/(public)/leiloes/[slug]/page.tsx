@@ -113,6 +113,17 @@ const BAIRRO_LANDINGS: Record<string, { bairro: string; label: string }> = {
   'leilao-imoveis-boa-vista-franca-sp': { bairro: 'Boa Vista', label: 'Boa Vista' },
   'leilao-imoveis-parque-das-nacoes-franca-sp': { bairro: 'Parque das Nações', label: 'Parque das Nações' },
   'leilao-imoveis-residencial-brasil-franca-sp': { bairro: 'Residencial Brasil', label: 'Residencial Brasil' },
+  'leilao-imoveis-jardim-botanico-franca-sp': { bairro: 'Jardim Botânico', label: 'Jardim Botânico' },
+  'leilao-imoveis-jardim-noemia-franca-sp': { bairro: 'Jardim Noêmia', label: 'Jardim Noêmia' },
+  'leilao-imoveis-parque-universitario-franca-sp': { bairro: 'Parque Universitário', label: 'Parque Universitário' },
+  'leilao-imoveis-sao-jose-franca-sp': { bairro: 'São José', label: 'São José' },
+  'leilao-imoveis-cidade-nova-franca-sp': { bairro: 'Cidade Nova', label: 'Cidade Nova' },
+  'leilao-imoveis-jardim-santa-lucia-franca-sp': { bairro: 'Jardim Santa Lúcia', label: 'Jardim Santa Lúcia' },
+  'leilao-imoveis-jardim-consolacao-franca-sp': { bairro: 'Jardim Consolação', label: 'Jardim Consolação' },
+  'leilao-imoveis-residencial-paraiso-franca-sp': { bairro: 'Residencial Paraíso', label: 'Residencial Paraíso' },
+  'leilao-imoveis-residencial-amazonas-franca-sp': { bairro: 'Residencial Amazonas', label: 'Residencial Amazonas' },
+  'leilao-imoveis-jardim-natal-i-franca-sp': { bairro: 'Jardim Natal I', label: 'Jardim Natal I' },
+  'leilao-imoveis-sao-joaquim-franca-sp': { bairro: 'São Joaquim', label: 'São Joaquim' },
 }
 
 for (const [slug, bairro] of Object.entries(BAIRRO_LANDINGS)) {
