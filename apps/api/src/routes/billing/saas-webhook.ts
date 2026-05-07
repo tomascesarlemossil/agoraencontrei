@@ -69,7 +69,35 @@ export default async function saasWebhookRoutes(app: FastifyInstance) {
     const externalRef = (payment as any).externalReference as string | undefined
     app.log.info(`[saas-webhook] Event: ${event}, Payment: ${payment.id}, Ref: ${externalRef}`)
 
-    // 2. Route to correct handler based on externalReference
+    // 2. Hard idempotency — Asaas re-delivers events on timeout. Same pattern
+    //    used in /finance/webhook: try to insert into webhookProcessedEvent
+    //    with a UNIQUE eventKey; if the insert fails with P2002 we know the
+    //    event already ran and we 200-skip atomically (no race window).
+    const eventKey = `asaas-saas:${event}:${payment.id}`
+    try {
+      const delegate: any = (app.prisma as any).webhookProcessedEvent
+      if (delegate?.create) {
+        await delegate.create({
+          data: {
+            eventKey,
+            provider:   'asaas',
+            eventType:  event,
+            externalId: payment.id,
+            payload:    { event, paymentId: payment.id, externalRef } as any,
+          },
+        })
+      }
+    } catch (uniqueErr: any) {
+      if (uniqueErr?.code === 'P2002') {
+        app.log.info(`[saas-webhook] Duplicate event skipped: ${eventKey}`)
+        return reply.send({ success: true, skipped: true })
+      }
+      // P2021/P2022 = table missing → migration not deployed yet; continue
+      // without hard idempotency (matches finance/webhook behavior).
+      if (uniqueErr?.code !== 'P2021' && uniqueErr?.code !== 'P2022') throw uniqueErr
+    }
+
+    // 3. Route to correct handler based on externalReference
     try {
       if (externalRef?.startsWith('tenant:')) {
         await handleTenantEvent(app, prisma, event, payment, externalRef)
@@ -153,7 +181,12 @@ async function handleTenantEvent(
             settings: {
               ...cleanedSettings,
               lastPaymentId: payment.id,
-              lastPaymentDate: new Date().toISOString(),
+              // Prefer Asaas-supplied dates so the timestamp matches what the
+              // partner sees on the receipt; fall back to "now" only when the
+              // webhook payload doesn't include either field.
+              lastPaymentDate: payment.confirmedDate
+                ?? payment.clientPaymentDate
+                ?? new Date().toISOString(),
               tempPasswordIssued: false,
             },
           },
@@ -276,28 +309,34 @@ async function handleTenantEvent(
       }
 
       // ── Affiliate Commission: create earning if affiliate linked ────────
+      // Bug fix: previous code did `if (commission)` on an unresolved Promise
+      // (always truthy), then `(await commission).commissionAmount` threw a
+      // TypeError when the affiliate didn't exist (null). Now we await first,
+      // null-check the resolved value, then only create the earning when we
+      // actually have a commission to record.
       try {
         const { calculateAffiliateCommission, createAffiliateEarning } = await import('../../services/affiliate-commission.service.js')
-        // Check AffiliateReferral linked to this tenant
         const referral = await prisma.affiliateReferral.findFirst({
           where: { tenantId: tenant.id, status: 'converted' },
         }).catch(() => null)
 
         if (referral) {
-          const commission = calculateAffiliateCommission(prisma, {
+          const commission = await calculateAffiliateCommission(prisma, {
             affiliateId: referral.affiliateId,
             grossAmount: Number(payment.value || 0),
             transactionId: payment.id,
           })
-          if (commission) {
+          if (commission && commission.commissionAmount > 0) {
             await createAffiliateEarning(prisma, {
               affiliateId: referral.affiliateId,
               transactionId: payment.id,
               grossAmount: Number(payment.value || 0),
-              commissionAmount: (await commission).commissionAmount,
+              commissionAmount: commission.commissionAmount,
               description: `Comissão plano ${tenant.plan} — ${subdomain}`,
             })
-            app.log.info(`[saas-webhook] Affiliate earning created for referral ${referral.affiliateId}`)
+            app.log.info(`[saas-webhook] Affiliate earning created for referral ${referral.affiliateId} (R$ ${commission.commissionAmount})`)
+          } else {
+            app.log.info(`[saas-webhook] No affiliate commission to record for referral ${referral.affiliateId}`)
           }
         }
       } catch (err: any) {

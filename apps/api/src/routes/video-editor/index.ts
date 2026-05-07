@@ -36,7 +36,17 @@ declare module 'fastify' {
 const ClipUploadIntentSchema = z.object({
   filename: z.string().min(1).max(255),
   contentType: z.string().min(1).max(120),
-  kind: z.enum(['input', 'audio']).default('input'),
+  kind: z.enum(['input', 'audio', 'logo']).default('input'),
+})
+
+const LogoConfigSchema = z.object({
+  enabled:      z.boolean().default(false),
+  /** S3 key of an uploaded PNG/JPG logo; required when enabled=true. */
+  key:          z.string().optional(),
+  position:     z.enum(['bottom-right', 'bottom-left', 'top-right', 'top-left']).default('bottom-right'),
+  /** % of frame width — keeps logo proportional across resolutions. */
+  sizePercent:  z.number().min(2).max(40).default(10),
+  opacity:      z.number().min(0).max(1).default(0.85),
 })
 
 const RenderConfigSchema = z.object({
@@ -59,6 +69,9 @@ const RenderConfigSchema = z.object({
     durationSec: z.number().int().min(3).max(10),
     atSec:       z.number().min(0),
   })).optional(),
+  logo:            LogoConfigSchema.optional(),
+  /** When true, render at 480p without B-roll/captions for fast preview. */
+  previewMode:     z.boolean().default(false),
   config:          z.record(z.unknown()).optional(),
 })
 
@@ -98,6 +111,22 @@ export default async function videoEditorRoutes(app: FastifyInstance) {
     const user = (req as any).user as { companyId: string }
     const snap = await quotaSnapshot(app.prisma, user.companyId)
     return reply.send(snap)
+  })
+
+  // ── Diagnostics — surfaces config status so the UI can show what's
+  //    missing when uploads fail (most common cause: bucket unconfigured).
+  app.get('/diagnostics', async (req, reply) => {
+    const user = (req as any).user as { companyId: string }
+    const probe = await import('../../services/video-editor/ffmpeg.service.js')
+      .then(m => m.runFfprobe(['-version'])).then(r => r.stdout.split('\n')[0]).catch(() => null)
+    return reply.send({
+      ffmpeg:           probe ?? 'NOT_AVAILABLE',
+      s3VideoBucket:    videoS3.isConfigured(),
+      assemblyaiKey:    !!process.env.ASSEMBLYAI_API_KEY,
+      lumaKey:          !!process.env.LUMA_API_KEY,
+      renderQueue:      !!app.videoEditorQueue,
+      companyId:        user.companyId,
+    })
   })
 
   // ── Extract audio from a video upload (multipart) ──────────────────────
@@ -145,13 +174,20 @@ export default async function videoEditorRoutes(app: FastifyInstance) {
   })
 
   // ── Create draft job + return presigned PUT URLs for direct browser upload
+  // (presigned is the fast path — large files stream straight to S3). When
+  // it fails (CORS, expired credentials, bucket not yet created), the UI
+  // falls back to POST /projects/:id/upload below which routes through the
+  // API.
   app.post('/projects', async (req, reply) => {
     const body = z.object({
       uploads: z.array(ClipUploadIntentSchema).min(1).max(20),
     }).parse(req.body)
 
     if (!videoS3.isConfigured()) {
-      return reply.status(503).send({ error: 'VIDEO_BUCKET_UNCONFIGURED' })
+      return reply.status(503).send({
+        error: 'VIDEO_BUCKET_UNCONFIGURED',
+        message: 'AWS_S3_VIDEO_BUCKET ainda não foi configurado no servidor.',
+      })
     }
 
     const user = (req as any).user as { sub: string; companyId: string }
@@ -178,6 +214,42 @@ export default async function videoEditorRoutes(app: FastifyInstance) {
     return reply.send({ jobId: job.id, uploads })
   })
 
+  // ── Server-relay upload (fallback for when presigned PUT fails) ────────
+  // Streams the multipart file to S3 from the API. Use this when the browser
+  // can't PUT directly to S3 (CORS, restrictive corp networks). Body limit
+  // is governed by Fastify's default 100MB — keep videos under that or use
+  // presigned URLs.
+  app.post('/projects/:id/upload', async (req, reply) => {
+    if (!videoS3.isConfigured()) {
+      return reply.status(503).send({ error: 'VIDEO_BUCKET_UNCONFIGURED' })
+    }
+    const { id } = req.params as { id: string }
+    const user   = (req as any).user as { companyId: string }
+    const job = await app.prisma.videoEditorJob.findFirst({
+      where: { id, companyId: user.companyId },
+    })
+    if (!job) return reply.status(404).send({ error: 'NOT_FOUND' })
+
+    const file = await req.file()
+    if (!file) return reply.status(400).send({ error: 'NO_FILE' })
+    const kindRaw = (file.fields?.kind as { value?: string } | undefined)?.value
+    const kind: 'input' | 'audio' | 'logo' =
+      kindRaw === 'audio' ? 'audio' : kindRaw === 'logo' ? 'logo' : 'input'
+
+    const chunks: Buffer[] = []
+    for await (const c of file.file) chunks.push(c)
+    const buf = Buffer.concat(chunks)
+
+    const key = buildVideoKey({
+      companyId: user.companyId,
+      jobId:     id,
+      kind,
+      filename:  file.filename || `upload-${Date.now()}`,
+    })
+    await videoS3.putBuffer(key, buf, file.mimetype || 'application/octet-stream')
+    return reply.send({ key, kind, size: buf.length })
+  })
+
   // ── Confirm uploads & enqueue render ───────────────────────────────────
   app.post('/projects/:id/render', async (req, reply) => {
     const { id } = req.params as { id: string }
@@ -189,19 +261,26 @@ export default async function videoEditorRoutes(app: FastifyInstance) {
     })
     if (!job)                       return reply.status(404).send({ error: 'NOT_FOUND' })
     if (job.status === 'PROCESSING') return reply.status(409).send({ error: 'ALREADY_PROCESSING' })
-    if (job.status === 'DONE')       return reply.status(409).send({ error: 'ALREADY_DONE' })
 
-    // Quota check — daily limit + B-roll credit balance.
-    const brollSeconds = body.brollEnabled
-      ? (body.brollPrompts ?? []).reduce((sum, p) => sum + p.durationSec, 0)
-      : 0
-    try {
-      await assertCanRender(app.prisma, user.companyId, { brollSeconds })
-    } catch (e) {
-      if (e instanceof QuotaError) {
-        return reply.status(402).send({ error: e.code, message: e.message })
+    // Preview renders re-use the same job slot, so allow re-running when
+    // the previous attempt was a preview. Full renders block when DONE.
+    if (job.status === 'DONE' && !job.previewMode && !body.previewMode) {
+      return reply.status(409).send({ error: 'ALREADY_DONE' })
+    }
+
+    // Quota check — preview renders are free (no daily charge, no B-roll).
+    if (!body.previewMode) {
+      const brollSeconds = body.brollEnabled
+        ? (body.brollPrompts ?? []).reduce((sum, p) => sum + p.durationSec, 0)
+        : 0
+      try {
+        await assertCanRender(app.prisma, user.companyId, { brollSeconds })
+      } catch (e) {
+        if (e instanceof QuotaError) {
+          return reply.status(402).send({ error: e.code, message: e.message })
+        }
+        throw e
       }
-      throw e
     }
 
     // Verify each declared key actually exists in S3 (uploads completed).
@@ -225,11 +304,17 @@ export default async function videoEditorRoutes(app: FastifyInstance) {
         transitionId:     body.transitionId ?? null,
         resolution:       body.resolution,
         outputFormat:     body.outputFormat,
-        captionsEnabled:  body.captionsEnabled,
+        captionsEnabled:  body.previewMode ? false : body.captionsEnabled,
         captionsLanguage: body.captionsLanguage,
         captionsStyle:    (body.captionsStyle ?? null) as any,
-        brollEnabled:     body.brollEnabled,
-        brollPrompts:     (body.brollPrompts ?? null) as any,
+        brollEnabled:     body.previewMode ? false : body.brollEnabled,
+        brollPrompts:     body.previewMode ? null : ((body.brollPrompts ?? null) as any),
+        logoEnabled:      body.logo?.enabled ?? false,
+        logoKey:          body.logo?.key ?? null,
+        logoPosition:     body.logo?.position ?? 'bottom-right',
+        logoSizePercent:  body.logo?.sizePercent ?? 10,
+        logoOpacity:      body.logo?.opacity ?? 0.85,
+        previewMode:      body.previewMode ?? false,
         config:           (body.config ?? {}) as any,
         errorMsg:         null,
       },
@@ -248,9 +333,10 @@ export default async function videoEditorRoutes(app: FastifyInstance) {
     })
 
     // Charge the daily counter only after the job is successfully enqueued.
-    await consumeDaily(app.prisma, user.companyId)
+    // Preview renders don't consume the daily quota.
+    if (!body.previewMode) await consumeDaily(app.prisma, user.companyId)
 
-    return reply.send({ id: updated.id, status: updated.status })
+    return reply.send({ id: updated.id, status: updated.status, previewMode: body.previewMode })
   })
 
   // ── Job status ─────────────────────────────────────────────────────────
