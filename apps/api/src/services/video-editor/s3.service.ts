@@ -74,7 +74,7 @@ export const videoS3 = {
 export function buildVideoKey(parts: {
   companyId: string
   jobId:     string
-  kind:      'input' | 'audio' | 'output' | 'thumbnail' | 'broll'
+  kind:      'input' | 'audio' | 'output' | 'thumbnail' | 'broll' | 'logo'
   filename:  string
 }): string {
   // companyId/jobId/kind/filename → easy to enumerate per-tenant in S3 console

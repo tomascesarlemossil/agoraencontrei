@@ -24,6 +24,14 @@ export interface BRollInsertion {
   durationSec: number
 }
 
+export interface LogoOverlay {
+  /** Local path to the logo file (PNG with transparency works best). */
+  path:        string
+  position:    'bottom-right' | 'bottom-left' | 'top-right' | 'top-left'
+  sizePercent: number
+  opacity:     number
+}
+
 export interface RenderInput {
   jobId:        string
   /** Local file paths after download from S3. */
@@ -33,10 +41,18 @@ export interface RenderInput {
   captionsPath: string | null
   /** B-roll clips to splice into the timeline at specific positions. */
   brollClips:   BRollInsertion[]
+  /** Optional logo burned into every frame. */
+  logo:         LogoOverlay | null
   presetId:     string | null
   transitionId: string | null
   resolution:   string
   outputFormat: OutputFormat
+  /**
+   * When true, the render is downscaled to 480p and uses a fast preset.
+   * Used by the "preview" workflow so partners can sanity-check before
+   * burning compute on a full 4K render.
+   */
+  previewMode?: boolean
 }
 
 export interface RenderOutput {
@@ -49,7 +65,10 @@ export interface RenderOutput {
 export async function renderProject(input: RenderInput): Promise<RenderOutput> {
   const preset     = getPreset(input.presetId)
   const transition = getTransition(input.transitionId)
-  const resolution = getResolution(input.resolution)
+  // Preview mode forces a small frame so the render finishes in seconds.
+  const resolution = input.previewMode
+    ? { id: 'preview' as const, label: 'Preview 480p', width: 854, height: 480, crf: 28 }
+    : getResolution(input.resolution)
   const codecs     = getFormatCodecs(input.outputFormat)
 
   const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), `videojob-${input.jobId}-`))
@@ -78,11 +97,14 @@ export async function renderProject(input: RenderInput): Promise<RenderOutput> {
       height:       resolution.height,
       hasCaptions:  !!input.captionsPath,
       captionsPath: input.captionsPath,
+      logo:         input.logo,
+      logoInputIdx: input.audioPath ? orderedClips.length + 1 : orderedClips.length,
     })
 
     const args: string[] = []
     for (const c of orderedClips) args.push('-i', c.path)
     if (input.audioPath) args.push('-i', input.audioPath)
+    if (input.logo)      args.push('-i', input.logo.path)
 
     args.push(
       '-filter_complex', filterGraph.graph,
@@ -99,7 +121,7 @@ export async function renderProject(input: RenderInput): Promise<RenderOutput> {
     args.push(
       '-c:v',  codecs.vcodec,
       '-crf',  String(resolution.crf),
-      '-preset', 'medium',
+      '-preset', input.previewMode ? 'ultrafast' : 'medium',
       '-c:a',  codecs.acodec,
       '-b:a',  '192k',
       '-movflags', '+faststart',
@@ -200,8 +222,11 @@ function buildFilterGraph(opts: {
   height:       number
   hasCaptions:  boolean
   captionsPath: string | null
+  logo:         LogoOverlay | null
+  /** Index of the logo input in the FFmpeg `-i` list (after clips & audio). */
+  logoInputIdx: number
 }): FilterGraph {
-  const { clips, preset, transition, width, height, hasCaptions, captionsPath } = opts
+  const { clips, preset, transition, width, height, hasCaptions, captionsPath, logo, logoInputIdx } = opts
   const parts: string[] = []
 
   // 1) Normalize + color-grade each clip
@@ -243,7 +268,26 @@ function buildFilterGraph(opts: {
   // 3) Caption burn-in
   if (hasCaptions && captionsPath) {
     const escaped = captionsPath.replace(/\\/g, '/').replace(/:/g, '\\:').replace(/'/g, "\\'")
-    parts.push(`${videoOut}ass='${escaped}'[vfinal]`)
+    parts.push(`${videoOut}ass='${escaped}'[vcaps]`)
+    videoOut = '[vcaps]'
+  }
+
+  // 4) Logo overlay — scaled to a percent of frame width, anchored at the
+  //    requested corner with a margin equal to ~2% of the smaller axis so
+  //    it never touches the edge of the frame.
+  if (logo) {
+    const targetWidth = Math.round((logo.sizePercent / 100) * width)
+    const margin      = Math.max(12, Math.round(0.02 * Math.min(width, height)))
+    const xy = {
+      'bottom-right': `x=W-w-${margin}:y=H-h-${margin}`,
+      'bottom-left':  `x=${margin}:y=H-h-${margin}`,
+      'top-right':    `x=W-w-${margin}:y=${margin}`,
+      'top-left':     `x=${margin}:y=${margin}`,
+    }[logo.position]
+    parts.push(
+      `[${logoInputIdx}:v]scale=${targetWidth}:-1,format=rgba,colorchannelmixer=aa=${logo.opacity.toFixed(2)}[lg]`,
+    )
+    parts.push(`${videoOut}[lg]overlay=${xy}[vfinal]`)
     videoOut = '[vfinal]'
   }
 

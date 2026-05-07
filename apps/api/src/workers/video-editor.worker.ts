@@ -82,6 +82,20 @@ export async function processVideoEditorJob(
       audioPath = dst
     }
 
+    // Logo overlay — burned into every frame at the chosen corner.
+    let logoOverlay: { path: string; position: any; sizePercent: number; opacity: number } | null = null
+    if (record.logoEnabled && record.logoKey) {
+      const url = await videoS3.presignGet(record.logoKey, 600)
+      const dst = path.join(tmp, 'logo.png')
+      await downloadTo(url, dst)
+      logoOverlay = {
+        path:        dst,
+        position:    (record.logoPosition as any) ?? 'bottom-right',
+        sizePercent: record.logoSizePercent ?? 10,
+        opacity:     record.logoOpacity ?? 0.85,
+      }
+    }
+
     // ── 2) Captions ──────────────────────────────────────────────────────
     let captionsPath: string | null = null
     if (record.captionsEnabled) {
@@ -122,10 +136,12 @@ export async function processVideoEditorJob(
       audioPath,
       captionsPath,
       brollClips,
+      logo:         logoOverlay,
       presetId:     record.presetId,
       transitionId: record.transitionId,
       resolution:   record.resolution,
       outputFormat: (record.outputFormat as OutputFormat) ?? 'mp4',
+      previewMode:  record.previewMode,
     })
 
     // ── 5) Upload outputs ────────────────────────────────────────────────

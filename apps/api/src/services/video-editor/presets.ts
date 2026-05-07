@@ -34,6 +34,12 @@ export interface PresetDefinition {
   }
   // Default transition between clips
   defaultTransitionId: string
+  /** UI preview — a dominant color hint (used when there is no thumbnail). */
+  previewColor: string
+  /** UI preview — a CSS filter string approximating the videoFilter. The
+   *  dashboard applies it to a static thumbnail so the partner can see
+   *  "more or less" the look before rendering. */
+  cssPreview:   string
 }
 
 export const PRESETS: PresetDefinition[] = [
@@ -54,6 +60,8 @@ export const PRESETS: PresetDefinition[] = [
       bold:        true,
     },
     defaultTransitionId: 'fade',
+    previewColor: '#1B2B5B',
+    cssPreview:   'contrast(1.05) saturate(1.10) brightness(1.02)',
   },
   {
     id:          'realestate-before-after',
@@ -72,6 +80,8 @@ export const PRESETS: PresetDefinition[] = [
       bold:        true,
     },
     defaultTransitionId: 'wipe-left',
+    previewColor: '#3A506B',
+    cssPreview:   'contrast(1.10) saturate(1.05)',
   },
   {
     id:          'social-reels-fast',
@@ -90,6 +100,8 @@ export const PRESETS: PresetDefinition[] = [
       bold:        true,
     },
     defaultTransitionId: 'cut',
+    previewColor: '#FF1744',
+    cssPreview:   'contrast(1.15) saturate(1.20) brightness(0.95)',
   },
   {
     id:          'social-vlog',
@@ -108,6 +120,8 @@ export const PRESETS: PresetDefinition[] = [
       bold:        false,
     },
     defaultTransitionId: 'fade',
+    previewColor: '#5C4033',
+    cssPreview:   'contrast(1.08) saturate(0.95) sepia(0.15)',
   },
   {
     id:          'ecommerce-product',
@@ -126,6 +140,8 @@ export const PRESETS: PresetDefinition[] = [
       bold:        true,
     },
     defaultTransitionId: 'zoom',
+    previewColor: '#FF3366',
+    cssPreview:   'contrast(1.12) saturate(1.30) brightness(1.04)',
   },
   {
     id:          'tutorial-stepbystep',
@@ -144,6 +160,8 @@ export const PRESETS: PresetDefinition[] = [
       bold:        true,
     },
     defaultTransitionId: 'fade',
+    previewColor: '#33CCFF',
+    cssPreview:   'contrast(1.04) saturate(1.00)',
   },
   {
     id:          'testimonial-talking-head',
@@ -162,6 +180,8 @@ export const PRESETS: PresetDefinition[] = [
       bold:        true,
     },
     defaultTransitionId: 'cut',
+    previewColor: '#FFD400',
+    cssPreview:   'contrast(1.06) saturate(1.05)',
   },
   {
     id:          'generic-clean',
@@ -180,6 +200,8 @@ export const PRESETS: PresetDefinition[] = [
       bold:        false,
     },
     defaultTransitionId: 'cut',
+    previewColor: '#9CA3AF',
+    cssPreview:   'none',
   },
 ]
 

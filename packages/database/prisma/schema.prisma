@@ -1538,6 +1538,14 @@ model VideoEditorJob {
   captionsStyle    Json?                     // { font, color, highlight, position, ... }
   brollEnabled     Boolean   @default(false)  // Luma Ray 2 — bills extra credits
   brollPrompts     Json?                     // [{ promptText, durationSec, atSec }]
+  // Logo overlay (PNG/JPG burned into the corner of every frame)
+  logoEnabled      Boolean   @default(false)
+  logoKey          String?                   // S3 key inside the video bucket
+  logoPosition     String    @default("bottom-right")
+  logoSizePercent  Float     @default(10.0)
+  logoOpacity      Float     @default(0.85)
+  // Preview mode: 480p, no B-roll, no captions — fast and free of credits.
+  previewMode      Boolean   @default(false)
   config           Json      @default("{}") // catch-all for advanced options
 
   // Outputs
