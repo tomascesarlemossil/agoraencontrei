@@ -3351,3 +3351,33 @@ model DealPayment {
   @@index([dealId])
   @@map("deal_payments")
 }
+
+// =============================================================================
+// CARTÓRIO & REGISTRO — processo de escritura/registro assistido
+// =============================================================================
+
+/// Processo cartorial assistido de uma negociação — escritura no tabelionato
+/// e registro no Cartório de Registro de Imóveis. As telas preparam o dossiê
+/// e acompanham o status; a integração com e-Notariado / RI Digital depende
+/// de convênio institucional e é plugada depois.
+model NotarialProcess {
+  id              String   @id @default(cuid())
+  dealId          String   @unique
+  companyId       String
+  /// ESCRITURA_COMPRA_VENDA | ESCRITURA_PERMUTA | PROCURACAO | ESCRITURA_CESSAO
+  actType         String   @default("ESCRITURA_COMPRA_VENDA")
+  notaryOffice    String?
+  registryOffice  String?
+  /// preparing | at_notary | deed_signed | at_registry | registered
+  status          String   @default("preparing")
+  deedFileUrl     String?
+  registryProtocol String?
+  /// Checklist documental { itemKey: boolean }.
+  checklist       Json     @default("{}")
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([companyId])
+  @@map("notarial_processes")
+}
