@@ -3321,3 +3321,33 @@ model LoteReserva {
   @@index([status, expiresAt])
   @@map("lote_reservas")
 }
+
+// =============================================================================
+// DEAL PAYMENTS — sinal e pagamentos da negociação (Asaas)
+// =============================================================================
+
+/// Cobrança vinculada a uma negociação (sinal, parcela, saldo). Criada via
+/// Asaas; o webhook atualiza o status e avança a etapa do Transaction Hub.
+model DealPayment {
+  id            String    @id @default(cuid())
+  dealId        String
+  companyId     String
+  /// signal | installment | balance | other
+  type          String    @default("signal")
+  amount        Decimal   @db.Decimal(14, 2)
+  /// PIX | BOLETO | CREDIT_CARD | UNDEFINED
+  billingType   String    @default("UNDEFINED")
+  /// pending | received | overdue | refunded | cancelled
+  status        String    @default("pending")
+  asaasChargeId String?   @unique
+  invoiceUrl    String?
+  pixPayload    String?
+  dueDate       DateTime?
+  paidAt        DateTime?
+  metadata      Json      @default("{}")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([dealId])
+  @@map("deal_payments")
+}
