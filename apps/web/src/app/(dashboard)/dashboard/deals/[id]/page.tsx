@@ -30,13 +30,19 @@ const STATUS_LABELS: Record<string, string> = {
 }
 const STATUSES = Object.entries(STATUS_LABELS)
 
-// Esteira de venda — checklist granular dentro de cada etapa do funil.
-const ESTEIRA: { status: string; items: string[] }[] = [
-  { status: 'OPEN',        items: ['Lead recebido', 'Primeiro contato realizado', 'Cliente qualificado'] },
-  { status: 'IN_PROGRESS', items: ['Atendimento iniciado', 'Visita agendada', 'Visita realizada'] },
-  { status: 'PROPOSAL',    items: ['Proposta enviada', 'Proposta negociada', 'Proposta aceita'] },
-  { status: 'CONTRACT',    items: ['Documentos recebidos', 'Contrato gerado', 'Contrato assinado', 'Entrada paga'] },
-  { status: 'CLOSED_WON',  items: ['Escritura realizada', 'Chaves entregues', 'Pós-venda concluído'] },
+// Transaction Hub — pipeline completo da negociação, do lead ao registro.
+// Cada etapa tem um checklist; a etapa atual fica em metadata.transaction.stage.
+const TRANSACTION_STAGES: { key: string; label: string; items: string[] }[] = [
+  { key: 'lead',       label: 'Lead',       items: ['Lead recebido', 'Primeiro contato', 'Cliente qualificado'] },
+  { key: 'proposta',   label: 'Proposta',   items: ['Proposta enviada', 'Proposta negociada', 'Proposta aceita'] },
+  { key: 'kyc',        label: 'KYC',        items: ['Documentos do comprador recebidos', 'Identidade verificada'] },
+  { key: 'sinal',      label: 'Sinal',      items: ['Cobrança do sinal gerada', 'Sinal pago'] },
+  { key: 'contrato',   label: 'Contrato',   items: ['Contrato gerado', 'Cláusulas revisadas'] },
+  { key: 'assinatura', label: 'Assinatura', items: ['Enviado para assinatura', 'Assinado por todas as partes'] },
+  { key: 'escritura',  label: 'Escritura',  items: ['Dossiê para escritura montado', 'Escritura lavrada'] },
+  { key: 'registro',   label: 'Registro',   items: ['Protocolo de registro', 'Registro concluído'] },
+  { key: 'posse',      label: 'Posse',      items: ['Chaves entregues'] },
+  { key: 'concluido',  label: 'Concluído',  items: ['Pós-venda concluído'] },
 ]
 
 const COMM_STATUS: Record<string, string> = {
@@ -126,6 +132,17 @@ export default function DealDetailPage() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['deal', id] }),
   })
 
+  const stageMutation = useMutation({
+    mutationFn: async (stage: string) => {
+      const token = await getValidToken()
+      const meta = (deal?.metadata ?? {}) as Record<string, unknown>
+      return dealsApi.update(token!, id, {
+        metadata: { ...meta, transaction: { ...(meta.transaction as object ?? {}), stage } },
+      })
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['deal', id] }),
+  })
+
   const addActivityMutation = useMutation({
     mutationFn: async () => {
       const token = await getValidToken()
@@ -157,6 +174,14 @@ export default function DealDetailPage() {
   const checklist = (((deal.metadata as any)?.checklist) ?? {}) as Record<string, boolean>
   const toggleChecklist = (key: string) =>
     checklistMutation.mutate({ ...checklist, [key]: !checklist[key] })
+
+  // Transaction Hub — etapa atual da jornada da negociação.
+  const isAdmin = ['SUPER_ADMIN', 'ADMIN', 'MANAGER'].includes(user?.role ?? '')
+  const currentStageKey = ((deal.metadata as any)?.transaction?.stage as string) ?? 'lead'
+  const currentStageIdx = Math.max(0, TRANSACTION_STAGES.findIndex(s => s.key === currentStageKey))
+  const currentStage = TRANSACTION_STAGES[currentStageIdx]
+  const currentItems = currentStage.items.map((label, i) => ({ key: `${currentStage.key}-${i}`, label }))
+  const currentDone = currentItems.every(it => checklist[it.key])
 
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">
@@ -221,51 +246,87 @@ export default function DealDetailPage() {
             </Select>
           </div>
 
-          {/* Esteira de venda — checklist por etapa */}
+          {/* Transaction Hub — pipeline da negociação */}
           <div className="bg-white/5 rounded-xl border border-white/10 p-4">
-            <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-1">
-              Esteira de Venda
+            <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-3">
+              Transaction Hub
             </h3>
-            {ESTEIRA.map((stage) => {
-              const items = stage.items.map((label, i) => ({ key: `${stage.status}-${i}`, label }))
-              const done = items.filter((it) => checklist[it.key]).length
-              const isCurrent = stage.status === deal.status
-              return (
+
+            {/* Stepper */}
+            <div className="flex flex-wrap gap-1">
+              {TRANSACTION_STAGES.map((stage, i) => (
                 <div
-                  key={stage.status}
+                  key={stage.key}
+                  title={stage.label}
                   className={cn(
-                    'mt-2 rounded-lg p-2',
-                    isCurrent ? 'bg-yellow-500/5 ring-1 ring-yellow-500/30' : '',
+                    'h-1.5 flex-1 min-w-[18px] rounded-full',
+                    i < currentStageIdx ? 'bg-emerald-500'
+                      : i === currentStageIdx ? 'bg-yellow-500'
+                      : 'bg-white/10',
                   )}
+                />
+              ))}
+            </div>
+            <div className="mt-2 flex items-center justify-between">
+              <span className="text-sm font-semibold text-white">
+                {currentStageIdx + 1}. {currentStage.label}
+              </span>
+              <span className="text-[10px] text-white/40">
+                Etapa {currentStageIdx + 1} de {TRANSACTION_STAGES.length}
+              </span>
+            </div>
+
+            {/* Current stage checklist */}
+            <div className="mt-2 space-y-1">
+              {currentItems.map((it) => (
+                <label key={it.key} className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={!!checklist[it.key]}
+                    onChange={() => toggleChecklist(it.key)}
+                    disabled={checklistMutation.isPending}
+                    className="h-3.5 w-3.5 rounded border-white/20 bg-white/5 accent-yellow-500"
+                  />
+                  <span className={cn(
+                    'text-xs',
+                    checklist[it.key] ? 'text-white/40 line-through' : 'text-white/70',
+                  )}>
+                    {it.label}
+                  </span>
+                </label>
+              ))}
+            </div>
+
+            {/* Stage controls */}
+            <div className="mt-3 flex items-center gap-2">
+              {currentStageIdx > 0 && (
+                <Button
+                  size="sm" variant="ghost"
+                  className="text-white/50 hover:text-white text-xs h-7"
+                  disabled={stageMutation.isPending}
+                  onClick={() => stageMutation.mutate(TRANSACTION_STAGES[currentStageIdx - 1].key)}
                 >
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold text-white/80">
-                      {STATUS_LABELS[stage.status] ?? stage.status}
-                    </span>
-                    <span className="text-[10px] text-white/40">{done}/{items.length}</span>
-                  </div>
-                  <div className="mt-1 space-y-1">
-                    {items.map((it) => (
-                      <label key={it.key} className="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={!!checklist[it.key]}
-                          onChange={() => toggleChecklist(it.key)}
-                          disabled={checklistMutation.isPending}
-                          className="h-3.5 w-3.5 rounded border-white/20 bg-white/5 accent-yellow-500"
-                        />
-                        <span className={cn(
-                          'text-xs',
-                          checklist[it.key] ? 'text-white/40 line-through' : 'text-white/70',
-                        )}>
-                          {it.label}
-                        </span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              )
-            })}
+                  Voltar etapa
+                </Button>
+              )}
+              {currentStageIdx < TRANSACTION_STAGES.length - 1 && (
+                <Button
+                  size="sm"
+                  className="text-xs h-7 gap-1"
+                  disabled={stageMutation.isPending || (!currentDone && !isAdmin)}
+                  onClick={() => stageMutation.mutate(TRANSACTION_STAGES[currentStageIdx + 1].key)}
+                >
+                  Avançar: {TRANSACTION_STAGES[currentStageIdx + 1].label}
+                </Button>
+              )}
+            </div>
+            {!currentDone && currentStageIdx < TRANSACTION_STAGES.length - 1 && (
+              <p className="mt-1.5 text-[10px] text-white/40">
+                {isAdmin
+                  ? 'Conclua o checklist ou avance manualmente (admin).'
+                  : 'Conclua o checklist desta etapa para avançar.'}
+              </p>
+            )}
           </div>
 
           {/* Properties */}
