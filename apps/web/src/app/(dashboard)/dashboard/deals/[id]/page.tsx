@@ -15,6 +15,7 @@ import { ArrowLeft, DollarSign, User, TrendingUp, Plus, MessageCircle, PhoneCall
 import Link from 'next/link'
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
+import { DealKyc } from './DealKyc'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 
@@ -559,6 +560,9 @@ export default function DealDetailPage() {
               Fluxo assistido — integração com e-Notariado / RI Digital depende de convênio.
             </p>
           </div>
+
+          {/* KYC — verificação das partes */}
+          <DealKyc dealId={id} />
 
           {/* Properties */}
           {deal.properties?.length > 0 && (

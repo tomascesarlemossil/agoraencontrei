@@ -493,4 +493,78 @@ export default async function dealsRoutes(app: FastifyInstance) {
     })
     return reply.send({ data: process })
   })
+
+  // ── GET /:id/kyc — verificações KYC da negociação ──────────────────────
+  app.get('/:id/kyc', { schema: { tags: ['deals'] } }, async (req, reply) => {
+    const { id } = req.params as { id: string }
+    const deal = await app.prisma.deal.findFirst({ where: { id, companyId: req.user.cid } })
+    if (!deal) return reply.status(404).send({ error: 'NOT_FOUND' })
+    const checks = await app.prisma.kycCheck.findMany({
+      where: { dealId: id },
+      orderBy: { createdAt: 'asc' },
+    })
+    return reply.send({ data: checks })
+  })
+
+  // ── POST /:id/kyc — adiciona uma verificação ───────────────────────────
+  app.post('/:id/kyc', { schema: { tags: ['deals'] } }, async (req, reply) => {
+    const { id } = req.params as { id: string }
+    const body = z.object({
+      subjectName: z.string().min(2).max(160),
+      subjectRole: z.enum(['buyer', 'seller', 'other']).default('buyer'),
+      cpfCnpj:     z.string().max(20).optional(),
+    }).parse(req.body)
+
+    const deal = await app.prisma.deal.findFirst({ where: { id, companyId: req.user.cid } })
+    if (!deal) return reply.status(404).send({ error: 'NOT_FOUND' })
+
+    const check = await app.prisma.kycCheck.create({
+      data: {
+        dealId: id,
+        companyId: req.user.cid,
+        subjectName: body.subjectName,
+        subjectRole: body.subjectRole,
+        cpfCnpj: body.cpfCnpj ?? null,
+      },
+    })
+    return reply.status(201).send({ data: check })
+  })
+
+  // ── PUT /:id/kyc/:checkId — atualiza uma verificação ───────────────────
+  app.put('/:id/kyc/:checkId', { schema: { tags: ['deals'] } }, async (req, reply) => {
+    const { id, checkId } = req.params as { id: string; checkId: string }
+    const body = z.object({
+      status:    z.enum(['pending', 'approved', 'rejected', 'review']).optional(),
+      riskLevel: z.enum(['low', 'medium', 'high']).optional(),
+      checklist: z.record(z.boolean()).optional(),
+      notes:     z.string().max(2000).optional(),
+    }).parse(req.body)
+
+    const check = await app.prisma.kycCheck.findFirst({
+      where: { id: checkId, dealId: id, companyId: req.user.cid },
+    })
+    if (!check) return reply.status(404).send({ error: 'NOT_FOUND' })
+
+    const updated = await app.prisma.kycCheck.update({
+      where: { id: checkId },
+      data: {
+        ...(body.status !== undefined && { status: body.status }),
+        ...(body.riskLevel !== undefined && { riskLevel: body.riskLevel }),
+        ...(body.checklist !== undefined && { checklist: body.checklist }),
+        ...(body.notes !== undefined && { notes: body.notes }),
+      },
+    })
+    return reply.send({ data: updated })
+  })
+
+  // ── DELETE /:id/kyc/:checkId — remove uma verificação ──────────────────
+  app.delete('/:id/kyc/:checkId', { schema: { tags: ['deals'] } }, async (req, reply) => {
+    const { id, checkId } = req.params as { id: string; checkId: string }
+    const check = await app.prisma.kycCheck.findFirst({
+      where: { id: checkId, dealId: id, companyId: req.user.cid },
+    })
+    if (!check) return reply.status(404).send({ error: 'NOT_FOUND' })
+    await app.prisma.kycCheck.delete({ where: { id: checkId } })
+    return reply.send({ success: true })
+  })
 }
