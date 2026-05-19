@@ -96,22 +96,63 @@ export interface AudioTranscript {
 }
 
 export async function transcribeAudio(base64Audio: string, mimeType = 'audio/ogg'): Promise<AudioTranscript> {
-  const client = getClient()
+  // 1. Real transcription via OpenAI Whisper — Claude cannot accept raw
+  //    audio bytes, so the previous version (passing base64 as text) never
+  //    actually transcribed anything.
+  if (!env.OPENAI_API_KEY) {
+    return { text: '', intent: 'other', suggestedAction: 'Transcrição indisponível — configure OPENAI_API_KEY.' }
+  }
 
+  let transcript = ''
+  try {
+    const buf = Buffer.from(base64Audio, 'base64')
+    const ext = mimeType.includes('webm') ? 'webm'
+      : mimeType.includes('mp3') || mimeType.includes('mpeg') ? 'mp3'
+      : mimeType.includes('wav') ? 'wav'
+      : mimeType.includes('m4a') || mimeType.includes('mp4') ? 'm4a'
+      : 'ogg'
+    const form = new FormData()
+    form.append('file', new Blob([buf], { type: mimeType }), `audio.${ext}`)
+    form.append('model', 'whisper-1')
+    form.append('language', 'pt')
+    form.append('response_format', 'json')
+
+    const res = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+      method: 'POST',
+      headers: { authorization: `Bearer ${env.OPENAI_API_KEY}` },
+      body: form,
+    })
+    if (res.ok) {
+      const data = await res.json() as { text?: string }
+      transcript = (data.text ?? '').trim()
+    }
+  } catch {
+    /* fall through to empty transcript */
+  }
+
+  if (!transcript) {
+    return { text: '', intent: 'other', suggestedAction: 'Não foi possível transcrever o áudio.' }
+  }
+
+  // 2. Classify intent/entities from the REAL transcript.
+  if (!env.ANTHROPIC_API_KEY) {
+    return { text: transcript, intent: 'other' }
+  }
+  const client = getClient()
   const response = await client.messages.create({
-    model: 'claude-opus-4-6',
-    max_tokens: 1024,
+    model: 'claude-haiku-4-5-20251001',
+    max_tokens: 512,
     messages: [
       {
         role: 'user',
         content: [
           {
             type: 'text',
-            text: `Transcreva este áudio e identifique a intenção. Retorne JSON com os campos:
-text (transcrição), intent (schedule_visit/price_inquiry/document_request/other),
+            text: `Analise esta transcrição de um áudio de cliente imobiliário e retorne APENAS JSON válido com os campos:
+text (a transcrição), intent (schedule_visit/price_inquiry/document_request/other),
 entities (propertyId, date, phone se mencionados), suggestedAction (ação sugerida no CRM).
-O áudio está em base64: ${base64Audio.substring(0, 100)}...
-Retorne APENAS JSON válido.`,
+
+Transcrição: "${transcript}"`,
           },
         ],
       },
@@ -120,9 +161,10 @@ Retorne APENAS JSON válido.`,
 
   const text = response.content[0].type === 'text' ? response.content[0].text : '{}'
   try {
-    return JSON.parse(text)
+    const parsed = JSON.parse(text.replace(/```json\n?|```/g, '').trim()) as AudioTranscript
+    return { ...parsed, text: parsed.text || transcript }
   } catch {
-    return { text: text, intent: 'other' }
+    return { text: transcript, intent: 'other' }
   }
 }
 
