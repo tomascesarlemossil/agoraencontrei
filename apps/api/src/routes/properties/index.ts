@@ -2,6 +2,7 @@ import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 import { createAuditLog } from '../../services/audit.service.js'
 import { geocodeProperty, sleep } from '../../services/geocoding.service.js'
+import { assertWithinPlanQuota, PlanLimitError } from '../../services/plan-gating.service.js'
 
 const toUpper = (v: unknown) => typeof v === 'string' ? v.toUpperCase() : v
 
@@ -526,6 +527,17 @@ export default async function propertiesRoutes(app: FastifyInstance) {
     schema: { tags: ['properties'], summary: 'Create a property' },
   }, async (req, reply) => {
      const body = CreatePropertyBody.parse(req.body)
+
+    // Enforce the subscription plan's property limit before creating.
+    try {
+      await assertWithinPlanQuota(app.prisma, req.user.cid, 'properties')
+    } catch (err) {
+      if (err instanceof PlanLimitError) {
+        return reply.status(403).send({ error: err.code, message: err.message })
+      }
+      throw err
+    }
+
     const slug = buildSlug(body.title, body.reference)
 
     // Auto-geocode if address is provided but lat/lng are missing
