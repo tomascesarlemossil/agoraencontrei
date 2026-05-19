@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { createAuditLog } from '../../services/audit.service.js'
 import { geocodeProperty, sleep } from '../../services/geocoding.service.js'
 import { assertWithinPlanQuota, PlanLimitError } from '../../services/plan-gating.service.js'
+import { notifyMatchingAlerts } from '../../services/property-match.service.js'
 
 const toUpper = (v: unknown) => typeof v === 'string' ? v.toUpperCase() : v
 
@@ -589,6 +590,10 @@ export default async function propertiesRoutes(app: FastifyInstance) {
       before: null,
       after: property as any,
     })
+
+    // Match the new listing against clients' saved search profiles and
+    // alert them — non-blocking so the create response is not delayed.
+    void notifyMatchingAlerts(app.prisma, property)
 
     return reply.status(201).send(property)
   })

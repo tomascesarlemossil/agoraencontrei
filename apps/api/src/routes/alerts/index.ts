@@ -2,13 +2,17 @@ import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 
 const CreateAlertBody = z.object({
-  email:    z.string().email(),
-  city:     z.string().optional(),
-  type:     z.string().optional(),
-  purpose:  z.string().optional(),
-  minPrice: z.number().positive().optional(),
-  maxPrice: z.number().positive().optional(),
-  bedrooms: z.number().int().min(1).optional(),
+  email:        z.string().email(),
+  name:         z.string().max(120).optional(),
+  phone:        z.string().max(30).optional(),
+  companyId:    z.string().optional(),
+  city:         z.string().optional(),
+  neighborhood: z.string().optional(),
+  type:         z.string().optional(),
+  purpose:      z.string().optional(),
+  minPrice:     z.number().positive().optional(),
+  maxPrice:     z.number().positive().optional(),
+  bedrooms:     z.number().int().min(1).optional(),
 })
 
 export default async function alertsRoutes(app: FastifyInstance) {
@@ -20,17 +24,42 @@ export default async function alertsRoutes(app: FastifyInstance) {
 
     const alert = await app.prisma.propertyAlert.create({
       data: {
-        email:    body.email,
-        city:     body.city ?? null,
-        type:     body.type ?? null,
-        purpose:  body.purpose ?? null,
-        minPrice: body.minPrice ?? null,
-        maxPrice: body.maxPrice ?? null,
-        bedrooms: body.bedrooms ?? null,
+        email:        body.email,
+        name:         body.name ?? null,
+        phone:        body.phone ?? null,
+        companyId:    body.companyId ?? null,
+        city:         body.city ?? null,
+        neighborhood: body.neighborhood ?? null,
+        type:         body.type ?? null,
+        purpose:      body.purpose ?? null,
+        minPrice:     body.minPrice ?? null,
+        maxPrice:     body.maxPrice ?? null,
+        bedrooms:     body.bedrooms ?? null,
       },
     })
 
     return reply.status(201).send({ data: alert })
+  })
+
+  // GET /unsubscribe?token= — public one-click unsubscribe from email links
+  app.get('/unsubscribe', {
+    schema: { tags: ['alerts'], summary: 'Unsubscribe from property alerts via token' },
+  }, async (req, reply) => {
+    const { token } = req.query as { token?: string }
+    if (!token) {
+      return reply.status(400).send({ error: 'TOKEN_REQUIRED' })
+    }
+    const result = await app.prisma.propertyAlert.updateMany({
+      where: { token },
+      data: { active: false },
+    })
+    if (result.count === 0) {
+      return reply.status(404).send({ error: 'NOT_FOUND', message: 'Alerta não encontrado.' })
+    }
+    return reply
+      .type('text/html')
+      .send('<html><body style="font-family:sans-serif;text-align:center;padding:48px">' +
+        '<h2>Alerta cancelado</h2><p>Você não receberá mais avisos de imóveis compatíveis.</p></body></html>')
   })
 
   // GET / — admin only
