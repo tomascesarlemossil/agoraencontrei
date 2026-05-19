@@ -3404,3 +3404,34 @@ model PropertyDossier {
   @@index([companyId])
   @@map("property_dossiers")
 }
+
+// =============================================================================
+// KYC — verificação de identidade / antifraude
+// =============================================================================
+
+/// Verificação KYC de uma parte da negociação (comprador/vendedor). O fluxo
+/// é assistido; a integração com provedores (Unico, Idwall, Serasa) é
+/// plugada depois sem mudar o modelo.
+model KycCheck {
+  id          String   @id @default(cuid())
+  dealId      String
+  companyId   String
+  subjectName String
+  /// buyer | seller | other
+  subjectRole String   @default("buyer")
+  cpfCnpj     String?
+  /// pending | approved | rejected | review
+  status      String   @default("pending")
+  /// low | medium | high
+  riskLevel   String   @default("medium")
+  /// Checklist de verificação { itemKey: boolean }.
+  checklist   Json     @default("{}")
+  notes       String?
+  provider    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([dealId])
+  @@index([companyId])
+  @@map("kyc_checks")
+}
