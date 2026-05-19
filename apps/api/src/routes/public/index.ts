@@ -422,6 +422,51 @@ export default async function publicRoutes(app: FastifyInstance) {
     return reply.send(result)
   })
 
+  // GET /api/v1/public/properties/compare?ids=a,b,c — compare 2-4 listings
+  app.get('/properties/compare', async (req, reply) => {
+    const q = req.query as { ids?: string }
+    const ids = (q.ids ?? '').split(',').map(s => s.trim()).filter(Boolean).slice(0, 4)
+    if (ids.length < 2) {
+      return reply.status(400).send({ error: 'NOT_ENOUGH_IDS', message: 'Informe de 2 a 4 imóveis para comparar.' })
+    }
+
+    const rows = await app.prisma.property.findMany({
+      where: { id: { in: ids }, status: 'ACTIVE', authorizedPublish: true },
+      select: PUBLIC_PROPERTY_SELECT,
+    })
+    if (rows.length < 2) {
+      return reply.status(404).send({ error: 'NOT_FOUND', message: 'Imóveis não encontrados ou indisponíveis.' })
+    }
+    const properties = rows.map(applyLocationPrivacy)
+
+    // Rule-based analysis — não depende de IA, funciona sempre.
+    const analysis = properties.map(p => {
+      const price = Number(p.price ?? 0)
+      const rent  = Number(p.priceRent ?? 0)
+      const area  = Number(p.builtArea ?? 0) || Number(p.totalArea ?? 0) || Number(p.landArea ?? 0)
+      const pricePerSqm = price > 0 && area > 0 ? price / area : null
+      // Liquidez de moradia: cômodos e espaço.
+      const livability = (p.bedrooms ?? 0) * 2 + (p.suites ?? 0) * 3 +
+        (p.bathrooms ?? 0) + (p.parkingSpaces ?? 0) * 1.5 + (area > 0 ? area / 50 : 0)
+      // Aluguel/preço — yield bruto mensal.
+      const grossYield = price > 0 && rent > 0 ? (rent / price) * 100 : 0
+      return { id: p.id, pricePerSqm, livability, grossYield }
+    })
+
+    const withSqm = analysis.filter(a => a.pricePerSqm != null)
+    const bestToLive = [...analysis].sort((a, b) => b.livability - a.livability)[0]?.id ?? null
+    const bestToInvest = (withSqm.length
+      ? [...withSqm].sort((a, b) =>
+          (b.grossYield - a.grossYield) || (a.pricePerSqm! - b.pricePerSqm!))[0]
+      : [...analysis].sort((a, b) => b.grossYield - a.grossYield)[0])?.id ?? null
+
+    return reply.send({
+      properties,
+      analysis,
+      verdict: { bestToLive, bestToInvest },
+    })
+  })
+
   // GET /api/v1/public/properties/:slug — single property detail
   app.get('/properties/:slug', async (req, reply) => {
     const { slug } = req.params as { slug: string }

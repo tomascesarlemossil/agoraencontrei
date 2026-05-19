@@ -30,10 +30,12 @@ type Row = {
 const ROWS: Row[] = [
   { label: 'Preco de Venda', key: 'price', format: (v) => v ? fmt.format(Number(v)) : '—', highlight: 'lower' },
   { label: 'Aluguel', key: 'priceRent', format: (v) => v ? `${fmt.format(Number(v))}/mes` : '—', highlight: 'lower' },
+  { label: 'Valor por m2', key: '_pricePerSqm', format: (v) => v ? fmt.format(Number(v)) : '—', highlight: 'lower' },
+  { label: 'Rentab. aluguel (a.m.)', key: '_grossYield', format: (v) => v > 0 ? `${Number(v).toFixed(2)}%` : '—', highlight: 'higher' },
   { label: 'Condominio', key: 'condoFee', format: (v) => v ? fmt.format(Number(v)) : '—', highlight: 'lower' },
   { label: 'IPTU', key: 'iptu', format: (v) => v ? fmt.format(Number(v)) : '—', highlight: 'lower' },
   { label: 'Area Total', key: 'totalArea', format: (v) => v ? `${v} m2` : '—', highlight: 'higher' },
-  { label: 'Area Util', key: 'usableArea', format: (v) => v ? `${v} m2` : '—', highlight: 'higher' },
+  { label: 'Area Construida', key: 'builtArea', format: (v) => v ? `${v} m2` : '—', highlight: 'higher' },
   { label: 'Quartos', key: 'bedrooms', format: (v) => v > 0 ? String(v) : '—', highlight: 'higher' },
   { label: 'Banheiros', key: 'bathrooms', format: (v) => v > 0 ? String(v) : '—', highlight: 'higher' },
   { label: 'Vagas', key: 'parkingSpaces', format: (v) => v > 0 ? String(v) : '—', highlight: 'higher' },
@@ -62,6 +64,7 @@ function getBestIndex(properties: any[], key: string, mode: 'lower' | 'higher'):
 export default function CompararPage() {
   const { compareIds, hydrated, clearCompare } = useCompare()
   const [properties, setProperties] = useState<any[]>([])
+  const [verdict, setVerdict] = useState<{ bestToLive: string | null; bestToInvest: string | null } | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
 
@@ -70,6 +73,7 @@ export default function CompararPage() {
 
     if (compareIds.length < 2) {
       setProperties([])
+      setVerdict(null)
       setLoading(false)
       return
     }
@@ -78,14 +82,24 @@ export default function CompararPage() {
       setLoading(true)
       setError(false)
       try {
-        const ids = compareIds.join(',')
-        const res = await fetch(`${API_URL}/api/v1/public/properties?ids=${ids}`)
+        const ids = compareIds.slice(0, 4).join(',')
+        const res = await fetch(`${API_URL}/api/v1/public/properties/compare?ids=${ids}`)
         if (!res.ok) throw new Error('Failed to fetch')
         const data = await res.json()
-        setProperties(data.data ?? [])
+        // Merge the rule-based analysis (valor/m², yield) onto each property.
+        const analysisById = new Map(
+          (data.analysis ?? []).map((a: any) => [a.id, a]),
+        )
+        const merged = (data.properties ?? []).map((p: any) => {
+          const a: any = analysisById.get(p.id)
+          return { ...p, _pricePerSqm: a?.pricePerSqm ?? null, _grossYield: a?.grossYield ?? 0 }
+        })
+        setProperties(merged)
+        setVerdict(data.verdict ?? null)
       } catch {
         setError(true)
         setProperties([])
+        setVerdict(null)
       } finally {
         setLoading(false)
       }
@@ -186,6 +200,28 @@ export default function CompararPage() {
           >
             Explorar imoveis
           </Link>
+        </div>
+      )}
+
+      {/* Verdict cards */}
+      {!loading && !error && properties.length >= 2 && verdict && (
+        <div className="grid gap-3 sm:grid-cols-2 mb-6">
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
+            <p className="text-xs font-semibold uppercase tracking-wider text-emerald-700">
+              Melhor para morar
+            </p>
+            <p className="mt-1 text-sm font-medium text-emerald-900">
+              {properties.find(p => p.id === verdict.bestToLive)?.title ?? '—'}
+            </p>
+          </div>
+          <div className="rounded-xl border border-blue-200 bg-blue-50 p-4">
+            <p className="text-xs font-semibold uppercase tracking-wider text-blue-700">
+              Melhor para investir
+            </p>
+            <p className="mt-1 text-sm font-medium text-blue-900">
+              {properties.find(p => p.id === verdict.bestToInvest)?.title ?? '—'}
+            </p>
+          </div>
         </div>
       )}
 
