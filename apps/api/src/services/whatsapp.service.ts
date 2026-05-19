@@ -6,15 +6,20 @@ import { env } from '../utils/env.js'
 
 const BASE = 'https://graph.facebook.com/v19.0'
 
-async function call<T>(path: string, body: unknown): Promise<T> {
-  if (!env.WHATSAPP_TOKEN || !env.WHATSAPP_PHONE_ID) {
+/** Per-tenant WhatsApp credentials — resolve via getIntegrationConfig('whatsapp'). */
+export interface WhatsAppConfig { token?: string; phoneId?: string }
+
+async function call<T>(path: string, body: unknown, cfg?: WhatsAppConfig): Promise<T> {
+  const token   = cfg?.token   || env.WHATSAPP_TOKEN
+  const phoneId = cfg?.phoneId || env.WHATSAPP_PHONE_ID
+  if (!token || !phoneId) {
     throw new Error('WhatsApp credentials not configured')
   }
 
-  const res = await fetch(`${BASE}/${env.WHATSAPP_PHONE_ID}${path}`, {
+  const res = await fetch(`${BASE}/${phoneId}${path}`, {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${env.WHATSAPP_TOKEN}`,
+      Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(body),
@@ -29,23 +34,23 @@ async function call<T>(path: string, body: unknown): Promise<T> {
 }
 
 export const whatsappService = {
-  sendText: (to: string, text: string) =>
+  sendText: (to: string, text: string, cfg?: WhatsAppConfig) =>
     call('/messages', {
       messaging_product: 'whatsapp',
       to,
       type: 'text',
       text: { body: text, preview_url: false },
-    }),
+    }, cfg),
 
-  sendTemplate: (to: string, name: string, lang = 'pt_BR', components: unknown[] = []) =>
+  sendTemplate: (to: string, name: string, lang = 'pt_BR', components: unknown[] = [], cfg?: WhatsAppConfig) =>
     call('/messages', {
       messaging_product: 'whatsapp',
       to,
       type: 'template',
       template: { name, language: { code: lang }, components },
-    }),
+    }, cfg),
 
-  sendInteractive: (to: string, body: string, buttons: { id: string; title: string }[]) =>
+  sendInteractive: (to: string, body: string, buttons: { id: string; title: string }[], cfg?: WhatsAppConfig) =>
     call('/messages', {
       messaging_product: 'whatsapp',
       to,
@@ -60,7 +65,7 @@ export const whatsappService = {
           })),
         },
       },
-    }),
+    }, cfg),
 
   markRead: (messageId: string) =>
     call('/messages', {

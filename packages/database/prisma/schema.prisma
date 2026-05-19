@@ -3182,3 +3182,29 @@ model Notification {
   @@index([userId, read])
   @@map("notifications")
 }
+
+// =============================================================================
+// INTEGRATION CREDENTIALS
+// =============================================================================
+
+/// Per-tenant integration credentials (WhatsApp, Asaas, Cloudinary, SMTP, …).
+/// The integration-config service resolves a tenant's own credentials here
+/// first and falls back to the platform-wide env vars when absent.
+model IntegrationCredential {
+  id           String    @id @default(cuid())
+  companyId    String
+  /// whatsapp | asaas | cloudinary | smtp | google_maps | instagram | openai
+  provider     String
+  /// Provider credentials as key/value JSON (token, apiKey, phoneId, …).
+  credentials  Json      @default("{}")
+  isActive     Boolean   @default(true)
+  /// ok | failed | untested — result of the last connection test.
+  testStatus   String?
+  lastTestedAt DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@unique([companyId, provider])
+  @@index([companyId])
+  @@map("integration_credentials")
+}
