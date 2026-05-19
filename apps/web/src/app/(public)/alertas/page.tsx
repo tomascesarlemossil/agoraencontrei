@@ -30,7 +30,9 @@ const PURPOSES = [
 export default function AlertasPage() {
   const [form, setForm] = useState({
     email: '',
+    name: '',
     city: '',
+    neighborhood: '',
     type: '',
     purpose: '',
     minPrice: '',
@@ -48,7 +50,9 @@ export default function AlertasPage() {
 
     try {
       const payload: Record<string, unknown> = { email: form.email }
+      if (form.name) payload.name = form.name
       if (form.city) payload.city = form.city
+      if (form.neighborhood) payload.neighborhood = form.neighborhood
       if (form.type) payload.type = form.type
       if (form.purpose) payload.purpose = form.purpose
       if (form.minPrice) payload.minPrice = Number(form.minPrice)
@@ -130,7 +134,7 @@ export default function AlertasPage() {
               </p>
               <button
                 onClick={() => {
-                  setForm({ email: '', city: '', type: '', purpose: '', minPrice: '', maxPrice: '', bedrooms: '' })
+                  setForm({ email: '', name: '', city: '', neighborhood: '', type: '', purpose: '', minPrice: '', maxPrice: '', bedrooms: '' })
                   setSubmitted(false)
                 }}
                 className="mt-6 px-6 py-2 rounded-xl text-sm font-semibold text-white transition-all hover:opacity-90"
@@ -141,6 +145,21 @@ export default function AlertasPage() {
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-5">
+              {/* Name */}
+              <div>
+                <label htmlFor="name" className="block text-sm font-medium mb-1.5" style={{ color: '#1B2B5B' }}>
+                  Seu nome
+                </label>
+                <input
+                  id="name"
+                  type="text"
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  className={inputClass}
+                  placeholder="Como podemos te chamar"
+                />
+              </div>
+
               {/* Email */}
               <div>
                 <label htmlFor="email" className="block text-sm font-medium mb-1.5" style={{ color: '#1B2B5B' }}>
@@ -173,6 +192,21 @@ export default function AlertasPage() {
                     <option key={c} value={c}>{c}</option>
                   ))}
                 </select>
+              </div>
+
+              {/* Neighborhood */}
+              <div>
+                <label htmlFor="neighborhood" className="block text-sm font-medium mb-1.5" style={{ color: '#1B2B5B' }}>
+                  Bairro
+                </label>
+                <input
+                  id="neighborhood"
+                  type="text"
+                  value={form.neighborhood}
+                  onChange={(e) => setForm({ ...form, neighborhood: e.target.value })}
+                  className={inputClass}
+                  placeholder="Bairro de interesse (opcional)"
+                />
               </div>
 
               {/* Type & Purpose row */}

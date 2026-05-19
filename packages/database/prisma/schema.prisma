@@ -1871,21 +1871,29 @@ model LegalCaseUpdate {
 
 // ── Alertas de Imóveis (notificações para interessados) ──────────────────────
 model PropertyAlert {
-  id        String   @id @default(cuid())
-  email     String
-  city      String?
-  type      String?  // HOUSE, APARTMENT, etc.
-  purpose   String?  // SALE, RENT
-  minPrice  Decimal? @db.Decimal(12, 2)
-  maxPrice  Decimal? @db.Decimal(12, 2)
-  bedrooms  Int?
-  token     String?  @unique @default(cuid())  // token para cancelar alerta
-  active    Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id            String   @id @default(cuid())
+  email         String
+  name          String?
+  phone         String?
+  /// Escopo de tenant: null = casa o imóvel de qualquer empresa.
+  companyId     String?
+  city          String?
+  neighborhood  String?
+  type          String?  // HOUSE, APARTMENT, etc.
+  purpose       String?  // SALE, RENT
+  minPrice      Decimal? @db.Decimal(12, 2)
+  maxPrice      Decimal? @db.Decimal(12, 2)
+  bedrooms      Int?
+  token         String?  @unique @default(cuid())  // token para cancelar alerta
+  active        Boolean  @default(true)
+  /// Última vez que um imóvel compatível foi notificado a este perfil.
+  lastMatchedAt DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   @@index([email])
   @@index([city])
+  @@index([companyId])
   @@map("property_alerts")
 }
 
