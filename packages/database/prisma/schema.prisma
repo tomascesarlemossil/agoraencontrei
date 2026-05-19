@@ -3210,3 +3210,33 @@ model IntegrationCredential {
   @@index([companyId])
   @@map("integration_credentials")
 }
+
+// =============================================================================
+// EXCHANGE / PERMUTA
+// =============================================================================
+
+/// Central de permutas — bens que um cliente oferece em troca de um imóvel.
+/// Cruzado com imóveis marcados como allowExchange.
+model ExchangeOffer {
+  id               String   @id @default(cuid())
+  companyId        String?
+  name             String
+  email            String
+  phone            String?
+  /// vehicle | property | land | credit | machinery | other
+  offerType        String
+  offerDescription String
+  offerValue       Decimal? @db.Decimal(12, 2)
+  /// O que o cliente deseja em troca.
+  wantedType       String?
+  wantedCity       String?
+  wantedMaxValue   Decimal? @db.Decimal(12, 2)
+  /// active | matched | closed
+  status           String   @default("active")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([status])
+  @@index([companyId])
+  @@map("exchange_offers")
+}
