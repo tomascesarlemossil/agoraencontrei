@@ -3240,3 +3240,84 @@ model ExchangeOffer {
   @@index([companyId])
   @@map("exchange_offers")
 }
+
+// =============================================================================
+// LOTEADORA — Loteamentos, Lotes & Reservas
+// =============================================================================
+
+enum LoteStatus {
+  AVAILABLE     // Disponível
+  RESERVED      // Reservado
+  NEGOTIATING   // Em negociação
+  SOLD          // Vendido
+  BLOCKED       // Bloqueado
+}
+
+/// Empreendimento de loteamento (loteamento, condomínio de lotes, chácaras).
+model Loteamento {
+  id             String   @id @default(cuid())
+  companyId      String
+  name           String
+  slug           String
+  description    String?
+  city           String?
+  state          String?
+  coverImage     String?
+  /// planning | launching | selling | sold_out
+  status         String   @default("selling")
+  /// Itens de infraestrutura entregues (água, energia, portaria, asfalto…).
+  infrastructure String[] @default([])
+  lotes          Lote[]
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([companyId, slug])
+  @@index([companyId])
+  @@map("loteamentos")
+}
+
+/// Lote individual dentro de um loteamento. mapColumn/mapRow posicionam o
+/// lote no mapa interativo (grade de quadras).
+model Lote {
+  id           String        @id @default(cuid())
+  loteamentoId String
+  loteamento   Loteamento    @relation(fields: [loteamentoId], references: [id], onDelete: Cascade)
+  quadra       String?
+  numero       String
+  area         Float?
+  frente       Float?
+  fundo        Float?
+  price        Decimal?      @db.Decimal(12, 2)
+  status       LoteStatus    @default(AVAILABLE)
+  mapColumn    Int?
+  mapRow       Int?
+  description  String?
+  sunPosition  String?
+  notes        String?
+  reservas     LoteReserva[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@index([loteamentoId])
+  @@index([loteamentoId, status])
+  @@map("lotes")
+}
+
+/// Reserva online de um lote — expira automaticamente após expiresAt.
+model LoteReserva {
+  id        String   @id @default(cuid())
+  loteId    String
+  lote      Lote     @relation(fields: [loteId], references: [id], onDelete: Cascade)
+  name      String
+  email     String
+  phone     String?
+  /// pending | confirmed | expired | cancelled
+  status    String   @default("pending")
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([loteId])
+  @@index([status, expiresAt])
+  @@map("lote_reservas")
+}
