@@ -439,4 +439,58 @@ export default async function dealsRoutes(app: FastifyInstance) {
       })
     }
   })
+
+  // ── GET /:id/notarial — processo cartorial da negociação ───────────────
+  app.get('/:id/notarial', { schema: { tags: ['deals'] } }, async (req, reply) => {
+    const { id } = req.params as { id: string }
+    const deal = await app.prisma.deal.findFirst({ where: { id, companyId: req.user.cid } })
+    if (!deal) return reply.status(404).send({ error: 'NOT_FOUND' })
+    const process = await app.prisma.notarialProcess.findUnique({ where: { dealId: id } })
+    return reply.send({ data: process })
+  })
+
+  // ── PUT /:id/notarial — cria ou atualiza o processo cartorial ──────────
+  app.put('/:id/notarial', { schema: { tags: ['deals'] } }, async (req, reply) => {
+    const { id } = req.params as { id: string }
+    const body = z.object({
+      actType:          z.enum(['ESCRITURA_COMPRA_VENDA', 'ESCRITURA_PERMUTA', 'PROCURACAO', 'ESCRITURA_CESSAO']).optional(),
+      notaryOffice:     z.string().max(200).optional(),
+      registryOffice:   z.string().max(200).optional(),
+      status:           z.enum(['preparing', 'at_notary', 'deed_signed', 'at_registry', 'registered']).optional(),
+      deedFileUrl:      z.string().max(1000).optional(),
+      registryProtocol: z.string().max(120).optional(),
+      checklist:        z.record(z.boolean()).optional(),
+      notes:            z.string().max(4000).optional(),
+    }).parse(req.body)
+
+    const deal = await app.prisma.deal.findFirst({ where: { id, companyId: req.user.cid } })
+    if (!deal) return reply.status(404).send({ error: 'NOT_FOUND' })
+
+    const process = await app.prisma.notarialProcess.upsert({
+      where: { dealId: id },
+      create: {
+        dealId: id,
+        companyId: req.user.cid,
+        actType: body.actType ?? 'ESCRITURA_COMPRA_VENDA',
+        notaryOffice: body.notaryOffice ?? null,
+        registryOffice: body.registryOffice ?? null,
+        status: body.status ?? 'preparing',
+        deedFileUrl: body.deedFileUrl ?? null,
+        registryProtocol: body.registryProtocol ?? null,
+        checklist: body.checklist ?? {},
+        notes: body.notes ?? null,
+      },
+      update: {
+        ...(body.actType !== undefined && { actType: body.actType }),
+        ...(body.notaryOffice !== undefined && { notaryOffice: body.notaryOffice }),
+        ...(body.registryOffice !== undefined && { registryOffice: body.registryOffice }),
+        ...(body.status !== undefined && { status: body.status }),
+        ...(body.deedFileUrl !== undefined && { deedFileUrl: body.deedFileUrl }),
+        ...(body.registryProtocol !== undefined && { registryProtocol: body.registryProtocol }),
+        ...(body.checklist !== undefined && { checklist: body.checklist }),
+        ...(body.notes !== undefined && { notes: body.notes }),
+      },
+    })
+    return reply.send({ data: process })
+  })
 }

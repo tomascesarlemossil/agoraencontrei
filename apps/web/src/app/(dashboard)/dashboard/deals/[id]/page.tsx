@@ -26,6 +26,21 @@ const PAYMENT_STATUS: Record<string, string> = {
   cancelled: 'bg-white/10 text-white/50',
 }
 
+const NOTARIAL_STATUS: [string, string][] = [
+  ['preparing', 'Preparando dossiê'],
+  ['at_notary', 'No tabelionato'],
+  ['deed_signed', 'Escritura assinada'],
+  ['at_registry', 'No registro'],
+  ['registered', 'Registrado'],
+]
+const NOTARIAL_DOCS: [string, string][] = [
+  ['matricula', 'Matrícula atualizada'],
+  ['certidoes_partes', 'Certidões das partes'],
+  ['certidao_onus', 'Certidão de ônus reais'],
+  ['itbi', 'ITBI recolhido'],
+  ['minuta', 'Minuta conferida'],
+]
+
 const STATUS_MAP: Record<string, string> = {
   OPEN:        'bg-white/10 text-white/60',
   IN_PROGRESS: 'bg-blue-500/20 text-blue-400',
@@ -107,6 +122,7 @@ export default function DealDetailPage() {
   const [commSplit, setCommSplit] = useState('100')
   const [signalAmount, setSignalAmount] = useState('')
   const [signalType, setSignalType] = useState('PIX')
+  const [notarialDraft, setNotarialDraft] = useState<Record<string, any> | null>(null)
 
   const canManageComm = ['SUPER_ADMIN','ADMIN','MANAGER','FINANCIAL'].includes(user?.role ?? '')
 
@@ -174,6 +190,35 @@ export default function DealDetailPage() {
     },
   })
 
+  const notarialQuery = useQuery({
+    queryKey: ['deal-notarial', id],
+    queryFn: async () => {
+      const token = await getValidToken()
+      const res = await fetch(`${API_URL}/api/v1/deals/${id}/notarial`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (!res.ok) return { data: null }
+      return res.json() as Promise<{ data: Record<string, any> | null }>
+    },
+  })
+
+  const notarialMutation = useMutation({
+    mutationFn: async (payload: Record<string, unknown>) => {
+      const token = await getValidToken()
+      const res = await fetch(`${API_URL}/api/v1/deals/${id}/notarial`, {
+        method: 'PUT',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+      if (!res.ok) throw new Error('Falha ao salvar')
+      return res.json()
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['deal-notarial', id] })
+      setNotarialDraft(null)
+    },
+  })
+
   const stageMutation = useMutation({
     mutationFn: async (stage: string) => {
       const token = await getValidToken()
@@ -224,6 +269,15 @@ export default function DealDetailPage() {
   const currentStage = TRANSACTION_STAGES[currentStageIdx]
   const currentItems = currentStage.items.map((label, i) => ({ key: `${currentStage.key}-${i}`, label }))
   const currentDone = currentItems.every(it => checklist[it.key])
+
+  // Cartório & Registro — formulário derivado da query, editável via draft.
+  const NOTARIAL_DEFAULTS: Record<string, any> = {
+    actType: 'ESCRITURA_COMPRA_VENDA', notaryOffice: '', registryOffice: '',
+    status: 'preparing', deedFileUrl: '', registryProtocol: '', checklist: {},
+  }
+  const nf = notarialDraft ?? notarialQuery.data?.data ?? NOTARIAL_DEFAULTS
+  const setNf = (patch: Record<string, unknown>) => setNotarialDraft({ ...nf, ...patch })
+  const nfChecklist: Record<string, boolean> = nf.checklist ?? {}
 
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">
@@ -429,6 +483,81 @@ export default function DealDetailPage() {
                 </div>
               ))}
             </div>
+          </div>
+
+          {/* Cartório & Registro */}
+          <div className="bg-white/5 rounded-xl border border-white/10 p-4">
+            <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-2">
+              Cartório &amp; Registro
+            </h3>
+
+            <div className="space-y-2">
+              <div>
+                <Label className="text-xs text-white/50">Status</Label>
+                <Select value={nf.status} onValueChange={(v: string) => setNf({ status: v })}>
+                  <SelectTrigger className="bg-white/5 border-white/10 text-white text-sm h-8">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {NOTARIAL_STATUS.map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-xs text-white/50">Tabelionato</Label>
+                <Input value={nf.notaryOffice ?? ''} onChange={(e) => setNf({ notaryOffice: e.target.value })}
+                  placeholder="Tabelionato de notas" className="bg-white/5 border-white/10 text-white text-sm h-8" />
+              </div>
+              <div>
+                <Label className="text-xs text-white/50">Cartório de Registro de Imóveis</Label>
+                <Input value={nf.registryOffice ?? ''} onChange={(e) => setNf({ registryOffice: e.target.value })}
+                  placeholder="Ex: 1º RI de Franca/SP" className="bg-white/5 border-white/10 text-white text-sm h-8" />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label className="text-xs text-white/50">Protocolo de registro</Label>
+                  <Input value={nf.registryProtocol ?? ''} onChange={(e) => setNf({ registryProtocol: e.target.value })}
+                    className="bg-white/5 border-white/10 text-white text-sm h-8" />
+                </div>
+                <div>
+                  <Label className="text-xs text-white/50">URL da escritura</Label>
+                  <Input value={nf.deedFileUrl ?? ''} onChange={(e) => setNf({ deedFileUrl: e.target.value })}
+                    className="bg-white/5 border-white/10 text-white text-sm h-8" />
+                </div>
+              </div>
+            </div>
+
+            <p className="mt-3 text-[11px] font-semibold uppercase tracking-wider text-white/40">Dossiê documental</p>
+            <div className="mt-1 space-y-1">
+              {NOTARIAL_DOCS.map(([key, label]) => (
+                <label key={key} className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={!!nfChecklist[key]}
+                    onChange={() => setNf({ checklist: { ...nfChecklist, [key]: !nfChecklist[key] } })}
+                    className="h-3.5 w-3.5 rounded border-white/20 bg-white/5 accent-yellow-500"
+                  />
+                  <span className={cn('text-xs', nfChecklist[key] ? 'text-white/40 line-through' : 'text-white/70')}>
+                    {label}
+                  </span>
+                </label>
+              ))}
+            </div>
+
+            <Button
+              size="sm" className="mt-3 w-full text-xs h-8"
+              disabled={!notarialDraft || notarialMutation.isPending}
+              onClick={() => notarialMutation.mutate({
+                actType: nf.actType, notaryOffice: nf.notaryOffice, registryOffice: nf.registryOffice,
+                status: nf.status, deedFileUrl: nf.deedFileUrl, registryProtocol: nf.registryProtocol,
+                checklist: nfChecklist,
+              })}
+            >
+              {notarialMutation.isPending ? 'Salvando...' : 'Salvar processo cartorial'}
+            </Button>
+            <p className="mt-1.5 text-[10px] text-white/40">
+              Fluxo assistido — integração com e-Notariado / RI Digital depende de convênio.
+            </p>
           </div>
 
           {/* Properties */}
