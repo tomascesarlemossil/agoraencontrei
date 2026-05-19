@@ -792,4 +792,49 @@ export default async function propertiesRoutes(app: FastifyInstance) {
 
     return reply.send({ total, active, sold, rented, byType, byCityTop5 })
   })
+
+  // ── GET /:id/dossier — dossiê jurídico do imóvel ───────────────────────
+  app.get('/:id/dossier', { preHandler: [app.authenticate] }, async (req, reply) => {
+    const { id } = req.params as { id: string }
+    const property = await app.prisma.property.findFirst({
+      where: { id, companyId: req.user.cid },
+      select: { id: true },
+    })
+    if (!property) return reply.status(404).send({ error: 'NOT_FOUND' })
+    const dossier = await app.prisma.propertyDossier.findUnique({ where: { propertyId: id } })
+    return reply.send({ data: dossier })
+  })
+
+  // ── PUT /:id/dossier — cria ou atualiza o dossiê jurídico ──────────────
+  app.put('/:id/dossier', { preHandler: [app.authenticate] }, async (req, reply) => {
+    const { id } = req.params as { id: string }
+    const body = z.object({
+      riskLevel: z.enum(['green', 'yellow', 'red', 'gray']).optional(),
+      checklist: z.record(z.boolean()).optional(),
+      notes:     z.string().max(4000).optional(),
+    }).parse(req.body)
+
+    const property = await app.prisma.property.findFirst({
+      where: { id, companyId: req.user.cid },
+      select: { id: true },
+    })
+    if (!property) return reply.status(404).send({ error: 'NOT_FOUND' })
+
+    const dossier = await app.prisma.propertyDossier.upsert({
+      where: { propertyId: id },
+      create: {
+        propertyId: id,
+        companyId: req.user.cid,
+        riskLevel: body.riskLevel ?? 'gray',
+        checklist: body.checklist ?? {},
+        notes: body.notes ?? null,
+      },
+      update: {
+        ...(body.riskLevel !== undefined && { riskLevel: body.riskLevel }),
+        ...(body.checklist !== undefined && { checklist: body.checklist }),
+        ...(body.notes !== undefined && { notes: body.notes }),
+      },
+    })
+    return reply.send({ data: dossier })
+  })
 }

@@ -3381,3 +3381,26 @@ model NotarialProcess {
   @@index([companyId])
   @@map("notarial_processes")
 }
+
+// =============================================================================
+// DOSSIÊ JURÍDICO DO IMÓVEL — "Dossiê Seguro"
+// =============================================================================
+
+/// Raio-x jurídico/documental de um imóvel: checklist de documentos e um
+/// selo de risco (green/yellow/red/gray) para venda segura.
+model PropertyDossier {
+  id         String   @id @default(cuid())
+  propertyId String   @unique
+  companyId  String
+  /// green = pronto · yellow = atenção · red = risco alto · gray = incompleto
+  riskLevel  String   @default("gray")
+  /// Checklist documental { itemKey: boolean }.
+  checklist  Json     @default("{}")
+  notes      String?
+  aiSummary  String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([companyId])
+  @@map("property_dossiers")
+}

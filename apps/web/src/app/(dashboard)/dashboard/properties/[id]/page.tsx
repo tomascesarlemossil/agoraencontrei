@@ -27,6 +27,7 @@ import { revalidatePublicPages, PAGES } from '@/lib/revalidate'
 import { PropertyImageLightbox } from '@/components/dashboard/PropertyImageLightbox'
 import { PropertyFeaturesEditor } from '@/components/dashboard/PropertyFeaturesEditor'
 import { SocialPostPanel } from './SocialPostPanel'
+import { LegalDossier } from './LegalDossier'
 import { PhotoEditorPanel } from '@/components/dashboard/PhotoEditorPanel'
 import { MediaEditorModal } from '@/components/dashboard/MediaEditorModal'
 
@@ -1460,6 +1461,9 @@ export default function PropertyDetailPage() {
 
           {/* Leads History */}
           <LeadsHistoryPanel propertyId={p.id} />
+
+          {/* Dossiê Jurídico — selo de risco e checklist documental */}
+          <LegalDossier propertyId={p.id} />
 
           {/* Social Media Publishing Panel */}
           <SocialPostPanel propertyId={p.id} />
