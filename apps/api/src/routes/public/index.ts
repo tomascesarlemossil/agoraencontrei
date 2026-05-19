@@ -783,6 +783,45 @@ export default async function publicRoutes(app: FastifyInstance) {
       emitSSE({ type: 'lead_created', companyId: company.id, payload: { id: lead.id, name: lead.name, source: 'proposta_online' } })
     } catch { /* non-fatal */ }
 
+    // Persist a proper Proposal record so the online offer surfaces in the
+    // proposals pipeline / notification center — not only as a lead.
+    let proposalId: string | null = null
+    if (propertyId && proposta?.valorProposta) {
+      const created = await app.prisma.proposal.create({
+        data: {
+          companyId: company.id,
+          propertyId,
+          leadId: lead.id,
+          contactId: contact.id,
+          offerValue: proposta.valorProposta / 100,
+          paymentMethod: proposta.formaPagamento ?? null,
+          downPayment: proposta.entradaValor ? proposta.entradaValor / 100 : null,
+          financingAmount: proposta.bancoFinanciamento && proposta.valorProposta
+            ? (proposta.valorProposta - (proposta.entradaValor ?? 0)) / 100
+            : null,
+          status: 'sent',
+          notes,
+          metadata: (proposta ?? {}) as object,
+        },
+      }).catch(() => null)
+      proposalId = created?.id ?? null
+    }
+
+    // In-app notification (notification center + platform admins). Email is
+    // skipped here — the block below already sends a dedicated proposal email.
+    try {
+      const { notify } = await import('../../services/notification.service.js')
+      await notify({
+        prisma: app.prisma,
+        companyId: company.id,
+        type: 'proposal_received',
+        title: `Nova proposta online: ${name}`,
+        body: notes,
+        payload: { leadId: lead.id, proposalId, propertyId: propertyId ?? null, phone },
+        email: false,
+      })
+    } catch { /* non-fatal */ }
+
     // Email notification for proposta
     try {
       const { sendEmail, isEmailConfigured } = await import('../../services/email.service.js')
