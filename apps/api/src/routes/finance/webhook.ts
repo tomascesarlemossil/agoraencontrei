@@ -225,7 +225,7 @@ export default async function asaasWebhookRoutes(app: FastifyInstance) {
                 await scheduleRepasse(app.prisma as any, {
                   tenantId: tenant?.id || undefined,
                   companyId: contract.companyId,
-                  contractId: rental.contractId,
+                  contractId: rental.contractId ?? undefined,
                   rentalId,
                   landlordId: contract.landlordId,
                   grossValue: payment.value,

@@ -1,5 +1,23 @@
 import type { FastifyInstance } from 'fastify'
 
+interface ViaCepResponse {
+  cep?: string
+  logradouro?: string
+  bairro?: string
+  localidade?: string
+  uf?: string
+  erro?: boolean
+  [key: string]: unknown
+}
+
+interface BrasilApiCepResponse {
+  cep?: string
+  street?: string
+  neighborhood?: string
+  city?: string
+  state?: string
+}
+
 export default async function cepRoutes(app: FastifyInstance) {
   // GET /api/v1/cep/:cep — Proxy para ViaCEP (evita CORS no browser)
   app.get('/:cep', async (req, reply) => {
@@ -24,7 +42,7 @@ export default async function cepRoutes(app: FastifyInstance) {
         }).catch(() => null)
 
         if (res2 && res2.ok) {
-          const data2 = await res2.json()
+          const data2 = await res2.json() as BrasilApiCepResponse
           return reply.send({
             cep: data2.cep,
             logradouro: data2.street || '',
@@ -38,7 +56,7 @@ export default async function cepRoutes(app: FastifyInstance) {
         return reply.status(404).send({ error: 'CEP_NOT_FOUND' })
       }
 
-      const data = await res.json()
+      const data = await res.json() as ViaCepResponse
 
       if (data.erro) {
         // Fallback: tentar BrasilAPI
@@ -48,7 +66,7 @@ export default async function cepRoutes(app: FastifyInstance) {
         }).catch(() => null)
 
         if (res2 && res2.ok) {
-          const data2 = await res2.json()
+          const data2 = await res2.json() as BrasilApiCepResponse
           return reply.send({
             cep: data2.cep,
             logradouro: data2.street || '',
@@ -72,7 +90,7 @@ export default async function cepRoutes(app: FastifyInstance) {
         })
 
         if (res2.ok) {
-          const data2 = await res2.json()
+          const data2 = await res2.json() as BrasilApiCepResponse
           return reply.send({
             cep: data2.cep,
             logradouro: data2.street || '',

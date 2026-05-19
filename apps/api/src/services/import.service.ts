@@ -378,7 +378,7 @@ O campo "confidence" deve ser de 0 a 1.`
 
     if (!res.ok) return fallbackColumnMapping(headers)
 
-    const data = await res.json()
+    const data = await res.json() as { content?: Array<{ text?: string }> }
     const text = data.content?.[0]?.text || ''
     const jsonMatch = text.match(/\[[\s\S]*\]/)
     if (!jsonMatch) return fallbackColumnMapping(headers)
