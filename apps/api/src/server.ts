@@ -94,6 +94,7 @@ import tomasRoutes from './routes/tomas/index.js'
 import notificationsRoutes from './routes/notifications/index.js'
 import integrationsRoutes from './routes/integrations/index.js'
 import exchangeRoutes from './routes/exchange/index.js'
+import loteadoraRoutes from './routes/loteadora/index.js'
 import hunterRoutes from './routes/hunter/index.js'
 import affiliateRoutes from './routes/affiliates/index.js'
 import saasFinanceRoutes from './routes/saas-finance/index.js'
@@ -831,6 +832,7 @@ async function bootstrap() {
   await app.register(notificationsRoutes,    { prefix: '/api/v1/notifications' })
   await app.register(integrationsRoutes,     { prefix: '/api/v1/integrations' })
   await app.register(exchangeRoutes,         { prefix: '/api/v1/public/exchange' })
+  await app.register(loteadoraRoutes,        { prefix: '/api/v1/loteadora' })
   await app.register(hunterRoutes,           { prefix: '/api/v1/hunter' })
   await app.register(affiliateRoutes,        { prefix: '/api/v1/affiliates' })
   await app.register(saasFinanceRoutes,      { prefix: '/api/v1/saas-finance' })

@@ -50,6 +50,7 @@ import {
   ShoppingCart,
   ShieldAlert,
   Crosshair,
+  LandPlot,
   Brain,
   Clapperboard,
 } from 'lucide-react'
@@ -85,6 +86,7 @@ const midNavItems = [
   { href: '/dashboard/admin/master',         icon: ShieldAlert,     label: 'Admin Master',   highlight: true  },
   { href: '/dashboard/admin/tenants',        icon: Building2,       label: 'Parceiros & Tenants', highlight: true },
   { href: '/dashboard/hunter',              icon: Crosshair,       label: 'Hunter Mode',    highlight: true  },
+  { href: '/dashboard/loteadora',           icon: LandPlot,        label: 'Loteadora',      highlight: true  },
   { href: '/dashboard/afiliados',           icon: Users,           label: 'Afiliados',      highlight: true  },
   { href: '/dashboard/saas-financeiro',     icon: Landmark,        label: 'Financeiro SaaS',highlight: true  },
   { href: '/dashboard/master',             icon: Brain,           label: 'Master Intel',   highlight: true  },
