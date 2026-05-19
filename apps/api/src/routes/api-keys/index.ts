@@ -8,10 +8,14 @@
 
 import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
-import { createHash, randomBytes } from 'node:crypto'
+import { createHmac, randomBytes } from 'node:crypto'
+import { env } from '../../utils/env.js'
 
+// Keyed hash (HMAC) of an API key. The key is a 192-bit random token, so a
+// keyed digest is both correct and brute-force-proof — and, unlike a plain
+// hash, an attacker with DB access cannot precompute it without the secret.
 export function hashApiKey(raw: string): string {
-  return createHash('sha256').update(raw).digest('hex')
+  return createHmac('sha256', env.JWT_SECRET).update(raw).digest('hex')
 }
 
 const VALID_SCOPES = ['properties:read', 'properties:write', 'leads:write'] as const
