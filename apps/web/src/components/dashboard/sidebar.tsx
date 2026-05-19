@@ -81,6 +81,7 @@ const midNavItems = [
   { href: '/dashboard/site-factory',         icon: Palette,          label: 'Site Factory',   highlight: true  },
   { href: '/dashboard/crescer',              icon: ShoppingCart,     label: 'Crescer',        highlight: true  },
   { href: '/dashboard/admin/master',         icon: ShieldAlert,     label: 'Admin Master',   highlight: true  },
+  { href: '/dashboard/admin/tenants',        icon: Building2,       label: 'Parceiros & Tenants', highlight: true },
   { href: '/dashboard/hunter',              icon: Crosshair,       label: 'Hunter Mode',    highlight: true  },
   { href: '/dashboard/afiliados',           icon: Users,           label: 'Afiliados',      highlight: true  },
   { href: '/dashboard/saas-financeiro',     icon: Landmark,        label: 'Financeiro SaaS',highlight: true  },
