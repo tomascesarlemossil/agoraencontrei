@@ -370,8 +370,32 @@ export default function DocumentosPage() {
     }
   }
 
-  // ── print / download ────────────────────────────────────────────────────────
-  function handlePrint() {
+  // ── download ──────────────────────────────────────────────────────────────
+  function docFileName(ext: string) {
+    const date = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')
+    return `${selectedTemplate?.id ?? 'documento'}_${date}.${ext}`
+  }
+
+  // Word editável: HTML embrulhado no namespace Office faz o Word abrir o
+  // arquivo .doc como documento nativo e totalmente editável.
+  function handleDownloadWord() {
+    if (!generatedHtml) return
+    const officeNs = 'xmlns:o="urn:schemas-microsoft-com:office:office" ' +
+      'xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"'
+    const officeHtml = /<html/i.test(generatedHtml)
+      ? generatedHtml.replace(/<html(\s|>)/i, `<html ${officeNs}$1`)
+      : `<html ${officeNs}><head><meta charset="utf-8"></head><body>${generatedHtml}</body></html>`
+    const blob = new Blob(['﻿', officeHtml], { type: 'application/msword' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = docFileName('doc')
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  // PDF: abre a janela de impressão — o usuário escolhe "Salvar como PDF".
+  function handleDownloadPdf() {
     if (!generatedHtml) return
     const win = window.open('', '_blank')
     if (win) {
@@ -380,17 +404,6 @@ export default function DocumentosPage() {
       win.focus()
       setTimeout(() => win.print(), 500)
     }
-  }
-
-  function handleDownload() {
-    if (!generatedHtml) return
-    const blob = new Blob([generatedHtml], { type: 'text/html;charset=utf-8' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `${selectedTemplate?.id ?? 'documento'}_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.html`
-    a.click()
-    URL.revokeObjectURL(url)
   }
 
   // ── reset ───────────────────────────────────────────────────────────────────
@@ -408,11 +421,16 @@ export default function DocumentosPage() {
 
   // ── download helper for history items ────────────────────────────────────────
   function downloadHistoryItem(item: DocHistoryItem) {
-    const blob = new Blob([item.html], { type: 'text/html;charset=utf-8' })
+    const officeNs = 'xmlns:o="urn:schemas-microsoft-com:office:office" ' +
+      'xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"'
+    const officeHtml = /<html/i.test(item.html)
+      ? item.html.replace(/<html(\s|>)/i, `<html ${officeNs}$1`)
+      : `<html ${officeNs}><head><meta charset="utf-8"></head><body>${item.html}</body></html>`
+    const blob = new Blob(['﻿', officeHtml], { type: 'application/msword' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `${item.templateId}_${new Date(item.generatedAt).toLocaleDateString('pt-BR').replace(/\//g, '-')}.html`
+    a.download = `${item.templateId}_${new Date(item.generatedAt).toLocaleDateString('pt-BR').replace(/\//g, '-')}.doc`
     a.click()
     URL.revokeObjectURL(url)
   }
@@ -741,17 +759,17 @@ export default function DocumentosPage() {
                     Editar campos
                   </button>
                   <button
-                    onClick={handlePrint}
+                    onClick={handleDownloadPdf}
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 hover:border-white/20 text-xs text-white/60 hover:text-white transition-all"
                   >
-                    <Printer className="w-3.5 h-3.5" /> Imprimir
+                    <Printer className="w-3.5 h-3.5" /> PDF
                   </button>
                   <button
-                    onClick={handleDownload}
+                    onClick={handleDownloadWord}
                     className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-semibold transition-all hover:brightness-110"
                     style={{ background: 'linear-gradient(135deg, #C9A84C, #e8c66a)', color: '#1B2B5B' }}
                   >
-                    <Download className="w-3.5 h-3.5" /> Download
+                    <Download className="w-3.5 h-3.5" /> Baixar Word
                   </button>
                 </div>
               </div>
