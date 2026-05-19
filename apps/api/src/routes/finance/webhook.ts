@@ -17,6 +17,7 @@ import type { AsaasWebhookEvent } from '../../services/asaas.service.js'
 import { scheduleRepasse } from '../../services/repasse.service.js'
 import { safeStringEqual } from '../../utils/crypto-safe.js'
 import { notify } from '../../services/notification.service.js'
+import { dispatchWebhooks } from '../../services/outgoing-webhook.service.js'
 
 function isUniqueConstraintError(err: any): boolean {
   return err?.code === 'P2002'
@@ -282,6 +283,11 @@ export default async function asaasWebhookRoutes(app: FastifyInstance) {
                   payload: { dealId: deal.id, dealPaymentId: dealPayment.id },
                   email: false,
                 }).catch(() => {})
+
+                void dispatchWebhooks(app.prisma, deal.companyId, 'deal.payment_received', {
+                  dealId: deal.id, dealPaymentId: dealPayment.id,
+                  amount: Number(payment.value ?? dealPayment.amount), type: dealPayment.type,
+                })
               }
               app.log.info(`[asaas-webhook] DealPayment ${dealPayment.id} marked received`)
             }

@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { KeyRound, Loader2, Plus, Trash2, Copy, Check } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
+import { WebhooksSection } from './WebhooksSection'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 
@@ -183,6 +184,8 @@ export default function ApiKeysPage() {
 GET  ${API_URL}/public-api/v1/properties/:id
 POST ${API_URL}/public-api/v1/leads`}</pre>
         </div>
+
+        <WebhooksSection />
       </div>
     </div>
   )
