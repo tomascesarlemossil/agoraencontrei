@@ -464,6 +464,7 @@ export interface Deal {
   lead?: { id: string; name: string; status: string }
   expectedCloseAt?: string
   closedAt?: string
+  metadata?: Record<string, unknown>
   createdAt: string
   updatedAt: string
 }

@@ -27,6 +27,8 @@ const UpdateDealBody = z.object({
   contactId:       z.string().cuid().optional(),
   expectedCloseAt: z.string().optional(),
   closedAt:        z.string().optional(),
+  // Esteira de venda — checklist por etapa.
+  metadata:        z.record(z.any()).optional(),
 })
 
 const DealFilters = z.object({
