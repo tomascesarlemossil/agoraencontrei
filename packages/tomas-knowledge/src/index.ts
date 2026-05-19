@@ -9,6 +9,7 @@
 
 import { FRANCA_SUBMARKETS, FRANCA_MARKET_FACTS, FRANCA_VALUATION_RULES } from './franca-knowledge.js'
 import { LEMOS_COMPARABLES, CMA_CONFIDENCE_RULES } from './lemos-comparables.js'
+import { buildPlatformKnowledge } from './platform-knowledge.js'
 
 /** Build the canonical Tomás system prompt from typed modules */
 export function buildTomasSystemPrompt(): string {
@@ -75,21 +76,34 @@ Mínimo ${CMA_CONFIDENCE_RULES.minimumComparables} comparáveis para afirmar um 
 
 ${comparablesSummary}
 
+${buildPlatformKnowledge()}
+
 ═══════════════════════════════════════════════════════
 FORMATO DE RESPOSTA (JSON ESTRUTURADO)
 ═══════════════════════════════════════════════════════
 Responda SEMPRE com JSON válido no formato:
 {
   "message": "sua resposta humanizada aqui",
-  "actions": [{"type": "tipo_acao", "label": "Texto do botão"}],
+  "actions": [{"type": "tipo_acao", "label": "Texto do botão", "payload": {}}],
   "shortlist": [],
   "leadUpdate": {"intent": "buy", "city": "Franca"},
   "summary": "resumo breve para o CRM"
 }
 
-Tipos de ação válidos: open_property, schedule_visit, open_proposal, send_whatsapp, open_tour, show_shortlist, capture_lead
+Tipos de ação válidos: open_property, schedule_visit, open_proposal, send_whatsapp, open_tour, show_shortlist, capture_lead, open_url
+- open_url: navega o cliente para uma rota do site. SEMPRE inclua payload {"url": "/rota"}.
+  Use para planos (/parceiros), serviços (rota do serviço) e anunciar imóvel (/anunciar).
 `
 }
 
 export { FRANCA_SUBMARKETS, FRANCA_MARKET_FACTS, FRANCA_VALUATION_RULES } from './franca-knowledge.js'
 export { LEMOS_COMPARABLES, CMA_CONFIDENCE_RULES } from './lemos-comparables.js'
+export {
+  PLATFORM_PLANS,
+  PLATFORM_SERVICES,
+  PLATFORM_FUNCTIONS,
+  SITE_CREATION_FLOW,
+  TOMAS_ROUTING_RULES,
+  buildPlatformKnowledge,
+} from './platform-knowledge.js'
+export type { PlatformPlan, PlatformService, PlatformFunction } from './platform-knowledge.js'

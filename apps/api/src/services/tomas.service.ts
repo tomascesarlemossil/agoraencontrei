@@ -22,7 +22,7 @@ export interface TomasMessage {
 }
 
 export interface TomasAction {
-  type: 'open_property' | 'schedule_visit' | 'open_proposal' | 'send_whatsapp' | 'open_tour' | 'show_shortlist' | 'capture_lead'
+  type: 'open_property' | 'schedule_visit' | 'open_proposal' | 'send_whatsapp' | 'open_tour' | 'show_shortlist' | 'capture_lead' | 'open_url'
   label: string
   payload?: Record<string, unknown>
 }

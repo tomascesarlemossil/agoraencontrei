@@ -536,6 +536,23 @@ export default function TomasWidget({ propertyContext }: TomasWidgetProps) {
                   )
                 }
               }
+              // open_url → leva o cliente direto à rota indicada pelo Tomás
+              // (planos /parceiros, serviços, anunciar imóvel, etc.)
+              if (action.type === 'open_url') {
+                const payload = action.payload as { url?: string } | undefined
+                if (payload?.url) {
+                  return (
+                    <a
+                      key={`${action.label}-${i}`}
+                      href={payload.url}
+                      className="flex items-center gap-1 rounded-full border border-yellow-600/50 bg-yellow-600/10 px-3 py-1.5 text-xs font-medium text-yellow-500 transition-colors hover:bg-yellow-600/20"
+                    >
+                      {action.label}
+                      <ChevronRight className="h-3 w-3" />
+                    </a>
+                  )
+                }
+              }
               return (
                 <button
                   key={`${action.label}-${i}`}
