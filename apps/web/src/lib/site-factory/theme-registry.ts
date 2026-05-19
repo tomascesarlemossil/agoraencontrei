@@ -5,7 +5,7 @@
  * Each theme includes visual config, Tailwind classes, Tomás tone, and metadata.
  */
 
-export type ThemeKey = 'luxury_gold' | 'urban_tech' | 'landscape_living' | 'classic_trust' | 'fast_sales_pro' | 'signature_estate'
+export type ThemeKey = 'luxury_gold' | 'urban_tech' | 'landscape_living' | 'classic_trust' | 'fast_sales_pro' | 'signature_estate' | 'minimal_studio' | 'bold_agency' | 'editorial_journal'
 
 export interface ThemeConfig {
   key: ThemeKey
@@ -160,6 +160,81 @@ export const THEME_REGISTRY: Record<ThemeKey, ThemeConfig> = {
     tomasFocus: 'Curadoria personalizada, alto padrão, discrição, assessoria completa, experiência sob medida',
   },
 
+  minimal_studio: {
+    key: 'minimal_studio',
+    name: 'Minimal Studio',
+    tagline: 'Simplicidade & Profissionalismo',
+    description: 'Visual minimalista, muito espaço em branco e tipografia limpa. Ideal para profissionais autônomos e prestadores de serviço.',
+    idealFor: 'Profissionais liberais, prestadores de serviço, consultores, portfólios pessoais',
+    bg: 'bg-white',
+    text: 'text-neutral-900',
+    textMuted: 'text-neutral-500',
+    accent: 'text-neutral-900',
+    accentHex: '#171717',
+    card: 'bg-white border border-neutral-200 rounded-lg',
+    cardHover: 'hover:border-neutral-400',
+    hero: 'bg-neutral-50',
+    headerBg: 'bg-white/90 backdrop-blur-xl border-b border-neutral-100',
+    footerBg: 'bg-neutral-50 border-t border-neutral-100',
+    buttonPrimary: 'bg-neutral-900 text-white font-medium hover:bg-neutral-700 rounded-lg',
+    buttonSecondary: 'border border-neutral-300 text-neutral-700 hover:bg-neutral-50 rounded-lg',
+    fontHeading: 'font-sans',
+    fontBody: 'font-sans',
+    tomasTone: 'direto',
+    tomasGreeting: 'Olá! Como posso ajudar você hoje?',
+    tomasFocus: 'Clareza, agilidade no atendimento, apresentação de serviços, agendamento',
+  },
+
+  bold_agency: {
+    key: 'bold_agency',
+    name: 'Bold Agency',
+    tagline: 'Impacto & Conversão',
+    description: 'Visual vibrante e arrojado, com cores fortes e gradientes. Feito para marcas que querem chamar atenção e converter.',
+    idealFor: 'Agências de marketing, startups, empresas de tecnologia, lançamentos',
+    bg: 'bg-slate-950',
+    text: 'text-white',
+    textMuted: 'text-slate-400',
+    accent: 'text-fuchsia-400',
+    accentHex: '#e879f9',
+    card: 'bg-slate-900 border border-slate-800 rounded-2xl',
+    cardHover: 'hover:border-fuchsia-500/40 hover:shadow-fuchsia-500/10',
+    hero: 'bg-gradient-to-br from-slate-950 via-violet-950/40 to-fuchsia-950/30',
+    headerBg: 'bg-slate-950/90 backdrop-blur-xl border-b border-slate-800',
+    footerBg: 'bg-slate-950 border-t border-slate-800',
+    buttonPrimary: 'bg-gradient-to-r from-fuchsia-500 to-violet-500 text-white font-bold hover:from-fuchsia-400 hover:to-violet-400 rounded-xl',
+    buttonSecondary: 'border border-fuchsia-500/40 text-fuchsia-300 hover:bg-fuchsia-500/10 rounded-xl',
+    fontHeading: 'font-sans',
+    fontBody: 'font-sans',
+    tomasTone: 'agil',
+    tomasGreeting: 'E aí! Bora fazer acontecer? Me conta o que você precisa.',
+    tomasFocus: 'Conversão, impacto, resultados, propostas, fechamento rápido',
+  },
+
+  editorial_journal: {
+    key: 'editorial_journal',
+    name: 'Editorial Journal',
+    tagline: 'Conteúdo & Autoridade',
+    description: 'Layout editorial de revista, foco em leitura e conteúdo. Ideal para blogs, portais de notícia e produção de conteúdo.',
+    idealFor: 'Blogs, portais de conteúdo, criadores, jornalismo, newsletters',
+    bg: 'bg-white',
+    text: 'text-zinc-900',
+    textMuted: 'text-zinc-500',
+    accent: 'text-red-700',
+    accentHex: '#b91c1c',
+    card: 'bg-white border-b border-zinc-200',
+    cardHover: 'hover:bg-zinc-50',
+    hero: 'bg-zinc-50',
+    headerBg: 'bg-white border-b border-zinc-900',
+    footerBg: 'bg-zinc-900 text-white',
+    buttonPrimary: 'bg-red-700 text-white font-semibold hover:bg-red-800',
+    buttonSecondary: 'border border-zinc-300 text-zinc-800 hover:bg-zinc-100',
+    fontHeading: 'font-serif',
+    fontBody: 'font-serif',
+    tomasTone: 'consultivo',
+    tomasGreeting: 'Bem-vindo. Posso ajudar a encontrar um conteúdo ou tirar uma dúvida?',
+    tomasFocus: 'Conteúdo, informação, credibilidade, autoridade, engajamento do leitor',
+  },
+
   fast_sales_pro: {
     key: 'fast_sales_pro',
     name: 'Fast Sales Pro',
@@ -199,6 +274,9 @@ export const LAYOUT_TO_THEME: Record<string, ThemeKey> = {
   classic_trust: 'classic_trust',
   fast_sales_pro: 'fast_sales_pro',
   signature_estate: 'signature_estate',
+  minimal_studio: 'minimal_studio',
+  bold_agency: 'bold_agency',
+  editorial_journal: 'editorial_journal',
 }
 
 export function resolveTheme(layoutType: string): ThemeConfig {

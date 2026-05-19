@@ -14,6 +14,7 @@ import type { PrismaClient, Prisma } from '@prisma/client'
 import { buildTomasSystemPrompt } from '@agoraencontrei/tomas-knowledge'
 import { env } from '../utils/env.js'
 import { notify } from './notification.service.js'
+import { checkAIQuota } from './plan-gating.service.js'
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -568,6 +569,19 @@ export async function runTomasChat(
   const apiKey = env.ANTHROPIC_API_KEY
   if (!apiKey) {
     return fallbackResponse(params)
+  }
+
+  // Enforce the subscription plan's monthly AI quota (maxAIRequests).
+  if (params.companyId) {
+    const quota = await checkAIQuota(prisma, params.companyId)
+    if (quota.exceeded) {
+      return {
+        message: `Atingimos o limite de ${quota.limit} conversas com IA do plano neste mês. ` +
+          `Fale com nossa equipe para liberar mais atendimentos ou fazer upgrade do plano.`,
+        actions: [{ type: 'send_whatsapp', label: 'Falar com a equipe' }],
+        shortlist: [],
+      }
+    }
   }
 
   const client = new Anthropic({ apiKey })
