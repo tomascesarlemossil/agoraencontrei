@@ -76,7 +76,7 @@ export const PLAN_REGISTRY: Record<PlanKey, PlanConfig> = {
       'proposta_online', 'seo_programatico', 'mapa_interativo',
       'whatsapp_inteligente', 'blog', 'crm_basico', 'analytics',
     ],
-    themes: ['urban_tech', 'classic_trust', 'fast_sales_pro', 'luxury_gold'],
+    themes: ['urban_tech', 'classic_trust', 'fast_sales_pro', 'luxury_gold', 'signature_estate'],
     highlighted: true,
   },
 
