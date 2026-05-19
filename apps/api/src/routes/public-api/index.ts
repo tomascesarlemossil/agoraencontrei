@@ -13,13 +13,11 @@ import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 import type { Prisma } from '@prisma/client'
 import { z } from 'zod'
 import argon2 from 'argon2'
+import rateLimit from '@fastify/rate-limit'
 import { apiKeyPrefix } from '../api-keys/index.js'
 import { notify } from '../../services/notification.service.js'
 
 interface ApiKeyContext { companyId: string; scopes: string[] }
-
-// Explicit per-route rate limit for the public partner API.
-const PUBLIC_API_RATE_LIMIT = { rateLimit: { max: 120, timeWindow: '1 minute' } }
 
 const PROPERTY_SELECT = {
   id: true, reference: true, title: true, slug: true, type: true, purpose: true,
@@ -29,6 +27,9 @@ const PROPERTY_SELECT = {
 } satisfies Prisma.PropertySelect
 
 export default async function publicApiRoutes(app: FastifyInstance) {
+  // Rate limiting for the whole partner API scope — 120 req/min per IP.
+  await app.register(rateLimit, { max: 120, timeWindow: '1 minute' })
+
   // ── Autenticação por API key ───────────────────────────────────────────
   app.addHook('preHandler', async (req, reply) => {
     const raw = (req.headers['x-api-key'] as string | undefined)?.trim()
@@ -65,7 +66,7 @@ export default async function publicApiRoutes(app: FastifyInstance) {
   }
 
   // ── GET /v1/properties ─────────────────────────────────────────────────
-  app.get('/v1/properties', { config: PUBLIC_API_RATE_LIMIT }, async (req, reply) => {
+  app.get('/v1/properties', async (req, reply) => {
     if (!requireScope(req, reply, 'properties:read')) return
     const q = req.query as { page?: string; limit?: string; status?: string }
     const limit = Math.min(Number(q.limit) || 20, 100)
@@ -85,7 +86,7 @@ export default async function publicApiRoutes(app: FastifyInstance) {
   })
 
   // ── GET /v1/properties/:id ─────────────────────────────────────────────
-  app.get('/v1/properties/:id', { config: PUBLIC_API_RATE_LIMIT }, async (req, reply) => {
+  app.get('/v1/properties/:id', async (req, reply) => {
     if (!requireScope(req, reply, 'properties:read')) return
     const { id } = req.params as { id: string }
     const property = await app.prisma.property.findFirst({
@@ -97,7 +98,7 @@ export default async function publicApiRoutes(app: FastifyInstance) {
   })
 
   // ── POST /v1/leads ─────────────────────────────────────────────────────
-  app.post('/v1/leads', { config: PUBLIC_API_RATE_LIMIT }, async (req, reply) => {
+  app.post('/v1/leads', async (req, reply) => {
     if (!requireScope(req, reply, 'leads:write')) return
     const body = z.object({
       name:     z.string().min(2).max(160),
