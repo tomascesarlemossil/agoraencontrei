@@ -243,4 +243,25 @@ export default async function tenantRoutes(app: FastifyInstance) {
       ...(result.error && { error: result.error }),
     })
   })
+
+  // DELETE /:id — Cancela o tenant (soft: preserva dados, desativa o site)
+  app.delete('/:id', {
+    schema: { tags: ['tenants'], summary: 'Cancel (soft-delete) a tenant' },
+  }, async (req, reply) => {
+    const { id } = req.params as { id: string }
+
+    if (req.user.role !== 'SUPER_ADMIN') {
+      return reply.status(403).send({ error: 'FORBIDDEN' })
+    }
+
+    const tenant = await (app.prisma as any).tenant.findUnique({ where: { id } })
+    if (!tenant) return reply.status(404).send({ error: 'TENANT_NOT_FOUND' })
+
+    const updated = await (app.prisma as any).tenant.update({
+      where: { id },
+      data: { planStatus: 'CANCELLED', isActive: false, suspendedAt: new Date() },
+    })
+
+    return reply.send({ success: true, data: updated })
+  })
 }

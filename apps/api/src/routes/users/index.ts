@@ -10,6 +10,7 @@ const UpdateUserBody = z.object({
   creciNumber: z.string().optional(),
   avatarUrl: z.string().optional(),
   role: z.enum(['ADMIN', 'MANAGER', 'BROKER', 'FINANCIAL', 'LAWYER', 'CLIENT']).optional(),
+  status: z.enum(['ACTIVE', 'INACTIVE', 'SUSPENDED', 'PENDING_VERIFICATION']).optional(),
   accessLevel: z.enum(['full', 'custom', 'readonly']).optional(),
   moduleAccess: z.array(z.string()).optional(),
   hasDataAccess: z.boolean().optional(),
@@ -337,6 +338,17 @@ export default async function usersRoutes(app: FastifyInstance) {
       }
       if (id === req.user.sub) {
         return reply.status(400).send({ error: 'VALIDATION_ERROR', message: 'Você não pode alterar seu próprio perfil de acesso' })
+      }
+    }
+
+    // Only ADMIN/SUPER_ADMIN can change a user's status (suspend/reactivate),
+    // and cannot suspend/deactivate their own account.
+    if (body.status) {
+      if (!['SUPER_ADMIN', 'ADMIN'].includes(req.user.role)) {
+        return reply.status(403).send({ error: 'FORBIDDEN', message: 'Apenas administradores podem alterar o status de um usuário' })
+      }
+      if (id === req.user.sub) {
+        return reply.status(400).send({ error: 'VALIDATION_ERROR', message: 'Você não pode alterar o próprio status' })
       }
     }
 
