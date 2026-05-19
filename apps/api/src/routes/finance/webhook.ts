@@ -16,6 +16,7 @@ import { env } from '../../utils/env.js'
 import type { AsaasWebhookEvent } from '../../services/asaas.service.js'
 import { scheduleRepasse } from '../../services/repasse.service.js'
 import { safeStringEqual } from '../../utils/crypto-safe.js'
+import { notify } from '../../services/notification.service.js'
 
 function isUniqueConstraintError(err: any): boolean {
   return err?.code === 'P2002'
@@ -242,6 +243,47 @@ export default async function asaasWebhookRoutes(app: FastifyInstance) {
               }
 
               app.log.info(`[asaas-webhook] Rental ${rentalId} marked as PAID (${payment.billingType}, R$ ${payment.value})`)
+            }
+          }
+
+          // Deal sinal payment — mark received and advance the Transaction Hub.
+          {
+            const dealPayment = await app.prisma.dealPayment.findUnique({
+              where: { asaasChargeId: payment.id },
+            }).catch(() => null)
+            if (dealPayment && dealPayment.status !== 'received') {
+              await app.prisma.dealPayment.update({
+                where: { id: dealPayment.id },
+                data: {
+                  status: 'received',
+                  paidAt: payment.confirmedDate ? new Date(payment.confirmedDate) : new Date(),
+                },
+              }).catch(() => {})
+
+              const deal = await app.prisma.deal.findUnique({ where: { id: dealPayment.dealId } }).catch(() => null)
+              if (deal) {
+                // Advance the Transaction Hub to "sinal" once the signal is paid.
+                const meta = (deal.metadata as Record<string, unknown>) ?? {}
+                const tx = (meta.transaction as Record<string, unknown>) ?? {}
+                const ORDER = ['lead', 'proposta', 'kyc', 'sinal']
+                const cur = (tx.stage as string) ?? 'lead'
+                if (dealPayment.type === 'signal' && ORDER.includes(cur)) {
+                  await app.prisma.deal.update({
+                    where: { id: deal.id },
+                    data: { metadata: { ...meta, transaction: { ...tx, stage: 'sinal' } } },
+                  }).catch(() => {})
+                }
+                await notify({
+                  prisma: app.prisma,
+                  companyId: deal.companyId,
+                  type: 'proposal_received',
+                  title: `Sinal pago — negociação "${deal.title}"`,
+                  body: `Pagamento de R$ ${Number(payment.value ?? dealPayment.amount).toLocaleString('pt-BR')} confirmado.`,
+                  payload: { dealId: deal.id, dealPaymentId: dealPayment.id },
+                  email: false,
+                }).catch(() => {})
+              }
+              app.log.info(`[asaas-webhook] DealPayment ${dealPayment.id} marked received`)
             }
           }
           break

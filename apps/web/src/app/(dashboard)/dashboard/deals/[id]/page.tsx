@@ -16,6 +16,16 @@ import Link from 'next/link'
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
+
+const PAYMENT_STATUS: Record<string, string> = {
+  pending:   'bg-yellow-500/20 text-yellow-400',
+  received:  'bg-emerald-500/20 text-emerald-400',
+  overdue:   'bg-red-500/20 text-red-400',
+  refunded:  'bg-white/10 text-white/50',
+  cancelled: 'bg-white/10 text-white/50',
+}
+
 const STATUS_MAP: Record<string, string> = {
   OPEN:        'bg-white/10 text-white/60',
   IN_PROGRESS: 'bg-blue-500/20 text-blue-400',
@@ -95,6 +105,8 @@ export default function DealDetailPage() {
   const [showCommForm, setShowCommForm] = useState(false)
   const [commRate, setCommRate] = useState('6')
   const [commSplit, setCommSplit] = useState('100')
+  const [signalAmount, setSignalAmount] = useState('')
+  const [signalType, setSignalType] = useState('PIX')
 
   const canManageComm = ['SUPER_ADMIN','ADMIN','MANAGER','FINANCIAL'].includes(user?.role ?? '')
 
@@ -130,6 +142,36 @@ export default function DealDetailPage() {
       })
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['deal', id] }),
+  })
+
+  const paymentsQuery = useQuery({
+    queryKey: ['deal-payments', id],
+    queryFn: async () => {
+      const token = await getValidToken()
+      const res = await fetch(`${API_URL}/api/v1/deals/${id}/payments`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (!res.ok) return { data: [] as any[] }
+      return res.json() as Promise<{ data: any[] }>
+    },
+  })
+
+  const signalMutation = useMutation({
+    mutationFn: async (vars: { amount: number; billingType: string }) => {
+      const token = await getValidToken()
+      const res = await fetch(`${API_URL}/api/v1/deals/${id}/payments/signal`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(vars),
+      })
+      const j = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(j.message || 'Falha ao gerar cobrança')
+      return j
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['deal-payments', id] })
+      setSignalAmount('')
+    },
   })
 
   const stageMutation = useMutation({
@@ -327,6 +369,66 @@ export default function DealDetailPage() {
                   : 'Conclua o checklist desta etapa para avançar.'}
               </p>
             )}
+          </div>
+
+          {/* Pagamentos / Sinal */}
+          <div className="bg-white/5 rounded-xl border border-white/10 p-4">
+            <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-2">
+              Pagamentos
+            </h3>
+            <div className="flex items-end gap-2">
+              <div className="flex-1">
+                <Label className="text-xs text-white/50">Valor do sinal (R$)</Label>
+                <Input
+                  value={signalAmount} onChange={(e) => setSignalAmount(e.target.value)}
+                  type="number" placeholder="Ex: 25000"
+                  className="bg-white/5 border-white/10 text-white text-sm h-8"
+                />
+              </div>
+              <Select value={signalType} onValueChange={setSignalType}>
+                <SelectTrigger className="w-24 bg-white/5 border-white/10 text-white text-xs h-8">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {[['PIX', 'Pix'], ['BOLETO', 'Boleto'], ['CREDIT_CARD', 'Cartão']].map(([v, l]) => (
+                    <SelectItem key={v} value={v}>{l}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button
+                size="sm" className="h-8 text-xs"
+                disabled={!signalAmount || Number(signalAmount) <= 0 || signalMutation.isPending}
+                onClick={() => signalMutation.mutate({ amount: Number(signalAmount), billingType: signalType })}
+              >
+                Gerar cobrança
+              </Button>
+            </div>
+            {signalMutation.isError && (
+              <p className="mt-1 text-xs text-red-400">{(signalMutation.error as Error).message}</p>
+            )}
+
+            <div className="mt-3 space-y-1.5">
+              {(paymentsQuery.data?.data ?? []).length === 0 && (
+                <p className="text-xs text-white/40">Nenhuma cobrança gerada.</p>
+              )}
+              {(paymentsQuery.data?.data ?? []).map((pay: any) => (
+                <div key={pay.id} className="flex items-center justify-between border-t border-white/5 pt-1.5">
+                  <div>
+                    <p className="text-sm text-white">{fmt(Number(pay.amount))}</p>
+                    <p className="text-[10px] text-white/40">{pay.billingType} · {pay.type}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {pay.invoiceUrl && (
+                      <a href={pay.invoiceUrl} target="_blank" rel="noopener noreferrer"
+                        className="text-[11px] text-yellow-400 hover:underline">cobrança</a>
+                    )}
+                    <Badge className={cn('border-0 text-xs', PAYMENT_STATUS[pay.status] ?? 'bg-white/10')}>
+                      {pay.status}
+                    </Badge>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
 
           {/* Properties */}

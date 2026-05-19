@@ -2,6 +2,9 @@ import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 import { emitAutomation } from '../../services/automation.emitter.js'
 import { createAuditLog } from '../../services/audit.service.js'
+import { env } from '../../utils/env.js'
+import { findOrCreateCustomer, createCharge, getPixQrCode, type AsaasBillingType } from '../../services/asaas.service.js'
+import { notify } from '../../services/notification.service.js'
 
 const toUpper = (v: unknown) => typeof v === 'string' ? v.toUpperCase() : v
 
@@ -333,5 +336,107 @@ export default async function dealsRoutes(app: FastifyInstance) {
     })
 
     return reply.send(updated)
+  })
+
+  // ── GET /:id/payments — pagamentos da negociação ───────────────────────
+  app.get('/:id/payments', { schema: { tags: ['deals'] } }, async (req, reply) => {
+    const { id } = req.params as { id: string }
+    const deal = await app.prisma.deal.findFirst({ where: { id, companyId: req.user.cid } })
+    if (!deal) return reply.status(404).send({ error: 'NOT_FOUND' })
+    const payments = await app.prisma.dealPayment.findMany({
+      where: { dealId: id },
+      orderBy: { createdAt: 'desc' },
+    })
+    return reply.send({ data: payments })
+  })
+
+  // ── POST /:id/payments/signal — gera cobrança de sinal via Asaas ───────
+  app.post('/:id/payments/signal', { schema: { tags: ['deals'] } }, async (req, reply) => {
+    if (!env.ASAAS_API_KEY) {
+      return reply.status(503).send({
+        error: 'ASAAS_NOT_CONFIGURED',
+        message: 'A integração de pagamento (Asaas) não está configurada.',
+      })
+    }
+    const { id } = req.params as { id: string }
+    const body = z.object({
+      amount:      z.number().positive(),
+      billingType: z.enum(['PIX', 'BOLETO', 'CREDIT_CARD', 'UNDEFINED']).default('PIX'),
+      dueDate:     z.string().optional(),
+      cpfCnpj:     z.string().optional(),
+      type:        z.enum(['signal', 'installment', 'balance', 'other']).default('signal'),
+    }).parse(req.body)
+
+    const deal = await app.prisma.deal.findFirst({
+      where: { id, companyId: req.user.cid },
+      include: { contact: true },
+    })
+    if (!deal) return reply.status(404).send({ error: 'NOT_FOUND' })
+    if (!deal.contact) {
+      return reply.status(400).send({ error: 'NO_CONTACT', message: 'A negociação precisa de um contato (comprador).' })
+    }
+
+    const cpfCnpj = (body.cpfCnpj || (deal.contact as any).cpf || '').replace(/\D/g, '')
+    if (cpfCnpj.length !== 11 && cpfCnpj.length !== 14) {
+      return reply.status(400).send({ error: 'INVALID_CPF', message: 'Informe um CPF/CNPJ válido do comprador.' })
+    }
+
+    const due = body.dueDate ? new Date(body.dueDate) : new Date(Date.now() + 3 * 86_400_000)
+    const dueDate = due.toISOString().split('T')[0]
+
+    try {
+      const customer = await findOrCreateCustomer({
+        name: deal.contact.name,
+        cpfCnpj,
+        email: deal.contact.email ?? undefined,
+        phone: deal.contact.phone ?? undefined,
+      })
+      const charge = await createCharge({
+        customer: customer.id,
+        billingType: body.billingType as AsaasBillingType,
+        value: body.amount,
+        dueDate,
+        description: `Sinal — negociação "${deal.title}"`,
+        externalReference: `deal:${deal.id}`,
+      })
+
+      let pixPayload: string | null = null
+      if (body.billingType === 'PIX') {
+        pixPayload = await getPixQrCode(charge.id).then(r => r.payload).catch(() => null)
+      }
+
+      const payment = await app.prisma.dealPayment.create({
+        data: {
+          dealId: deal.id,
+          companyId: req.user.cid,
+          type: body.type,
+          amount: body.amount,
+          billingType: body.billingType,
+          status: 'pending',
+          asaasChargeId: charge.id,
+          invoiceUrl: charge.invoiceUrl ?? charge.bankSlipUrl ?? null,
+          pixPayload,
+          dueDate: due,
+        },
+      })
+
+      return reply.status(201).send({
+        success: true,
+        data: {
+          paymentId: payment.id,
+          asaasChargeId: charge.id,
+          invoiceUrl: payment.invoiceUrl,
+          pixPayload,
+          amount: body.amount,
+          dueDate,
+        },
+      })
+    } catch (err: any) {
+      app.log.error({ err }, `[deals] signal payment failed: ${err?.message}`)
+      return reply.status(502).send({
+        error: 'CHARGE_FAILED',
+        message: 'Não foi possível gerar a cobrança. Confira os dados e tente novamente.',
+      })
+    }
   })
 }
