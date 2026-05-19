@@ -54,6 +54,10 @@ const envSchema = z.object({
   // Public portal
   PUBLIC_COMPANY_ID: z.string().optional(),
 
+  // Platform admins — comma-separated e-mails that receive a copy of every
+  // lead/visit/handoff notification across all tenants.
+  PLATFORM_ADMIN_EMAILS: z.string().optional(),
+
   // Asaas — cobranças e boletos
   ASAAS_API_KEY:        z.string().optional(),
   ASAAS_BASE_URL:       z.string().default('https://www.asaas.com/api/v3'),

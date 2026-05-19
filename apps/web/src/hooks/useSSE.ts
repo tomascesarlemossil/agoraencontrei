@@ -12,6 +12,8 @@ interface SSEMessage {
 }
 
 function getTitle(type: NotificationType, payload: Record<string, unknown>): string {
+  // Persisted notifications carry their own ready-made title.
+  if (typeof payload.title === 'string' && payload.title) return payload.title
   switch (type) {
     case 'lead_created':      return `Novo lead: ${payload.name ?? ''}`
     case 'lead_updated':      return `Lead atualizado`
@@ -26,6 +28,7 @@ function getTitle(type: NotificationType, payload: Record<string, unknown>): str
 }
 
 function getBody(type: NotificationType, payload: Record<string, unknown>): string {
+  if (typeof payload.body === 'string' && payload.body) return payload.body
   switch (type) {
     case 'hunter_lead':
       return `${payload.neighborhoods ?? ''} — ${payload.city ?? 'Franca'} — Budget: R$ ${Number(payload.budgetMax ?? 0).toLocaleString('pt-BR')}`
@@ -53,10 +56,16 @@ export function useSSE() {
     es.onmessage = (e) => {
       try {
         const msg: SSEMessage = JSON.parse(e.data)
+        // Persisted-notification events carry the specific type in the
+        // payload (lead_captured, broker_handoff, …) — use it so the
+        // store colours and criticality match.
+        const resolvedType = (msg.type === 'notification' && typeof msg.payload.notificationType === 'string'
+          ? msg.payload.notificationType
+          : msg.type) as NotificationType
         add({
-          type:     msg.type,
-          title:    getTitle(msg.type, msg.payload),
-          body:     getBody(msg.type, msg.payload),
+          type:     resolvedType,
+          title:    getTitle(resolvedType, msg.payload),
+          body:     getBody(resolvedType, msg.payload),
           critical: false, // store sets critical based on type
           payload:  msg.payload,
         })

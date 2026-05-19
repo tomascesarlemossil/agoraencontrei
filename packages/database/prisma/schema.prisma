@@ -3147,3 +3147,30 @@ model WebhookProcessedEvent {
   @@index([processedAt])
   @@map("webhook_processed_events")
 }
+
+// =============================================================================
+// NOTIFICATIONS
+// =============================================================================
+
+/// Persistent in-app notifications. Unlike the ephemeral SSE/poll stream,
+/// these survive page reloads and power the notification center for users,
+/// partners and platform admins. Lead/visit/handoff events all land here.
+model Notification {
+  id         String    @id @default(cuid())
+  companyId  String
+  /// Target user. Null = company-wide (visible to every user of the company).
+  userId     String?
+  /// lead_captured | visit_requested | broker_handoff | proposal_received | partner_registered | system
+  type       String
+  title      String
+  body       String
+  /// Extra structured data: contactId, propertyId, phone, neighborhoods, etc.
+  payload    Json      @default("{}")
+  read       Boolean   @default(false)
+  readAt     DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([companyId, read, createdAt])
+  @@index([userId, read])
+  @@map("notifications")
+}

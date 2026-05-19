@@ -13,6 +13,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import type { PrismaClient, Prisma } from '@prisma/client'
 import { buildTomasSystemPrompt } from '@agoraencontrei/tomas-knowledge'
 import { env } from '../utils/env.js'
+import { notify } from './notification.service.js'
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -477,6 +478,25 @@ async function executeTool(
             },
           })
 
+          if (companyId) {
+            await notify({
+              prisma,
+              companyId,
+              type: 'lead_captured',
+              title: isHunterMode
+                ? `🔥 Investidor identificado pelo Tomás: ${contact.name}`
+                : `Novo lead capturado pelo Tomás: ${contact.name}`,
+              body: [
+                contact.phone ? `Telefone: ${contact.phone}` : '',
+                contact.email ? `E-mail: ${contact.email}` : '',
+                toolInput.intent ? `Intenção: ${toolInput.intent}` : '',
+                toolInput.budgetMax ? `Orçamento: R$ ${Number(toolInput.budgetMax).toLocaleString('pt-BR')}` : '',
+                toolInput.notes ? `Observações: ${toolInput.notes}` : '',
+              ].filter(Boolean).join('\n') || 'Lead capturado via chat do Tomás.',
+              payload: { contactId: contact.id, name: contact.name, phone: contact.phone, hunterMode: isHunterMode },
+            })
+          }
+
           return JSON.stringify({
             status: 'created',
             contactId: contact.id,
@@ -504,6 +524,27 @@ async function executeTool(
         toolInput.clientName ? `Cliente: ${toolInput.clientName}` : '',
         toolInput.clientPhone ? `Tel: ${toolInput.clientPhone}` : '',
       ].filter(Boolean).join('\n')
+
+      const visitProperty = await prisma.property
+        .findUnique({ where: { id: propertyId }, select: { title: true, reference: true } })
+        .catch(() => null)
+
+      if (companyId) {
+        await notify({
+          prisma,
+          companyId,
+          type: 'visit_requested',
+          title: `📅 Visita solicitada: ${visitProperty?.title ?? `imóvel ${visitProperty?.reference ?? propertyId}`}`,
+          body: visitNote,
+          payload: {
+            propertyId,
+            clientName: toolInput.clientName ?? null,
+            clientPhone: toolInput.clientPhone ?? null,
+            date: toolInput.date ?? null,
+            time: toolInput.time ?? null,
+          },
+        })
+      }
 
       return JSON.stringify({
         status: 'scheduled',
@@ -732,7 +773,7 @@ export async function runTomasChat(
 
     // Mark chat for handoff if hunter mode lead was captured
     if (hunterLeadCaptured && params.chatId) {
-      await markHunterHandoff(prisma, params.chatId, parsed.summary)
+      await markHunterHandoff(prisma, params.chatId, parsed.summary, params.companyId)
     }
 
     return parsed
@@ -805,7 +846,12 @@ export async function persistMessages(
 
 // ── Hunter Mode Handoff ───────────────────────────────────────────────────
 
-async function markHunterHandoff(prisma: PrismaClient, chatId: string, summary?: string) {
+async function markHunterHandoff(
+  prisma: PrismaClient,
+  chatId: string,
+  summary?: string,
+  companyId?: string,
+) {
   await prisma.tomasChat.update({
     where: { id: chatId },
     data: {
@@ -819,6 +865,17 @@ async function markHunterHandoff(prisma: PrismaClient, chatId: string, summary?:
       },
     },
   })
+
+  if (companyId) {
+    await notify({
+      prisma,
+      companyId,
+      type: 'broker_handoff',
+      title: '🤝 Atendimento para um corretor — investidor identificado',
+      body: summary || 'O Tomás identificou um investidor que precisa de busca externa. Assuma o atendimento.',
+      payload: { chatId },
+    })
+  }
 }
 
 // ── Helpers ─────────────────────────────────────────────────────────────────

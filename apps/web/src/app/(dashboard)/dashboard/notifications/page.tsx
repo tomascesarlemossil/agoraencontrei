@@ -13,6 +13,11 @@ const TYPE_COLORS: Record<AppNotification['type'], string> = {
   hunter_lead:       'bg-amber-50 text-amber-700',
   proposal_received: 'bg-emerald-50 text-emerald-700',
   plan_sale:         'bg-violet-50 text-violet-700',
+  lead_captured:     'bg-blue-50 text-blue-700',
+  visit_requested:   'bg-cyan-50 text-cyan-700',
+  broker_handoff:    'bg-amber-50 text-amber-700',
+  partner_registered:'bg-fuchsia-50 text-fuchsia-700',
+  system:            'bg-gray-50 text-gray-700',
 }
 
 export default function NotificationsPage() {

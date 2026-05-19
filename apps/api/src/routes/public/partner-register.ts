@@ -1,5 +1,6 @@
 import { FastifyInstance } from 'fastify'
 import { z } from 'zod'
+import { notify } from '../../services/notification.service.js'
 
 const PartnerSchema = z.object({
   name: z.string().min(2).max(200),
@@ -37,6 +38,25 @@ export async function partnerRegisterRoute(app: FastifyInstance) {
           notes: `Parceiro: ${data.specialty}${data.company ? ` — ${data.company}` : ''}${data.creci ? ` (${data.creci})` : ''}\nEdifícios: ${data.condos.join(', ')}\nMembro Fundador: ${data.isFounder ? 'SIM' : 'NÃO'}\nBio: ${data.bio || '—'}`,
         },
       })
+
+      // In-app + e-mail notification (notification center + platform admins)
+      await notify({
+        prisma: app.prisma,
+        companyId: lead.companyId,
+        type: 'partner_registered',
+        title: data.isFounder
+          ? `💰 Novo Membro Fundador: ${data.name}`
+          : `👤 Novo parceiro cadastrado: ${data.name}`,
+        body: [
+          `Especialidade: ${data.specialty}${data.company ? ` — ${data.company}` : ''}`,
+          data.creci ? `CRECI: ${data.creci}` : '',
+          `Telefone: ${data.phone}`,
+          `E-mail: ${data.email}`,
+          data.condos.length ? `Edifícios: ${data.condos.slice(0, 8).join(', ')}` : '',
+          `Plano: ${data.isFounder ? 'Membro Fundador (R$ 497/mês)' : 'Gratuito'}`,
+        ].filter(Boolean).join('\n'),
+        payload: { leadId: lead.id, name: data.name, phone: data.phone, isFounder: data.isFounder },
+      }).catch(() => {})
 
       // Notify Tomás via WhatsApp
       const whatsappToken = process.env.WHATSAPP_TOKEN || process.env.WHATSAPP_ACCESS_TOKEN || process.env.META_WHATSAPP_TOKEN
