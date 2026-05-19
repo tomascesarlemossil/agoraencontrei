@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 import { createAuditLog } from '../../services/audit.service.js'
+import { assertWithinPlanQuota, PlanLimitError } from '../../services/plan-gating.service.js'
 
 const UpdateUserBody = z.object({
   name: z.string().min(2).max(100).optional(),
@@ -126,6 +127,19 @@ export default async function usersRoutes(app: FastifyInstance) {
       targetCompanyId = newCompany.id
       settings.isolatedCompany = true
       settings.parentCompanyId = req.user.cid // track who created it
+    }
+
+    // Enforce the subscription plan's user limit (skipped for brand-new
+    // isolated companies, which have no tenant/plan yet).
+    if (!body.createIsolatedCompany) {
+      try {
+        await assertWithinPlanQuota(app.prisma, targetCompanyId, 'users')
+      } catch (err) {
+        if (err instanceof PlanLimitError) {
+          return reply.status(403).send({ error: err.code, message: err.message })
+        }
+        throw err
+      }
     }
 
     const user = await app.prisma.user.create({
