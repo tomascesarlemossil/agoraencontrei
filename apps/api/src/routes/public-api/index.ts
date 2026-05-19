@@ -16,6 +16,7 @@ import argon2 from 'argon2'
 import rateLimit from '@fastify/rate-limit'
 import { apiKeyPrefix } from '../api-keys/index.js'
 import { notify } from '../../services/notification.service.js'
+import { dispatchWebhooks } from '../../services/outgoing-webhook.service.js'
 
 interface ApiKeyContext { companyId: string; scopes: string[] }
 
@@ -132,6 +133,11 @@ export default async function publicApiRoutes(app: FastifyInstance) {
       payload: { leadId: lead.id, source: 'open_api' },
       email: false,
     }).catch(() => {})
+
+    void dispatchWebhooks(app.prisma, companyId, 'lead.created', {
+      id: lead.id, name: body.name, email: body.email ?? null,
+      phone: body.phone ?? null, interest: body.interest ?? null, source: 'open_api',
+    })
 
     return reply.status(201).send({ data: { id: lead.id } })
   })

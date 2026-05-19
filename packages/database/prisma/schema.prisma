@@ -3435,3 +3435,26 @@ model KycCheck {
   @@index([companyId])
   @@map("kyc_checks")
 }
+
+// =============================================================================
+// OUTGOING WEBHOOKS — eventos enviados a sistemas parceiros
+// =============================================================================
+
+/// Webhook de saída: o AgoraEncontrei faz POST assinado (HMAC) para a URL do
+/// parceiro quando um evento assinado acontece.
+model OutgoingWebhook {
+  id          String    @id @default(cuid())
+  companyId   String
+  url         String
+  secret      String
+  /// Eventos assinados: lead.created | property.created | deal.payment_received
+  events      String[]  @default([])
+  isActive    Boolean   @default(true)
+  lastFiredAt DateTime?
+  failCount   Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([companyId])
+  @@map("outgoing_webhooks")
+}

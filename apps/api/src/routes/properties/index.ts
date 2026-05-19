@@ -4,6 +4,7 @@ import { createAuditLog } from '../../services/audit.service.js'
 import { geocodeProperty, sleep } from '../../services/geocoding.service.js'
 import { assertWithinPlanQuota, PlanLimitError } from '../../services/plan-gating.service.js'
 import { notifyMatchingAlerts } from '../../services/property-match.service.js'
+import { dispatchWebhooks } from '../../services/outgoing-webhook.service.js'
 
 const toUpper = (v: unknown) => typeof v === 'string' ? v.toUpperCase() : v
 
@@ -594,6 +595,13 @@ export default async function propertiesRoutes(app: FastifyInstance) {
     // Match the new listing against clients' saved search profiles and
     // alert them — non-blocking so the create response is not delayed.
     void notifyMatchingAlerts(app.prisma, property)
+
+    // Notify partner systems subscribed to property.created.
+    void dispatchWebhooks(app.prisma, req.user.cid, 'property.created', {
+      id: property.id, title: property.title, slug: property.slug,
+      type: property.type, purpose: property.purpose, price: property.price,
+      city: property.city, neighborhood: property.neighborhood,
+    })
 
     return reply.status(201).send(property)
   })
