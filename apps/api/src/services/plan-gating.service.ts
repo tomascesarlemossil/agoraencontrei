@@ -66,3 +66,42 @@ export async function assertWithinPlanQuota(
     throw new PlanLimitError(quota, limit, plan.name)
   }
 }
+
+/**
+ * Verifica a quota mensal de requisições de IA do plano (maxAIRequests).
+ * Conta as respostas do Tomás (mensagens 'assistant') no mês corrente.
+ * Não lança — devolve o status para o chamador decidir como degradar.
+ *
+ * limit -1 = ilimitado; limit 0 = plano sem quota configurada (fail-open).
+ */
+export async function checkAIQuota(
+  prisma: PrismaClient,
+  companyId: string,
+): Promise<{ exceeded: boolean; limit: number; used: number }> {
+  const tenant = await prisma.tenant
+    .findFirst({ where: { companyId }, select: { plan: true } })
+    .catch(() => null)
+  if (!tenant) return { exceeded: false, limit: -1, used: 0 }
+
+  const plan = await prisma.planDefinition
+    .findUnique({
+      where: { slug: (tenant.plan || '').toLowerCase() },
+      select: { maxAIRequests: true },
+    })
+    .catch(() => null)
+
+  const limit = plan?.maxAIRequests ?? 0
+  if (limit <= 0) return { exceeded: false, limit, used: 0 } // -1 ilimitado / 0 não configurado
+
+  const monthStart = new Date()
+  monthStart.setDate(1)
+  monthStart.setHours(0, 0, 0, 0)
+
+  const used = await prisma.tomasChatMessage
+    .count({
+      where: { role: 'assistant', createdAt: { gte: monthStart }, chat: { companyId } },
+    })
+    .catch(() => 0)
+
+  return { exceeded: used >= limit, limit, used }
+}
