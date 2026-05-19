@@ -8,14 +8,12 @@
 
 import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
-import { createHmac, randomBytes } from 'node:crypto'
-import { env } from '../../utils/env.js'
+import { randomBytes } from 'node:crypto'
+import argon2 from 'argon2'
 
-// Keyed hash (HMAC) of an API key. The key is a 192-bit random token, so a
-// keyed digest is both correct and brute-force-proof — and, unlike a plain
-// hash, an attacker with DB access cannot precompute it without the secret.
-export function hashApiKey(raw: string): string {
-  return createHmac('sha256', env.JWT_SECRET).update(raw).digest('hex')
+/** Prefix used to narrow the key lookup before the (slow) argon2 verify. */
+export function apiKeyPrefix(raw: string): string {
+  return raw.slice(0, 16)
 }
 
 const VALID_SCOPES = ['properties:read', 'properties:write', 'leads:write'] as const
@@ -52,8 +50,8 @@ export default async function apiKeysRoutes(app: FastifyInstance) {
         companyId: req.user.cid,
         userId: req.user.sub,
         name: body.name,
-        keyHash: hashApiKey(raw),
-        prefix: raw.slice(0, 16),
+        keyHash: await argon2.hash(raw, { type: argon2.argon2id }),
+        prefix: apiKeyPrefix(raw),
         scopes: body.scopes,
       },
       select: { id: true, name: true, prefix: true, scopes: true, createdAt: true },

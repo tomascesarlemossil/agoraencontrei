@@ -12,7 +12,8 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 import type { Prisma } from '@prisma/client'
 import { z } from 'zod'
-import { hashApiKey } from '../api-keys/index.js'
+import argon2 from 'argon2'
+import { apiKeyPrefix } from '../api-keys/index.js'
 import { notify } from '../../services/notification.service.js'
 
 interface ApiKeyContext { companyId: string; scopes: string[] }
@@ -31,14 +32,17 @@ export default async function publicApiRoutes(app: FastifyInstance) {
     if (!raw) {
       return reply.status(401).send({ error: 'MISSING_API_KEY', message: 'Informe o header x-api-key.' })
     }
-    const key = await app.prisma.apiKey
-      .findUnique({ where: { keyHash: hashApiKey(raw) } })
-      .catch(() => null)
-    if (!key || !key.isActive) {
-      return reply.status(401).send({ error: 'INVALID_API_KEY' })
+    // Narrow by prefix, then verify the full token against the argon2 hash.
+    const candidates = await app.prisma.apiKey
+      .findMany({ where: { prefix: apiKeyPrefix(raw), isActive: true } })
+      .catch(() => [])
+    let key: (typeof candidates)[number] | null = null
+    for (const c of candidates) {
+      if (c.expiresAt && c.expiresAt < new Date()) continue
+      if (await argon2.verify(c.keyHash, raw).catch(() => false)) { key = c; break }
     }
-    if (key.expiresAt && key.expiresAt < new Date()) {
-      return reply.status(401).send({ error: 'EXPIRED_API_KEY' })
+    if (!key) {
+      return reply.status(401).send({ error: 'INVALID_API_KEY' })
     }
     ;(req as unknown as { apiKey: ApiKeyContext }).apiKey = {
       companyId: key.companyId, scopes: key.scopes,
