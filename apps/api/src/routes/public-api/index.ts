@@ -18,6 +18,9 @@ import { notify } from '../../services/notification.service.js'
 
 interface ApiKeyContext { companyId: string; scopes: string[] }
 
+// Explicit per-route rate limit for the public partner API.
+const PUBLIC_API_RATE_LIMIT = { rateLimit: { max: 120, timeWindow: '1 minute' } }
+
 const PROPERTY_SELECT = {
   id: true, reference: true, title: true, slug: true, type: true, purpose: true,
   status: true, price: true, priceRent: true, city: true, neighborhood: true,
@@ -62,7 +65,7 @@ export default async function publicApiRoutes(app: FastifyInstance) {
   }
 
   // ── GET /v1/properties ─────────────────────────────────────────────────
-  app.get('/v1/properties', async (req, reply) => {
+  app.get('/v1/properties', { config: PUBLIC_API_RATE_LIMIT }, async (req, reply) => {
     if (!requireScope(req, reply, 'properties:read')) return
     const q = req.query as { page?: string; limit?: string; status?: string }
     const limit = Math.min(Number(q.limit) || 20, 100)
@@ -82,7 +85,7 @@ export default async function publicApiRoutes(app: FastifyInstance) {
   })
 
   // ── GET /v1/properties/:id ─────────────────────────────────────────────
-  app.get('/v1/properties/:id', async (req, reply) => {
+  app.get('/v1/properties/:id', { config: PUBLIC_API_RATE_LIMIT }, async (req, reply) => {
     if (!requireScope(req, reply, 'properties:read')) return
     const { id } = req.params as { id: string }
     const property = await app.prisma.property.findFirst({
@@ -94,7 +97,7 @@ export default async function publicApiRoutes(app: FastifyInstance) {
   })
 
   // ── POST /v1/leads ─────────────────────────────────────────────────────
-  app.post('/v1/leads', async (req, reply) => {
+  app.post('/v1/leads', { config: PUBLIC_API_RATE_LIMIT }, async (req, reply) => {
     if (!requireScope(req, reply, 'leads:write')) return
     const body = z.object({
       name:     z.string().min(2).max(160),
