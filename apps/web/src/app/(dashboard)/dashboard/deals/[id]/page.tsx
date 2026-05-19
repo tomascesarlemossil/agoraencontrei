@@ -30,6 +30,15 @@ const STATUS_LABELS: Record<string, string> = {
 }
 const STATUSES = Object.entries(STATUS_LABELS)
 
+// Esteira de venda — checklist granular dentro de cada etapa do funil.
+const ESTEIRA: { status: string; items: string[] }[] = [
+  { status: 'OPEN',        items: ['Lead recebido', 'Primeiro contato realizado', 'Cliente qualificado'] },
+  { status: 'IN_PROGRESS', items: ['Atendimento iniciado', 'Visita agendada', 'Visita realizada'] },
+  { status: 'PROPOSAL',    items: ['Proposta enviada', 'Proposta negociada', 'Proposta aceita'] },
+  { status: 'CONTRACT',    items: ['Documentos recebidos', 'Contrato gerado', 'Contrato assinado', 'Entrada paga'] },
+  { status: 'CLOSED_WON',  items: ['Escritura realizada', 'Chaves entregues', 'Pós-venda concluído'] },
+]
+
 const COMM_STATUS: Record<string, string> = {
   PENDING:   'bg-yellow-500/20 text-yellow-400',
   PARTIAL:   'bg-blue-500/20 text-blue-400',
@@ -107,6 +116,16 @@ export default function DealDetailPage() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['deal', id] }),
   })
 
+  const checklistMutation = useMutation({
+    mutationFn: async (next: Record<string, boolean>) => {
+      const token = await getValidToken()
+      return dealsApi.update(token!, id, {
+        metadata: { ...(deal?.metadata ?? {}), checklist: next },
+      })
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['deal', id] }),
+  })
+
   const addActivityMutation = useMutation({
     mutationFn: async () => {
       const token = await getValidToken()
@@ -134,6 +153,10 @@ export default function DealDetailPage() {
 
   if (isLoading) return <div className="p-6 text-white/40 text-center py-20">Carregando...</div>
   if (!deal) return <div className="p-6 text-red-400 text-center py-20">Negócio não encontrado</div>
+
+  const checklist = (((deal.metadata as any)?.checklist) ?? {}) as Record<string, boolean>
+  const toggleChecklist = (key: string) =>
+    checklistMutation.mutate({ ...checklist, [key]: !checklist[key] })
 
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">
@@ -196,6 +219,53 @@ export default function DealDetailPage() {
                 {STATUSES.map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}
               </SelectContent>
             </Select>
+          </div>
+
+          {/* Esteira de venda — checklist por etapa */}
+          <div className="bg-white/5 rounded-xl border border-white/10 p-4">
+            <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-1">
+              Esteira de Venda
+            </h3>
+            {ESTEIRA.map((stage) => {
+              const items = stage.items.map((label, i) => ({ key: `${stage.status}-${i}`, label }))
+              const done = items.filter((it) => checklist[it.key]).length
+              const isCurrent = stage.status === deal.status
+              return (
+                <div
+                  key={stage.status}
+                  className={cn(
+                    'mt-2 rounded-lg p-2',
+                    isCurrent ? 'bg-yellow-500/5 ring-1 ring-yellow-500/30' : '',
+                  )}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-white/80">
+                      {STATUS_LABELS[stage.status] ?? stage.status}
+                    </span>
+                    <span className="text-[10px] text-white/40">{done}/{items.length}</span>
+                  </div>
+                  <div className="mt-1 space-y-1">
+                    {items.map((it) => (
+                      <label key={it.key} className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={!!checklist[it.key]}
+                          onChange={() => toggleChecklist(it.key)}
+                          disabled={checklistMutation.isPending}
+                          className="h-3.5 w-3.5 rounded border-white/20 bg-white/5 accent-yellow-500"
+                        />
+                        <span className={cn(
+                          'text-xs',
+                          checklist[it.key] ? 'text-white/40 line-through' : 'text-white/70',
+                        )}>
+                          {it.label}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )
+            })}
           </div>
 
           {/* Properties */}

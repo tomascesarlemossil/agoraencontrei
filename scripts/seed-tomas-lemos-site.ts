@@ -22,7 +22,7 @@
  *   DATABASE_URL        — conexão Postgres (obrigatória)
  *   DRY_RUN=1           — só mostra o que faria, não grava
  *   PARTNER_EMAIL       — e-mail de login do parceiro (default abaixo)
- *   PARTNER_PASSWORD    — senha do parceiro (default: gerada e impressa)
+ *   PARTNER_PASSWORD    — senha do parceiro (obrigatória ao criar o usuário)
  *   TOMAS_SOURCE_EMAIL  — dono atual dos imóveis de captação
  *                         (default: tomas@agoraencontrei.com.br)
  *   SKIP_PROPERTIES=1   — não reatribui imóveis (só cria o site)
@@ -33,13 +33,13 @@
 
 import { PrismaClient } from '@prisma/client'
 import * as argon2 from 'argon2'
-import { randomBytes } from 'node:crypto'
 
 const prisma = new PrismaClient()
 
 const DRY_RUN = process.env.DRY_RUN === '1' || process.env.DRY_RUN === 'true'
 const SKIP_PROPERTIES = process.env.SKIP_PROPERTIES === '1'
 const PARTNER_EMAIL = (process.env.PARTNER_EMAIL || 'contato@tomaslemos.agoraencontrei.com.br').toLowerCase().trim()
+const PARTNER_PASSWORD = process.env.PARTNER_PASSWORD || ''
 const TOMAS_SOURCE_EMAIL = (process.env.TOMAS_SOURCE_EMAIL || 'tomas@agoraencontrei.com.br').toLowerCase().trim()
 
 // ── Identidade visual & dados do parceiro ──────────────────────────────
@@ -58,13 +58,6 @@ const IDENTITY = {
   niche: 'imobiliaria',
   ownerName: 'Tomás Lemos',
   tagline: 'Curadoria imobiliária de alto padrão em Franca e região',
-}
-
-function genPassword(): string {
-  const words = ['Brisa', 'Cedro', 'Atrio', 'Marfim', 'Solar', 'Vitral', 'Aurora', 'Lago']
-  const w = () => words[randomBytes(1)[0] % words.length]
-  const n = () => (randomBytes(1)[0] % 90) + 10
-  return `${w()}${n()}-${w()}${n()}`
 }
 
 function log(msg: string) {
@@ -120,16 +113,23 @@ async function main() {
 
   // ── 3. User parceiro (ADMIN, separado do admin da plataforma) ────────
   const existingUser = await prisma.user.findUnique({ where: { email: PARTNER_EMAIL } })
-  let tempPassword: string | null = null
+  let userCreated = false
 
   if (existingUser) {
     ownerId = existingUser.id
     log(`✔ Usuário parceiro já existe (${PARTNER_EMAIL}) — reaproveitando.`)
   } else {
-    tempPassword = process.env.PARTNER_PASSWORD || genPassword()
+    // A senha NUNCA é gerada/logada pelo script — o operador a define via
+    // env PARTNER_PASSWORD e já a conhece, evitando vazá-la em logs.
+    if (!PARTNER_PASSWORD && !DRY_RUN) {
+      console.error('❌ Defina a variável PARTNER_PASSWORD para criar o usuário parceiro.')
+      console.error('   Ex.: PARTNER_PASSWORD=\'SuaSenhaForte\' npx tsx scripts/seed-tomas-lemos-site.ts')
+      process.exit(1)
+    }
+    userCreated = true
     log(`→ Criando usuário parceiro ADMIN "${PARTNER_EMAIL}"...`)
     if (!DRY_RUN && companyId) {
-      const passwordHash = await argon2.hash(tempPassword, {
+      const passwordHash = await argon2.hash(PARTNER_PASSWORD, {
         type: argon2.argon2id,
         memoryCost: 65536,
         timeCost: 3,
@@ -234,11 +234,7 @@ async function main() {
   console.log('✅ Concluído.')
   console.log(`   Site:        https://${IDENTITY.subdomain}.agoraencontrei.com.br`)
   console.log(`   Login:       ${PARTNER_EMAIL}`)
-  if (tempPassword) {
-    console.log(`   Senha:       ${tempPassword}   ← guarde com segurança`)
-  } else {
-    console.log(`   Senha:       (usuário já existia — senha inalterada)`)
-  }
+  console.log(`   Senha:       ${userCreated ? 'a definida em PARTNER_PASSWORD' : '(usuário já existia — senha inalterada)'}`)
   console.log(`   CRECI:       ${IDENTITY.creci}`)
   console.log(`   Tema:        ${IDENTITY.theme} (Signature Estate)`)
   if (DRY_RUN) console.log('\n   ⚠ Isto foi uma PRÉ-VISUALIZAÇÃO. Rode sem DRY_RUN para gravar.')
