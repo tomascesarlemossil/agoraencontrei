@@ -15,7 +15,7 @@ export type AuditAction =
   // Negócios (CRM)
   | 'deal.create'     | 'deal.update'     | 'deal.delete'
   // Leads
-  | 'lead.create'     | 'lead.update'     | 'lead.delete'
+  | 'lead.create'     | 'lead.update'     | 'lead.delete'     | 'lead.start_deal'
   // Jurídico
   | 'legal.create'    | 'legal.update'    | 'legal.delete'
   // Blog

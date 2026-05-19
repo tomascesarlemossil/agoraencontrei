@@ -561,6 +561,7 @@ export default async function usersRoutes(app: FastifyInstance) {
           await app.prisma.property.create({
             data: {
               companyId,
+              userId: req.user.sub,
               title: title || `${type} em ${city || 'N/A'}`,
               slug,
               type: (['HOUSE','APARTMENT','LAND','FARM','WAREHOUSE','OFFICE','STORE','STUDIO','PENTHOUSE','CONDO','KITNET'].includes(type) ? type : 'HOUSE') as any,

@@ -233,8 +233,8 @@ export async function valuationRoutes(app: FastifyInstance) {
         return reply.status(400).send({ error: 'Cobrança não encontrada' })
       }
 
-      const charge = await res.json()
-      const isPaid = ['RECEIVED', 'CONFIRMED', 'RECEIVED_IN_CASH'].includes(charge.status)
+      const charge = await res.json() as { status?: string; value?: number }
+      const isPaid = ['RECEIVED', 'CONFIRMED', 'RECEIVED_IN_CASH'].includes(charge.status ?? '')
 
       if (isPaid) {
         // Update local record

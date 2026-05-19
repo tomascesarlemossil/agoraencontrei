@@ -10,7 +10,7 @@
  */
 
 import Anthropic from '@anthropic-ai/sdk'
-import type { PrismaClient } from '@prisma/client'
+import type { PrismaClient, Prisma } from '@prisma/client'
 import { buildTomasSystemPrompt } from '@agoraencontrei/tomas-knowledge'
 import { env } from '../utils/env.js'
 
@@ -439,7 +439,7 @@ async function executeTool(
                     intent: toolInput.intent,
                     budgetMax: toolInput.budgetMax,
                     neighborhoods: toolInput.neighborhoods,
-                  },
+                  } as Prisma.InputJsonValue,
                 },
               })
             }
@@ -473,7 +473,7 @@ async function executeTool(
                 city: toolInput.city,
                 neighborhoods: toolInput.neighborhoods,
                 ...(tag ? { tag } : {}),
-              },
+              } as Prisma.InputJsonValue,
             },
           })
 
@@ -786,7 +786,7 @@ export async function persistMessages(
         chatId,
         role: 'assistant',
         content: response.message,
-        actions: response.actions.length ? response.actions : undefined,
+        actions: response.actions.length ? (response.actions as unknown as Prisma.InputJsonValue) : undefined,
       },
     ],
   })

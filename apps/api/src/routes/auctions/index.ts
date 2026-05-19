@@ -1,4 +1,5 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
+import type { Prisma } from '@prisma/client'
 import { z } from 'zod'
 import { env } from '../../utils/env.js'
 import { calculateAcquisitionCosts, getStateCosts, validateDocument } from '../../utils/brazil-costs.js'
@@ -352,7 +353,7 @@ export default async function auctionsRoutes(app: FastifyInstance) {
 
   // ── GET /auctions/stats — Estatísticas completas para dashboard ─────────────
   app.get('/stats', async (_req: FastifyRequest, reply: FastifyReply) => {
-    const activeWhere = { status: { notIn: ['CANCELLED', 'CLOSED'] as string[] } }
+    const activeWhere: Prisma.AuctionWhereInput = { status: { notIn: ['CANCELLED', 'CLOSED'] } }
 
     const [total, bySource, byStatus, avgDiscount, topCities, maxDiscountAuction, recentRuns, latestAuctions] = await Promise.all([
       app.prisma.auction.count({ where: activeWhere }),
@@ -1117,7 +1118,7 @@ export default async function auctionsRoutes(app: FastifyInstance) {
         discountPercent: true, opportunityScore: true, estimatedROI: true,
         auctionDate: true, firstRoundDate: true, secondRoundDate: true,
         occupation: true, hasDebts: true, financingAvailable: true, fgtsAllowed: true,
-        coverImage: true, streetViewUrl: true, bankName: true, auctioneerName: true,
+        coverImage: true, bankName: true, auctioneerName: true,
         processNumber: true, court: true, debtorName: true,
       },
     })

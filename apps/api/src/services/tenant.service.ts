@@ -266,7 +266,7 @@ export async function addDomainToVercel(
       },
     )
 
-    const data = await res.json()
+    const data = await res.json() as { error?: { message?: string } }
 
     if (!res.ok) {
       return { success: false, error: data.error?.message || 'Vercel API error' }
