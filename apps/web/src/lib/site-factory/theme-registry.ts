@@ -5,7 +5,7 @@
  * Each theme includes visual config, Tailwind classes, Tomás tone, and metadata.
  */
 
-export type ThemeKey = 'luxury_gold' | 'urban_tech' | 'landscape_living' | 'classic_trust' | 'fast_sales_pro'
+export type ThemeKey = 'luxury_gold' | 'urban_tech' | 'landscape_living' | 'classic_trust' | 'fast_sales_pro' | 'signature_estate'
 
 export interface ThemeConfig {
   key: ThemeKey
@@ -135,6 +135,31 @@ export const THEME_REGISTRY: Record<ThemeKey, ThemeConfig> = {
     tomasFocus: 'Consultoria, documentação, financiamento, segurança jurídica, histórico do mercado',
   },
 
+  signature_estate: {
+    key: 'signature_estate',
+    name: 'Signature Estate',
+    tagline: 'Assinatura & Sofisticação',
+    description: 'Visual editorial de altíssimo padrão — paleta ivory e carvão com detalhe brass, tipografia serifada e composição de revista. O tema mais sofisticado da plataforma.',
+    idealFor: 'Corretores premium, imobiliárias boutique, marca pessoal de alto padrão',
+    bg: 'bg-[#faf8f4]',
+    text: 'text-[#1c1a17]',
+    textMuted: 'text-[#6b6457]',
+    accent: 'text-[#9a7b4f]',
+    accentHex: '#9a7b4f',
+    card: 'bg-white border border-[#e7e1d6] shadow-[0_2px_24px_-12px_rgba(28,26,23,0.18)] rounded-2xl',
+    cardHover: 'hover:shadow-[0_12px_40px_-16px_rgba(28,26,23,0.28)] hover:border-[#d6c9b0]',
+    hero: 'bg-gradient-to-br from-[#1c1a17] via-[#2a2620] to-[#3a3024]',
+    headerBg: 'bg-[#faf8f4]/90 backdrop-blur-xl border-b border-[#e7e1d6]',
+    footerBg: 'bg-[#1c1a17] text-[#faf8f4] border-t border-[#9a7b4f]/20',
+    buttonPrimary: 'bg-[#1c1a17] text-[#faf8f4] font-medium tracking-wide hover:bg-[#9a7b4f] rounded-full',
+    buttonSecondary: 'border border-[#9a7b4f]/40 text-[#9a7b4f] hover:bg-[#9a7b4f]/8 rounded-full',
+    fontHeading: 'font-serif',
+    fontBody: 'font-sans',
+    tomasTone: 'consultivo',
+    tomasGreeting: 'Seja bem-vindo. Sou Tomás, seu consultor imobiliário pessoal. Conte-me o que procura — cuido de cada detalhe com você.',
+    tomasFocus: 'Curadoria personalizada, alto padrão, discrição, assessoria completa, experiência sob medida',
+  },
+
   fast_sales_pro: {
     key: 'fast_sales_pro',
     name: 'Fast Sales Pro',
@@ -173,6 +198,7 @@ export const LAYOUT_TO_THEME: Record<string, ThemeKey> = {
   landscape_living: 'landscape_living',
   classic_trust: 'classic_trust',
   fast_sales_pro: 'fast_sales_pro',
+  signature_estate: 'signature_estate',
 }
 
 export function resolveTheme(layoutType: string): ThemeConfig {

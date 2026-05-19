@@ -64,7 +64,7 @@ const DEFAULT_PLANS: PlanSeed[] = [
     maxLeadViews: 1000,
     maxUsers: 5,
     maxAIRequests: 1000,
-    themes: ['urban_tech', 'classic_trust', 'luxury_gold', 'fast_sales_pro'],
+    themes: ['urban_tech', 'classic_trust', 'luxury_gold', 'fast_sales_pro', 'signature_estate'],
     modules: ['site_basico', 'crm_avancado', 'ia_tomas', 'whatsapp', 'leiloes'],
     features: [
       'Tudo do Lite',
@@ -89,7 +89,7 @@ const DEFAULT_PLANS: PlanSeed[] = [
     maxLeadViews: -1,
     maxUsers: -1,
     maxAIRequests: -1,
-    themes: ['urban_tech', 'classic_trust', 'luxury_gold', 'fast_sales_pro', 'landscape_living'],
+    themes: ['urban_tech', 'classic_trust', 'luxury_gold', 'fast_sales_pro', 'landscape_living', 'signature_estate'],
     modules: ['site_basico', 'crm_avancado', 'ia_tomas', 'whatsapp', 'leiloes', 'dominio_proprio', 'split_pagamentos'],
     features: [
       'Tudo do Pro',
@@ -113,7 +113,7 @@ const DEFAULT_PLANS: PlanSeed[] = [
     maxLeadViews: -1,
     maxUsers: -1,
     maxAIRequests: -1,
-    themes: ['urban_tech', 'classic_trust', 'luxury_gold', 'fast_sales_pro', 'landscape_living'],
+    themes: ['urban_tech', 'classic_trust', 'luxury_gold', 'fast_sales_pro', 'landscape_living', 'signature_estate'],
     modules: ['site_basico', 'crm_avancado', 'ia_tomas', 'whatsapp', 'leiloes', 'dominio_proprio', 'split_pagamentos', 'video_editor'],
     features: [
       'Tudo do Enterprise',
