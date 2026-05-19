@@ -14,6 +14,7 @@ const POLL_INTERVAL = 15_000 // 15 seconds
 export function useRealTimeNotifications() {
   const token = useAuthStore(s => s.accessToken)
   const add = useNotifications(s => s.add)
+  const hydrate = useNotifications(s => s.hydrate)
   const lastCheckRef = useRef<string>(new Date().toISOString())
   const seenIdsRef = useRef<Set<string>>(new Set())
 
@@ -66,10 +67,12 @@ export function useRealTimeNotifications() {
   useEffect(() => {
     if (!token) return
 
-    // Initial poll
+    // Load persisted notifications so the center survives reloads
+    hydrate(token)
+    // Initial poll for critical real-time events
     poll()
 
     const interval = setInterval(poll, POLL_INTERVAL)
     return () => clearInterval(interval)
-  }, [token, poll])
+  }, [token, poll, hydrate])
 }

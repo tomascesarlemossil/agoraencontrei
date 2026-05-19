@@ -10,6 +10,7 @@
 
 import type { PrismaClient } from '@prisma/client'
 import { emitAutomation } from './automation.emitter.js'
+import { notify } from './notification.service.js'
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -192,6 +193,25 @@ export async function ingestLead(
         },
       }).catch(() => null)
       leadId = lead?.id ?? null
+
+      // New lead → notification center + e-mail (admins + platform)
+      if (lead) {
+        await notify({
+          prisma,
+          companyId,
+          type: 'lead_captured',
+          title: `Novo lead: ${input.name}`,
+          body: [
+            normalizedPhone ? `Telefone: ${normalizedPhone}` : '',
+            input.email ? `E-mail: ${input.email}` : '',
+            input.interest ? `Interesse: ${input.interest}` : '',
+            input.budget ? `Orçamento: ${input.budget}` : '',
+            `Origem: ${input.source}`,
+            `Score: ${score}`,
+          ].filter(Boolean).join('\n'),
+          payload: { leadId, name: input.name, phone: normalizedPhone, source: input.source, score },
+        }).catch(() => {})
+      }
     }
 
     // Link funnel to lead

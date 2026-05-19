@@ -140,4 +140,59 @@ export default async function notificationsRoutes(app: FastifyInstance) {
 
     return reply.send(results)
   })
+
+  // ── GET / — Persisted notification center (survives page reloads) ───────
+  app.get('/', {
+    schema: { tags: ['notifications'], description: 'List persisted notifications' },
+    preHandler: [app.authenticate],
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
+    const user = request.user as { sub: string; cid: string }
+    const { unreadOnly, limit } = request.query as { unreadOnly?: string; limit?: string }
+    const take = Math.min(Number(limit) || 50, 100)
+
+    const items = await app.prisma.notification.findMany({
+      where: {
+        companyId: user.cid,
+        OR: [{ userId: null }, { userId: user.sub }],
+        ...(unreadOnly === 'true' ? { read: false } : {}),
+      },
+      orderBy: { createdAt: 'desc' },
+      take,
+    })
+
+    const unreadCount = await app.prisma.notification.count({
+      where: { companyId: user.cid, OR: [{ userId: null }, { userId: user.sub }], read: false },
+    })
+
+    return reply.send({ items, unreadCount })
+  })
+
+  // ── PATCH /:id/read — Mark a notification as read ───────────────────────
+  app.patch('/:id/read', {
+    schema: { tags: ['notifications'], description: 'Mark notification as read' },
+    preHandler: [app.authenticate],
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
+    const user = request.user as { sub: string; cid: string }
+    const { id } = request.params as { id: string }
+
+    const result = await app.prisma.notification.updateMany({
+      where: { id, companyId: user.cid },
+      data: { read: true, readAt: new Date() },
+    })
+    if (result.count === 0) return reply.status(404).send({ error: 'NOT_FOUND' })
+    return reply.send({ success: true })
+  })
+
+  // ── POST /read-all — Mark every notification as read ────────────────────
+  app.post('/read-all', {
+    schema: { tags: ['notifications'], description: 'Mark all notifications as read' },
+    preHandler: [app.authenticate],
+  }, async (request: FastifyRequest, reply: FastifyReply) => {
+    const user = request.user as { sub: string; cid: string }
+    const result = await app.prisma.notification.updateMany({
+      where: { companyId: user.cid, OR: [{ userId: null }, { userId: user.sub }], read: false },
+      data: { read: true, readAt: new Date() },
+    })
+    return reply.send({ success: true, updated: result.count })
+  })
 }
