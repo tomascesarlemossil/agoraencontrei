@@ -17,6 +17,7 @@ import rateLimit from '@fastify/rate-limit'
 import { apiKeyPrefix } from '../api-keys/index.js'
 import { notify } from '../../services/notification.service.js'
 import { dispatchWebhooks } from '../../services/outgoing-webhook.service.js'
+import { recordEvent } from '../../services/system-event.service.js'
 
 interface ApiKeyContext { companyId: string; scopes: string[] }
 
@@ -137,6 +138,12 @@ export default async function publicApiRoutes(app: FastifyInstance) {
     void dispatchWebhooks(app.prisma, companyId, 'lead.created', {
       id: lead.id, name: body.name, email: body.email ?? null,
       phone: body.phone ?? null, interest: body.interest ?? null, source: 'open_api',
+    })
+
+    void recordEvent({
+      prisma: app.prisma, companyId, eventType: 'lead.created', source: 'open_api',
+      entityType: 'lead', entityId: lead.id,
+      payload: { name: body.name, phone: body.phone ?? null, interest: body.interest ?? null },
     })
 
     return reply.status(201).send({ data: { id: lead.id } })

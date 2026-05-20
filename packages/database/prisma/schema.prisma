@@ -3458,3 +3458,32 @@ model OutgoingWebhook {
   @@index([companyId])
   @@map("outgoing_webhooks")
 }
+
+// =============================================================================
+// SYSTEM EVENTS — log central de eventos de domínio
+// =============================================================================
+
+/// Registro central de eventos de negócio (lead criado, pagamento recebido,
+/// imóvel publicado, etc.). Distinto de AuditLog (que rastreia ações do
+/// usuário sobre recursos): SystemEvent rastreia o que ACONTECEU no domínio.
+/// Base para auditoria, replay e automações.
+model SystemEvent {
+  id           String   @id @default(cuid())
+  companyId    String?
+  /// lead.created | property.created | deal.payment_received | ...
+  eventType    String
+  /// open_api | asaas_webhook | tomas | dashboard | public_site | ...
+  source       String?
+  /// lead | property | deal | contact | ...
+  entityType   String?
+  entityId     String?
+  payload      Json     @default("{}")
+  processed    Boolean  @default(false)
+  errorMessage String?
+  createdAt    DateTime @default(now())
+
+  @@index([companyId, eventType])
+  @@index([createdAt])
+  @@index([processed])
+  @@map("system_events")
+}
