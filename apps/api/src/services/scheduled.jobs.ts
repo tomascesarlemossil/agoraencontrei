@@ -503,6 +503,98 @@ export async function runScheduledJobs(app: FastifyInstance) {
     }
   }
 
+  // ── 7b. Lembrete de visita 24h antes (PropertyVisit) ─────────────────
+  // Avisa o corretor (in-app + e-mail) e — se houver WhatsApp configurado —
+  // dispara automação para mandar lembrete ao visitante.
+  try {
+    const in23h = new Date(now.getTime() + 23 * 60 * 60 * 1000)
+    const in25h = new Date(now.getTime() + 25 * 60 * 60 * 1000)
+
+    const upcoming = await app.prisma.propertyVisit.findMany({
+      where: {
+        status: { in: ['pending', 'confirmed'] },
+        scheduledAt: { gte: in23h, lte: in25h },
+      },
+      take: 200,
+    })
+
+    if (upcoming.length > 0) {
+      const { notify } = await import('./notification.service.js')
+
+      let reminded = 0
+      for (const visit of upcoming) {
+        const already = await app.prisma.auditLog.findFirst({
+          where: {
+            resource: 'property_visit',
+            resourceId: visit.id,
+            action: 'visit.reminder.24h' as any,
+          },
+        }).catch(() => null)
+        if (already) continue
+
+        const prop = await app.prisma.property.findUnique({
+          where: { id: visit.propertyId },
+          select: { title: true, neighborhood: true, city: true },
+        }).catch(() => null)
+
+        const dateLabel = visit.scheduledAt.toLocaleString('pt-BR', {
+          day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit',
+        })
+        const propertyLabel = prop?.title ?? 'imóvel'
+
+        await notify({
+          prisma: app.prisma,
+          companyId: visit.companyId,
+          userId: visit.brokerId ?? null,
+          type: 'visit_requested',
+          title: 'Lembrete: visita amanhã',
+          body: `${visit.visitorName} tem visita amanhã (${dateLabel}) para ${propertyLabel}.\nTelefone: ${visit.visitorPhone}`,
+          payload: {
+            visitId: visit.id,
+            propertyId: visit.propertyId,
+            scheduledAt: visit.scheduledAt.toISOString(),
+            visitorPhone: visit.visitorPhone,
+          },
+        }).catch(() => {})
+
+        // Emit automation event so WhatsApp templates / e-mails to the visitor
+        // can be wired in the rules engine (the action runs only if rules match).
+        emitAutomation({
+          companyId: visit.companyId,
+          event: 'visita_lembrete_24h' as any,
+          data: {
+            visitId: visit.id,
+            visitorName: visit.visitorName,
+            visitorPhone: visit.visitorPhone,
+            visitorEmail: visit.visitorEmail ?? '',
+            propertyId: visit.propertyId,
+            propertyTitle: propertyLabel,
+            scheduledAt: visit.scheduledAt.toISOString(),
+            brokerId: visit.brokerId ?? '',
+          },
+        })
+
+        await app.prisma.auditLog.create({
+          data: {
+            companyId: visit.companyId,
+            action: 'visit.reminder.24h' as any,
+            resource: 'property_visit',
+            resourceId: visit.id,
+            payload: { scheduledAt: visit.scheduledAt.toISOString(), sentAt: now.toISOString() },
+          },
+        }).catch(() => {})
+
+        reminded++
+      }
+
+      if (reminded > 0) {
+        app.log.info(`[scheduled] visit-reminder-24h: emitted ${reminded} reminders`)
+      }
+    }
+  } catch (err) {
+    app.log.error({ err }, '[scheduled] visit-reminder-24h failed')
+  }
+
   // ── 8. Follow-up automático: processa follow-ups agendados (D+1, D+3, D+7) ───
   try {
     const followUpResult = await processDueFollowUps(app.prisma, app.outboundQueue)
