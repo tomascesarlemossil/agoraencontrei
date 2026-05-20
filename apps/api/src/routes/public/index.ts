@@ -805,6 +805,47 @@ export default async function publicRoutes(app: FastifyInstance) {
         },
       }).catch(() => null)
       proposalId = created?.id ?? null
+
+      // Initial event so the public timeline has a starting point.
+      if (proposalId) {
+        await app.prisma.proposalEvent.create({
+          data: {
+            proposalId,
+            type: 'sent',
+            actorType: 'buyer',
+            value: proposta.valorProposta / 100,
+            note: 'Proposta enviada pelo cliente.',
+          },
+        }).catch(() => {})
+      }
+
+      // E-mail ao comprador com link de acompanhamento — fechar o loop.
+      if (proposalId && email) {
+        try {
+          const { sendEmail, isEmailConfigured } = await import('../../services/email.service.js')
+          if (isEmailConfigured()) {
+            const trackingUrl = `https://www.agoraencontrei.com.br/proposta/${proposalId}`
+            const valueLabel = (proposta.valorProposta / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })
+            await sendEmail({
+              to: email,
+              subject: 'Sua proposta foi recebida — AgoraEncontrei',
+              html: `<div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto">
+  <div style="background:#1B2B5B;color:#fff;padding:20px 24px;border-radius:8px 8px 0 0">
+    <strong style="font-size:16px">AgoraEncontrei</strong>
+  </div>
+  <div style="border:1px solid #e5e7eb;border-top:0;padding:24px;border-radius:0 0 8px 8px">
+    <h2 style="margin:0 0 8px;font-size:18px;color:#111">Olá, ${name.split(' ')[0]}!</h2>
+    <p style="margin:0 0 16px;color:#444;line-height:1.6">
+      Recebemos sua proposta de <strong>${valueLabel}</strong>. Nossa equipe vai analisar e te
+      responde em até 24h. Acompanhe o andamento em tempo real pelo link abaixo:
+    </p>
+    <a href="${trackingUrl}" style="display:inline-block;background:#C9A84C;color:#1B2B5B;font-weight:bold;padding:12px 24px;border-radius:8px;text-decoration:none">Acompanhar minha proposta</a>
+  </div>
+</div>`,
+            })
+          }
+        } catch { /* non-fatal */ }
+      }
     }
 
     // In-app notification (notification center + platform admins). Email is
@@ -1150,6 +1191,43 @@ export default async function publicRoutes(app: FastifyInstance) {
   // POST /api/v1/public/visits — schedule a visit (public, no auth)
   const { default: visitRoutes } = await import('./visits.js')
   app.register(visitRoutes, { prefix: '/visits' })
+
+  // GET /api/v1/public/proposals/:id — tracking page for the buyer. Only
+  // exposes sanitized fields: status, value, events, basic property info.
+  app.get('/proposals/:id', async (req, reply) => {
+    const { id } = req.params as { id: string }
+    const proposal = await app.prisma.proposal.findUnique({
+      where: { id },
+      include: { events: { orderBy: { createdAt: 'asc' } } },
+    }).catch(() => null)
+    if (!proposal) return reply.status(404).send({ error: 'NOT_FOUND' })
+
+    const prop = await app.prisma.property.findUnique({
+      where: { id: proposal.propertyId },
+      select: { title: true, slug: true, neighborhood: true, city: true, coverImage: true },
+    }).catch(() => null)
+
+    return reply.send({
+      id: proposal.id,
+      status: proposal.status,
+      offerValue: proposal.offerValue,
+      paymentMethod: proposal.paymentMethod,
+      downPayment: proposal.downPayment,
+      financingAmount: proposal.financingAmount,
+      expiresAt: proposal.expiresAt,
+      createdAt: proposal.createdAt,
+      updatedAt: proposal.updatedAt,
+      property: prop,
+      events: proposal.events.map(e => ({
+        id: e.id,
+        type: e.type,
+        actorType: e.actorType,
+        value: e.value,
+        note: e.note,
+        createdAt: e.createdAt,
+      })),
+    })
+  })
 
   // GET /api/v1/public/neighborhoods — unique neighborhoods for autocomplete
   app.get('/neighborhoods', async (req, reply) => {
