@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
-import { Calendar, Loader2, RefreshCw, Check, X, Phone, MessageCircle, Star } from 'lucide-react'
+import { Calendar, Loader2, RefreshCw, Check, X, Phone, MessageCircle, Star, TrendingUp, AlertTriangle, Award } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
@@ -14,6 +14,18 @@ interface Visit {
   notes: string | null; rating: number | null; feedback: string | null
   property: { id: string; title: string; slug: string | null; neighborhood: string | null; city: string | null } | null
   broker: { id: string; name: string; avatarUrl: string | null } | null
+}
+
+interface Stats {
+  periodDays: number
+  total: number
+  byStatus: Record<string, number>
+  noShowRate: number
+  conversionRate: number
+  avgRating: number
+  ratingCount: number
+  topProperties: { id?: string; title?: string; slug?: string | null; neighborhood?: string | null; visits: number }[]
+  topBrokers: { id: string; name?: string; avatarUrl?: string | null; total: number; done: number; avgRating: number | null }[]
 }
 
 const STATUS: Record<string, { label: string; cls: string }> = {
@@ -31,6 +43,7 @@ function fmtDate(iso: string) {
 export default function AgendaPage() {
   const { getValidToken } = useAuth()
   const [visits, setVisits] = useState<Visit[]>([])
+  const [stats, setStats] = useState<Stats | null>(null)
   const [loading, setLoading] = useState(false)
   const [filter, setFilter] = useState('')
   const [busy, setBusy] = useState<string | null>(null)
@@ -44,11 +57,13 @@ export default function AgendaPage() {
       const token = await getValidToken()
       const q = new URLSearchParams()
       if (filter) q.set('status', filter)
-      const res = await fetch(`${API_URL}/api/v1/visits?${q}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      const j = await res.json()
-      setVisits(j.data ?? [])
+      const [listRes, statsRes] = await Promise.all([
+        fetch(`${API_URL}/api/v1/visits?${q}`, { headers: { Authorization: `Bearer ${token}` } }),
+        fetch(`${API_URL}/api/v1/visits/stats?days=30`, { headers: { Authorization: `Bearer ${token}` } }),
+      ])
+      const list = await listRes.json()
+      setVisits(list.data ?? [])
+      if (statsRes.ok) setStats(await statsRes.json())
     } catch { setVisits([]) }
     finally { setLoading(false) }
   }, [filter, getValidToken])
@@ -93,6 +108,94 @@ export default function AgendaPage() {
       </div>
 
       <div className="mx-auto max-w-6xl px-4 py-5 sm:px-6 space-y-4">
+        {/* Stats — últimos 30 dias */}
+        {stats && stats.total > 0 && (
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              <div className="rounded-xl border border-gray-800 bg-gray-900/40 p-3">
+                <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-gray-500">
+                  <Calendar size={11} /> Visitas (30d)
+                </div>
+                <p className="mt-1 text-xl font-bold text-white">{stats.total}</p>
+                <p className="mt-0.5 text-[10px] text-gray-500">
+                  {stats.byStatus.pending + stats.byStatus.confirmed} agendadas
+                </p>
+              </div>
+              <div className="rounded-xl border border-gray-800 bg-gray-900/40 p-3">
+                <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-gray-500">
+                  <TrendingUp size={11} /> Conversão
+                </div>
+                <p className="mt-1 text-xl font-bold text-emerald-300">
+                  {(stats.conversionRate * 100).toFixed(0)}%
+                </p>
+                <p className="mt-0.5 text-[10px] text-gray-500">{stats.byStatus.done} realizadas</p>
+              </div>
+              <div className="rounded-xl border border-gray-800 bg-gray-900/40 p-3">
+                <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-gray-500">
+                  <AlertTriangle size={11} /> No-show
+                </div>
+                <p className={`mt-1 text-xl font-bold ${stats.noShowRate >= 0.2 ? 'text-red-300' : 'text-white'}`}>
+                  {(stats.noShowRate * 100).toFixed(0)}%
+                </p>
+                <p className="mt-0.5 text-[10px] text-gray-500">{stats.byStatus.no_show} não compareceu</p>
+              </div>
+              <div className="rounded-xl border border-gray-800 bg-gray-900/40 p-3">
+                <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-gray-500">
+                  <Star size={11} /> Avaliação média
+                </div>
+                <p className="mt-1 text-xl font-bold text-amber-300">
+                  {stats.avgRating > 0 ? stats.avgRating.toFixed(1) : '—'}
+                </p>
+                <p className="mt-0.5 text-[10px] text-gray-500">{stats.ratingCount} avaliações</p>
+              </div>
+            </div>
+
+            {(stats.topProperties.length > 0 || stats.topBrokers.length > 0) && (
+              <div className="grid sm:grid-cols-2 gap-2">
+                {stats.topProperties.length > 0 && (
+                  <div className="rounded-xl border border-gray-800 bg-gray-900/40 p-3">
+                    <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-gray-500">
+                      <Award size={11} /> Imóveis mais visitados
+                    </div>
+                    <ul className="mt-2 space-y-1">
+                      {stats.topProperties.slice(0, 3).map((p, i) => (
+                        <li key={p.id ?? i} className="flex items-center justify-between text-xs">
+                          <Link href={p.slug || p.id ? `/imoveis/${p.slug ?? p.id}` : '#'}
+                            className="truncate text-gray-300 hover:text-amber-400">
+                            {p.title ?? 'Imóvel removido'}
+                            {p.neighborhood && <span className="text-gray-600"> · {p.neighborhood}</span>}
+                          </Link>
+                          <span className="ml-2 flex-shrink-0 text-amber-300 font-semibold">{p.visits}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {stats.topBrokers.length > 0 && (
+                  <div className="rounded-xl border border-gray-800 bg-gray-900/40 p-3">
+                    <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-gray-500">
+                      <Award size={11} /> Corretores em destaque
+                    </div>
+                    <ul className="mt-2 space-y-1">
+                      {stats.topBrokers.slice(0, 3).map(b => (
+                        <li key={b.id} className="flex items-center justify-between text-xs">
+                          <span className="truncate text-gray-300">{b.name ?? 'Corretor'}</span>
+                          <span className="ml-2 flex-shrink-0 text-gray-400">
+                            {b.done} <span className="text-gray-600">realizadas</span>
+                            {b.avgRating != null && (
+                              <span className="ml-1.5 text-amber-300">{b.avgRating.toFixed(1)}★</span>
+                            )}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Filters */}
         <div className="flex flex-wrap gap-1">
           {[['', 'Todas'], ['pending', 'Pendentes'], ['confirmed', 'Confirmadas'], ['done', 'Realizadas'], ['cancelled', 'Canceladas']]
