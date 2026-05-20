@@ -169,4 +169,72 @@ export default async function visitRoutes(app: FastifyInstance) {
 
     return reply.send({ success: true, activityId: activity.id, contactId: contact.id })
   })
+
+  // GET /api/v1/public/visits/:id/feedback — fetch visit info for the public
+  // feedback page (only returns the bare minimum needed to render the form).
+  app.get('/:id/feedback', async (req, reply) => {
+    const { id } = req.params as { id: string }
+    const visit = await app.prisma.propertyVisit.findUnique({
+      where: { id },
+      select: {
+        id: true, visitorName: true, scheduledAt: true,
+        status: true, rating: true, propertyId: true,
+      },
+    }).catch(() => null)
+    if (!visit) return reply.status(404).send({ error: 'NOT_FOUND' })
+
+    const prop = await app.prisma.property.findUnique({
+      where: { id: visit.propertyId },
+      select: { title: true, slug: true, neighborhood: true, city: true },
+    }).catch(() => null)
+
+    return reply.send({
+      id: visit.id,
+      visitorName: visit.visitorName,
+      scheduledAt: visit.scheduledAt,
+      status: visit.status,
+      alreadyRated: visit.rating != null,
+      property: prop,
+    })
+  })
+
+  // POST /api/v1/public/visits/:id/feedback — visitor submits rating + comment.
+  // Only accepted when the visit is marked done and has no rating yet, so the
+  // link can be safely shared (no auth) without risk of overwrite or spam.
+  app.post('/:id/feedback', async (req, reply) => {
+    const { id } = req.params as { id: string }
+    const body = req.body as { rating?: number; feedback?: string }
+    const rating = Math.max(1, Math.min(5, Number(body.rating) || 0))
+    const feedback = (body.feedback ?? '').toString().slice(0, 2000)
+    if (!rating) return reply.status(400).send({ error: 'INVALID_RATING' })
+
+    const visit = await app.prisma.propertyVisit.findUnique({
+      where: { id },
+      select: { id: true, status: true, rating: true, companyId: true, visitorName: true },
+    }).catch(() => null)
+    if (!visit) return reply.status(404).send({ error: 'NOT_FOUND' })
+    if (visit.status !== 'done') return reply.status(409).send({ error: 'VISIT_NOT_COMPLETED' })
+    if (visit.rating != null) return reply.status(409).send({ error: 'ALREADY_RATED' })
+
+    await app.prisma.propertyVisit.update({
+      where: { id },
+      data: { rating, feedback: feedback || null },
+    })
+
+    // Notifica o corretor que o feedback chegou — sinal forte para reabrir o
+    // diálogo com o cliente (proposta, novas opções, etc.).
+    try {
+      const { notify } = await import('../../services/notification.service.js')
+      await notify({
+        prisma: app.prisma,
+        companyId: visit.companyId,
+        type: 'system',
+        title: 'Feedback de visita recebido',
+        body: `${visit.visitorName} avaliou a visita ${rating}/5.${feedback ? `\n"${feedback.slice(0, 200)}"` : ''}`,
+        payload: { visitId: id, rating },
+      })
+    } catch { /* non-fatal */ }
+
+    return reply.send({ success: true })
+  })
 }
