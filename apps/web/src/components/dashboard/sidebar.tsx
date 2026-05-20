@@ -101,6 +101,7 @@ const midNavItems = [
 ]
 
 const corretorNavItem = { href: '/dashboard/corretor', icon: BriefcaseBusiness, label: 'Meu Painel', highlight: false }
+const corretorHojeItem = { href: '/dashboard/corretor/hoje', icon: Calendar, label: 'Meu Dia', highlight: false }
 
 const lemosbankSubItems = [
   { href: '/dashboard/lemosbank',              icon: Banknote,   label: 'Visão Geral' },
@@ -338,11 +339,11 @@ function NavContent({ onClose }: { onClose?: () => void }) {
         })}
 
         {/* ── Meu Painel (corretor) — last ──────────────────── */}
-        {(() => {
-          const { href, icon: Icon, label } = corretorNavItem
-          const active = pathname === href || pathname.startsWith(href)
+        {[corretorHojeItem, corretorNavItem].map(({ href, icon: Icon, label }) => {
+          const active = pathname === href || (href !== '/dashboard/corretor' && pathname.startsWith(href)) || (href === '/dashboard/corretor' && pathname === href)
           return (
             <Link
+              key={href}
               href={href}
               onClick={onClose}
               className={cn(
@@ -355,7 +356,7 @@ function NavContent({ onClose }: { onClose?: () => void }) {
               {active && <ChevronRight className="ml-auto h-3 w-3 flex-shrink-0" />}
             </Link>
           )
-        })()}
+        })}
       </nav>
 
       {/* Bottom */}

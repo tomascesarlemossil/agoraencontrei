@@ -41,6 +41,95 @@ export default async function corretorRoutes(app: FastifyInstance) {
     })
   })
 
+  // GET /api/v1/corretor/today — vista enxuta do dia para uso mobile.
+  // Próxima visita destacada + agenda do dia + leads novos + KPIs.
+  app.get('/today', async (req, reply) => {
+    const userId = req.user.sub
+    const cid    = req.user.cid
+    const now    = new Date()
+    const dayStart = new Date(now); dayStart.setHours(0, 0, 0, 0)
+    const dayEnd   = new Date(now); dayEnd.setHours(23, 59, 59, 999)
+
+    const [todayVisits, nextVisit, newLeadsToday, pendingTasks] = await Promise.all([
+      app.prisma.propertyVisit.findMany({
+        where: {
+          companyId: cid,
+          brokerId: userId,
+          scheduledAt: { gte: dayStart, lte: dayEnd },
+        },
+        orderBy: { scheduledAt: 'asc' },
+        take: 50,
+      }),
+      app.prisma.propertyVisit.findFirst({
+        where: {
+          companyId: cid,
+          brokerId: userId,
+          status: { in: ['pending', 'confirmed'] },
+          scheduledAt: { gte: now },
+        },
+        orderBy: { scheduledAt: 'asc' },
+      }),
+      app.prisma.lead.findMany({
+        where: {
+          companyId: cid,
+          assignedToId: userId,
+          createdAt: { gte: dayStart },
+        },
+        select: { id: true, name: true, phone: true, email: true, status: true, source: true, createdAt: true },
+        orderBy: { createdAt: 'desc' },
+        take: 30,
+      }),
+      app.prisma.activity.count({
+        where: {
+          companyId: cid, userId,
+          type: 'task',
+          scheduledAt: { gte: now, lte: new Date(now.getTime() + 24 * 60 * 60 * 1000) },
+        },
+      }),
+    ])
+
+    // Enrich visits with property title for the agenda display.
+    const propIds = [...new Set([
+      ...todayVisits.map(v => v.propertyId),
+      ...(nextVisit ? [nextVisit.propertyId] : []),
+    ])]
+    const props = propIds.length
+      ? await app.prisma.property.findMany({
+          where: { id: { in: propIds } },
+          select: { id: true, title: true, slug: true, street: true, number: true, neighborhood: true, city: true, latitude: true, longitude: true },
+        }).catch(() => [])
+      : []
+    const propById = new Map(props.map(p => [p.id, p]))
+
+    function mapsUrl(p: typeof props[number] | undefined) {
+      if (!p) return null
+      if (p.latitude && p.longitude) {
+        return `https://www.google.com/maps/search/?api=1&query=${p.latitude},${p.longitude}`
+      }
+      const addr = [p.street && p.number ? `${p.street}, ${p.number}` : p.street, p.neighborhood, p.city]
+        .filter(Boolean).join(', ')
+      return addr ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addr)}` : null
+    }
+
+    return reply.send({
+      now: now.toISOString(),
+      nextVisit: nextVisit
+        ? { ...nextVisit, property: propById.get(nextVisit.propertyId) ?? null, mapsUrl: mapsUrl(propById.get(nextVisit.propertyId)) }
+        : null,
+      todayVisits: todayVisits.map(v => ({
+        ...v,
+        property: propById.get(v.propertyId) ?? null,
+        mapsUrl: mapsUrl(propById.get(v.propertyId)),
+      })),
+      newLeadsToday,
+      kpis: {
+        visitsToday: todayVisits.length,
+        leadsToday: newLeadsToday.length,
+        pendingTasks,
+      },
+    })
+  })
+
   // GET /api/v1/corretor/leads — broker's assigned leads
   app.get('/leads', async (req, reply) => {
     const q      = req.query as any
