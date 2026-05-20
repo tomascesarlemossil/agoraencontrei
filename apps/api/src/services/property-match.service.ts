@@ -105,7 +105,7 @@ export async function notifyMatchingAlerts(
 
   const alerts = await prisma.propertyAlert
     .findMany({ where: { active: true, AND: and } as never, take: 200 })
-    .catch(() => [] as Array<{ id: string; email: string; name: string | null; token: string | null }>)
+    .catch(() => [] as Array<{ id: string; email: string; name: string | null; phone: string | null; token: string | null }>)
 
   if (!alerts.length) return 0
 
@@ -120,6 +120,21 @@ export async function notifyMatchingAlerts(
         subject: 'Encontramos um imóvel compatível com seu perfil',
         html: matchEmailHtml(alert.name, property.title, priceLabel, location, url, alert.token),
       }).catch(() => {})
+    }
+  }
+
+  // WhatsApp para quem cadastrou telefone — canal mais direto que e-mail.
+  const { env } = await import('../utils/env.js')
+  if (env.WHATSAPP_TOKEN && env.WHATSAPP_PHONE_ID) {
+    const { whatsappService } = await import('./whatsapp.service.js')
+    for (const alert of alerts) {
+      if (!alert.phone) continue
+      const phone = alert.phone.replace(/\D/g, '')
+      if (phone.length < 10) continue
+      const dest = phone.startsWith('55') ? phone : `55${phone}`
+      const first = alert.name?.split(' ')[0] ?? 'Olá'
+      const msg = `${first}, achamos um imóvel que combina com o que você procura!\n\n🏠 ${property.title}\n📍 ${location}\n💰 ${priceLabel}\n\nVer: ${url}`
+      await whatsappService.sendText(dest, msg).catch(() => {})
     }
   }
 

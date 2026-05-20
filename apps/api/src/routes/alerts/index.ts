@@ -62,7 +62,8 @@ export default async function alertsRoutes(app: FastifyInstance) {
         '<h2>Alerta cancelado</h2><p>Você não receberá mais avisos de imóveis compatíveis.</p></body></html>')
   })
 
-  // GET / — admin only
+  // GET / — admin: only alerts of this tenant (or cross-tenant, companyId=null);
+  // SUPER_ADMIN sees every alert.
   app.get('/', {
     schema: { tags: ['alerts'], summary: 'List property alerts (admin)' },
     preHandler: [app.authenticate],
@@ -71,7 +72,12 @@ export default async function alertsRoutes(app: FastifyInstance) {
     const page  = parseInt(q.page  ?? '1',  10)
     const limit = parseInt(q.limit ?? '50', 10)
 
+    const tenantFilter = req.user.role === 'SUPER_ADMIN'
+      ? {}
+      : { OR: [{ companyId: req.user.cid }, { companyId: null }] }
+
     const where: any = {
+      ...tenantFilter,
       ...(q.active !== undefined && { active: q.active === 'true' }),
       ...(q.email && { email: { contains: q.email, mode: 'insensitive' } }),
     }

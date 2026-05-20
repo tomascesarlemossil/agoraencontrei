@@ -676,6 +676,12 @@ export default async function propertiesRoutes(app: FastifyInstance) {
       after:  updated  as any,
     })
 
+    // Match the listing against client alerts when it transitions to ACTIVE
+    // (draft properties only fire match when first activated).
+    if (body.status === 'ACTIVE' && existing.status !== 'ACTIVE') {
+      void notifyMatchingAlerts(app.prisma, updated as any)
+    }
+
     // Auto-post to Instagram when property becomes ACTIVE
     let autoPostStatus: string | null = null
     if (body.status === 'ACTIVE' && existing.status !== 'ACTIVE') {

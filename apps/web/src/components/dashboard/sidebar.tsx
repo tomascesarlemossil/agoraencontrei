@@ -73,6 +73,7 @@ const midNavItems = [
   { href: '/dashboard/contacts',            icon: Users,            label: 'Contatos',      highlight: false },
   { href: '/dashboard/deals',               icon: TrendingUp,       label: 'Negócios',      highlight: false },
   { href: '/dashboard/agenda',              icon: Calendar,         label: 'Agenda de Visitas', highlight: false },
+  { href: '/dashboard/alertas',             icon: Bell,             label: 'Alertas de Match', highlight: false },
   { href: '/dashboard/inbox',               icon: MessageCircle,    label: 'Lemos.chat',    highlight: false },
   { href: '/dashboard/financiamentos',      icon: Landmark,         label: 'Financiamentos',highlight: false },
   { href: '/dashboard/portals',             icon: Globe,            label: 'Portais',       highlight: false },
