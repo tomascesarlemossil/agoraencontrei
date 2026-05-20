@@ -127,6 +127,16 @@ export default async function proposalsRoutes(app: FastifyInstance) {
       }
     }
 
+    // Re-pontua o lead — proposta aceita = lead super-quente.
+    if (proposal.leadId) {
+      void (async () => {
+        try {
+          const { scoreLeadFromDb } = await import('../../services/lead-auto-score.service.js')
+          await scoreLeadFromDb(app.prisma, proposal.leadId!)
+        } catch { /* non-fatal */ }
+      })()
+    }
+
     return reply.send({ data: updated })
   })
 

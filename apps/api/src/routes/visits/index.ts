@@ -174,6 +174,22 @@ export default async function visitsRoutes(app: FastifyInstance) {
         ...(body.feedback !== undefined && { feedback: body.feedback }),
       },
     })
+
+    // Re-pontua leads ligados a este visitante por telefone — visita
+    // realizada/no-show é sinal forte de mudança de temperatura.
+    if (body.status !== undefined) {
+      void (async () => {
+        try {
+          const leads = await app.prisma.lead.findMany({
+            where: { companyId: req.user.cid, phone: updated.visitorPhone },
+            select: { id: true },
+          }).catch(() => [])
+          const { scoreLeadFromDb } = await import('../../services/lead-auto-score.service.js')
+          for (const l of leads) await scoreLeadFromDb(app.prisma, l.id)
+        } catch { /* non-fatal */ }
+      })()
+    }
+
     return reply.send({ data: updated })
   })
 }

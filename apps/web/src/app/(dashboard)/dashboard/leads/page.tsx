@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { formatCurrency } from '@/lib/utils'
 import Link from 'next/link'
-import { UserCheck, Phone, Mail, Star, ChevronLeft, ChevronRight } from 'lucide-react'
+import { UserCheck, Phone, Mail, ChevronLeft, ChevronRight } from 'lucide-react'
 import { SearchInputWithVoice } from '@/components/ui/SearchInputWithVoice'
 
 const STATUS_COLORS: Record<string, string> = {
@@ -121,7 +121,22 @@ export default function LeadsPage() {
   )
 }
 
+const TEMP_BADGE: Record<string, { label: string; cls: string; emoji: string }> = {
+  on_fire: { label: 'Super quente', cls: 'bg-red-100 text-red-700 border-red-300',     emoji: '🔥' },
+  hot:     { label: 'Quente',       cls: 'bg-orange-100 text-orange-700 border-orange-300', emoji: '🌶️' },
+  warm:    { label: 'Morno',        cls: 'bg-yellow-100 text-yellow-700 border-yellow-300', emoji: '☀️' },
+  cold:    { label: 'Frio',         cls: 'bg-blue-50 text-blue-600 border-blue-200',      emoji: '❄️' },
+}
+
+function temperatureFor(score: number): keyof typeof TEMP_BADGE {
+  if (score >= 76) return 'on_fire'
+  if (score >= 51) return 'hot'
+  if (score >= 26) return 'warm'
+  return 'cold'
+}
+
 function LeadRow({ lead }: { lead: Lead }) {
+  const temp = TEMP_BADGE[temperatureFor(lead.score ?? 0)]
   return (
     <Link href={`/dashboard/leads/${lead.id}`} className="flex items-center gap-4 px-4 py-3 hover:bg-muted/50 transition-colors cursor-pointer block">
       {/* Avatar */}
@@ -161,10 +176,12 @@ function LeadRow({ lead }: { lead: Lead }) {
             <p className="text-sm font-medium">{formatCurrency(lead.budget)}</p>
           </div>
         )}
-        <div className="flex items-center gap-1">
-          <Star className="h-3 w-3 text-yellow-500" />
-          <span className="text-sm font-medium">{lead.score}</span>
-        </div>
+        <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold ${temp.cls}`}
+          title={`Score ${lead.score}/100 — ${temp.label}`}>
+          <span>{temp.emoji}</span>
+          <span className="hidden sm:inline">{temp.label}</span>
+          <span className="ml-0.5 font-bold">{lead.score}</span>
+        </span>
         {lead.assignedTo && (
           <div className="hidden md:block text-right">
             <p className="text-xs text-muted-foreground">Corretor</p>

@@ -641,6 +641,15 @@ export default async function publicRoutes(app: FastifyInstance) {
       },
     })
 
+    // Auto-score: deriva o score a partir dos sinais já presentes (telefone,
+    // e-mail, orçamento, UTM, etc.). Fire-and-forget para não atrasar o 201.
+    void (async () => {
+      try {
+        const { scoreLeadFromDb } = await import('../../services/lead-auto-score.service.js')
+        await scoreLeadFromDb(app.prisma, lead.id)
+      } catch { /* non-fatal */ }
+    })()
+
     // Fire SSE + automation
     const { emitAutomation } = await import('../../services/automation.emitter.js')
     const { emitSSE }        = await import('../../services/sse.emitter.js')
@@ -890,6 +899,15 @@ export default async function publicRoutes(app: FastifyInstance) {
         })
       }
     } catch { /* non-fatal */ }
+
+    // Auto-score: agora que lead + proposta + ProposalEvent estão no DB,
+    // o score reflete o sinal forte de "proposta enviada".
+    void (async () => {
+      try {
+        const { scoreLeadFromDb } = await import('../../services/lead-auto-score.service.js')
+        await scoreLeadFromDb(app.prisma, lead.id)
+      } catch { /* non-fatal */ }
+    })()
 
     return reply.status(201).send({
       id: lead.id,
