@@ -72,6 +72,22 @@ export default async function leadsRoutes(app: FastifyInstance) {
       ]
     }
 
+    // Temperature filter — maps the bucket to a score range.
+    // Use orderBy=score so quentes vêm primeiro quando filtrando.
+    const TEMP_RANGES: Record<string, { gte?: number; lte?: number }> = {
+      on_fire: { gte: 76 },
+      hot:     { gte: 51, lte: 75 },
+      warm:    { gte: 26, lte: 50 },
+      cold:    { lte: 25 },
+    }
+    let orderBy: any = { createdAt: 'desc' }
+    if (q.temperature && TEMP_RANGES[q.temperature]) {
+      where.score = TEMP_RANGES[q.temperature]
+      orderBy = [{ score: 'desc' }, { createdAt: 'desc' }]
+    } else if (q.sort === 'score') {
+      orderBy = [{ score: 'desc' }, { createdAt: 'desc' }]
+    }
+
     const page  = parseInt(q.page  ?? '1',  10)
     const limit = parseInt(q.limit ?? '50', 10)
 
@@ -119,7 +135,7 @@ export default async function leadsRoutes(app: FastifyInstance) {
           contact:    { select: { id: true, name: true } },
           _count:     { select: { activities: true } },
         },
-        orderBy: { createdAt: 'desc' },
+        orderBy,
         skip: (page - 1) * limit,
         take: limit,
       }),

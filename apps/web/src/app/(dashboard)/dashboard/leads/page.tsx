@@ -36,10 +36,15 @@ export default function LeadsPage() {
   const { accessToken } = useAuthStore()
   const [page, setPage] = useState(1)
   const [search, setSearch] = useState('')
+  const [temperature, setTemperature] = useState<'' | 'on_fire' | 'hot' | 'warm' | 'cold'>('')
 
   const { data, isLoading } = useQuery({
-    queryKey: ['leads', page, search],
-    queryFn: () => leadsApi.list(accessToken!, { page, limit: 50, search: search || undefined }),
+    queryKey: ['leads', page, search, temperature],
+    queryFn: () => leadsApi.list(accessToken!, {
+      page, limit: 50,
+      search: search || undefined,
+      temperature: temperature || undefined,
+    }),
     enabled: !!accessToken,
   })
 
@@ -52,19 +57,44 @@ export default function LeadsPage() {
         <div>
           <h1 className="text-2xl font-bold">Leads</h1>
           <p className="text-muted-foreground text-sm mt-1">
-            {meta ? `${meta.total} leads no total` : 'Carregando...'}
+            {meta ? `${meta.total} leads${temperature ? ` — filtro: ${TEMP_BADGE[temperature].label}` : ' no total'}` : 'Carregando...'}
           </p>
         </div>
       </div>
 
-      <SearchInputWithVoice
-        containerClassName="max-w-md"
-        placeholder="Buscar por nome, e-mail, telefone..."
-        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        onVoiceResult={(t) => setSearch(t)}
-      />
+      <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
+        <SearchInputWithVoice
+          containerClassName="max-w-md flex-1"
+          placeholder="Buscar por nome, e-mail, telefone..."
+          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          onVoiceResult={(t) => setSearch(t)}
+        />
+
+        {/* Temperature chips */}
+        <div className="flex flex-wrap gap-1.5">
+          {([
+            ['', 'Todos', null],
+            ['on_fire', '🔥 Super quentes', 'border-red-300 bg-red-100 text-red-700'],
+            ['hot', '🌶️ Quentes', 'border-orange-300 bg-orange-100 text-orange-700'],
+            ['warm', '☀️ Mornos', 'border-yellow-300 bg-yellow-100 text-yellow-700'],
+            ['cold', '❄️ Frios', 'border-blue-200 bg-blue-50 text-blue-600'],
+          ] as const).map(([v, l, cls]) => (
+            <button
+              key={v}
+              onClick={() => { setTemperature(v as typeof temperature); setPage(1) }}
+              className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+                temperature === v
+                  ? (cls ?? 'border-primary bg-primary text-primary-foreground')
+                  : 'border-input bg-background text-muted-foreground hover:bg-muted'
+              }`}
+            >
+              {l}
+            </button>
+          ))}
+        </div>
+      </div>
 
       {isLoading ? (
         <div className="space-y-3">
