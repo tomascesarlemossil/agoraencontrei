@@ -92,6 +92,7 @@ const midNavItems = [
   { href: '/dashboard/afiliados',           icon: Users,           label: 'Afiliados',      highlight: true  },
   { href: '/dashboard/saas-financeiro',     icon: Landmark,        label: 'Financeiro SaaS',highlight: true  },
   { href: '/dashboard/master',             icon: Brain,           label: 'Master Intel',   highlight: true  },
+  { href: '/dashboard/market',             icon: BarChart3,       label: 'Radar de Mercado', highlight: true },
 ]
 
 const corretorNavItem = { href: '/dashboard/corretor', icon: BriefcaseBusiness, label: 'Meu Painel', highlight: false }
