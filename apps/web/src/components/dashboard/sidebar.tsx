@@ -55,6 +55,7 @@ import {
   LandPlot,
   Brain,
   Clapperboard,
+  Calendar,
 } from 'lucide-react'
 import { useNotifications } from '@/stores/notifications.store'
 import { UserAvatar } from '@/components/ui/UserAvatar'
@@ -71,6 +72,7 @@ const midNavItems = [
   { href: '/dashboard/leads',               icon: UserCheck,        label: 'Leads',         highlight: false },
   { href: '/dashboard/contacts',            icon: Users,            label: 'Contatos',      highlight: false },
   { href: '/dashboard/deals',               icon: TrendingUp,       label: 'Negócios',      highlight: false },
+  { href: '/dashboard/agenda',              icon: Calendar,         label: 'Agenda de Visitas', highlight: false },
   { href: '/dashboard/inbox',               icon: MessageCircle,    label: 'Lemos.chat',    highlight: false },
   { href: '/dashboard/financiamentos',      icon: Landmark,         label: 'Financiamentos',highlight: false },
   { href: '/dashboard/portals',             icon: Globe,            label: 'Portais',       highlight: false },

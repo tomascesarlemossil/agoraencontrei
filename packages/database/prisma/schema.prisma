@@ -3487,3 +3487,36 @@ model SystemEvent {
   @@index([processed])
   @@map("system_events")
 }
+
+// =============================================================================
+// PROPERTY VISITS — agenda inteligente de visitas
+// =============================================================================
+
+/// Visita agendada a um imóvel pelo site público. Distinto do PropertyTour
+/// (que é tour virtual). Aqui ficam visitas presenciais ou por vídeo, com
+/// status workflow e feedback pós-visita.
+model PropertyVisit {
+  id           String   @id @default(cuid())
+  companyId    String
+  propertyId   String
+  brokerId     String?
+  visitorName  String
+  visitorEmail String?
+  visitorPhone String
+  scheduledAt  DateTime
+  /// in_person | video
+  mode         String   @default("in_person")
+  /// pending | confirmed | done | cancelled | no_show
+  status       String   @default("pending")
+  notes        String?
+  /// 1-5 — coletado após a visita
+  rating       Int?
+  feedback     String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([companyId, scheduledAt])
+  @@index([propertyId])
+  @@index([status])
+  @@map("property_visits")
+}
