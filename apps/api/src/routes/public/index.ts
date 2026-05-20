@@ -1385,6 +1385,35 @@ export default async function publicRoutes(app: FastifyInstance) {
     }
   })
 
+  // GET /api/v1/public/team/:id — perfil público de um corretor + portfólio
+  app.get('/team/:id', async (req, reply) => {
+    const { id } = req.params as { id: string }
+    const company = await resolveCompany(app)
+    if (!company) return reply.status(503).send({ error: 'SERVICE_UNAVAILABLE' })
+
+    const broker = await app.prisma.user.findFirst({
+      where: { id, companyId: company.id, status: 'ACTIVE' },
+      select: {
+        id: true, name: true, email: true, phone: true,
+        avatarUrl: true, bio: true, creciNumber: true, role: true,
+      },
+    })
+    if (!broker) return reply.status(404).send({ error: 'NOT_FOUND' })
+
+    const properties = await app.prisma.property.findMany({
+      where: { userId: id, companyId: company.id, status: 'ACTIVE', authorizedPublish: true },
+      select: {
+        id: true, title: true, slug: true, coverImage: true,
+        price: true, priceRent: true, type: true, purpose: true,
+        bedrooms: true, totalArea: true, city: true, neighborhood: true,
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 60,
+    }).catch(() => [])
+
+    return reply.send({ broker, properties })
+  })
+
   // ── GET /auctions — Imóveis da Caixa (Apify enriched → CSV fallback) ──
   app.get('/auctions', async (req, reply) => {
     try {
