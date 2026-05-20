@@ -98,6 +98,7 @@ import loteadoraRoutes from './routes/loteadora/index.js'
 import apiKeysRoutes from './routes/api-keys/index.js'
 import publicApiRoutes from './routes/public-api/index.js'
 import outgoingWebhooksRoutes from './routes/outgoing-webhooks/index.js'
+import marketRoutes from './routes/market/index.js'
 import hunterRoutes from './routes/hunter/index.js'
 import affiliateRoutes from './routes/affiliates/index.js'
 import saasFinanceRoutes from './routes/saas-finance/index.js'
@@ -838,6 +839,7 @@ async function bootstrap() {
   await app.register(loteadoraRoutes,        { prefix: '/api/v1/loteadora' })
   await app.register(apiKeysRoutes,          { prefix: '/api/v1/api-keys' })
   await app.register(outgoingWebhooksRoutes, { prefix: '/api/v1/webhooks' })
+  await app.register(marketRoutes,           { prefix: '/api/v1/market' })
   await app.register(publicApiRoutes,        { prefix: '/public-api' })
   await app.register(hunterRoutes,           { prefix: '/api/v1/hunter' })
   await app.register(affiliateRoutes,        { prefix: '/api/v1/affiliates' })
