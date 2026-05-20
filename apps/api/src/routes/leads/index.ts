@@ -214,6 +214,19 @@ export default async function leadsRoutes(app: FastifyInstance) {
     return reply.status(201).send(lead)
   })
 
+  // GET /api/v1/leads/:id/recommendations — top imóveis sugeridos
+  app.get('/:id/recommendations', { schema: { tags: ['leads'] } }, async (req, reply) => {
+    const { id } = req.params as { id: string }
+    const lead = await app.prisma.lead.findFirst({
+      where: { id, companyId: req.user.cid },
+      select: { id: true },
+    })
+    if (!lead) return reply.status(404).send({ error: 'NOT_FOUND' })
+    const { recommendForLead } = await import('../../services/lead-recommender.service.js')
+    const recs = await recommendForLead(app.prisma, id, 3)
+    return reply.send({ data: recs })
+  })
+
   // GET /api/v1/leads/:id
   app.get('/:id', {
     schema: { tags: ['leads'] },
