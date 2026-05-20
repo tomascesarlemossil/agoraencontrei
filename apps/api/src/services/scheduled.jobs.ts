@@ -853,4 +853,42 @@ export async function runScheduledJobs(app: FastifyInstance) {
       app.log.error({ err }, '[scheduled] streetview-batch failed')
     }
   }
+
+  // ── 10. Lead re-scoring nightly (03h UTC = 00h BRT) ─────────────────────
+  // Aplica recency decay e captura mudanças que aconteceram sem trigger
+  // direto (ex.: lead que ficou parado, atividades manuais no CRM, etc.).
+  // Cap em 500 leads por noite — em produção rotaciona naturalmente porque
+  // re-pontuar atualiza updatedAt e os critérios ranqueiam diferente
+  // amanhã.
+  if (hour === 3 && minute < 30) {
+    try {
+      const sixtyDaysAgo = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000)
+      const leads = await app.prisma.lead.findMany({
+        where: {
+          status: { notIn: ['WON', 'LOST', 'ARCHIVED'] },
+          updatedAt: { gte: sixtyDaysAgo },
+        },
+        select: { id: true, score: true },
+        orderBy: { updatedAt: 'asc' },
+        take: 500,
+      })
+
+      const { scoreLeadFromDb } = await import('./lead-auto-score.service.js')
+      let rescored = 0
+      let coolers = 0
+      for (const lead of leads) {
+        const prev = lead.score ?? 0
+        const result = await scoreLeadFromDb(app.prisma, lead.id).catch(() => null)
+        if (!result) continue
+        rescored++
+        if (result.score < prev) coolers++
+      }
+
+      if (rescored > 0) {
+        app.log.info(`[scheduled] lead-rescore-nightly: rescored=${rescored} cooled_down=${coolers}`)
+      }
+    } catch (err) {
+      app.log.error({ err }, '[scheduled] lead-rescore-nightly failed')
+    }
+  }
 }
