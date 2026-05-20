@@ -58,6 +58,21 @@ export default async function visitRoutes(app: FastifyInstance) {
       },
     })
 
+    // Structured visit record so the dashboard agenda can manage status,
+    // confirmation and post-visit feedback (separate from the free-form Activity).
+    await app.prisma.propertyVisit.create({
+      data: {
+        companyId,
+        propertyId: body.propertyId,
+        visitorName: body.name,
+        visitorEmail: body.email ?? null,
+        visitorPhone: body.phone,
+        scheduledAt: visitDateTime,
+        mode: 'in_person',
+        notes: body.notes ?? null,
+      },
+    }).catch(() => {})
+
     // 3. Create a Deal (lead pipeline) if not exists
     const existingDeal = await app.prisma.deal.findFirst({
       where: {

@@ -100,6 +100,7 @@ import publicApiRoutes from './routes/public-api/index.js'
 import outgoingWebhooksRoutes from './routes/outgoing-webhooks/index.js'
 import marketRoutes from './routes/market/index.js'
 import systemEventsRoutes from './routes/system-events/index.js'
+import visitsRoutes from './routes/visits/index.js'
 import hunterRoutes from './routes/hunter/index.js'
 import affiliateRoutes from './routes/affiliates/index.js'
 import saasFinanceRoutes from './routes/saas-finance/index.js'
@@ -842,6 +843,7 @@ async function bootstrap() {
   await app.register(outgoingWebhooksRoutes, { prefix: '/api/v1/webhooks' })
   await app.register(marketRoutes,           { prefix: '/api/v1/market' })
   await app.register(systemEventsRoutes,     { prefix: '/api/v1/system-events' })
+  await app.register(visitsRoutes,           { prefix: '/api/v1/visits' })
   await app.register(publicApiRoutes,        { prefix: '/public-api' })
   await app.register(hunterRoutes,           { prefix: '/api/v1/hunter' })
   await app.register(affiliateRoutes,        { prefix: '/api/v1/affiliates' })
