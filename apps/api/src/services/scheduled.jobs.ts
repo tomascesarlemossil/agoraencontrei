@@ -595,6 +595,127 @@ export async function runScheduledJobs(app: FastifyInstance) {
     app.log.error({ err }, '[scheduled] visit-reminder-24h failed')
   }
 
+  // ── 7b'. Lembrete de visita 1h antes (PropertyVisit) ──────────────────
+  // Recado curto direto antes da visita — em geral o que efetivamente
+  // reduz no-show. WhatsApp com link do Google Maps para o visitante;
+  // notificação in-app para o corretor.
+  try {
+    const in30min = new Date(now.getTime() + 30 * 60 * 1000)
+    const in90min = new Date(now.getTime() + 90 * 60 * 1000)
+
+    const soon = await app.prisma.propertyVisit.findMany({
+      where: {
+        status: { in: ['pending', 'confirmed'] },
+        scheduledAt: { gte: in30min, lte: in90min },
+      },
+      take: 200,
+    })
+
+    if (soon.length > 0) {
+      const { notify } = await import('./notification.service.js')
+      let reminded = 0
+
+      for (const visit of soon) {
+        const already = await app.prisma.auditLog.findFirst({
+          where: {
+            resource: 'property_visit',
+            resourceId: visit.id,
+            action: 'visit.reminder.1h' as any,
+          },
+        }).catch(() => null)
+        if (already) continue
+
+        const prop = await app.prisma.property.findUnique({
+          where: { id: visit.propertyId },
+          select: { title: true, street: true, number: true, neighborhood: true, city: true, state: true, latitude: true, longitude: true },
+        }).catch(() => null)
+
+        const propTitle = prop?.title ?? 'o imóvel'
+        const addressParts = [
+          prop?.street && prop?.number ? `${prop.street}, ${prop.number}` : prop?.street,
+          prop?.neighborhood, prop?.city, prop?.state,
+        ].filter(Boolean)
+        const addressLabel = addressParts.join(', ') || ''
+        const mapsUrl = prop?.latitude && prop?.longitude
+          ? `https://www.google.com/maps/search/?api=1&query=${prop.latitude},${prop.longitude}`
+          : addressLabel
+            ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addressLabel)}`
+            : null
+
+        const timeLabel = visit.scheduledAt.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+
+        // WhatsApp para o visitante com link do mapa.
+        if (env.WHATSAPP_TOKEN && env.WHATSAPP_PHONE_ID && visit.visitorPhone) {
+          const phone = visit.visitorPhone.replace(/\D/g, '')
+          const dest = phone.startsWith('55') ? phone : `55${phone}`
+          const first = visit.visitorName.split(' ')[0]
+          const msg = [
+            `Oi ${first}! Em ~1h temos sua visita em ${propTitle} às ${timeLabel}.`,
+            addressLabel ? `📍 ${addressLabel}` : null,
+            mapsUrl ? `🗺️ Como chegar: ${mapsUrl}` : null,
+            'Qualquer imprevisto, é só responder por aqui!',
+          ].filter(Boolean).join('\n')
+          try {
+            const { whatsappService } = await import('./whatsapp.service.js')
+            await whatsappService.sendText(dest, msg)
+          } catch (err) {
+            app.log.warn({ err }, '[scheduled] visit-reminder-1h whatsapp failed')
+          }
+        }
+
+        // Notificação ao corretor — o "vai sair pra rua" do dia.
+        await notify({
+          prisma: app.prisma,
+          companyId: visit.companyId,
+          userId: visit.brokerId ?? null,
+          type: 'visit_requested',
+          title: 'Visita em ~1h',
+          body: `${visit.visitorName} tem visita às ${timeLabel} em ${propTitle}.${addressLabel ? `\n${addressLabel}` : ''}\nTel: ${visit.visitorPhone}`,
+          payload: {
+            visitId: visit.id,
+            propertyId: visit.propertyId,
+            scheduledAt: visit.scheduledAt.toISOString(),
+            mapsUrl,
+          },
+          email: false, // 24h já mandou e-mail — 1h é só push curto
+        }).catch(() => {})
+
+        emitAutomation({
+          companyId: visit.companyId,
+          event: 'visita_lembrete_1h' as any,
+          data: {
+            visitId: visit.id,
+            visitorName: visit.visitorName,
+            visitorPhone: visit.visitorPhone,
+            propertyId: visit.propertyId,
+            propertyTitle: propTitle,
+            scheduledAt: visit.scheduledAt.toISOString(),
+            mapsUrl: mapsUrl ?? '',
+            brokerId: visit.brokerId ?? '',
+          },
+        })
+
+        await app.prisma.auditLog.create({
+          data: {
+            companyId: visit.companyId,
+            action: 'visit.reminder.1h' as any,
+            resource: 'property_visit',
+            resourceId: visit.id,
+            payload: { scheduledAt: visit.scheduledAt.toISOString(), sentAt: now.toISOString() },
+          },
+        }).catch(() => {})
+
+        reminded++
+      }
+
+      if (reminded > 0) {
+        app.log.info(`[scheduled] visit-reminder-1h: emitted ${reminded} reminders`)
+      }
+    }
+  } catch (err) {
+    app.log.error({ err }, '[scheduled] visit-reminder-1h failed')
+  }
+
   // ── 7c. Pedido de feedback pós-visita ─────────────────────────────────
   // Visitas marcadas como done sem rating há 2h-7d → manda link para o
   // visitante avaliar. WhatsApp se configurado, e-mail como fallback.
