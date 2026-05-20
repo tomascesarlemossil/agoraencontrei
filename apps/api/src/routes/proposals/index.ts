@@ -11,6 +11,50 @@ import { z } from 'zod'
 export default async function proposalsRoutes(app: FastifyInstance) {
   app.addHook('preHandler', app.authenticate)
 
+  // GET / — lista propostas da empresa, com filtros e enrich.
+  app.get('/', { schema: { tags: ['proposals'] } }, async (req, reply) => {
+    const q = req.query as { status?: string; limit?: string }
+    const take = Math.min(Number(q.limit) || 100, 500)
+
+    const proposals = await app.prisma.proposal.findMany({
+      where: {
+        companyId: req.user.cid,
+        ...(q.status && { status: q.status }),
+      },
+      orderBy: { createdAt: 'desc' },
+      take,
+    })
+
+    const propertyIds = [...new Set(proposals.map(p => p.propertyId))]
+    const contactIds = [...new Set(proposals.map(p => p.contactId).filter((c): c is string => !!c))]
+
+    const [properties, contacts] = await Promise.all([
+      propertyIds.length
+        ? app.prisma.property.findMany({
+            where: { id: { in: propertyIds } },
+            select: { id: true, title: true, slug: true, neighborhood: true, city: true, coverImage: true, price: true },
+          }).catch(() => [])
+        : Promise.resolve([]),
+      contactIds.length
+        ? app.prisma.contact.findMany({
+            where: { id: { in: contactIds } },
+            select: { id: true, name: true, email: true, phone: true },
+          }).catch(() => [])
+        : Promise.resolve([]),
+    ])
+
+    const pById = new Map(properties.map(p => [p.id, p]))
+    const cById = new Map(contacts.map(c => [c.id, c]))
+
+    return reply.send({
+      data: proposals.map(p => ({
+        ...p,
+        property: pById.get(p.propertyId) ?? null,
+        contact: p.contactId ? cById.get(p.contactId) ?? null : null,
+      })),
+    })
+  })
+
   app.patch('/:id', { schema: { tags: ['proposals'] } }, async (req, reply) => {
     const { id } = req.params as { id: string }
     const body = z.object({
