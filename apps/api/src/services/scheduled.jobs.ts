@@ -595,6 +595,108 @@ export async function runScheduledJobs(app: FastifyInstance) {
     app.log.error({ err }, '[scheduled] visit-reminder-24h failed')
   }
 
+  // ── 7c. Pedido de feedback pós-visita ─────────────────────────────────
+  // Visitas marcadas como done sem rating há 2h-7d → manda link para o
+  // visitante avaliar. WhatsApp se configurado, e-mail como fallback.
+  try {
+    const twoHoursAgo = new Date(now.getTime() - 2 * 60 * 60 * 1000)
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+
+    const donesWaiting = await app.prisma.propertyVisit.findMany({
+      where: {
+        status: 'done',
+        rating: null,
+        updatedAt: { lt: twoHoursAgo, gte: sevenDaysAgo },
+      },
+      take: 200,
+    })
+
+    if (donesWaiting.length > 0) {
+      const baseUrl = (env.WEB_URL ?? 'https://agoraencontrei.com.br').replace(/\/$/, '')
+      let asked = 0
+      for (const visit of donesWaiting) {
+        const already = await app.prisma.auditLog.findFirst({
+          where: {
+            resource: 'property_visit',
+            resourceId: visit.id,
+            action: 'visit.feedback_request.sent' as any,
+          },
+        }).catch(() => null)
+        if (already) continue
+
+        const link = `${baseUrl}/visita/${visit.id}/feedback`
+        const propTitle = visit.propertyId
+          ? (await app.prisma.property.findUnique({
+              where: { id: visit.propertyId },
+              select: { title: true },
+            }).catch(() => null))?.title ?? 'o imóvel'
+          : 'o imóvel'
+        const message = `Olá ${visit.visitorName.split(' ')[0]}! Como foi sua visita em ${propTitle}? Avalie em 30 segundos: ${link}`
+
+        // WhatsApp se configurado.
+        if (env.WHATSAPP_TOKEN && env.WHATSAPP_PHONE_ID && visit.visitorPhone) {
+          const phone = visit.visitorPhone.replace(/\D/g, '')
+          const dest = phone.startsWith('55') ? phone : `55${phone}`
+          try {
+            const { whatsappService } = await import('./whatsapp.service.js')
+            await whatsappService.sendText(dest, message)
+          } catch (err) {
+            app.log.warn({ err }, '[scheduled] feedback whatsapp failed')
+          }
+        }
+
+        // E-mail fallback se houver endereço.
+        if (visit.visitorEmail) {
+          try {
+            const { sendEmail, isEmailConfigured } = await import('./email.service.js')
+            if (isEmailConfigured()) {
+              await sendEmail({
+                to: visit.visitorEmail,
+                subject: 'Como foi sua visita?',
+                html: `<p>Olá ${visit.visitorName.split(' ')[0]},</p>
+<p>Como foi sua visita em ${propTitle}?</p>
+<p><a href="${link}" style="background:#1B2B5B;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;display:inline-block">Avaliar em 30 segundos</a></p>
+<p style="color:#888;font-size:12px">AgoraEncontrei — Imobiliária Lemos</p>`,
+              })
+            }
+          } catch { /* non-fatal */ }
+        }
+
+        // Permite que regras do automation engine reajam ao evento também.
+        emitAutomation({
+          companyId: visit.companyId,
+          event: 'visita_pedido_feedback' as any,
+          data: {
+            visitId: visit.id,
+            visitorName: visit.visitorName,
+            visitorPhone: visit.visitorPhone,
+            visitorEmail: visit.visitorEmail ?? '',
+            propertyId: visit.propertyId,
+            feedbackUrl: link,
+          },
+        })
+
+        await app.prisma.auditLog.create({
+          data: {
+            companyId: visit.companyId,
+            action: 'visit.feedback_request.sent' as any,
+            resource: 'property_visit',
+            resourceId: visit.id,
+            payload: { sentAt: now.toISOString(), channel: visit.visitorPhone ? 'whatsapp' : 'email' },
+          },
+        }).catch(() => {})
+
+        asked++
+      }
+
+      if (asked > 0) {
+        app.log.info(`[scheduled] visit-feedback-request: sent ${asked} requests`)
+      }
+    }
+  } catch (err) {
+    app.log.error({ err }, '[scheduled] visit-feedback-request failed')
+  }
+
   // ── 8. Follow-up automático: processa follow-ups agendados (D+1, D+3, D+7) ───
   try {
     const followUpResult = await processDueFollowUps(app.prisma, app.outboundQueue)
