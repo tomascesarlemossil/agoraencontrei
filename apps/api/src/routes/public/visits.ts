@@ -60,7 +60,7 @@ export default async function visitRoutes(app: FastifyInstance) {
 
     // Structured visit record so the dashboard agenda can manage status,
     // confirmation and post-visit feedback (separate from the free-form Activity).
-    await app.prisma.propertyVisit.create({
+    const propertyVisit = await app.prisma.propertyVisit.create({
       data: {
         companyId,
         propertyId: body.propertyId,
@@ -71,7 +71,33 @@ export default async function visitRoutes(app: FastifyInstance) {
         mode: 'in_person',
         notes: body.notes ?? null,
       },
-    }).catch(() => {})
+    }).catch(() => null)
+
+    // In-app + e-mail notification for company admins so the visit is
+    // surfaced the moment it is scheduled.
+    try {
+      const { notify } = await import('../../services/notification.service.js')
+      const dateLabel = visitDateTime.toLocaleString('pt-BR', {
+        day: '2-digit', month: '2-digit', year: 'numeric',
+        hour: '2-digit', minute: '2-digit',
+      })
+      await notify({
+        prisma: app.prisma,
+        companyId,
+        type: 'visit_requested',
+        title: 'Nova visita agendada',
+        body: `${body.name} agendou uma visita para ${title} em ${dateLabel}.\nTelefone: ${body.phone}${body.notes ? `\nObs: ${body.notes}` : ''}`,
+        payload: {
+          visitId: propertyVisit?.id ?? null,
+          propertyId: body.propertyId,
+          visitorName: body.name,
+          visitorPhone: body.phone,
+          scheduledAt: visitDateTime.toISOString(),
+        },
+      })
+    } catch (err) {
+      app.log.warn({ err }, 'visit notify failed')
+    }
 
     // 3. Create a Deal (lead pipeline) if not exists
     const existingDeal = await app.prisma.deal.findFirst({
