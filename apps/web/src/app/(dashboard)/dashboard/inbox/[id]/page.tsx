@@ -134,7 +134,7 @@ export default function ConversationPage() {
   if (!conversation) return <div className="p-6 text-red-400 text-center py-20">Conversa não encontrada</div>
 
   return (
-    <div className="flex h-[calc(100vh-0px)] max-h-screen">
+    <div className="flex h-[100dvh] max-h-screen">
       {/* Chat */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Header */}

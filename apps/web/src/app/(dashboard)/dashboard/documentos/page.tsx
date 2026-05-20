@@ -802,7 +802,7 @@ export default function DocumentosPage() {
                     onChange={e => setRefinementText(e.target.value)}
                     placeholder="Ex: Altere o valor do aluguel para R$2.500, corrija o nome do locatário para 'Maria Aparecida'..."
                     className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 pr-10 text-white placeholder:text-white/25 outline-none focus:border-yellow-400/40 resize-none transition-colors"
-                    style={{ fontSize: '14px', minHeight: '80px' }}
+                    style={{ fontSize: '16px', minHeight: '80px' }}
                   />
                   <span className="absolute right-3 top-3">
                     <VoiceInputButton onResult={(text) => setRefinementText(prev => prev ? prev + ' ' + text : text)} dark />
