@@ -5,6 +5,7 @@ import { geocodeProperty, sleep } from '../../services/geocoding.service.js'
 import { assertWithinPlanQuota, PlanLimitError } from '../../services/plan-gating.service.js'
 import { notifyMatchingAlerts } from '../../services/property-match.service.js'
 import { dispatchWebhooks } from '../../services/outgoing-webhook.service.js'
+import { recordEvent } from '../../services/system-event.service.js'
 
 const toUpper = (v: unknown) => typeof v === 'string' ? v.toUpperCase() : v
 
@@ -601,6 +602,14 @@ export default async function propertiesRoutes(app: FastifyInstance) {
       id: property.id, title: property.title, slug: property.slug,
       type: property.type, purpose: property.purpose, price: property.price,
       city: property.city, neighborhood: property.neighborhood,
+    })
+
+    // Domain event log
+    void recordEvent({
+      prisma: app.prisma, companyId: req.user.cid,
+      eventType: 'property.created', source: 'dashboard',
+      entityType: 'property', entityId: property.id,
+      payload: { title: property.title, type: property.type, purpose: property.purpose, city: property.city },
     })
 
     return reply.status(201).send(property)
