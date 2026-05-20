@@ -39,6 +39,29 @@ function fmt(v?: number | null) {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v)
 }
 
+function fmtMoney(v: unknown): string | null {
+  if (v == null) return null
+  const n = typeof v === 'string' ? Number(v) : (v as number)
+  if (!Number.isFinite(n) || n === 0) return null
+  return n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })
+}
+
+interface Recommendation {
+  id: string
+  title: string
+  slug: string | null
+  type: string
+  purpose: string
+  city: string | null
+  neighborhood: string | null
+  price: string | null
+  priceRent: string | null
+  bedrooms: number
+  coverImage: string | null
+  matchScore: number
+  matchReasons: string[]
+}
+
 function TimelineItem({ activity }: { activity: Activity }) {
   const Icon = ACTIVITY_ICONS[activity.type] ?? MessageCircle
   return (
@@ -83,6 +106,19 @@ export default function LeadDetailPage() {
     queryFn: async () => {
       const token = await getValidToken()
       return activitiesApi.list(token!, { leadId: id, limit: 50 })
+    },
+  })
+
+  const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
+  const { data: recs } = useQuery({
+    queryKey: ['lead-recommendations', id],
+    queryFn: async () => {
+      const token = await getValidToken()
+      const res = await fetch(`${API_URL}/api/v1/leads/${id}/recommendations`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (!res.ok) return { data: [] as Recommendation[] }
+      return res.json() as Promise<{ data: Recommendation[] }>
     },
   })
 
@@ -168,6 +204,46 @@ export default function LeadDetailPage() {
                 </div>
                 <span className="text-sm font-bold text-white">{lead.score}</span>
               </div>
+            </div>
+          )}
+
+          {/* Recomendações */}
+          {(recs?.data?.length ?? 0) > 0 && (
+            <div className="bg-white/5 rounded-xl border border-white/10 p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider">Imóveis recomendados</h3>
+                <span className="text-[10px] text-amber-400">✨ IA</span>
+              </div>
+              {recs!.data.map(r => {
+                const price = r.purpose === 'RENT' ? fmtMoney(r.priceRent) : fmtMoney(r.price)
+                return (
+                  <Link key={r.id} href={`/dashboard/properties/${r.id}`}
+                    className="block rounded-lg border border-white/10 bg-white/[0.02] p-2.5 hover:bg-white/5 transition-colors">
+                    <div className="flex gap-2.5">
+                      {r.coverImage && (
+                        /* eslint-disable-next-line @next/next/no-img-element */
+                        <img src={r.coverImage} alt={r.title}
+                          className="h-14 w-14 flex-shrink-0 rounded-md object-cover" />
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between gap-1">
+                          <p className="text-xs font-semibold text-white truncate">{r.title}</p>
+                          <span className="text-[10px] font-bold text-amber-400 flex-shrink-0">{r.matchScore}%</span>
+                        </div>
+                        {(r.neighborhood || r.city) && (
+                          <p className="text-[10px] text-white/40 truncate">
+                            {[r.neighborhood, r.city].filter(Boolean).join(' · ')}
+                          </p>
+                        )}
+                        {price && <p className="text-xs font-medium text-emerald-300 mt-0.5">{price}</p>}
+                        {r.matchReasons[0] && (
+                          <p className="text-[10px] italic text-white/40 mt-0.5 truncate">→ {r.matchReasons[0]}</p>
+                        )}
+                      </div>
+                    </div>
+                  </Link>
+                )
+              })}
             </div>
           )}
 
