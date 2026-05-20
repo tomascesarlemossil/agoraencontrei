@@ -291,7 +291,8 @@ export default function AgendaPage() {
                       <textarea value={fbText} onChange={(e) => setFbText(e.target.value)}
                         placeholder="Feedback do cliente (gostou? fez proposta? quer ver opções parecidas?)"
                         rows={2}
-                        className="w-full rounded-md border border-gray-700 bg-gray-950 px-2 py-1.5 text-xs text-white" />
+                        className="w-full rounded-md border border-gray-700 bg-gray-950 px-2 py-1.5 text-white"
+                        style={{ fontSize: '16px' }} />
                       <div className="flex gap-2">
                         <button onClick={submitFeedback}
                           className="rounded-md bg-emerald-600 px-3 py-1 text-xs font-medium text-white hover:bg-emerald-500">
