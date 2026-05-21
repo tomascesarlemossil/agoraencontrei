@@ -180,7 +180,14 @@ const SUB_TABS = [
 export function SystemConfigPanel() {
   const { getValidToken, user } = useAuth()
   const qc = useQueryClient()
-  const [subTab, setSubTab] = useState('empresa')
+  // Deep-link: ?panel=cores abre direto a aba "Cores & Botões"
+  // (atalho "Editar meu site"). Lê window.location p/ evitar Suspense.
+  const [subTab, setSubTab] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return new URLSearchParams(window.location.search).get('panel') ?? 'empresa'
+    }
+    return 'empresa'
+  })
   const [saved, setSaved] = useState(false)
 
   // Keep a current access token in local state so child components that

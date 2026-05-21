@@ -105,6 +105,7 @@ const midNavItems = [
 
 const corretorNavItem = { href: '/dashboard/corretor', icon: BriefcaseBusiness, label: 'Meu Painel', highlight: false }
 const corretorHojeItem = { href: '/dashboard/corretor/hoje', icon: Calendar, label: 'Meu Dia', highlight: false }
+const editarSiteItem = { href: '/dashboard/settings?tab=sistema&panel=cores', icon: Palette, label: 'Editar meu site', highlight: true }
 
 const lemosbankSubItems = [
   { href: '/dashboard/lemosbank',              icon: Banknote,   label: 'Visão Geral' },
@@ -340,6 +341,28 @@ function NavContent({ onClose }: { onClose?: () => void }) {
             </Link>
           )
         })}
+
+        {/* ── Editar meu site — atalho destacado ────────────── */}
+        {(() => {
+          const { href, icon: Icon, label } = editarSiteItem
+          const active = pathname.startsWith('/dashboard/settings')
+          return (
+            <Link
+              href={href}
+              onClick={onClose}
+              className={cn(
+                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors border',
+                active
+                  ? 'text-white border-yellow-400/40'
+                  : 'text-yellow-400/80 hover:text-yellow-300 hover:bg-yellow-400/5 border-yellow-400/20',
+              )}
+              style={active ? { background: 'linear-gradient(135deg, rgba(201,168,76,0.2), rgba(232,198,106,0.1))' } : undefined}
+            >
+              <Icon className="h-4 w-4 flex-shrink-0 text-yellow-400/70" />
+              <span className="truncate">{label}</span>
+            </Link>
+          )
+        })()}
 
         {/* ── Meu Painel (corretor) — last ──────────────────── */}
         {[corretorHojeItem, corretorNavItem].map(({ href, icon: Icon, label }) => {

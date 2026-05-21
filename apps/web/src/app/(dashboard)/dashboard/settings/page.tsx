@@ -146,7 +146,16 @@ export default function SettingsPage() {
     { id: 'sistema',      label: 'Sistema',       icon: Settings,  show: isManager },
   ].filter(t => t.show)
 
-  const [activeTab, setActiveTab] = useState('empresa')
+  // Deep-link: /dashboard/settings?tab=sistema abre a aba direto (ex.: atalho
+  // "Editar meu site" do menu). Lê window.location p/ evitar Suspense de
+  // useSearchParams no build.
+  const [activeTab, setActiveTab] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const t = new URLSearchParams(window.location.search).get('tab')
+      if (t && TABS.some(x => x.id === t)) return t
+    }
+    return 'empresa'
+  })
 
   // ── Empresa ────────────────────────────────────────────────────────────────
   const [empresa, setEmpresa] = useState({
