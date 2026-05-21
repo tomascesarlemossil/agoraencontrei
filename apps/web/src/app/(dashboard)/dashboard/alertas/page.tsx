@@ -54,7 +54,7 @@ export default function AlertasPage() {
       const q = new URLSearchParams({ limit: '200' })
       if (filter === 'active') q.set('active', 'true')
       if (filter === 'inactive') q.set('active', 'false')
-      const res = await fetch(`${API_URL}/api/v1/alerts?${q}`, {
+      const res = await fetch(`${API_URL}/api/v1/public/alerts?${q}`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       const j = await res.json()

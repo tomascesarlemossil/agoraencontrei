@@ -115,7 +115,7 @@ export default function MeuPainelPage() {
     setLoadingAnalytics(true)
     Promise.all([
       fetch(`${API_URL}/api/v1/public/partner-stats/${specialist.id}`).then(r => r.ok ? r.json() : null).catch(() => null),
-      fetch(`${API_URL}/api/v1/territory/my/${specialist.id}`).then(r => r.ok ? r.json() : null).catch(() => null),
+      fetch(`${API_URL}/api/v1/public/territory/my/${specialist.id}`).then(r => r.ok ? r.json() : null).catch(() => null),
     ]).then(([analyticsData, territoryData]) => {
       if (analyticsData) setAnalytics(analyticsData)
       if (territoryData?.territories) setTerritories(territoryData.territories)
