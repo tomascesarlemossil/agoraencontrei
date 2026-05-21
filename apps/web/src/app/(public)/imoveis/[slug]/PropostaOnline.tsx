@@ -113,6 +113,7 @@ export function PropostaOnline({ propertyId, propertyTitle, propertyPrice, prope
   const [form, setForm] = useState<FormState>(INITIAL)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [website, setWebsite] = useState('') // honeypot anti-bot
   const [proposalCode, setProposalCode] = useState('')
   const [proposalHash, setProposalHash] = useState('')
   const [codeCopied, setCodeCopied] = useState(false)
@@ -161,6 +162,7 @@ export function PropostaOnline({ propertyId, propertyTitle, propertyPrice, prope
           cpf: form.cpf || undefined,
           propertyId,
           proposta,
+          website: website || undefined,
         }),
       })
       // Gerar hash SHA-256 para validade jurídica
@@ -282,6 +284,16 @@ export function PropostaOnline({ propertyId, propertyTitle, propertyPrice, prope
                   <h3 className="font-semibold text-gray-800 flex items-center gap-2">
                     <User className="w-4 h-4" style={{ color: '#C9A84C' }} /> Dados do Comprador
                   </h3>
+                  {/* Honeypot anti-bot — invisível para humanos */}
+                  <input
+                    name="website"
+                    value={website}
+                    onChange={e => setWebsite(e.target.value)}
+                    tabIndex={-1}
+                    autoComplete="off"
+                    aria-hidden="true"
+                    className="absolute left-[-9999px] h-0 w-0 opacity-0"
+                  />
                   <div>
                     <label className={labelCls}>Nome completo *</label>
                     <input className={inputCls} value={form.nome} onChange={e => set('nome', e.target.value)} placeholder="João da Silva" />

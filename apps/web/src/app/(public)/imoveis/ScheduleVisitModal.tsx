@@ -44,6 +44,7 @@ export function ScheduleVisitModal({ propertyId, propertyTitle, propertySlug }: 
   const [phone, setPhone] = useState('')
   const [email, setEmail] = useState('')
   const [notes, setNotes] = useState('')
+  const [website, setWebsite] = useState('') // honeypot anti-bot
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -83,6 +84,7 @@ export function ScheduleVisitModal({ propertyId, propertyTitle, propertySlug }: 
           preferredDate: selectedDate,
           preferredTime: selectedTime,
           notes: notes.trim() || undefined,
+          website: website || undefined,
         }),
       })
       if (!res.ok) throw new Error('Erro ao agendar')
@@ -205,6 +207,16 @@ export function ScheduleVisitModal({ propertyId, propertyTitle, propertySlug }: 
                   </div>
 
                   <div className="space-y-3">
+                    {/* Honeypot anti-bot — invisível para humanos */}
+                    <input
+                      name="website"
+                      value={website}
+                      onChange={e => setWebsite(e.target.value)}
+                      tabIndex={-1}
+                      autoComplete="off"
+                      aria-hidden="true"
+                      className="absolute left-[-9999px] h-0 w-0 opacity-0"
+                    />
                     <div>
                       <label className="text-xs font-semibold text-gray-600 flex items-center gap-1 mb-1">
                         <User className="w-3.5 h-3.5" /> Nome *
