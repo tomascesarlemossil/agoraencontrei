@@ -13,6 +13,7 @@ import type {
   GeoMetrics,
   GrowthEngineMetrics,
   MasterIntelligenceResponse,
+  TopPropertyMetric,
 } from '../../types/master-intelligence.js'
 import { buildForecast } from './forecast.service.js'
 import { buildRetention } from './retention.service.js'
@@ -271,8 +272,35 @@ async function buildGrowthEngine(prisma: any): Promise<GrowthEngineMetrics> {
   }
 }
 
+// ── Top Marketplace Properties (cross-tenant, por views) ────────────────────
+
+async function buildTopProperties(prisma: any): Promise<TopPropertyMetric[]> {
+  const rows = await prisma.property.findMany({
+    where: { status: 'ACTIVE', authorizedPublish: true },
+    select: {
+      id: true, title: true, slug: true, city: true, neighborhood: true,
+      price: true, views: true, coverImage: true,
+      company: { select: { name: true, tradeName: true } },
+    },
+    orderBy: { views: 'desc' },
+    take: 10,
+  }).catch(() => [])
+
+  return rows.map((p: any) => ({
+    id: p.id,
+    title: p.title,
+    slug: p.slug ?? null,
+    city: p.city ?? null,
+    neighborhood: p.neighborhood ?? null,
+    price: p.price != null ? Number(p.price) : null,
+    views: p.views ?? 0,
+    coverImage: p.coverImage ?? null,
+    companyName: p.company?.tradeName || p.company?.name || null,
+  }))
+}
+
 export async function buildMasterIntelligence(prisma: any): Promise<MasterIntelligenceResponse> {
-  const [revenue, sales, retention, forecast, affiliates, geo, growthEngine] = await Promise.all([
+  const [revenue, sales, retention, forecast, affiliates, geo, growthEngine, topProperties] = await Promise.all([
     buildRevenue(prisma),
     buildSales(prisma),
     buildRetention(prisma),
@@ -280,6 +308,7 @@ export async function buildMasterIntelligence(prisma: any): Promise<MasterIntell
     buildAffiliateMetrics(prisma),
     buildGeo(prisma),
     buildGrowthEngine(prisma),
+    buildTopProperties(prisma),
   ])
 
   const channels = await buildChannelAttribution(prisma)
@@ -318,6 +347,7 @@ export async function buildMasterIntelligence(prisma: any): Promise<MasterIntell
     geo,
     advisor,
     growthEngine,
+    topProperties,
     generatedAt: new Date().toISOString(),
   }
 }

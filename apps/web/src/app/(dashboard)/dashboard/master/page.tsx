@@ -89,7 +89,7 @@ export default function MasterPage() {
     )
   }
 
-  const { revenue, sales, channels, retention, forecast, unitEconomics, affiliates, geo, advisor, growthEngine } = intel
+  const { revenue, sales, channels, retention, forecast, unitEconomics, affiliates, geo, advisor, growthEngine, topProperties } = intel
 
   // Chart data
   const planChartData = (revenue?.receitaPorPlano || []).map((p: any) => ({
@@ -577,6 +577,34 @@ export default function MasterPage() {
               <div key={`${c.city}-${c.state}`} className="flex items-center justify-between bg-gray-50 rounded-lg p-2 text-sm">
                 <span className="text-gray-700">{c.city}{c.state ? ` - ${c.state}` : ''}</span>
                 <span className="text-gray-500 text-xs">{c.leads} leads</span>
+              </div>
+            ))}
+          </div>
+        </CollapsibleSection>
+      )}
+
+      {(topProperties || []).length > 0 && (
+        <CollapsibleSection
+          id="topProps" title="Imóveis mais vistos (marketplace)" icon={<Building2 className="h-4 w-4 text-amber-600" />}
+          expanded={expandedSection === 'topProps'} onToggle={() => toggleSection('topProps')}
+          summary={`${topProperties.length} imóveis | ${topProperties.reduce((s: number, p: any) => s + (p.views ?? 0), 0).toLocaleString('pt-BR')} views`}
+        >
+          <div className="space-y-1.5">
+            {topProperties.map((p: any, i: number) => (
+              <div key={p.id} className="flex items-center gap-2 bg-gray-50 rounded-lg p-2 text-sm">
+                <span className="text-xs font-bold text-gray-400 w-5 flex-shrink-0">{i + 1}</span>
+                {p.coverImage && (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img src={p.coverImage} alt={p.title} className="h-9 w-9 rounded object-cover flex-shrink-0" />
+                )}
+                <div className="min-w-0 flex-1">
+                  <p className="text-gray-800 truncate text-xs font-medium">{p.title}</p>
+                  <p className="text-gray-400 text-[10px] truncate">
+                    {[p.neighborhood, p.city].filter(Boolean).join(' · ')}
+                    {p.companyName && <span> · {p.companyName}</span>}
+                  </p>
+                </div>
+                <span className="text-amber-600 text-xs font-semibold flex-shrink-0">{(p.views ?? 0).toLocaleString('pt-BR')} views</span>
               </div>
             ))}
           </div>
