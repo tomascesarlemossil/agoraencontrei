@@ -1033,4 +1033,69 @@ export async function runScheduledJobs(app: FastifyInstance) {
       app.log.error({ err }, '[scheduled] daily-broker-digest failed')
     }
   }
+
+  // ── 12. Reengajamento do bot WhatsApp ───────────────────────────────────
+  // Conversa parada em modo bot (status='bot') significa que o lead começou
+  // mas abandonou o fluxo de qualificação (concluir move pra 'open'). Manda
+  // um nudge único entre 1h e 24h após a última mensagem.
+  try {
+    if (env.WHATSAPP_TOKEN && env.WHATSAPP_PHONE_ID) {
+      const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000)
+      const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000)
+
+      const stalled = await app.prisma.conversation.findMany({
+        where: {
+          status: 'bot',
+          channel: 'whatsapp',
+          lastMessageAt: { lt: oneHourAgo, gte: oneDayAgo },
+        },
+        select: { id: true, phone: true, companyId: true, contactName: true },
+        take: 200,
+      }).catch(() => [])
+
+      if (stalled.length > 0) {
+        const { whatsappService } = await import('./whatsapp.service.js')
+        let nudged = 0
+
+        for (const conv of stalled) {
+          const already = await app.prisma.auditLog.findFirst({
+            where: { resource: 'conversation', resourceId: conv.id, action: 'whatsapp.bot.nudge' as any },
+          }).catch(() => null)
+          if (already) continue
+
+          const first = (conv.contactName ?? '').split(' ')[0]
+          const msg = `${first ? `Oi ${first}! ` : 'Oi! '}Vi que você começou a busca por um imóvel com a gente mas não finalizou. 😊\n\nQuer continuar de onde parou? É rapidinho — me responde aqui que eu te ajudo a encontrar as melhores opções!`
+
+          try {
+            const phone = conv.phone.replace(/\D/g, '')
+            const dest = phone.startsWith('55') ? phone : `55${phone}`
+            await whatsappService.sendText(dest, msg)
+            await app.prisma.message.create({
+              data: { conversationId: conv.id, direction: 'outbound', type: 'text', content: msg, status: 'sent', sentBy: 'bot' },
+            }).catch(() => {})
+          } catch (err) {
+            app.log.warn({ err }, '[scheduled] bot-nudge send failed')
+          }
+
+          await app.prisma.auditLog.create({
+            data: {
+              companyId: conv.companyId,
+              action: 'whatsapp.bot.nudge' as any,
+              resource: 'conversation',
+              resourceId: conv.id,
+              payload: { sentAt: now.toISOString() },
+            },
+          }).catch(() => {})
+
+          nudged++
+        }
+
+        if (nudged > 0) {
+          app.log.info(`[scheduled] whatsapp-bot-nudge: sent ${nudged} re-engagement nudges`)
+        }
+      }
+    }
+  } catch (err) {
+    app.log.error({ err }, '[scheduled] whatsapp-bot-nudge failed')
+  }
 }
