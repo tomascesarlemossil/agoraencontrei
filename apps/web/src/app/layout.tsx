@@ -5,6 +5,7 @@ import { Providers } from '@/components/providers'
 import { ConditionalMetaPixel } from '@/components/ConditionalMetaPixel'
 import { WebVitals } from '@/components/WebVitals'
 import { GoogleAnalytics } from '@/components/GoogleAnalytics'
+import { CookieConsent } from '@/components/CookieConsent'
 import { FRANCA_GEO_KEYWORDS } from '@/data/seo-geo-keywords'
 import './globals.css'
 
@@ -378,6 +379,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className="font-sans" style={{ fontFamily: "'Inter', system-ui, -apple-system, sans-serif" }}>
         <Providers>{children}</Providers>
+        {/* ── Banner de consentimento de cookies (LGPD) ───────── */}
+        <CookieConsent />
         {/* ── Meta Pixel condicional (LGPD) ───────────────────── */}
         <ConditionalMetaPixel />
         {/* ── Core Web Vitals monitoring ──────────────────────── */}
