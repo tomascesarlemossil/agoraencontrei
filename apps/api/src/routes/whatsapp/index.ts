@@ -348,7 +348,45 @@ async function runBot(app: FastifyInstance, conversation: any, phone: string, in
         })
       } catch { /* non-fatal */ }
 
-      if (env.WHATSAPP_TOKEN) await BOT_STEPS.DONE(phone, name)
+      // Entrega valor imediato: envia até 2 imóveis recomendados (#127)
+      // antes da mensagem de encerramento.
+      let sentRecs = false
+      if (env.WHATSAPP_TOKEN) {
+        try {
+          const { recommendForLead } = await import('../../services/lead-recommender.service.js')
+          const recs = await recommendForLead(app.prisma, lead.id, 2)
+          if (recs.length > 0) {
+            const lines = recs.map((r, i) => {
+              const price = r.purpose === 'RENT' ? r.priceRent : r.price
+              const priceLabel = price != null && Number(price) > 0
+                ? `R$ ${Number(price).toLocaleString('pt-BR')}`
+                : 'Valor sob consulta'
+              const loc = [r.neighborhood, r.city].filter(Boolean).join(', ')
+              const url = `https://www.agoraencontrei.com.br/imoveis/${r.slug ?? r.id}`
+              return `${i + 1}. *${r.title}*${loc ? `\n📍 ${loc}` : ''}\n💰 ${priceLabel}\n🔗 ${url}`
+            }).join('\n\n')
+            await whatsappService.sendText(
+              phone,
+              `${name.split(' ')[0]}, separei ${recs.length === 1 ? 'um imóvel' : 'alguns imóveis'} que combina${recs.length === 1 ? '' : 'm'} com o que você procura: 🏠\n\n${lines}`,
+            )
+            await app.prisma.message.create({
+              data: { conversationId: conversation.id, direction: 'outbound', type: 'text', content: `[${recs.length} recomendações enviadas]`, status: 'sent', sentBy: 'bot' },
+            }).catch(() => {})
+            sentRecs = true
+          }
+        } catch { /* non-fatal */ }
+      }
+
+      if (env.WHATSAPP_TOKEN) {
+        if (sentRecs) {
+          await whatsappService.sendText(
+            phone,
+            `Um corretor vai te chamar em breve pra agendar uma visita. Se quiser ver mais opções, é só responder por aqui! 🙌`,
+          ).catch(() => {})
+        } else {
+          await BOT_STEPS.DONE(phone, name)
+        }
+      }
       await clearState(app.redis, phone)
       return
     }
