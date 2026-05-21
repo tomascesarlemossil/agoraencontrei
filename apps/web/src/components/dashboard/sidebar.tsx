@@ -94,6 +94,7 @@ const midNavItems = [
   { href: '/dashboard/admin/tenants',        icon: Building2,       label: 'Parceiros & Tenants', highlight: true },
   { href: '/dashboard/admin/events',         icon: Activity,        label: 'Eventos do Sistema',  highlight: true },
   { href: '/dashboard/admin/webhooks',        icon: Plug,            label: 'Saúde das Integrações', highlight: true },
+  { href: '/dashboard/admin/repasses',        icon: Banknote,        label: 'Fila de Repasses',    highlight: true },
   { href: '/dashboard/hunter',              icon: Crosshair,       label: 'Hunter Mode',    highlight: true  },
   { href: '/dashboard/loteadora',           icon: LandPlot,        label: 'Loteadora',      highlight: true  },
   { href: '/dashboard/afiliados',           icon: Users,           label: 'Afiliados',      highlight: true  },
