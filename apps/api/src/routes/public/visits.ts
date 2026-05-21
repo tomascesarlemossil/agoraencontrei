@@ -29,43 +29,41 @@ export default async function visitRoutes(app: FastifyInstance) {
     const property = await app.prisma.property.findFirst({
       where: { id: body.propertyId },
       select: { companyId: true, title: true, street: true, city: true },
-    })
+    }).catch(() => null)
     if (!property) return reply.status(404).send({ error: 'PROPERTY_NOT_FOUND' })
 
     const companyId = property.companyId
     const visitDateTime = new Date(`${body.preferredDate}T${body.preferredTime}:00`)
+    if (isNaN(visitDateTime.getTime())) {
+      return reply.status(400).send({ error: 'INVALID_DATE', message: 'Data ou horário inválido.' })
+    }
     const title = body.propertyTitle ?? property.title ?? 'Imóvel'
 
-    // 1. Find or create a lead (Contact)
-    let contact = await app.prisma.contact.findFirst({
-      where: { phone: body.phone, companyId },
-    })
-    if (!contact) {
-      contact = await app.prisma.contact.create({
-        data: {
-          name: body.name,
-          phone: body.phone,
-          email: body.email ?? null,
-          companyId,
-          type: 'INDIVIDUAL',
-        },
+    // 1. Find or create a lead (Contact) — best-effort (não pode quebrar o agendamento)
+    let contact: { id: string } | null = null
+    try {
+      contact = await app.prisma.contact.findFirst({
+        where: { phone: body.phone, companyId },
+        select: { id: true },
       })
+      if (!contact) {
+        contact = await app.prisma.contact.create({
+          data: {
+            name: body.name,
+            phone: body.phone,
+            email: body.email ?? null,
+            companyId,
+            type: 'INDIVIDUAL',
+          },
+          select: { id: true },
+        })
+      }
+    } catch (err) {
+      app.log.warn({ err }, 'visit: contact upsert failed (non-fatal)')
     }
 
-    // 2. Create an Activity (visit) in the agent's agenda
-    const activity = await app.prisma.activity.create({
-      data: {
-        companyId,
-        contactId: contact.id,
-        type: 'visit',
-        title: `Visita: ${title}`,
-        description: `Cliente: ${body.name} (${body.phone})\nImóvel: ${title}\nData: ${visitDateTime.toLocaleDateString('pt-BR')} às ${body.preferredTime}\n${body.notes ? `Obs: ${body.notes}` : ''}`,
-        scheduledAt: visitDateTime,
-      },
-    })
-
-    // Structured visit record so the dashboard agenda can manage status,
-    // confirmation and post-visit feedback (separate from the free-form Activity).
+    // 2. PRINCIPAL: registro estruturado da visita (agenda do dashboard).
+    //    É o critério de sucesso — se isto falhar, retorna erro real.
     const propertyVisit = await app.prisma.propertyVisit.create({
       data: {
         companyId,
@@ -77,7 +75,32 @@ export default async function visitRoutes(app: FastifyInstance) {
         mode: 'in_person',
         notes: body.notes ?? null,
       },
-    }).catch(() => null)
+    }).catch((err: unknown) => {
+      app.log.error({ err }, 'visit: propertyVisit.create failed')
+      return null
+    })
+
+    if (!propertyVisit) {
+      return reply.status(500).send({ error: 'SCHEDULE_FAILED', message: 'Não foi possível agendar. Tente novamente.' })
+    }
+
+    // 3. Activity na timeline livre — best-effort.
+    let activity: { id: string } | null = null
+    try {
+      activity = await app.prisma.activity.create({
+        data: {
+          companyId,
+          contactId: contact?.id ?? null,
+          type: 'visit',
+          title: `Visita: ${title}`,
+          description: `Cliente: ${body.name} (${body.phone})\nImóvel: ${title}\nData: ${visitDateTime.toLocaleDateString('pt-BR')} às ${body.preferredTime}\n${body.notes ? `Obs: ${body.notes}` : ''}`,
+          scheduledAt: visitDateTime,
+        },
+        select: { id: true },
+      })
+    } catch (err) {
+      app.log.warn({ err }, 'visit: activity.create failed (non-fatal)')
+    }
 
     // In-app + e-mail notification for company admins so the visit is
     // surfaced the moment it is scheduled.
@@ -105,36 +128,40 @@ export default async function visitRoutes(app: FastifyInstance) {
       app.log.warn({ err }, 'visit notify failed')
     }
 
-    // 3. Create a Deal (lead pipeline) if not exists
-    const existingDeal = await app.prisma.deal.findFirst({
-      where: {
-        contactId: contact.id,
-        companyId,
-        status: { in: ['OPEN', 'IN_PROGRESS'] },
-        properties: { some: { propertyId: body.propertyId } },
-      },
-    })
-    if (!existingDeal) {
-      // Find the first active broker/user in this company to assign the deal
-      const broker = await app.prisma.user.findFirst({
-        where: { companyId, status: 'ACTIVE' },
-        select: { id: true },
-      })
-      if (broker) {
-        await app.prisma.deal.create({
-          data: {
-            companyId,
+    // 4. Create a Deal (lead pipeline) if not exists — best-effort.
+    try {
+      if (contact) {
+        const existingDeal = await app.prisma.deal.findFirst({
+          where: {
             contactId: contact.id,
-            brokerId: broker.id,
-            title: `Visita agendada — ${title}`,
-            status: 'OPEN',
-            value: null,
-            properties: {
-              create: { propertyId: body.propertyId },
-            },
+            companyId,
+            status: { in: ['OPEN', 'IN_PROGRESS'] },
+            properties: { some: { propertyId: body.propertyId } },
           },
-        }).catch(() => {/* deal creation is optional */})
+          select: { id: true },
+        })
+        if (!existingDeal) {
+          const broker = await app.prisma.user.findFirst({
+            where: { companyId, status: 'ACTIVE' },
+            select: { id: true },
+          })
+          if (broker) {
+            await app.prisma.deal.create({
+              data: {
+                companyId,
+                contactId: contact.id,
+                brokerId: broker.id,
+                title: `Visita agendada — ${title}`,
+                status: 'OPEN',
+                value: null,
+                properties: { create: { propertyId: body.propertyId } },
+              },
+            })
+          }
+        }
       }
+    } catch (err) {
+      app.log.warn({ err }, 'visit: deal creation failed (non-fatal)')
     }
 
     // 4. Send WhatsApp to company agent (if configured)
@@ -173,7 +200,7 @@ export default async function visitRoutes(app: FastifyInstance) {
       }
     }
 
-    return reply.send({ success: true, activityId: activity.id, contactId: contact.id })
+    return reply.send({ success: true, visitId: propertyVisit.id, activityId: activity?.id ?? null, contactId: contact?.id ?? null })
   })
 
   // GET /api/v1/public/visits/:id/feedback — fetch visit info for the public
