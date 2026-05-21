@@ -331,7 +331,7 @@ export default function PoliticaPrivacidadePage() {
                 <strong style={{ color: '#1B2B5B' }}>CNPJ:</strong> 10.962.301/0001-50
               </p>
               <p className="text-gray-600">
-                <strong style={{ color: '#1B2B5B' }}>Endereço:</strong> Rua Simão Caleiro, 2383 — Vila França — Franca/SP — CEP 14401-155
+                <strong style={{ color: '#1B2B5B' }}>Endereço:</strong> Rua Simão Caleiro, 2383 — Vila Industrial — Franca/SP — CEP 14400-340
               </p>
               <p className="text-gray-600 mt-3">
                 Para exercer seus direitos ou esclarecer duvidas sobre o tratamento de dados pessoais,

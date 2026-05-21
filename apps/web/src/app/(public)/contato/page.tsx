@@ -92,8 +92,8 @@ export default function ContatoPage() {
                 </div>
                 <div>
                   <p className="text-sm font-semibold" style={{ color: '#1B2B5B' }}>Telefone</p>
-                  <a href="tel:1637111990" className="text-gray-600 hover:text-blue-800 transition-colors">
-                    (16) 3711-1990
+                  <a href="tel:1637230045" className="text-gray-600 hover:text-blue-800 transition-colors">
+                    (16) 3723-0045
                   </a>
                 </div>
               </div>
@@ -111,12 +111,12 @@ export default function ContatoPage() {
                 <div>
                   <p className="text-sm font-semibold" style={{ color: '#1B2B5B' }}>WhatsApp</p>
                   <a
-                    href="https://wa.me/5516991686626?text=Olá!%20Gostaria%20de%20mais%20informações."
+                    href="https://wa.me/5516981010004?text=Olá!%20Gostaria%20de%20mais%20informações."
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-gray-600 hover:text-green-700 transition-colors"
                   >
-                    (16) 99168-6626
+                    (16) 98101-0004
                   </a>
                 </div>
               </div>
@@ -154,7 +154,7 @@ export default function ContatoPage() {
                 </div>
                 <div>
                   <p className="text-sm font-semibold" style={{ color: '#1B2B5B' }}>Endereço</p>
-                  <p className="text-gray-600">Franca/SP</p>
+                  <p className="text-gray-600">Rua Simão Caleiro, 2383 — Vila Industrial<br />Franca/SP — CEP 14400-340</p>
                 </div>
               </div>
             </div>
@@ -298,7 +298,7 @@ export default function ContatoPage() {
               Atendimento rápido e personalizado pelo WhatsApp.
             </p>
             <a
-              href="https://wa.me/5516991686626?text=Olá!%20Gostaria%20de%20mais%20informações."
+              href="https://wa.me/5516981010004?text=Olá!%20Gostaria%20de%20mais%20informações."
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2.5 px-8 py-4 rounded-2xl text-base font-bold transition-all hover:scale-105 hover:shadow-xl shadow-lg"

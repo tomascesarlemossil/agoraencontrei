@@ -12,7 +12,7 @@ export interface DocTemplate {
 const LEMOS_HEADER = `IMOBILIÁRIA LEMOS
 NOEMIA PIRES LEMOS DA SILVA — CRECI/SP 61053-F
 TOMAS CESAR LEMOS SILVA — CRECI/SP 279051
-Rua Simão Caleiro, 2383 — Vila França — Franca/SP — CEP 14401-155
+Rua Simão Caleiro, 2383 — Vila Industrial — Franca/SP — CEP 14400-340
 Tel: (16) 3723-0045`
 
 export const TEMPLATES: DocTemplate[] = [
@@ -645,7 +645,7 @@ CARTA DE DESISTÊNCIA DE COMPRA DE IMÓVEL
 Franca, [data_carta]
 
 À IMOBILIÁRIA LEMOS
-Rua Simão Caleiro, 2383 — Vila França — Franca/SP
+Rua Simão Caleiro, 2383 — Vila Industrial — Franca/SP
 
 Ref.: Desistência de proposta de compra — [imovel_descricao]
 
@@ -1643,7 +1643,7 @@ Tel: (16) 3723-0045`,
 
 INSTRUMENTO PARTICULAR DE CONFISSÃO DE DÍVIDA
 
-CREDOR: IMOBILIÁRIA LEMOS, representada por NOÊMIA PIRES LEMOS DA SILVA, CRECI/SP 61053-F e TOMAS CESAR LEMOS SILVA, CRECI/SP 279051, Rua Simão Caleiro, 2383, Vila França, Franca/SP.
+CREDOR: IMOBILIÁRIA LEMOS, representada por NOÊMIA PIRES LEMOS DA SILVA, CRECI/SP 61053-F e TOMAS CESAR LEMOS SILVA, CRECI/SP 279051, Rua Simão Caleiro, 2383, Vila Industrial, Franca/SP.
 
 DEVEDOR: [devedor_nome], [devedor_estado_civil], RG: [devedor_rg], CPF: [devedor_cpf], residente em [devedor_endereco].
 

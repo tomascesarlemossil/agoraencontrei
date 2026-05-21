@@ -256,7 +256,7 @@ const jsonLdBusiness = {
     streetAddress: 'Rua Simão Caleiro, 2383',
     addressLocality: 'Franca',
     addressRegion: 'SP',
-    postalCode: '14401-155',
+    postalCode: '14400-340',
     addressCountry: 'BR',
   },
   geo: {

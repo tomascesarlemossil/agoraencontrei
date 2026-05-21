@@ -236,8 +236,8 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
                   <p className="text-white/40 text-xs uppercase tracking-wider mb-0.5">Endereço</p>
                   <p className="text-white/60 text-sm leading-relaxed">
                     Rua Simão Caleiro, 2383<br />
-                    Vila França — Franca/SP<br />
-                    CEP 14401-155
+                    Vila Industrial — Franca/SP<br />
+                    CEP 14400-340
                   </p>
                   <p className="text-white/40 text-xs mt-1">CNPJ: 10.962.301/0001-50</p>
                   <a

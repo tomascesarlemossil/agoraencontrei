@@ -651,11 +651,11 @@ export default function SettingsPage() {
 
             <Section title="Endereço">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <DarkInput label="CEP" value={empresa.zipCode} onChange={e => setEmpresa(p => ({ ...p, zipCode: e.target.value }))} placeholder="14401-155" />
+                <DarkInput label="CEP" value={empresa.zipCode} onChange={e => setEmpresa(p => ({ ...p, zipCode: e.target.value }))} placeholder="14400-340" />
                 <DarkInput label="Cidade" value={empresa.city} onChange={e => setEmpresa(p => ({ ...p, city: e.target.value }))} placeholder="Franca" />
                 <DarkInput label="UF" value={empresa.state} onChange={e => setEmpresa(p => ({ ...p, state: e.target.value }))} placeholder="SP" maxLength={2} />
                 <div className="sm:col-span-3">
-                  <DarkInput label="Endereço Completo" value={empresa.address} onChange={e => setEmpresa(p => ({ ...p, address: e.target.value }))} placeholder="Rua Simão Caleiro, 2383, Vila França" />
+                  <DarkInput label="Endereço Completo" value={empresa.address} onChange={e => setEmpresa(p => ({ ...p, address: e.target.value }))} placeholder="Rua Simão Caleiro, 2383, Vila Industrial" />
                 </div>
               </div>
             </Section>
