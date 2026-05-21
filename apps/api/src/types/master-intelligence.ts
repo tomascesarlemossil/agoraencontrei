@@ -257,5 +257,18 @@ export interface MasterIntelligenceResponse {
   geo: GeoMetrics
   advisor: AdvisorInsights
   growthEngine: GrowthEngineMetrics
+  topProperties: TopPropertyMetric[]
   generatedAt: string
+}
+
+export interface TopPropertyMetric {
+  id: string
+  title: string
+  slug: string | null
+  city: string | null
+  neighborhood: string | null
+  price: number | null
+  views: number
+  coverImage: string | null
+  companyName: string | null
 }
