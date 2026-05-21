@@ -736,6 +736,11 @@ export default async function publicRoutes(app: FastifyInstance) {
     const body = req.body as any
     const { name, email, phone, cpf, propertyId, proposta } = body ?? {}
 
+    // Honeypot anti-bot: campo invisível preenchido = bot.
+    if (typeof body?.website === 'string' && body.website.trim().length > 0) {
+      return reply.status(201).send({ id: 'ok', message: 'Proposta recebida! Nossa equipe entrará em contato em até 24 horas.' })
+    }
+
     if (!name || !phone) {
       return reply.status(400).send({ error: 'MISSING_FIELDS', message: 'Nome e telefone são obrigatórios.' })
     }

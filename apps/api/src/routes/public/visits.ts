@@ -13,6 +13,12 @@ export default async function visitRoutes(app: FastifyInstance) {
       preferredDate: string  // ISO date string
       preferredTime: string  // HH:mm
       notes?: string
+      website?: string  // honeypot anti-bot
+    }
+
+    // Honeypot: campo invisível preenchido = bot. Sucesso falso, nada criado.
+    if (typeof body.website === 'string' && body.website.trim().length > 0) {
+      return reply.send({ success: true })
     }
 
     if (!body.propertyId || !body.name || !body.phone || !body.preferredDate || !body.preferredTime) {
