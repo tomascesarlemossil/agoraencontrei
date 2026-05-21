@@ -1474,6 +1474,9 @@ export const masterApi = {
   webhookHealth: (token: string) =>
     request<{ success: boolean; data: any }>('/api/v1/master/webhook-health', { token }),
 
+  launchReadiness: (token: string) =>
+    request<{ success: boolean; data: any }>('/api/v1/master/launch-readiness', { token }),
+
   repasseQueue: (token: string, params?: { status?: string }) =>
     request<{ success: boolean; data: any }>(`/api/v1/master/repasse-queue?${toQS(params)}`, { token }),
 
