@@ -1468,6 +1468,9 @@ export const masterApi = {
   health: (token: string) =>
     request<{ success: boolean; data: any }>('/api/v1/master/health', { token }),
 
+  webhookHealth: (token: string) =>
+    request<{ success: boolean; data: any }>('/api/v1/master/webhook-health', { token }),
+
   systemHealth: () =>
     request<{ status: 'green' | 'yellow' | 'red'; checks: Record<string, { status: string; message: string }>; timestamp: string }>('/api/v1/health/system'),
 }
