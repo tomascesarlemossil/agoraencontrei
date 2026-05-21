@@ -13,7 +13,7 @@
   "dependencies": {
     "@agoraencontrei/database": "workspace:*",
     "@agoraencontrei/tomas-knowledge": "workspace:*",
-    "@hookform/resolvers": "^3.9.1",
+    "@hookform/resolvers": "^5.2.2",
     "@radix-ui/react-avatar": "^1.1.1",
     "@radix-ui/react-dialog": "^1.1.2",
     "@radix-ui/react-dropdown-menu": "^2.1.2",
