@@ -339,6 +339,64 @@ export default async function masterRoutes(app: FastifyInstance) {
     return reply.send({ success: true, data: tenant })
   })
 
+  // GET /repasse-queue — fila de repasses agendados/processados (cross-tenant)
+  app.get('/repasse-queue', {
+    schema: { tags: ['master'], summary: 'Scheduled repasse queue' },
+  }, async (req, reply) => {
+    const q = req.query as { status?: string; limit?: string }
+    const take = Math.min(Number(q.limit) || 100, 500)
+
+    const repasses = await (app.prisma as any).scheduledRepasse.findMany({
+      where: { ...(q.status && { status: q.status }) },
+      orderBy: [{ status: 'asc' }, { scheduledDate: 'asc' }],
+      take,
+    }).catch(() => [])
+
+    const summary: Record<string, { count: number; total: number }> = {
+      SCHEDULED: { count: 0, total: 0 }, PROCESSING: { count: 0, total: 0 },
+      COMPLETED: { count: 0, total: 0 }, FAILED: { count: 0, total: 0 },
+    }
+    for (const r of repasses) {
+      const s = r.status ?? 'SCHEDULED'
+      if (!summary[s]) summary[s] = { count: 0, total: 0 }
+      summary[s].count++
+      summary[s].total += Number(r.netValue || 0)
+    }
+
+    const companyIds = [...new Set(repasses.map((r: any) => r.companyId).filter(Boolean))] as string[]
+    const landlordIds = [...new Set(repasses.map((r: any) => r.landlordId).filter(Boolean))] as string[]
+    const [companies, landlords] = await Promise.all([
+      companyIds.length
+        ? app.prisma.company.findMany({ where: { id: { in: companyIds } }, select: { id: true, name: true, tradeName: true } }).catch(() => [])
+        : Promise.resolve([]),
+      landlordIds.length
+        ? (app.prisma as any).client.findMany({ where: { id: { in: landlordIds } }, select: { id: true, name: true } }).catch(() => [])
+        : Promise.resolve([]),
+    ])
+    const compById = new Map(companies.map((c: any) => [c.id, c.tradeName || c.name]))
+    const landlordById = new Map(landlords.map((l: any) => [l.id, l.name]))
+
+    return reply.send({
+      success: true,
+      data: {
+        summary,
+        repasses: repasses.map((r: any) => ({
+          id: r.id,
+          status: r.status,
+          grossValue: Number(r.grossValue || 0),
+          commissionValue: Number(r.commissionValue || 0),
+          netValue: Number(r.netValue || 0),
+          scheduledDate: r.scheduledDate,
+          processedAt: r.processedAt,
+          failureReason: r.failureReason,
+          companyName: compById.get(r.companyId) ?? null,
+          landlordName: landlordById.get(r.landlordId) ?? null,
+        })),
+        timestamp: new Date().toISOString(),
+      },
+    })
+  })
+
   // GET /webhook-health — Monitor webhook endpoints and recent delivery status
   app.get('/webhook-health', {
     schema: { tags: ['master'], summary: 'Webhook health monitor' },

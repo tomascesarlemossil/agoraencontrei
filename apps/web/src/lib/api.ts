@@ -1471,6 +1471,9 @@ export const masterApi = {
   webhookHealth: (token: string) =>
     request<{ success: boolean; data: any }>('/api/v1/master/webhook-health', { token }),
 
+  repasseQueue: (token: string, params?: { status?: string }) =>
+    request<{ success: boolean; data: any }>(`/api/v1/master/repasse-queue?${toQS(params)}`, { token }),
+
   systemHealth: () =>
     request<{ status: 'green' | 'yellow' | 'red'; checks: Record<string, { status: string; message: string }>; timestamp: string }>('/api/v1/health/system'),
 }
