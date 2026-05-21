@@ -25,11 +25,21 @@ interface Lead {
   id: string; name: string; phone: string | null; email: string | null
   status: string; source: string | null; createdAt: string
 }
+interface HotLead {
+  id: string
+  name: string
+  phone: string | null
+  score: number
+  status: string
+  interest: string | null
+  budget: string | null
+}
 interface Today {
   now: string
   nextVisit: Visit | null
   todayVisits: Visit[]
   newLeadsToday: Lead[]
+  topHotLeads?: HotLead[]
   kpis: { visitsToday: number; leadsToday: number; pendingTasks: number }
 }
 
@@ -140,6 +150,54 @@ export default function CorretorHojePage() {
                 <p className="mt-1 text-2xl font-bold text-blue-300">{data.kpis.pendingTasks}</p>
               </div>
             </div>
+
+            {/* Pitche agora — leads quentes sem contato hoje */}
+            {(data.topHotLeads?.length ?? 0) > 0 && (
+              <div className="rounded-2xl border border-red-500/30 bg-red-500/5 p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-[10px] uppercase tracking-wider text-red-300 font-semibold">🔥 Pitche agora</p>
+                  <span className="text-[9px] text-gray-500">sem contato hoje</span>
+                </div>
+                <div className="space-y-2">
+                  {data.topHotLeads!.map(l => {
+                    const temp = l.score >= 76 ? { emoji: '🔥', label: 'Super quente' } : { emoji: '🌶️', label: 'Quente' }
+                    const phoneClean = l.phone?.replace(/\D/g, '') ?? ''
+                    return (
+                      <div key={l.id} className="rounded-xl bg-gray-950/60 p-3">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <span>{temp.emoji}</span>
+                              <p className="text-sm font-bold text-white truncate">{l.name}</p>
+                              <span className="text-[10px] font-bold text-red-300 flex-shrink-0">{l.score}</span>
+                            </div>
+                            <p className="text-[10px] text-gray-400 mt-0.5">
+                              {temp.label}
+                              {l.interest && <span> · {l.interest === 'buy' ? 'Comprar' : 'Alugar'}</span>}
+                              {l.budget && (
+                                <span> · até R$ {Number(l.budget).toLocaleString('pt-BR', { maximumFractionDigits: 0 })}</span>
+                              )}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="mt-2 flex gap-1.5">
+                          <Link href={`/dashboard/leads/${l.id}`}
+                            className="flex-1 flex items-center justify-center gap-1 rounded-md bg-red-600 hover:bg-red-500 px-2 py-1.5 text-[11px] font-semibold text-white">
+                            Pitch agora →
+                          </Link>
+                          {phoneClean && (
+                            <a href={`https://wa.me/55${phoneClean}`} target="_blank" rel="noopener noreferrer"
+                              className="flex items-center justify-center rounded-md bg-emerald-600/20 px-2 py-1.5 text-emerald-300">
+                              <MessageCircle size={12} />
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
 
             {/* Próxima visita — destaque grande */}
             {next ? (
