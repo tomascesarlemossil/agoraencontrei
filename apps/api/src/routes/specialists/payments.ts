@@ -76,14 +76,55 @@ async function cancelSubscription(subscriptionId: string) {
   return asaasFetch(`/subscriptions/${subscriptionId}`, { method: 'DELETE' })
 }
 
+// ── Aporte inicial (cobrança única de implantação) ──────────────────────────
+const APORTE_VALUE = 990
+const APORTE_PIX_DISCOUNT = 0.068 // 6,80% à vista no PIX
+const APORTE_PIX_VALUE = Math.round(APORTE_VALUE * (1 - APORTE_PIX_DISCOUNT) * 100) / 100 // 922.68
+
+// Cria a cobrança única do aporte no Asaas (/payments). PIX recebe desconto;
+// boleto/cartão podem ser parcelados via installmentCount (taxa da operadora).
+async function createAporteCharge(payload: {
+  customer: string
+  billingType: 'BOLETO' | 'PIX' | 'CREDIT_CARD'
+  dueDate: string
+  externalReference?: string
+  installments?: number
+}) {
+  const isPix = payload.billingType === 'PIX'
+  const total = isPix ? APORTE_PIX_VALUE : APORTE_VALUE
+  const installments = (!isPix && payload.installments && payload.installments > 1)
+    ? Math.min(payload.installments, 12)
+    : 1
+
+  const body: Record<string, unknown> = {
+    customer: payload.customer,
+    billingType: payload.billingType,
+    dueDate: payload.dueDate,
+    description: 'Aporte inicial de implantação — AgoraEncontrei',
+    externalReference: payload.externalReference,
+  }
+  if (installments > 1) {
+    body.installmentCount = installments
+    body.totalValue = total
+  } else {
+    body.value = total
+  }
+
+  return asaasFetch<{ id: string; status: string; value: number; invoiceUrl?: string; bankSlipUrl?: string }>('/payments', {
+    method: 'POST',
+    body: JSON.stringify(body),
+  })
+}
+
 export async function specialistPaymentRoutes(app: FastifyInstance) {
   // ── POST /checkout — Inicia assinatura para um especialista ──────────────
   app.post('/checkout', async (req, reply) => {
-    const { specialistId, plan, billingType = 'PIX', cpfCnpj } = req.body as {
+    const { specialistId, plan, billingType = 'PIX', cpfCnpj, aporteInstallments } = req.body as {
       specialistId: string
       plan: 'PRIME' | 'VIP'
       billingType?: 'BOLETO' | 'PIX' | 'CREDIT_CARD'
       cpfCnpj?: string
+      aporteInstallments?: number
     }
 
     if (!specialistId || !plan) {
@@ -133,7 +174,23 @@ export async function specialistPaymentRoutes(app: FastifyInstance) {
       const price = await getSpecialistPlanPrice(prisma, plan, isPremiumCategory)
       const desc = isPremiumCategory ? PLAN_DESCRIPTIONS.PREMIUM_CATEGORY : PLAN_DESCRIPTIONS[plan]
 
-      // Criar assinatura recorrente no Asaas
+      // 1) Cobrança única do aporte inicial de implantação (R$990 / PIX com
+      //    desconto / parcelável no boleto/cartão).
+      let aporte: { id: string; value: number; invoiceUrl?: string; bankSlipUrl?: string } | null = null
+      try {
+        aporte = await createAporteCharge({
+          customer: asaasCustomerId,
+          billingType,
+          dueDate: dueDateStr,
+          externalReference: `specialist:${specialistId}:aporte`,
+          installments: aporteInstallments,
+        })
+      } catch (aporteErr: any) {
+        app.log.error({ aporteErr }, 'Falha ao criar cobrança do aporte')
+        return reply.status(500).send({ error: 'APORTE_FAILED', message: 'Não foi possível gerar a cobrança do aporte inicial. Tente novamente.' })
+      }
+
+      // 2) Assinatura recorrente mensal do plano (inicia junto com o aporte).
       const subscription = await createSubscription({
         customer: asaasCustomerId,
         billingType,
@@ -157,8 +214,14 @@ export async function specialistPaymentRoutes(app: FastifyInstance) {
         subscriptionId: subscription.id,
         status: subscription.status,
         nextDueDate: subscription.nextDueDate,
-        message: 'Assinatura criada. Aguardando confirmação de pagamento.',
+        message: 'Assinatura e aporte criados. Aguardando confirmação de pagamento.',
         paymentUrl: `https://www.asaas.com/c/${subscription.id}`,
+        aporte: aporte ? {
+          id: aporte.id,
+          value: aporte.value,
+          invoiceUrl: aporte.invoiceUrl ?? `https://www.asaas.com/i/${aporte.id}`,
+          bankSlipUrl: aporte.bankSlipUrl ?? null,
+        } : null,
       })
     } catch (err: any) {
       app.log.error({ err }, 'Erro ao criar assinatura Asaas')
@@ -214,6 +277,12 @@ export async function specialistPaymentRoutes(app: FastifyInstance) {
       switch (event.event) {
         case 'PAYMENT_RECEIVED':
         case 'PAYMENT_CONFIRMED': {
+          // Pagamento do aporte: apenas registra, não altera o plano. A
+          // ativação do plano vem do pagamento da assinatura (PRIME/VIP).
+          if (targetPlan === 'aporte') {
+            app.log.info({ specialistId }, 'Aporte inicial confirmado via webhook Asaas')
+            break
+          }
           // Pagamento confirmado — ativar plano
           const plan = (targetPlan as 'START' | 'PRIME' | 'VIP') || 'PRIME'
           await prisma.specialist.update({
