@@ -20,11 +20,24 @@ const AVULSO_PLANS = [
   },
   {
     id: 'CRM',
-    name: 'CRM Completo',
+    name: 'CRM Completo + IA',
     price: 20000,
     period: 'único',
-    desc: 'Sistema CRM completo com gestão de leads, contratos, financeiro, agentes IA, documentos, automações e muito mais.',
-    features: ['Gestão de leads', 'Contratos digitais', 'Financeiro integrado', 'Agentes IA', 'Documentos por IA', 'Editor de fotos', 'Automações', 'Portal do cliente', 'Notas fiscais'],
+    desc: 'O motor de vendas completo: bot WhatsApp que qualifica leads 24/7, lead scoring automático, recomendação de imóveis por IA, agenda inteligente de visitas, propostas online, CRM, financeiro e muito mais.',
+    features: [
+      'Bot WhatsApp qualificador 24/7',
+      'Lead scoring automático',
+      'Recomendação de imóveis por IA',
+      'Agenda inteligente de visitas',
+      'Propostas online com acompanhamento',
+      'Gestão de leads e funil',
+      'Contratos e assinatura digital',
+      'Financeiro + boletos (Lemosbank)',
+      'Agentes IA e documentos',
+      'Editor de fotos e vídeo IA',
+      'Automações e campanhas',
+      'Portal do cliente e notas fiscais',
+    ],
   },
 ]
 
@@ -142,6 +155,66 @@ const DASHBOARD_TOOLS = [
     title: 'Visibilidade em Leilões',
     desc: 'Seu perfil aparece nas páginas de leilões ativos da sua cidade, conectando você com compradores que precisam de reforma, avaliação ou corretagem.',
     plan: 'Prime+',
+  },
+]
+
+// ── Catálogo completo de funcionalidades da plataforma ──────────────────────
+const PLATFORM_FEATURES = [
+  {
+    group: 'Captação de Clientes',
+    icon: Target,
+    color: '#C9A84C',
+    items: [
+      { name: 'Bot WhatsApp qualificador', desc: 'Atende e qualifica leads 24/7 (intenção, orçamento, bairro, urgência) e já envia imóveis compatíveis' },
+      { name: 'Match cliente-imóvel', desc: 'Cruza alertas salvos e perfis de busca com novos imóveis e avisa cliente + corretor automaticamente' },
+      { name: 'Alertas de imóveis', desc: 'Clientes cadastram o que procuram e recebem por e-mail/WhatsApp quando surge algo compatível' },
+      { name: 'Site próprio + SEO', desc: 'Site profissional com domínio próprio, SEO programático e captura de leads integrada' },
+      { name: 'Portais integrados', desc: 'Sincroniza imóveis com ZAP, VivaReal, OLX e Facebook Marketplace' },
+    ],
+  },
+  {
+    group: 'Qualificação Inteligente',
+    icon: TrendingUp,
+    color: '#10b981',
+    items: [
+      { name: 'Lead scoring automático', desc: 'Cada lead recebe nota 0-100 e temperatura (🔥 quente, ☀️ morno, ❄️ frio) com base no comportamento real' },
+      { name: 'Re-scoring diário', desc: 'Leads esfriam sozinhos por inatividade — o ranking fica sempre fresco' },
+      { name: 'Filtro por temperatura', desc: 'O corretor ataca primeiro quem está mais quente, em 1 toque' },
+      { name: 'Recomendação de imóveis por IA', desc: 'Para cada lead, sugere os 3 melhores imóveis do catálogo com match score explicável' },
+    ],
+  },
+  {
+    group: 'Conversão e Vendas',
+    icon: DollarSign,
+    color: '#1B2B5B',
+    items: [
+      { name: 'Propostas 100% online', desc: 'Cliente envia proposta pelo site e acompanha o status em tempo real (enviada → negociação → aceita)' },
+      { name: 'Resposta de proposta em 1 clique', desc: 'Corretor aceita, faz contra-proposta ou recusa — cliente é notificado na hora' },
+      { name: 'Comprar online + sinal', desc: 'Fluxo de compra digital com pagamento de sinal via Asaas' },
+      { name: 'Envio de imóveis por WhatsApp', desc: 'Recomendações com mensagem pronta, enviadas ao cliente em 1 toque' },
+    ],
+  },
+  {
+    group: 'Operação do Corretor',
+    icon: MapPin,
+    color: '#8b5cf6',
+    items: [
+      { name: 'Agenda inteligente de visitas', desc: 'Confirmação, lembrete 24h e 1h antes (com Google Maps) e feedback pós-visita do cliente' },
+      { name: 'Painel "Meu Dia" mobile', desc: 'No celular: próxima visita, leads quentes para atacar e atalhos WhatsApp/Maps' },
+      { name: 'Resumo diário por e-mail', desc: 'Às 7h, snapshot do dia: visitas, leads quentes pendentes e propostas aguardando' },
+      { name: 'Métricas de visitas', desc: 'Taxa de no-show, conversão, avaliação média e ranking de imóveis/corretores' },
+    ],
+  },
+  {
+    group: 'Gestão e Inteligência',
+    icon: BarChart3,
+    color: '#3b82f6',
+    items: [
+      { name: 'Master Intel (cross-tenant)', desc: 'MRR/ARR, churn, top imóveis do marketplace, conversões e forecast' },
+      { name: 'Radar de Mercado + Precificador', desc: 'Estimativa de valor por m² com base em comparáveis reais da região' },
+      { name: 'Leilões com IA', desc: 'Calculadora de ROI, score de oportunidade e alertas de descontos acima de 40%' },
+      { name: 'Automações e Open API', desc: 'Regras automáticas, webhooks de saída e API para integrar com qualquer sistema' },
+    ],
   },
 ]
 
@@ -295,6 +368,57 @@ export function PlanosContent() {
               e informações administrativas são inacessíveis por design.
             </p>
           </div>
+        </div>
+      </section>
+
+      {/* ── Catálogo completo de funcionalidades ─────────────────────────── */}
+      <section style={{ backgroundColor: '#f0ece4' }} className="py-16 px-4">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-12">
+            <p className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: '#C9A84C' }}>
+              Tudo em um só lugar
+            </p>
+            <h2 className="text-2xl sm:text-3xl font-bold text-[#1B2B5B]" style={{ fontFamily: 'Georgia, serif' }}>
+              Plataforma completa de vendas imobiliárias com IA
+            </h2>
+            <p className="text-gray-500 mt-3 max-w-2xl mx-auto text-sm leading-relaxed">
+              Da captação ao fechamento: um motor de vendas que trabalha sozinho —
+              capta no WhatsApp, qualifica com IA, recomenda imóveis, agenda visitas
+              e acompanha propostas. Tudo integrado.
+            </p>
+          </div>
+
+          <div className="space-y-6">
+            {PLATFORM_FEATURES.map((grp) => {
+              const GroupIcon = grp.icon
+              return (
+                <div key={grp.group} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                  <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-100">
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${grp.color}1a` }}>
+                      <GroupIcon className="w-5 h-5" style={{ color: grp.color }} />
+                    </div>
+                    <h3 className="font-bold text-[#1B2B5B] text-base">{grp.group}</h3>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 px-6 py-5">
+                    {grp.items.map((item) => (
+                      <div key={item.name} className="flex items-start gap-2.5">
+                        <CheckCircle className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: grp.color }} />
+                        <div>
+                          <p className="text-sm font-semibold text-[#1B2B5B] leading-tight">{item.name}</p>
+                          <p className="text-xs text-gray-500 leading-snug mt-0.5">{item.desc}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+
+          <p className="text-center text-xs text-gray-400 mt-8 max-w-xl mx-auto">
+            O CRM Completo + IA inclui todas estas ferramentas. Os planos de parceiro (Prime/VIP)
+            dão acesso ao perfil público e às ferramentas de inteligência de leads e leilões.
+          </p>
         </div>
       </section>
 
