@@ -111,6 +111,36 @@ export default async function corretorRoutes(app: FastifyInstance) {
       return addr ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addr)}` : null
     }
 
+    // Top leads quentes que NÃO receberam pitch hoje. "Pitch" = qualquer
+    // Activity tipo whatsapp/call/email registrada hoje.
+    const hotCandidates = await app.prisma.lead.findMany({
+      where: {
+        companyId: cid,
+        assignedToId: userId,
+        score: { gte: 51 },
+        status: { notIn: ['WON', 'LOST', 'ARCHIVED'] },
+      },
+      select: { id: true, name: true, phone: true, score: true, status: true, interest: true, budget: true },
+      orderBy: { score: 'desc' },
+      take: 20,
+    })
+
+    let topHotLeads: typeof hotCandidates = []
+    if (hotCandidates.length > 0) {
+      const pitchedIds = new Set<string>(
+        (await app.prisma.activity.findMany({
+          where: {
+            companyId: cid, userId,
+            leadId: { in: hotCandidates.map(l => l.id) },
+            type: { in: ['whatsapp', 'call', 'email'] },
+            createdAt: { gte: dayStart },
+          },
+          select: { leadId: true },
+        }).catch(() => [])).map(a => a.leadId).filter((id): id is string => !!id),
+      )
+      topHotLeads = hotCandidates.filter(l => !pitchedIds.has(l.id)).slice(0, 2)
+    }
+
     return reply.send({
       now: now.toISOString(),
       nextVisit: nextVisit
@@ -122,6 +152,7 @@ export default async function corretorRoutes(app: FastifyInstance) {
         mapsUrl: mapsUrl(propById.get(v.propertyId)),
       })),
       newLeadsToday,
+      topHotLeads,
       kpis: {
         visitsToday: todayVisits.length,
         leadsToday: newLeadsToday.length,
