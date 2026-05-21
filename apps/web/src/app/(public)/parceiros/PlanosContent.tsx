@@ -53,6 +53,12 @@ const DESTAQUE_PLANS = [
 ]
 
 // ── Planos Recorrentes (Prime, VIP) ─────────────────────────────────────────
+
+// Aporte inicial obrigatório para qualquer plano contratado.
+const APORTE_INICIAL = 990
+const PIX_DESCONTO = 0.068 // 6,80%
+const APORTE_PIX = Math.round(APORTE_INICIAL * (1 - PIX_DESCONTO) * 100) / 100 // R$ 922,68
+
 const PLANS = [
   {
     id: 'PRIME',
@@ -431,7 +437,45 @@ export function PlanosContent() {
           <h2 className="text-2xl sm:text-3xl font-bold text-[#1B2B5B]" style={{ fontFamily: 'Georgia, serif' }}>
             Escolha o plano ideal para você
           </h2>
-          <p className="text-gray-500 mt-2 text-sm">Sem fidelidade. Cancele quando quiser. Pagamento via PIX, boleto ou cartão.</p>
+          <p className="text-gray-500 mt-2 text-sm">Pagamento via PIX, boleto ou cartão de crédito.</p>
+        </div>
+
+        {/* Investimento inicial (aporte) */}
+        <div className="max-w-3xl mx-auto mb-8 rounded-2xl border-2 border-[#C9A84C]/40 bg-white overflow-hidden shadow-sm">
+          <div className="px-6 py-4 border-b border-gray-100" style={{ backgroundColor: 'rgba(201,168,76,0.08)' }}>
+            <div className="flex items-center gap-2">
+              <DollarSign className="w-5 h-5" style={{ color: '#C9A84C' }} />
+              <h3 className="font-bold text-[#1B2B5B]">Investimento inicial — aporte de R$ {APORTE_INICIAL}</h3>
+            </div>
+            <p className="text-xs text-gray-500 mt-1">
+              Toda contratação inclui um aporte inicial único de implantação, cobrado junto com o início das parcelas mensais do plano escolhido.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-gray-100">
+            <div className="p-5">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-lg">⚡</span>
+                <p className="text-sm font-bold text-[#1B2B5B]">À vista no PIX</p>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: 'rgba(16,185,129,0.12)', color: '#059669' }}>
+                  -6,80%
+                </span>
+              </div>
+              <p className="text-2xl font-bold text-[#1B2B5B]">R$ {APORTE_PIX.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+              <p className="text-xs text-gray-500 mt-1">Aprovação imediata. Economia de R$ {(APORTE_INICIAL - APORTE_PIX).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}.</p>
+            </div>
+            <div className="p-5">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-lg">💳</span>
+                <p className="text-sm font-bold text-[#1B2B5B]">Parcelado</p>
+              </div>
+              <p className="text-2xl font-bold text-[#1B2B5B]">R$ {APORTE_INICIAL}</p>
+              <p className="text-xs text-gray-500 mt-1">No boleto ou cartão de crédito, podendo ser dividido (sujeito a taxa da operadora).</p>
+            </div>
+          </div>
+          <div className="px-6 py-3 bg-gray-50 text-xs text-gray-500 flex items-start gap-2">
+            <Clock className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
+            <span>As parcelas mensais do plano (Prime ou VIP) iniciam junto com o aporte. Valores sujeitos a reajuste a cada 5 meses — veja o <Link href="/parceiros/contrato" className="underline text-[#1B2B5B] font-medium">contrato</Link>.</span>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
