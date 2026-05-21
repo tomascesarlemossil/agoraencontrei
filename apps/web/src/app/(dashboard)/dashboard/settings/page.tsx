@@ -469,6 +469,7 @@ export default function SettingsPage() {
 
   // ── Profile ───────────────────────────────────────────────────────────────
   const [profile, setProfile] = useState({ name: '', phone: '', creciNumber: '', bio: '' })
+  const [notifPrefs, setNotifPrefs] = useState({ notifyEmail: true, notifyWhatsapp: true, dailyDigest: true })
   const [profileSaved, setProfileSaved] = useState(false)
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
   const [avatarFile, setAvatarFile] = useState<File | null>(null)
@@ -477,6 +478,12 @@ export default function SettingsPage() {
   useEffect(() => {
     if (user) {
       setProfile({ name: user.name ?? '', phone: user.phone ?? '', creciNumber: user.creciNumber ?? '', bio: (user as User & { bio?: string }).bio ?? '' })
+      const s = (user as any).settings ?? {}
+      setNotifPrefs({
+        notifyEmail: s.notifyEmail !== false,
+        notifyWhatsapp: s.notifyWhatsapp !== false,
+        dailyDigest: s.dailyDigest !== false,
+      })
     }
   }, [user])
 
@@ -518,7 +525,7 @@ export default function SettingsPage() {
       if (avatarFile) {
         avatarUrl = await uploadAvatar()
       }
-      return usersApi.update(token!, user!.id, { ...profile, ...(avatarUrl ? { avatarUrl } : {}) })
+      return usersApi.update(token!, user!.id, { ...profile, ...notifPrefs, ...(avatarUrl ? { avatarUrl } : {}) })
     },
     onSuccess: (data) => {
       qc.invalidateQueries({ queryKey: ['me'] })
@@ -1133,6 +1140,26 @@ export default function SettingsPage() {
                 <DarkInput label="CRECI" value={profile.creciNumber} onChange={e => setProfile(p => ({ ...p, creciNumber: e.target.value }))} placeholder="000000-F" />
               </div>
               <DarkTextarea label="Bio / Apresentação" value={profile.bio} onChange={e => setProfile(p => ({ ...p, bio: e.target.value }))} rows={3} placeholder="Sobre você, especialidades, tempo de mercado..." />
+            </Section>
+
+            <Section title="Notificações">
+              <div className="space-y-3">
+                <Toggle
+                  checked={notifPrefs.notifyEmail}
+                  onChange={v => setNotifPrefs(p => ({ ...p, notifyEmail: v }))}
+                  label="Receber notificações por e-mail (novos leads, visitas, propostas)"
+                />
+                <Toggle
+                  checked={notifPrefs.dailyDigest}
+                  onChange={v => setNotifPrefs(p => ({ ...p, dailyDigest: v }))}
+                  label="Receber resumo diário às 07h (agenda, leads quentes, propostas pendentes)"
+                />
+                <Toggle
+                  checked={notifPrefs.notifyWhatsapp}
+                  onChange={v => setNotifPrefs(p => ({ ...p, notifyWhatsapp: v }))}
+                  label="Receber alertas por WhatsApp (quando configurado)"
+                />
+              </div>
             </Section>
 
             <div className="flex items-center gap-3">
