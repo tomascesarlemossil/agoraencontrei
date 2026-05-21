@@ -66,6 +66,12 @@ interface CheckoutResult {
   bankSlipUrl?: string
   invoiceUrl?: string
   status: string
+  aporte?: {
+    id: string
+    value: number
+    invoiceUrl?: string
+    bankSlipUrl?: string | null
+  } | null
 }
 
 function CheckoutContent() {
@@ -408,6 +414,27 @@ function CheckoutContent() {
                   <p className="text-gray-600 mb-6">
                     Plano <strong>{planInfo.name}</strong> ativado. Seu perfil será promovido em até 24h após confirmação do pagamento.
                   </p>
+
+                  {/* Aporte inicial — cobrança única de implantação */}
+                  {result.aporte && (
+                    <div className="mb-6 rounded-xl border-2 border-[#C9A84C]/40 bg-[#C9A84C]/5 p-4 text-left">
+                      <p className="text-sm font-bold text-[#1B2B5B]">
+                        Aporte inicial — R$ {result.aporte.value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        {billingType === 'PIX' && <span className="ml-1 text-xs font-semibold text-emerald-600">(PIX com 6,80% off)</span>}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1 mb-3">
+                        Pagamento único de implantação, cobrado junto com a 1ª mensalidade do plano.
+                      </p>
+                      <a
+                        href={result.aporte.bankSlipUrl || result.aporte.invoiceUrl}
+                        target="_blank" rel="noopener noreferrer"
+                        className="inline-flex items-center justify-center gap-2 w-full py-3 rounded-xl text-sm font-bold transition-all hover:brightness-110"
+                        style={{ backgroundColor: '#C9A84C', color: '#1B2B5B' }}
+                      >
+                        <ExternalLink className="w-4 h-4" /> Pagar aporte inicial
+                      </a>
+                    </div>
+                  )}
 
                   {/* PIX */}
                   {billingType === 'PIX' && result.pixQrCode && (
