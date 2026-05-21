@@ -48,6 +48,17 @@ export default function WebhooksHealthPage() {
     refetchInterval: 60_000,
   })
 
+  const { data: readiness } = useQuery({
+    queryKey: ['launch-readiness'],
+    queryFn: async () => {
+      const token = await getValidToken()
+      const res = await masterApi.launchReadiness(token!)
+      return res.data
+    },
+    enabled: isSuperAdmin,
+    refetchInterval: 60_000,
+  })
+
   if (!isSuperAdmin) {
     return (
       <div className="min-h-screen bg-gray-950 text-white flex items-center justify-center">
@@ -75,6 +86,36 @@ export default function WebhooksHealthPage() {
       </div>
 
       <div className="mx-auto max-w-5xl px-4 py-5 sm:px-6 space-y-5">
+        {/* Prontidão de lançamento */}
+        {readiness && (
+          <div className={`rounded-2xl border p-4 ${readiness.ready ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-amber-500/40 bg-amber-500/5'}`}>
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-lg">{readiness.ready ? '✅' : '⚠️'}</span>
+              <h2 className="text-sm font-bold">
+                {readiness.ready ? 'Pronto para lançamento' : 'Pendências antes do lançamento'}
+              </h2>
+            </div>
+            {readiness.criticalMissing?.length > 0 && (
+              <p className="text-xs text-red-300 mb-1">Faltando (crítico): {readiness.criticalMissing.join(', ')}</p>
+            )}
+            {readiness.warnings?.length > 0 && (
+              <p className="text-xs text-amber-300 mb-2">Atenção: {readiness.warnings.join(', ')}</p>
+            )}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 mt-2">
+              {readiness.checks?.map((c: any) => (
+                <div key={c.key} className="flex items-start gap-2 text-xs">
+                  <span className="flex-shrink-0 mt-0.5">{c.configured ? (c.warn ? '🟡' : '🟢') : (c.critical ? '🔴' : '⚪')}</span>
+                  <div className="min-w-0">
+                    <span className="text-white">{c.label}</span>
+                    {c.critical && <span className="ml-1 text-[9px] text-gray-500 uppercase">crítico</span>}
+                    <p className="text-[10px] text-gray-500 leading-tight">{c.note}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {isLoading ? (
           <div className="flex justify-center py-10"><Loader2 className="animate-spin text-amber-400" /></div>
         ) : !data ? (

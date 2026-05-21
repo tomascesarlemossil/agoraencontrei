@@ -1301,8 +1301,9 @@ export default async function publicRoutes(app: FastifyInstance) {
 
       const apiKey = process.env.OPENAI_API_KEY ?? env.OPENAI_API_KEY
       if (!apiKey) {
-        // Sem chave OpenAI: retorna vazio para o frontend usar busca textual
-        return reply.send({ transcript: '', filters: {} })
+        // Transcrição não configurada — sinaliza claramente (não é "não
+        // entendi o áudio"; é falta de OPENAI_API_KEY no servidor).
+        return reply.send({ transcript: '', filters: {}, reason: 'not_configured' })
       }
 
       // Ler buffer do áudio
@@ -1340,13 +1341,13 @@ export default async function publicRoutes(app: FastifyInstance) {
       if (!whisperRes.ok) {
         const errText = await whisperRes.text()
         app.log.warn({ status: whisperRes.status, body: errText }, '[voice-search] Whisper error')
-        return reply.send({ transcript: '', filters: {} })
+        return reply.send({ transcript: '', filters: {}, reason: 'failed' })
       }
 
       const whisperData = await whisperRes.json() as { text: string }
       const transcript = (whisperData.text ?? '').trim()
 
-      if (!transcript) return reply.send({ transcript: '', filters: {} })
+      if (!transcript) return reply.send({ transcript: '', filters: {}, reason: 'no_speech' })
 
       // Interpretar transcrição com IA (reutiliza função existente)
       let filters: Record<string, unknown> = {}

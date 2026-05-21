@@ -6,6 +6,7 @@ import {
   Bot, MessageCircle, BarChart3, Globe, Code, EyeOff, Users,
   FileText, Lock, Loader2, X,
 } from 'lucide-react'
+import { ALL_THEMES } from '@/lib/site-factory/theme-registry'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 
@@ -554,36 +555,58 @@ export function DynamicPlans() {
                 </div>
               )}
 
-              {/* Layout + Color side by side */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">
-                    Layout do site
-                  </label>
-                  <select
-                    value={checkoutForm.layoutType}
-                    onChange={(e) => setCheckoutForm(f => ({ ...f, layoutType: e.target.value }))}
-                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 sm:py-2.5 text-white text-sm focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
-                  >
-                    <option value="urban_tech">Urban Tech</option>
-                    <option value="clean">Clean</option>
-                    <option value="classic">Classic</option>
-                    <option value="bold">Bold</option>
-                  </select>
+              {/* Layout — galeria visual de temas prontos */}
+              <div>
+                <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-2">
+                  Escolha o visual do seu site
+                </label>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                  {ALL_THEMES.map((t) => {
+                    const selected = checkoutForm.layoutType === t.key
+                    const dark = ['luxury_gold', 'bold_agency'].includes(t.key)
+                    return (
+                      <button
+                        key={t.key}
+                        type="button"
+                        onClick={() => setCheckoutForm(f => ({ ...f, layoutType: t.key, primaryColor: t.accentHex }))}
+                        className={`text-left rounded-xl border-2 overflow-hidden transition-all ${
+                          selected ? 'border-amber-400 ring-2 ring-amber-400/30' : 'border-gray-700 hover:border-gray-500'
+                        }`}
+                      >
+                        {/* Mini mockup do tema */}
+                        <div className="p-2.5" style={{ backgroundColor: dark ? '#0b0f1a' : '#ffffff' }}>
+                          <div className="flex items-center gap-1 mb-1.5">
+                            <div className="h-1.5 flex-1 rounded-full" style={{ backgroundColor: t.accentHex }} />
+                            <div className="h-1.5 w-3 rounded-full" style={{ backgroundColor: dark ? '#374151' : '#e5e7eb' }} />
+                          </div>
+                          <div className="h-1 w-3/4 rounded-full mb-1" style={{ backgroundColor: dark ? '#4b5563' : '#d1d5db' }} />
+                          <div className="h-1 w-1/2 rounded-full mb-2" style={{ backgroundColor: dark ? '#374151' : '#e5e7eb' }} />
+                          <div className="h-3.5 w-12 rounded-md" style={{ backgroundColor: t.accentHex }} />
+                        </div>
+                        {/* Rótulo */}
+                        <div className="px-2.5 py-1.5 bg-gray-800/80">
+                          <div className="flex items-center gap-1.5">
+                            <span className="inline-block w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: t.accentHex }} />
+                            <p className="text-[11px] font-semibold text-white truncate">{t.name}</p>
+                            {selected && <CheckCircle className="w-3 h-3 text-amber-400 ml-auto flex-shrink-0" />}
+                          </div>
+                          <p className="text-[9px] text-gray-400 truncate mt-0.5">{t.tagline}</p>
+                        </div>
+                      </button>
+                    )
+                  })}
                 </div>
-                <div>
-                  <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">
-                    Cor principal
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="color"
-                      value={checkoutForm.primaryColor}
-                      onChange={(e) => setCheckoutForm(f => ({ ...f, primaryColor: e.target.value }))}
-                      className="w-9 h-9 rounded-lg border border-gray-700 bg-gray-800 cursor-pointer flex-shrink-0"
-                    />
-                    <span className="text-xs text-gray-400">{checkoutForm.primaryColor}</span>
-                  </div>
+                {/* Cor principal — ajuste fino */}
+                <div className="mt-3 flex items-center gap-2">
+                  <label className="text-xs text-gray-400">Cor principal:</label>
+                  <input
+                    type="color"
+                    value={checkoutForm.primaryColor}
+                    onChange={(e) => setCheckoutForm(f => ({ ...f, primaryColor: e.target.value }))}
+                    className="w-9 h-9 rounded-lg border border-gray-700 bg-gray-800 cursor-pointer flex-shrink-0"
+                  />
+                  <span className="text-xs text-gray-400">{checkoutForm.primaryColor}</span>
+                  <span className="text-[10px] text-gray-500 ml-1">Você poderá editar tudo depois no painel.</span>
                 </div>
               </div>
 

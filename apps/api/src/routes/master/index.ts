@@ -468,6 +468,63 @@ export default async function masterRoutes(app: FastifyInstance) {
     })
   })
 
+  // GET /launch-readiness — verifica se todas as integrações críticas para
+  // o lançamento público estão configuradas. Read-only, nunca expõe valores
+  // (só booleanos). Detecta Asaas em sandbox vs produção.
+  app.get('/launch-readiness', {
+    schema: { tags: ['master'], summary: 'Launch readiness — env/integration check' },
+  }, async (_req, reply) => {
+    const e = process.env
+    const has = (...keys: string[]) => keys.every(k => !!(e[k] && String(e[k]).trim().length > 0))
+    const asaasBase = e.ASAAS_BASE_URL ?? 'https://www.asaas.com/api/v3'
+    const asaasSandbox = /sandbox/i.test(asaasBase)
+
+    const checks = [
+      { key: 'database',   label: 'Banco de dados',          configured: has('DATABASE_URL'), critical: true,
+        note: 'Conexão PostgreSQL' },
+      { key: 'jwt',        label: 'Segredos (JWT/Cookie)',   configured: has('JWT_SECRET', 'COOKIE_SECRET'), critical: true,
+        note: 'Autenticação e sessões' },
+      { key: 'asaas',      label: 'Asaas (pagamentos)',       configured: has('ASAAS_API_KEY'), critical: true,
+        note: asaasSandbox ? '⚠️ Em SANDBOX — troque para produção antes de cobrar' : 'Modo produção',
+        warn: asaasSandbox },
+      { key: 'whatsapp',   label: 'WhatsApp',                 configured: has('WHATSAPP_TOKEN', 'WHATSAPP_PHONE_ID'), critical: true,
+        note: 'Bot qualificador + notificações' },
+      { key: 'smtp',       label: 'E-mail (SMTP)',            configured: has('SMTP_HOST', 'SMTP_USER', 'SMTP_PASS', 'SMTP_FROM'), critical: true,
+        note: 'Notificações, digest, propostas' },
+      { key: 'anthropic',  label: 'IA (Anthropic)',           configured: has('ANTHROPIC_API_KEY'), critical: false,
+        note: 'Tomás e agentes de IA' },
+      { key: 'openai',     label: 'OpenAI (voz/legendas)',    configured: has('OPENAI_API_KEY'), critical: false,
+        note: 'Busca por voz, legendas de vídeo' },
+      { key: 's3',         label: 'AWS S3 (uploads)',         configured: has('AWS_S3_BUCKET', 'AWS_ACCESS_KEY_ID'), critical: true,
+        note: 'Upload de fotos de imóveis' },
+      { key: 'cloudinary', label: 'Cloudinary (watermark)',   configured: has('CLOUDINARY_CLOUD_NAME'), critical: false,
+        note: 'Presets e marca d\'água nas imagens' },
+      { key: 'redis',      label: 'Redis (filas/cache)',      configured: has('REDIS_URL'), critical: false,
+        note: 'BullMQ e cache; sem ele usa fallback em memória' },
+      { key: 'maps',       label: 'Google Maps / Street View', configured: has('GOOGLE_MAPS_API_KEY'), critical: false,
+        note: 'Mapas e fachadas' },
+      { key: 'clicksign',  label: 'Clicksign (assinatura)',   configured: has('CLICKSIGN_ACCESS_TOKEN'), critical: false,
+        note: 'Assinatura digital de contratos' },
+      { key: 'ga',         label: 'Google Analytics',         configured: has('NEXT_PUBLIC_GA_MEASUREMENT_ID'), critical: false,
+        note: 'Definido no app web; pode aparecer vazio aqui' },
+    ]
+
+    const criticalMissing = checks.filter(c => c.critical && !c.configured).map(c => c.label)
+    const warnings = checks.filter(c => (c as any).warn).map(c => c.label)
+    const ready = criticalMissing.length === 0 && warnings.length === 0
+
+    return reply.send({
+      success: true,
+      data: {
+        ready,
+        criticalMissing,
+        warnings,
+        checks,
+        timestamp: new Date().toISOString(),
+      },
+    })
+  })
+
   // GET /ai-config — AI feature configuration per plan
   app.get('/ai-config', {
     schema: { tags: ['master'], summary: 'AI feature configuration per plan' },

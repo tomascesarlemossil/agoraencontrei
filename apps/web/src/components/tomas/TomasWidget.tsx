@@ -310,13 +310,17 @@ export default function TomasWidget({ propertyContext }: TomasWidgetProps) {
             return
           }
 
-          const data = await res.json() as { transcript: string }
+          const data = await res.json() as { transcript: string; reason?: string }
 
           if (data.transcript?.trim()) {
             // Send the transcribed text as a chat message
             sendMessage(data.transcript)
           } else {
-            setAudioError('Não consegui entender o áudio. Tente novamente.')
+            setAudioError(
+              data.reason === 'not_configured'
+                ? 'Voz indisponível no momento. Pode digitar sua mensagem normalmente.'
+                : 'Não consegui entender o áudio. Tente novamente.',
+            )
             setAudioState('error')
             setTimeout(() => { setAudioState('idle'); setAudioError(null) }, 3000)
           }
