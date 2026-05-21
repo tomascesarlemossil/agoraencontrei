@@ -891,4 +891,146 @@ export async function runScheduledJobs(app: FastifyInstance) {
       app.log.error({ err }, '[scheduled] lead-rescore-nightly failed')
     }
   }
+
+  // ── 11. Resumo diário por e-mail para corretores (10h UTC = 07h BRT) ────
+  // Envia snapshot do dia: visitas, leads quentes não-tocados, propostas
+  // aguardando resposta. Honra prefs (settings.notifyEmail !== false).
+  if (hour === 10 && minute < 30) {
+    try {
+      const { sendEmail, isEmailConfigured } = await import('./email.service.js')
+      if (!isEmailConfigured()) {
+        app.log.info('[scheduled] daily-broker-digest: skipped (email not configured)')
+      } else {
+        const brokers = await app.prisma.user.findMany({
+          where: { status: 'ACTIVE', email: { not: null } },
+          select: { id: true, name: true, email: true, companyId: true, settings: true },
+          take: 1000,
+        })
+
+        const dayStart = new Date(now); dayStart.setHours(0, 0, 0, 0)
+        const dayEnd   = new Date(now); dayEnd.setHours(23, 59, 59, 999)
+        let sent = 0
+
+        for (const broker of brokers) {
+          if (!broker.email) continue
+          const prefs = (broker.settings as Record<string, unknown> | null) ?? {}
+          if (prefs.notifyEmail === false || prefs.dailyDigest === false) continue
+
+          const [todayVisits, hotLeads, openProposals] = await Promise.all([
+            app.prisma.propertyVisit.findMany({
+              where: {
+                companyId: broker.companyId,
+                brokerId: broker.id,
+                scheduledAt: { gte: dayStart, lte: dayEnd },
+                status: { in: ['pending', 'confirmed'] },
+              },
+              orderBy: { scheduledAt: 'asc' },
+              take: 20,
+            }).catch(() => []),
+            app.prisma.lead.findMany({
+              where: {
+                companyId: broker.companyId,
+                assignedToId: broker.id,
+                score: { gte: 51 },
+                status: { notIn: ['WON', 'LOST', 'ARCHIVED'] },
+              },
+              select: { id: true, name: true, phone: true, score: true, interest: true },
+              orderBy: { score: 'desc' },
+              take: 5,
+            }).catch(() => []),
+            app.prisma.proposal.findMany({
+              where: {
+                companyId: broker.companyId,
+                status: { in: ['sent', 'countered'] },
+              },
+              select: { id: true, offerValue: true, contactId: true, propertyId: true, createdAt: true },
+              orderBy: { createdAt: 'desc' },
+              take: 5,
+            }).catch(() => []),
+          ])
+
+          // Skip silenciosamente quando o dia está vazio — não polui inbox.
+          if (todayVisits.length === 0 && hotLeads.length === 0 && openProposals.length === 0) continue
+
+          const propIds = [...new Set(todayVisits.map(v => v.propertyId))]
+          const props = propIds.length
+            ? await app.prisma.property.findMany({
+                where: { id: { in: propIds } },
+                select: { id: true, title: true, neighborhood: true, city: true },
+              }).catch(() => [])
+            : []
+          const propById = new Map(props.map(p => [p.id, p]))
+
+          const firstName = (broker.name ?? '').split(' ')[0] || 'Corretor'
+          const baseUrl = (env.WEB_URL ?? 'https://agoraencontrei.com.br').replace(/\/$/, '')
+
+          const visitsHtml = todayVisits.length === 0 ? '<p style="color:#999;font-size:13px">Sem visitas hoje.</p>' :
+            `<ul style="padding-left:18px;margin:8px 0;color:#333">${todayVisits.map(v => {
+              const prop = propById.get(v.propertyId)
+              const time = v.scheduledAt.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+              const loc = prop ? `${prop.title}${prop.neighborhood ? ` · ${prop.neighborhood}` : ''}` : 'Imóvel'
+              return `<li><strong>${time}</strong> — ${v.visitorName} (${v.visitorPhone}) — ${loc}</li>`
+            }).join('')}</ul>`
+
+          const hotHtml = hotLeads.length === 0 ? '<p style="color:#999;font-size:13px">Nenhum lead quente pendente. Ótimo trabalho!</p>' :
+            `<ul style="padding-left:18px;margin:8px 0;color:#333">${hotLeads.map(l => {
+              const emoji = l.score >= 76 ? '🔥' : '🌶️'
+              const intent = l.interest === 'buy' ? 'Comprar' : l.interest === 'rent' ? 'Alugar' : ''
+              return `<li>${emoji} <strong>${l.name}</strong> (score ${l.score}${intent ? ` · ${intent}` : ''}) — ${l.phone ?? 'sem telefone'}</li>`
+            }).join('')}</ul>`
+
+          const propsHtml = openProposals.length === 0 ? '<p style="color:#999;font-size:13px">Nenhuma proposta pendente.</p>' :
+            `<ul style="padding-left:18px;margin:8px 0;color:#333">${openProposals.map(p => {
+              const val = Number(p.offerValue).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })
+              const age = Math.floor((now.getTime() - p.createdAt.getTime()) / 86_400_000)
+              return `<li><strong>${val}</strong> — enviada há ${age} dia(s)</li>`
+            }).join('')}</ul>`
+
+          const dateLabel = now.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' })
+
+          try {
+            await sendEmail({
+              to: broker.email,
+              subject: `📅 Seu dia — ${dateLabel}`,
+              html: `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
+  <div style="background:#1B2B5B;color:#fff;padding:20px 24px;border-radius:8px 8px 0 0">
+    <strong style="font-size:18px">AgoraEncontrei</strong>
+    <p style="margin:4px 0 0;font-size:13px;color:#C9A84C">${dateLabel}</p>
+  </div>
+  <div style="border:1px solid #e5e7eb;border-top:0;padding:24px;border-radius:0 0 8px 8px">
+    <h2 style="margin:0 0 16px;font-size:18px;color:#111">Bom dia, ${firstName}!</h2>
+    <p style="margin:0 0 20px;color:#444;font-size:14px;line-height:1.5">
+      Aqui está o resumo do seu dia. Atalho pro painel: <a href="${baseUrl}/dashboard/corretor/hoje" style="color:#1B2B5B;font-weight:bold">abrir Meu Dia</a>.
+    </p>
+
+    <h3 style="margin:24px 0 4px;font-size:14px;color:#1B2B5B">🗓️ Visitas (${todayVisits.length})</h3>
+    ${visitsHtml}
+
+    <h3 style="margin:24px 0 4px;font-size:14px;color:#1B2B5B">🔥 Leads quentes para atacar (${hotLeads.length})</h3>
+    ${hotHtml}
+
+    <h3 style="margin:24px 0 4px;font-size:14px;color:#1B2B5B">📋 Propostas aguardando resposta (${openProposals.length})</h3>
+    ${propsHtml}
+
+    <div style="text-align:center;margin-top:24px">
+      <a href="${baseUrl}/dashboard/corretor/hoje" style="display:inline-block;background:#C9A84C;color:#1B2B5B;font-weight:bold;padding:12px 24px;border-radius:8px;text-decoration:none">Abrir Meu Dia</a>
+    </div>
+  </div>
+  <p style="color:#9ca3af;font-size:11px;text-align:center;margin-top:12px">
+    Para desativar este resumo diário, ajuste as preferências no seu perfil.
+  </p>
+</div>`,
+            })
+            sent++
+          } catch { /* skip individual failures */ }
+        }
+
+        if (sent > 0) {
+          app.log.info(`[scheduled] daily-broker-digest: sent ${sent} digests`)
+        }
+      }
+    } catch (err) {
+      app.log.error({ err }, '[scheduled] daily-broker-digest failed')
+    }
+  }
 }
