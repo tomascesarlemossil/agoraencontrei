@@ -225,7 +225,11 @@ function CadastroParceirosContent() {
             }
             <div>
               <p className="text-sm font-bold" style={{ color: '#1B2B5B' }}>Plano {selectedPlan} selecionado — R$ {selectedPlan === 'VIP' ? '497' : '197'}/mês</p>
-              <p className="text-xs text-gray-500">Após o cadastro, você será redirecionado ao checkout para ativar seu dashboard privado.</p>
+              <p className="text-xs text-gray-500">
+                Inclui aporte inicial único de R$ 990 (à vista no PIX com 6,80% de desconto = R$ 922,68, ou parcelado no boleto/cartão),
+                cobrado junto com a 1ª mensalidade. Após o cadastro você vai ao checkout. Ao continuar, você concorda com o{' '}
+                <a href="/parceiros/contrato" target="_blank" rel="noreferrer" className="underline" style={{ color: '#1B2B5B' }}>Contrato de Adesão</a>.
+              </p>
             </div>
           </div>
         )}
