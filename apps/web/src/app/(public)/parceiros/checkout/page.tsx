@@ -353,9 +353,10 @@ function CheckoutContent() {
                     />
                     <span className="text-xs text-gray-600 leading-relaxed">
                       Li e concordo com os{' '}
-                      <Link href="/termos-uso" className="underline text-[#1B2B5B] hover:text-blue-700" target="_blank">Termos de Uso</Link>{' '}e com os{' '}
-                      <Link href="/parceiros/membro-fundador" className="underline text-[#C9A84C] hover:text-yellow-700" target="_blank">Termos de Parceria</Link>.
-                      Autorizo a cobrança recorrente mensal e o cancelamento sem multa a qualquer momento.
+                      <Link href="/termos-uso" className="underline text-[#1B2B5B] hover:text-blue-700" target="_blank">Termos de Uso</Link>{' '}e com o{' '}
+                      <Link href="/parceiros/contrato" className="underline text-[#C9A84C] hover:text-yellow-700" target="_blank">Contrato de Adesão</Link>.
+                      Estou ciente do aporte inicial de R$ 990, da cobrança mensal do plano e de que os
+                      valores podem ser reajustados a cada 5 meses mediante aviso prévio.
                     </span>
                   </label>
 
