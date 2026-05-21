@@ -145,6 +145,19 @@ export default function LeadDetailPage() {
     },
   })
 
+  // Registra a recomendação enviada no timeline (silencioso, fail-soft).
+  async function logRecommendationSent(propertyTitle: string) {
+    try {
+      const token = await getValidToken()
+      await activitiesApi.create(token!, {
+        type: 'whatsapp',
+        title: `Recomendação enviada: ${propertyTitle}`,
+        leadId: id,
+      })
+      qc.invalidateQueries({ queryKey: ['activities', 'lead', id] })
+    } catch { /* non-fatal */ }
+  }
+
   if (isLoading) return <div className="p-6 text-white/40 text-center py-20">Carregando...</div>
 
   return (
@@ -216,32 +229,48 @@ export default function LeadDetailPage() {
               </div>
               {recs!.data.map(r => {
                 const price = r.purpose === 'RENT' ? fmtMoney(r.priceRent) : fmtMoney(r.price)
+                const phoneClean = lead?.phone?.replace(/\D/g, '') ?? ''
+                const publicUrl = `https://www.agoraencontrei.com.br/imoveis/${r.slug ?? r.id}`
+                const firstName = (lead?.name ?? '').split(' ')[0] || ''
+                const waText = encodeURIComponent(
+                  `${firstName ? `Olá ${firstName}! ` : ''}Achei este imóvel pra você:\n\n🏠 ${r.title}${price ? `\n💰 ${price}` : ''}${r.neighborhood ? `\n📍 ${r.neighborhood}${r.city ? `, ${r.city}` : ''}` : ''}\n\nVeja todas as fotos e detalhes: ${publicUrl}`
+                )
+                const waHref = phoneClean ? `https://wa.me/55${phoneClean}?text=${waText}` : `https://wa.me/?text=${waText}`
+
                 return (
-                  <Link key={r.id} href={`/dashboard/properties/${r.id}`}
-                    className="block rounded-lg border border-white/10 bg-white/[0.02] p-2.5 hover:bg-white/5 transition-colors">
-                    <div className="flex gap-2.5">
-                      {r.coverImage && (
-                        /* eslint-disable-next-line @next/next/no-img-element */
-                        <img src={r.coverImage} alt={r.title}
-                          className="h-14 w-14 flex-shrink-0 rounded-md object-cover" />
-                      )}
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center justify-between gap-1">
-                          <p className="text-xs font-semibold text-white truncate">{r.title}</p>
-                          <span className="text-[10px] font-bold text-amber-400 flex-shrink-0">{r.matchScore}%</span>
+                  <div key={r.id} className="rounded-lg border border-white/10 bg-white/[0.02] p-2.5">
+                    <Link href={`/dashboard/properties/${r.id}`}
+                      className="block hover:opacity-80 transition-opacity">
+                      <div className="flex gap-2.5">
+                        {r.coverImage && (
+                          /* eslint-disable-next-line @next/next/no-img-element */
+                          <img src={r.coverImage} alt={r.title}
+                            className="h-14 w-14 flex-shrink-0 rounded-md object-cover" />
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center justify-between gap-1">
+                            <p className="text-xs font-semibold text-white truncate">{r.title}</p>
+                            <span className="text-[10px] font-bold text-amber-400 flex-shrink-0">{r.matchScore}%</span>
+                          </div>
+                          {(r.neighborhood || r.city) && (
+                            <p className="text-[10px] text-white/40 truncate">
+                              {[r.neighborhood, r.city].filter(Boolean).join(' · ')}
+                            </p>
+                          )}
+                          {price && <p className="text-xs font-medium text-emerald-300 mt-0.5">{price}</p>}
+                          {r.matchReasons[0] && (
+                            <p className="text-[10px] italic text-white/40 mt-0.5 truncate">→ {r.matchReasons[0]}</p>
+                          )}
                         </div>
-                        {(r.neighborhood || r.city) && (
-                          <p className="text-[10px] text-white/40 truncate">
-                            {[r.neighborhood, r.city].filter(Boolean).join(' · ')}
-                          </p>
-                        )}
-                        {price && <p className="text-xs font-medium text-emerald-300 mt-0.5">{price}</p>}
-                        {r.matchReasons[0] && (
-                          <p className="text-[10px] italic text-white/40 mt-0.5 truncate">→ {r.matchReasons[0]}</p>
-                        )}
                       </div>
-                    </div>
-                  </Link>
+                    </Link>
+                    <a href={waHref} target="_blank" rel="noopener noreferrer"
+                      onClick={() => logRecommendationSent(r.title)}
+                      className="mt-2 flex items-center justify-center gap-1.5 rounded-md bg-emerald-600 hover:bg-emerald-500 px-2.5 py-1.5 text-[11px] font-semibold text-white transition-colors">
+                      <MessageCircle className="h-3 w-3" />
+                      {phoneClean ? 'Enviar via WhatsApp' : 'Compartilhar via WhatsApp'}
+                    </a>
+                  </div>
                 )
               })}
             </div>
