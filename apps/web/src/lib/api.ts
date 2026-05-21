@@ -557,7 +557,10 @@ export const inboxApi = {
     request<Conversation>(`/api/v1/inbox/${id}`, { method: 'PATCH', token, body: JSON.stringify(body) }),
 
   stats: (token: string) =>
-    request<{ total: number; open: number; bot: number; unreadTotal: number }>('/api/v1/inbox/stats/summary', { token }),
+    request<{
+      total: number; open: number; bot: number; unreadTotal: number
+      botPerformance?: { conversations30d: number; qualified30d: number; conversionRate: number; nudges30d: number }
+    }>('/api/v1/inbox/stats/summary', { token }),
 
   send: (token: string, body: { to: string; text: string; conversationId?: string }) =>
     request('/api/v1/whatsapp/send', { method: 'POST', token, body: JSON.stringify(body) }),

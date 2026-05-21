@@ -105,8 +105,9 @@ export default async function inboxRoutes(app: FastifyInstance) {
     schema: { tags: ['inbox'] },
   }, async (req, reply) => {
     const companyId = req.user.cid
+    const last30d = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
 
-    const [total, open, bot, unread] = await Promise.all([
+    const [total, open, bot, unread, bot30d, qualified30d, nudges30d] = await Promise.all([
       app.prisma.conversation.count({ where: { companyId } }),
       app.prisma.conversation.count({ where: { companyId, status: { in: ['open', 'assigned'] } } }),
       app.prisma.conversation.count({ where: { companyId, status: 'bot' } }),
@@ -114,13 +115,33 @@ export default async function inboxRoutes(app: FastifyInstance) {
         where: { companyId },
         _sum: { unreadCount: true },
       }),
+      // Conversas iniciadas (bot) nos últimos 30 dias
+      app.prisma.conversation.count({
+        where: { companyId, channel: 'whatsapp', createdAt: { gte: last30d } },
+      }),
+      // Quantas viraram lead (bot concluiu a qualificação)
+      app.prisma.conversation.count({
+        where: { companyId, channel: 'whatsapp', createdAt: { gte: last30d }, leadId: { not: null } },
+      }),
+      // Nudges de reengajamento enviados (#136)
+      app.prisma.auditLog.count({
+        where: { companyId, action: 'whatsapp.bot.nudge' as any, createdAt: { gte: last30d } },
+      }).catch(() => 0),
     ])
+
+    const conversionRate = bot30d > 0 ? qualified30d / bot30d : 0
 
     return reply.send({
       total,
       open,
       bot,
       unreadTotal: unread._sum.unreadCount ?? 0,
+      botPerformance: {
+        conversations30d: bot30d,
+        qualified30d,
+        conversionRate,
+        nudges30d,
+      },
     })
   })
 }

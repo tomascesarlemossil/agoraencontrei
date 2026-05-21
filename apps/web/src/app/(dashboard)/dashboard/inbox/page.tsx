@@ -90,6 +90,31 @@ export default function InboxPage() {
         )}
       </div>
 
+      {/* Bot performance (últimos 30 dias) */}
+      {stats?.botPerformance && stats.botPerformance.conversations30d > 0 && (
+        <div className="flex flex-wrap items-center gap-4 rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+          <div className="flex items-center gap-1.5 text-xs text-white/50">
+            <span className="text-blue-400">🤖</span> Bot (30d):
+          </div>
+          <div className="flex flex-wrap items-center gap-4 text-sm">
+            <span className="text-white/70">
+              <strong className="text-white">{stats.botPerformance.conversations30d}</strong> conversas
+            </span>
+            <span className="text-white/70">
+              <strong className="text-emerald-400">{stats.botPerformance.qualified30d}</strong> qualificados
+            </span>
+            <span className="text-white/70">
+              <strong className="text-amber-400">{Math.round(stats.botPerformance.conversionRate * 100)}%</strong> conversão
+            </span>
+            {stats.botPerformance.nudges30d > 0 && (
+              <span className="text-white/70">
+                <strong className="text-purple-400">{stats.botPerformance.nudges30d}</strong> reengajamentos
+              </span>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Filters */}
       <div className="flex items-center gap-3 flex-wrap">
         <SearchInputWithVoice
