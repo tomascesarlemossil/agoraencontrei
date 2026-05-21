@@ -27,6 +27,8 @@ export function LeadCaptureForm({ propertyId, propertyTitle }: Props) {
       email:      (fd.get('email') as string) || undefined,
       message:    (fd.get('message') as string) || undefined,
       interest:   (fd.get('interest') as string) || undefined,
+      // Honeypot anti-bot: campo invisível que humanos não preenchem.
+      website:    (fd.get('website') as string) || undefined,
       propertyId,
     }
 
@@ -66,6 +68,15 @@ export function LeadCaptureForm({ propertyId, propertyTitle }: Props) {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-3">
+        {/* Honeypot anti-bot — escondido de humanos, ignorado por leitores de tela */}
+        <input
+          name="website"
+          type="text"
+          tabIndex={-1}
+          autoComplete="off"
+          aria-hidden="true"
+          className="absolute left-[-9999px] h-0 w-0 opacity-0"
+        />
         <input
           name="name"
           required

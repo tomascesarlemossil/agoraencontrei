@@ -46,6 +46,8 @@ const LeadCaptureBody = z.object({
   utmCampaign: z.string().optional(),
   // Fotos enviadas pelo cliente no formulário de anúncio
   photoUrls:  z.array(z.string()).max(50).optional(),
+  // Honeypot anti-bot — humanos não preenchem; se vier preenchido, é bot.
+  website:    z.string().optional(),
 })
 
 // ── Location privacy helper ─────────────────────────────────────────────────
@@ -595,6 +597,12 @@ export default async function publicRoutes(app: FastifyInstance) {
       return reply.status(400).send({ error: 'VALIDATION_ERROR', message: _bodyParsed.error.message })
     }
     const body = _bodyParsed.data
+
+    // Honeypot: campo invisível preenchido = bot. Devolve sucesso falso
+    // (201) para não revelar a armadilha, mas não cria nada.
+    if (body.website && body.website.trim().length > 0) {
+      return reply.status(201).send({ id: 'ok', message: 'Obrigado! Em breve entraremos em contato.' })
+    }
 
     // Find or create contact
     let contact = body.email
