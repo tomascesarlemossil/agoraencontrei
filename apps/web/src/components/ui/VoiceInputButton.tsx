@@ -199,10 +199,14 @@ export function VoiceInputButton({
             return
           }
 
-          const data = await res.json() as { transcript?: string; filters?: Record<string, string> }
+          const data = await res.json() as { transcript?: string; filters?: Record<string, string>; reason?: string }
 
           if (!data.transcript || data.transcript.trim().length === 0) {
-            flashError('Não consegui entender o que foi dito. Tente falar mais devagar e mais próximo do microfone.')
+            flashError(
+              data.reason === 'not_configured'
+                ? 'Busca por voz indisponível no momento. Você pode digitar normalmente.'
+                : 'Não consegui entender o que foi dito. Tente falar mais devagar e mais próximo do microfone.',
+            )
             return
           }
 
