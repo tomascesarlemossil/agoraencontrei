@@ -16,6 +16,9 @@ const UpdateUserBody = z.object({
   hasDataAccess: z.boolean().optional(),
   welcomeMessage: z.string().optional(),
   welcomeDuration: z.number().optional(),
+  notifyEmail: z.boolean().optional(),
+  notifyWhatsapp: z.boolean().optional(),
+  dailyDigest: z.boolean().optional(),
 })
 
 // All available system modules for granular permission control
@@ -354,14 +357,17 @@ export default async function usersRoutes(app: FastifyInstance) {
 
     const existingUser = await app.prisma.user.findUnique({ where: { id }, select: { id: true, name: true, role: true, phone: true, bio: true, creciNumber: true, settings: true } })
 
-    // Extract permission fields that go into settings JSON
-    const { accessLevel, moduleAccess, hasDataAccess, welcomeMessage, welcomeDuration, ...directFields } = body
+    // Extract permission/preference fields that go into settings JSON
+    const { accessLevel, moduleAccess, hasDataAccess, welcomeMessage, welcomeDuration, notifyEmail, notifyWhatsapp, dailyDigest, ...directFields } = body
     const updateData: any = { ...directFields }
 
-    // Update settings if permission fields are provided
-    if (accessLevel !== undefined || moduleAccess !== undefined || hasDataAccess !== undefined || welcomeMessage !== undefined || welcomeDuration !== undefined) {
+    // Update settings if permission or preference fields are provided
+    if (accessLevel !== undefined || moduleAccess !== undefined || hasDataAccess !== undefined || welcomeMessage !== undefined || welcomeDuration !== undefined || notifyEmail !== undefined || notifyWhatsapp !== undefined || dailyDigest !== undefined) {
       const currentSettings = (existingUser?.settings as Record<string, any>) ?? {}
       const newSettings = { ...currentSettings }
+      if (notifyEmail !== undefined) newSettings.notifyEmail = notifyEmail
+      if (notifyWhatsapp !== undefined) newSettings.notifyWhatsapp = notifyWhatsapp
+      if (dailyDigest !== undefined) newSettings.dailyDigest = dailyDigest
       if (accessLevel) {
         newSettings.accessLevel = accessLevel
         if (accessLevel === 'full') newSettings.moduleAccess = ALL_MODULES
