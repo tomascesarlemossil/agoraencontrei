@@ -257,27 +257,49 @@ async function runBot(app: FastifyInstance, conversation: any, phone: string, in
 
     case 'ASK_PROPERTY': {
       next.propertySearch = input.trim()
+      next.step = 'ASK_URGENCY'
+      if (env.WHATSAPP_TOKEN) await BOT_STEPS.ASK_URGENCY(phone)
+      break
+    }
+
+    case 'ASK_URGENCY': {
+      // Accept the interactive button id or free text fallback.
+      const urgency = input.startsWith('urgency_')
+        ? input.replace('urgency_', '')
+        : /(já|agora|urg)/i.test(input) ? 'urgent'
+        : /(mês|mes|semana)/i.test(input) ? 'month'
+        : 'exploring'
+      next.urgency = urgency
       next.step = 'DONE'
 
-      // Create lead in CRM
-      const name = state.name ?? contactName(conversation)
-      const budget = parseBudget(state.budget)
+      const finalState = { ...state, urgency }
+      const name = finalState.name ?? contactName(conversation)
+      const budget = parseBudget(finalState.budget)
+      const urgencyLabel = urgency === 'urgent' ? 'Alta (quer já)'
+        : urgency === 'month' ? 'Média (neste mês)' : 'Baixa (pesquisando)'
 
       const lead = await app.prisma.lead.create({
         data: {
           companyId,
           name,
           phone,
-          interest: state.interest,
+          interest: finalState.interest,
           budget,
           source: 'whatsapp',
           status: 'NEW',
-          notes: `Busca: ${input.trim()}`,
-          metadata: { botState: state } as any,
+          notes: [
+            `Qualificado via WhatsApp bot.`,
+            `Busca: ${finalState.propertySearch ?? '—'}`,
+            `Orçamento informado: ${finalState.budget ?? '—'}`,
+            `Urgência: ${urgencyLabel}`,
+          ].join('\n'),
+          tags: urgency === 'urgent' ? ['urgente', 'whatsapp_bot'] : ['whatsapp_bot'],
+          metadata: { botState: finalState } as any,
         },
       })
 
-      // Link lead to conversation
+      // Link lead to conversation; handoff: urgentes vão direto pra fila
+      // humana (open), os demais ficam open também mas sem flag.
       await app.prisma.conversation.update({
         where: { id: conversation.id },
         data: { leadId: lead.id, status: 'open' },
@@ -288,10 +310,43 @@ async function runBot(app: FastifyInstance, conversation: any, phone: string, in
           companyId,
           leadId: lead.id,
           type: 'system',
-          title: 'Lead capturado via WhatsApp',
-          description: `Bot qualificou: ${name}, interesse: ${state.interest}, orçamento: ${state.budget}`,
+          title: 'Lead qualificado via WhatsApp',
+          description: `Bot: ${name} · ${finalState.interest ?? '?'} · ${finalState.budget ?? '?'} · urgência ${urgencyLabel}`,
         },
-      })
+      }).catch(() => {})
+
+      // Score imediatamente com os sinais coletados (#124).
+      let scored: { score: number; temperature: string } | null = null
+      try {
+        const { scoreLeadFromDb } = await import('../../services/lead-auto-score.service.js')
+        scored = await scoreLeadFromDb(app.prisma, lead.id)
+      } catch { /* non-fatal */ }
+
+      // Notifica o time — urgentes com prioridade visual no corpo.
+      try {
+        const { notify } = await import('../../services/notification.service.js')
+        const tempLabel = scored
+          ? (scored.score >= 76 ? '🔥 Super quente' : scored.score >= 51 ? '🌶️ Quente' : scored.score >= 26 ? '☀️ Morno' : '❄️ Frio')
+          : ''
+        await notify({
+          prisma: app.prisma,
+          companyId,
+          type: 'lead_captured',
+          title: urgency === 'urgent'
+            ? `🔥 Lead URGENTE via WhatsApp: ${name}`
+            : `Novo lead via WhatsApp: ${name}`,
+          body: [
+            `${name} foi qualificado pelo bot do WhatsApp.`,
+            `Telefone: ${phone}`,
+            `Interesse: ${finalState.interest === 'buy' ? 'Comprar' : finalState.interest === 'rent' ? 'Alugar' : '—'}`,
+            `Orçamento: ${finalState.budget ?? '—'}`,
+            `Busca: ${finalState.propertySearch ?? '—'}`,
+            `Urgência: ${urgencyLabel}`,
+            scored ? `Score: ${scored.score}/100 ${tempLabel}` : '',
+          ].filter(Boolean).join('\n'),
+          payload: { leadId: lead.id, phone, conversationId: conversation.id, urgency, score: scored?.score ?? null },
+        })
+      } catch { /* non-fatal */ }
 
       if (env.WHATSAPP_TOKEN) await BOT_STEPS.DONE(phone, name)
       await clearState(app.redis, phone)

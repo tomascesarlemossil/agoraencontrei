@@ -78,11 +78,12 @@ export const whatsappService = {
 // ── Qualification Bot ────────────────────────────────────────────────────────
 
 type BotState = {
-  step: 'GREET' | 'ASK_NAME' | 'ASK_INTEREST' | 'ASK_BUDGET' | 'ASK_PROPERTY' | 'DONE'
+  step: 'GREET' | 'ASK_NAME' | 'ASK_INTEREST' | 'ASK_BUDGET' | 'ASK_PROPERTY' | 'ASK_URGENCY' | 'DONE'
   name?: string
   interest?: string
   budget?: string
   propertySearch?: string
+  urgency?: string  // urgent | month | exploring
 }
 
 export const BOT_STEPS = {
@@ -115,7 +116,20 @@ export const BOT_STEPS = {
   ASK_PROPERTY: async (to: string) => {
     await whatsappService.sendText(
       to,
-      'Que tipo de imóvel você procura? Localização preferida? 📍',
+      'Que tipo de imóvel você procura? Qual bairro ou região prefere? 📍',
+    )
+    return {}
+  },
+
+  ASK_URGENCY: async (to: string) => {
+    await whatsappService.sendInteractive(
+      to,
+      'Para te atender melhor: qual a sua urgência? ⏱️',
+      [
+        { id: 'urgency_urgent', title: 'Quero já 🔥' },
+        { id: 'urgency_month', title: 'Neste mês' },
+        { id: 'urgency_exploring', title: 'Só pesquisando' },
+      ],
     )
     return {}
   },
