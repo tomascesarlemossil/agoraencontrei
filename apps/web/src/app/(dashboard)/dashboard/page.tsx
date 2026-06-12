@@ -12,6 +12,7 @@ import {
   Tooltip, ResponsiveContainer, Legend,
 } from 'recharts'
 import AuctionMonitor from './AuctionMonitor'
+import { OnboardingChecklist } from '@/components/dashboard/OnboardingChecklist'
 import {
   Building2,
   UserCheck,
@@ -141,6 +142,9 @@ export default function DashboardPage() {
           Aqui está um resumo do seu negócio hoje
         </p>
       </div>
+
+      {/* Onboarding — primeiros passos (some quando concluído ou dispensado) */}
+      <OnboardingChecklist propertyCount={stats?.total ?? 0} />
 
       {/* Banner de status da IA */}
       {aiStatus && (
