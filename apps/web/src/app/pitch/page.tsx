@@ -94,7 +94,7 @@ export default function PitchPage() {
       <section className="relative flex h-screen snap-start flex-col items-center justify-center px-6 text-center" style={{ backgroundColor: CREAM }}>
         <SlideTag n="04" />
         <Bot className="mb-5 h-16 w-16" style={{ color: GOLD }} />
-        <p className="mb-2 text-xs font-bold uppercase tracking-widest" style={{ color: GOLD }}>Diferencial exclusivo</p>
+        <p className="mb-2 text-xs font-bold uppercase tracking-widest" style={{ color: GOLD }}>Seu plantão nunca dorme</p>
         <h2 className="max-w-3xl text-3xl font-bold sm:text-5xl" style={{ color: NAVY, fontFamily: 'Georgia, serif' }}>
           Um vendedor com IA que atende 24/7
         </h2>
