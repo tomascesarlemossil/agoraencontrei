@@ -43,12 +43,13 @@ O corretor / imobiliária típico vive **espalhado em 6 ferramentas que não con
 
 Organizado por área. Cada item tem o **benefício de venda** (o que dizer ao cliente).
 
-### 🤖 Tomás — Vendedor com IA (o diferencial nº 1)
+### 🤖 Tomás — Vendedor com IA
 - Atende e **qualifica leads 24/7** no WhatsApp e no site (intenção, orçamento, bairro, urgência).
 - Já **envia imóveis compatíveis** automaticamente e marca visita.
 - Segue a **"regra dos 2 minutos"**: manda o imóvel primeiro, segura o checkout, cria desejo antes de oferecer.
 - Entende **voz** (o cliente fala, ele transcreve e responde).
 - **Venda:** "Seu plantão nunca dorme. Enquanto você está em uma visita, o Tomás fecha o próximo."
+- > ℹ️ *IA de atendimento 24/7 já existe em concorrentes (Kenlo, Superlógica, Universal, Imobzi/Lais). Venda o Tomás pela **qualidade e método** (regra dos 2 min, voz, nativo no sistema) — **não** como "ninguém tem".*
 
 ### 🌐 Site próprio + Marketplace
 - **Site profissional no ar em 24h**, com seu domínio próprio e **white-label** (sem "powered by").
@@ -101,14 +102,13 @@ Organizado por área. Cada item tem o **benefício de venda** (o que dizer ao cl
 
 ---
 
-## 4. Os 6 diferenciais que NINGUÉM junta
+## 4. Os diferenciais (em ordem de força)
 
-1. **Vendedor com IA (Tomás)** que atende 24/7 — não é chatbot de FAQ, é qualificação + envio de imóvel + agendamento.
-2. **Inteligência de leilões com ROI** — exclusivo no mercado de CRM imobiliário.
-3. **Site próprio em 24h + marketplace** — presença dupla (seu site + nosso tráfego).
-4. **Tudo-em-um real** — CRM + site + portais + financeiro + marketing + IA num login só.
+1. 🥇 **Inteligência de leilões com ROI dentro do CRM** — genuinamente único: **nenhum** CRM imobiliário (Jetimob, Kenlo, Vista, Universal, Superlógica, Tecimob, Imobzi) tem busca Caixa/bancos + cálculo de ROI. O mercado separa "plataforma de leilão" de "CRM" — só nós juntamos.
+2. 🥈 **Tudo-em-um real a partir de R$ 97/mês** — CRM + site + portais + financeiro + marketing + IA num login só, com o **menor ticket de entrada** entre os de preço público.
+3. 🥉 **Site próprio em 24h + marketplace** — presença dupla (seu site + nosso tráfego).
+4. **Tomás (IA) com método** — qualifica e atende 24/7 com a regra dos 2 min e voz, **nativo** (sem add-on de terceiro). *IA 24/7 já existe em concorrentes — nosso ganho é qualidade e integração, não exclusividade.*
 5. **Nativo Brasil** — Caixa, Asaas (boleto/PIX), Clicksign, WhatsApp oficial, NF.
-6. **Preço de entrada agressivo** — começa em **R$ 97/mês**, com tudo de IA já a partir de **R$ 297/mês**.
 
 ---
 
@@ -118,17 +118,19 @@ Organizado por área. Cada item tem o **benefício de venda** (o que dizer ao cl
 
 | Concorrente | O que é forte | O que NÃO tem (onde ganhamos) |
 |-------------|---------------|-------------------------------|
-| **Jetimob** | Site + CRM + integração de portais; popular em imobiliárias | Sem vendedor com IA real; sem inteligência de leilões; sem financeiro próprio |
-| **Vista / Kenlo (ex-Ingaia)** | CRM robusto, grande base, integrações | Caro/corporativo; sem IA de atendimento 24/7 nem leilões; implantação lenta |
-| **Tecimob** | Sites + CRM baratos para corretor autônomo | Foco em site; sem IA, sem leilões, sem financeiro completo |
-| **Imobzi** | Gestão (CRM + locação + financeiro + site) | Sem vendedor com IA; sem inteligência de leilões; sem marketplace |
-| **Universal Software / Superlógica** | Fortes em administração de locação/financeiro | Não são plataforma de aquisição/venda com IA nem leilões |
-| **RD Station / HubSpot** | CRM/marketing genérico poderoso | Não é imobiliário; sem site de imóveis, portais, leilões ou financeiro do setor |
-| **Loft / QuintoAndar** | Marketplaces com tráfego | São concorrentes de atenção, não dão ao corretor um sistema próprio |
+| **Jetimob** | Site + CRM + portais; financeiro (módulo aluguéis) | IA só de descrições (sem SDR conversacional); **sem leilões**; preço sob consulta |
+| **Kenlo** (ex-inGaia) | CRM forte + **IA "LYA SDR" 24/7** + financeiro robusto | **Sem leilões**; preço alto/sob consulta; IA cobrada à parte |
+| **Vista** (Loft) | CRM vendas+locação, assistente IA, site (R$130–1.900) | **Sem leilões**; financeiro mediano |
+| **Tecimob** | Site + CRM baratos (R$129,90) p/ corretor | IA só de texto; **sem leilões**; financeiro básico |
+| **Imobzi** | Gestão CRM+ERP forte em locação/cobrança | IA 24/7 **só via terceiro (Lais)**; **sem leilões**; sem marketplace |
+| **Universal (Imoview)** | Suíte completa + chatbot (R$1.300–3.250) | **Sem leilões**; preço alto |
+| **Superlógica / Arbo** | Financeiro/locação líder, IA "Atende", white-label | **Sem leilões**; preço sob consulta |
+| **RD Station** | CRM/marketing genérico poderoso | Não é imobiliário; **sem leilões**, site de imóveis ou financeiro do setor |
 
-**Conclusão de venda:** os concorrentes resolvem **uma fatia** (ou site, ou CRM, ou
-financeiro). O AgoraEncontrei resolve **a operação inteira** — e é o **único** com
-IA de atendimento + inteligência de leilões.
+**Conclusão de venda:** IA de atendimento e portais viraram **commodity** — quase todos têm.
+O que **ninguém** tem é **inteligência de leilões com ROI dentro do CRM**. Some isso ao
+**tudo-em-um a partir de R$ 97/mês** (menor ticket de entrada) e você tem a oferta que os
+concorrentes não conseguem igualar.
 
 ---
 
