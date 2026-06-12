@@ -216,15 +216,10 @@ export default async function tenantRoutes(app: FastifyInstance) {
     const tenant = await (app.prisma as any).tenant.findUnique({ where: { id } })
     if (!tenant) return reply.status(404).send({ error: 'TENANT_NOT_FOUND' })
 
-    // Authorization: só um SUPER_ADMIN, ou um ADMIN da própria empresa do
-    // tenant, pode vincular um domínio. Sem isso, qualquer usuário autenticado
-    // poderia apontar um domínio para o tenant de outra pessoa.
-    const isSuperAdmin = req.user.role === 'SUPER_ADMIN'
-    const ownsTenant =
-      !!tenant.companyId &&
-      (req.user as any).companyId === tenant.companyId &&
-      ['ADMIN', 'SUPER_ADMIN'].includes(req.user.role)
-    if (!isSuperAdmin && !ownsTenant) {
+    // Authorization: só o dono do tenant ou um SUPER_ADMIN pode vincular um
+    // domínio (mesmo padrão de GET/PATCH /:id). Sem isso, qualquer usuário
+    // autenticado poderia apontar um domínio para o tenant de outra pessoa.
+    if (tenant.ownerId !== req.user.sub && req.user.role !== 'SUPER_ADMIN') {
       return reply.status(403).send({ error: 'FORBIDDEN' })
     }
 
