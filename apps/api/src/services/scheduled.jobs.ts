@@ -1098,4 +1098,60 @@ export async function runScheduledJobs(app: FastifyInstance) {
   } catch (err) {
     app.log.error({ err }, '[scheduled] whatsapp-bot-nudge failed')
   }
+
+  // ── 13. Expiração de trial: tenants em TRIAL com trialEndsAt vencido ─────
+  // Sem este job, um trial nunca expira sozinho — o tenant fica usando o
+  // sistema de graça pra sempre. Suspende o Tenant + Company juntos (mesma
+  // transação) e registra auditoria. A reativação acontece no webhook de
+  // pagamento (PAYMENT_CONFIRMED volta pra ACTIVE).
+  try {
+    const expiredTrials = await app.prisma.tenant.findMany({
+      where: {
+        planStatus: 'TRIAL',
+        trialEndsAt: { not: null, lt: now },
+      },
+      select: { id: true, subdomain: true, companyId: true, settings: true },
+      orderBy: { trialEndsAt: 'asc' },
+      take: 200,
+    })
+
+    let suspended = 0
+    for (const tenant of expiredTrials) {
+      await app.prisma.$transaction(async (tx: any) => {
+        await tx.tenant.update({
+          where: { id: tenant.id },
+          data: {
+            planStatus: 'SUSPENDED',
+            isActive: false,
+            suspendedAt: now,
+            settings: { ...((tenant.settings as any) || {}), trialExpiredAt: now.toISOString() },
+          },
+        })
+        if (tenant.companyId) {
+          await tx.company.update({
+            where: { id: tenant.companyId },
+            data: { isActive: false },
+          }).catch(() => null)
+        }
+      })
+
+      await app.prisma.auditLog.create({
+        data: {
+          companyId: tenant.companyId || 'platform',
+          action: 'tenant.trial.expired' as any,
+          resource: 'tenant',
+          resourceId: tenant.id,
+          payload: { subdomain: tenant.subdomain, expiredAt: now.toISOString() } as any,
+        },
+      }).catch(() => {})
+
+      suspended++
+    }
+
+    if (suspended > 0) {
+      app.log.info(`[scheduled] trial-expiration: suspended ${suspended} expired trials`)
+    }
+  } catch (err) {
+    app.log.error({ err }, '[scheduled] trial-expiration failed')
+  }
 }
