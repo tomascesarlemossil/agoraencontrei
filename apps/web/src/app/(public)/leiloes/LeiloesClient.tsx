@@ -700,17 +700,17 @@ export default function LeiloesClient() {
         </div>
       </section>
 
-      {/* MAPA POR REGIÃO — satélite, com leilões e imóveis por bairro */}
+      {/* MAPA POR REGIÃO — satélite, só com os leilões (sem imóveis da plataforma) */}
       <section className="max-w-7xl mx-auto px-4 pt-6">
         <div className="mb-3">
           <h2 className="text-xl font-bold text-[#1B2B5B]" style={{ fontFamily: 'Georgia, serif' }}>
-            Mapa de oportunidades por região
+            Mapa de leilões por região
           </h2>
           <p className="text-sm text-gray-500">
-            Explore leilões e imóveis no mapa via satélite — navegue por bairro antes de ver a lista abaixo.
+            Explore os leilões no mapa via satélite — navegue por bairro antes de ver a lista abaixo.
           </p>
         </div>
-        <LeiloesMapa />
+        <LeiloesMapa auctionsOnly />
       </section>
 
       {/* Toolbar */}

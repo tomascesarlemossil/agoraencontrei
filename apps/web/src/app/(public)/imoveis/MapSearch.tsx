@@ -121,6 +121,7 @@ interface Props {
   initialMaxPrice?: string
   initialBedrooms?: string
   initialClusters?: Cluster[] // SSR pre-fetched clusters for immediate display
+  auctionsOnly?: boolean // quando true, mostra só pins de leilão (esconde imóveis da plataforma)
 }
 
 // Nominatim cache in module scope
@@ -147,7 +148,7 @@ async function geocodeNeighborhood(neighborhood: string, city: string): Promise<
   return null
 }
 
-export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initialBedrooms, initialClusters }: Props) {
+export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initialBedrooms, initialClusters, auctionsOnly }: Props) {
   const mapRef = useRef<HTMLDivElement>(null)
   const mapInstance = useRef<MapLibreMap | null>(null)
   const markersRef = useRef<MapLibreMarker[]>([])
@@ -251,6 +252,8 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
 
   // Load clusters from API
   useEffect(() => {
+    // Modo "só leilões" (página de leilões): não carrega imóveis da plataforma.
+    if (auctionsOnly) return
     async function loadClusters(bbox?: { swLat: number; swLng: number; neLat: number; neLng: number }) {
       try {
         const params = new URLSearchParams()
@@ -314,6 +317,8 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
   }, [initialPurpose]) // eslint-disable-line react-hooks/exhaustive-deps
   // Load owner-direct (green pins) properties from free-listing endpoint
   useEffect(() => {
+    // Modo "só leilões": não mostra os pins verdes de imóveis dos proprietários.
+    if (auctionsOnly) return
     fetch(`${API_URL}/api/v1/public/free-listing/map-pins`)
       .then(r => r.ok ? r.json() : [])
       .then((data: OwnerDirectPin[]) => setOwnerDirectPins(Array.isArray(data) ? data : []))
@@ -1046,6 +1051,8 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
 
         {/* Layer Toggles */}
         <div className="ml-auto flex items-center gap-1.5 pointer-events-auto">
+          {/* Toggle de imóveis à venda — escondido no modo só-leilões */}
+          {!auctionsOnly && (
           <button
             onClick={() => setShowSaleLayer(v => !v)}
             className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold shadow-lg transition-all ${
@@ -1057,6 +1064,7 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
             <span className={`w-2.5 h-2.5 rounded-full ${showSaleLayer ? 'bg-blue-400' : 'bg-gray-300'}`} />
             🏠 Venda
           </button>
+          )}
           <button
             onClick={() => setShowAuctionLayer(v => !v)}
             className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold shadow-lg transition-all ${
