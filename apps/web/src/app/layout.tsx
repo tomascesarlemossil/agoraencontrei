@@ -6,7 +6,6 @@ import { ConditionalMetaPixel } from '@/components/ConditionalMetaPixel'
 import { WebVitals } from '@/components/WebVitals'
 import { GoogleAnalytics } from '@/components/GoogleAnalytics'
 import { CookieConsent } from '@/components/CookieConsent'
-import { FRANCA_GEO_KEYWORDS } from '@/data/seo-geo-keywords'
 import './globals.css'
 
 const META_PIXEL_ID = '932688306232065'
@@ -161,8 +160,6 @@ export const metadata: Metadata = {
     'imóvel comercial para investir franca', 'fundo imobiliário franca sp',
     'imóvel como investimento franca sp', 'comprar imóvel para alugar franca',
     'imóvel rentabilidade franca sp', 'investimento seguro imóvel franca',
-    // Keywords geográficas: todas as ruas, bairros e edifícios de Franca/SP
-    ...FRANCA_GEO_KEYWORDS,
   ].join(', '),
   authors: [{ name: 'Imobiliária Lemos', url: WEB_URL }],
   creator: 'Imobiliária Lemos',

@@ -44,19 +44,20 @@ você não usa.
 | **WhatsApp Cloud (Meta)** | Mensagens | integração WhatsApp | ✅ (faixa grátis + por conversa) |
 | **Google Maps** | Mapas / Street View | busca, mapa de imóveis | ✅ (tem crédito grátis mensal) |
 | **Cloudinary** | Otimização de imagem / marca d'água | processamento de imagem | ⚠️ Avaliar redundância com S3 |
-| **Veras** | Render fotorrealista de imóvel | `apps/api/src/workers/visual-ai.worker.ts` (tela ai-visual) | ⚠️ Só se usa "Foto IA" |
-| **MNML** | Staging virtual | `visual-ai.worker.ts` (tela ai-visual) | ⚠️ Só se usa "Foto IA" |
-| **Google Imagen** | Edição de fotos em lote | `visual-ai.worker.ts` (tela ai-visual) | ⚠️ Só se usa "Foto IA" |
-| **AssemblyAI** | Legendas de vídeo | `services/video-editor/captions.service.ts` | ⚠️ **Duplica o Whisper** — pode cortar |
-| **Luma** | B-roll de vídeo com IA | `services/video-editor/luma.service.ts` | ⚠️ Só se usa "Editor de Vídeo" |
+| **Veras** | Render fotorrealista de imóvel | `apps/api/src/workers/visual-ai.worker.ts` (tela ai-visual) | ✅ **Em uso** (tela Foto IA) — manter |
+| **MNML** | Staging virtual | `visual-ai.worker.ts` (tela ai-visual) | ✅ **Em uso** (tela Foto IA) — manter |
+| **Google Imagen** | Edição de fotos em lote | `visual-ai.worker.ts` (tela ai-visual) | ✅ **Em uso** (tela Foto IA) — manter |
+| **AssemblyAI** | Legendas de vídeo | `services/video-editor/captions.service.ts` | ✅ **Em uso** (Editor de Vídeo) — manter |
+| **Luma** | B-roll de vídeo com IA | `services/video-editor/luma.service.ts` | ✅ **Em uso** (Editor de Vídeo) — manter |
 | **Clicksign** | Assinatura digital de contrato | fluxo de contratos | ✅ Se assina contrato |
 | **Asaas** | Pagamentos / boletos | sistema de receita | ✅ Essencial (é a receita) |
 
 ### ⚠️ Observações
-- **AssemblyAI duplica o Whisper (OpenAI):** `captions.service.ts` já usa
-  Whisper como fallback. Dá para cancelar a AssemblyAI e manter só o OpenAI.
+- **Veras, MNML, Imagen, AssemblyAI e Luma estão EM USO** (telas "Foto IA"
+  e "Editor de Vídeo" do painel) — **NÃO remover**. São cobradas por uso,
+  então só geram custo quando você efetivamente gera fotos/vídeos.
 - **`GEMINI_API_KEY` foi removida do código** — estava declarada mas nunca
-  era usada em runtime. Pode apagar a chave no Railway também.
+  era usada em runtime. Pode apagar a chave no Railway também (segurança).
 - Todas as chaves são **opcionais**: se faltar, a funcionalidade apenas se
   desabilita com uma mensagem amigável — **não quebra o site**.
 
@@ -64,30 +65,40 @@ você não usa.
 
 ## 🧹 Como blindar custo (sem quebrar nada)
 
-No **Railway → API → Variables**, remova as chaves das funcionalidades que
-você **não usa**:
+No **Railway → API → Variables**:
 
-- Se **NÃO usa** a tela `Dashboard → Foto IA (ai-visual)`:
-  remova `VERAS_API_KEY`, `MNML_API_KEY`, `GOOGLE_IMAGEN_API_KEY`.
-- Se **NÃO usa** a tela `Dashboard → Editor de Vídeo (video-editor)`:
-  remova `LUMA_API_KEY`, `ASSEMBLYAI_API_KEY`.
 - Sempre seguro remover: `GEMINI_API_KEY` (não usada no código).
+- **Manter** `VERAS_API_KEY`, `MNML_API_KEY`, `GOOGLE_IMAGEN_API_KEY`,
+  `LUMA_API_KEY`, `ASSEMBLYAI_API_KEY` — as telas Foto IA e Editor de
+  Vídeo estão em uso. (São por uso: custam ~R$0 quando não há geração.)
 
-> Remover a chave **desabilita** a feature graciosamente. Para reativar,
+> Remover uma chave **desabilita** a feature graciosamente. Para reativar,
 > basta colocar a chave de volta.
 
 ---
 
-## 📉 Otimização de banda (home)
+## 📉 Otimização de banda
 
-A home pesa ~930 KB sem compressão, mas a Vercel já entrega ~214 KB com
-brotli. Composição: ~480 KB de payload de hidratação (RSC) + ~483 KB de
-texto SEO renderizado direto na página.
+### ✅ Feito: removida a tag `<meta keywords>` gigante
+O `layout.tsx` despejava **3.127 keywords** (`FRANCA_GEO_KEYWORDS`, arquivo de
+3.179 linhas) numa única tag `<meta name="keywords">` em toda página que herda
+o metadata padrão (~90 KB por página). A tag `<meta keywords>` é **ignorada
+pelo Google desde 2009** — zero valor de SEO. Removida sem nenhum impacto
+visual ou de ranking. O arquivo `seo-geo-keywords.ts` deixou de ser importado
+(sai do bundle); pode ser apagado num próximo passo se ninguém mais usar.
 
-**Melhorias possíveis (a fazer com teste, sem pressa):**
-1. Mover blocos pesados de texto SEO para fora do render principal da home.
-2. Reduzir componentes `"use client"` na home (cada um infla o payload RSC).
-3. Garantir que todas as imagens usam `next/image` (otimização automática).
+### ℹ️ Sobre a home (já está razoável)
+A home pesa ~930 KB sem compressão, mas a Vercel entrega ~214 KB com brotli.
+Ela **já é eficiente em custo**: usa `<img>` puro nas fotos (evita o custo de
+Image Optimization da Vercel) e `revalidate=60` (ISR — servida de cache, não
+re-renderiza a cada visita). O peso restante é o payload de hidratação (RSC)
+do Next.js App Router.
+
+**Melhorias futuras (fazer com teste, sem pressa — NÃO mexer às pressas):**
+1. Reduzir componentes `"use client"` na home (cada um infla o payload RSC).
+2. Extrair SVGs repetidos (ex.: ícone do Instagram aparece 2x) para componente.
+3. Manter `<img>` puro nas fotos de imóvel (trocar por `next/image`
+   **aumentaria** o custo de Image Optimization da Vercel).
 
 ---
 
