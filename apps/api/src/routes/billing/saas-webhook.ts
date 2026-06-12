@@ -41,9 +41,18 @@ export default async function saasWebhookRoutes(app: FastifyInstance) {
     },
     bodyLimit: 65536, // 64KB max payload
   }, async (req, reply) => {
-    // 1. Validate webhook secret
+    // 1. Validate webhook secret (fail-closed in production)
     const webhookToken = (req.headers['asaas-access-token'] as string) || ''
-    if (env.ASAAS_WEBHOOK_SECRET && !safeStringEqual(webhookToken, env.ASAAS_WEBHOOK_SECRET)) {
+    if (!env.ASAAS_WEBHOOK_SECRET) {
+      // No secret configured. In production this is unsafe — without it anyone
+      // could forge a PAYMENT_CONFIRMED and activate a tenant for free — so we
+      // reject. In dev/test we warn and continue to keep local testing easy.
+      if (env.NODE_ENV === 'production') {
+        app.log.error('[saas-webhook] ASAAS_WEBHOOK_SECRET not configured — rejecting webhook (fail-closed)')
+        return reply.status(503).send({ error: 'WEBHOOK_SECRET_NOT_CONFIGURED' })
+      }
+      app.log.warn('[saas-webhook] ASAAS_WEBHOOK_SECRET not set — skipping signature check (dev only)')
+    } else if (!safeStringEqual(webhookToken, env.ASAAS_WEBHOOK_SECRET)) {
       app.log.warn('[saas-webhook] Invalid webhook token')
 
       await app.prisma.auditLog.create({
