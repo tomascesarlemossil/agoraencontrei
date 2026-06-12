@@ -1,13 +1,13 @@
-import { redirect } from 'next/navigation'
 import type { Metadata } from 'next'
+import { PlanosContent } from '../PlanosContent'
 
 export const metadata: Metadata = {
-  title: 'Seja um Parceiro — Planos e Ferramentas | AgoraEncontrei',
+  title: 'Planos e Preços — Seja um Parceiro | AgoraEncontrei',
   description:
-    'Acesse o dashboard privado do AgoraEncontrei. Calculadora ROI de leilões, sentinela territorial, analytics de leads e alertas inteligentes. Planos a partir de R$ 197/mês.',
-  alternates: { canonical: 'https://www.agoraencontrei.com.br/parceiros/cadastro' },
+    'Conheça os planos do AgoraEncontrei para imobiliárias e corretores: site próprio, CRM com IA, planos PRIME e VIP e pacotes de imóveis. Tecnologia de ponta a partir de R$ 197/mês.',
+  alternates: { canonical: 'https://www.agoraencontrei.com.br/parceiros/planos' },
 }
 
 export default function ParceirosPlanos() {
-  redirect('/parceiros/cadastro')
+  return <PlanosContent />
 }

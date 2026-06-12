@@ -136,12 +136,11 @@ function CheckoutContent() {
 
       if (!res.ok) {
         if (data.error === 'ASAAS_NOT_CONFIGURED') {
-          // Fallback: registrar interesse e mostrar mensagem
-          setResult({
-            subscriptionId: 'PENDING_MANUAL',
-            status: 'PENDING',
-          })
-          setStep('success')
+          // Pagamento online indisponível: NÃO mostrar sucesso falso — orientar
+          // o cliente a concluir pelo WhatsApp, para não dar a impressão de que
+          // a assinatura já foi paga.
+          setError('O pagamento online está temporariamente indisponível. Fale com a gente no WhatsApp (16) 98101-0004 para concluir sua assinatura.')
+          setStep('form')
           return
         }
         setError(data.message ?? data.error ?? 'Erro ao processar pagamento. Tente novamente.')
