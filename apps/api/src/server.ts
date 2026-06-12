@@ -2,6 +2,7 @@ import 'dotenv/config'
 import Fastify from 'fastify'
 import { ZodError } from 'zod'
 import { env, logEnvWarnings } from './utils/env.js'
+import { initSentry, captureError } from './utils/sentry.js'
 
 // ── v2026.04.01 ────────────────────────────────────────────────────────────
 // ── Plugins ────────────────────────────────────────────────────────────────
@@ -686,6 +687,9 @@ async function runMigrations(prisma: any) {
 }
 
 async function bootstrap() {
+  // Monitoramento de erros — no-op se SENTRY_DSN ausente ou @sentry/node não instalado.
+  await initSentry(app)
+
   // ── Core Plugins ────────────────────────────────────────────────────────
   await app.register(corsPlugin)
   await app.register(helmetPlugin)
@@ -922,8 +926,9 @@ async function bootstrap() {
         message: error.message,
       })
     }
-    app.log.error(error)
     const statusCode = error?.statusCode ?? 500
+    if (statusCode >= 500) captureError(error)
+    app.log.error(error)
     reply.status(statusCode).send({
       error: error?.code ?? 'INTERNAL_ERROR',
       message: env.NODE_ENV === 'production' && statusCode === 500
