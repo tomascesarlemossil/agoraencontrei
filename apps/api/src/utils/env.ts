@@ -95,6 +95,12 @@ const envSchema = z.object({
   VERCEL_TOKEN: z.string().optional(),
   VERCEL_PROJECT_ID: z.string().optional(),
 
+  // Sentry — monitoramento de erros (opcional). Só ativa quando esta DSN está
+  // setada E o pacote @sentry/node está instalado (carregado via dynamic
+  // import — ver utils/sentry.ts).
+  SENTRY_DSN: z.string().optional(),
+  SENTRY_TRACES_SAMPLE_RATE: z.string().optional(),
+
   // Clicksign — digital signatures
   CLICKSIGN_ACCESS_TOKEN: z.string().optional(),
   CLICKSIGN_BASE_URL: z.string().optional(),
