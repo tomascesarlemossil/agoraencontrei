@@ -236,7 +236,11 @@ Empacote para o "sim" imediato:
 - ✅ **Sem fidelidade** — cancela quando quiser.
 - ✅ **Migração assistida** do sistema atual.
 - ✅ **Tomás IA incluso** já no Premium.
-- 🎁 **Bônus de lançamento** (sugestão): 1º mês com desconto / setup grátis / X destaques no marketplace.
+- 🎁 **Oferta de Fundador (lançamento) — para os primeiros 50 assinantes:**
+  - **1º mês com 50% de desconto** (ex.: Premium por R$ 148 no 1º mês)
+  - **Implantação/onboarding assistido grátis** — site no ar em 24h, feito junto
+  - **Preço de fundador travado** — sem reajuste no 1º ano
+  - **Garantia de 7 dias** — não gostou, devolvemos sem perguntas
 
 > **Frase de fechamento:** "Você pode continuar pagando caro por ferramentas soltas
 > e perdendo lead às 22h… ou ter tudo num lugar, com um vendedor de IA trabalhando
