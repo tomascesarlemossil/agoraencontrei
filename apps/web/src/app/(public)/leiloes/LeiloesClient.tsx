@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import Link from 'next/link'
+import dynamic from 'next/dynamic'
 import { Search, MapPin, Filter, Calculator, Bell, TrendingUp, ChevronDown, X, ArrowRight, Building, Home, Map as MapIcon, Star, Clock, DollarSign, BarChart3, AlertTriangle, Loader2, CheckCircle, ExternalLink } from 'lucide-react'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'https://api-production-669c.up.railway.app'
@@ -9,6 +10,19 @@ const PUBLIC_AUCTIONS_URL = `${API_URL}/api/v1/public/auctions`
 const CAIXA_CSV_URL = '/api/caixa-csv?state=SP' // Vercel proxy (no geo-block)
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://oenbzvxcsgyzqjtlovdq.supabase.co'
 const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
+
+// Mapa por região (satélite + pins de leilão e imóveis). É o mesmo componente
+// do /imoveis, carregado de forma lazy (sem SSR) para não pesar no carregamento
+// inicial da lista de leilões.
+const LeiloesMapa = dynamic(() => import('../imoveis/MapSearchWrapper'), {
+  ssr: false,
+  loading: () => (
+    <div
+      className="rounded-2xl border border-gray-200 bg-gray-100 animate-pulse"
+      style={{ height: 580 }}
+    />
+  ),
+})
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -400,9 +414,9 @@ export default function LeiloesClient() {
       if (minDiscount) params.set('minDiscount', minDiscount)
       if (maxPrice) params.set('maxPrice', maxPrice)
 
-      // Dispara os 3 feeds em paralelo — nunca dependemos de um único para
-      // renderizar. Se a API Railway estiver instável (502/timeout), o proxy
-      // Vercel da Caixa garante que a página ainda mostra inventário.
+      // Renderiza assim que o feed INTERNO responder — sem esperar os 3
+      // feeds terminarem. Antes, o Promise.allSettled segurava a tela por
+      // até 12s mesmo com os dados internos já prontos (causa da lentidão).
       const fallbackParams = new URLSearchParams()
       if (state) fallbackParams.set('state', state)
       const fallbackUrl = `${PUBLIC_AUCTIONS_URL}${fallbackParams.toString() ? '?' + fallbackParams : ''}`
@@ -415,51 +429,46 @@ export default function LeiloesClient() {
           ),
         ])
 
-      const [internalRes, railwayRes, caixaRes] = await Promise.allSettled([
-        withTimeout(fetch(`${API_URL}/api/v1/auctions?${params}`)),
-        withTimeout(fetch(fallbackUrl)),
-        withTimeout(fetch(CAIXA_CSV_URL)),
-      ])
+      // Pré-aquece os feeds públicos (Railway + Caixa) em paralelo. Os erros
+      // são engolidos aqui para não vazar rejeição de promise não-aguardada
+      // caso o feed interno responda antes e a função retorne.
+      const railwayP = withTimeout(fetch(fallbackUrl)).catch(() => null)
+      const caixaP = withTimeout(fetch(CAIXA_CSV_URL)).catch(() => null)
 
-      // 1) Tenta primeiro os dados internos (DB com opportunityScore, ROI etc).
-      let internalItems: Auction[] = []
-      let internalTotal = 0
-      let internalTotalPages = 1
-      if (internalRes.status === 'fulfilled' && internalRes.value.ok) {
-        try {
-          const data = await internalRes.value.json()
-          internalItems = (data.data || []) as Auction[]
-          internalTotal = data.pagination?.total || 0
-          internalTotalPages = data.pagination?.totalPages || 1
-        } catch { /* payload inválido — ignora e segue para os feeds públicos */ }
-      }
+      // 1) Feed interno primeiro (DB com opportunityScore, ROI etc). Se tiver
+      //    dados, renderiza na hora — não espera os feeds públicos.
+      try {
+        const internalRes = await withTimeout(fetch(`${API_URL}/api/v1/auctions?${params}`), 8000)
+        if (internalRes.ok) {
+          const data = await internalRes.json()
+          const internalItems = (data.data || []) as Auction[]
+          if (internalItems.length > 0) {
+            internalItems.sort((a: Auction, b: Auction) => {
+              const geoA = cityPriority(a.city, a.state)
+              const geoB = cityPriority(b.city, b.state)
+              return geoA - geoB
+            })
+            setAuctions(internalItems)
+            setTotal(data.pagination?.total || internalItems.length)
+            setTotalPages(data.pagination?.totalPages || 1)
+            setLoading(false)
+            return
+          }
+        }
+      } catch { /* interno lento/indisponível — usa os feeds públicos abaixo */ }
 
-      if (internalItems.length > 0) {
-        internalItems.sort((a: Auction, b: Auction) => {
-          const geoA = cityPriority(a.city, a.state)
-          const geoB = cityPriority(b.city, b.state)
-          if (geoA !== geoB) return geoA - geoB
-          return 0
-        })
-        setAuctions(internalItems)
-        setTotal(internalTotal)
-        setTotalPages(internalTotalPages)
-        setLoading(false)
-        return
-      }
-
-      // 2) Mescla Railway + Caixa CSV (Vercel). Cada fonte é tolerada de
-      // forma independente — qualquer uma que tenha dados já é suficiente.
+      // 2) Interno vazio/falhou → mescla Railway + Caixa CSV (já pré-aquecidos).
+      const [railwayRes, caixaRes] = await Promise.all([railwayP, caixaP])
       const allItems: any[] = []
-      if (railwayRes.status === 'fulfilled' && railwayRes.value.ok) {
+      if (railwayRes && railwayRes.ok) {
         try {
-          const railwayData = await railwayRes.value.json()
+          const railwayData = await railwayRes.json()
           allItems.push(...(railwayData.items || []))
         } catch { /* ignore malformed response */ }
       }
-      if (caixaRes.status === 'fulfilled' && caixaRes.value.ok) {
+      if (caixaRes && caixaRes.ok) {
         try {
-          const caixaData = await caixaRes.value.json()
+          const caixaData = await caixaRes.json()
           const caixaItems = caixaData.items || []
           const existingIds = new Set(allItems.map((i: any) => i.id))
           for (const item of caixaItems) {
@@ -689,6 +698,19 @@ export default function LeiloesClient() {
             </div>
           )}
         </div>
+      </section>
+
+      {/* MAPA POR REGIÃO — satélite, com leilões e imóveis por bairro */}
+      <section className="max-w-7xl mx-auto px-4 pt-6">
+        <div className="mb-3">
+          <h2 className="text-xl font-bold text-[#1B2B5B]" style={{ fontFamily: 'Georgia, serif' }}>
+            Mapa de oportunidades por região
+          </h2>
+          <p className="text-sm text-gray-500">
+            Explore leilões e imóveis no mapa via satélite — navegue por bairro antes de ver a lista abaixo.
+          </p>
+        </div>
+        <LeiloesMapa />
       </section>
 
       {/* Toolbar */}
