@@ -88,9 +88,6 @@ const envSchema = z.object({
   CLOUDINARY_CLOUD_NAME: z.string().optional(),
   CLOUDINARY_LOGO_ID: z.string().optional(),
 
-  // Gemini — vision & content generation (alternative to Anthropic)
-  GEMINI_API_KEY: z.string().optional(),
-
   // Google Maps / Street View
   GOOGLE_MAPS_API_KEY: z.string().optional(),
 
