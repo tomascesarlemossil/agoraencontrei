@@ -9,6 +9,7 @@ import type { FastifyInstance } from 'fastify'
 import { prisma } from '../../lib/prisma.js'
 import { env } from '../../utils/env.js'
 import { findOrCreateCustomer } from '../../services/asaas.service.js'
+import { safeStringEqual } from '../../utils/crypto-safe.js'
 
 const ASAAS_BASE_URL = env.ASAAS_BASE_URL ?? 'https://www.asaas.com/api/v3'
 const ASAAS_API_KEY  = env.ASAAS_API_KEY  ?? ''
@@ -233,6 +234,15 @@ export async function specialistPaymentRoutes(app: FastifyInstance) {
   app.post('/webhook', {
     config: { rawBody: true },
   }, async (req, reply) => {
+    // Fail-closed: valida o segredo do Asaas (mesmo padrão do webhook SaaS).
+    // Sem isso, qualquer um poderia POSTar aqui e ativar um plano de
+    // especialista sem ter pago.
+    const webhookToken = (req.headers['asaas-access-token'] as string) || ''
+    if (env.ASAAS_WEBHOOK_SECRET && !safeStringEqual(webhookToken, env.ASAAS_WEBHOOK_SECRET)) {
+      app.log.warn('[specialist-webhook] token inválido — recusado')
+      return reply.status(401).send({ error: 'UNAUTHORIZED' })
+    }
+
     const event = req.body as {
       event: string
       payment?: { externalReference?: string; status?: string; subscription?: string }
