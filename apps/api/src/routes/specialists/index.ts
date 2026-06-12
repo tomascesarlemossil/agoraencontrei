@@ -175,6 +175,7 @@ export default async function specialistsRoute(app: FastifyInstance) {
         'ARQUITETO', 'ENGENHEIRO', 'CORRETOR', 'AVALIADOR',
         'DESIGNER_INTERIORES', 'FOTOGRAFO', 'VIDEOMAKER',
         'ADVOGADO_IMOBILIARIO', 'DESPACHANTE', 'OUTRO',
+        'IMOBILIARIA', 'LOTEADORA',
       ]),
       bio: z.string().optional(),
       city: z.string().default('Franca'),
