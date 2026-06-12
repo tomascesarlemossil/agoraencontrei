@@ -40,7 +40,7 @@ const DORES = [
 ]
 
 const FERRAMENTAS = [
-  { icon: Bot, t: 'Tomás — Vendedor com IA', d: 'Atende e qualifica leads 24/7 no WhatsApp e no site, manda o imóvel certo e agenda a visita — sozinho.', star: true },
+  { icon: Bot, t: 'Tomás — Vendedor com IA', d: 'Atende e qualifica leads 24/7 no WhatsApp e no site, manda o imóvel certo e agenda a visita — sozinho.' },
   { icon: Globe, t: 'Site próprio em 24h', d: 'Site profissional com seu domínio, white-label e 5 temas premium. Ainda aparece no nosso marketplace.' },
   { icon: BarChart3, t: 'CRM completo', d: 'Leads, funil, negócios, comissões, lead scoring e follow-up automático. Nenhum contato perdido.' },
   { icon: Gavel, t: 'Inteligência de leilões', d: 'Caixa, Santander, BB e leiloeiros com calculadora de ROI, score de oportunidade e alertas. Exclusivo.', star: true },
