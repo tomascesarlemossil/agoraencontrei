@@ -43,8 +43,8 @@ function VerificarEmailContent() {
         // Auto-login after verification
         if (data.accessToken && data.user) {
           setAuth(data.user, data.accessToken, data.expiresIn, data.refreshToken)
-          // Redirect to plans page after 2 seconds
-          setTimeout(() => router.push('/parceiros/planos'), 2000)
+          // Redirect the new subscriber straight to their dashboard after 2s.
+          setTimeout(() => router.push('/dashboard'), 2000)
         }
       } catch {
         setStatus('error')
@@ -73,11 +73,11 @@ function VerificarEmailContent() {
             </div>
             <h1 className="text-xl font-bold mb-2" style={{ color: '#1B2B5B' }}>E-mail verificado!</h1>
             <p className="text-gray-500 mb-6">{message}</p>
-            <p className="text-sm text-gray-400 mb-4">Redirecionando para a escolha do plano...</p>
-            <Link href="/parceiros/planos"
+            <p className="text-sm text-gray-400 mb-4">Redirecionando para o seu painel...</p>
+            <Link href="/dashboard"
               className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm text-white"
               style={{ background: '#1B2B5B' }}>
-              Escolher meu plano
+              Ir para o meu painel
             </Link>
           </>
         )}
