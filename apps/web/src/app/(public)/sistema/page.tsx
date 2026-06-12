@@ -109,6 +109,17 @@ export default function SistemaPage() {
         </div>
       </section>
 
+      {/* OFERTA DE FUNDADOR */}
+      <div className="border-y border-[#C9A84C]/40 bg-[#C9A84C]/10 px-4 py-3">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-x-3 gap-y-1 text-center text-sm">
+          <span className="font-bold" style={{ color: NAVY }}>🎁 Oferta de Fundador:</span>
+          <span className="text-gray-700">
+            1º mês <strong>50% OFF</strong> · implantação <strong>grátis</strong> · preço travado no 1º ano · garantia de 7 dias
+          </span>
+          <span className="text-xs font-semibold text-amber-700">— para os primeiros 50 assinantes</span>
+        </div>
+      </div>
+
       {/* DORES */}
       <section className="mx-auto max-w-6xl px-4 py-16">
         <h2 className="mb-2 text-center text-2xl font-bold sm:text-3xl" style={{ color: NAVY, fontFamily: 'Georgia, serif' }}>
