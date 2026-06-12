@@ -854,6 +854,60 @@ export async function runScheduledJobs(app: FastifyInstance) {
     }
   }
 
+  // ── 9b. Geocodificação de leilões por bairro (scatter na região) ────────
+  // Leilões raramente vêm com endereço exato — em geral só bairro/cidade.
+  // Geocodifica pelo bairro (fallback p/ cidade) e aplica um deslocamento
+  // DETERMINÍSTICO (~100–650m) a partir do id, pra espalhar vários leilões do
+  // mesmo bairro na região em vez de empilhar no mesmo ponto. Assim eles
+  // aparecem no mapa (/auctions/map só retorna quem tem lat/lng). A coordenada
+  // é aproximada por design — para leilão, rápido/por-bairro > exato.
+  try {
+    const toGeocode = await app.prisma.auction.findMany({
+      where: {
+        latitude: null,
+        longitude: null,
+        city: { not: null },
+        status: { notIn: ['CANCELLED', 'CLOSED'] },
+      },
+      select: { id: true, neighborhood: true, city: true, state: true },
+      take: 10,
+    })
+
+    if (toGeocode.length > 0) {
+      const { geocodeProperty } = await import('./geocoding.service.js')
+      let geocoded = 0
+      for (const auction of toGeocode) {
+        const result = await geocodeProperty({
+          neighborhood: auction.neighborhood,
+          city: auction.city,
+          state: auction.state,
+        }).catch(() => null)
+        if (!result) continue
+
+        // Offset determinístico a partir do id (estável entre execuções —
+        // não "anda" no mapa a cada rodada).
+        let h = 0
+        for (let i = 0; i < auction.id.length; i++) h = (h * 31 + auction.id.charCodeAt(i)) | 0
+        const angle = (Math.abs(h) % 360) * (Math.PI / 180)
+        const radius = 0.001 + (Math.abs(h >> 9) % 50) / 10000 // ~0.001–0.006° (~100–650m)
+        const lat = result.latitude + Math.sin(angle) * radius
+        const lng = result.longitude + Math.cos(angle) * radius
+
+        await app.prisma.auction.update({
+          where: { id: auction.id },
+          data: { latitude: lat, longitude: lng },
+        }).catch(() => null)
+        geocoded++
+      }
+
+      if (geocoded > 0) {
+        app.log.info(`[scheduled] auction-geocode-bairro: geocoded ${geocoded}/${toGeocode.length} auctions`)
+      }
+    }
+  } catch (err) {
+    app.log.error({ err }, '[scheduled] auction-geocode-bairro failed')
+  }
+
   // ── 10. Lead re-scoring nightly (03h UTC = 00h BRT) ─────────────────────
   // Aplica recency decay e captura mudanças que aconteceram sem trigger
   // direto (ex.: lead que ficou parado, atividades manuais no CRM, etc.).
