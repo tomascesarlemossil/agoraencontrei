@@ -379,8 +379,8 @@ export default async function HomePage() {
             style={{ backgroundColor: 'rgba(201,168,76,0.15)', color: 'var(--site-accent-color, #C9A84C)', border: '1px solid rgba(201,168,76,0.3)' }}
           >
             <Star className="w-3 h-3 fill-current" />
-            <span className="hidden sm:inline">Mais de 20 anos de tradição em Franca/SP</span>
-            <span className="sm:hidden">20+ anos em Franca/SP</span>
+            <span className="hidden sm:inline">Mais de 25 anos de experiência no mercado imobiliário</span>
+            <span className="sm:hidden">25+ anos no mercado imobiliário</span>
           </div>
 
           {/* Título — responsivo */}
@@ -393,13 +393,6 @@ export default async function HomePage() {
             <span style={{ color: 'var(--site-accent-color, #C9A84C)' }}>dos seus sonhos</span>
           </h1>
 
-          {/* Subtítulo — menor no mobile */}
-          <p className="text-white/70 text-sm sm:text-lg mb-5 sm:mb-10 max-w-xl mx-auto font-medium">
-            {stats.total > 0
-              ? `${stats.total.toLocaleString('pt-BR')} imóveis disponíveis para compra e aluguel`
-              : 'Compra, venda e locação de imóveis em Franca e região'}
-          </p>
-
           <HeroSearchForm />
         </div>
 
@@ -411,7 +404,43 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ── 2. SMART QUIZ + CTA AVALIAÇÃO (primeiro após hero) ────────── */}
+      {/* ── LEILÕES (logo após o hero) ────────────────────────────────── */}
+      <section className="py-12" style={{ backgroundColor: theme.colors.primary }}>
+        <div className="max-w-6xl mx-auto px-4 text-center">
+          <h2 className="text-3xl font-bold text-white mb-3" style={{ fontFamily: theme.typography.heroFont }}>
+            Leilões de Imóveis com até 70% de Desconto
+          </h2>
+          <p className="text-white/60 text-lg mb-6 max-w-2xl mx-auto">
+            Dados reais cruzados de Caixa, Santander, ZAP e QuintoAndar. Calculadora de ROI, score jurídico e alertas inteligentes.
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-4 mb-8">
+            <Link href="/leiloes" className="px-8 py-4 rounded-xl font-bold text-lg transition-all hover:scale-105" style={{ backgroundColor: theme.colors.accent, color: theme.colors.primary }}>
+              Ver Leilões Ativos
+            </Link>
+            <Link href="/oportunidades/melhores-alugueis-brasil" className="px-8 py-4 rounded-xl font-bold text-lg border-2 text-white transition-all hover:bg-white/10" style={{ borderColor: theme.colors.accent }}>
+              Ranking de Yield Nacional
+            </Link>
+            <Link href="/investor" className="px-8 py-4 rounded-xl font-bold text-lg border-2 text-white transition-all hover:bg-white/10" style={{ borderColor: '#4ade80' }}>
+              Terminal Investidor
+            </Link>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-3xl mx-auto">
+            {[
+              { label: 'Leilões Monitorados', value: '500+' },
+              { label: 'Desconto Médio', value: '38%' },
+              { label: 'Cidades Cobertas', value: '5.570' },
+              { label: 'Fontes de Dados', value: '12' },
+            ].map(s => (
+              <div key={s.label} className="bg-white/10 rounded-xl px-4 py-3 text-center">
+                <div className="text-xl font-bold" style={{ color: theme.colors.accent }}>{s.value}</div>
+                <div className="text-[11px] text-white/50">{s.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── SMART QUIZ + CTA AVALIAÇÃO ─────────────────────────────────── */}
       <SmartQuizModal>
       <section style={{ backgroundColor: theme.colors.secondary }} className="py-14">
         <div className="max-w-5xl mx-auto px-4 sm:px-6">
@@ -452,38 +481,36 @@ export default async function HomePage() {
       </section>
       </SmartQuizModal>
 
-      {/* ── 3. LEILÕES ────────────────────────────────────────────────────── */}
-      <section className="py-12" style={{ backgroundColor: theme.colors.primary }}>
-        <div className="max-w-6xl mx-auto px-4 text-center">
-          <h2 className="text-3xl font-bold text-white mb-3" style={{ fontFamily: theme.typography.heroFont }}>
-            Leilões de Imóveis com até 70% de Desconto
-          </h2>
-          <p className="text-white/60 text-lg mb-6 max-w-2xl mx-auto">
-            Dados reais cruzados de Caixa, Santander, ZAP e QuintoAndar. Calculadora de ROI, score jurídico e alertas inteligentes.
+      {/* ── SEJA UM PARCEIRO (após Quiz / Avaliação) ──────────────────── */}
+      <section className="py-14 px-4 sm:px-6" style={{ backgroundColor: 'var(--site-primary-color, #1B2B5B)' }}>
+        <div className="max-w-4xl mx-auto rounded-3xl p-8 sm:p-12 text-center" style={{ background: 'linear-gradient(135deg, rgba(201,168,76,0.18), rgba(201,168,76,0.05))', border: '1px solid rgba(201,168,76,0.35)' }}>
+          <p className="text-xs sm:text-sm font-semibold uppercase tracking-widest mb-2" style={{ color: 'var(--site-accent-color, #C9A84C)' }}>
+            Para imobiliárias e corretores
           </p>
-          <div className="flex flex-wrap items-center justify-center gap-4 mb-8">
-            <Link href="/leiloes" className="px-8 py-4 rounded-xl font-bold text-lg transition-all hover:scale-105" style={{ backgroundColor: theme.colors.accent, color: theme.colors.primary }}>
-              Ver Leilões Ativos
+          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3" style={{ fontFamily: 'Georgia, serif' }}>
+            Seja um Parceiro do AgoraEncontrei
+          </h2>
+          <p className="text-white/70 text-sm sm:text-base mb-6 max-w-2xl mx-auto leading-relaxed">
+            Tenha seu site profissional, CRM, IA do Tomás e marketplace integrado.
+            Anuncie seus imóveis com tecnologia de ponta e ganhe presença regional.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Link
+              href="/parceiros/planos"
+              className="px-7 py-3 rounded-xl text-sm font-bold transition-all hover:brightness-110 inline-flex items-center justify-center gap-2"
+              style={{ backgroundColor: 'var(--site-accent-color, #C9A84C)', color: 'var(--site-primary-color, #1B2B5B)' }}
+            >
+              Ver Planos e Assinar <ArrowRight className="w-4 h-4" />
             </Link>
-            <Link href="/oportunidades/melhores-alugueis-brasil" className="px-8 py-4 rounded-xl font-bold text-lg border-2 text-white transition-all hover:bg-white/10" style={{ borderColor: theme.colors.accent }}>
-              Ranking de Yield Nacional
-            </Link>
-            <Link href="/investor" className="px-8 py-4 rounded-xl font-bold text-lg border-2 text-white transition-all hover:bg-white/10" style={{ borderColor: '#4ade80' }}>
-              Terminal Investidor
-            </Link>
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-3xl mx-auto">
-            {[
-              { label: 'Leilões Monitorados', value: '500+' },
-              { label: 'Desconto Médio', value: '38%' },
-              { label: 'Cidades Cobertas', value: '5.570' },
-              { label: 'Fontes de Dados', value: '12' },
-            ].map(s => (
-              <div key={s.label} className="bg-white/10 rounded-xl px-4 py-3 text-center">
-                <div className="text-xl font-bold" style={{ color: theme.colors.accent }}>{s.value}</div>
-                <div className="text-[11px] text-white/50">{s.label}</div>
-              </div>
-            ))}
+            <a
+              href="https://wa.me/5516981010004?text=Olá! Gostaria de ser um parceiro do AgoraEncontrei e anunciar meus imóveis."
+              target="_blank"
+              rel="noreferrer"
+              className="px-7 py-3 rounded-xl text-sm font-bold border-2 text-white transition-all hover:bg-white/10 inline-flex items-center justify-center gap-2"
+              style={{ borderColor: 'rgba(201,168,76,0.5)' }}
+            >
+              Falar pelo WhatsApp
+            </a>
           </div>
         </div>
       </section>
@@ -881,40 +908,6 @@ export default async function HomePage() {
             </svg>
             Canal no YouTube
           </a>
-        </div>
-      </section>
-
-      {/* ── CTA SEJA UM PARCEIRO (antes do rodapé) ─────────────────────── */}
-      <section className="py-14 px-4 sm:px-6" style={{ backgroundColor: 'var(--site-primary-color, #1B2B5B)' }}>
-        <div className="max-w-4xl mx-auto rounded-3xl p-8 sm:p-12 text-center" style={{ background: 'linear-gradient(135deg, rgba(201,168,76,0.18), rgba(201,168,76,0.05))', border: '1px solid rgba(201,168,76,0.35)' }}>
-          <p className="text-xs sm:text-sm font-semibold uppercase tracking-widest mb-2" style={{ color: 'var(--site-accent-color, #C9A84C)' }}>
-            Para imobiliárias e corretores
-          </p>
-          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3" style={{ fontFamily: 'Georgia, serif' }}>
-            Seja um Parceiro do AgoraEncontrei
-          </h2>
-          <p className="text-white/70 text-sm sm:text-base mb-6 max-w-2xl mx-auto leading-relaxed">
-            Tenha seu site profissional, CRM, IA do Tomás e marketplace integrado.
-            Anuncie seus imóveis com tecnologia de ponta e ganhe presença regional.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Link
-              href="/parceiros/planos"
-              className="px-7 py-3 rounded-xl text-sm font-bold transition-all hover:brightness-110 inline-flex items-center justify-center gap-2"
-              style={{ backgroundColor: 'var(--site-accent-color, #C9A84C)', color: 'var(--site-primary-color, #1B2B5B)' }}
-            >
-              Ver Planos e Assinar <ArrowRight className="w-4 h-4" />
-            </Link>
-            <a
-              href="https://wa.me/5516981010004?text=Olá! Gostaria de ser um parceiro do AgoraEncontrei e anunciar meus imóveis."
-              target="_blank"
-              rel="noreferrer"
-              className="px-7 py-3 rounded-xl text-sm font-bold border-2 text-white transition-all hover:bg-white/10 inline-flex items-center justify-center gap-2"
-              style={{ borderColor: 'rgba(201,168,76,0.5)' }}
-            >
-              Falar pelo WhatsApp
-            </a>
-          </div>
         </div>
       </section>
 
