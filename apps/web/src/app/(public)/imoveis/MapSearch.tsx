@@ -155,6 +155,7 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
   const drawingPointsRef = useRef<[number, number][]>([])
   const drawingRef = useRef(false)
   const tempMarkersRef = useRef<MapLibreMarker[]>([])
+  const didFitAuctionsRef = useRef(false)
 
   const [clusters, setClusters] = useState<(Cluster & { resolvedLat: number; resolvedLng: number })[]>(() => {
     if (!initialClusters) return []
@@ -633,6 +634,31 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
       }))
 
     source.setData({ type: 'FeatureCollection', features })
+
+    // Enquadra o mapa nos leilões na PRIMEIRA carga. Sem isto o mapa fica preso
+    // em Franca/zoom 14 e os pins (geocodificados por bairro/cidade Brasil
+    // afora) ficam fora da vista — parecia que "não carregava as opções".
+    if (features.length > 0 && !didFitAuctionsRef.current && mapInstance.current) {
+      didFitAuctionsRef.current = true
+      let minLng = Infinity, minLat = Infinity, maxLng = -Infinity, maxLat = -Infinity
+      for (const f of features) {
+        const [lng, lat] = f.geometry.coordinates
+        if (lng < minLng) minLng = lng
+        if (lng > maxLng) maxLng = lng
+        if (lat < minLat) minLat = lat
+        if (lat > maxLat) maxLat = lat
+      }
+      try {
+        if (minLng === maxLng && minLat === maxLat) {
+          mapInstance.current.easeTo({ center: [minLng, minLat], zoom: 12, duration: 600 })
+        } else {
+          mapInstance.current.fitBounds(
+            [[minLng, minLat], [maxLng, maxLat]],
+            { padding: 60, maxZoom: 13, duration: 600 },
+          )
+        }
+      } catch { /* fitBounds pode falhar com bounds degenerados — ignora */ }
+    }
   }, [filteredAuctions, isLoaded])
 
   // Render owner-direct green pins using MapLibre Markers
