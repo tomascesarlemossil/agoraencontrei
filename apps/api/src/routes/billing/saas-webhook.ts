@@ -20,6 +20,7 @@ import type { FastifyInstance } from 'fastify'
 import { env } from '../../utils/env.js'
 import type { AsaasWebhookEvent } from '../../services/asaas.service.js'
 import { safeStringEqual } from '../../utils/crypto-safe.js'
+import { createPasswordSetupToken } from '../auth/first-access.js'
 
 export default async function saasWebhookRoutes(app: FastifyInstance) {
   const prisma = app.prisma as any
@@ -211,7 +212,14 @@ async function handleTenantEvent(
       // Envia credenciais ao parceiro (e-mail + WhatsApp em paralelo).
       // Tudo feito em try/catch independentes pra um canal falhar sem
       // travar a ativação.
-      if (tempPasswordPlain && customerEmail) {
+      if (customerEmail) {
+        // Em vez de enviar a senha em texto puro, geramos um token de 1º acesso
+        // e mandamos um link para o parceiro definir a própria senha.
+        const setupToken = await createPasswordSetupToken(prisma, customerEmail).catch(() => null)
+        const setupLink = setupToken
+          ? `https://agoraencontrei.com.br/primeiro-acesso?token=${setupToken}`
+          : 'https://agoraencontrei.com.br/login'
+
         try {
           const { sendEmail, isEmailConfigured } = await import('../../services/email.service.js')
           if (isEmailConfigured()) {
@@ -225,10 +233,12 @@ async function handleTenantEvent(
                   <p style="margin:0 0 12px"><a href="https://agoraencontrei.com.br/login" style="color:#C9A84C">https://agoraencontrei.com.br/login</a></p>
                   <p style="margin:0 0 8px"><strong>Seu site:</strong></p>
                   <p style="margin:0 0 12px"><a href="${siteUrl}" style="color:#C9A84C">${siteUrl}</a></p>
-                  <p style="margin:0 0 8px"><strong>E-mail:</strong> ${customerEmail}</p>
-                  <p style="margin:0"><strong>Senha temporária:</strong> <code style="background:#f1f5f9;padding:2px 6px;border-radius:4px">${tempPasswordPlain}</code></p>
+                  <p style="margin:0 0 12px"><strong>E-mail:</strong> ${customerEmail}</p>
+                  <div style="text-align:center;margin:8px 0 4px">
+                    <a href="${setupLink}" style="display:inline-block;background:#C9A84C;color:#1B2B5B;font-weight:700;padding:12px 24px;border-radius:10px;text-decoration:none">Definir minha senha →</a>
+                  </div>
                 </div>
-                <p style="margin:16px 0;color:#475569">No primeiro acesso troque a senha em <em>Perfil → Segurança</em>.</p>
+                <p style="margin:16px 0;color:#475569">Clique no botão acima para criar sua senha de acesso. O link expira em 7 dias.</p>
                 <p style="margin:24px 0 0;font-size:13px;color:#64748b">Qualquer dúvida, responda este e-mail.</p>
               </div>`
             await sendEmail({
@@ -256,9 +266,9 @@ async function handleTenantEvent(
                 `🎉 *AgoraEncontrei — Pagamento confirmado!*\n\n` +
                 `Seu site está no ar:\n${siteUrl}\n\n` +
                 `*Acesso ao painel:*\nhttps://agoraencontrei.com.br/login\n\n` +
-                `*E-mail:* ${customerEmail}\n` +
-                `*Senha temporária:* ${tempPasswordPlain}\n\n` +
-                `Troque a senha no primeiro acesso (Perfil → Segurança).`
+                `*E-mail:* ${customerEmail}\n\n` +
+                `*Defina sua senha de acesso:*\n${setupLink}\n\n` +
+                `(o link expira em 7 dias)`
               await fetch(`https://graph.facebook.com/v19.0/${WHATSAPP_PHONE_ID}/messages`, {
                 method: 'POST',
                 headers: {
@@ -281,7 +291,7 @@ async function handleTenantEvent(
           }
         }
       } else {
-        app.log.warn(`[saas-webhook] Tenant ${subdomain} sem tempPasswordPlain — credenciais NÃO enviadas (provavelmente checkout antigo)`)
+        app.log.warn(`[saas-webhook] Tenant ${subdomain} sem customerEmail — link de 1º acesso NÃO enviado`)
       }
 
       app.log.info(`[saas-webhook] Tenant ${subdomain} ACTIVATED (plan: ${tenant.plan})`)
