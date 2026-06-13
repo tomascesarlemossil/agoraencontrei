@@ -60,6 +60,8 @@ check "/parceiros/planos"     "$WEB_URL/parceiros/planos"       200
 check "/seja-parceiro"        "$WEB_URL/seja-parceiro"          200
 check "/politica-privacidade" "$WEB_URL/politica-privacidade"   200
 check "/termos-uso"           "$WEB_URL/termos-uso"             200
+check "/cookies"              "$WEB_URL/cookies"                200
+check "/primeiro-acesso"      "$WEB_URL/primeiro-acesso"        200             "" 0
 check "/contato"              "$WEB_URL/contato"                200
 
 echo ""
@@ -71,9 +73,11 @@ check "auctions/stats"        "$API_URL/api/v1/auctions/stats"  200             
 
 echo ""
 echo "🔒 Segurança"
-# Webhook SaaS sem o header asaas-access-token DEVE recusar (401) quando o
+# Webhooks sem o header asaas-access-token DEVEM recusar (401) quando o
 # ASAAS_WEBHOOK_SECRET está setado em produção (fail-closed). 200 aqui = alerta.
 check_post "webhook SaaS sem segredo → 401" "$API_URL/api/v1/webhooks/asaas" 401 \
+  '{"event":"PAYMENT_CONFIRMED","payment":{"id":"smoke-test"}}' 0
+check_post "webhook especialistas sem segredo → 401" "$API_URL/api/v1/specialists/payments/webhook" 401 \
   '{"event":"PAYMENT_CONFIRMED","payment":{"id":"smoke-test"}}' 0
 
 echo ""

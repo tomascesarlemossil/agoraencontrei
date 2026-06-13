@@ -16,12 +16,12 @@ API_URL=https://api.agoraencontrei.com.br \
 
 ---
 
-## A. Vitrine pública  *(PR #160)*
+## A. Vitrine pública  *(PRs #160, #178)*
 - [ ] `/` carrega com a **home reordenada** (Leilões → Quiz → Parceiro; badge "Mais de 25 anos…").
 - [ ] Sem `<meta keywords>` gigante no `<head>` (View Source).
 - [ ] `/imoveis`, `/leiloes`, `/avaliacao`, `/anunciar` abrem (200).
-- [ ] `/politica-privacidade`, `/termos-uso`, `/contato`, `/sobre` abrem.
-- [ ] Banner de cookies aparece; GA/Pixel só disparam após consentimento (DevTools → Network).
+- [ ] `/politica-privacidade`, `/termos-uso`, `/cookies`, `/contato`, `/sobre` abrem.
+- [ ] Banner de cookies aparece e linka **Privacidade e Cookies**; GA/Pixel só disparam após consentimento (DevTools → Network).
 
 ## B. Material de vendas  *(PRs #166–#169)*
 - [ ] **Navbar** mostra **"💼 Para Imobiliárias"** (desktop e mobile) → leva a `/sistema`.
@@ -29,9 +29,10 @@ API_URL=https://api.agoraencontrei.com.br \
 - [ ] `/pitch`: 9 slides em scroll-snap; slide do Tomás diz "Seu plantão nunca dorme" (não "exclusivo"); slide de leilões diz "Ninguém mais tem".
 - [ ] Docs revisados: `PLANO-DE-VENDAS.md` e `ANALISE-CONCORRENTES.md` coerentes (leilões = diferencial nº 1).
 
-## C. Leilões — performance + mapa  *(PRs #165, #171)*
+## C. Leilões — performance + mapa  *(PRs #165, #171, #175, #179)*
 - [ ] `/leiloes` carrega a lista **rápido** (não trava ~12s esperando feeds).
 - [ ] Logo após o hero aparece o **mapa por região** (satélite, com pins).
+- [ ] **Mapa só mostra leilões:** o mapa de `/leiloes` exibe **apenas pins de leilão** (sem imóveis comuns nem toggle "🏠 Venda"); já o `/imoveis?view=map` mostra **tudo** (imóveis + leilões).
 - [ ] Pins de leilão aparecem **espalhados por bairro** (após o job de geocodificação rodar algumas vezes — ver seção H).
 - [ ] Filtros, botão 💎 Pérola, calculadora de ROI e criação de alerta funcionam.
 
@@ -40,12 +41,12 @@ API_URL=https://api.agoraencontrei.com.br \
 - [ ] No dashboard aparece o **checklist "Primeiros passos"** (4 passos; dispensável; some quando concluído).
 - [ ] Cadastro de especialista como **Imobiliária** ou **Loteadora** **não dá mais 400** *(requer o SQL do enum aplicado no Neon)*.
 
-## E. Fluxo de assinatura (pagamento) — o mais crítico  *(PRs #161, #162)*
+## E. Fluxo de assinatura (pagamento) — o mais crítico  *(PRs #161, #162, #180)*
 - [ ] `/parceiros/planos` mostra a **landing de planos** (não redireciona p/ cadastro).
 - [ ] Escolher plano → checkout → gera cobrança Asaas (PIX/boleto/cartão).
-- [ ] Pagar (sandbox) → **webhook ativa o tenant** → credenciais chegam por **e-mail/WhatsApp**.
+- [ ] Pagar (sandbox) → **webhook ativa o tenant** → chega e-mail/WhatsApp com **link de 1º acesso** (`/primeiro-acesso?token=…`), **sem senha em texto puro**.
 - [ ] **Não há mais "sucesso falso"**: se o Asaas não estiver configurado, o checkout mostra erro honesto (não tela de sucesso).
-- [ ] Login com as credenciais → acessa o dashboard.
+- [ ] Abrir o link → **definir senha** em `/primeiro-acesso` → login com a nova senha → dashboard. (Link expira em 7 dias; link inválido/usado mostra erro amigável.)
 - [ ] `{subdomínio}.agoraencontrei.com.br` → site do cliente no ar.
 
 ## F. SaaS / Tenant  *(PRs #170, #172)*
@@ -54,15 +55,17 @@ API_URL=https://api.agoraencontrei.com.br \
 - [ ] **Expiração de trial:** um tenant com `planStatus=TRIAL` e `trialEndsAt` no passado é **suspenso** automaticamente (após o job rodar) → `planStatus=SUSPENDED`, site fora do ar.
 - [ ] Pagar reativa o tenant (webhook → `ACTIVE`).
 
-## G. Segurança  *(PRs #161, #172, #173)*
-- [ ] **Webhook fail-closed:** `POST /api/v1/webhooks/asaas` **sem** o header `asaas-access-token` → **401** (com `ASAAS_WEBHOOK_SECRET` setado). *(O smoke-test verifica isso.)*
+## G. Segurança  *(PRs #161, #172, #173, #176)*
+- [ ] **Webhook SaaS fail-closed:** `POST /api/v1/webhooks/asaas` **sem** o header `asaas-access-token` → **401** (com `ASAAS_WEBHOOK_SECRET` setado). *(O smoke-test verifica isso.)*
+- [ ] **Webhook de especialistas fail-closed:** `POST /api/v1/specialists/payments/webhook` **sem** segredo → **401**; e um pagamento **VIP** confirmado ativa **VIP** (não cai em PRIME).
 - [ ] **Idempotência:** reenviar o mesmo evento de pagamento não ativa/credita duas vezes.
 - [ ] **Sentry (opcional):** após `pnpm --filter @agoraencontrei/api add @sentry/node` + `SENTRY_DSN`, um erro 500 aparece no painel do Sentry. Sem isso, o app funciona normal (no-op).
 
-## H. Jobs agendados (backend)  *(PRs #170, #171)*
+## H. Jobs agendados + scrapers (backend)  *(PRs #170, #171, #179)*
 > Rodam a cada ~30 min via `scheduled.jobs.ts`. Confira nos **logs do Railway**:
 - [ ] `[scheduled] trial-expiration: suspended N expired trials` (quando houver trials vencidos).
 - [ ] `[scheduled] auction-geocode-bairro: geocoded N/M auctions` (backfill das coordenadas dos leilões).
+- [ ] **Scraper Caixa:** novos leilões trazem `source_format: caixa_csv` (usa o CSV oficial como abordagem 0; cai para ASP/HTML se o CSV falhar).
 - [ ] Demais jobs sem erro (boleto, follow-ups, lembretes de visita, etc.).
 
 ---
