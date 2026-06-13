@@ -239,11 +239,10 @@ export default async function saasBillingRoutes(app: FastifyInstance) {
               nicheSlug: body.nicheSlug || 'imobiliaria',
               customerEmail: body.customer.email,
               customerPhone: body.customer.phone || null,
-              // Marcamos a senha como temporária para o webhook saber que
-              // ele deve incluí-la no e-mail/WhatsApp de boas-vindas. Após
-              // o primeiro login bem-sucedido a flag deve sair.
+              // O webhook de ativação gera um token de 1º acesso e envia um
+              // link para o parceiro definir a própria senha — sem senha em
+              // texto puro guardada no banco. Ver routes/auth/first-access.ts.
               tempPasswordIssued: true,
-              tempPasswordPlain: tempPassword,
             },
           },
         })
