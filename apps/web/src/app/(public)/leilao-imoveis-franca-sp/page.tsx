@@ -69,7 +69,7 @@ function getPropertyIcon(type: string) {
   }
 }
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'https://api.agoraencontrei.com.br'
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'https://api-production-669c.up.railway.app'
 
 // ── Main Component ────────────────────────────────────────────────────────────
 export default function LeilaoPage() {

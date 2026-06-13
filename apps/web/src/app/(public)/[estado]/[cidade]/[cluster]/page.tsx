@@ -11,7 +11,7 @@ import { MapPin, Home, Search, ChevronRight } from 'lucide-react'
 import { IBGE_CITY_BY_SLUG, IBGE_CITIES_152, getIbgeCitySnippet } from '@/data/seo-ibge-cities-expanded'
 
 const WEB_URL = process.env.NEXT_PUBLIC_WEB_URL || 'https://agoraencontrei.com.br'
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.agoraencontrei.com.br'
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api-production-669c.up.railway.app'
 
 // Mapeamento de cluster-slug para metadados
 const CLUSTER_META: Record<string, { title: string; h1: string; desc: string; schema: string; icon: string }> = {
