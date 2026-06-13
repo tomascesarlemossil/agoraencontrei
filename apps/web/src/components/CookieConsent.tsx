@@ -40,6 +40,9 @@ export function CookieConsent() {
             Ao clicar em &quot;Aceitar&quot;, você concorda com o uso de cookies conforme nossa{' '}
             <Link href="/politica-privacidade" className="underline text-yellow-300 hover:text-yellow-200">
               Política de Privacidade
+            </Link>{' '}e{' '}
+            <Link href="/cookies" className="underline text-yellow-300 hover:text-yellow-200">
+              Política de Cookies
             </Link>.
           </p>
           <p className="text-xs text-white/50 mt-1">
