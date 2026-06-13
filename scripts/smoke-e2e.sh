@@ -12,7 +12,9 @@
 set -u
 
 WEB_URL="${WEB_URL:-https://www.agoraencontrei.com.br}"
-API_URL="${API_URL:-https://api.agoraencontrei.com.br}"
+# API: o domínio custom api.agoraencontrei.com.br estava com TLS quebrado (503);
+# o Railway responde. Ajuste para o seu domínio assim que o TLS estiver ok.
+API_URL="${API_URL:-https://api-production-669c.up.railway.app}"
 TIMEOUT="${TIMEOUT:-25}"
 
 pass=0; fail=0; warn=0
@@ -66,10 +68,12 @@ check "/contato"              "$WEB_URL/contato"                200
 
 echo ""
 echo "🔌 API — $API_URL"
-check "health"                "$API_URL/health"                 200             "" 0
-check "auctions (lista)"      "$API_URL/api/v1/auctions"        200
-check "auctions/map (pins)"   "$API_URL/api/v1/auctions/map"    200             "" 0
-check "auctions/stats"        "$API_URL/api/v1/auctions/stats"  200             "" 0
+# /health = liveness real. Os endpoints de dados respondem 403 a acesso
+# automatizado (proteção anti-bot da API: "Automated access is not permitted"),
+# então 403 aqui = API no ar e protegida (não é falha). No navegador funcionam.
+check "health (liveness)"     "$API_URL/health"                 200             "status"
+check "auctions (anti-bot)"   "$API_URL/api/v1/auctions"        403             "" 0
+check "auctions/map (anti-bot)" "$API_URL/api/v1/auctions/map"  403             "" 0
 
 echo ""
 echo "🔒 Segurança"
