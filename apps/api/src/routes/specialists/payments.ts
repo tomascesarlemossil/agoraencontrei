@@ -252,11 +252,24 @@ export async function specialistPaymentRoutes(app: FastifyInstance) {
     app.log.info({ event: event.event }, 'Asaas webhook recebido')
 
     try {
-      const externalRef = event.payment?.externalReference || event.subscription?.externalReference
+      let externalRef = event.payment?.externalReference || event.subscription?.externalReference
       const subscriptionId = event.payment?.subscription || event.subscription?.id
 
       if (!externalRef && !subscriptionId) {
         return reply.send({ received: true })
+      }
+
+      // Eventos PAYMENT_* às vezes chegam só com o subscriptionId, sem o
+      // externalReference. Recupera a referência consultando a assinatura no
+      // Asaas — sem isso perderíamos o plano-alvo e ativaríamos PRIME por
+      // engano para um assinante VIP.
+      if (!externalRef && subscriptionId && ASAAS_API_KEY) {
+        try {
+          const sub = await asaasFetch<{ externalReference?: string }>(`/subscriptions/${subscriptionId}`)
+          if (sub?.externalReference) externalRef = sub.externalReference
+        } catch (subErr: any) {
+          app.log.warn({ subErr }, 'Não foi possível recuperar a assinatura no Asaas')
+        }
       }
 
       // Extrair specialistId da referência externa
@@ -271,7 +284,8 @@ export async function specialistPaymentRoutes(app: FastifyInstance) {
         }
       }
 
-      // Se não tiver na referência, buscar pelo subscriptionId
+      // Fallback final: achar pelo subscriptionId no banco. Usa o plano atual
+      // do especialista como alvo (melhor que defaultar para PRIME).
       if (!specialistId && subscriptionId) {
         const found = await prisma.specialist.findFirst({
           where: { asaasSubscriptionId: subscriptionId },
@@ -279,6 +293,7 @@ export async function specialistPaymentRoutes(app: FastifyInstance) {
         })
         if (found) {
           specialistId = found.id
+          targetPlan = targetPlan || found.plan
         }
       }
 
