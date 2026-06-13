@@ -20,6 +20,7 @@ import {
   createCharge,
   type AsaasBillingType,
 } from '../../services/asaas.service.js'
+import { isSubdomainAvailable } from '../../services/tenant.service.js'
 
 /**
  * Gera senha temporária legível (ex: "Onda7-Mar9-Lua") — fácil de copiar
@@ -34,6 +35,22 @@ function generateTempPassword(): string {
 
 export default async function saasBillingRoutes(app: FastifyInstance) {
   const prisma = app.prisma as any
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // GET /check-subdomain — disponibilidade do subdomínio (PÚBLICO)
+  // O checkout é público; a versão em /tenants exige auth e por isso o checkout
+  // recebia 401 e marcava TODO subdomínio como indisponível (botão travado).
+  // Retorna shape PLANO { available, reason } — o front lê direto.
+  // ═══════════════════════════════════════════════════════════════════════════
+  app.get('/check-subdomain', async (req, reply) => {
+    const sd = String((req.query as any)?.subdomain ?? '').trim()
+    if (!sd) return reply.status(400).send({ available: false, reason: 'Informe um subdomínio.' })
+    const result = await isSubdomainAvailable(prisma, sd).catch(() => ({
+      available: false,
+      reason: 'Não foi possível verificar agora. Tente novamente.',
+    }))
+    return reply.send(result)
+  })
 
   // ═══════════════════════════════════════════════════════════════════════════
   // POST /checkout — Create subscription for a plan
