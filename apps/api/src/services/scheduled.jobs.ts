@@ -1211,4 +1211,61 @@ export async function runScheduledJobs(app: FastifyInstance) {
   } catch (err) {
     app.log.error({ err }, '[scheduled] trial-expiration failed')
   }
+
+  // ── 14. Libera checkouts abandonados (nunca ativados) — 1x/dia (04h UTC) ──
+  // Tenant criado no checkout mas que NUNCA pagou (activatedAt null) e cujo
+  // trial venceu há 7+ dias: libera o subdomínio e o e-mail (tombstone), para
+  // que o nome possa ser reusado. NÃO deleta (evita risco de FK/perda); só
+  // renomeia + marca CANCELLED. Paga-se com activatedAt != null => protegido.
+  if (now.getUTCHours() === 4 && now.getUTCMinutes() < 30) {
+    try {
+      const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+      const orphans = await app.prisma.tenant.findMany({
+        where: {
+          activatedAt: null,
+          planStatus: { in: ['TRIAL', 'PENDING_PAYMENT', 'SUSPENDED'] },
+          trialEndsAt: { not: null, lt: sevenDaysAgo },
+        },
+        select: { id: true, subdomain: true, ownerId: true, settings: true },
+        take: 20,
+      })
+
+      let released = 0
+      for (const t of orphans) {
+        const tag = t.id.slice(-6)
+        try {
+          await app.prisma.$transaction(async (tx: any) => {
+            await tx.tenant.update({
+              where: { id: t.id },
+              data: {
+                subdomain: `${t.subdomain}-exp-${tag}`.slice(0, 50),
+                planStatus: 'CANCELLED',
+                isActive: false,
+                settings: { ...((t.settings as any) || {}), releasedAt: now.toISOString(), originalSubdomain: t.subdomain },
+              },
+            })
+            if (t.ownerId) {
+              const owner = await tx.user.findUnique({ where: { id: t.ownerId }, select: { email: true } }).catch(() => null)
+              if (owner?.email && !owner.email.includes('+exp-')) {
+                const [local, domain] = owner.email.split('@')
+                await tx.user.update({
+                  where: { id: t.ownerId },
+                  data: { email: `${local}+exp-${tag}@${domain || 'expired.local'}` },
+                }).catch(() => null)
+              }
+            }
+          })
+          released++
+        } catch (e) {
+          app.log.warn({ e, tenantId: t.id }, '[scheduled] orphan-release skip')
+        }
+      }
+
+      if (released > 0) {
+        app.log.info(`[scheduled] orphan-checkout-release: liberou ${released} subdomínios/e-mails abandonados`)
+      }
+    } catch (err) {
+      app.log.error({ err }, '[scheduled] orphan-checkout-release failed')
+    }
+  }
 }
