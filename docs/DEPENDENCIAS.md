@@ -49,10 +49,11 @@
 | **#61** | Regenera `pnpm-lock.yaml` p/ `tomas-knowledge` | abr/2026 (draft) | ❌ **Fechar — OBSOLETO.** `tomas-knowledge` já está no lockfile da `main`. |
 | **#41** | SEO 1M URLs (152 cidades IBGE, rotas `[estado]/[cidade]`) | abr/2026 | ⚠️ **Conflita.** A rota `[estado]` **já existe na `main`** — a SEO foi evoluída por outro caminho. Reavaliar item a item ou fechar; **não mergear como está** (risco de thin content / crawl budget em 1M URLs). |
 | **#69** | Reliability sprint 2+3 (scope cross-tenant, retry Asaas, idempotência, observabilidade) | abr/2026 | ⚠️ **Parcialmente superado.** Idempotência de webhook já foi tratada nesta sessão (#161). Tem partes valiosas (tenant scope, observabilidade) mas está 2 meses defasado → precisa rebase + resolução de conflito + revisão. Não mergear às cegas. |
-| **#92** | Scraper Caixa (CSV) + **validação de token no webhook de especialistas** + SEO de bairro | mai/2026 | ⚠️ **Sobrepõe o #176.** O #92 já fazia a validação de token do webhook de especialistas — mas vem embrulhado com scraper + SEO. O **#176** (desta sessão) faz essa correção de forma **focada e limpa**. Recomendação: mergear **#176**, e do #92 só reaproveitar (cherry-pick) o que for útil e não-redundante (ex.: recuperar `externalReference` via `subscriptionId`; fallback CSV da Caixa) — **não mergear #92 inteiro**. |
+| **#92** | Scraper Caixa (CSV) + validação de token no webhook de especialistas + SEO de bairro | mai/2026 | ✅ **Webhook já cherry-picked no #176** (validação de token **+ recuperação de `externalReference` via `subscriptionId`**, que corrigia a ativação de plano errado). Resta avaliar **só o fallback CSV da Caixa** no scraper — exige o diff real + teste de scraping. **Não mergear #92 inteiro** (reintroduz código antigo + SEO já superada). |
 
-> ⚠️ **Atenção ao #92 vs #176:** não mergeie os dois. O #176 é o caminho correto;
-> o #92 inteiro reintroduz código antigo e mudanças não relacionadas.
+> ⚠️ **#92 vs #176:** a parte do webhook do #92 **já está no #176** (token +
+> recuperação de `externalReference`). Não mergeie o #92 inteiro — resta só
+> avaliar o **scraper CSV da Caixa** à parte, com o diff e um teste de scraping.
 
 ---
 
