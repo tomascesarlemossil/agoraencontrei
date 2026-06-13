@@ -124,7 +124,7 @@ export function DynamicPlans() {
     const t = setTimeout(async () => {
       try {
         const r = await fetch(
-          `${API_URL}/api/v1/tenants/check-subdomain?subdomain=${encodeURIComponent(sd)}`,
+          `${API_URL}/api/v1/billing/saas/check-subdomain?subdomain=${encodeURIComponent(sd)}`,
         )
         const d = await r.json()
         if (d.available) setSubdomainStatus({ state: 'available' })
