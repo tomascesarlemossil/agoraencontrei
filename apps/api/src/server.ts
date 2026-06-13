@@ -20,6 +20,7 @@ import compress from '@fastify/compress'
 // ── Routes ─────────────────────────────────────────────────────────────────
 import healthRoutes from './routes/health.js'
 import authRoutes from './routes/auth/index.js'
+import firstAccessRoutes from './routes/auth/first-access.js'
 import usersRoutes from './routes/users/index.js'
 import propertiesRoutes from './routes/properties/index.js'
 import leadsRoutes from './routes/leads/index.js'
@@ -723,6 +724,7 @@ async function bootstrap() {
   // ── Routes ──────────────────────────────────────────────────────────────
   await app.register(healthRoutes, { prefix: '/health' })
   await app.register(authRoutes,   { prefix: '/api/v1/auth' })
+  await app.register(firstAccessRoutes, { prefix: '/api/v1/auth' })
   await app.register(usersRoutes,  { prefix: '/api/v1/users' })
   await app.register(propertiesRoutes, { prefix: '/api/v1/properties' })
   await app.register(leadsRoutes,  { prefix: '/api/v1/leads' })
