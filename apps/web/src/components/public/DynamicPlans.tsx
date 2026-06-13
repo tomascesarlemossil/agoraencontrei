@@ -6,7 +6,8 @@ import {
   Bot, MessageCircle, BarChart3, Globe, Code, EyeOff, Users,
   FileText, Lock, Loader2, X,
 } from 'lucide-react'
-import { ALL_THEMES } from '@/lib/site-factory/theme-registry'
+import { ALL_THEMES, THEME_REGISTRY } from '@/lib/site-factory/theme-registry'
+import { ThemePreviewModal } from './ThemePreviewModal'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 
@@ -113,6 +114,10 @@ export function DynamicPlans() {
   const [subdomainStatus, setSubdomainStatus] = useState<
     { state: 'idle' | 'checking' | 'available' | 'taken'; reason?: string }
   >({ state: 'idle' })
+
+  // Tema em prévia (full-screen). Clicar num card abre a prévia; o usuário
+  // escolhe dentro do modal.
+  const [previewKey, setPreviewKey] = useState<string | null>(null)
 
   useEffect(() => {
     const sd = checkoutForm.subdomain
@@ -568,7 +573,7 @@ export function DynamicPlans() {
                       <button
                         key={t.key}
                         type="button"
-                        onClick={() => setCheckoutForm(f => ({ ...f, layoutType: t.key, primaryColor: t.accentHex }))}
+                        onClick={() => setPreviewKey(t.key)}
                         className={`text-left rounded-xl border-2 overflow-hidden transition-all ${
                           selected ? 'border-amber-400 ring-2 ring-amber-400/30' : 'border-gray-700 hover:border-gray-500'
                         }`}
@@ -591,11 +596,26 @@ export function DynamicPlans() {
                             {selected && <CheckCircle className="w-3 h-3 text-amber-400 ml-auto flex-shrink-0" />}
                           </div>
                           <p className="text-[9px] text-gray-400 truncate mt-0.5">{t.tagline}</p>
+                          <p className="text-[9px] font-semibold mt-0.5" style={{ color: t.accentHex }}>👁 Ver prévia</p>
                         </div>
                       </button>
                     )
                   })}
                 </div>
+
+                {previewKey && (THEME_REGISTRY as any)[previewKey] && (
+                  <ThemePreviewModal
+                    theme={(THEME_REGISTRY as any)[previewKey]}
+                    selected={checkoutForm.layoutType === previewKey}
+                    onChoose={() => {
+                      const th = (THEME_REGISTRY as any)[previewKey]
+                      setCheckoutForm(f => ({ ...f, layoutType: th.key, primaryColor: th.accentHex }))
+                      setPreviewKey(null)
+                    }}
+                    onClose={() => setPreviewKey(null)}
+                  />
+                )}
+
                 {/* Cor principal — ajuste fino */}
                 <div className="mt-3 flex items-center gap-2">
                   <label className="text-xs text-gray-400">Cor principal:</label>
