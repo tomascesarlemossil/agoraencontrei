@@ -8,7 +8,7 @@
  */
 import { IBGE_CITY_BY_SLUG, type IbgeCityData } from '@/data/seo-ibge-cities-expanded'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.agoraencontrei.com.br'
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api-production-669c.up.railway.app'
 
 export interface ResolvedCity {
   slug: string

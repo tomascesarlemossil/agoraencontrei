@@ -20,7 +20,7 @@ import {
 } from '@/lib/financial-engine'
 import { fetchMacroRates, getCachedRates, formatRate } from '@/lib/bcb-rates'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'https://api.agoraencontrei.com.br'
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'https://api-production-669c.up.railway.app'
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 

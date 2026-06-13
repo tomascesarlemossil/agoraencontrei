@@ -332,7 +332,7 @@ export default function LeiloesClient() {
     setLeadSubmitting(true)
     setLeadError('')
     try {
-      const API = process.env.NEXT_PUBLIC_API_URL ?? 'https://api.agoraencontrei.com.br'
+      const API = process.env.NEXT_PUBLIC_API_URL ?? 'https://api-production-669c.up.railway.app'
       const res = await fetch(`${API}/api/v1/public/leads`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
