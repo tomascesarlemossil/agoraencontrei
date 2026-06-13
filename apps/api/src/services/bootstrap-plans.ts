@@ -34,7 +34,7 @@ interface PlanSeed {
 const DEFAULT_PLANS: PlanSeed[] = [
   {
     slug: 'lite',
-    name: 'Lite',
+    name: 'Simples',
     description: 'Site profissional + CRM básico para começar a vender online.',
     priceMonthly: 97,
     priceYearly: 970, // ~2 meses grátis
@@ -56,7 +56,7 @@ const DEFAULT_PLANS: PlanSeed[] = [
   },
   {
     slug: 'pro',
-    name: 'Pro',
+    name: 'Premium',
     description: 'Para corretores e imobiliárias que querem escalar com IA e automação.',
     priceMonthly: 297,
     priceYearly: 2970, // ~2 meses grátis
@@ -67,7 +67,7 @@ const DEFAULT_PLANS: PlanSeed[] = [
     themes: ['urban_tech', 'classic_trust', 'luxury_gold', 'fast_sales_pro', 'signature_estate'],
     modules: ['site_basico', 'crm_avancado', 'ia_tomas', 'whatsapp', 'leiloes'],
     features: [
-      'Tudo do Lite',
+      'Tudo do Simples',
       'Até 200 imóveis publicados',
       'CRM avançado (deals, pipeline, automações)',
       'Tomás IA — 1000 conversas/mês + voz',
@@ -81,7 +81,7 @@ const DEFAULT_PLANS: PlanSeed[] = [
   },
   {
     slug: 'enterprise',
-    name: 'Enterprise',
+    name: 'Super Premium',
     description: 'Domínio próprio, ilimitado e atendimento dedicado.',
     priceMonthly: 597,
     priceYearly: 5970,
@@ -92,7 +92,7 @@ const DEFAULT_PLANS: PlanSeed[] = [
     themes: ['urban_tech', 'classic_trust', 'luxury_gold', 'fast_sales_pro', 'landscape_living', 'signature_estate'],
     modules: ['site_basico', 'crm_avancado', 'ia_tomas', 'whatsapp', 'leiloes', 'dominio_proprio', 'split_pagamentos'],
     features: [
-      'Tudo do Pro',
+      'Tudo do Premium',
       'Imóveis e leads ilimitados',
       'Domínio próprio (.com.br)',
       'Split de pagamentos (Asaas)',
@@ -106,7 +106,7 @@ const DEFAULT_PLANS: PlanSeed[] = [
   {
     slug: 'nivel-maximo',
     name: 'Nível Máximo',
-    description: 'Tudo do Enterprise + Editor de Vídeo IA com legendas automáticas, presets, transições e B-roll por IA.',
+    description: 'Tudo do Super Premium + Editor de Vídeo IA com legendas automáticas, presets, transições e B-roll por IA.',
     priceMonthly: 3500,
     priceYearly: 35000,
     maxProperties: -1,
@@ -116,7 +116,7 @@ const DEFAULT_PLANS: PlanSeed[] = [
     themes: ['urban_tech', 'classic_trust', 'luxury_gold', 'fast_sales_pro', 'landscape_living', 'signature_estate'],
     modules: ['site_basico', 'crm_avancado', 'ia_tomas', 'whatsapp', 'leiloes', 'dominio_proprio', 'split_pagamentos', 'video_editor'],
     features: [
-      'Tudo do Enterprise',
+      'Tudo do Super Premium',
       'Editor de Vídeo IA — 50 renders/dia',
       'Legendas automáticas PT-BR (palavra-a-palavra)',
       'Presets para imobiliário, social, e-commerce, tutorial',

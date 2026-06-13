@@ -1,7 +1,16 @@
 /**
- * Site Factory — Plan Registry
+ * Site Factory — Plan Registry (ESPELHO ESTÁTICO)
  *
- * Defines available plans and which modules each plan unlocks.
+ * ⚠️ FONTE DE VERDADE = banco de dados (`PlanDefinition`, semeado por
+ * `apps/api/src/services/bootstrap-plans.ts`). O checkout (`/saas/checkout`) e
+ * a página `/parceiros/planos` (via `DynamicPlans` + catálogo público) leem
+ * os planos/preços DIRETO do banco.
+ *
+ * Este arquivo é um ESPELHO ESTÁTICO, usado só em contextos renderizados em
+ * build/sem fetch: `/sistema`, `/pitch` e a ferramenta interna site-factory.
+ * Mantenha nomes e preços IDÊNTICOS ao seed do banco:
+ *   lite → "Simples" (R$ 97) · pro → "Premium" (R$ 297) · enterprise → "Super Premium" (R$ 597)
+ * Ao mudar um plano, edite o seed (fonte) e reflita aqui.
  */
 
 export type PlanKey = 'LITE' | 'PRO' | 'ENTERPRISE'
