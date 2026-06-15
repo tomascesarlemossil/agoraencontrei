@@ -358,6 +358,32 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
     loadAuctions()
   }, [])
 
+  // Fallback: geocodifica leilões que vieram sem latitude/longitude.
+  // Os scrapers nem sempre preenchem coordenadas, então sem isto esses
+  // leilões não viram pin no mapa. Resolve progressivamente (respeitando o
+  // rate-limit do Nominatim) e atualiza o estado para o pin aparecer.
+  const geocodeAttemptedRef = useRef<Set<string>>(new Set())
+  useEffect(() => {
+    const pending = auctions.filter(
+      a => (!a.latitude || !a.longitude) && (a.neighborhood || a.city) && !geocodeAttemptedRef.current.has(a.id)
+    )
+    if (pending.length === 0) return
+
+    let delay = 0
+    for (const a of pending) {
+      geocodeAttemptedRef.current.add(a.id)
+      setTimeout(async () => {
+        const coords = await geocodeNeighborhood(a.neighborhood || a.city || '', a.city || 'Franca')
+        if (coords) {
+          setAuctions(prev => prev.map(p =>
+            p.id === a.id ? { ...p, latitude: coords[0], longitude: coords[1] } : p
+          ))
+        }
+      }, delay)
+      delay += NOMINATIM_DELAY
+    }
+  }, [auctions])
+
   // Inject MapLibre CSS + critical inline styles
   useEffect(() => {
     // Critical inline CSS for canvas positioning (no network needed)
