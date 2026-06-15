@@ -185,6 +185,11 @@ const nextConfig = {
             value: [
               "default-src 'self'",
               "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://connect.facebook.net https://www.googletagmanager.com https://www.google-analytics.com https://maps.googleapis.com https://cdn.jsdelivr.net https://unpkg.com",
+              // MapLibre GL processa as fontes GeoJSON/clustering num Web Worker
+              // carregado via blob: — sem isto os pins do mapa não renderizam
+              // (worker-src cai em default-src 'self' e o blob é bloqueado).
+              "worker-src 'self' blob:",
+              "child-src 'self' blob:",
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com",
               "font-src 'self' https://fonts.gstatic.com",
               "img-src 'self' data: blob: https: http:",
