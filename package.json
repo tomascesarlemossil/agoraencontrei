@@ -13,6 +13,7 @@
     "db:migrate": "pnpm --filter @agoraencontrei/database migrate:dev",
     "db:push": "pnpm --filter @agoraencontrei/database push",
     "db:seed": "pnpm --filter @agoraencontrei/database seed",
+    "db:seed:ligia": "pnpm --filter @agoraencontrei/database seed:ligia",
     "db:studio": "pnpm --filter @agoraencontrei/database studio",
     "lint": "pnpm --parallel --filter './apps/*' lint",
     "typecheck": "pnpm --parallel --filter './apps/*' typecheck",
