@@ -9,6 +9,7 @@
     "push": "prisma db push",
     "seed": "tsx prisma/seed.ts",
     "seed:blog": "tsx prisma/seed-blog.ts",
+    "seed:ligia": "tsx prisma/seed-ligiagiani.ts",
     "studio": "prisma studio",
     "reset": "prisma migrate reset --force"
   },
