@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { X, PenLine, Trash2, Search, MapPin, BedDouble, Maximize } from 'lucide-react'
 import type { Map as MapLibreMap, Marker as MapLibreMarker } from 'maplibre-gl'
+import { getUserGeo, haversineKm, type UserGeo } from '@/lib/geolocation'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://oenbzvxcsgyzqjtlovdq.supabase.co'
@@ -122,6 +123,8 @@ interface Props {
   initialBedrooms?: string
   initialClusters?: Cluster[] // SSR pre-fetched clusters for immediate display
   auctionsOnly?: boolean // quando true, mostra só pins de leilão (esconde imóveis da plataforma)
+  userLat?: number // localização do visitante (passada pelo pai p/ evitar 2º prompt)
+  userLng?: number
 }
 
 // Nominatim cache in module scope
@@ -148,7 +151,7 @@ async function geocodeNeighborhood(neighborhood: string, city: string): Promise<
   return null
 }
 
-export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initialBedrooms, initialClusters, auctionsOnly }: Props) {
+export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initialBedrooms, initialClusters, auctionsOnly, userLat, userLng }: Props) {
   const mapRef = useRef<HTMLDivElement>(null)
   const mapInstance = useRef<MapLibreMap | null>(null)
   const markersRef = useRef<MapLibreMarker[]>([])
@@ -157,6 +160,15 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
   const drawingRef = useRef(false)
   const tempMarkersRef = useRef<MapLibreMarker[]>([])
   const didFitAuctionsRef = useRef(false)
+
+  // Localização do visitante (ao vivo). Inicia com o que o pai passou (se houver)
+  // e tenta obter do navegador caso ainda não tenha. Serve para abrir o mapa já
+  // na região de quem acessa e priorizar os leilões/imóveis mais próximos.
+  const [userLoc, setUserLoc] = useState<UserGeo | null>(
+    typeof userLat === 'number' && typeof userLng === 'number' ? { lat: userLat, lng: userLng } : null,
+  )
+  const userMarkerRef = useRef<MapLibreMarker | null>(null)
+  const didCenterOnUserRef = useRef(false)
 
   const [clusters, setClusters] = useState<(Cluster & { resolvedLat: number; resolvedLng: number })[]>(() => {
     if (!initialClusters) return []
@@ -358,6 +370,45 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
     }
     loadAuctions()
   }, [])
+
+  // Sincroniza com a localização vinda do pai (quando passada via props).
+  useEffect(() => {
+    if (typeof userLat === 'number' && typeof userLng === 'number') {
+      setUserLoc(prev => (prev && prev.lat === userLat && prev.lng === userLng ? prev : { lat: userLat, lng: userLng }))
+    }
+  }, [userLat, userLng])
+
+  // Pede a localização do visitante ao abrir o mapa (se o pai ainda não passou).
+  // Sem isto o mapa abre preso em Franca; com isto abre na região de quem acessa.
+  useEffect(() => {
+    if (userLoc) return
+    let cancelled = false
+    getUserGeo().then(geo => { if (geo && !cancelled) setUserLoc(geo) })
+    return () => { cancelled = true }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Centraliza o mapa na localização do visitante (1x) e fixa um marcador
+  // "você está aqui". Impede o fit-all dos leilões de sobrescrever a vista.
+  useEffect(() => {
+    const map = mapInstance.current
+    if (!userLoc || !isLoaded || !map || didCenterOnUserRef.current) return
+    didCenterOnUserRef.current = true
+    // Voo imediato p/ a região do visitante. O enquadramento fino nos leilões
+    // mais próximos é feito quando os pins chegam (effect de auctions abaixo).
+    try {
+      map.flyTo({ center: [userLoc.lng, userLoc.lat], zoom: 11, duration: 800 })
+    } catch {}
+    import('maplibre-gl').then(mod => {
+      const maplibregl = mod.default || mod
+      try { userMarkerRef.current?.remove() } catch {}
+      const el = document.createElement('div')
+      el.title = 'Você está aqui'
+      el.style.cssText = 'width:18px;height:18px;border-radius:50%;background:#2563eb;border:3px solid #fff;box-shadow:0 0 0 4px rgba(37,99,235,0.25),0 2px 6px rgba(0,0,0,0.3);'
+      userMarkerRef.current = new maplibregl.Marker({ element: el })
+        .setLngLat([userLoc.lng, userLoc.lat])
+        .addTo(map)
+    }).catch(() => {})
+  }, [userLoc, isLoaded])
 
   // Fallback: geocodifica leilões que vieram sem latitude/longitude.
   // Os scrapers nem sempre preenchem coordenadas, então sem isto esses
@@ -671,6 +722,35 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
     // afora) ficam fora da vista — parecia que "não carregava as opções".
     if (features.length > 0 && !didFitAuctionsRef.current && mapInstance.current) {
       didFitAuctionsRef.current = true
+
+      // Com a localização do visitante: enquadra ELE + os leilões mais próximos
+      // (até 12, dentro de ~300km) — abre já na região de quem acessa. Sem
+      // localização: enquadra todos os pins (comportamento anterior).
+      if (userLoc) {
+        const near = features
+          .map(f => ({ f, d: haversineKm(userLoc, { lat: f.geometry.coordinates[1], lng: f.geometry.coordinates[0] }) }))
+          .sort((a, b) => a.d - b.d)
+          .filter(x => x.d <= 300)
+          .slice(0, 12)
+        const pts = near.map(x => x.f.geometry.coordinates as [number, number])
+        pts.push([userLoc.lng, userLoc.lat])
+        let nMinLng = Infinity, nMinLat = Infinity, nMaxLng = -Infinity, nMaxLat = -Infinity
+        for (const [lng, lat] of pts) {
+          if (lng < nMinLng) nMinLng = lng
+          if (lng > nMaxLng) nMaxLng = lng
+          if (lat < nMinLat) nMinLat = lat
+          if (lat > nMaxLat) nMaxLat = lat
+        }
+        try {
+          if (pts.length <= 1 || (nMinLng === nMaxLng && nMinLat === nMaxLat)) {
+            mapInstance.current.easeTo({ center: [userLoc.lng, userLoc.lat], zoom: 11, duration: 600 })
+          } else {
+            mapInstance.current.fitBounds([[nMinLng, nMinLat], [nMaxLng, nMaxLat]], { padding: 70, maxZoom: 13, duration: 600 })
+          }
+        } catch { /* ignora bounds degenerados */ }
+        return
+      }
+
       let minLng = Infinity, minLat = Infinity, maxLng = -Infinity, maxLat = -Infinity
       for (const f of features) {
         const [lng, lat] = f.geometry.coordinates
