@@ -115,7 +115,9 @@ export function HeroSearchForm() {
       const params = new URLSearchParams()
 
       if (result.purpose) params.set('purpose', result.purpose)
-      else params.set('purpose', purpose) // default to selected purpose
+      // Sem finalidade explícita na frase (ex.: "casa no centro"), NÃO força
+      // aluguel — deixa sem purpose para mostrar venda E aluguel, igual à
+      // busca manual. Forçar RENT escondia a maioria do estoque (venda).
 
       if (result.type) params.set('type', result.type)
       if (result.city) params.set('city', result.city)
@@ -135,7 +137,7 @@ export function HeroSearchForm() {
       startTransition(() => router.push(`/imoveis?${params}`))
     } catch {
       // Fallback: use raw query as text search
-      startTransition(() => router.push(`/imoveis?search=${encodeURIComponent(aiQuery)}&purpose=${purpose}`))
+      startTransition(() => router.push(`/imoveis?search=${encodeURIComponent(aiQuery)}`))
     } finally {
       setAiLoading(false)
     }
