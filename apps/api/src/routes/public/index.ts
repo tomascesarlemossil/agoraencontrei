@@ -2018,4 +2018,85 @@ export default async function publicRoutes(app: FastifyInstance) {
 
     return reply.send({ success: true, data: tenant })
   })
+
+  // GET /api/v1/public/tenant/:slug/properties — properties scoped to a tenant's company
+  const PROPERTY_TYPES = ['HOUSE','APARTMENT','LAND','FARM','RANCH','WAREHOUSE','OFFICE','STORE','STUDIO','PENTHOUSE','CONDO','KITNET']
+  app.get('/tenant/:slug/properties', async (req, reply) => {
+    const { slug } = req.params as { slug: string }
+    const q = req.query as Record<string, string | undefined>
+
+    const tenant = await (app.prisma as any).tenant?.findUnique?.({
+      where: { subdomain: slug },
+      select: { companyId: true },
+    }).catch(() => null)
+
+    if (!tenant?.companyId) {
+      return reply.status(404).send({ error: 'TENANT_NOT_FOUND' })
+    }
+
+    const page  = Math.max(1, parseInt(q.page ?? '1', 10) || 1)
+    const limit = Math.min(48, Math.max(1, parseInt(q.limit ?? '24', 10) || 24))
+
+    const where: any = {
+      companyId: tenant.companyId,
+      status: 'ACTIVE',
+      authorizedPublish: true,
+      ...(q.type && PROPERTY_TYPES.includes(q.type) && { type: q.type }),
+      ...(q.purpose === 'RENT' && { purpose: { in: ['RENT', 'BOTH'] } }),
+      ...(q.purpose === 'SALE' && { purpose: { in: ['SALE', 'BOTH'] } }),
+      ...(q.search && {
+        OR: [
+          { title:        { contains: q.search, mode: 'insensitive' } },
+          { neighborhood: { contains: q.search, mode: 'insensitive' } },
+          { city:         { contains: q.search, mode: 'insensitive' } },
+          { description:  { contains: q.search, mode: 'insensitive' } },
+        ],
+      }),
+    }
+
+    const [total, items] = await Promise.all([
+      app.prisma.property.count({ where }),
+      app.prisma.property.findMany({
+        where,
+        select: PUBLIC_PROPERTY_SELECT,
+        orderBy: [{ isFeatured: 'desc' }, { createdAt: 'desc' }],
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+    ])
+
+    return reply.send({
+      success: true,
+      data: items,
+      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    })
+  })
+
+  // GET /api/v1/public/tenant/:slug/properties/:propSlug — single property in tenant scope
+  app.get('/tenant/:slug/properties/:propSlug', async (req, reply) => {
+    const { slug, propSlug } = req.params as { slug: string; propSlug: string }
+
+    const tenant = await (app.prisma as any).tenant?.findUnique?.({
+      where: { subdomain: slug },
+      select: { companyId: true },
+    }).catch(() => null)
+
+    if (!tenant?.companyId) {
+      return reply.status(404).send({ error: 'TENANT_NOT_FOUND' })
+    }
+
+    const property = await app.prisma.property.findFirst({
+      where: { companyId: tenant.companyId, slug: propSlug, status: 'ACTIVE', authorizedPublish: true },
+      select: PUBLIC_PROPERTY_SELECT,
+    })
+
+    if (!property) {
+      return reply.status(404).send({ error: 'PROPERTY_NOT_FOUND' })
+    }
+
+    // Best-effort view counter
+    app.prisma.property.update({ where: { id: (property as any).id }, data: { views: { increment: 1 } } }).catch(() => {})
+
+    return reply.send({ success: true, data: property })
+  })
 }

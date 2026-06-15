@@ -8,6 +8,7 @@
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import { resolveTheme, type ThemeConfig } from '@/lib/site-factory/theme-registry'
+import { getTenantProperties, propertyPrice, typeLabel } from '@/lib/tenant/api'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 
@@ -91,6 +92,14 @@ export default async function TenantPage({
 
   const theme = resolveTheme(tenant.layoutType)
   const accentColor = tenant.primaryColor || theme.accentHex
+
+  // Imóveis reais do tenant (escopo da empresa)
+  const properties = await getTenantProperties(slug, { limit: '12' })
+
+  // Contato vindo das configurações do tenant (settings)
+  const s = tenant.settings || {}
+  const waNumber: string | undefined = s.whatsapp || (s.phone ? String(s.phone).replace(/\D/g, '') : undefined)
+  const waBase = waNumber ? `https://wa.me/${waNumber}` : 'https://wa.me/'
 
   return (
     <div className={`min-h-screen ${theme.bg} ${theme.text}`}>
@@ -181,31 +190,68 @@ export default async function TenantPage({
              theme.key === 'landscape_living' ? 'Terrenos e Loteamentos' :
              'Imóveis em Destaque'}
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[1, 2, 3].map(i => (
-              <div key={i} className={`${theme.card} ${theme.cardHover} border rounded-lg overflow-hidden transition-all`}>
-                <div className="h-48 bg-gradient-to-br from-gray-200 to-gray-300 relative">
-                  {theme.key === 'fast_sales_pro' && (
-                    <span className="absolute top-2 left-2 bg-rose-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
-                      Oportunidade
-                    </span>
-                  )}
-                  {theme.key === 'luxury_gold' && (
-                    <span className="absolute top-2 left-2 bg-amber-500 text-gray-950 text-[10px] font-bold px-2 py-0.5 rounded-full">
-                      Exclusivo
-                    </span>
-                  )}
-                </div>
-                <div className="p-4">
-                  <p className={`text-sm font-semibold ${theme.text}`}>Casa exemplo {i}</p>
-                  <p className={`text-xs ${theme.textMuted} mt-1`}>Jardim Petráglia • 3 quartos • 2 vagas</p>
-                  <p className="mt-2 font-bold" style={{ color: accentColor }}>
-                    R$ {(350000 + i * 50000).toLocaleString('pt-BR')}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
+          {properties.length === 0 ? (
+            <div className={`${theme.card} border rounded-lg p-10 text-center max-w-xl mx-auto`}>
+              <p className={`${theme.text} font-semibold`}>Em breve, novos imóveis por aqui.</p>
+              <p className={`text-sm ${theme.textMuted} mt-2`}>
+                Fale com a gente no WhatsApp e conte o que você procura.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {properties.map(p => {
+                const img = p.coverImage || p.images?.[0]
+                const specs = [
+                  p.bedrooms ? `${p.bedrooms} quartos` : null,
+                  p.suites ? `${p.suites} suíte${p.suites > 1 ? 's' : ''}` : null,
+                  p.parkingSpaces ? `${p.parkingSpaces} vaga${p.parkingSpaces > 1 ? 's' : ''}` : null,
+                  p.totalArea ? `${p.totalArea} m²` : null,
+                ].filter(Boolean).join(' • ')
+                return (
+                  <a
+                    key={p.id}
+                    href={`/imovel/${p.slug}`}
+                    className={`group ${theme.card} ${theme.cardHover} border rounded-lg overflow-hidden transition-all block`}
+                  >
+                    <div className="h-48 bg-gradient-to-br from-gray-200 to-gray-300 relative overflow-hidden">
+                      {img ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={img}
+                          alt={p.title}
+                          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          loading="lazy"
+                        />
+                      ) : null}
+                      {p.isFeatured && (
+                        <span className="absolute top-2 left-2 bg-amber-500 text-gray-950 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                          Destaque
+                        </span>
+                      )}
+                      <span className="absolute top-2 right-2 bg-black/60 text-white text-[10px] font-medium px-2 py-0.5 rounded-full">
+                        {typeLabel(p.type)}
+                      </span>
+                      {p.images?.length > 0 && (
+                        <span className="absolute bottom-2 right-2 bg-black/60 text-white text-[10px] px-2 py-0.5 rounded">
+                          {p.images.length} fotos
+                        </span>
+                      )}
+                    </div>
+                    <div className="p-4">
+                      <p className={`text-sm font-semibold ${theme.text} line-clamp-2`}>{p.title}</p>
+                      <p className={`text-xs ${theme.textMuted} mt-1`}>
+                        {[p.neighborhood, `${p.city}/${p.state}`].filter(Boolean).join(' • ')}
+                      </p>
+                      {specs && <p className={`text-xs ${theme.textMuted} mt-1`}>{specs}</p>}
+                      <p className="mt-2 font-bold" style={{ color: accentColor }}>
+                        {propertyPrice(p)}
+                      </p>
+                    </div>
+                  </a>
+                )
+              })}
+            </div>
+          )}
         </div>
       </section>
 
@@ -222,7 +268,7 @@ export default async function TenantPage({
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <a
-              href={`https://wa.me/?text=Olá, vi um imóvel no site ${tenant.name} e gostaria de mais informações.`}
+              href={`${waBase}?text=${encodeURIComponent(`Olá, vi um imóvel no site ${tenant.name} e gostaria de mais informações.`)}`}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-6 py-3 rounded-lg text-white font-medium"
