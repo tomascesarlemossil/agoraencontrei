@@ -417,13 +417,23 @@ export default function LeiloesClient() {
   // na cidade/UF de quem acessa (ex.: quem está em Franca/SP vê Franca/SP primeiro).
   const [userLoc, setUserLoc] = useState<UserGeo | null>(null)
   const [userRegion, setUserRegion] = useState<UserRegion | null>(null)
+  const autoRegionAppliedRef = useRef(false)
   useEffect(() => {
     let cancelled = false
     getUserGeo().then(async geo => {
       if (!geo || cancelled) return
       setUserLoc(geo)
       const region = await reverseGeocodeRegion(geo.lat, geo.lng)
-      if (region && !cancelled) setUserRegion(region)
+      if (!region || cancelled) return
+      setUserRegion(region)
+      // Com 16k+ leilões, ordenar a página no client não traz a região do
+      // visitante do meio da lista. Então aplica a cidade dele como filtro
+      // (no servidor) na 1ª vez — abre já mostrando os leilões da região.
+      if (region.city && !autoRegionAppliedRef.current) {
+        autoRegionAppliedRef.current = true
+        setCity(prev => prev || region.city)
+        setPage(1)
+      }
     })
     return () => { cancelled = true }
   }, [])
@@ -740,14 +750,24 @@ export default function LeiloesClient() {
             Explore os leilões no mapa via satélite — navegue por bairro antes de ver a lista abaixo.
           </p>
         </div>
-        <LeiloesMapa auctionsOnly userLat={userLoc?.lat} userLng={userLoc?.lng} />
+        <LeiloesMapa auctionsOnly userLat={userLoc?.lat} userLng={userLoc?.lng} userCity={userRegion?.city} />
       </section>
 
       {/* Toolbar */}
       <div className="sticky top-16 z-20 bg-white border-b shadow-sm">
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2 text-sm text-gray-500">
+          <div className="flex items-center gap-2 text-sm text-gray-500 flex-wrap">
             <span className="font-semibold text-gray-800">{total.toLocaleString('pt-BR')}</span> leilões encontrados
+            {userRegion?.city && city && city.toLowerCase() === userRegion.city.toLowerCase() && (
+              <span className="inline-flex items-center gap-1.5 text-xs">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-semibold" style={{ backgroundColor: '#eef2ff', color: '#1B2B5B' }}>
+                  📍 {userRegion.city}{userRegion.state ? `/${userRegion.state}` : ''} (sua região)
+                </span>
+                <button onClick={() => { setCity(''); setPage(1) }} className="underline text-gray-500 hover:text-gray-700">
+                  ver todos
+                </button>
+              </span>
+            )}
           </div>
           <div className="flex items-center gap-2">
             <button

@@ -125,6 +125,7 @@ interface Props {
   auctionsOnly?: boolean // quando true, mostra só pins de leilão (esconde imóveis da plataforma)
   userLat?: number // localização do visitante (passada pelo pai p/ evitar 2º prompt)
   userLng?: number
+  userCity?: string // cidade do visitante — escopa os pins de leilão à região
 }
 
 // Nominatim cache in module scope
@@ -151,7 +152,7 @@ async function geocodeNeighborhood(neighborhood: string, city: string): Promise<
   return null
 }
 
-export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initialBedrooms, initialClusters, auctionsOnly, userLat, userLng }: Props) {
+export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initialBedrooms, initialClusters, auctionsOnly, userLat, userLng, userCity }: Props) {
   const mapRef = useRef<HTMLDivElement>(null)
   const mapInstance = useRef<MapLibreMap | null>(null)
   const markersRef = useRef<MapLibreMarker[]>([])
@@ -338,12 +339,15 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
       .catch(() => {})
   }, [])
 
-  // Load auction pins — bypass Railway, read directly from Supabase
+  // Load auction pins — bypass Railway, read directly from Supabase.
+  // Com a cidade do visitante (userCity), escopa os pins à região dele; sem
+  // ela, cai no estado padrão (SP). Refaz a busca quando a cidade resolve.
   useEffect(() => {
     async function loadAuctions() {
+      const scope = userCity ? `city=${encodeURIComponent(userCity)}` : 'state=SP'
       // Try API first
       try {
-        const res = await fetch(`${API_URL}/api/v1/auctions/map?state=SP&limit=2000`)
+        const res = await fetch(`${API_URL}/api/v1/auctions/map?${scope}&limit=2000`)
         if (res.ok) {
           const data = await res.json()
           if (data.data?.length > 0) { setAuctions(data.data); return }
@@ -368,8 +372,9 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
         }
       } catch {}
     }
+    didFitAuctionsRef.current = false // novo conjunto → permite reenquadrar
     loadAuctions()
-  }, [])
+  }, [userCity])
 
   // Sincroniza com a localização vinda do pai (quando passada via props).
   useEffect(() => {
