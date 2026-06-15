@@ -112,51 +112,64 @@ async function fetchProperties(params: SearchParams) {
 const RESIDENTIAL_TYPES = ['HOUSE', 'APARTMENT', 'STUDIO', 'KITNET', 'PENTHOUSE', 'CONDO']
 const RURAL_TYPES = ['FARM', 'RANCH']
 
-// Fetch "closest alternatives" when exact search yields 0 results
-async function fetchAlternatives(params: SearchParams) {
+// Fetch "closest alternatives" to enrich results when the exact search
+// yields zero OR very few items. Broadens progressively, but keeps the
+// neighborhood (the strongest signal) as long as possible — surfacing
+// other options in the SAME bairro before jumping to the rest of the city.
+async function fetchAlternatives(params: SearchParams, excludeIds: Set<string> = new Set()) {
   // Determine if the original search was for residential types
   const isResidential = params.type && RESIDENTIAL_TYPES.includes(params.type.toUpperCase())
   const isRural = params.type && RURAL_TYPES.includes(params.type.toUpperCase())
+  const hasNeighborhood = !!(params.neighborhood || params.search)
 
-  // Build attempts — never drop to "just purpose" if that would mix rural/residential
+  // Ordered closest → broadest.
   const attempts: Record<string, string>[] = [
-    // Relax price
-    { maxPrice: '', minPrice: '' },
-    // Relax bedrooms
-    { bedrooms: '' },
-    // Relax neighborhood but keep city + type + purpose
-    { neighborhood: '', search: '' },
-    // Relax type but keep city + purpose (only if not residential — avoid mixing with farms)
-    ...(!isResidential ? [{ type: '', neighborhood: '', search: '' }] : []),
-    // Just city + purpose (keep type for residential to avoid showing farms)
+    // 1. Same neighborhood + purpose, any type (ex.: apartamentos p/ alugar no Centro)
+    ...(hasNeighborhood ? [{ type: '', maxPrice: '', minPrice: '', bedrooms: '' }] : []),
+    // 2. Same neighborhood, any type/purpose (qualquer imóvel no Centro)
+    ...(hasNeighborhood ? [{ type: '', purpose: '', maxPrice: '', minPrice: '', bedrooms: '' }] : []),
+    // 3. Relax neighborhood but keep city + type + purpose
+    { neighborhood: '', search: '', maxPrice: '', minPrice: '', bedrooms: '' },
+    // 4. Relax type but keep city + purpose (only if not residential — avoid mixing with farms)
+    ...(!isResidential ? [{ type: '', neighborhood: '', search: '', maxPrice: '', minPrice: '', bedrooms: '' }] : []),
+    // 5. Just city + purpose (keep type for residential to avoid showing farms)
     ...(isResidential
       ? [{ neighborhood: '', search: '', maxPrice: '', minPrice: '', bedrooms: '' }]
       : [{ type: '', neighborhood: '', search: '', maxPrice: '', minPrice: '', bedrooms: '' }]
     ),
-    // City + purpose + residential types filter (last resort for residential)
-    ...(isResidential ? [{ neighborhood: '', search: '', maxPrice: '', minPrice: '', bedrooms: '', city: params.city || 'Franca' }] : []),
+    // 6. City + residential bucket, any purpose (last resort for residential)
+    ...(isResidential ? [{ type: '', neighborhood: '', search: '', purpose: '', maxPrice: '', minPrice: '', bedrooms: '', city: params.city || 'Franca' }] : []),
   ]
 
+  const collected: any[] = []
+  const seen = new Set<string>(excludeIds)
+  let relaxedBy: Record<string, string> = {}
+
   for (const override of attempts) {
+    if (collected.length >= 8) break
     try {
-      const qs = buildQs(params, { ...override, limit: '8', page: '1' })
+      const qs = buildQs(params, { ...override, limit: '12', page: '1' })
       const res = await fetch(`${API_URL}/api/v1/public/properties?${qs}`, { next: { revalidate: 60 } })
       if (!res.ok) continue
       const data = await res.json()
       const items: any[] = Array.isArray(data?.data) ? data.data : []
-      if (items.length === 0) continue
 
-      // Filter out rural types when searching for residential
+      // Filter out rural types when searching for residential and vice versa
       const filtered = isResidential
         ? items.filter((p: any) => !RURAL_TYPES.includes(p.type))
         : isRural
         ? items.filter((p: any) => RURAL_TYPES.includes(p.type))
         : items
 
-      if (filtered.length > 0) return { items: filtered, relaxedBy: override }
+      // Only keep items we haven't shown yet (exact results + earlier attempts)
+      const fresh = filtered.filter((p: any) => !seen.has(p.id))
+      if (fresh.length === 0) continue
+      for (const p of fresh) { seen.add(p.id); collected.push(p) }
+      if (!Object.keys(relaxedBy).length) relaxedBy = override
     } catch {}
   }
-  return { items: [], relaxedBy: {} }
+
+  return { items: collected.slice(0, 12), relaxedBy }
 }
 
 function formatPrice(price: number | null, priceRent: number | null, purpose: string) {
@@ -203,11 +216,15 @@ export default async function ImoveisPage({ searchParams }: { searchParams: Prom
     } catch {}
   }
 
-  // If no results, try to find closest alternatives
+  // When the exact search returns zero OR very few results, fetch similar
+  // options so the user isn't left on a dead-end with a single card while
+  // the neighborhood actually has plenty more to offer.
+  const MIN_RESULTS = 4
   const hasActiveSearch = !!(resolvedSearchParams.search || resolvedSearchParams.type || resolvedSearchParams.city ||
     resolvedSearchParams.neighborhood || resolvedSearchParams.maxPrice || resolvedSearchParams.bedrooms)
-  const alternatives = (!isMapView && properties.length === 0 && hasActiveSearch)
-    ? await fetchAlternatives(resolvedSearchParams)
+  const exactIds = new Set<string>(properties.map((p: any) => p.id))
+  const alternatives = (!isMapView && hasActiveSearch && properties.length < MIN_RESULTS)
+    ? await fetchAlternatives(resolvedSearchParams, exactIds)
     : { items: [], relaxedBy: {} }
 
   const title = resolvedSearchParams.purpose === 'SALE'
@@ -385,12 +402,34 @@ export default async function ImoveisPage({ searchParams }: { searchParams: Prom
           )}
         </div>
       ) : (
-        <LoadMoreProperties
-          initialProperties={properties}
-          initialTotal={meta.total}
-          initialTotalPages={meta.totalPages}
-          searchParams={resolvedSearchParams as Record<string, string | undefined>}
-        />
+        <>
+          <LoadMoreProperties
+            initialProperties={properties}
+            initialTotal={meta.total}
+            initialTotalPages={meta.totalPages}
+            searchParams={resolvedSearchParams as Record<string, string | undefined>}
+          />
+
+          {/* Poucos resultados exatos — sugere opções semelhantes (mesmo bairro primeiro) */}
+          {alternatives.items.length > 0 && (
+            <div className="text-left mt-12 pt-8 border-t border-gray-200">
+              <p className="text-lg font-bold mb-1" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>
+                Veja também
+              </p>
+              <p className="text-sm text-gray-500 mb-5">
+                {resolvedSearchParams.neighborhood
+                  ? `Outras opções em ${resolvedSearchParams.neighborhood} e região que podem te interessar:`
+                  : 'Outras opções parecidas com a sua busca:'}
+              </p>
+              <LoadMoreProperties
+                initialProperties={alternatives.items}
+                initialTotal={alternatives.items.length}
+                initialTotalPages={1}
+                searchParams={{}}
+              />
+            </div>
+          )}
+        </>
       )}
     </div>
   )
