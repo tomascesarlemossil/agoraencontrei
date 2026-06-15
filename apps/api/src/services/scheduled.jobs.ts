@@ -870,11 +870,11 @@ export async function runScheduledJobs(app: FastifyInstance) {
         status: { notIn: ['CANCELLED', 'CLOSED'] },
       },
       select: { id: true, neighborhood: true, city: true, state: true },
-      take: 10,
+      take: 50,
     })
 
     if (toGeocode.length > 0) {
-      const { geocodeProperty } = await import('./geocoding.service.js')
+      const { geocodeProperty, sleep } = await import('./geocoding.service.js')
       let geocoded = 0
       for (const auction of toGeocode) {
         const result = await geocodeProperty({
@@ -882,6 +882,9 @@ export async function runScheduledJobs(app: FastifyInstance) {
           city: auction.city,
           state: auction.state,
         }).catch(() => null)
+        // Respeita o rate-limit do Nominatim (1 req/s) entre leilões —
+        // geocodeProperty não dorme após um acerto na 1ª query.
+        await sleep(1100)
         if (!result) continue
 
         // Offset determinístico a partir do id (estável entre execuções —
