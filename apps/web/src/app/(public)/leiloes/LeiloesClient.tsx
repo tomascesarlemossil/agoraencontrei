@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
+import { getUserGeo, reverseGeocodeRegion, type UserGeo, type UserRegion } from '@/lib/geolocation'
 import { Search, MapPin, Filter, Calculator, Bell, TrendingUp, ChevronDown, X, ArrowRight, Building, Home, Map as MapIcon, Star, Clock, DollarSign, BarChart3, AlertTriangle, Loader2, CheckCircle, ExternalLink } from 'lucide-react'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'https://api-production-669c.up.railway.app'
@@ -179,10 +180,24 @@ function parseMoneyValue(v: unknown): number | null {
   return null
 }
 
-// Franca-first geographic priority
-function cityPriority(city: string | null, state: string | null): number {
+// Prioridade geográfica. Com a localização do visitante (userRegion), prioriza
+// a cidade/UF de quem acessa; sem ela, cai no padrão Franca-first.
+function cityPriority(
+  city: string | null,
+  state: string | null,
+  userRegion?: { city: string; state: string } | null,
+): number {
   const c = (city || '').toUpperCase()
   const s = (state || '').toUpperCase()
+
+  if (userRegion?.city) {
+    const uc = userRegion.city.toUpperCase()
+    const us = (userRegion.state || '').toUpperCase()
+    if (c && (c.includes(uc) || uc.includes(c))) return 0 // mesma cidade do visitante
+    if (us && s === us) return 1                            // mesmo estado
+    return 2
+  }
+
   if (c.includes('FRANCA')) return 0
   if (c.includes('BATATAIS') || c.includes('PATROCINIO') || c.includes('CRISTAIS') || c.includes('RESTINGA')) return 1
   if (c.includes('RIBEIRAO') || c.includes('RIBEIRÃO')) return 2
@@ -398,6 +413,21 @@ export default function LeiloesClient() {
   // View mode
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
 
+  // Localização do visitante (ao vivo): centraliza o mapa e prioriza a listagem
+  // na cidade/UF de quem acessa (ex.: quem está em Franca/SP vê Franca/SP primeiro).
+  const [userLoc, setUserLoc] = useState<UserGeo | null>(null)
+  const [userRegion, setUserRegion] = useState<UserRegion | null>(null)
+  useEffect(() => {
+    let cancelled = false
+    getUserGeo().then(async geo => {
+      if (!geo || cancelled) return
+      setUserLoc(geo)
+      const region = await reverseGeocodeRegion(geo.lat, geo.lng)
+      if (region && !cancelled) setUserRegion(region)
+    })
+    return () => { cancelled = true }
+  }, [])
+
   const fetchAuctions = useCallback(async () => {
     setLoading(true)
     try {
@@ -444,8 +474,8 @@ export default function LeiloesClient() {
           const internalItems = (data.data || []) as Auction[]
           if (internalItems.length > 0) {
             internalItems.sort((a: Auction, b: Auction) => {
-              const geoA = cityPriority(a.city, a.state)
-              const geoB = cityPriority(b.city, b.state)
+              const geoA = cityPriority(a.city, a.state, userRegion)
+              const geoB = cityPriority(b.city, b.state, userRegion)
               return geoA - geoB
             })
             setAuctions(internalItems)
@@ -490,11 +520,11 @@ export default function LeiloesClient() {
         maxPrice,
       })
 
-      // FRANCA-FIRST: Always prioritize by geographic relevance, then by selected sort
+      // Prioriza pela região do visitante (ou Franca-first sem localização),
+      // depois pela ordenação escolhida.
       const sortedItems = [...filteredItems].sort((a, b) => {
-        // Primary: Geographic priority (Franca=0, neighbors=1, Ribeirão=2, SP=3, others=5)
-        const geoA = cityPriority(a.city, a.state)
-        const geoB = cityPriority(b.city, b.state)
+        const geoA = cityPriority(a.city, a.state, userRegion)
+        const geoB = cityPriority(b.city, b.state, userRegion)
         if (geoA !== geoB) return geoA - geoB
 
         // Secondary: User-selected sort
@@ -548,7 +578,7 @@ export default function LeiloesClient() {
       setTotalPages(1)
     }
     setLoading(false)
-  }, [page, search, city, state, source, propertyType, minDiscount, maxPrice, sortBy, sortOrder])
+  }, [page, search, city, state, source, propertyType, minDiscount, maxPrice, sortBy, sortOrder, userRegion])
 
   useEffect(() => { fetchAuctions() }, [fetchAuctions])
 
@@ -710,7 +740,7 @@ export default function LeiloesClient() {
             Explore os leilões no mapa via satélite — navegue por bairro antes de ver a lista abaixo.
           </p>
         </div>
-        <LeiloesMapa auctionsOnly />
+        <LeiloesMapa auctionsOnly userLat={userLoc?.lat} userLng={userLoc?.lng} />
       </section>
 
       {/* Toolbar */}
