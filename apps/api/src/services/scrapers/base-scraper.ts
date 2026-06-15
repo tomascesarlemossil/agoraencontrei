@@ -1,6 +1,7 @@
 import { PrismaClient } from '@prisma/client'
 import crypto from 'crypto'
 import { getStreetViewForProperty } from '../streetview.service.js'
+import { geocodeProperty } from '../geocoding.service.js'
 
 export interface ScrapedAuction {
   externalId: string
@@ -238,6 +239,26 @@ export abstract class BaseScraper {
               })
             })
             created++
+
+            // Geocode novos leilões na hora da ingestão (bairro → cidade como
+            // fallback). Sem lat/lng o leilão não vira pin em /auctions/map,
+            // então fazemos no fluxo de criação em vez de depender só do job
+            // noturno. Só para leilões novos — updates não re-geocodificam.
+            if (item.neighborhood || item.city) {
+              try {
+                const geo = await geocodeProperty({
+                  street: item.street, number: item.number,
+                  neighborhood: item.neighborhood, city: item.city,
+                  state: item.state, zipCode: item.zipCode,
+                })
+                if (geo) {
+                  await this.prisma.auction.updateMany({
+                    where: { externalId: item.externalId, source: item.source as any },
+                    data: { latitude: geo.latitude, longitude: geo.longitude },
+                  }).catch(() => {})
+                }
+              } catch { /* geocoding é best-effort */ }
+            }
 
             // Auto-capture Street View facade for new auctions without cover image
             if (!item.coverImage && (item.street || item.city)) {
