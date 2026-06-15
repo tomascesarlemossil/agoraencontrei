@@ -417,23 +417,13 @@ export default function LeiloesClient() {
   // na cidade/UF de quem acessa (ex.: quem está em Franca/SP vê Franca/SP primeiro).
   const [userLoc, setUserLoc] = useState<UserGeo | null>(null)
   const [userRegion, setUserRegion] = useState<UserRegion | null>(null)
-  const autoRegionAppliedRef = useRef(false)
   useEffect(() => {
     let cancelled = false
     getUserGeo().then(async geo => {
       if (!geo || cancelled) return
       setUserLoc(geo)
       const region = await reverseGeocodeRegion(geo.lat, geo.lng)
-      if (!region || cancelled) return
-      setUserRegion(region)
-      // Com 16k+ leilões, ordenar a página no client não traz a região do
-      // visitante do meio da lista. Então aplica a cidade dele como filtro
-      // (no servidor) na 1ª vez — abre já mostrando os leilões da região.
-      if (region.city && !autoRegionAppliedRef.current) {
-        autoRegionAppliedRef.current = true
-        setCity(prev => prev || region.city)
-        setPage(1)
-      }
+      if (region && !cancelled) setUserRegion(region)
     })
     return () => { cancelled = true }
   }, [])
@@ -477,19 +467,41 @@ export default function LeiloesClient() {
 
       // 1) Feed interno primeiro (DB com opportunityScore, ROI etc). Se tiver
       //    dados, renderiza na hora — não espera os feeds públicos.
+      //    Na página 1, se sabemos a região do visitante e ele não filtrou
+      //    cidade manualmente, buscamos os leilões da cidade dele e colocamos
+      //    no TOPO — seguidos do restante do Brasil (sem precisar clicar).
       try {
-        const internalRes = await withTimeout(fetch(`${API_URL}/api/v1/auctions?${params}`), 8000)
+        const wantRegionFirst = page === 1 && !!userRegion?.city && !city
+        const regionParams = new URLSearchParams(params)
+        if (wantRegionFirst && userRegion?.city) regionParams.set('city', userRegion.city)
+
+        const [internalRes, regionRes] = await Promise.all([
+          withTimeout(fetch(`${API_URL}/api/v1/auctions?${params}`), 8000),
+          wantRegionFirst
+            ? withTimeout(fetch(`${API_URL}/api/v1/auctions?${regionParams}`), 8000).catch(() => null)
+            : Promise.resolve(null),
+        ])
+
         if (internalRes.ok) {
           const data = await internalRes.json()
           const internalItems = (data.data || []) as Auction[]
-          if (internalItems.length > 0) {
-            internalItems.sort((a: Auction, b: Auction) => {
-              const geoA = cityPriority(a.city, a.state, userRegion)
-              const geoB = cityPriority(b.city, b.state, userRegion)
-              return geoA - geoB
-            })
-            setAuctions(internalItems)
-            setTotal(data.pagination?.total || internalItems.length)
+
+          // Leilões da região do visitante (vão para o topo).
+          let regionItems: Auction[] = []
+          if (regionRes && regionRes.ok) {
+            try { regionItems = ((await regionRes.json()).data || []) as Auction[] } catch { /* ignore */ }
+          }
+
+          if (internalItems.length > 0 || regionItems.length > 0) {
+            const seen = new Set(regionItems.map(a => a.id))
+            const rest = internalItems.filter(a => !seen.has(a.id))
+            // Sem região conhecida, mantém o Franca-first por cidade.
+            if (regionItems.length === 0) {
+              rest.sort((a, b) => cityPriority(a.city, a.state, userRegion) - cityPriority(b.city, b.state, userRegion))
+            }
+            const combined = [...regionItems, ...rest]
+            setAuctions(combined)
+            setTotal(data.pagination?.total || combined.length)
             setTotalPages(data.pagination?.totalPages || 1)
             setLoading(false)
             return
@@ -758,14 +770,9 @@ export default function LeiloesClient() {
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2 text-sm text-gray-500 flex-wrap">
             <span className="font-semibold text-gray-800">{total.toLocaleString('pt-BR')}</span> leilões encontrados
-            {userRegion?.city && city && city.toLowerCase() === userRegion.city.toLowerCase() && (
-              <span className="inline-flex items-center gap-1.5 text-xs">
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-semibold" style={{ backgroundColor: '#eef2ff', color: '#1B2B5B' }}>
-                  📍 {userRegion.city}{userRegion.state ? `/${userRegion.state}` : ''} (sua região)
-                </span>
-                <button onClick={() => { setCity(''); setPage(1) }} className="underline text-gray-500 hover:text-gray-700">
-                  ver todos
-                </button>
+            {userRegion?.city && !city && page === 1 && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold" style={{ backgroundColor: '#eef2ff', color: '#1B2B5B' }}>
+                📍 {userRegion.city}{userRegion.state ? `/${userRegion.state}` : ''} em destaque no topo
               </span>
             )}
           </div>
