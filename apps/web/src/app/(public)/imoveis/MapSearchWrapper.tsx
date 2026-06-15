@@ -11,6 +11,7 @@ interface Props {
   auctionsOnly?: boolean
   userLat?: number
   userLng?: number
+  userCity?: string
 }
 
 export default function MapSearchWrapper(props: Props) {
