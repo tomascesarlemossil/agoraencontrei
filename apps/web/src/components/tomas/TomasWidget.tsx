@@ -251,6 +251,18 @@ export default function TomasWidget({ propertyContext }: TomasWidgetProps) {
     }
   }, [input, loading, messages, chatId, visitorId, propertyContext])
 
+  // Ditado por voz com transcrição AO VIVO (Web Speech + fallback Whisper).
+  // IMPORTANTE: hooks devem ficar ANTES de qualquer return condicional
+  // (estado fechado/aberto) para não violar as Regras dos Hooks.
+  const dictation = useLiveDictation({
+    onInterim: (t) => setInput(t),
+    onResult: (t) => { setInput(''); void sendMessage(t) },
+  })
+  const isRecording = dictation.isRecording
+  const isAudioBusy = dictation.isProcessing
+  const isAudioError = dictation.isError
+  const audioErrorMsg = dictation.errorMsg
+
   // ── Audio recording functions ─────────────────────────────────────────────
 
   function stopAudioStream() {
@@ -424,17 +436,6 @@ export default function TomasWidget({ propertyContext }: TomasWidgetProps) {
   }
 
   // ── Open state: chat panel ────────────────────────────────────────────────
-
-  // Ditado por voz com transcrição AO VIVO (Web Speech + fallback Whisper).
-  // O texto aparece no campo enquanto a pessoa fala; ao terminar, é enviado.
-  const dictation = useLiveDictation({
-    onInterim: (t) => setInput(t),
-    onResult: (t) => { setInput(''); void sendMessage(t) },
-  })
-  const isRecording = dictation.isRecording
-  const isAudioBusy = dictation.isProcessing
-  const isAudioError = dictation.isError
-  const audioErrorMsg = dictation.errorMsg
 
   return (
     <div
