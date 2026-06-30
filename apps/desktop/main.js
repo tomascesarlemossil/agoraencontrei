@@ -1,5 +1,5 @@
 /**
- * AgoraEncontrei Software — processo principal Electron (edição offline).
+ * Sistema Administrador AgoraEncontrei — processo principal Electron (edição offline).
  *
  * Estratégia: sobe a aplicação web (API Fastify + Next standalone) em localhost
  * dentro do próprio app, usando banco SQLite local. A janela carrega essa URL.
@@ -39,7 +39,7 @@ function createWindow(startUrl) {
     height: 820,
     minWidth: 1024,
     minHeight: 700,
-    title: 'AgoraEncontrei Software',
+    title: 'Sistema Administrador AgoraEncontrei',
     backgroundColor: '#0a0e1a',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),

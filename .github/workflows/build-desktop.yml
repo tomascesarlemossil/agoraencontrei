@@ -1,6 +1,6 @@
 name: Build Desktop (.exe)
 
-# Compila a edição OFFLINE (AgoraEncontrei Software) num runner Windows na nuvem
+# Compila a edição OFFLINE (Sistema Administrador AgoraEncontrei) num runner Windows na nuvem
 # e publica o instalador .exe como artifact — sem precisar de toolchain local.
 #
 # Disparo: manual (workflow_dispatch) ou ao mexer em apps/desktop no branch de trabalho.
@@ -95,7 +95,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: desktop-latest
-          name: AgoraEncontrei Software (instalador offline)
+          name: Sistema Administrador AgoraEncontrei (instalador offline)
           body: |
             Instalador da edição offline. Baixe o `.exe`, instale e ative com sua chave de licença.
             Atualizado automaticamente a cada build do app desktop.

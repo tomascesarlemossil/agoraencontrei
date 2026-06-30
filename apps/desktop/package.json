@@ -2,7 +2,7 @@
   "name": "@agoraencontrei/desktop",
   "version": "0.1.0",
   "private": true,
-  "description": "AgoraEncontrei Software — edição offline (instalável no Windows). Empacota a plataforma para rodar local com PostgreSQL embarcado e ativação por licença.",
+  "description": "Sistema Administrador AgoraEncontrei — edição offline (instalável no Windows). Empacota a plataforma para rodar local com PostgreSQL embarcado e ativação por licença.",
   "main": "main.js",
   "author": "Imobiliária Lemos",
   "scripts": {
@@ -13,7 +13,7 @@
   },
   "build": {
     "appId": "com.agoraencontrei.software",
-    "productName": "AgoraEncontrei Software",
+    "productName": "Sistema Administrador AgoraEncontrei",
     "artifactName": "AgoraEncontrei-Software-Setup.${ext}",
     "npmRebuild": false,
     "directories": { "output": "dist" },
@@ -25,7 +25,7 @@
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
-      "shortcutName": "AgoraEncontrei Software"
+      "shortcutName": "Sistema Administrador AgoraEncontrei"
     }
   },
   "devDependencies": {
