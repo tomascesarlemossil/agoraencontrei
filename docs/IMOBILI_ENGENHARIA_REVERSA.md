@@ -6,6 +6,22 @@
 
 ---
 
+## 0. Localização dos dados e integrações (descoberto no `IMOBILI.exe`)
+
+- **Pasta de dados (tabelas Paradox):** **`C:\DB\`** — contém `Imoveis.DB`, `Contrato.DB`,
+  `Propriet.DB`, `Inquilin.DB`, `Fiadores.DB`, `Parcelas.DB` + `ControleNossoNumero.txt`.
+  *(O `.rar` enviado tinha só a pasta do programa, não a de dados.)*
+- **Compilador:** **Delphi 7** (`c:\program files\borland\delphi7\Lib\`).
+- **Alias BDE:** `IMOBILI` / `Dados`.
+- **Banco (boletos):** **Sicoob** — remessa em `C:\Sicoob\Remessa\`, retorno em `C:\Sicoob\Retorno\`.
+- **Fiscal:** exporta **DIMOB** para `C:\dimob` (gera `Dimob.txt`).
+- ⚠️ Senha do sistema em texto puro no `imobilichb.CFG` (`Master` / `EP123`).
+
+> **Ação para migração:** o cliente deve **zipar a pasta `C:\DB`** e enviar.
+> É de lá que o migrador (`scripts/imobili-migrator/`) lê a carteira real.
+
+---
+
 ## 1. Stack técnico (confirmado pelos binários)
 
 | Item | Achado | Evidência |
