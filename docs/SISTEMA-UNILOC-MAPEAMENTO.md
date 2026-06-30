@@ -1,215 +1,128 @@
-# Sistema UNILOC / IMOBILI — Mapeamento Completo
+# Sistema IMOBILI/UNILOC — Mapa de Funcionalidades & Análise de Lacunas
 
-> Sistema **offline** legado de administração de carteira de imóveis (locação) usado pela
-> **Imobiliária Lemos** (Noemia Pires Lemos — Franca/SP). Construído em **Visual FoxPro**.
-> Este documento mapeia caminhos, estrutura de dados, relacionamentos e funções, a partir do
-> backup de dados presente em `data/uniloc/`.
-
----
-
-## 1. Identificação do sistema
-
-| Item | Valor |
-|------|-------|
-| Nome do produto | **UNILOC** (motor de dados) / **IMOBILI** (aplicação) |
-| Plataforma | Visual FoxPro (BDE — Borland Database Engine, `bde-vista64`) |
-| Empresa | NOEMIA PIRES LEMOS — Imobiliária Lemos |
-| Endereço | Estevão Leão Bourroul, 1685 — Franca/SP — CEP 14400-750 |
-| CNPJ/CGC | 75237326668 · CRECI 61053F/SP |
-| Telefone / Site | 3723-0045 · www.imobiliarialemos.com.br |
-| Banco padrão | SICREDI |
-| Comissão / Juros / Multa | 10% · 0,033%/dia · 10% |
-| Código da unidade | CODUNI `000851` · IDIMOBILIA `72164.G0TQ` |
-| Última versão aplicada | **17.0.372** (aplicada em 11/02/2022) |
-
-### Histórico de versões (`versoes.dbf`)
-`11.100.123` (02/2018) → `11.100.298` → `11.100.318` → `11.100.339` →
-`17.0.2` (10/2018) → `17.0.42` → `17.0.60` → `17.0.98` → `17.0.116/117` (2020) →
-**`17.0.372`** (02/2022, última).
+> Referência **funcional** (não de dados) do sistema offline legado de administração de
+> carteira de locação **IMOBILI** (motor **UNILOC**, Visual FoxPro). O objetivo deste
+> documento é **identificar funções comprovadas** desse sistema (em uso há ~25 anos) que
+> podem **faltar ou ser melhoradas** no AgoraEncontrei.
+>
+> ⚠️ **Sem dados pessoais.** Nenhum dado de cliente, contrato, proprietário ou usuário é
+> registrado aqui — apenas a engenharia de funcionalidades do software.
 
 ---
 
-## 2. Caminhos (no computador Windows original)
+## 1. O que é o sistema
 
-| Caminho | Conteúdo |
-|---------|----------|
-| `C:\Imobili\` | Pasta da aplicação |
-| `C:\Imobili\IMOBILI.exe` | Executável principal (6,4 MB, atualizado em 06/01/2025) |
-| `C:\Imobili\bde-vista64.exe` | Borland Database Engine (acesso aos `.dbf`) |
-| `C:\Imobili\Estruturas.exe` | Utilitário de estrutura das tabelas (1999) |
-| `C:\Imobili\spdBoleto_dependencies_3.0.11.6487.exe` | Gerador de boletos |
-| `C:\Imobili\imobilichb.CFG` | Arquivo de configuração |
-| `C:\Imobili\Documentos\`, `C:\Imobili\utilidade\` | Documentos e utilitários |
-| **`C:\UNILOC\DADOS\`** | **Diretório do banco de dados** (alias `dadosservidorlemos`) — definido em `path_bd.dbf` |
+Aplicação desktop de **administração de locação** (property management) para imobiliárias.
+Cobre todo o ciclo: cadastro → contrato → cobrança mensal → recebimento → repasse ao
+proprietário → rescisão, mais o financeiro interno da imobiliária.
 
-> No repositório, o backup desses dados está em `data/uniloc/backup_extraido/`.
+- **Aplicação:** `IMOBILI.exe` (Visual FoxPro) · motor de dados **UNILOC**
+- **Componentes:** BDE (Borland Database Engine), utilitário `Estruturas.exe`, gerador de
+  boletos `spdBoleto`, arquivo de config `.CFG`
+- **Dados:** ~54 tabelas DBF/FoxPro
 
 ---
 
-## 3. Formato dos arquivos
+## 2. Funcionalidades por módulo (derivadas da estrutura do sistema)
 
-- **`.DBF`** — tabela de dados (dBase/FoxPro)
-- **`.FPT`** — campos memo/texto longo (referenciados pela tabela)
-- **`.CDX`** — índices compostos
-- **`*_Log.FPT`** — logs/auditoria
-- `dbesquema.dbf` — **dicionário oficial**: lista as 54 tabelas e indica quais têm `.CDX` e `.FPT`
-- `path_bd.dbf` — caminho do banco
-- `FOXUSER.DBF/.FPT` — recursos da interface FoxPro
+### A. Cadastros
+- Proprietário (locador) com dados bancários para repasse
+- **Co-proprietários / locador secundário** com **rateio por percentual**
+- **Favorecidos de repasse** (terceiros) com **% por imóvel**
+- Inquilino, Fiador (até 2 fiadores por contrato), cônjuge e representantes legais
+- Imóvel com vínculo de % de propriedade, IPTU, luz, água, garagem
+- **Vagas de garagem** cadastradas e vinculáveis a imóveis distintos
+- Base de CEP própria
 
-Leitura em Python: `pip install dbfread` →
-`DBF(path, ignore_missing_memofile=True, encoding='latin-1')`.
+### B. Contratos
+- Índice de reajuste (IGPM/IPCA…), data-base e mês de reajuste anual
+- Tipo de garantia: fiador / caução / seguro fiança / título de capitalização
+- Comissão da imobiliária e taxa de administração configuráveis
+- Multa, juros (por dia/mês) e cálculo de IRRF retido
+- Encargos inclusos no aluguel (água, luz, condomínio, IPTU)
+- **Vistoria de entrada e de saída** (data + observações)
+- Renovação com contagem de renovações e próxima data de reajuste
 
----
+### C. Cobrança mensal (recebimentos)
+- Geração de lançamentos de aluguel + encargos + diversos
+- **Emissão de boleto** (linha digitável, nosso número, código de barras)
+- Lançamentos diversos (débitos/créditos avulsos no contrato)
+- **Carnê de IPTU parcelado** lançado por imóvel/ano e rateado ao inquilino
+- Sequenciadores de nº de boleto, recibo e edital
+- **Baixa por arquivo CNAB de retorno** (campo `BAIXACNAB`) + baixa manual
 
-## 4. Chaves de relacionamento (PKs/FKs)
+### D. Repasse ao proprietário
+- Cálculo do líquido = aluguel − comissão − IRRF − despesas
+- **Rateio do repasse entre múltiplos proprietários/favorecidos** por percentual
+- Registro de banco/conta de destino por favorecido
 
-Quase todas as tabelas se ligam por estes códigos de 6 dígitos (string):
+### E. Financeiro interno da imobiliária
+- **Caixa** (fluxo de débito/crédito por grupo/plano de contas)
+- **Movimentação bancária** por conta + conciliação caixa × banco
+- **Contas a pagar (despesas)** com favorecido, vencimento, pagamento e documento
+- **Controle de cheques (a pagar / pré-datados)** com situação e favorecido
+- Plano de contas (grupos)
 
-| Código | Significado | Tabela principal |
-|--------|-------------|------------------|
-| `CODLOC` | Locador (proprietário) | `locador.dbf` |
-| `CODINQ` | Inquilino | `inquili.dbf` |
-| `CODIMO` | Imóvel | `imovel.dbf` |
-| `CODCON` | Contrato | `contrato.dbf` |
-| `CODFIA` | Fiador | `fiador.dbf` |
-| `CODFAV` | Favorecido (repasse) | `favore.dbf` |
-| `CODSEC` | Locador secundário | `secunlo.dbf` |
-| `CODGR` | Grupo (plano de contas) | `grupo.dbf` |
-| `CODLAN` | Lançamento financeiro | `diversos.dbf` |
-| `CODBAN` | Conta bancária | `contas.dbf` / `bancos.dbf` |
+### F. Pós-contrato e jurídico
+- **Acordos / renegociação** de débitos em atraso (novo cronograma)
+- **Rescisão com apuração de saldo**: aluguel proporcional, IPTU pro-rata, multa,
+  bonificação, devolução de caução, lançamentos de rescisão
+- **Notificações formais** (aviso/extrajudicial) com tipo, assunto e situação
 
-Contadores de sequência ficam nas tabelas `COD*` (`codcad.dbf` concentra os próximos
-números de locador, inquilino, imóvel, contrato, etc.).
-
----
-
-## 5. Tabelas por área funcional
-
-### 5.1 Cadastros (pessoas e imóveis)
-| Tabela | Recs | Função |
-|--------|------|--------|
-| `locador.dbf` | 252 | Proprietários (dados, banco, repasse, cônjuge, representantes) — 90 campos |
-| `inquili.dbf` | 904 | Inquilinos — 64 campos |
-| `fiador.dbf` | 1.025 | Fiadores — 63 campos |
-| `favore.dbf` | 59 | Favorecidos de repasse — 90 campos |
-| `secunlo.dbf` / `secunda.dbf` | 28 / 31 | Locadores secundários e rateio (% de cada) |
-| `favopor.dbf` | 55 | % de favorecido por imóvel |
-| `imovel.dbf` | 623 | Imóveis (endereço, tipo, status, IPTU, luz, água) — 35 campos |
-| `garagem.dbf` | 19 | Vagas de garagem vinculadas a imóvel |
-| `cep.dbf` | 2.801 | Base de CEPs |
-
-### 5.2 Contratos
-| Tabela | Recs | Função |
-|--------|------|--------|
-| `contrato.dbf` | 982 | Contratos de locação (índice de reajuste, garantia, comissão, multa, juros, IRRF) — **88 campos** |
-| `continq.dbf` | 21 | Inquilinos adicionais por contrato |
-| `contfia.dbf` | 1.149 | Fiadores por contrato |
-| `acordos.dbf` | 322 | Acordos/renegociações |
-| `rescisao.dbf` | 809 | Rescisões de contrato |
-| `resclncs.dbf` | 1.561 | Lançamentos de rescisão |
-| `incendio.dbf` | 472 | Seguro incêndio |
-| `fianca.dbf` | 0 | Seguro fiança (vazia) |
-| `notifics.dbf` | 35 | Notificações ao inquilino/locador |
-
-### 5.3 Financeiro — recebimentos e cobrança
-| Tabela | Recs | Função |
-|--------|------|--------|
-| `aluguel.dbf` | 27.898 | **Lançamentos de aluguel** (vencimentos, recebimento, multa, juros, IR, comissão) — 45 campos |
-| `diversos.dbf` | 12.660 | Lançamentos diversos (débitos/créditos avulsos no contrato) — 68 campos |
-| `boletos.dbf` | 19.335 | Boletos emitidos (linha digitável, nosso número, código de barras) |
-| `lanciptu.dbf` | 9.505 | Parcelas de IPTU lançadas/cobradas |
-| `iptu.dbf` | 1.781 | IPTU por imóvel/ano |
-| `impresso.dbf` | 12.336 | Documentos impressos (recibos, comprovantes) |
-| `num_rec.dbf` | 60.073 | Sequência de nº de recibo |
-| `num_bol.dbf` / `num_edi.dbf` | 6 / 0 | Sequência de boleto/edital |
-
-### 5.4 Financeiro — repasses e caixa
-| Tabela | Recs | Função |
-|--------|------|--------|
-| `lanrepas.dbf` | **67.674** | **Repasses aos proprietários** (a maior tabela — quem recebe, %, valor, banco) — 42 campos |
-| `caixa.dbf` | 36.040 | Movimento de caixa (débito/crédito, grupo, contraparte) — 28 campos |
-| `movbanco.dbf` | 18.818 | Movimentação bancária |
-| `movfutur.dbf` | 0 | Movimentos futuros (vazia) |
-| `cadespe.dbf` | 4.800 | Despesas (contas a pagar) — favorecido, vencimento, pagamento |
-| `cp_cheqs.dbf` | 4.116 | Cheques a pagar |
-| `contas.dbf` / `bancos.dbf` | 1 / 4 | Contas bancárias da imobiliária |
-
-### 5.5 Apoio / parametrização
-| Tabela | Recs | Função |
-|--------|------|--------|
-| `parame.dbf` | 1 | **Configuração geral** (empresa, banco, taxas, NF, e-mail/SMTP, FTP) — 201 campos |
-| `indices.dbf` | 211 | Índices de reajuste (IGPM, IPCA, etc.) por data |
-| `tabela.dbf` | 216 | Tabela de IR (faixas, alíquota, dedução) |
-| `grupo.dbf` | 49 | Grupos / plano de contas |
-| `feriados.dbf` | 50 | Feriados (cálculo de vencimentos) |
-| `modelos.dbf` | 5 | Modelos de documento |
-| `usuarios.dbf` | 5 | Usuários do sistema (~50 flags de permissão por módulo) |
-| `lembre.dbf` | 1 | Lembretes/agenda |
-| `logoban.dbf` | 1 | Logos de banco (campo `General`/OLE) |
-| `versoes.dbf` | 11 | Histórico de versões |
-
-### 5.6 Tabelas temporárias (na raiz `data/uniloc/`)
-`tmp_rel.DBF`, `tmp_rep.DBF`, `tmp_div.DBF`, `tmp_iptu.DBF`, `tmp_repo.DBF`,
-`tmp_dash_calcula_txR.DBF`, `tmp2_dash_calcula_txA.DBF` — resultados intermediários de
-relatórios/dashboards. `RFBR.DBF` (593 KB) parece base auxiliar (provável Receita Federal/bairros).
+### G. Apoio
+- Tabela de **índices de reajuste** por data
+- Tabela de **IR** (faixas, alíquota, dedução) para retenção
+- Feriados (cálculo de vencimentos em dia útil)
+- Modelos de documento
+- **Permissões granulares por módulo** (~50 flags por usuário)
+- Lembretes/agenda operacional
+- Parametrização central (taxas, dados bancários, NF, e-mail/SMTP, FTP)
 
 ---
 
-## 6. Usuários cadastrados (`usuarios.dbf`)
-`UNION` (master), **NOEMIA LEMOS** (Diretora — lemos@imobiliarialemos.com.br),
-NAIRA LEMOS, GABRIEL LEAL, CELIA. Senhas existem nos campos `SENHA` (N6) e `PASSWORD` (C8) —
-**dados sensíveis: não expor.**
+## 3. Cobertura no AgoraEncontrei
+
+Boa parte já existe (o schema Prisma já cita `legacyId` do Uniloc). Comparativo:
+
+| Funcionalidade IMOBILI | AgoraEncontrei | Status |
+|------------------------|----------------|--------|
+| Cadastro locador/inquilino/fiador/imóvel | `Client`, `Property`, `Contract.guarantor/guarantor2` | ✅ |
+| Contrato (reajuste, garantia, comissão, IRRF, vistoria) | `Contract` (campos completos) | ✅ |
+| Cobrança mensal + boleto | `Rental`, `Invoice` (Asaas) | ✅ |
+| Índices de reajuste | `bcb-rates` | ✅ |
+| Repasse simples ao proprietário | `OwnerRepasse`, `ScheduledRepasse` | ✅ |
+| Caixa / transações | `Transaction`, `FinancialForecast` | ✅ |
+| Nota fiscal de serviço | `FiscalNote` | ✅ |
+| **Rateio de repasse multi-proprietário/favorecido** | — | ⚠️ **Lacuna** |
+| **Contas a pagar + cheques pré-datados** | — | ⚠️ **Lacuna** |
+| **Conciliação bancária / CNAB retorno** | parcial (Asaas webhook) | ⚠️ **Parcial** |
+| **Acordos / renegociação de dívida** | — | ⚠️ **Lacuna** |
+| **Cálculo automatizado de rescisão** | campos existem, sem motor | ⚠️ **Parcial** |
+| **Notificação formal/extrajudicial** | `legal` + `alerts` (parcial) | ⚠️ **Parcial** |
+| Carnê de IPTU parcelado | `Rental.iptuAmount` (sem carnê) | ⚠️ **Parcial** |
+| Permissões granulares por módulo | `UserRole` (papéis fixos) | ⚠️ **Parcial** |
 
 ---
 
-## 7. Fluxo operacional (como o sistema funciona)
+## 4. Recomendações (caminhos a corrigir/melhorar)
 
-1. **Cadastro**: locador → imóvel (com % de repasse) → inquilino → fiador.
-2. **Contrato** (`contrato.dbf`) amarra locador+imóvel+inquilino+fiador, define índice de
-   reajuste, garantia, comissão da imobiliária, dia de vencimento e multa/juros.
-3. **Geração de cobrança**: todo mês gera lançamentos em `aluguel.dbf` (+ `diversos`/`lanciptu`)
-   e emite `boletos.dbf` (SICREDI).
-4. **Recebimento**: baixa do boleto atualiza situação (`A_SITUI/A_SITUP`) e alimenta o `caixa.dbf`.
-5. **Repasse**: o valor do aluguel menos comissão/IR vira `lanrepas.dbf` → pagamento ao
-   proprietário (e favorecidos via `favopor`/`secunda`).
-6. **Saída**: `rescisao.dbf` + `resclncs.dbf` encerram o contrato.
+Priorizado por impacto operacional numa imobiliária de locação:
 
-Reajuste usa `indices.dbf`; retenção de IR usa `tabela.dbf`; despesas próprias da imobiliária
-em `cadespe.dbf`/`cp_cheqs.dbf`.
+1. **Rateio de repasse multi-proprietário** — `OwnerRepasse` hoje tem um único
+   `landlordId`. Imóveis com co-proprietários/favorecidos precisam de uma tabela de
+   participantes (`% por favorecido`), como `favopor`/`secunda`/`secunlo` faziam.
+2. **Módulo Contas a Pagar + Cheques** — despesas da imobiliária e de terceiros
+   (`cadespe`/`cp_cheqs`): favorecido, vencimento, status, controle de cheques pré-datados.
+3. **Motor de rescisão** — usar os campos já existentes em `Contract`/`Rental` para
+   calcular automaticamente o acerto de saída (proporcional + IPTU pro-rata + multa +
+   bonificação + caução).
+4. **Acordos/renegociação** — novo cronograma de parcelas para débitos em atraso, com
+   vínculo aos lançamentos originais.
+5. **Conciliação bancária** — importar extrato/CNAB de retorno para baixa automática e
+   bater caixa × banco.
+6. **Notificação formal padronizada** — tipo, assunto, situação e data de resolução
+   (cobrança amigável → extrajudicial).
+7. **Permissões granulares por módulo** — complementar `UserRole` com flags por recurso.
 
----
-
-## 8. Correspondência com o AgoraEncontrei (Prisma) — para migração futura
-
-| UNILOC (legado) | AgoraEncontrei (Prisma) |
-|-----------------|--------------------------|
-| `locador` | `PropertyOwner` / `Client` (role proprietário) |
-| `inquili` | `Client` (role inquilino) / `Contact` |
-| `fiador` | (novo — fiador no `Contract`) |
-| `imovel` | `Property` |
-| `contrato` | `Contract` + `Rental` |
-| `aluguel` / `diversos` | `Transaction` / `Invoice` |
-| `boletos` | `Invoice` (Asaas/boleto) |
-| `lanrepas` | `OwnerRepasse` |
-| `caixa` / `movbanco` | `Transaction` |
-| `indices` | `bcb-rates` / reajuste |
-| `cadespe` / `cp_cheqs` | `Transaction` (despesa) |
-
-> Observação: os códigos legados (`CODLOC`, `CODIMO`, …) devem ser preservados como
-> `legacyId` em cada modelo para rastreabilidade na importação.
-
----
-
-## 9. Como reler os dados (script de referência)
-
-```python
-from dbfread import DBF
-t = DBF("data/uniloc/backup_extraido/contrato.dbf",
-        ignore_missing_memofile=True, encoding='latin-1')
-print([f.name for f in t.fields])      # campos
-for rec in t:                          # registros
-    print(rec)
-```
-
-Para exportar tudo para CSV/JSON ou carregar num PostgreSQL de staging, basta iterar sobre
-cada `.dbf` listado em `dbesquema.dbf`.
+> Estas recomendações são apenas de **funcionalidade**; nenhuma migração de dados é
+> proposta ou necessária.
