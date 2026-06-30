@@ -2,8 +2,9 @@
   "name": "@agoraencontrei/desktop",
   "version": "0.1.0",
   "private": true,
-  "description": "AgoraEncontrei Software — edição offline (instalável no Windows). Empacota a plataforma para rodar local com banco SQLite e ativação por licença.",
+  "description": "AgoraEncontrei Software — edição offline (instalável no Windows). Empacota a plataforma para rodar local com PostgreSQL embarcado e ativação por licença.",
   "main": "main.js",
+  "author": "Imobiliária Lemos",
   "scripts": {
     "start": "electron .",
     "bundle": "node scripts/bundle-server.mjs",
@@ -13,12 +14,11 @@
   "build": {
     "appId": "com.agoraencontrei.software",
     "productName": "AgoraEncontrei Software",
-    "directories": { "output": "dist", "buildResources": "resources" },
+    "npmRebuild": false,
+    "directories": { "output": "dist" },
     "files": ["main.js", "preload.js", "license.js", "db.js", "renderer/**", "server/**"],
-    "extraResources": ["node_modules/@embedded-postgres/**"],
     "win": {
-      "target": ["nsis"],
-      "icon": "resources/icon.ico"
+      "target": ["nsis"]
     },
     "nsis": {
       "oneClick": false,
