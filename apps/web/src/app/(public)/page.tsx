@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import Image from 'next/image'
-import { BedDouble, Bath, Maximize, ArrowRight, Star, Sparkles } from 'lucide-react'
+import { BedDouble, Bath, Maximize, ArrowRight, Star, Sparkles, Check } from 'lucide-react'
 import { HeroSearchForm } from './HeroSearchForm'
 import { HeroBackground } from './HeroBackground'
 import { SmartQuizButton, SmartQuizModal } from './SmartQuiz'
@@ -492,27 +492,53 @@ export default async function HomePage() {
             Seja um Parceiro do AgoraEncontrei
           </h2>
           <p className="text-white/70 text-sm sm:text-base mb-6 max-w-2xl mx-auto leading-relaxed">
-            Tenha seu site profissional, CRM, IA do Tomás e marketplace integrado.
-            Anuncie seus imóveis com tecnologia de ponta e ganhe presença regional.
+            Tudo o que sua imobiliária precisa, em um só lugar: site profissional, CRM completo,
+            IA do Tomás, marketplace integrado, anúncios ilimitados e até a versão offline.
+            Assine online em minutos e já saia com seu site no ar.
           </p>
+
+          {/* Tudo incluído — reunido de uma vez só, sem repetir CTAs */}
+          <div className="flex flex-wrap justify-center gap-2 mb-7 max-w-2xl mx-auto">
+            {[
+              'Site profissional próprio',
+              'CRM completo',
+              'IA do Tomás 24/7',
+              'Marketplace integrado',
+              'Anúncios ilimitados',
+              'Versão offline (sistema)',
+            ].map(item => (
+              <span
+                key={item}
+                className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-white/85"
+                style={{ backgroundColor: 'rgba(201,168,76,0.12)', border: '1px solid rgba(201,168,76,0.25)' }}
+              >
+                <Check className="w-3 h-3" style={{ color: 'var(--site-accent-color, #C9A84C)' }} />
+                {item}
+              </span>
+            ))}
+          </div>
+
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link
               href="/parceiros/planos"
-              className="px-7 py-3 rounded-xl text-sm font-bold transition-all hover:brightness-110 inline-flex items-center justify-center gap-2"
+              className="px-8 py-3.5 rounded-xl text-sm font-bold transition-all hover:brightness-110 inline-flex items-center justify-center gap-2"
               style={{ backgroundColor: 'var(--site-accent-color, #C9A84C)', color: 'var(--site-primary-color, #143A1F)' }}
             >
-              Ver Planos e Assinar <ArrowRight className="w-4 h-4" />
+              Ver planos e assinar <ArrowRight className="w-4 h-4" />
             </Link>
             <a
               href="https://wa.me/5516981010004?text=Olá! Gostaria de ser um parceiro do AgoraEncontrei e anunciar meus imóveis."
               target="_blank"
               rel="noreferrer"
-              className="px-7 py-3 rounded-xl text-sm font-bold border-2 text-white transition-all hover:bg-white/10 inline-flex items-center justify-center gap-2"
+              className="px-7 py-3.5 rounded-xl text-sm font-bold border-2 text-white transition-all hover:bg-white/10 inline-flex items-center justify-center gap-2"
               style={{ borderColor: 'rgba(201,168,76,0.5)' }}
             >
-              Falar pelo WhatsApp
+              Tirar dúvidas no WhatsApp
             </a>
           </div>
+          <p className="text-white/45 text-xs mt-4">
+            Compra 100% online · seu site no ar na sequência · cancele quando quiser
+          </p>
         </div>
       </section>
 
@@ -608,27 +634,16 @@ export default async function HomePage() {
             ))}
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          {/* CTA do marketplace — apenas o anúncio gratuito (dono de imóvel).
+              A oferta para imobiliárias/corretores (site, CRM, IA, offline)
+              está reunida na seção "Seja um Parceiro", logo acima, sem repetir. */}
+          <div className="flex justify-center">
             <Link
               href="/anunciar"
               className="px-8 py-3.5 rounded-xl text-sm font-bold transition-all hover:brightness-110 text-center"
               style={{ backgroundColor: 'var(--site-accent-color, #C9A84C)', color: 'var(--site-primary-color, #143A1F)' }}
             >
-              Anuncie seu Imóvel
-            </Link>
-            <Link
-              href="/parceiros/cadastro"
-              className="px-8 py-3.5 rounded-xl text-sm font-bold text-center transition-all hover:bg-white/10"
-              style={{ border: '1px solid rgba(201,168,76,0.4)', color: 'var(--site-accent-color, #C9A84C)' }}
-            >
-              Seja um Parceiro
-            </Link>
-            <Link
-              href="/parceiros/planos"
-              className="px-8 py-3.5 rounded-xl text-sm font-bold text-center transition-all hover:bg-white/10"
-              style={{ border: '1px solid rgba(255,255,255,0.2)', color: 'white' }}
-            >
-              Quero CRM, Site próprio e Anunciar
+              Anuncie seu Imóvel gratuitamente
             </Link>
           </div>
         </div>
