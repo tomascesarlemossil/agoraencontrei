@@ -119,6 +119,7 @@ const lemosbankSubItems = [
   { href: '/dashboard/lemosbank/rateio-repasse', icon: Split,    label: 'Rateio de Repasse' },
   { href: '/dashboard/lemosbank/contas-a-pagar', icon: Wallet,   label: 'Contas a Pagar' },
   { href: '/dashboard/lemosbank/conciliacao',  icon: Landmark,   label: 'Conciliação' },
+  { href: '/dashboard/lemosbank/iptu',         icon: Home,       label: 'Carnê de IPTU' },
   { href: '/dashboard/lemosbank/acordos',      icon: Handshake,  label: 'Acordos' },
   { href: '/dashboard/lemosbank/rescisoes',    icon: Scissors,   label: 'Rescisões' },
   { href: '/dashboard/lemosbank/acerto-rescisao', icon: Scissors, label: 'Acerto de Rescisão' },
