@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="UTF-8"><style>
+  body{font-family:'Times New Roman',serif;font-size:12pt;line-height:1.6;color:#000;max-width:680px;margin:40px auto;padding:0 30px}
+  .cab{text-align:center;border-bottom:2px solid #1B2B5B;padding-bottom:12px;margin-bottom:24px}
+  .cab h1{font-size:16pt;color:#1B2B5B;margin:0}
+  .cab small{color:#444}
+  .tabela{width:100%;border-collapse:collapse;margin:16px 0}
+  .tabela th,.tabela td{border:1px solid #999;padding:6px 10px;text-align:left;font-size:11pt}
+  .total{text-align:right;font-weight:bold;margin-top:8px}
+  .assina{margin-top:48px;text-align:center}
+</style></head><body>
+  <div class="cab">
+    <h1>{{empresa.nome|maiusc}}</h1>
+    <small>{{empresa.endereco}} · {{empresa.telefone}}{{#se empresa.creci}} · CRECI {{empresa.creci}}{{/se}}</small>
+  </div>
+
+  <p style="text-align:right">{{empresa.cidade}}, {{data.hoje|extenso}}</p>
+
+  <p><strong>Aviso de Cobrança</strong></p>
+  <p>Prezado(a) Sr(a). <strong>{{locatario.nome}}</strong>,</p>
+
+  <p>Constam em aberto, referentes ao contrato de locação do imóvel situado em
+  <strong>{{imovel.endereco}}</strong>, os seguintes débitos:</p>
+
+  <table class="tabela">
+    <tr><th>Competência</th><th>Vencimento</th><th>Valor</th></tr>
+    {{#se parcela.competencia}}<tr><td>{{parcela.competencia}}</td><td>{{parcela.vencimento|data}}</td><td>{{parcela.valor|moeda}}</td></tr>{{/se}}
+  </table>
+  <p class="total">Total devido: {{cobranca.totalDevido|moeda}}</p>
+
+  <p>A fim de evitar o envio do débito ao Departamento Jurídico — o que acarretaria
+  maiores despesas, tais como honorários advocatícios, custas de cartório, taxa de
+  oficial de justiça e a negativação junto ao SPC e SERASA — solicitamos que tome
+  urgentes providências para a liquidação das parcelas acima.</p>
+
+  <p>Para tanto, V.Sa. dispõe de <strong>10 (dez) dias úteis</strong>, a contar do
+  recebimento desta, para o pagamento ou negociação das mesmas.</p>
+
+  <p>No aguardo de suas urgentes providências.</p>
+
+  <div class="assina">
+    <p>Atenciosamente,</p>
+    <p>_______________________________________<br>{{empresa.nome}}</p>
+  </div>
+</body></html>

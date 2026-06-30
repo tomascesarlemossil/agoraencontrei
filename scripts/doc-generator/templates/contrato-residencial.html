@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="UTF-8"><style>
+  body{font-family:'Times New Roman',serif;font-size:12pt;line-height:1.7;color:#000;max-width:700px;margin:40px auto;padding:0 30px;text-align:justify}
+  h1{font-size:15pt;text-align:center;color:#1B2B5B;margin-bottom:24px}
+  h2{font-size:12pt;margin:18px 0 6px}
+  .assinaturas{margin-top:60px;display:flex;justify-content:space-between;gap:40px;text-align:center}
+  .assinaturas div{flex:1;border-top:1px solid #000;padding-top:6px;font-size:11pt}
+</style></head><body>
+  <h1>CONTRATO DE LOCAÇÃO RESIDENCIAL</h1>
+
+  <p><strong>LOCADOR(A):</strong> {{locador.nome}}, inscrito(a) no CPF/CNPJ sob nº
+  {{locador.cpfCnpj}}{{#se locador.endereco}}, residente em {{locador.endereco}}{{/se}}.</p>
+
+  <p><strong>LOCATÁRIO(A):</strong> {{locatario.nome}}, inscrito(a) no CPF nº
+  {{locatario.cpfCnpj}}{{#se locatario.profissao}}, {{locatario.profissao}}{{/se}}.</p>
+
+  {{#se fiador.nome}}<p><strong>FIADOR(A):</strong> {{fiador.nome}}, CPF nº {{fiador.cpfCnpj}},
+  que assina o presente como garantidor solidário das obrigações do(a) locatário(a).</p>{{/se}}
+
+  <p>As partes acima têm, entre si, justo e contratado o presente Contrato de Locação,
+  que se regerá pela Lei nº 8.245/91 e pelas cláusulas seguintes:</p>
+
+  <h2>CLÁUSULA 1ª — DO OBJETO</h2>
+  <p>O LOCADOR dá em locação ao LOCATÁRIO o imóvel situado em <strong>{{imovel.endereco}}</strong>
+  {{#se imovel.bairro}}, bairro {{imovel.bairro}}{{/se}}{{#se imovel.cidade}}, {{imovel.cidade}}{{/se}},
+  destinado exclusivamente a fins residenciais.</p>
+
+  <h2>CLÁUSULA 2ª — DO PRAZO</h2>
+  <p>A locação terá o prazo de <strong>{{contrato.prazoMeses}} meses</strong>, com início em
+  {{contrato.inicio|data}}.</p>
+
+  <h2>CLÁUSULA 3ª — DO ALUGUEL</h2>
+  <p>O valor mensal do aluguel é de <strong>{{contrato.valorAluguel|moeda}}</strong>, a ser pago
+  até o dia {{contrato.diaVencimento}} de cada mês.{{#se contrato.indiceReajuste}} O aluguel será
+  reajustado anualmente pelo índice {{contrato.indiceReajuste}}.{{/se}}</p>
+
+  <h2>CLÁUSULA 4ª — DA MULTA</h2>
+  <p>O descumprimento de qualquer cláusula sujeita o infrator à multa equivalente a
+  {{contrato.multa}}% do valor anual do aluguel, sem prejuízo das demais cominações legais.</p>
+
+  <p style="margin-top:28px;text-align:center">{{empresa.cidade}}, {{data.hoje|extenso}}.</p>
+
+  <div class="assinaturas">
+    <div>{{locador.nome}}<br>LOCADOR(A)</div>
+    <div>{{locatario.nome}}<br>LOCATÁRIO(A)</div>
+    {{#se fiador.nome}}<div>{{fiador.nome}}<br>FIADOR(A)</div>{{/se}}
+  </div>
+</body></html>
