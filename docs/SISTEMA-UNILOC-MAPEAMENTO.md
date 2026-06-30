@@ -99,7 +99,7 @@ Boa parte já existe (o schema Prisma já cita `legacyId` do Uniloc). Comparativ
 | **Acordos / renegociação de dívida** | `Agreement` + `AgreementInstallment` + rota `/agreements` | ✅ **Implementado** |
 | **Cálculo automatizado de rescisão** | `calculateRescission` + `Rescission` + rota `/rescission` | ✅ **Implementado** |
 | **Notificação formal/extrajudicial** | `FormalNotice` + rota `/notices` | ✅ **Implementado** |
-| Carnê de IPTU parcelado | `Rental.iptuAmount` (sem carnê) | ⚠️ **Parcial** |
+| Carnê de IPTU parcelado | `IptuCarne` + `IptuInstallment` + rota `/iptu` | ✅ **Implementado** |
 | Permissões granulares por módulo | `UserModulePermission` + `/permissions` + guard | ✅ **Implementado** |
 
 ---
@@ -134,10 +134,13 @@ Priorizado por impacto operacional numa imobiliária de locação:
    + guard `requirePermission` (opt-in) + rota `/api/v1/permissions`.
    Migrations 5–7: `20260630000004_add_notices_reconciliation_permissions`.
 
-### Ainda pendente (parcial)
-- **Carnê de IPTU parcelado** — hoje só `Rental.iptuAmount` (valor por cobrança); falta
-  o carnê anual por imóvel com rateio de parcelas (Uniloc `iptu`/`lanciptu`).
-- **Frontend (telas)** dos módulos novos.
+### Frontend
+Todas as 8 telas implementadas no dashboard (submenu **LemosBank** + **Permissões**):
+Contas a Pagar, Rateio de Repasse, Conciliação, Carnê de IPTU, Acordos, Acerto de
+Rescisão, Notificações Formais e Permissões por módulo.
+
+### Ainda pendente
+- **Backfill com dados reais** — aguardando definição de acesso ao banco.
 
 > Estas funcionalidades são apenas de **código**; nenhuma migração de dados foi feita.
 >
