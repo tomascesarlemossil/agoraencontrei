@@ -204,7 +204,7 @@ function CadastroParceirosContent() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#f8f6f1] to-white">
       {/* Header */}
-      <header className="bg-[#1B2B5B] py-4 px-6">
+      <header className="bg-[#143A1F] py-4 px-6">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <Link href="/">
             <Image src="/logo-ae-v2.png" alt="AgoraEncontrei" width={140} height={40} className="h-8 w-auto" />
@@ -218,17 +218,17 @@ function CadastroParceirosContent() {
       <div className="max-w-3xl mx-auto px-4 py-12">
         {/* Badge do plano selecionado */}
         {selectedPlan !== 'START' && step !== 'success' && (
-          <div className="mb-6 flex items-center gap-3 p-4 rounded-2xl border" style={{ backgroundColor: selectedPlan === 'VIP' ? 'rgba(27,43,91,0.05)' : 'rgba(201,168,76,0.08)', borderColor: selectedPlan === 'VIP' ? 'rgba(27,43,91,0.2)' : 'rgba(201,168,76,0.3)' }}>
+          <div className="mb-6 flex items-center gap-3 p-4 rounded-2xl border" style={{ backgroundColor: selectedPlan === 'VIP' ? 'rgba(20,58,31,0.05)' : 'rgba(201,168,76,0.08)', borderColor: selectedPlan === 'VIP' ? 'rgba(20,58,31,0.2)' : 'rgba(201,168,76,0.3)' }}>
             {selectedPlan === 'VIP'
-              ? <Crown className="w-5 h-5 flex-shrink-0" style={{ color: '#1B2B5B' }} />
+              ? <Crown className="w-5 h-5 flex-shrink-0" style={{ color: '#143A1F' }} />
               : <Star className="w-5 h-5 flex-shrink-0" style={{ color: '#C9A84C' }} />
             }
             <div>
-              <p className="text-sm font-bold" style={{ color: '#1B2B5B' }}>Plano {selectedPlan} selecionado — R$ {selectedPlan === 'VIP' ? '497' : '197'}/mês</p>
+              <p className="text-sm font-bold" style={{ color: '#143A1F' }}>Plano {selectedPlan} selecionado — R$ {selectedPlan === 'VIP' ? '497' : '197'}/mês</p>
               <p className="text-xs text-gray-500">
                 Inclui aporte inicial único de R$ 990 (à vista no PIX com 6,80% de desconto = R$ 922,68, ou parcelado no boleto/cartão),
                 cobrado junto com a 1ª mensalidade. Após o cadastro você vai ao checkout. Ao continuar, você concorda com o{' '}
-                <a href="/parceiros/contrato" target="_blank" rel="noreferrer" className="underline" style={{ color: '#1B2B5B' }}>Contrato de Adesão</a>.
+                <a href="/parceiros/contrato" target="_blank" rel="noreferrer" className="underline" style={{ color: '#143A1F' }}>Contrato de Adesão</a>.
               </p>
             </div>
           </div>
@@ -240,10 +240,10 @@ function CadastroParceirosContent() {
               <div key={s} className="flex items-center gap-2">
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all ${
                   step === s ? 'bg-[#C9A84C] text-white' :
-                  ['category', 'info', 'buildings'].indexOf(step) > i ? 'bg-[#1B2B5B] text-white' :
+                  ['category', 'info', 'buildings'].indexOf(step) > i ? 'bg-[#143A1F] text-white' :
                   'bg-gray-200 text-gray-400'
                 }`}>{i + 1}</div>
-                <span className={`text-sm hidden sm:block ${step === s ? 'text-[#1B2B5B] font-semibold' : 'text-gray-400'}`}>
+                <span className={`text-sm hidden sm:block ${step === s ? 'text-[#143A1F] font-semibold' : 'text-gray-400'}`}>
                   {s === 'category' ? 'Especialidade' : s === 'info' ? 'Seus Dados' : 'Edifícios'}
                 </span>
                 {i < 2 && <ChevronRight className="w-4 h-4 text-gray-300" />}
@@ -256,13 +256,13 @@ function CadastroParceirosContent() {
         {step === 'category' && (
           <div>
             <div className="mb-8">
-              <h1 className="text-3xl font-bold text-[#1B2B5B] mb-2">Seja um Parceiro Profissional</h1>
+              <h1 className="text-3xl font-bold text-[#143A1F] mb-2">Seja um Parceiro Profissional</h1>
               <p className="text-gray-600 text-lg">
                 Cadastre-se gratuitamente e apareça nas buscas de quem precisa dos seus serviços em Franca e região.
               </p>
             </div>
 
-            <h2 className="text-lg font-semibold text-[#1B2B5B] mb-4">Qual é a sua especialidade?</h2>
+            <h2 className="text-lg font-semibold text-[#143A1F] mb-4">Qual é a sua especialidade?</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {CATEGORIES.map(cat => {
                 const Icon = cat.icon
@@ -273,10 +273,10 @@ function CadastroParceirosContent() {
                     className="flex items-start gap-4 p-4 bg-white rounded-xl border-2 border-gray-100 hover:border-[#C9A84C] hover:shadow-md transition-all text-left group"
                   >
                     <div className="w-10 h-10 bg-[#f8f6f1] rounded-lg flex items-center justify-center flex-shrink-0 group-hover:bg-[#C9A84C]/10 transition-colors">
-                      <Icon className="w-5 h-5 text-[#1B2B5B]" />
+                      <Icon className="w-5 h-5 text-[#143A1F]" />
                     </div>
                     <div>
-                      <p className="font-semibold text-[#1B2B5B]">{cat.label}</p>
+                      <p className="font-semibold text-[#143A1F]">{cat.label}</p>
                       <p className="text-sm text-gray-500 mt-0.5">{cat.desc}</p>
                     </div>
                   </button>
@@ -296,7 +296,7 @@ function CadastroParceirosContent() {
                 </div>
               )}
               <div>
-                <h1 className="text-2xl font-bold text-[#1B2B5B]">Seus Dados Profissionais</h1>
+                <h1 className="text-2xl font-bold text-[#143A1F]">Seus Dados Profissionais</h1>
                 <p className="text-gray-500 text-sm">{selectedCategory?.label} · Franca e Região</p>
               </div>
             </div>
@@ -304,7 +304,7 @@ function CadastroParceirosContent() {
             <div className="space-y-5">
               {/* Nome */}
               <div>
-                <label className="block text-sm font-semibold text-[#1B2B5B] mb-1.5">Nome completo *</label>
+                <label className="block text-sm font-semibold text-[#143A1F] mb-1.5">Nome completo *</label>
                 <div className="relative">
                   <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <input
@@ -319,7 +319,7 @@ function CadastroParceirosContent() {
 
               {/* Email */}
               <div>
-                <label className="block text-sm font-semibold text-[#1B2B5B] mb-1.5">E-mail profissional *</label>
+                <label className="block text-sm font-semibold text-[#143A1F] mb-1.5">E-mail profissional *</label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <input
@@ -336,7 +336,7 @@ function CadastroParceirosContent() {
               {/* Telefone + WhatsApp */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-semibold text-[#1B2B5B] mb-1.5">Telefone</label>
+                  <label className="block text-sm font-semibold text-[#143A1F] mb-1.5">Telefone</label>
                   <div className="relative">
                     <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                     <input
@@ -349,7 +349,7 @@ function CadastroParceirosContent() {
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-[#1B2B5B] mb-1.5">WhatsApp</label>
+                  <label className="block text-sm font-semibold text-[#143A1F] mb-1.5">WhatsApp</label>
                   <div className="relative">
                     <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                     <input
@@ -365,7 +365,7 @@ function CadastroParceirosContent() {
 
               {/* CPF/CNPJ */}
               <div>
-                <label className="block text-sm font-semibold text-[#1B2B5B] mb-1.5">CPF ou CNPJ</label>
+                <label className="block text-sm font-semibold text-[#143A1F] mb-1.5">CPF ou CNPJ</label>
                 <div className="relative">
                   <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <input
@@ -399,7 +399,7 @@ function CadastroParceirosContent() {
               {/* CREA/CAU/CRO */}
               {['IMOBILIARIA', 'LOTEADORA', 'ARQUITETO', 'ENGENHEIRO', 'AVALIADOR', 'CORRETOR', 'ADVOGADO_IMOBILIARIO'].includes(form.category) && (
                 <div>
-                  <label className="block text-sm font-semibold text-[#1B2B5B] mb-1.5">
+                  <label className="block text-sm font-semibold text-[#143A1F] mb-1.5">
                     {form.category === 'IMOBILIARIA' || form.category === 'LOTEADORA' || form.category === 'CORRETOR' ? 'CRECI' :
                      form.category === 'ARQUITETO' ? 'CAU' :
                      form.category === 'ADVOGADO_IMOBILIARIO' ? 'OAB' : 'CREA'} (opcional)
@@ -419,7 +419,7 @@ function CadastroParceirosContent() {
 
               {/* Bio */}
               <div>
-                <label className="block text-sm font-semibold text-[#1B2B5B] mb-1.5">Apresentação profissional</label>
+                <label className="block text-sm font-semibold text-[#143A1F] mb-1.5">Apresentação profissional</label>
                 <textarea
                   value={form.bio}
                   onChange={e => setForm(f => ({ ...f, bio: e.target.value }))}
@@ -432,7 +432,7 @@ function CadastroParceirosContent() {
               {/* Instagram + Website */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-semibold text-[#1B2B5B] mb-1.5">Instagram</label>
+                  <label className="block text-sm font-semibold text-[#143A1F] mb-1.5">Instagram</label>
                   <div className="relative">
                     <Instagram className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                     <input
@@ -445,7 +445,7 @@ function CadastroParceirosContent() {
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-[#1B2B5B] mb-1.5">Site</label>
+                  <label className="block text-sm font-semibold text-[#143A1F] mb-1.5">Site</label>
                   <div className="relative">
                     <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                     <input
@@ -462,7 +462,7 @@ function CadastroParceirosContent() {
               {/* Tags de especialidade */}
               {SPECIALTY_TAGS[form.category]?.length > 0 && (
                 <div>
-                  <label className="block text-sm font-semibold text-[#1B2B5B] mb-2">Áreas de atuação (selecione as que se aplicam)</label>
+                  <label className="block text-sm font-semibold text-[#143A1F] mb-2">Áreas de atuação (selecione as que se aplicam)</label>
                   <div className="flex flex-wrap gap-2">
                     {SPECIALTY_TAGS[form.category].map(tag => (
                       <button
@@ -471,7 +471,7 @@ function CadastroParceirosContent() {
                         onClick={() => toggleTag(tag)}
                         className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-all ${
                           form.tags.includes(tag)
-                            ? 'bg-[#1B2B5B] text-white border-[#1B2B5B]'
+                            ? 'bg-[#143A1F] text-white border-[#143A1F]'
                             : 'bg-white text-gray-600 border-gray-200 hover:border-[#C9A84C]'
                         }`}
                       >
@@ -500,7 +500,7 @@ function CadastroParceirosContent() {
                   setError('')
                   setStep('buildings')
                 }}
-                className="flex-1 bg-[#1B2B5B] text-white py-3 rounded-xl font-semibold hover:bg-[#162247] transition-colors flex items-center justify-center gap-2"
+                className="flex-1 bg-[#143A1F] text-white py-3 rounded-xl font-semibold hover:bg-[#0E2A15] transition-colors flex items-center justify-center gap-2"
               >
                 Continuar <ChevronRight className="w-4 h-4" />
               </button>
@@ -513,7 +513,7 @@ function CadastroParceirosContent() {
         {step === 'buildings' && (
           <div>
             <div className="mb-8">
-              <h1 className="text-2xl font-bold text-[#1B2B5B] mb-2">Onde você já trabalhou?</h1>
+              <h1 className="text-2xl font-bold text-[#143A1F] mb-2">Onde você já trabalhou?</h1>
               <p className="text-gray-600">
                 Selecione os condomínios e edifícios onde você já prestou serviços. Isso cria links automáticos entre seu perfil e esses imóveis no Google.
               </p>
@@ -521,11 +521,11 @@ function CadastroParceirosContent() {
 
             {/* Selecionados */}
             {selectedBuildings.length > 0 && (
-              <div className="mb-4 p-4 bg-[#1B2B5B]/5 rounded-xl">
-                <p className="text-sm font-semibold text-[#1B2B5B] mb-2">{selectedBuildings.length} selecionado(s):</p>
+              <div className="mb-4 p-4 bg-[#143A1F]/5 rounded-xl">
+                <p className="text-sm font-semibold text-[#143A1F] mb-2">{selectedBuildings.length} selecionado(s):</p>
                 <div className="flex flex-wrap gap-2">
                   {selectedBuildings.map(b => (
-                    <span key={b.id} className="flex items-center gap-1 bg-[#1B2B5B] text-white text-xs px-3 py-1.5 rounded-full">
+                    <span key={b.id} className="flex items-center gap-1 bg-[#143A1F] text-white text-xs px-3 py-1.5 rounded-full">
                       {b.name}
                       <button onClick={() => toggleBuilding(b)}>
                         <X className="w-3 h-3 ml-1" />
@@ -571,7 +571,7 @@ function CadastroParceirosContent() {
                       {selected && <CheckCircle2 className="w-3 h-3 text-white" />}
                     </div>
                     <div>
-                      <p className="font-medium text-[#1B2B5B] text-sm">{b.name}</p>
+                      <p className="font-medium text-[#143A1F] text-sm">{b.name}</p>
                       {b.neighborhood && (
                         <p className="text-xs text-gray-400 flex items-center gap-1 mt-0.5">
                           <MapPin className="w-3 h-3" /> {b.neighborhood} · {b.city}/SP
@@ -622,7 +622,7 @@ function CadastroParceirosContent() {
             <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
               <CheckCircle2 className="w-10 h-10 text-green-500" />
             </div>
-            <h1 className="text-3xl font-bold text-[#1B2B5B] mb-3">Cadastro realizado! 🎉</h1>
+            <h1 className="text-3xl font-bold text-[#143A1F] mb-3">Cadastro realizado! 🎉</h1>
             <p className="text-gray-600 text-lg mb-2">
               Olá, <strong>{result.name}</strong>! Seu perfil foi criado com sucesso.
             </p>
@@ -633,14 +633,14 @@ function CadastroParceirosContent() {
 
             {/* Link do perfil */}
             <div className="bg-[#f8f6f1] rounded-2xl p-6 mb-8 text-left">
-              <p className="text-sm font-semibold text-[#1B2B5B] mb-3 flex items-center gap-2">
+              <p className="text-sm font-semibold text-[#143A1F] mb-3 flex items-center gap-2">
                 <Globe className="w-4 h-4" /> Seu link de perfil (disponível após aprovação):
               </p>
               <div className="flex items-center gap-2 bg-white rounded-xl p-3 border border-gray-200">
-                <p className="text-[#1B2B5B] text-sm font-mono flex-1 truncate">{result.profileUrl}</p>
+                <p className="text-[#143A1F] text-sm font-mono flex-1 truncate">{result.profileUrl}</p>
                 <button
                   onClick={() => navigator.clipboard.writeText(result.profileUrl)}
-                  className="text-xs bg-[#1B2B5B] text-white px-3 py-1.5 rounded-lg hover:bg-[#162247] transition-colors flex-shrink-0"
+                  className="text-xs bg-[#143A1F] text-white px-3 py-1.5 rounded-lg hover:bg-[#0E2A15] transition-colors flex-shrink-0"
                 >
                   Copiar
                 </button>
@@ -658,7 +658,7 @@ function CadastroParceirosContent() {
                   <div className="w-8 h-8 bg-[#C9A84C]/10 rounded-lg flex items-center justify-center mb-3">
                     <item.icon className="w-4 h-4 text-[#C9A84C]" />
                   </div>
-                  <p className="font-semibold text-[#1B2B5B] text-sm mb-1">{item.title}</p>
+                  <p className="font-semibold text-[#143A1F] text-sm mb-1">{item.title}</p>
                   <p className="text-xs text-gray-500">{item.desc}</p>
                 </div>
               ))}
@@ -673,7 +673,7 @@ function CadastroParceirosContent() {
               </Link>
               <Link
                 href="/"
-                className="px-6 py-3 bg-[#1B2B5B] text-white rounded-xl font-semibold hover:bg-[#162247] transition-colors"
+                className="px-6 py-3 bg-[#143A1F] text-white rounded-xl font-semibold hover:bg-[#0E2A15] transition-colors"
               >
                 Ir para o Início
               </Link>

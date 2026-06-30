@@ -77,7 +77,7 @@ export default function PermutasPage() {
   return (
     <main className="min-h-screen bg-gray-50 py-10 px-4">
       <div className="mx-auto max-w-5xl">
-        <h1 className="flex items-center gap-2 text-2xl sm:text-3xl font-bold" style={{ color: '#1B2B5B' }}>
+        <h1 className="flex items-center gap-2 text-2xl sm:text-3xl font-bold" style={{ color: '#143A1F' }}>
           <Repeat className="h-7 w-7" style={{ color: '#C9A84C' }} />
           Central de Permutas
         </h1>
@@ -91,18 +91,18 @@ export default function PermutasPage() {
             {result ? (
               <div className="py-8 text-center">
                 <CheckCircle2 className="mx-auto h-12 w-12 text-emerald-500" />
-                <p className="mt-3 font-semibold" style={{ color: '#1B2B5B' }}>{result}</p>
+                <p className="mt-3 font-semibold" style={{ color: '#143A1F' }}>{result}</p>
                 <button
                   onClick={() => { setResult(null); setForm({ ...form, offerDescription: '' }) }}
                   className="mt-5 rounded-xl px-5 py-2 text-sm font-semibold text-white"
-                  style={{ backgroundColor: '#1B2B5B' }}
+                  style={{ backgroundColor: '#143A1F' }}
                 >
                   Registrar outra permuta
                 </button>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4">
-                <h2 className="font-semibold" style={{ color: '#1B2B5B' }}>O que você oferece</h2>
+                <h2 className="font-semibold" style={{ color: '#143A1F' }}>O que você oferece</h2>
                 <div className="grid grid-cols-2 gap-3">
                   <input required placeholder="Seu nome *" value={form.name}
                     onChange={(e) => setForm({ ...form, name: e.target.value })} className={input} />
@@ -122,7 +122,7 @@ export default function PermutasPage() {
                   onChange={(e) => setForm({ ...form, offerDescription: e.target.value })}
                   rows={3} className={input} />
 
-                <h2 className="font-semibold pt-2" style={{ color: '#1B2B5B' }}>O que você procura</h2>
+                <h2 className="font-semibold pt-2" style={{ color: '#143A1F' }}>O que você procura</h2>
                 <div className="grid grid-cols-2 gap-3">
                   <select value={form.wantedType} onChange={(e) => setForm({ ...form, wantedType: e.target.value })} className={input}>
                     <option value="">Qualquer tipo</option>
@@ -137,7 +137,7 @@ export default function PermutasPage() {
                 {error && <p className="text-sm text-red-600">{error}</p>}
                 <button type="submit" disabled={loading}
                   className="flex w-full items-center justify-center gap-2 rounded-xl py-3.5 font-semibold text-white transition-all hover:brightness-110 disabled:opacity-60"
-                  style={{ backgroundColor: '#1B2B5B' }}>
+                  style={{ backgroundColor: '#143A1F' }}>
                   {loading && <Loader2 className="h-4 w-4 animate-spin" />}
                   Registrar permuta
                 </button>
@@ -147,7 +147,7 @@ export default function PermutasPage() {
 
           {/* Properties accepting exchange */}
           <div>
-            <h2 className="font-semibold mb-3" style={{ color: '#1B2B5B' }}>
+            <h2 className="font-semibold mb-3" style={{ color: '#143A1F' }}>
               Imóveis que aceitam permuta
             </h2>
             {properties.length === 0 ? (
@@ -161,7 +161,7 @@ export default function PermutasPage() {
                       ? <img src={p.coverImage} alt={p.title} className="h-24 w-full object-cover" />
                       : <div className="h-24 w-full bg-gray-100" />}
                     <div className="p-2.5">
-                      <p className="text-xs font-medium line-clamp-2" style={{ color: '#1B2B5B' }}>{p.title}</p>
+                      <p className="text-xs font-medium line-clamp-2" style={{ color: '#143A1F' }}>{p.title}</p>
                       <p className="text-[11px] text-gray-400 mt-0.5 truncate">
                         {[p.neighborhood, p.city].filter(Boolean).join(', ')}
                       </p>

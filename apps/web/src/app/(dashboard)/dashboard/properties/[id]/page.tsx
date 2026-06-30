@@ -640,7 +640,7 @@ export default function PropertyDetailPage() {
                 <div key={url} className="relative group rounded-lg overflow-hidden aspect-video bg-white/5">
                   <img src={url} alt="" className="w-full h-full object-cover" />
                   {url === p.coverImage && (
-                    <div className="absolute top-1 left-1 bg-[#C9A84C] text-[#1B2B5B] text-[10px] font-bold px-1 py-0.5 rounded flex items-center gap-0.5">
+                    <div className="absolute top-1 left-1 bg-[#C9A84C] text-[#143A1F] text-[10px] font-bold px-1 py-0.5 rounded flex items-center gap-0.5">
                       <Star className="h-2 w-2 fill-current" /> Capa
                     </div>
                   )}
@@ -651,7 +651,7 @@ export default function PropertyDetailPage() {
                     </button>
                     {url !== p.coverImage && (
                       <button onClick={async () => await saveImages(url, p.images ?? [])}
-                        className="text-[10px] bg-[#C9A84C] text-[#1B2B5B] px-1.5 py-0.5 rounded font-semibold">
+                        className="text-[10px] bg-[#C9A84C] text-[#143A1F] px-1.5 py-0.5 rounded font-semibold">
                         Capa
                       </button>
                     )}

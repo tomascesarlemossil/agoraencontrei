@@ -15,7 +15,7 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
   return (
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#F8F5F0' }}>
       {/* Header */}
-      <header style={{ backgroundColor: '#1B2B5B' }} className="py-4 px-6 flex items-center gap-4 shadow-md">
+      <header style={{ backgroundColor: '#143A1F' }} className="py-4 px-6 flex items-center gap-4 shadow-md">
         <Link href="/" className="flex items-center gap-3">
           <div
             className="h-9 w-9 rounded-lg flex items-center justify-center text-white font-bold text-sm flex-shrink-0"
@@ -44,7 +44,7 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
       </main>
 
       {/* Footer */}
-      <footer style={{ backgroundColor: '#1B2B5B' }} className="py-6 px-6 mt-8">
+      <footer style={{ backgroundColor: '#143A1F' }} className="py-6 px-6 mt-8">
         <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-white/50">
           <div className="flex items-center gap-3">
             <div

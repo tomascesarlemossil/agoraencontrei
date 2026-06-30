@@ -55,7 +55,7 @@ export default async function CorretorProfilePage({ params }: { params: Promise<
       <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
         <Link href="/corretores"
           className="inline-flex items-center gap-1 text-sm hover:opacity-80"
-          style={{ color: '#1B2B5B' }}>
+          style={{ color: '#143A1F' }}>
           <ChevronLeft className="w-4 h-4" /> Voltar à equipe
         </Link>
 
@@ -67,13 +67,13 @@ export default async function CorretorProfilePage({ params }: { params: Promise<
               <img src={broker.avatarUrl} alt={broker.name} className="h-full w-full object-cover" />
             ) : (
               <div className="h-full w-full flex items-center justify-center text-3xl font-bold text-white"
-                style={{ backgroundColor: '#1B2B5B' }}>
+                style={{ backgroundColor: '#143A1F' }}>
                 {broker.name.split(' ').slice(0, 2).map(s => s[0]).join('')}
               </div>
             )}
           </div>
           <div className="flex-1 min-w-0">
-            <h1 className="text-2xl font-bold" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>
+            <h1 className="text-2xl font-bold" style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}>
               {broker.name}
             </h1>
             <p className="mt-0.5 text-sm" style={{ color: '#C9A84C' }}>
@@ -93,7 +93,7 @@ export default async function CorretorProfilePage({ params }: { params: Promise<
               {broker.email && (
                 <a href={`mailto:${broker.email}`}
                   className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 px-4 py-2 text-sm font-semibold hover:bg-gray-50"
-                  style={{ color: '#1B2B5B' }}>
+                  style={{ color: '#143A1F' }}>
                   <Mail size={14} /> {broker.email}
                 </a>
               )}
@@ -102,7 +102,7 @@ export default async function CorretorProfilePage({ params }: { params: Promise<
         </div>
 
         {/* Portfolio */}
-        <h2 className="mt-8 text-lg font-bold" style={{ color: '#1B2B5B' }}>
+        <h2 className="mt-8 text-lg font-bold" style={{ color: '#143A1F' }}>
           Imóveis sob captação ({properties.length})
         </h2>
         {properties.length === 0 ? (
@@ -120,7 +120,7 @@ export default async function CorretorProfilePage({ params }: { params: Promise<
                   )}
                 </div>
                 <div className="p-3">
-                  <p className="font-semibold text-sm line-clamp-2" style={{ color: '#1B2B5B' }}>{p.title}</p>
+                  <p className="font-semibold text-sm line-clamp-2" style={{ color: '#143A1F' }}>{p.title}</p>
                   <p className="mt-0.5 text-xs text-gray-500 flex items-center gap-1">
                     <MapPin size={11} /> {[p.neighborhood, p.city].filter(Boolean).join(', ') || '—'}
                   </p>

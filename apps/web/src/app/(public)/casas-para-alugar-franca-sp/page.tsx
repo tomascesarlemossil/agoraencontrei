@@ -88,7 +88,7 @@ export default async function CasasParaAlugarFrancaSP() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(SCHEMA) }} />
 
       {/* ── HERO ── */}
-      <section className="bg-gradient-to-br from-[#1B2B5B] to-[#0f1c3a] text-white py-16 px-4">
+      <section className="bg-gradient-to-br from-[#143A1F] to-[#0f1c3a] text-white py-16 px-4">
         <div className="max-w-5xl mx-auto text-center">
           <div className="inline-flex items-center gap-2 bg-white/10 rounded-full px-4 py-1.5 text-xs font-semibold mb-4" style={{ color: '#C9A84C' }}>
             <Home className="w-3.5 h-3.5" />
@@ -105,7 +105,7 @@ export default async function CasasParaAlugarFrancaSP() {
           <div className="flex flex-wrap justify-center gap-3">
             <Link href="/imoveis?type=HOUSE&purpose=RENT&city=Franca"
               className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm transition-all hover:brightness-110"
-              style={{ background: '#C9A84C', color: '#1B2B5B' }}>
+              style={{ background: '#C9A84C', color: '#143A1F' }}>
               Ver todas as casas <ArrowRight className="w-4 h-4" />
             </Link>
             <a href="https://wa.me/5516981010004?text=Olá! Quero alugar uma casa em Franca/SP. Podem me ajudar?"
@@ -119,7 +119,7 @@ export default async function CasasParaAlugarFrancaSP() {
 
       {/* ── BAIRROS ── */}
       <section className="max-w-5xl mx-auto px-4 py-10">
-        <h2 className="text-xl font-bold mb-4" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>
+        <h2 className="text-xl font-bold mb-4" style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}>
           Casas para Alugar por Bairro em Franca
         </h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
@@ -128,7 +128,7 @@ export default async function CasasParaAlugarFrancaSP() {
             return (
               <Link key={bairro}
                 href={`/imoveis/em/franca/${slug}`}
-                className="flex items-center gap-2 p-3 rounded-xl bg-white border border-gray-100 hover:border-[#C9A84C] hover:shadow-sm transition-all text-sm text-gray-700 hover:text-[#1B2B5B]">
+                className="flex items-center gap-2 p-3 rounded-xl bg-white border border-gray-100 hover:border-[#C9A84C] hover:shadow-sm transition-all text-sm text-gray-700 hover:text-[#143A1F]">
                 <MapPin className="w-3.5 h-3.5 flex-shrink-0" style={{ color: '#C9A84C' }} />
                 {bairro}
               </Link>
@@ -140,7 +140,7 @@ export default async function CasasParaAlugarFrancaSP() {
       {/* ── IMÓVEIS ── */}
       <section className="max-w-7xl mx-auto px-4 pb-16">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>
+          <h2 className="text-xl font-bold" style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}>
             {total > 0 ? `${total} Casas para Alugar em Franca` : 'Casas Disponíveis para Alugar'}
           </h2>
           <Link href="/imoveis?type=HOUSE&purpose=RENT&city=Franca"
@@ -161,9 +161,9 @@ export default async function CasasParaAlugarFrancaSP() {
                       className="object-cover group-hover:scale-105 transition-transform duration-500"
                       sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw" />
                   ) : (
-                    <div className="h-full flex items-center justify-center text-4xl" style={{ background: 'linear-gradient(135deg, #1B2B5B15, #C9A84C15)' }}>🏠</div>
+                    <div className="h-full flex items-center justify-center text-4xl" style={{ background: 'linear-gradient(135deg, #143A1F15, #C9A84C15)' }}>🏠</div>
                   )}
-                  <div className="absolute top-2 left-2 px-2 py-0.5 rounded-full text-xs font-bold text-white" style={{ background: '#1B2B5B' }}>
+                  <div className="absolute top-2 left-2 px-2 py-0.5 rounded-full text-xs font-bold text-white" style={{ background: '#143A1F' }}>
                     Aluguel
                   </div>
                 </div>
@@ -189,7 +189,7 @@ export default async function CasasParaAlugarFrancaSP() {
             <p className="mb-4">Carregando imóveis disponíveis...</p>
             <Link href="/imoveis?type=HOUSE&purpose=RENT"
               className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm text-white"
-              style={{ background: '#1B2B5B' }}>
+              style={{ background: '#143A1F' }}>
               Ver todos os imóveis <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
@@ -199,7 +199,7 @@ export default async function CasasParaAlugarFrancaSP() {
           <div className="text-center mt-8">
             <Link href="/imoveis?type=HOUSE&purpose=RENT&city=Franca"
               className="inline-flex items-center gap-2 px-8 py-3 rounded-xl font-bold text-sm transition-all hover:brightness-110"
-              style={{ background: '#1B2B5B', color: 'white' }}>
+              style={{ background: '#143A1F', color: 'white' }}>
               Ver todas as {total} casas para alugar <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
@@ -209,7 +209,7 @@ export default async function CasasParaAlugarFrancaSP() {
       {/* ── CONTEÚDO SEO ── */}
       <section className="bg-white border-t py-12 px-4">
         <div className="max-w-4xl mx-auto prose prose-gray">
-          <h2 className="text-2xl font-bold mb-4" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>
+          <h2 className="text-2xl font-bold mb-4" style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}>
             Como Alugar uma Casa em Franca/SP com Segurança
           </h2>
           <p className="text-gray-600 mb-4">
@@ -217,19 +217,19 @@ export default async function CasasParaAlugarFrancaSP() {
             A <strong>Imobiliária Lemos</strong>, com mais de 22 anos de experiência no mercado imobiliário de Franca,
             oferece um processo de locação transparente, seguro e ágil.
           </p>
-          <h3 className="text-lg font-bold mt-6 mb-2" style={{ color: '#1B2B5B' }}>Bairros mais procurados para alugar casa em Franca</h3>
+          <h3 className="text-lg font-bold mt-6 mb-2" style={{ color: '#143A1F' }}>Bairros mais procurados para alugar casa em Franca</h3>
           <p className="text-gray-600 mb-4">
             Os bairros com maior demanda para locação residencial em Franca são: <strong>Jardim Califórnia</strong>,
             <strong> Jardim Europa</strong>, <strong>Centro</strong>, <strong>Vila Lemos</strong>,
             <strong> Jardim Paulista</strong> e <strong>Parque Universitário</strong>.
             Cada bairro tem características únicas de infraestrutura, proximidade com comércio e escolas.
           </p>
-          <h3 className="text-lg font-bold mt-6 mb-2" style={{ color: '#1B2B5B' }}>Documentos necessários para alugar uma casa</h3>
+          <h3 className="text-lg font-bold mt-6 mb-2" style={{ color: '#143A1F' }}>Documentos necessários para alugar uma casa</h3>
           <p className="text-gray-600 mb-4">
             Para alugar uma casa em Franca/SP, você precisará de: RG e CPF, comprovante de renda (3 últimos holerites ou declaração de IR),
             comprovante de residência atual e fiador ou seguro fiança. Nossa equipe orienta você em cada etapa do processo.
           </p>
-          <h3 className="text-lg font-bold mt-6 mb-2" style={{ color: '#1B2B5B' }}>Por que escolher a Imobiliária Lemos para alugar em Franca</h3>
+          <h3 className="text-lg font-bold mt-6 mb-2" style={{ color: '#143A1F' }}>Por que escolher a Imobiliária Lemos para alugar em Franca</h3>
           <p className="text-gray-600">
             Com o <strong>AgoraEncontrei</strong>, plataforma digital da Imobiliária Lemos, você pode buscar casas para alugar
             em Franca com filtros avançados, visualizar no mapa interativo e agendar visitas online.
@@ -239,7 +239,7 @@ export default async function CasasParaAlugarFrancaSP() {
       </section>
 
       {/* ── CTA ── */}
-      <section className="py-12 px-4 text-center" style={{ background: 'linear-gradient(135deg, #1B2B5B, #0f1c3a)' }}>
+      <section className="py-12 px-4 text-center" style={{ background: 'linear-gradient(135deg, #143A1F, #0f1c3a)' }}>
         <div className="max-w-2xl mx-auto">
           <Star className="w-8 h-8 mx-auto mb-3" style={{ color: '#C9A84C' }} />
           <h2 className="text-2xl font-bold text-white mb-2" style={{ fontFamily: 'Georgia, serif' }}>

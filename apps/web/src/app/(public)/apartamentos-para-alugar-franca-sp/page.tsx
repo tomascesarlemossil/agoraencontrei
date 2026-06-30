@@ -74,7 +74,7 @@ export default async function ApartamentosParaAlugarFrancaSP() {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(SCHEMA) }} />
 
-      <section className="bg-gradient-to-br from-[#1B2B5B] to-[#0f1c3a] text-white py-16 px-4">
+      <section className="bg-gradient-to-br from-[#143A1F] to-[#0f1c3a] text-white py-16 px-4">
         <div className="max-w-5xl mx-auto text-center">
           <div className="inline-flex items-center gap-2 bg-white/10 rounded-full px-4 py-1.5 text-xs font-semibold mb-4" style={{ color: '#C9A84C' }}>
             <Building2 className="w-3.5 h-3.5" />
@@ -91,7 +91,7 @@ export default async function ApartamentosParaAlugarFrancaSP() {
           <div className="flex flex-wrap justify-center gap-3">
             <Link href="/imoveis?type=APARTMENT&purpose=RENT&city=Franca"
               className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm transition-all hover:brightness-110"
-              style={{ background: '#C9A84C', color: '#1B2B5B' }}>
+              style={{ background: '#C9A84C', color: '#143A1F' }}>
               Ver todos os apartamentos <ArrowRight className="w-4 h-4" />
             </Link>
             <a href="https://wa.me/5516981010004?text=Olá! Quero alugar um apartamento em Franca/SP."
@@ -104,7 +104,7 @@ export default async function ApartamentosParaAlugarFrancaSP() {
       </section>
 
       <section className="max-w-5xl mx-auto px-4 py-10">
-        <h2 className="text-xl font-bold mb-4" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>
+        <h2 className="text-xl font-bold mb-4" style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}>
           Apartamentos para Alugar por Bairro em Franca
         </h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
@@ -123,7 +123,7 @@ export default async function ApartamentosParaAlugarFrancaSP() {
 
       <section className="max-w-7xl mx-auto px-4 pb-16">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>
+          <h2 className="text-xl font-bold" style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}>
             {total > 0 ? `${total} Apartamentos para Alugar em Franca` : 'Apartamentos Disponíveis'}
           </h2>
           <Link href="/imoveis?type=APARTMENT&purpose=RENT&city=Franca"
@@ -144,9 +144,9 @@ export default async function ApartamentosParaAlugarFrancaSP() {
                       className="object-cover group-hover:scale-105 transition-transform duration-500"
                       sizes="(max-width: 640px) 100vw, 25vw" />
                   ) : (
-                    <div className="h-full flex items-center justify-center text-4xl" style={{ background: 'linear-gradient(135deg, #1B2B5B15, #C9A84C15)' }}>🏢</div>
+                    <div className="h-full flex items-center justify-center text-4xl" style={{ background: 'linear-gradient(135deg, #143A1F15, #C9A84C15)' }}>🏢</div>
                   )}
-                  <div className="absolute top-2 left-2 px-2 py-0.5 rounded-full text-xs font-bold text-white" style={{ background: '#1B2B5B' }}>Aluguel</div>
+                  <div className="absolute top-2 left-2 px-2 py-0.5 rounded-full text-xs font-bold text-white" style={{ background: '#143A1F' }}>Aluguel</div>
                 </div>
                 <div className="p-4">
                   <p className="font-bold text-base mb-0.5" style={{ color: '#C9A84C' }}>{fmtPrice(p)}</p>
@@ -168,7 +168,7 @@ export default async function ApartamentosParaAlugarFrancaSP() {
           <div className="text-center py-12">
             <Link href="/imoveis?type=APARTMENT&purpose=RENT"
               className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm text-white"
-              style={{ background: '#1B2B5B' }}>
+              style={{ background: '#143A1F' }}>
               Ver todos os apartamentos <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
@@ -177,7 +177,7 @@ export default async function ApartamentosParaAlugarFrancaSP() {
           <div className="text-center mt-8">
             <Link href="/imoveis?type=APARTMENT&purpose=RENT&city=Franca"
               className="inline-flex items-center gap-2 px-8 py-3 rounded-xl font-bold text-sm text-white transition-all hover:brightness-110"
-              style={{ background: '#1B2B5B' }}>
+              style={{ background: '#143A1F' }}>
               Ver todos os {total} apartamentos para alugar <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
@@ -186,7 +186,7 @@ export default async function ApartamentosParaAlugarFrancaSP() {
 
       <section className="bg-white border-t py-12 px-4">
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-2xl font-bold mb-4" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>
+          <h2 className="text-2xl font-bold mb-4" style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}>
             Alugar Apartamento em Franca/SP: O que Saber
           </h2>
           <p className="text-gray-600 mb-4">
@@ -194,13 +194,13 @@ export default async function ApartamentosParaAlugarFrancaSP() {
             até apartamentos de 3 quartos para famílias. A cidade tem forte presença da UNESP e de empresas do setor
             coureiro-calçadista, gerando demanda constante por locação.
           </p>
-          <h3 className="text-lg font-bold mt-6 mb-2" style={{ color: '#1B2B5B' }}>Apartamentos próximos à UNESP Franca</h3>
+          <h3 className="text-lg font-bold mt-6 mb-2" style={{ color: '#143A1F' }}>Apartamentos próximos à UNESP Franca</h3>
           <p className="text-gray-600 mb-4">
             Para estudantes da UNESP Franca, os bairros mais procurados são <strong>Jardim Paulista</strong>,
             <strong> Centro</strong> e <strong>Vila Flores</strong>, com fácil acesso ao campus e ao centro da cidade.
             Temos kitinetes e apartamentos a partir de R$ 700/mês.
           </p>
-          <h3 className="text-lg font-bold mt-6 mb-2" style={{ color: '#1B2B5B' }}>Valores de aluguel de apartamentos em Franca</h3>
+          <h3 className="text-lg font-bold mt-6 mb-2" style={{ color: '#143A1F' }}>Valores de aluguel de apartamentos em Franca</h3>
           <p className="text-gray-600">
             Os preços de aluguel de apartamentos em Franca variam de acordo com o bairro, tamanho e acabamento.
             Kitinetes: R$ 600–900/mês. Apartamentos 1 quarto: R$ 800–1.400/mês. Apartamentos 2 quartos: R$ 1.200–2.500/mês.

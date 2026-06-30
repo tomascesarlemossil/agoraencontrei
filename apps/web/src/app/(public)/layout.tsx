@@ -64,7 +64,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
         {/* eslint-disable-next-line @next/next/no-sync-scripts */}
         <script dangerouslySetInnerHTML={{ __html: AE_THEME_SCRIPT }} />
       {/* Top info bar */}
-      <div style={{ backgroundColor: '#1B2B5B' }} className="hidden lg:block">
+      <div style={{ backgroundColor: '#143A1F' }} className="hidden lg:block">
         <div className="max-w-7xl mx-auto px-6 h-9 flex items-center justify-between text-xs text-white/70">
           <div className="flex items-center gap-6">
             <a href="tel:1637230045" className="flex items-center gap-1.5 hover:text-white transition-colors">
@@ -102,7 +102,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
       <TomasWidget />
 
       {/* Footer */}
-      <footer style={{ backgroundColor: '#1B2B5B' }} className="mt-20 pt-14 pb-8">
+      <footer style={{ backgroundColor: '#143A1F' }} className="mt-20 pt-14 pb-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-10 mb-10">
             {/* Brand */}

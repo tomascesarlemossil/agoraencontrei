@@ -18,7 +18,7 @@ export default function NotFound() {
         {/* Icon */}
         <div
           className="mx-auto mb-6 w-20 h-20 rounded-2xl flex items-center justify-center"
-          style={{ backgroundColor: '#1B2B5B' }}
+          style={{ backgroundColor: '#143A1F' }}
         >
           <MapPin className="w-10 h-10" style={{ color: '#C9A84C' }} />
         </div>
@@ -26,7 +26,7 @@ export default function NotFound() {
         {/* 404 number */}
         <p
           className="text-7xl font-bold mb-2"
-          style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}
+          style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}
         >
           404
         </p>
@@ -34,11 +34,11 @@ export default function NotFound() {
         {/* Message */}
         <h1
           className="text-2xl font-bold mb-3"
-          style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}
+          style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}
         >
           Página não encontrada
         </h1>
-        <p className="text-sm mb-8" style={{ color: '#1B2B5B', opacity: 0.6 }}>
+        <p className="text-sm mb-8" style={{ color: '#143A1F', opacity: 0.6 }}>
           A página que você procura não existe ou foi movida.
           Que tal explorar nossos imóveis?
         </p>
@@ -48,7 +48,7 @@ export default function NotFound() {
           <Link
             href="/"
             className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium text-white transition-opacity hover:opacity-90"
-            style={{ backgroundColor: '#1B2B5B' }}
+            style={{ backgroundColor: '#143A1F' }}
           >
             <Home className="w-4 h-4" />
             Página Inicial

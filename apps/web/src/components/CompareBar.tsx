@@ -13,7 +13,7 @@ export function CompareBar() {
   return (
     <div
       className="fixed bottom-0 left-0 right-0 z-50 shadow-2xl border-t"
-      style={{ backgroundColor: '#1B2B5B', borderColor: 'rgba(201, 168, 76, 0.3)' }}
+      style={{ backgroundColor: '#143A1F', borderColor: 'rgba(201, 168, 76, 0.3)' }}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
@@ -36,7 +36,7 @@ export function CompareBar() {
             onClick={() => router.push('/comparar')}
             aria-label="Comparar imóveis selecionados"
             className="flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-semibold transition-all hover:brightness-110"
-            style={{ backgroundColor: '#C9A84C', color: '#1B2B5B' }}
+            style={{ backgroundColor: '#C9A84C', color: '#143A1F' }}
           >
             Comparar agora
           </button>

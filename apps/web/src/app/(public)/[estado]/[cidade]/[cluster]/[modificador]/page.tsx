@@ -116,7 +116,7 @@ export default async function ClusterModificadorPage(props: { params: Promise<{ 
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
 
       {/* Hero */}
-      <section className="bg-gradient-to-br from-[#1B2B5B] to-[#0f1c3a] text-white py-14 px-4">
+      <section className="bg-gradient-to-br from-[#143A1F] to-[#0f1c3a] text-white py-14 px-4">
         <div className="max-w-5xl mx-auto">
           <nav className="text-xs text-blue-200 mb-4 flex items-center gap-1.5 flex-wrap">
             <Link href="/" className="hover:text-white">Início</Link>
@@ -137,7 +137,7 @@ export default async function ClusterModificadorPage(props: { params: Promise<{ 
             <Link
               href={`/imoveis?city=${city.name}`}
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm"
-              style={{ background: '#C9A84C', color: '#1B2B5B' }}
+              style={{ background: '#C9A84C', color: '#143A1F' }}
             >
               <Search className="w-4 h-4" /> Buscar Imóveis
             </Link>
@@ -154,7 +154,7 @@ export default async function ClusterModificadorPage(props: { params: Promise<{ 
       <div className="max-w-6xl mx-auto px-4 py-10 space-y-10">
         {/* Conteúdo SEO */}
         <section className="bg-white rounded-2xl border p-6 sm:p-8">
-          <h2 className="text-xl font-bold text-[#1B2B5B] mb-4">{h1} — Guia Completo</h2>
+          <h2 className="text-xl font-bold text-[#143A1F] mb-4">{h1} — Guia Completo</h2>
           <div className="prose prose-sm max-w-none text-gray-600 space-y-3">
             <p>
               {mod.desc} Em {city.name}/{city.state}, com{' '}
@@ -174,14 +174,14 @@ export default async function ClusterModificadorPage(props: { params: Promise<{ 
         </section>
 
         {/* CTA */}
-        <section className="bg-gradient-to-r from-[#1B2B5B] to-[#2a3f7e] rounded-2xl p-6 sm:p-8 text-white text-center">
+        <section className="bg-gradient-to-r from-[#143A1F] to-[#2a3f7e] rounded-2xl p-6 sm:p-8 text-white text-center">
           <h2 className="text-xl font-bold mb-2">Encontre o imóvel ideal em {city.name}</h2>
           <p className="text-white/70 mb-6">Crie um alerta gratuito e seja notificado assim que novos imóveis forem cadastrados.</p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link
               href="/alertas"
               className="px-6 py-3 rounded-xl font-bold text-sm"
-              style={{ background: '#C9A84C', color: '#1B2B5B' }}
+              style={{ background: '#C9A84C', color: '#143A1F' }}
             >
               Criar Alerta Gratuito
             </Link>
@@ -196,7 +196,7 @@ export default async function ClusterModificadorPage(props: { params: Promise<{ 
 
         {/* Outros modificadores */}
         <section>
-          <h2 className="text-lg font-bold text-[#1B2B5B] mb-4">Outras opções em {city.name}</h2>
+          <h2 className="text-lg font-bold text-[#143A1F] mb-4">Outras opções em {city.name}</h2>
           <div className="flex flex-wrap gap-2">
             {Object.entries(MODIFICADORES)
               .filter(([k]) => k !== params.modificador)
@@ -204,7 +204,7 @@ export default async function ClusterModificadorPage(props: { params: Promise<{ 
                 <Link
                   key={k}
                   href={`/${params.estado}/${params.cidade}/${params.cluster}/${k}`}
-                  className="px-4 py-2 bg-white border rounded-full text-sm text-gray-700 hover:border-[#C9A84C] hover:text-[#1B2B5B] transition"
+                  className="px-4 py-2 bg-white border rounded-full text-sm text-gray-700 hover:border-[#C9A84C] hover:text-[#143A1F] transition"
                 >
                   {clLabel} {v.label}
                 </Link>
@@ -232,7 +232,7 @@ export default async function ClusterModificadorPage(props: { params: Promise<{ 
             <Link
               href={`/imoveis?city=${city.name}`}
               className="flex-1 sm:flex-none px-4 py-2 rounded-xl font-bold text-sm text-center"
-              style={{ background: '#C9A84C', color: '#1B2B5B' }}
+              style={{ background: '#C9A84C', color: '#143A1F' }}
             >
               Ver Marketplace
             </Link>

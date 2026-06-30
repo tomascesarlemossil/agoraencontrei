@@ -682,7 +682,7 @@ export default function LeiloesClient() {
     <>
     <div className="min-h-screen bg-[#f8f6f1]">
       {/* HERO */}
-      <section className="bg-gradient-to-br from-[#1B2B5B] to-[#0f1c3a] text-white py-12 px-4">
+      <section className="bg-gradient-to-br from-[#143A1F] to-[#0f1c3a] text-white py-12 px-4">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-8">
             <div className="inline-flex items-center gap-2 bg-white/10 rounded-full px-4 py-1.5 text-xs font-semibold mb-3" style={{ color: '#C9A84C' }}>
@@ -755,7 +755,7 @@ export default function LeiloesClient() {
       {/* MAPA POR REGIÃO — satélite, só com os leilões (sem imóveis da plataforma) */}
       <section className="max-w-7xl mx-auto px-4 pt-6">
         <div className="mb-3">
-          <h2 className="text-xl font-bold text-[#1B2B5B]" style={{ fontFamily: 'Georgia, serif' }}>
+          <h2 className="text-xl font-bold text-[#143A1F]" style={{ fontFamily: 'Georgia, serif' }}>
             Mapa de leilões por região
           </h2>
           <p className="text-sm text-gray-500">
@@ -771,7 +771,7 @@ export default function LeiloesClient() {
           <div className="flex items-center gap-2 text-sm text-gray-500 flex-wrap">
             <span className="font-semibold text-gray-800">{total.toLocaleString('pt-BR')}</span> leilões encontrados
             {userRegion?.city && !city && page === 1 && (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold" style={{ backgroundColor: '#eef2ff', color: '#1B2B5B' }}>
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold" style={{ backgroundColor: '#eef2ff', color: '#143A1F' }}>
                 📍 {userRegion.city}{userRegion.state ? `/${userRegion.state}` : ''} em destaque no topo
               </span>
             )}
@@ -780,7 +780,7 @@ export default function LeiloesClient() {
             <button
               onClick={() => setShowFilters(!showFilters)}
               className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-bold transition"
-              style={{ backgroundColor: '#e5e7eb', color: '#1B2B5B' }}
+              style={{ backgroundColor: '#e5e7eb', color: '#143A1F' }}
             >
               <Filter className="w-4 h-4" /> Filtros
             </button>
@@ -794,10 +794,10 @@ export default function LeiloesClient() {
               }}
               className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-bold transition"
               style={{
-                backgroundColor: minDiscount === '40' ? '#000000' : '#1B2B5B',
+                backgroundColor: minDiscount === '40' ? '#000000' : '#143A1F',
                 color: minDiscount === '40' ? '#00C805' : '#FFFFFF',
                 border: '2px solid',
-                borderColor: minDiscount === '40' ? '#00C805' : '#1B2B5B',
+                borderColor: minDiscount === '40' ? '#00C805' : '#143A1F',
               }}
               title="Leilões com mais de 40% de desconto sobre o valor de avaliação"
             >
@@ -812,10 +812,10 @@ export default function LeiloesClient() {
               }}
               className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-bold transition"
               style={{
-                backgroundColor: sortBy === 'zapSpread' ? '#000000' : '#1B2B5B',
+                backgroundColor: sortBy === 'zapSpread' ? '#000000' : '#143A1F',
                 color: sortBy === 'zapSpread' ? '#00C805' : '#FFFFFF',
                 border: '2px solid',
-                borderColor: sortBy === 'zapSpread' ? '#00C805' : '#1B2B5B',
+                borderColor: sortBy === 'zapSpread' ? '#00C805' : '#143A1F',
               }}
               title="Ordenar por maior spread vs preço de mercado ZAP"
             >
@@ -824,7 +824,7 @@ export default function LeiloesClient() {
             <button
               onClick={() => setShowCalc(!showCalc)}
               className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-bold transition"
-              style={{ backgroundColor: '#1B2B5B', color: '#FFFFFF' }}
+              style={{ backgroundColor: '#143A1F', color: '#FFFFFF' }}
             >
               <Calculator className="w-4 h-4" /> Calculadora
             </button>
@@ -839,7 +839,7 @@ export default function LeiloesClient() {
               value={sortBy}
               onChange={e => setSortBy(e.target.value)}
               className="px-3 py-2 rounded-lg text-sm border-0 outline-none font-bold"
-              style={{ backgroundColor: '#e5e7eb', color: '#1B2B5B' }}
+              style={{ backgroundColor: '#e5e7eb', color: '#143A1F' }}
             >
               <option value="auctionDate">Data do Leilão</option>
               <option value="minimumBid">Menor Lance</option>
@@ -890,7 +890,7 @@ export default function LeiloesClient() {
             </div>
             <div className="max-w-7xl mx-auto mt-3 flex gap-2">
               <button onClick={() => { setPage(1); fetchAuctions() }}
-                className="px-4 py-2 text-white rounded-lg text-sm font-semibold" style={{ backgroundColor: '#1B2B5B' }}>
+                className="px-4 py-2 text-white rounded-lg text-sm font-semibold" style={{ backgroundColor: '#143A1F' }}>
                 Aplicar Filtros
               </button>
               <button onClick={() => { setCity(''); setState(''); setSource(''); setPropertyType(''); setMinDiscount(''); setMaxPrice(''); setSearch('') }}
@@ -951,7 +951,7 @@ export default function LeiloesClient() {
                   </label>
                 </div>
                 <button onClick={handleCalculate}
-                  className="w-full px-4 py-3 text-white rounded-lg text-sm font-semibold" style={{ backgroundColor: '#1B2B5B' }}>
+                  className="w-full px-4 py-3 text-white rounded-lg text-sm font-semibold" style={{ backgroundColor: '#143A1F' }}>
                   Calcular Investimento
                 </button>
               </div>
@@ -1004,7 +1004,7 @@ export default function LeiloesClient() {
                       Payback via aluguel: <strong>{calcResult.paybackMonths} meses</strong> ({formatCurrency(calcResult.monthlyRentEstimate)}/mês estimado)
                     </div>
                   )}
-                  <div className="text-xs text-center p-2 rounded-lg" style={{ backgroundColor: '#1B2B5B', color: '#C9A84C' }}>
+                  <div className="text-xs text-center p-2 rounded-lg" style={{ backgroundColor: '#143A1F', color: '#C9A84C' }}>
                     Lance máximo recomendado: <strong>{formatCurrency(calcResult.maxRecommendedBid)}</strong>
                   </div>
                 </div>
@@ -1085,7 +1085,7 @@ export default function LeiloesClient() {
                     onClick={(e) => { e.stopPropagation(); toggleCompare(auction.id) }}
                     className={`absolute top-2 left-2 z-20 w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold transition-all ${
                       compareIds.has(auction.id)
-                        ? 'bg-yellow-400 text-[#1B2B5B] shadow-lg scale-110'
+                        ? 'bg-yellow-400 text-[#143A1F] shadow-lg scale-110'
                         : 'bg-black/40 text-white/80 hover:bg-black/60'
                     }`}
                     title={compareIds.has(auction.id) ? 'Remover da comparação' : 'Adicionar à comparação'}
@@ -1148,7 +1148,7 @@ export default function LeiloesClient() {
 
                   {/* Content */}
                   <div className="p-4">
-                    <h3 className="font-semibold text-gray-800 text-sm line-clamp-2 mb-1 group-hover:text-[#1B2B5B] transition">
+                    <h3 className="font-semibold text-gray-800 text-sm line-clamp-2 mb-1 group-hover:text-[#143A1F] transition">
                       {auction.title}
                     </h3>
                     <div className="flex items-center gap-1 text-xs text-gray-500 mb-3">
@@ -1165,7 +1165,7 @@ export default function LeiloesClient() {
                           Avaliação: {formatCurrency(Number(auction.appraisalValue))}
                         </div>
                       )}
-                      <div className="text-lg font-bold" style={{ color: '#1B2B5B' }}>
+                      <div className="text-lg font-bold" style={{ color: '#143A1F' }}>
                         {Number(auction.minimumBid) > 0 ? formatCurrency(Number(auction.minimumBid)) : 'Consultar valor'}
                       </div>
                       {auction.appraisalValue && Number(auction.appraisalValue) > 0 && Number(auction.minimumBid) > 0 && (
@@ -1218,12 +1218,12 @@ export default function LeiloesClient() {
 
             {/* Compare floating bar */}
             {compareIds.size >= 2 && (
-              <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-[#1B2B5B] text-white px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-4 animate-bounce-once">
+              <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-[#143A1F] text-white px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-4 animate-bounce-once">
                 <BarChart3 className="w-5 h-5 text-yellow-400" />
                 <span className="text-sm font-semibold">{compareIds.size} leilões selecionados</span>
                 <a
                   href={`/leiloes/comparativo?ids=${Array.from(compareIds).join(',')}`}
-                  className="px-4 py-2 bg-yellow-400 text-[#1B2B5B] rounded-lg text-sm font-bold hover:bg-yellow-300 transition-colors"
+                  className="px-4 py-2 bg-yellow-400 text-[#143A1F] rounded-lg text-sm font-bold hover:bg-yellow-300 transition-colors"
                 >
                   Comparar ROI →
                 </a>
@@ -1244,18 +1244,18 @@ export default function LeiloesClient() {
                   disabled={page <= 1}
                   onClick={() => setPage(p => Math.max(1, p - 1))}
                   className="px-5 py-2.5 rounded-lg text-sm font-bold disabled:opacity-30 disabled:cursor-not-allowed transition"
-                  style={{ backgroundColor: '#1B2B5B', color: '#FFFFFF' }}
+                  style={{ backgroundColor: '#143A1F', color: '#FFFFFF' }}
                 >
                   ← Anterior
                 </button>
-                <span className="px-4 py-2 text-sm font-bold" style={{ color: '#1B2B5B' }}>
+                <span className="px-4 py-2 text-sm font-bold" style={{ color: '#143A1F' }}>
                   Página {page} de {totalPages}
                 </span>
                 <button
                   disabled={page >= totalPages}
                   onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                   className="px-5 py-2.5 rounded-lg text-sm font-bold disabled:opacity-30 disabled:cursor-not-allowed transition"
-                  style={{ backgroundColor: '#C9A84C', color: '#1B2B5B' }}
+                  style={{ backgroundColor: '#C9A84C', color: '#143A1F' }}
                 >
                   Próxima →
                 </button>
@@ -1266,7 +1266,7 @@ export default function LeiloesClient() {
       </div>
 
       {/* CTA Section */}
-      <section className="py-12 px-4" style={{ backgroundColor: '#1B2B5B' }}>
+      <section className="py-12 px-4" style={{ backgroundColor: '#143A1F' }}>
         <div className="max-w-4xl mx-auto text-center text-white">
           <h2 className="text-2xl sm:text-3xl font-bold mb-3" style={{ fontFamily: 'Georgia, serif' }}>
             Não perca nenhuma oportunidade
@@ -1276,7 +1276,7 @@ export default function LeiloesClient() {
           </p>
           <button onClick={() => setShowAlert(true)}
             className="px-8 py-3 rounded-xl font-semibold text-base inline-flex items-center gap-2"
-            style={{ backgroundColor: '#C9A84C', color: '#1B2B5B' }}>
+            style={{ backgroundColor: '#C9A84C', color: '#143A1F' }}>
             <Bell className="w-5 h-5" /> Criar Alerta Gratuito
           </button>
         </div>
@@ -1302,7 +1302,7 @@ export default function LeiloesClient() {
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setShowLeadModal(false)}>
         <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl" onClick={e => e.stopPropagation()}>
           {/* Header */}
-          <div className="p-5 border-b flex items-center justify-between" style={{ background: '#1B2B5B' }}>
+          <div className="p-5 border-b flex items-center justify-between" style={{ background: '#143A1F' }}>
             <div>
               <h3 className="text-white font-bold text-lg">Tenho Interesse</h3>
               <p className="text-white/60 text-xs mt-0.5">{selectedAuction.title}</p>
@@ -1315,7 +1315,7 @@ export default function LeiloesClient() {
           {leadSuccess ? (
             <div className="p-8 text-center">
               <CheckCircle className="w-16 h-16 mx-auto mb-4" style={{ color: '#00C805' }} />
-              <h4 className="text-xl font-bold mb-2" style={{ color: '#1B2B5B' }}>Oportunidade Reservada!</h4>
+              <h4 className="text-xl font-bold mb-2" style={{ color: '#143A1F' }}>Oportunidade Reservada!</h4>
               <p className="text-gray-700 text-sm font-medium mb-1">
                 Inteligência AgoraEncontrei ativada.
               </p>
@@ -1336,7 +1336,7 @@ export default function LeiloesClient() {
                   <span className="font-semibold text-gray-800">{typeLabel(selectedAuction.propertyType)} — {selectedAuction.city}/{selectedAuction.state}</span>
                 </div>
                 <div className="flex items-center gap-3 text-xs text-gray-500">
-                  <span className="font-bold text-lg" style={{ color: '#1B2B5B' }}>{formatCurrency(selectedAuction.minimumBid)}</span>
+                  <span className="font-bold text-lg" style={{ color: '#143A1F' }}>{formatCurrency(selectedAuction.minimumBid)}</span>
                   {selectedAuction.discountPercent && (
                     <span className="bg-red-100 text-red-700 px-1.5 py-0.5 rounded text-xs font-bold">
                       -{Math.round(selectedAuction.discountPercent)}%
@@ -1352,22 +1352,22 @@ export default function LeiloesClient() {
                 <div className="col-span-2">
                   <label className="text-xs font-semibold text-gray-600 mb-1 block">Nome completo *</label>
                   <input required type="text" value={leadForm.name} onChange={e => setLeadForm(f => ({ ...f, name: e.target.value }))}
-                    className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#1B2B5B]/20 focus:border-[#1B2B5B]" placeholder="Seu nome" />
+                    className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#143A1F]/20 focus:border-[#143A1F]" placeholder="Seu nome" />
                 </div>
                 <div>
                   <label className="text-xs font-semibold text-gray-600 mb-1 block">CPF *</label>
                   <input required type="text" value={leadForm.cpf} onChange={e => setLeadForm(f => ({ ...f, cpf: e.target.value }))}
-                    className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#1B2B5B]/20" placeholder="000.000.000-00" maxLength={14} />
+                    className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#143A1F]/20" placeholder="000.000.000-00" maxLength={14} />
                 </div>
                 <div>
                   <label className="text-xs font-semibold text-gray-600 mb-1 block">Telefone / WhatsApp *</label>
                   <input required type="tel" value={leadForm.phone} onChange={e => setLeadForm(f => ({ ...f, phone: e.target.value }))}
-                    className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#1B2B5B]/20" placeholder="(16) 99999-9999" />
+                    className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#143A1F]/20" placeholder="(16) 99999-9999" />
                 </div>
                 <div className="col-span-2">
                   <label className="text-xs font-semibold text-gray-600 mb-1 block">E-mail</label>
                   <input type="email" value={leadForm.email} onChange={e => setLeadForm(f => ({ ...f, email: e.target.value }))}
-                    className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#1B2B5B]/20" placeholder="seu@email.com" />
+                    className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#143A1F]/20" placeholder="seu@email.com" />
                 </div>
               </div>
 
@@ -1376,7 +1376,7 @@ export default function LeiloesClient() {
                 <div>
                   <label className="text-xs font-semibold text-gray-600 mb-1 block">Faixa de investimento</label>
                   <select value={leadForm.investmentRange} onChange={e => setLeadForm(f => ({ ...f, investmentRange: e.target.value }))}
-                    className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#1B2B5B]/20">
+                    className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#143A1F]/20">
                     <option value="">Selecione</option>
                     <option value="ate-100k">Até R$ 100 mil</option>
                     <option value="100k-200k">R$ 100 a 200 mil</option>
@@ -1388,7 +1388,7 @@ export default function LeiloesClient() {
                 <div>
                   <label className="text-xs font-semibold text-gray-600 mb-1 block">Tipo de imóvel preferido</label>
                   <select value={leadForm.propertyPreference} onChange={e => setLeadForm(f => ({ ...f, propertyPreference: e.target.value }))}
-                    className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#1B2B5B]/20">
+                    className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#143A1F]/20">
                     <option value="">Selecione</option>
                     <option value="casa">Casa</option>
                     <option value="apartamento">Apartamento</option>
@@ -1413,7 +1413,7 @@ export default function LeiloesClient() {
               {/* Submit */}
               <button type="submit" disabled={leadSubmitting}
                 className="w-full py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 text-white transition-all hover:brightness-110 disabled:opacity-60"
-                style={{ background: '#1B2B5B' }}>
+                style={{ background: '#143A1F' }}>
                 {leadSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <ExternalLink className="w-4 h-4" />}
                 {leadSubmitting ? 'Enviando...' : 'Registrar interesse e ver no site do leiloeiro'}
               </button>

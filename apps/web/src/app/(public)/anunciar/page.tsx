@@ -47,7 +47,7 @@ export default function AnunciarPage() {
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#f8f6f1' }}>
       {/* Hero */}
-      <div className="py-14 px-4 text-center" style={{ background: 'linear-gradient(135deg, #1B2B5B 0%, #2d4a8a 100%)' }}>
+      <div className="py-14 px-4 text-center" style={{ background: 'linear-gradient(135deg, #143A1F 0%, #2d4a8a 100%)' }}>
         <p className="text-sm font-semibold uppercase tracking-widest mb-3" style={{ color: '#C9A84C' }}>
           Imobiliária Lemos
         </p>
@@ -104,7 +104,7 @@ export default function AnunciarPage() {
                       {v.icon}
                     </div>
                     <div>
-                      <p className="font-semibold text-sm" style={{ color: '#1B2B5B' }}>{v.title}</p>
+                      <p className="font-semibold text-sm" style={{ color: '#143A1F' }}>{v.title}</p>
                       <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">{v.desc}</p>
                     </div>
                   </div>
@@ -115,7 +115,7 @@ export default function AnunciarPage() {
             {/* Contact card */}
             <div
               className="rounded-3xl p-6 text-white"
-              style={{ background: 'linear-gradient(135deg, #1B2B5B 0%, #2d4a8a 100%)' }}
+              style={{ background: 'linear-gradient(135deg, #143A1F 0%, #2d4a8a 100%)' }}
             >
               <p className="text-sm font-bold mb-1" style={{ fontFamily: 'Georgia, serif' }}>Imobiliária Lemos</p>
               <p className="text-white/60 text-xs mb-4">Franca/SP</p>

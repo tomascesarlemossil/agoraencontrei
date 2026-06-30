@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Download, Loader2, ArrowLeft, FolderOpen, BarChart3, History } from 'lucide-react'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
-const NAVY = '#1B2B5B'
+const NAVY = '#143A1F'
 const GOLD = '#C9A84C'
 
 interface Doc {

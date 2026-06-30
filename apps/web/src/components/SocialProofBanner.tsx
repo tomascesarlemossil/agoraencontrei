@@ -126,7 +126,7 @@ export default function SocialProofBanner() {
     >
       <div
         className="relative flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium"
-        style={{ backgroundColor: '#1B2B5B', color: '#C9A84C' }}
+        style={{ backgroundColor: '#143A1F', color: '#C9A84C' }}
       >
         {/* Dots indicator */}
         <div className="absolute left-3 hidden gap-1 sm:flex">

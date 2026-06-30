@@ -85,7 +85,7 @@ export default function ProfissionaisPage() {
       ))}
 
       {/* HERO */}
-      <section className="bg-gradient-to-br from-[#1B2B5B] to-[#0f1c3a] text-white py-14 px-4">
+      <section className="bg-gradient-to-br from-[#143A1F] to-[#0f1c3a] text-white py-14 px-4">
         <div className="max-w-5xl mx-auto text-center">
           <div className="inline-flex items-center gap-2 bg-white/10 rounded-full px-4 py-1.5 text-xs font-semibold mb-4" style={{ color: '#C9A84C' }}>
             <Wrench className="w-3.5 h-3.5" /> Rede de Profissionais
@@ -167,7 +167,7 @@ export default function ProfissionaisPage() {
         ))}
 
         {/* CTA Cadastro */}
-        <section className="bg-gradient-to-r from-[#1B2B5B] to-[#2d4a8a] rounded-2xl p-8 text-center text-white">
+        <section className="bg-gradient-to-r from-[#143A1F] to-[#2d4a8a] rounded-2xl p-8 text-center text-white">
           <h2 className="text-2xl font-bold mb-2" style={{ fontFamily: 'Georgia, serif' }}>
             É profissional do setor imobiliário?
           </h2>
@@ -176,7 +176,7 @@ export default function ProfissionaisPage() {
           </p>
           <Link href="/parceiros/cadastro"
             className="inline-flex items-center gap-2 px-8 py-3 rounded-xl font-bold text-base"
-            style={{ backgroundColor: '#C9A84C', color: '#1B2B5B' }}>
+            style={{ backgroundColor: '#C9A84C', color: '#143A1F' }}>
             Cadastrar meu Perfil <ArrowRight className="w-5 h-5" />
           </Link>
         </section>

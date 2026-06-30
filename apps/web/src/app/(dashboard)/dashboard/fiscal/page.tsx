@@ -118,7 +118,7 @@ export default function FiscalPage() {
     <div className="p-6 max-w-7xl mx-auto space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>
+        <h1 className="text-2xl font-bold" style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}>
           Notas Fiscais de Serviço
         </h1>
         <p className="text-gray-500 text-sm mt-1">
@@ -129,7 +129,7 @@ export default function FiscalPage() {
       {/* Regra de negócio */}
       <div className="rounded-xl p-4 text-sm flex gap-3" style={{ backgroundColor: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.2)' }}>
         <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: '#C9A84C' }} />
-        <div style={{ color: '#1B2B5B' }}>
+        <div style={{ color: '#143A1F' }}>
           <strong>Regras:</strong> NF emitida apenas para proprietários · Valor = taxa de serviço (100% no 1º mês, 10% nos demais) ·
           Descrição: <em>"Prestação de serviços de administração e intermediação imobiliária"</em> · Município: Franca/SP (3516200)
         </div>
@@ -149,7 +149,7 @@ export default function FiscalPage() {
               style={{ border: '1px solid #f0ede6' }}
             >
               <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">{card.label}</p>
-              <p className="text-2xl font-bold" style={{ color: '#1B2B5B' }}>
+              <p className="text-2xl font-bold" style={{ color: '#143A1F' }}>
                 {card.fmt(card.value)}
               </p>
             </div>
@@ -209,7 +209,7 @@ export default function FiscalPage() {
           onClick={handleGenerate}
           disabled={generating}
           className="w-full flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold rounded-lg transition-all disabled:opacity-50"
-          style={{ backgroundColor: '#1B2B5B', color: '#fff' }}
+          style={{ backgroundColor: '#143A1F', color: '#fff' }}
         >
           <Plus className="w-4 h-4" />
           {generating ? 'Gerando...' : `Gerar NFS-e do mês ${MONTHS[month - 1]}/${year}`}
@@ -274,14 +274,14 @@ export default function FiscalPage() {
                         <span
                           className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold"
                           style={{
-                            backgroundColor: Number(note.serviceFeePercentage) === 100 ? 'rgba(201,168,76,0.15)' : 'rgba(27,43,91,0.08)',
-                            color: Number(note.serviceFeePercentage) === 100 ? '#C9A84C' : '#1B2B5B',
+                            backgroundColor: Number(note.serviceFeePercentage) === 100 ? 'rgba(201,168,76,0.15)' : 'rgba(20,58,31,0.08)',
+                            color: Number(note.serviceFeePercentage) === 100 ? '#C9A84C' : '#143A1F',
                           }}
                         >
                           {Number(note.serviceFeePercentage).toFixed(0)}%
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-right font-semibold" style={{ color: '#1B2B5B' }}>
+                      <td className="px-4 py-3 text-right font-semibold" style={{ color: '#143A1F' }}>
                         {fmt(Number(note.serviceFeeValue))}
                       </td>
                       <td className="px-4 py-3">
@@ -302,7 +302,7 @@ export default function FiscalPage() {
                         <button
                           onClick={() => handleDownloadXml(note.id, note.landlordName)}
                           className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-lg transition-colors hover:opacity-80"
-                          style={{ backgroundColor: 'rgba(27,43,91,0.08)', color: '#1B2B5B' }}
+                          style={{ backgroundColor: 'rgba(20,58,31,0.08)', color: '#143A1F' }}
                           title="Baixar XML NFS-e"
                         >
                           <Download className="w-3.5 h-3.5" />

@@ -109,7 +109,7 @@ export default async function ServicoCidadePage(props: { params: Promise<{ estad
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
 
       {/* Hero */}
-      <section className="bg-gradient-to-br from-[#1B2B5B] to-[#0f1c3a] text-white py-14 px-4">
+      <section className="bg-gradient-to-br from-[#143A1F] to-[#0f1c3a] text-white py-14 px-4">
         <div className="max-w-5xl mx-auto">
           <nav className="text-xs text-blue-200 mb-4 flex items-center gap-1.5 flex-wrap">
             <Link href="/" className="hover:text-white">Início</Link>
@@ -129,7 +129,7 @@ export default async function ServicoCidadePage(props: { params: Promise<{ estad
             <Link
               href="/seja-parceiro"
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm"
-              style={{ background: '#C9A84C', color: '#1B2B5B' }}
+              style={{ background: '#C9A84C', color: '#143A1F' }}
             >
               <Star className="w-4 h-4" /> Seja um Parceiro
             </Link>
@@ -146,7 +146,7 @@ export default async function ServicoCidadePage(props: { params: Promise<{ estad
       <div className="max-w-6xl mx-auto px-4 py-10 space-y-10">
         {/* Dados IBGE contextuais */}
         <section className="bg-gray-50 rounded-2xl border p-6">
-          <h2 className="text-lg font-bold text-[#1B2B5B] mb-3">
+          <h2 className="text-lg font-bold text-[#143A1F] mb-3">
             Mercado de {label} em {city.name}/{city.state}
           </h2>
           <p className="text-gray-600 text-sm leading-relaxed">
@@ -160,7 +160,7 @@ export default async function ServicoCidadePage(props: { params: Promise<{ estad
 
         {/* FAQ com Schema */}
         <section>
-          <h2 className="text-xl font-bold text-[#1B2B5B] mb-5">
+          <h2 className="text-xl font-bold text-[#143A1F] mb-5">
             Perguntas Frequentes sobre {label} em {city.name}
           </h2>
           <div className="space-y-4">
@@ -179,7 +179,7 @@ export default async function ServicoCidadePage(props: { params: Promise<{ estad
 
         {/* Outros serviços */}
         <section>
-          <h2 className="text-lg font-bold text-[#1B2B5B] mb-4">
+          <h2 className="text-lg font-bold text-[#143A1F] mb-4">
             Outros Serviços em {city.name}
           </h2>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -219,7 +219,7 @@ export default async function ServicoCidadePage(props: { params: Promise<{ estad
             <Link
               href="/seja-parceiro"
               className="flex-1 sm:flex-none px-4 py-2 rounded-xl font-bold text-sm text-center"
-              style={{ background: '#C9A84C', color: '#1B2B5B' }}
+              style={{ background: '#C9A84C', color: '#143A1F' }}
             >
               Seja Parceiro
             </Link>

@@ -26,7 +26,7 @@ export default async function CheckoutSuccessPage({ searchParams }: PageProps) {
   const paymentUrl = params.payment ? `https://www.asaas.com/c/${params.payment}` : null
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#1B2B5B] to-[#0f1c3a] py-12 px-4">
+    <div className="min-h-screen bg-gradient-to-br from-[#143A1F] to-[#0f1c3a] py-12 px-4">
       <div className="max-w-2xl mx-auto">
         <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
           {/* Header */}
@@ -84,7 +84,7 @@ export default async function CheckoutSuccessPage({ searchParams }: PageProps) {
             >
               <Link
                 href="/login"
-                className="inline-flex items-center gap-2 mt-2 px-4 py-2 rounded-lg bg-[#1B2B5B] hover:bg-[#243b78] text-white font-medium text-sm"
+                className="inline-flex items-center gap-2 mt-2 px-4 py-2 rounded-lg bg-[#143A1F] hover:bg-[#243b78] text-white font-medium text-sm"
               >
                 <LogIn className="w-4 h-4" /> Ir para o login
               </Link>

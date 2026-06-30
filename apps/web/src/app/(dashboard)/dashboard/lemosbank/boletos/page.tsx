@@ -9,7 +9,7 @@ import {
 } from 'lucide-react'
 import { invoiceApi, type Invoice } from '@/lib/api'
 
-const NAVY  = '#1B2B5B'
+const NAVY  = '#143A1F'
 const GOLD  = '#C9A84C'
 
 const fmt = (v?: number | null) =>
@@ -428,7 +428,7 @@ function InvoiceCard({
       {/* Row principal */}
       <div className="flex items-center gap-4 p-4 cursor-pointer hover:bg-gray-50/50 transition-colors" onClick={() => setExpanded(e => !e)}>
         <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#EEF2FF' }}>
-          <ReceiptText className="w-5 h-5" style={{ color: '#1B2B5B' }} />
+          <ReceiptText className="w-5 h-5" style={{ color: '#143A1F' }} />
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
@@ -499,7 +499,7 @@ function InvoiceCard({
             {invoice.asaasBankSlipUrl && (
               <a href={invoice.asaasBankSlipUrl} target="_blank" rel="noopener noreferrer"
                 className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg text-white hover:opacity-90"
-                style={{ backgroundColor: '#1B2B5B' }}>
+                style={{ backgroundColor: '#143A1F' }}>
                 <ExternalLink className="w-3.5 h-3.5" />
                 Abrir Boleto
               </a>

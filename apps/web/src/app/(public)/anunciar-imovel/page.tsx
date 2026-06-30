@@ -79,7 +79,7 @@ export default function AnunciarImovelPage() {
   return (
     <div className="min-h-screen bg-[#f8f6f1]">
       {/* Hero */}
-      <section className="bg-gradient-to-br from-[#1B2B5B] to-[#0f1c3a] text-white py-12 px-4">
+      <section className="bg-gradient-to-br from-[#143A1F] to-[#0f1c3a] text-white py-12 px-4">
         <div className="max-w-3xl mx-auto text-center">
           <h1 className="text-3xl sm:text-4xl font-bold mb-3" style={{ fontFamily: 'Georgia, serif' }}>
             Anuncie seu Imóvel <span style={{ color: '#C9A84C' }}>Gratuitamente</span>
@@ -101,11 +101,11 @@ export default function AnunciarImovelPage() {
             <div key={n} className="flex items-center gap-2">
               <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
                 step >= n ? 'text-white' : 'bg-gray-200 text-gray-400'
-              }`} style={step >= n ? { backgroundColor: step === n ? '#C9A84C' : '#1B2B5B' } : {}}>
+              }`} style={step >= n ? { backgroundColor: step === n ? '#C9A84C' : '#143A1F' } : {}}>
                 {step > n ? <CheckCircle className="w-5 h-5" /> : <Icon className="w-5 h-5" />}
               </div>
               <span className={`text-sm hidden sm:block ${step === n ? 'font-bold text-gray-800' : 'text-gray-400'}`}>{label}</span>
-              {n < 3 && <div className={`w-8 h-0.5 ${step > n ? 'bg-[#1B2B5B]' : 'bg-gray-200'}`} />}
+              {n < 3 && <div className={`w-8 h-0.5 ${step > n ? 'bg-[#143A1F]' : 'bg-gray-200'}`} />}
             </div>
           ))}
         </div>
@@ -167,7 +167,7 @@ export default function AnunciarImovelPage() {
                 </div>
               </div>
               <button onClick={() => setStep(2)}
-                className="w-full py-3 rounded-xl font-bold text-white text-sm" style={{ backgroundColor: '#1B2B5B' }}>
+                className="w-full py-3 rounded-xl font-bold text-white text-sm" style={{ backgroundColor: '#143A1F' }}>
                 Próximo <ArrowRight className="w-4 h-4 inline ml-1" />
               </button>
             </div>
@@ -214,7 +214,7 @@ export default function AnunciarImovelPage() {
                   <ArrowLeft className="w-4 h-4 inline mr-1" /> Voltar
                 </button>
                 <button onClick={() => setStep(3)}
-                  className="flex-1 py-3 rounded-xl font-bold text-white text-sm" style={{ backgroundColor: '#1B2B5B' }}>
+                  className="flex-1 py-3 rounded-xl font-bold text-white text-sm" style={{ backgroundColor: '#143A1F' }}>
                   Próximo <ArrowRight className="w-4 h-4 inline ml-1" />
                 </button>
               </div>
@@ -254,7 +254,7 @@ export default function AnunciarImovelPage() {
 
               <label className="flex items-start gap-2 cursor-pointer">
                 <input type="checkbox" checked={acceptTerms} onChange={e => setAcceptTerms(e.target.checked)}
-                  className="w-4 h-4 rounded mt-0.5 accent-[#1B2B5B]" />
+                  className="w-4 h-4 rounded mt-0.5 accent-[#143A1F]" />
                 <span className="text-xs text-gray-500">
                   Concordo com os <Link href="/termos-uso" className="text-[#C9A84C] underline">Termos de Uso</Link> e
                   autorizo o AgoraEncontrei a divulgar meu imóvel nas plataformas parceiras.

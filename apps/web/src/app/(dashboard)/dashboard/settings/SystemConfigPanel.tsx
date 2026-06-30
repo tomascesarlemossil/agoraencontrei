@@ -104,7 +104,7 @@ function SaveButton({ onClick, isPending, saved }: { onClick: () => void; isPend
         onClick={onClick}
         disabled={isPending}
         className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold disabled:opacity-50 transition-all"
-        style={{ background: 'linear-gradient(135deg, #C9A84C, #e8c66a)', color: '#1B2B5B' }}
+        style={{ background: 'linear-gradient(135deg, #C9A84C, #e8c66a)', color: '#143A1F' }}
       >
         {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : saved ? <CheckCircle2 className="w-4 h-4" /> : <Save className="w-4 h-4" />}
         {saved ? 'Salvo!' : 'Salvar alterações'}
@@ -115,7 +115,7 @@ function SaveButton({ onClick, isPending, saved }: { onClick: () => void; isPend
 
 // ── Seletor de Temas ──────────────────────────────────────────────────────────
 const THEMES = [
-  { id: 'classic-blue',    name: 'Clássico Azul',     desc: 'Azul marinho + dourado. Tradicional e confiável.',         gradient: 'linear-gradient(135deg,#1B2B5B 0%,#2d4a8a 50%,#C9A84C 100%)' },
+  { id: 'classic-blue',    name: 'Clássico Azul',     desc: 'Azul marinho + dourado. Tradicional e confiável.',         gradient: 'linear-gradient(135deg,#143A1F 0%,#2d4a8a 50%,#C9A84C 100%)' },
   { id: 'luxury-dark',     name: 'Luxo Escuro',       desc: 'Preto + dourado. Sofisticado e premium.',                  gradient: 'linear-gradient(135deg,#0a0a0a 0%,#1a1a1a 50%,#D4AF37 100%)' },
   { id: 'minimal-white',   name: 'Minimalista',       desc: 'Branco + azul. Clean, moderno, foco no conteúdo.',         gradient: 'linear-gradient(135deg,#f8f8f8 0%,#e0e0e0 50%,#2563EB 100%)' },
   { id: 'nature-green',    name: 'Verde Natureza',    desc: 'Esmeralda + verde. Tranquilo e acolhedor.',                gradient: 'linear-gradient(135deg,#064E3B 0%,#065F46 50%,#6EE7B7 100%)' },
@@ -671,8 +671,8 @@ export function SystemConfigPanel() {
                   <div>
                     <label className="text-xs font-semibold text-white/70 mb-1.5 block">Cor primária</label>
                     <div className="flex gap-2 items-center">
-                      <input type="color" value={cfg.design?.primaryColor ?? '#1B2B5B'} onChange={e => updateCfg('design', 'primaryColor', e.target.value)} className="w-10 h-10 rounded-lg border border-white/10 bg-transparent cursor-pointer" />
-                      <DarkInput value={cfg.design?.primaryColor ?? '#1B2B5B'} onChange={e => updateCfg('design', 'primaryColor', e.target.value)} placeholder="#1B2B5B" />
+                      <input type="color" value={cfg.design?.primaryColor ?? '#143A1F'} onChange={e => updateCfg('design', 'primaryColor', e.target.value)} className="w-10 h-10 rounded-lg border border-white/10 bg-transparent cursor-pointer" />
+                      <DarkInput value={cfg.design?.primaryColor ?? '#143A1F'} onChange={e => updateCfg('design', 'primaryColor', e.target.value)} placeholder="#143A1F" />
                     </div>
                   </div>
                   <div>

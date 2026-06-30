@@ -112,7 +112,7 @@ export default async function EspecialistaPage(props: { params: Promise<{ slug: 
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
 
       <div className="min-h-screen bg-gradient-to-b from-[#f8f6f1] to-white">
-        <header className="bg-[#1B2B5B] py-4 px-6">
+        <header className="bg-[#143A1F] py-4 px-6">
           <div className="max-w-5xl mx-auto flex items-center justify-between">
             <Link href="/">
               <Image src="/logo-ae-v2.png" alt="AgoraEncontrei" width={140} height={40} className="h-8 w-auto" />
@@ -125,11 +125,11 @@ export default async function EspecialistaPage(props: { params: Promise<{ slug: 
 
         <div className="max-w-5xl mx-auto px-4 py-3">
           <nav className="text-sm text-gray-400 flex items-center gap-2">
-            <Link href="/" className="hover:text-[#1B2B5B] transition-colors">Início</Link>
+            <Link href="/" className="hover:text-[#143A1F] transition-colors">Início</Link>
             <span>/</span>
-            <Link href="/parceiros" className="hover:text-[#1B2B5B] transition-colors">Parceiros</Link>
+            <Link href="/parceiros" className="hover:text-[#143A1F] transition-colors">Parceiros</Link>
             <span>/</span>
-            <span className="text-[#1B2B5B] font-medium">{specialist.name}</span>
+            <span className="text-[#143A1F] font-medium">{specialist.name}</span>
           </nav>
         </div>
 
@@ -139,7 +139,7 @@ export default async function EspecialistaPage(props: { params: Promise<{ slug: 
             {/* Coluna esquerda */}
             <div className="lg:col-span-1">
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden sticky top-6">
-                <div className="bg-gradient-to-br from-[#1B2B5B] to-[#2d4a8a] p-8 text-center">
+                <div className="bg-gradient-to-br from-[#143A1F] to-[#2d4a8a] p-8 text-center">
                   {specialist.photoUrl ? (
                     <Image
                       src={specialist.photoUrl}
@@ -184,25 +184,25 @@ export default async function EspecialistaPage(props: { params: Promise<{ slug: 
                   {specialist.email && (
                     <div className="flex items-center gap-2 text-sm text-gray-600">
                       <Mail className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                      <a href={`mailto:${specialist.email}`} className="hover:text-[#1B2B5B] transition-colors truncate">{specialist.email}</a>
+                      <a href={`mailto:${specialist.email}`} className="hover:text-[#143A1F] transition-colors truncate">{specialist.email}</a>
                     </div>
                   )}
                   {specialist.phone && (
                     <div className="flex items-center gap-2 text-sm text-gray-600">
                       <Phone className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                      <a href={`tel:${specialist.phone}`} className="hover:text-[#1B2B5B] transition-colors">{specialist.phone}</a>
+                      <a href={`tel:${specialist.phone}`} className="hover:text-[#143A1F] transition-colors">{specialist.phone}</a>
                     </div>
                   )}
                   {specialist.instagram && (
                     <div className="flex items-center gap-2 text-sm text-gray-600">
                       <Instagram className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                      <a href={`https://instagram.com/${specialist.instagram.replace('@', '')}`} target="_blank" rel="noopener noreferrer" className="hover:text-[#1B2B5B] transition-colors">{specialist.instagram}</a>
+                      <a href={`https://instagram.com/${specialist.instagram.replace('@', '')}`} target="_blank" rel="noopener noreferrer" className="hover:text-[#143A1F] transition-colors">{specialist.instagram}</a>
                     </div>
                   )}
                   {specialist.website && (
                     <div className="flex items-center gap-2 text-sm text-gray-600">
                       <Globe className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                      <a href={specialist.website} target="_blank" rel="noopener noreferrer" className="hover:text-[#1B2B5B] transition-colors truncate flex items-center gap-1">
+                      <a href={specialist.website} target="_blank" rel="noopener noreferrer" className="hover:text-[#143A1F] transition-colors truncate flex items-center gap-1">
                         {specialist.website.replace(/^https?:\/\//, '')} <ExternalLink className="w-3 h-3" />
                       </a>
                     </div>
@@ -222,7 +222,7 @@ export default async function EspecialistaPage(props: { params: Promise<{ slug: 
                   ) : null}
                   {specialist.email && (
                     <a href={`mailto:${specialist.email}?subject=Interesse nos seus serviços - AgoraEncontrei`}
-                      className="w-full border border-[#1B2B5B] text-[#1B2B5B] py-3 rounded-xl font-semibold hover:bg-[#1B2B5B] hover:text-white transition-colors flex items-center justify-center gap-2 text-sm">
+                      className="w-full border border-[#143A1F] text-[#143A1F] py-3 rounded-xl font-semibold hover:bg-[#143A1F] hover:text-white transition-colors flex items-center justify-center gap-2 text-sm">
                       <Mail className="w-4 h-4" /> Enviar E-mail
                     </a>
                   )}
@@ -234,7 +234,7 @@ export default async function EspecialistaPage(props: { params: Promise<{ slug: 
             <div className="lg:col-span-2 space-y-6">
               {specialist.bio && (
                 <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                  <h2 className="text-lg font-bold text-[#1B2B5B] mb-3 flex items-center gap-2">
+                  <h2 className="text-lg font-bold text-[#143A1F] mb-3 flex items-center gap-2">
                     <Star className="w-5 h-5 text-[#C9A84C]" /> Sobre o Profissional
                   </h2>
                   <p className="text-gray-600 leading-relaxed">{specialist.bio}</p>
@@ -243,12 +243,12 @@ export default async function EspecialistaPage(props: { params: Promise<{ slug: 
 
               {specialist.tags?.length > 0 && (
                 <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                  <h2 className="text-lg font-bold text-[#1B2B5B] mb-3 flex items-center gap-2">
+                  <h2 className="text-lg font-bold text-[#143A1F] mb-3 flex items-center gap-2">
                     <CheckCircle2 className="w-5 h-5 text-[#C9A84C]" /> Áreas de Atuação
                   </h2>
                   <div className="flex flex-wrap gap-2">
                     {specialist.tags.map((tag: string) => (
-                      <span key={tag} className="px-3 py-1.5 bg-[#1B2B5B]/5 text-[#1B2B5B] text-sm rounded-full font-medium">{tag}</span>
+                      <span key={tag} className="px-3 py-1.5 bg-[#143A1F]/5 text-[#143A1F] text-sm rounded-full font-medium">{tag}</span>
                     ))}
                   </div>
                 </div>
@@ -256,7 +256,7 @@ export default async function EspecialistaPage(props: { params: Promise<{ slug: 
 
               {specialist.buildings?.length > 0 && (
                 <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                  <h2 className="text-lg font-bold text-[#1B2B5B] mb-1 flex items-center gap-2">
+                  <h2 className="text-lg font-bold text-[#143A1F] mb-1 flex items-center gap-2">
                     <Building2 className="w-5 h-5 text-[#C9A84C]" /> Edifícios e Condomínios Atendidos
                   </h2>
                   <p className="text-sm text-gray-500 mb-4">
@@ -266,11 +266,11 @@ export default async function EspecialistaPage(props: { params: Promise<{ slug: 
                     {specialist.buildings.map((sb: { building: { id: string; slug: string; name: string; neighborhood?: string }; projectType?: string }) => (
                       <Link key={sb.building.id} href={`/condominios/franca/${sb.building.slug}`}
                         className="flex items-center gap-3 p-3 bg-[#f8f6f1] rounded-xl hover:bg-[#C9A84C]/10 transition-colors group">
-                        <div className="w-8 h-8 bg-[#1B2B5B]/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                          <Building2 className="w-4 h-4 text-[#1B2B5B]" />
+                        <div className="w-8 h-8 bg-[#143A1F]/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <Building2 className="w-4 h-4 text-[#143A1F]" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium text-[#1B2B5B] text-sm group-hover:text-[#C9A84C] transition-colors truncate">{sb.building.name}</p>
+                          <p className="font-medium text-[#143A1F] text-sm group-hover:text-[#C9A84C] transition-colors truncate">{sb.building.name}</p>
                           {sb.building.neighborhood && (
                             <p className="text-xs text-gray-400">{sb.building.neighborhood} · Franca/SP</p>
                           )}
@@ -283,7 +283,7 @@ export default async function EspecialistaPage(props: { params: Promise<{ slug: 
                 </div>
               )}
 
-              <div className="bg-gradient-to-br from-[#1B2B5B] to-[#2d4a8a] rounded-2xl p-6 text-white">
+              <div className="bg-gradient-to-br from-[#143A1F] to-[#2d4a8a] rounded-2xl p-6 text-white">
                 <h3 className="font-bold text-lg mb-2">É um profissional imobiliário?</h3>
                 <p className="text-white/70 text-sm mb-4">
                   Cadastre-se gratuitamente e apareça nas buscas de quem precisa dos seus serviços em Franca e região.

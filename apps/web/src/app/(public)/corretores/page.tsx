@@ -177,7 +177,7 @@ function SecaoEquipe({ titulo, badge, cor, membros }: {
           style={{ backgroundColor: cor + '22', color: cor }}>
           {badge}
         </span>
-        <h2 className="text-3xl font-bold" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>
+        <h2 className="text-3xl font-bold" style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}>
           {titulo}
         </h2>
       </div>
@@ -222,7 +222,7 @@ export default async function CorretoresPage() {
     <main className="min-h-screen" style={{ backgroundColor: '#f9f7f4' }}>
       {/* Hero */}
       <section className="py-16 text-white text-center"
-        style={{ background: 'linear-gradient(135deg, #1B2B5B 0%, #2d4a8a 60%, #1B2B5B 100%)' }}>
+        style={{ background: 'linear-gradient(135deg, #143A1F 0%, #2d4a8a 60%, #143A1F 100%)' }}>
         <div className="max-w-4xl mx-auto px-4">
           <p className="text-sm font-semibold uppercase tracking-widest mb-3" style={{ color: '#C9A84C' }}>
             Imobiliária Lemos — Franca/SP
@@ -272,7 +272,7 @@ export default async function CorretoresPage() {
 
         {/* CTA final */}
         <section className="text-center py-12 rounded-3xl relative overflow-hidden"
-          style={{ background: 'linear-gradient(135deg, #1B2B5B 0%, #2d4a8a 100%)' }}>
+          style={{ background: 'linear-gradient(135deg, #143A1F 0%, #2d4a8a 100%)' }}>
           <div className="absolute inset-0 opacity-5"
             style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
           <div className="relative z-10">

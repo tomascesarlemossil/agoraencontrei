@@ -93,7 +93,7 @@ export default function PortalLoginPage() {
         {/* Card */}
         <div className="bg-white rounded-3xl shadow-xl overflow-hidden" style={{ border: '1px solid #ddd9d0' }}>
           {/* Top banner */}
-          <div className="px-8 pt-8 pb-6 text-center" style={{ backgroundColor: '#1B2B5B' }}>
+          <div className="px-8 pt-8 pb-6 text-center" style={{ backgroundColor: '#143A1F' }}>
             <div
               className="h-14 w-14 rounded-2xl flex items-center justify-center text-white font-bold text-xl mx-auto mb-4"
               style={{ backgroundColor: '#C9A84C' }}
@@ -124,7 +124,7 @@ export default function PortalLoginPage() {
                 <a
                   href="tel:1637230045"
                   className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm transition-all hover:brightness-110"
-                  style={{ background: 'linear-gradient(135deg, #C9A84C, #e8c66a)', color: '#1B2B5B' }}
+                  style={{ background: 'linear-gradient(135deg, #C9A84C, #e8c66a)', color: '#143A1F' }}
                 >
                   <Phone className="h-4 w-4" />
                   (16) 3723-0045
@@ -188,7 +188,7 @@ export default function PortalLoginPage() {
                   type="submit"
                   disabled={loading || !cpf || !birthDate}
                   className="w-full flex items-center justify-center gap-2.5 py-3.5 rounded-xl font-bold text-sm transition-all hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed"
-                  style={{ background: 'linear-gradient(135deg, #C9A84C, #e8c66a)', color: '#1B2B5B' }}
+                  style={{ background: 'linear-gradient(135deg, #C9A84C, #e8c66a)', color: '#143A1F' }}
                 >
                   {loading ? (
                     <>
@@ -216,7 +216,7 @@ export default function PortalLoginPage() {
 
         {/* Back to site */}
         <p className="text-center mt-6 text-sm text-gray-500">
-          <a href="/" className="hover:underline" style={{ color: '#1B2B5B' }}>
+          <a href="/" className="hover:underline" style={{ color: '#143A1F' }}>
             ← Voltar ao site
           </a>
         </p>

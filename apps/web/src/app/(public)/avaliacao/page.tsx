@@ -98,7 +98,7 @@ export default function AvaliacaoPage() {
       {/* ── HERO ──────────────────────────────────────────────────────── */}
       <section
         className="relative py-20 overflow-hidden"
-        style={{ background: 'linear-gradient(135deg, #0f1c3a 0%, #1B2B5B 60%, #1e3568 100%)' }}
+        style={{ background: 'linear-gradient(135deg, #0f1c3a 0%, #143A1F 60%, #1e3568 100%)' }}
       >
         <div
           className="absolute inset-0 opacity-10"
@@ -151,7 +151,7 @@ export default function AvaliacaoPage() {
             <div className="lg:col-span-3">
               <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8">
                 <div className="mb-6">
-                  <h2 className="text-xl font-bold mb-1" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>
+                  <h2 className="text-xl font-bold mb-1" style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}>
                     Avaliação Profissional com Dados em Tempo Real
                   </h2>
                   <p className="text-gray-500 text-sm">Preencha os dados do seu imóvel e receba o laudo instantâneo.</p>
@@ -177,7 +177,7 @@ export default function AvaliacaoPage() {
                         {b.icon}
                       </div>
                       <div>
-                        <p className="text-sm font-semibold" style={{ color: '#1B2B5B' }}>{b.title}</p>
+                        <p className="text-sm font-semibold" style={{ color: '#143A1F' }}>{b.title}</p>
                         <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">{b.desc}</p>
                       </div>
                     </div>
@@ -188,7 +188,7 @@ export default function AvaliacaoPage() {
               {/* Contato direto */}
               <div
                 className="rounded-2xl p-5"
-                style={{ background: 'linear-gradient(135deg, #1B2B5B, #152347)' }}
+                style={{ background: 'linear-gradient(135deg, #143A1F, #0E2A15)' }}
               >
                 <p className="text-white font-semibold text-sm mb-3" style={{ fontFamily: 'Georgia, serif' }}>
                   Prefere falar diretamente?
@@ -230,7 +230,7 @@ export default function AvaliacaoPage() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6">
           <h2
             className="text-xl font-bold text-center mb-10"
-            style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}
+            style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}
           >
             O que dizem nossos clientes
           </h2>
@@ -247,7 +247,7 @@ export default function AvaliacaoPage() {
                   ))}
                 </div>
                 <p className="text-gray-600 text-sm leading-relaxed mb-3">&ldquo;{d.text}&rdquo;</p>
-                <p className="text-xs font-semibold" style={{ color: '#1B2B5B' }}>{d.name}</p>
+                <p className="text-xs font-semibold" style={{ color: '#143A1F' }}>{d.name}</p>
               </div>
             ))}
           </div>
@@ -255,7 +255,7 @@ export default function AvaliacaoPage() {
       </section>
 
       {/* ── CTA FINAL ─────────────────────────────────────────────────── */}
-      <section style={{ backgroundColor: '#1B2B5B' }} className="py-14">
+      <section style={{ backgroundColor: '#143A1F' }} className="py-14">
         <div className="max-w-2xl mx-auto px-4 sm:px-6 text-center">
           <h2
             className="text-2xl font-bold text-white mb-3"
@@ -269,7 +269,7 @@ export default function AvaliacaoPage() {
           <a
             href="/avaliacao"
             className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold transition-all hover:brightness-110"
-            style={{ backgroundColor: '#C9A84C', color: '#1B2B5B' }}
+            style={{ backgroundColor: '#C9A84C', color: '#143A1F' }}
           >
             Avaliar meu imóvel agora
           </a>

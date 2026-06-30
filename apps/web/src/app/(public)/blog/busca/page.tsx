@@ -69,7 +69,7 @@ export default function BlogSearchPage() {
   return (
     <div style={{ backgroundColor: '#f8f7f4' }}>
       {/* Hero */}
-      <section style={{ backgroundColor: '#1B2B5B' }}>
+      <section style={{ backgroundColor: '#143A1F' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-20 text-center">
           <h1
             className="text-3xl sm:text-4xl font-bold text-white mb-6 leading-tight"
@@ -94,7 +94,7 @@ export default function BlogSearchPage() {
               type="submit"
               disabled={loading}
               className="absolute right-2 top-1/2 -translate-y-1/2 px-6 py-2.5 rounded-full text-sm font-semibold text-white transition-all hover:brightness-110 disabled:opacity-50"
-              style={{ backgroundColor: '#C9A84C', color: '#1B2B5B' }}
+              style={{ backgroundColor: '#C9A84C', color: '#143A1F' }}
             >
               {loading ? 'Buscando...' : 'Buscar'}
             </button>
@@ -106,7 +106,7 @@ export default function BlogSearchPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14">
         {loading && (
           <div className="flex items-center justify-center py-20">
-            <Loader2 className="w-8 h-8 animate-spin" style={{ color: '#1B2B5B' }} />
+            <Loader2 className="w-8 h-8 animate-spin" style={{ color: '#143A1F' }} />
           </div>
         )}
 
@@ -155,7 +155,7 @@ export default function BlogSearchPage() {
           <Link
             href="/blog"
             className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-sm font-semibold border-2 transition-all hover:shadow-md"
-            style={{ borderColor: '#1B2B5B', color: '#1B2B5B' }}
+            style={{ borderColor: '#143A1F', color: '#143A1F' }}
           >
             <ArrowLeft className="w-4 h-4" />
             Voltar ao Blog

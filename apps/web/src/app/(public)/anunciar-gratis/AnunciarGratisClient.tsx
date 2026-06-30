@@ -44,7 +44,7 @@ const PROPERTY_TYPES = [
 const BENEFITS = [
   { icon: Star, text: 'Destaque na página inicial por 30 dias', color: 'text-[#C9A84C]' },
   { icon: MapPin, text: 'Pin verde exclusivo no mapa interativo', color: 'text-green-500' },
-  { icon: Users, text: 'Visibilidade para +5.000 compradores ativos', color: 'text-[#1B2B5B]' },
+  { icon: Users, text: 'Visibilidade para +5.000 compradores ativos', color: 'text-[#143A1F]' },
   { icon: Shield, text: 'Sem comissão, sem contrato, sem burocracia', color: 'text-blue-500' },
   { icon: TrendingUp, text: 'SEO otimizado para aparecer no Google', color: 'text-purple-500' },
   { icon: Zap, text: 'Anúncio publicado em menos de 5 minutos', color: 'text-orange-500' },
@@ -206,7 +206,7 @@ export default function AnunciarGratisClient() {
           <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <CheckCircle className="w-8 h-8 text-green-600" />
           </div>
-          <h1 className="text-2xl font-bold text-[#1B2B5B] mb-2" style={{ fontFamily: 'Georgia, serif' }}>
+          <h1 className="text-2xl font-bold text-[#143A1F] mb-2" style={{ fontFamily: 'Georgia, serif' }}>
             Imóvel cadastrado com sucesso!
           </h1>
           <p className="text-gray-500 mb-6 text-sm">
@@ -214,7 +214,7 @@ export default function AnunciarGratisClient() {
           </p>
           <div className="bg-[#f8f6f1] rounded-xl p-4 mb-6">
             <p className="text-xs text-gray-500 mb-2">Link do seu anúncio:</p>
-            <p className="text-[#1B2B5B] font-medium text-sm break-all">{profileUrl}</p>
+            <p className="text-[#143A1F] font-medium text-sm break-all">{profileUrl}</p>
           </div>
           <div className="flex gap-3 mb-6">
             <a href={`https://wa.me/?text=Estou vendendo meu imóvel! Veja o anúncio: ${profileUrl}`}
@@ -224,12 +224,12 @@ export default function AnunciarGratisClient() {
             </a>
             <button
               onClick={() => navigator.clipboard.writeText(profileUrl)}
-              className="flex-1 bg-[#1B2B5B] text-white py-3 rounded-xl text-sm font-bold">
+              className="flex-1 bg-[#143A1F] text-white py-3 rounded-xl text-sm font-bold">
               Copiar link
             </button>
           </div>
           <div className="bg-[#C9A84C]/10 border border-[#C9A84C]/30 rounded-xl p-4 text-left">
-            <p className="text-sm font-bold text-[#1B2B5B] mb-1">📧 Verifique seu e-mail</p>
+            <p className="text-sm font-bold text-[#143A1F] mb-1">📧 Verifique seu e-mail</p>
             <p className="text-xs text-gray-600">
               Enviamos o link do seu anúncio e dicas para aumentar suas chances de venda. Fique atento ao e-mail de aviso quando o período de destaque estiver encerrando.
             </p>
@@ -245,7 +245,7 @@ export default function AnunciarGratisClient() {
   return (
     <div className="min-h-screen bg-[#f8f6f1]">
       {/* Hero */}
-      <section className="bg-[#1B2B5B] text-white py-16 px-4">
+      <section className="bg-[#143A1F] text-white py-16 px-4">
         <div className="max-w-4xl mx-auto text-center">
           <div className="inline-flex items-center gap-2 bg-[#C9A84C]/20 text-[#C9A84C] px-4 py-2 rounded-full text-sm font-medium mb-6">
             <Star className="w-4 h-4" /> Destaque Gratuito por 30 Dias
@@ -270,13 +270,13 @@ export default function AnunciarGratisClient() {
         <div className="lg:col-span-3">
           {/* Indicador de progresso */}
           <div className="flex items-center gap-3 mb-6">
-            <div className={`flex items-center gap-2 ${step >= 1 ? 'text-[#1B2B5B]' : 'text-gray-300'}`}>
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${step >= 1 ? 'bg-[#1B2B5B] text-white' : 'bg-gray-200 text-gray-400'}`}>1</div>
+            <div className={`flex items-center gap-2 ${step >= 1 ? 'text-[#143A1F]' : 'text-gray-300'}`}>
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${step >= 1 ? 'bg-[#143A1F] text-white' : 'bg-gray-200 text-gray-400'}`}>1</div>
               <span className="text-sm font-medium hidden sm:block">Dados do Imóvel</span>
             </div>
-            <div className={`flex-1 h-0.5 ${step >= 2 ? 'bg-[#1B2B5B]' : 'bg-gray-200'}`} />
-            <div className={`flex items-center gap-2 ${step >= 2 ? 'text-[#1B2B5B]' : 'text-gray-300'}`}>
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${step >= 2 ? 'bg-[#1B2B5B] text-white' : 'bg-gray-200 text-gray-400'}`}>2</div>
+            <div className={`flex-1 h-0.5 ${step >= 2 ? 'bg-[#143A1F]' : 'bg-gray-200'}`} />
+            <div className={`flex items-center gap-2 ${step >= 2 ? 'text-[#143A1F]' : 'text-gray-300'}`}>
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${step >= 2 ? 'bg-[#143A1F] text-white' : 'bg-gray-200 text-gray-400'}`}>2</div>
               <span className="text-sm font-medium hidden sm:block">Seus Dados</span>
             </div>
           </div>
@@ -291,7 +291,7 @@ export default function AnunciarGratisClient() {
             {/* PASSO 1 */}
             {step === 1 && (
               <div className="space-y-4">
-                <h2 className="text-xl font-bold text-[#1B2B5B] mb-4" style={{ fontFamily: 'Georgia, serif' }}>
+                <h2 className="text-xl font-bold text-[#143A1F] mb-4" style={{ fontFamily: 'Georgia, serif' }}>
                   Onde fica seu imóvel?
                 </h2>
 
@@ -307,10 +307,10 @@ export default function AnunciarGratisClient() {
                       onChange={e => setForm(f => ({ ...f, zipCode: formatCep(e.target.value) }))}
                       onBlur={handleCepBlur}
                       placeholder="00000-000"
-                      className="w-full border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B2B5B]"
+                      className="w-full border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#143A1F]"
                     />
                     {cepLoading && (
-                      <div className="absolute right-3 top-3.5 w-4 h-4 border-2 border-[#1B2B5B] border-t-transparent rounded-full animate-spin" />
+                      <div className="absolute right-3 top-3.5 w-4 h-4 border-2 border-[#143A1F] border-t-transparent rounded-full animate-spin" />
                     )}
                   </div>
                   <p className="text-xs text-gray-400 mt-1">Endereço preenchido automaticamente</p>
@@ -325,7 +325,7 @@ export default function AnunciarGratisClient() {
                       value={form.street}
                       onChange={e => setForm(f => ({ ...f, street: e.target.value }))}
                       placeholder="Rua das Flores"
-                      className="w-full border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B2B5B]"
+                      className="w-full border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#143A1F]"
                     />
                   </div>
                   <div>
@@ -335,7 +335,7 @@ export default function AnunciarGratisClient() {
                       value={form.number}
                       onChange={e => setForm(f => ({ ...f, number: e.target.value }))}
                       placeholder="123"
-                      className="w-full border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B2B5B]"
+                      className="w-full border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#143A1F]"
                     />
                   </div>
                 </div>
@@ -349,7 +349,7 @@ export default function AnunciarGratisClient() {
                       value={form.neighborhood}
                       onChange={e => setForm(f => ({ ...f, neighborhood: e.target.value }))}
                       placeholder="Centro"
-                      className="w-full border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B2B5B]"
+                      className="w-full border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#143A1F]"
                     />
                   </div>
                   <div>
@@ -359,7 +359,7 @@ export default function AnunciarGratisClient() {
                       value={form.city}
                       onChange={e => setForm(f => ({ ...f, city: e.target.value }))}
                       placeholder="Franca"
-                      className="w-full border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B2B5B]"
+                      className="w-full border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#143A1F]"
                     />
                   </div>
                 </div>
@@ -376,7 +376,7 @@ export default function AnunciarGratisClient() {
                       value={form.price}
                       onChange={e => setForm(f => ({ ...f, price: formatPrice(e.target.value) }))}
                       placeholder="R$ 350.000"
-                      className="w-full border rounded-xl pl-9 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B2B5B]"
+                      className="w-full border rounded-xl pl-9 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#143A1F]"
                     />
                   </div>
                 </div>
@@ -393,7 +393,7 @@ export default function AnunciarGratisClient() {
                       value={form.ownerPhone}
                       onChange={e => setForm(f => ({ ...f, ownerPhone: formatPhone(e.target.value) }))}
                       placeholder="(16) 99999-9999"
-                      className="w-full border rounded-xl pl-9 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B2B5B]"
+                      className="w-full border rounded-xl pl-9 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#143A1F]"
                     />
                   </div>
                   <p className="text-xs text-gray-400 mt-1">Compradores entrarão em contato por aqui</p>
@@ -401,7 +401,7 @@ export default function AnunciarGratisClient() {
 
                 <button
                   onClick={handleStep1}
-                  className="w-full bg-[#C9A84C] text-[#1B2B5B] py-4 rounded-xl font-bold text-base hover:bg-[#b8943d] transition-colors flex items-center justify-center gap-2"
+                  className="w-full bg-[#C9A84C] text-[#143A1F] py-4 rounded-xl font-bold text-base hover:bg-[#b8943d] transition-colors flex items-center justify-center gap-2"
                 >
                   Continuar <ArrowRight className="w-5 h-5" />
                 </button>
@@ -414,10 +414,10 @@ export default function AnunciarGratisClient() {
             {/* PASSO 2 */}
             {step === 2 && (
               <div className="space-y-4">
-                <button onClick={() => setStep(1)} className="text-sm text-gray-500 hover:text-[#1B2B5B] flex items-center gap-1 mb-2">
+                <button onClick={() => setStep(1)} className="text-sm text-gray-500 hover:text-[#143A1F] flex items-center gap-1 mb-2">
                   ← Voltar
                 </button>
-                <h2 className="text-xl font-bold text-[#1B2B5B]" style={{ fontFamily: 'Georgia, serif' }}>
+                <h2 className="text-xl font-bold text-[#143A1F]" style={{ fontFamily: 'Georgia, serif' }}>
                   Seus dados e detalhes do imóvel
                 </h2>
 
@@ -432,7 +432,7 @@ export default function AnunciarGratisClient() {
                       value={form.ownerName}
                       onChange={e => setForm(f => ({ ...f, ownerName: e.target.value }))}
                       placeholder="João Silva"
-                      className="w-full border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B2B5B]"
+                      className="w-full border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#143A1F]"
                     />
                   </div>
                   <div>
@@ -444,7 +444,7 @@ export default function AnunciarGratisClient() {
                       value={form.ownerEmail}
                       onChange={e => setForm(f => ({ ...f, ownerEmail: e.target.value }))}
                       placeholder="joao@email.com"
-                      className="w-full border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B2B5B]"
+                      className="w-full border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#143A1F]"
                     />
                   </div>
                 </div>
@@ -457,7 +457,7 @@ export default function AnunciarGratisClient() {
                       <select
                         value={form.propertyType}
                         onChange={e => setForm(f => ({ ...f, propertyType: e.target.value }))}
-                        className="w-full border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B2B5B] appearance-none bg-white"
+                        className="w-full border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#143A1F] appearance-none bg-white"
                       >
                         {PROPERTY_TYPES.map(t => (
                           <option key={t.value} value={t.value}>{t.label}</option>
@@ -472,7 +472,7 @@ export default function AnunciarGratisClient() {
                       <select
                         value={form.bedrooms}
                         onChange={e => setForm(f => ({ ...f, bedrooms: e.target.value }))}
-                        className="w-full border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B2B5B] appearance-none bg-white"
+                        className="w-full border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#143A1F] appearance-none bg-white"
                       >
                         {['0', '1', '2', '3', '4', '5+'].map(n => (
                           <option key={n} value={n}>{n === '0' ? 'Sem quartos' : `${n} quarto${n !== '1' ? 's' : ''}`}</option>
@@ -491,7 +491,7 @@ export default function AnunciarGratisClient() {
                     value={form.totalArea}
                     onChange={e => setForm(f => ({ ...f, totalArea: e.target.value }))}
                     placeholder="120"
-                    className="w-full border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B2B5B]"
+                    className="w-full border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#143A1F]"
                   />
                 </div>
 
@@ -503,7 +503,7 @@ export default function AnunciarGratisClient() {
                     onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
                     placeholder="Descreva os diferenciais do seu imóvel: localização, reformas, vizinhança..."
                     rows={3}
-                    className="w-full border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B2B5B] resize-none"
+                    className="w-full border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#143A1F] resize-none"
                   />
                 </div>
 
@@ -518,7 +518,7 @@ export default function AnunciarGratisClient() {
                 <button
                   onClick={handleSubmit}
                   disabled={loading || !form.turnstileToken}
-                  className="w-full bg-[#1B2B5B] text-white py-4 rounded-xl font-bold text-base hover:bg-[#162247] transition-colors flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="w-full bg-[#143A1F] text-white py-4 rounded-xl font-bold text-base hover:bg-[#0E2A15] transition-colors flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   {loading ? (
                     <>
@@ -548,7 +548,7 @@ export default function AnunciarGratisClient() {
         <div className="lg:col-span-2 space-y-6">
           {/* Benefícios */}
           <div className="bg-white rounded-2xl border p-6 shadow-sm">
-            <h3 className="font-bold text-[#1B2B5B] mb-4" style={{ fontFamily: 'Georgia, serif' }}>
+            <h3 className="font-bold text-[#143A1F] mb-4" style={{ fontFamily: 'Georgia, serif' }}>
               O que você ganha
             </h3>
             <ul className="space-y-3">
@@ -562,7 +562,7 @@ export default function AnunciarGratisClient() {
           </div>
 
           {/* Timeline dos 30 dias */}
-          <div className="bg-[#1B2B5B] rounded-2xl p-6 text-white">
+          <div className="bg-[#143A1F] rounded-2xl p-6 text-white">
             <h3 className="font-bold mb-4 flex items-center gap-2">
               <Clock className="w-5 h-5 text-[#C9A84C]" /> O que acontece depois
             </h3>
@@ -583,7 +583,7 @@ export default function AnunciarGratisClient() {
 
           {/* Depoimentos */}
           <div className="bg-white rounded-2xl border p-6 shadow-sm">
-            <h3 className="font-bold text-[#1B2B5B] mb-4">O que dizem os proprietários</h3>
+            <h3 className="font-bold text-[#143A1F] mb-4">O que dizem os proprietários</h3>
             <div className="space-y-4">
               {TESTIMONIALS.map((t, i) => (
                 <div key={i} className="border-b last:border-0 pb-4 last:pb-0">
@@ -608,7 +608,7 @@ export default function AnunciarGratisClient() {
             ].map((s, i) => (
               <div key={i} className="bg-white rounded-xl border p-3 text-center shadow-sm">
                 <s.icon className="w-4 h-4 text-[#C9A84C] mx-auto mb-1" />
-                <p className="text-lg font-bold text-[#1B2B5B]">{s.value}</p>
+                <p className="text-lg font-bold text-[#143A1F]">{s.value}</p>
                 <p className="text-xs text-gray-500">{s.label}</p>
               </div>
             ))}
@@ -619,7 +619,7 @@ export default function AnunciarGratisClient() {
       {/* FAQ */}
       <section className="bg-white py-12 px-4">
         <div className="max-w-3xl mx-auto">
-          <h2 className="text-2xl font-bold text-[#1B2B5B] text-center mb-8" style={{ fontFamily: 'Georgia, serif' }}>
+          <h2 className="text-2xl font-bold text-[#143A1F] text-center mb-8" style={{ fontFamily: 'Georgia, serif' }}>
             Perguntas Frequentes
           </h2>
           <div className="space-y-4">
@@ -646,7 +646,7 @@ export default function AnunciarGratisClient() {
               },
             ].map((item, i) => (
               <details key={i} className="border rounded-xl overflow-hidden">
-                <summary className="px-5 py-4 font-medium text-[#1B2B5B] cursor-pointer hover:bg-[#f8f6f1] flex items-center justify-between">
+                <summary className="px-5 py-4 font-medium text-[#143A1F] cursor-pointer hover:bg-[#f8f6f1] flex items-center justify-between">
                   {item.q}
                   <ChevronDown className="w-4 h-4 text-gray-400 flex-shrink-0" />
                 </summary>
@@ -658,14 +658,14 @@ export default function AnunciarGratisClient() {
       </section>
 
       {/* CTA final */}
-      <section className="bg-[#1B2B5B] py-12 px-4 text-center text-white">
+      <section className="bg-[#143A1F] py-12 px-4 text-center text-white">
         <h2 className="text-2xl font-bold mb-3" style={{ fontFamily: 'Georgia, serif' }}>
           Pronto para anunciar seu imóvel?
         </h2>
         <p className="text-white/70 mb-6">Grátis · Sem compromisso · Publicado em 5 minutos</p>
         <button
           onClick={() => { window.scrollTo({ top: 0, behavior: 'smooth' }); setStep(1) }}
-          className="bg-[#C9A84C] text-[#1B2B5B] px-8 py-4 rounded-xl font-bold text-base hover:bg-[#b8943d] transition-colors inline-flex items-center gap-2"
+          className="bg-[#C9A84C] text-[#143A1F] px-8 py-4 rounded-xl font-bold text-base hover:bg-[#b8943d] transition-colors inline-flex items-center gap-2"
         >
           <Home className="w-5 h-5" /> Anunciar meu imóvel grátis
         </button>

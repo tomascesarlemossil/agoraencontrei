@@ -31,7 +31,7 @@ const PORTAL_SECTIONS = [
     icon: FileText,
     href: '/portal/contratos',
     description: 'Contratos de locação e compra e venda',
-    color: '#1B2B5B',
+    color: '#143A1F',
     bg: '#EEF2FF',
   },
   {
@@ -136,7 +136,7 @@ export default function PortalDashboardPage() {
       {/* Welcome header */}
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-2xl font-bold" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>
+          <h1 className="text-2xl font-bold" style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}>
             Bem-vindo, {firstName}!
           </h1>
           <p className="text-gray-500 text-sm mt-1">
@@ -210,7 +210,7 @@ export default function PortalDashboardPage() {
       {/* Contact card */}
       <div
         className="rounded-2xl p-6"
-        style={{ backgroundColor: '#1B2B5B', border: '1px solid #1B2B5B' }}
+        style={{ backgroundColor: '#143A1F', border: '1px solid #143A1F' }}
       >
         <h3 className="text-white font-bold text-base mb-1" style={{ fontFamily: 'Georgia, serif' }}>
           Precisa de ajuda?
@@ -222,7 +222,7 @@ export default function PortalDashboardPage() {
           <a
             href="tel:1637230045"
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all hover:brightness-110"
-            style={{ background: 'linear-gradient(135deg, #C9A84C, #e8c66a)', color: '#1B2B5B' }}
+            style={{ background: 'linear-gradient(135deg, #C9A84C, #e8c66a)', color: '#143A1F' }}
           >
             (16) 3723-0045
           </a>

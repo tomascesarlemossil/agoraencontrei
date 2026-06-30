@@ -22,7 +22,7 @@ const DIFERENCIAIS = [
     icon: <MapPin className="w-6 h-6" />,
     title: 'Domínio de Território',
     desc: 'Cada bairro e condomínio de Franca tem uma página SEO exclusiva. Você aparece no topo do Google para quem busca imóveis no seu bairro — não para quem busca "imóvel em Franca" de forma genérica.',
-    color: '#1B2B5B',
+    color: '#143A1F',
   },
   {
     icon: <Shield className="w-6 h-6" />,
@@ -68,8 +68,8 @@ const PLANOS = [
     preco: 497,
     precoOriginal: 997,
     destaque: true,
-    cor: '#1B2B5B',
-    bg: 'rgba(27,43,91,0.06)',
+    cor: '#143A1F',
+    bg: 'rgba(20,58,31,0.06)',
     badge: '💎 Apenas 10 vagas',
     beneficios: [
       'Tudo do Prime +',
@@ -174,7 +174,7 @@ export default function ImobiliariasPage() {
       {/* ── HERO ─────────────────────────────────────────────────────────── */}
       <section
         className="relative overflow-hidden py-20 px-4"
-        style={{ background: 'linear-gradient(135deg, #1B2B5B 0%, #0f1c3a 50%, #1a1a2e 100%)' }}
+        style={{ background: 'linear-gradient(135deg, #143A1F 0%, #0f1c3a 50%, #1a1a2e 100%)' }}
       >
         <div
           className="absolute inset-0 opacity-10"
@@ -183,7 +183,7 @@ export default function ImobiliariasPage() {
         <div className="max-w-5xl mx-auto text-center relative z-10">
           <div
             className="inline-flex items-center gap-2 rounded-full px-5 py-2 text-sm font-bold mb-6"
-            style={{ backgroundColor: '#C9A84C', color: '#1B2B5B' }}
+            style={{ backgroundColor: '#C9A84C', color: '#143A1F' }}
           >
             <Crown className="w-4 h-4" /> Apenas 10 vagas de Membro Fundador disponíveis
           </div>
@@ -205,7 +205,7 @@ export default function ImobiliariasPage() {
             <button
               onClick={() => openFormWithPlan('VIP')}
               className="flex items-center justify-center gap-2 px-8 py-4 rounded-xl font-bold text-base transition-all hover:brightness-110"
-              style={{ backgroundColor: '#C9A84C', color: '#1B2B5B' }}
+              style={{ backgroundColor: '#C9A84C', color: '#143A1F' }}
             >
               <Crown className="w-5 h-5" /> Quero ser Membro Fundador
             </button>
@@ -230,7 +230,7 @@ export default function ImobiliariasPage() {
               >
                 {s.icon}
               </div>
-              <p className="text-2xl font-bold text-[#1B2B5B]">{s.value}</p>
+              <p className="text-2xl font-bold text-[#143A1F]">{s.value}</p>
               <p className="text-xs text-gray-500 mt-1">{s.label}</p>
             </div>
           ))}
@@ -240,7 +240,7 @@ export default function ImobiliariasPage() {
       {/* ── DIFERENCIAIS ─────────────────────────────────────────────────── */}
       <section className="max-w-5xl mx-auto px-4 py-16">
         <h2
-          className="text-2xl sm:text-3xl font-bold text-center text-[#1B2B5B] mb-3"
+          className="text-2xl sm:text-3xl font-bold text-center text-[#143A1F] mb-3"
           style={{ fontFamily: 'Georgia, serif' }}
         >
           Por que o AgoraEncontrei é diferente?
@@ -267,7 +267,7 @@ export default function ImobiliariasPage() {
       {/* ── PLANOS ───────────────────────────────────────────────────────── */}
       <section className="max-w-4xl mx-auto px-4 pb-16">
         <h2
-          className="text-2xl sm:text-3xl font-bold text-center text-[#1B2B5B] mb-10"
+          className="text-2xl sm:text-3xl font-bold text-center text-[#143A1F] mb-10"
           style={{ fontFamily: 'Georgia, serif' }}
         >
           Escolha seu plano
@@ -295,7 +295,7 @@ export default function ImobiliariasPage() {
                 {p.precoOriginal && (
                   <span className="text-gray-400 line-through text-lg">R$ {p.precoOriginal}</span>
                 )}
-                <span className="text-3xl font-bold text-[#1B2B5B]">R$ {p.preco}</span>
+                <span className="text-3xl font-bold text-[#143A1F]">R$ {p.preco}</span>
                 <span className="text-gray-500 text-sm">/mês</span>
               </div>
               {p.precoOriginal && (
@@ -336,7 +336,7 @@ export default function ImobiliariasPage() {
                 <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
                   <CheckCircle2 className="w-10 h-10 text-green-500" />
                 </div>
-                <h2 className="text-2xl font-bold text-[#1B2B5B] mb-3">Interesse registrado! 🎉</h2>
+                <h2 className="text-2xl font-bold text-[#143A1F] mb-3">Interesse registrado! 🎉</h2>
                 <p className="text-gray-600 mb-6">
                   Nossa equipe entrará em contato em até <strong>2 horas</strong> para finalizar sua adesão ao Plano {selectedPlan === 'VIP' ? 'VIP Membro Fundador' : 'Prime'}.
                 </p>
@@ -346,7 +346,7 @@ export default function ImobiliariasPage() {
                 <Link
                   href="/imoveis"
                   className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-white transition-all hover:brightness-110"
-                  style={{ backgroundColor: '#1B2B5B' }}
+                  style={{ backgroundColor: '#143A1F' }}
                 >
                   Ver o mapa <ArrowRight className="w-4 h-4" />
                 </Link>
@@ -356,7 +356,7 @@ export default function ImobiliariasPage() {
                 <div className="flex items-center gap-3 mb-6">
                   <Crown className="w-6 h-6" style={{ color: '#C9A84C' }} />
                   <div>
-                    <h2 className="text-xl font-bold text-[#1B2B5B]">
+                    <h2 className="text-xl font-bold text-[#143A1F]">
                       {selectedPlan === 'VIP' ? 'Garantir vaga de Membro Fundador' : 'Começar com o Plano Prime'}
                     </h2>
                     <p className="text-sm text-gray-500">Nossa equipe entrará em contato em até 2h</p>
@@ -373,7 +373,7 @@ export default function ImobiliariasPage() {
                         value={form.name}
                         onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
                         placeholder="João da Silva"
-                        className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#1B2B5B] transition-colors"
+                        className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#143A1F] transition-colors"
                       />
                     </div>
                     <div>
@@ -384,7 +384,7 @@ export default function ImobiliariasPage() {
                         value={form.phone}
                         onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
                         placeholder="(16) 99999-9999"
-                        className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#1B2B5B] transition-colors"
+                        className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#143A1F] transition-colors"
                       />
                     </div>
                   </div>
@@ -397,7 +397,7 @@ export default function ImobiliariasPage() {
                       value={form.email}
                       onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
                       placeholder="joao@imobiliaria.com.br"
-                      className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#1B2B5B] transition-colors"
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#143A1F] transition-colors"
                     />
                   </div>
 
@@ -409,7 +409,7 @@ export default function ImobiliariasPage() {
                         value={form.company}
                         onChange={e => setForm(f => ({ ...f, company: e.target.value }))}
                         placeholder="Imobiliária Silva"
-                        className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#1B2B5B] transition-colors"
+                        className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#143A1F] transition-colors"
                       />
                     </div>
                     <div>
@@ -420,7 +420,7 @@ export default function ImobiliariasPage() {
                         value={form.creci}
                         onChange={e => setForm(f => ({ ...f, creci: e.target.value }))}
                         placeholder="CRECI 12345"
-                        className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#1B2B5B] transition-colors"
+                        className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#143A1F] transition-colors"
                       />
                     </div>
                   </div>
@@ -432,7 +432,7 @@ export default function ImobiliariasPage() {
                       value={form.bairros}
                       onChange={e => setForm(f => ({ ...f, bairros: e.target.value }))}
                       placeholder="Ex: Centro, Jardim Petraglia, Polo Club"
-                      className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#1B2B5B] transition-colors"
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#143A1F] transition-colors"
                     />
                   </div>
 
@@ -445,8 +445,8 @@ export default function ImobiliariasPage() {
                         onClick={() => { setSelectedPlan(p); setForm(f => ({ ...f, plano: p })) }}
                         className={`py-3 rounded-xl font-bold text-sm border-2 transition-all ${selectedPlan === p ? 'text-white' : 'bg-white text-gray-600'}`}
                         style={{
-                          borderColor: p === 'VIP' ? '#1B2B5B' : '#C9A84C',
-                          backgroundColor: selectedPlan === p ? (p === 'VIP' ? '#1B2B5B' : '#C9A84C') : 'white',
+                          borderColor: p === 'VIP' ? '#143A1F' : '#C9A84C',
+                          backgroundColor: selectedPlan === p ? (p === 'VIP' ? '#143A1F' : '#C9A84C') : 'white',
                         }}
                       >
                         {p === 'VIP' ? '💎 VIP Fundador — R$ 497' : '⭐ Prime — R$ 197'}
@@ -458,7 +458,7 @@ export default function ImobiliariasPage() {
                     type="submit"
                     disabled={submitting}
                     className="w-full flex items-center justify-center gap-2 py-4 rounded-xl font-bold text-base text-white transition-all hover:brightness-110 disabled:opacity-60"
-                    style={{ backgroundColor: '#1B2B5B' }}
+                    style={{ backgroundColor: '#143A1F' }}
                   >
                     {submitting ? 'Enviando...' : (
                       <>{selectedPlan === 'VIP' ? '💎 Garantir minha vaga de Fundador' : 'Quero começar com o Prime'} <ArrowRight className="w-5 h-5" /></>
@@ -478,7 +478,7 @@ export default function ImobiliariasPage() {
       {/* ── FAQ ──────────────────────────────────────────────────────────── */}
       <section className="max-w-3xl mx-auto px-4 pb-16">
         <h2
-          className="text-2xl font-bold text-center text-[#1B2B5B] mb-8"
+          className="text-2xl font-bold text-center text-[#143A1F] mb-8"
           style={{ fontFamily: 'Georgia, serif' }}
         >
           Perguntas frequentes
@@ -510,7 +510,7 @@ export default function ImobiliariasPage() {
       {/* ── CTA FINAL ────────────────────────────────────────────────────── */}
       <section
         className="py-16 px-4 text-center"
-        style={{ background: 'linear-gradient(135deg, #1B2B5B 0%, #0f1c3a 100%)' }}
+        style={{ background: 'linear-gradient(135deg, #143A1F 0%, #0f1c3a 100%)' }}
       >
         <Crown className="w-12 h-12 mx-auto mb-4" style={{ color: '#C9A84C' }} />
         <h2
@@ -525,7 +525,7 @@ export default function ImobiliariasPage() {
         <button
           onClick={() => openFormWithPlan('VIP')}
           className="inline-flex items-center gap-2 px-8 py-4 rounded-xl font-bold text-base transition-all hover:brightness-110"
-          style={{ backgroundColor: '#C9A84C', color: '#1B2B5B' }}
+          style={{ backgroundColor: '#C9A84C', color: '#143A1F' }}
         >
           <Crown className="w-5 h-5" /> Garantir minha vaga agora <ArrowRight className="w-5 h-5" />
         </button>

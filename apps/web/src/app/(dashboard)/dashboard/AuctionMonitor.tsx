@@ -183,7 +183,7 @@ export default function AuctionMonitor() {
     return (
       <button
         onClick={() => setCollapsed(false)}
-        className="fixed bottom-4 right-4 z-50 bg-[#1B2B5B] text-white rounded-full w-14 h-14 flex items-center justify-center shadow-2xl hover:scale-110 transition"
+        className="fixed bottom-4 right-4 z-50 bg-[#143A1F] text-white rounded-full w-14 h-14 flex items-center justify-center shadow-2xl hover:scale-110 transition"
       >
         <Activity className="w-6 h-6" />
         {data.summary.totalActive > 0 && (
@@ -200,7 +200,7 @@ export default function AuctionMonitor() {
   return (
     <div className="fixed bottom-4 right-4 z-50 bg-white rounded-xl shadow-2xl border w-96 max-h-[80vh] overflow-y-auto">
       {/* Header */}
-      <div className="sticky top-0 bg-[#1B2B5B] text-white px-4 py-3 rounded-t-xl flex items-center justify-between">
+      <div className="sticky top-0 bg-[#143A1F] text-white px-4 py-3 rounded-t-xl flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Activity className="w-5 h-5 text-[#C9A84C]" />
           <span className="font-semibold text-sm">Monitor de Leilões</span>

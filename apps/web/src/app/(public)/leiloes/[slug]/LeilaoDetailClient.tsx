@@ -298,7 +298,7 @@ export default function LeilaoDetailClient({ auction }: { auction: any }) {
                 <div className="flex justify-between items-end border-t pt-3">
                   <span className="text-gray-700 font-medium">Lance Mínimo</span>
                   <div className="text-right">
-                    <span className="text-2xl font-bold" style={{ color: '#1B2B5B' }}>
+                    <span className="text-2xl font-bold" style={{ color: '#143A1F' }}>
                       {formatCurrency(Number(auction.minimumBid))}
                     </span>
                   </div>
@@ -349,7 +349,7 @@ export default function LeilaoDetailClient({ auction }: { auction: any }) {
                 {auction.sourceUrl && (
                   <a href={auction.sourceUrl} target="_blank" rel="noopener noreferrer"
                     className="block w-full px-4 py-3 text-center rounded-lg font-semibold border-2"
-                    style={{ borderColor: '#1B2B5B', color: '#1B2B5B' }}>
+                    style={{ borderColor: '#143A1F', color: '#143A1F' }}>
                     Ver no Site do Leiloeiro
                   </a>
                 )}

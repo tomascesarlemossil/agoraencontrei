@@ -65,12 +65,12 @@ export function InviteModal({ isLoggedIn, userSlug }: InviteModalProps) {
         </button>
 
         {/* Icon */}
-        <div className="w-14 h-14 bg-gradient-to-br from-[#1B2B5B] to-[#2d4a8a] rounded-2xl flex items-center justify-center mb-4">
+        <div className="w-14 h-14 bg-gradient-to-br from-[#143A1F] to-[#2d4a8a] rounded-2xl flex items-center justify-center mb-4">
           <Users className="w-7 h-7 text-white" />
         </div>
 
         {/* Content */}
-        <h3 className="text-xl font-bold text-[#1B2B5B] mb-2">
+        <h3 className="text-xl font-bold text-[#143A1F] mb-2">
           Conhece alguém vendendo imóvel?
         </h3>
         <p className="text-gray-600 text-sm mb-4 leading-relaxed">
@@ -81,7 +81,7 @@ export function InviteModal({ isLoggedIn, userSlug }: InviteModalProps) {
         {/* Benefit badge */}
         <div className="bg-[#C9A84C]/10 border border-[#C9A84C]/30 rounded-xl p-3 mb-5 flex items-center gap-3">
           <Gift className="w-5 h-5 text-[#C9A84C] flex-shrink-0" />
-          <p className="text-sm text-[#1B2B5B] font-medium">
+          <p className="text-sm text-[#143A1F] font-medium">
             Cada indicação = +7 dias de destaque no seu perfil
           </p>
         </div>
@@ -96,7 +96,7 @@ export function InviteModal({ isLoggedIn, userSlug }: InviteModalProps) {
         <div className="flex gap-3">
           <button
             onClick={share}
-            className="flex-1 bg-[#1B2B5B] text-white py-3 rounded-xl font-semibold text-sm hover:bg-[#2d4a8a] transition-colors flex items-center justify-center gap-2"
+            className="flex-1 bg-[#143A1F] text-white py-3 rounded-xl font-semibold text-sm hover:bg-[#2d4a8a] transition-colors flex items-center justify-center gap-2"
           >
             <Share2 className="w-4 h-4" />
             Compartilhar link

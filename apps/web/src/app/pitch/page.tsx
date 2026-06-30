@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 }
 
-const NAVY = '#1B2B5B'
+const NAVY = '#143A1F'
 const DARK = '#0f1c3a'
 const GOLD = '#C9A84C'
 const CREAM = '#f8f6f1'

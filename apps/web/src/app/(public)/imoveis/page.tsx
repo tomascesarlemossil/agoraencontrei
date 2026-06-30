@@ -246,7 +246,7 @@ export default async function ImoveisPage({ searchParams }: { searchParams: Prom
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-6 flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>
+          <h1 className="text-2xl font-bold" style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}>
             {title}
           </h1>
           {!isMapView && (
@@ -277,7 +277,7 @@ export default async function ImoveisPage({ searchParams }: { searchParams: Prom
               className="group relative flex items-center gap-2.5 px-5 py-3 rounded-2xl text-sm font-bold transition-all hover:scale-105 hover:shadow-2xl shadow-lg overflow-hidden"
               style={{
                 background: 'linear-gradient(135deg, #C9A84C 0%, #e6c96a 50%, #C9A84C 100%)',
-                color: '#1B2B5B',
+                color: '#143A1F',
               }}
             >
               {/* Shimmer effect */}
@@ -290,8 +290,8 @@ export default async function ImoveisPage({ searchParams }: { searchParams: Prom
               />
               {/* Pulsing dot */}
               <span className="relative flex h-2.5 w-2.5 flex-shrink-0">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: '#1B2B5B' }} />
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5" style={{ backgroundColor: '#1B2B5B' }} />
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: '#143A1F' }} />
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5" style={{ backgroundColor: '#143A1F' }} />
               </span>
               <svg className="w-4 h-4 relative z-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
@@ -309,7 +309,7 @@ export default async function ImoveisPage({ searchParams }: { searchParams: Prom
         <Link
           href={mapViewUrl}
           className="group relative flex items-center justify-between gap-4 px-6 py-4 rounded-2xl mb-6 overflow-hidden transition-all hover:shadow-xl hover:scale-[1.01]"
-          style={{ background: 'linear-gradient(135deg, #1B2B5B 0%, #2d4a8a 60%, #1B2B5B 100%)' }}
+          style={{ background: 'linear-gradient(135deg, #143A1F 0%, #2d4a8a 60%, #143A1F 100%)' }}
         >
           {/* Background map dots pattern */}
           <div className="absolute inset-0 opacity-5" style={{
@@ -339,7 +339,7 @@ export default async function ImoveisPage({ searchParams }: { searchParams: Prom
           </div>
 
           <div className="relative z-10 flex-shrink-0 flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all group-hover:scale-105"
-            style={{ background: 'linear-gradient(135deg, #C9A84C, #e6c96a)', color: '#1B2B5B' }}>
+            style={{ background: 'linear-gradient(135deg, #C9A84C, #e6c96a)', color: '#143A1F' }}>
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-current opacity-75" />
               <span className="relative inline-flex rounded-full h-2 w-2 bg-current" />
@@ -369,7 +369,7 @@ export default async function ImoveisPage({ searchParams }: { searchParams: Prom
             <Link
               href="/imoveis"
               className="inline-block px-6 py-2.5 rounded-xl text-sm font-semibold transition-all hover:brightness-110"
-              style={{ backgroundColor: '#1B2B5B', color: 'white' }}
+              style={{ backgroundColor: '#143A1F', color: 'white' }}
             >
               Ver todos os imóveis
             </Link>
@@ -386,7 +386,7 @@ export default async function ImoveisPage({ searchParams }: { searchParams: Prom
           {/* Closest alternatives */}
           {alternatives.items.length > 0 && (
             <div className="text-left">
-              <p className="text-base font-bold mb-1" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>
+              <p className="text-base font-bold mb-1" style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}>
                 Imóveis mais próximos da sua busca:
               </p>
               <p className="text-sm text-gray-500 mb-5">
@@ -413,7 +413,7 @@ export default async function ImoveisPage({ searchParams }: { searchParams: Prom
           {/* Poucos resultados exatos — sugere opções semelhantes (mesmo bairro primeiro) */}
           {alternatives.items.length > 0 && (
             <div className="text-left mt-12 pt-8 border-t border-gray-200">
-              <p className="text-lg font-bold mb-1" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>
+              <p className="text-lg font-bold mb-1" style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}>
                 Veja também
               </p>
               <p className="text-sm text-gray-500 mb-5">

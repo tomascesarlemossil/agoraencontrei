@@ -145,7 +145,7 @@ export default async function PoiPage(props: Props) {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
 
       {/* Hero */}
-      <section className="bg-gradient-to-br from-[#1B2B5B] to-[#0f1c3a] text-white py-14 px-4">
+      <section className="bg-gradient-to-br from-[#143A1F] to-[#0f1c3a] text-white py-14 px-4">
         <div className="max-w-5xl mx-auto">
           <nav className="text-xs text-blue-200 mb-4 flex items-center gap-1.5 flex-wrap">
             <Link href="/" className="hover:text-white">Início</Link> <span>/</span>
@@ -172,7 +172,7 @@ export default async function PoiPage(props: Props) {
           <div className="flex flex-wrap gap-3">
             <Link href={`/imoveis?city=${poi.city}${poi.neighborhood ? `&neighborhood=${encodeURIComponent(poi.neighborhood)}` : ''}`}
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm"
-              style={{ background: '#C9A84C', color: '#1B2B5B' }}>
+              style={{ background: '#C9A84C', color: '#143A1F' }}>
               <Home className="w-4 h-4" /> Ver no Mapa
             </Link>
             <Link href={`/leiloes?city=${poi.city}`}
@@ -206,7 +206,7 @@ export default async function PoiPage(props: Props) {
                   <p className="text-xs text-gray-500 flex items-center gap-1 mb-2">
                     <MapPin className="w-3 h-3" /> {p.neighborhood || poi.city}
                   </p>
-                  <p className="font-bold text-base" style={{ color: '#1B2B5B' }}>{fmtPrice(p)}</p>
+                  <p className="font-bold text-base" style={{ color: '#143A1F' }}>{fmtPrice(p)}</p>
                   <div className="flex gap-3 mt-2 text-xs text-gray-500">
                     {p.bedrooms > 0 && <span>{p.bedrooms} quartos</span>}
                     {p.totalArea > 0 && <span>{p.totalArea}m²</span>}
@@ -220,7 +220,7 @@ export default async function PoiPage(props: Props) {
             <Home className="w-10 h-10 mx-auto mb-3 text-gray-300" />
             <p className="text-gray-500 mb-4">Nenhum imóvel encontrado perto de {poi.name} no momento.</p>
             <Link href={`/imoveis?city=${poi.city}`}
-              className="px-5 py-2.5 rounded-xl font-bold text-sm text-white" style={{ background: '#1B2B5B' }}>
+              className="px-5 py-2.5 rounded-xl font-bold text-sm text-white" style={{ background: '#143A1F' }}>
               Ver todos em {poi.city}
             </Link>
           </div>

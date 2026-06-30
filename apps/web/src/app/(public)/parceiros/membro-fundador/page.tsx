@@ -12,10 +12,10 @@ export default function MembroFundadorPage() {
   return (
     <div className="min-h-screen bg-[#f8f6f1]">
       {/* Hero */}
-      <section className="relative overflow-hidden py-16 px-4" style={{ background: 'linear-gradient(135deg, #1B2B5B 0%, #0f1c3a 50%, #1a1a2e 100%)' }}>
+      <section className="relative overflow-hidden py-16 px-4" style={{ background: 'linear-gradient(135deg, #143A1F 0%, #0f1c3a 50%, #1a1a2e 100%)' }}>
         <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 30% 50%, #C9A84C 1px, transparent 1px)', backgroundSize: '30px 30px' }} />
         <div className="max-w-4xl mx-auto text-center relative z-10">
-          <div className="inline-flex items-center gap-2 rounded-full px-5 py-2 text-sm font-bold mb-6" style={{ backgroundColor: '#C9A84C', color: '#1B2B5B' }}>
+          <div className="inline-flex items-center gap-2 rounded-full px-5 py-2 text-sm font-bold mb-6" style={{ backgroundColor: '#C9A84C', color: '#143A1F' }}>
             <Crown className="w-4 h-4" /> Vagas Limitadas — Membro Fundador
           </div>
           <h1 className="text-3xl sm:text-5xl font-bold text-white mb-4" style={{ fontFamily: 'Georgia, serif' }}>
@@ -130,7 +130,7 @@ export default function MembroFundadorPage() {
             <div className="flex flex-col sm:flex-row gap-3">
               <Link href="/parceiros/cadastro"
                 className="flex-1 flex items-center justify-center gap-2 py-4 rounded-xl font-bold text-base active:scale-[0.98] transition-transform"
-                style={{ backgroundColor: '#C9A84C', color: '#1B2B5B' }}>
+                style={{ backgroundColor: '#C9A84C', color: '#143A1F' }}>
                 <Crown className="w-5 h-5" /> Quero ser Membro Fundador
               </Link>
               <a href="https://wa.me/5516981010004?text=Olá! Tenho interesse no Plano Membro Fundador do AgoraEncontrei."

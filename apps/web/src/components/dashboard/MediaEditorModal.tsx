@@ -587,7 +587,7 @@ export function MediaEditorModal({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4">
-      <div className="bg-[#1a2744] border border-white/10 rounded-2xl w-full max-w-6xl max-h-[95dvh] overflow-hidden flex flex-col">
+      <div className="bg-[#0E2A15] border border-white/10 rounded-2xl w-full max-w-6xl max-h-[95dvh] overflow-hidden flex flex-col">
 
         {/* ── Header ──────────────────────────────────────────────────────── */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-white/10 flex-shrink-0">
@@ -674,7 +674,7 @@ export function MediaEditorModal({
                     </div>
                   )}
                   {previewDataUrl && (
-                    <div className="absolute top-2 right-2 bg-yellow-400 text-[#1B2B5B] text-[10px] font-bold px-2 py-0.5 rounded-full">
+                    <div className="absolute top-2 right-2 bg-yellow-400 text-[#143A1F] text-[10px] font-bold px-2 py-0.5 rounded-full">
                       Preview
                     </div>
                   )}
@@ -736,7 +736,7 @@ export function MediaEditorModal({
                         className={cn(
                           'px-2 py-2 rounded-lg text-xs font-semibold transition-colors text-left',
                           selectedFilter === f.id
-                            ? 'bg-yellow-400 text-[#1B2B5B]'
+                            ? 'bg-yellow-400 text-[#143A1F]'
                             : 'bg-white/5 text-white/70 hover:bg-white/10',
                         )}
                       >
@@ -955,7 +955,7 @@ export function MediaEditorModal({
                     <button
                       onClick={handleApplyAll}
                       disabled={selectedFilter === 'none' && !applyLogo}
-                      className="w-full flex items-center justify-center gap-2 bg-yellow-400 hover:bg-yellow-300 text-[#1B2B5B] py-2.5 rounded-xl text-sm font-bold transition-colors disabled:opacity-40"
+                      className="w-full flex items-center justify-center gap-2 bg-yellow-400 hover:bg-yellow-300 text-[#143A1F] py-2.5 rounded-xl text-sm font-bold transition-colors disabled:opacity-40"
                     >
                       <Layers className="h-4 w-4" />
                       Aplicar em todas ({localPhotos.length})

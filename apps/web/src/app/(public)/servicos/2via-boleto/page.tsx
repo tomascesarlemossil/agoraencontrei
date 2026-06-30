@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 export default function SegundaViaBoletoPage() {
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#f8f6f1' }}>
-      <section className="py-16 text-center" style={{ backgroundColor: '#1B2B5B' }}>
+      <section className="py-16 text-center" style={{ backgroundColor: '#143A1F' }}>
         <div className="max-w-3xl mx-auto px-4">
           <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: 'rgba(201,168,76,0.15)' }}>
             <CreditCard className="w-8 h-8" style={{ color: '#C9A84C' }} />
@@ -22,7 +22,7 @@ export default function SegundaViaBoletoPage() {
 
       <section className="max-w-3xl mx-auto px-4 py-12">
         <div className="bg-white rounded-2xl p-8 border mb-6" style={{ borderColor: '#e8e4dc' }}>
-          <h2 className="text-xl font-bold mb-4" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>Como solicitar</h2>
+          <h2 className="text-xl font-bold mb-4" style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}>Como solicitar</h2>
           <p className="text-gray-600 mb-6">Para receber a 2ª via do seu boleto de aluguel, entre em contato com nossa equipe por um dos canais abaixo. Tenha em mãos o número do seu contrato ou o CPF do titular.</p>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -44,11 +44,11 @@ export default function SegundaViaBoletoPage() {
             <a
               href="tel:+551637230045"
               className="flex flex-col items-center gap-3 p-5 rounded-2xl border-2 border-dashed hover:border-solid transition-all"
-              style={{ borderColor: '#1B2B5B' }}
+              style={{ borderColor: '#143A1F' }}
             >
-              <Phone className="w-8 h-8" style={{ color: '#1B2B5B' }} />
+              <Phone className="w-8 h-8" style={{ color: '#143A1F' }} />
               <div className="text-center">
-                <p className="font-bold text-sm" style={{ color: '#1B2B5B' }}>Telefone</p>
+                <p className="font-bold text-sm" style={{ color: '#143A1F' }}>Telefone</p>
                 <p className="text-xs text-gray-500 mt-1">(16) 3723-0045</p>
               </div>
               <span className="text-xs text-gray-500">Seg-Sex: 8h–18h | Sáb: 8h–12h</span>
@@ -70,7 +70,7 @@ export default function SegundaViaBoletoPage() {
         </div>
 
         <div className="bg-white rounded-2xl p-6 border" style={{ borderColor: '#e8e4dc' }}>
-          <h3 className="font-bold mb-2" style={{ color: '#1B2B5B' }}>Informações necessárias</h3>
+          <h3 className="font-bold mb-2" style={{ color: '#143A1F' }}>Informações necessárias</h3>
           <ul className="text-sm text-gray-600 space-y-1.5">
             <li>• Número do contrato de locação</li>
             <li>• CPF do titular do contrato</li>
@@ -79,7 +79,7 @@ export default function SegundaViaBoletoPage() {
         </div>
 
         <div className="mt-6 text-center">
-          <Link href="/servicos" className="text-sm font-medium hover:opacity-80" style={{ color: '#1B2B5B' }}>
+          <Link href="/servicos" className="text-sm font-medium hover:opacity-80" style={{ color: '#143A1F' }}>
             ← Voltar aos serviços
           </Link>
         </div>

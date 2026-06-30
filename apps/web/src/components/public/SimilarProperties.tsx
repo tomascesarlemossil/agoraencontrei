@@ -145,7 +145,7 @@ export function SimilarProperties({ slug, apiUrl }: Props) {
 
             {/* Content */}
             <div className="p-3">
-              <p className="font-bold text-sm mb-0.5" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>
+              <p className="font-bold text-sm mb-0.5" style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}>
                 {fmtPrice(p)}
               </p>
 

@@ -27,7 +27,7 @@ export const metadata: Metadata = {
   alternates: { canonical: 'https://www.agoraencontrei.com.br/sistema' },
 }
 
-const NAVY = '#1B2B5B'
+const NAVY = '#143A1F'
 const GOLD = '#C9A84C'
 
 const DORES = [

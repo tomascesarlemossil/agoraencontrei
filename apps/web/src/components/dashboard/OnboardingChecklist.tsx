@@ -98,7 +98,7 @@ export function OnboardingChecklist({ propertyCount = 0 }: { propertyCount?: num
   if (!mounted || dismissed || allDone) return null
 
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-[#C9A84C]/30 bg-gradient-to-br from-[#1B2B5B] to-[#0f1c3a] p-5 text-white">
+    <div className="relative overflow-hidden rounded-2xl border border-[#C9A84C]/30 bg-gradient-to-br from-[#143A1F] to-[#0f1c3a] p-5 text-white">
       <button
         onClick={dismiss}
         aria-label="Dispensar primeiros passos"

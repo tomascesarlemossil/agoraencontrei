@@ -150,7 +150,7 @@ export default function AIVisualPage() {
         <button
           onClick={() => setShowForm(true)}
           className="flex items-center gap-1.5 sm:gap-2 px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-medium rounded-xl text-white hover:opacity-90 transition-opacity shrink-0"
-          style={{ backgroundColor: '#1B2B5B' }}
+          style={{ backgroundColor: '#143A1F' }}
         >
           <Plus className="w-4 h-4" />
           <span className="hidden sm:inline">Novo Job</span>
@@ -162,7 +162,7 @@ export default function AIVisualPage() {
       {missingKeys.length > 0 && (
         <div className="flex items-start gap-3 p-4 rounded-xl border" style={{ backgroundColor: 'rgba(201,168,76,0.06)', borderColor: 'rgba(201,168,76,0.2)' }}>
           <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: '#C9A84C' }} />
-          <div className="text-sm" style={{ color: '#1B2B5B' }}>
+          <div className="text-sm" style={{ color: '#143A1F' }}>
             <strong>Configuração necessária:</strong> Configure as seguintes chaves no Railway para ativar os recursos:
             {missingKeys.map(k => (
               <code key={k} className="ml-1 text-xs bg-white px-1 py-0.5 rounded border font-mono">{k}</code>
@@ -414,7 +414,7 @@ export default function AIVisualPage() {
                   type="submit"
                   disabled={createMutation.isPending}
                   className="flex-1 px-4 py-2 text-sm font-medium rounded-xl text-white disabled:opacity-50"
-                  style={{ backgroundColor: '#1B2B5B' }}
+                  style={{ backgroundColor: '#143A1F' }}
                 >
                   {createMutation.isPending ? 'Enfileirando...' : 'Processar com IA'}
                 </button>

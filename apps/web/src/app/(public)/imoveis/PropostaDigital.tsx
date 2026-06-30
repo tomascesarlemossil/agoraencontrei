@@ -149,7 +149,7 @@ export function PropostaDigital({ propertyId, propertyTitle, propertySlug, askin
       <button
         onClick={() => { setOpen(true); setStep('form') }}
         className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl border-2 text-sm font-semibold transition-all hover:shadow-md"
-        style={{ borderColor: '#C9A84C', color: '#1B2B5B', background: '#C9A84C10' }}
+        style={{ borderColor: '#C9A84C', color: '#143A1F', background: '#C9A84C10' }}
       >
         <FileText className="w-4 h-4" style={{ color: '#C9A84C' }} />
         Fazer Proposta Digital
@@ -162,7 +162,7 @@ export function PropostaDigital({ propertyId, propertyTitle, propertySlug, askin
             <div className="flex items-center justify-between p-5 border-b sticky top-0 bg-white z-10">
               <div className="flex items-center gap-2">
                 <Shield className="w-5 h-5 text-[#C9A84C]" />
-                <h2 className="font-bold text-[#1B2B5B]">Proposta Digital</h2>
+                <h2 className="font-bold text-[#143A1F]">Proposta Digital</h2>
               </div>
               <button onClick={() => setOpen(false)} className="p-1.5 rounded-lg hover:bg-gray-100">
                 <X className="w-5 h-5 text-gray-500" />
@@ -173,7 +173,7 @@ export function PropostaDigital({ propertyId, propertyTitle, propertySlug, askin
               {step === 'form' && (
                 <div className="space-y-4">
                   <div className="bg-[#f8f6f1] rounded-xl p-3 text-sm">
-                    <p className="font-medium text-[#1B2B5B] truncate">{propertyTitle}</p>
+                    <p className="font-medium text-[#143A1F] truncate">{propertyTitle}</p>
                     {askingPrice > 0 && (
                       <p className="text-gray-500 text-xs mt-0.5">Preço pedido: {fmtCurrency(askingPrice)}</p>
                     )}
@@ -192,7 +192,7 @@ export function PropostaDigital({ propertyId, propertyTitle, propertySlug, askin
                     <input
                       value={name} onChange={e => setName(e.target.value)}
                       placeholder="Seu nome completo"
-                      className="w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B2B5B]"
+                      className="w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#143A1F]"
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-3">
@@ -201,7 +201,7 @@ export function PropostaDigital({ propertyId, propertyTitle, propertySlug, askin
                       <input
                         value={cpf} onChange={e => setCpf(e.target.value)}
                         placeholder="000.000.000-00"
-                        className="w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B2B5B]"
+                        className="w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#143A1F]"
                       />
                     </div>
                     <div>
@@ -209,7 +209,7 @@ export function PropostaDigital({ propertyId, propertyTitle, propertySlug, askin
                       <input
                         value={phone} onChange={e => setPhone(e.target.value)}
                         placeholder="(16) 99999-9999"
-                        className="w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B2B5B]"
+                        className="w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#143A1F]"
                       />
                     </div>
                   </div>
@@ -218,7 +218,7 @@ export function PropostaDigital({ propertyId, propertyTitle, propertySlug, askin
                     <input
                       type="email" value={email} onChange={e => setEmail(e.target.value)}
                       placeholder="seu@email.com"
-                      className="w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B2B5B]"
+                      className="w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#143A1F]"
                     />
                   </div>
 
@@ -229,7 +229,7 @@ export function PropostaDigital({ propertyId, propertyTitle, propertySlug, askin
                       value={offerValue} onChange={e => setOfferValue(e.target.value)}
                       placeholder="Ex: 350000"
                       type="number"
-                      className="w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B2B5B]"
+                      className="w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#143A1F]"
                     />
                     {askingPrice > 0 && offerValue && (
                       <p className="text-xs mt-1 text-gray-500">
@@ -250,7 +250,7 @@ export function PropostaDigital({ propertyId, propertyTitle, propertySlug, askin
                           onClick={() => setPaymentType(pt)}
                           className={`py-2 px-3 rounded-xl text-xs font-medium border-2 transition-all ${
                             paymentType === pt
-                              ? 'border-[#1B2B5B] bg-[#1B2B5B] text-white'
+                              ? 'border-[#143A1F] bg-[#143A1F] text-white'
                               : 'border-gray-200 text-gray-600 hover:border-gray-300'
                           }`}
                         >
@@ -264,7 +264,7 @@ export function PropostaDigital({ propertyId, propertyTitle, propertySlug, askin
                     <label className="block text-xs font-medium text-gray-600 mb-1">Validade da proposta</label>
                     <select
                       value={validDays} onChange={e => setValidDays(e.target.value)}
-                      className="w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B2B5B]"
+                      className="w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#143A1F]"
                     >
                       <option value="3">3 dias</option>
                       <option value="5">5 dias</option>
@@ -279,7 +279,7 @@ export function PropostaDigital({ propertyId, propertyTitle, propertySlug, askin
                       value={notes} onChange={e => setNotes(e.target.value)}
                       placeholder="Condições especiais, prazo para escritura, etc."
                       rows={2}
-                      className="w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B2B5B] resize-none"
+                      className="w-full border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#143A1F] resize-none"
                     />
                   </div>
 
@@ -293,7 +293,7 @@ export function PropostaDigital({ propertyId, propertyTitle, propertySlug, askin
                     onClick={handleSubmit}
                     disabled={loading}
                     className="w-full py-3 rounded-xl font-bold text-sm text-white transition-all"
-                    style={{ background: loading ? '#999' : 'linear-gradient(135deg, #1B2B5B, #2d4a8a)' }}
+                    style={{ background: loading ? '#999' : 'linear-gradient(135deg, #143A1F, #2d4a8a)' }}
                   >
                     {loading ? 'Gerando proposta...' : 'Gerar Proposta Digital com Código Único'}
                   </button>
@@ -306,12 +306,12 @@ export function PropostaDigital({ propertyId, propertyTitle, propertySlug, askin
                     <CheckCircle2 className="w-9 h-9 text-green-600" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-[#1B2B5B]">Proposta gerada!</h3>
+                    <h3 className="text-lg font-bold text-[#143A1F]">Proposta gerada!</h3>
                     <p className="text-gray-500 text-sm mt-1">Válida até {proposalData.expiresAt}</p>
                   </div>
 
                   {/* Código único */}
-                  <div className="bg-[#1B2B5B] rounded-xl p-4 text-center">
+                  <div className="bg-[#143A1F] rounded-xl p-4 text-center">
                     <p className="text-white/60 text-xs mb-1">Código de verificação</p>
                     <p className="text-[#C9A84C] font-mono text-xl font-bold tracking-wider">{proposalData.code}</p>
                     <p className="text-white/40 text-xs mt-2 font-mono break-all">

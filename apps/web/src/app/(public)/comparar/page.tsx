@@ -121,14 +121,14 @@ export default function CompararPage() {
           <Link
             href="/imoveis"
             className="inline-flex items-center gap-1 text-sm mb-3 hover:opacity-80 transition-opacity"
-            style={{ color: '#1B2B5B' }}
+            style={{ color: '#143A1F' }}
           >
             <ChevronLeft className="w-4 h-4" />
             Voltar aos imoveis
           </Link>
           <h1
             className="text-2xl font-bold flex items-center gap-3"
-            style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}
+            style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}
           >
             <Columns2 className="w-6 h-6" style={{ color: '#C9A84C' }} />
             Comparar Imoveis
@@ -156,7 +156,7 @@ export default function CompararPage() {
       {/* Loading state */}
       {loading && (
         <div className="flex flex-col items-center justify-center py-20">
-          <Loader2 className="w-8 h-8 animate-spin" style={{ color: '#1B2B5B' }} />
+          <Loader2 className="w-8 h-8 animate-spin" style={{ color: '#143A1F' }} />
           <p className="text-gray-500 text-sm mt-3">Carregando imoveis...</p>
         </div>
       )}
@@ -171,7 +171,7 @@ export default function CompararPage() {
           <button
             onClick={() => window.location.reload()}
             className="px-6 py-2.5 rounded-xl text-sm font-semibold text-white transition-all hover:brightness-110"
-            style={{ backgroundColor: '#1B2B5B' }}
+            style={{ backgroundColor: '#143A1F' }}
           >
             Tentar novamente
           </button>
@@ -183,11 +183,11 @@ export default function CompararPage() {
         <div className="text-center py-16">
           <div
             className="inline-flex items-center justify-center w-20 h-20 rounded-full mb-6"
-            style={{ backgroundColor: 'rgba(27, 43, 91, 0.08)' }}
+            style={{ backgroundColor: 'rgba(20, 58, 31, 0.08)' }}
           >
             <Columns2 className="w-10 h-10 text-gray-400" />
           </div>
-          <p className="text-gray-700 text-xl font-bold mb-2" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>
+          <p className="text-gray-700 text-xl font-bold mb-2" style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}>
             Selecione imoveis para comparar
           </p>
           <p className="text-gray-500 text-sm mb-8 max-w-md mx-auto">
@@ -196,7 +196,7 @@ export default function CompararPage() {
           <Link
             href="/imoveis"
             className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold transition-all hover:brightness-110"
-            style={{ backgroundColor: '#1B2B5B', color: 'white' }}
+            style={{ backgroundColor: '#143A1F', color: 'white' }}
           >
             Explorar imoveis
           </Link>
@@ -234,7 +234,7 @@ export default function CompararPage() {
               <tr>
                 <th
                   className="w-44 min-w-[176px] p-3 text-left text-xs font-semibold uppercase tracking-wider rounded-tl-xl"
-                  style={{ backgroundColor: '#1B2B5B', color: '#C9A84C' }}
+                  style={{ backgroundColor: '#143A1F', color: '#C9A84C' }}
                 >
                   Caracteristica
                 </th>
@@ -242,7 +242,7 @@ export default function CompararPage() {
                   <th
                     key={p.id}
                     className="p-3 text-center min-w-[180px]"
-                    style={{ backgroundColor: '#1B2B5B' }}
+                    style={{ backgroundColor: '#143A1F' }}
                   >
                     <Link href={`/imoveis/${p.slug}`} className="block group">
                       <div className="w-full h-28 rounded-lg overflow-hidden mb-2" style={{ backgroundColor: '#f0ece4' }}>
@@ -283,7 +283,7 @@ export default function CompararPage() {
                   >
                     <td
                       className="p-3 text-sm font-medium border-r"
-                      style={{ color: '#1B2B5B', borderColor: '#e8e4dc' }}
+                      style={{ color: '#143A1F', borderColor: '#e8e4dc' }}
                     >
                       {row.label}
                     </td>
@@ -314,7 +314,7 @@ export default function CompararPage() {
                     <td
                       colSpan={properties.length + 1}
                       className="p-3 text-xs font-semibold uppercase tracking-wider"
-                      style={{ backgroundColor: '#1B2B5B', color: '#C9A84C' }}
+                      style={{ backgroundColor: '#143A1F', color: '#C9A84C' }}
                     >
                       Caracteristicas
                     </td>
@@ -327,7 +327,7 @@ export default function CompararPage() {
                     >
                       <td
                         className="p-3 text-sm font-medium border-r"
-                        style={{ color: '#1B2B5B', borderColor: '#e8e4dc' }}
+                        style={{ color: '#143A1F', borderColor: '#e8e4dc' }}
                       >
                         {feature}
                       </td>

@@ -228,7 +228,7 @@ html {
 #ae-root {
   --ae-surface: #f8f6f1;                       /* page background */
   --ae-card: #ffffff;                          /* cards / panels  */
-  --ae-heading: var(--site-primary-color, #1B2B5B); /* titles on light surfaces */
+  --ae-heading: var(--site-primary-color, #143A1F); /* titles on light surfaces */
   --ae-body: #4b5563;                          /* gray-600 body   */
   --ae-muted: #6b7280;                         /* gray-500 muted  */
   --ae-border: #e5e7eb;                        /* gray-200 border */
@@ -271,12 +271,12 @@ html {
 #ae-root.ae-dark .bg-gray-100,
 #ae-root.ae-dark .bg-\[\#f8f6f1\] { background-color: var(--ae-surface) !important; }
 #ae-root.ae-dark .bg-gray-200 { background-color: #20242c !important; }
-/* Navy heading text written as a Tailwind arbitrary value (text-[#1B2B5B]) is
+/* Navy heading text written as a Tailwind arbitrary value (text-[#143A1F]) is
    the dominant title pattern on internal pages → remap to a readable token.
-   NOTE: inline `style={{ color: '#1B2B5B' }}` is deliberately NOT remapped — it
+   NOTE: inline `style={{ color: '#143A1F' }}` is deliberately NOT remapped — it
    is syntactically identical to navy-on-gold buttons, so it needs per-surface
    handling (see --ae-heading conversions) rather than a blanket override. */
-#ae-root.ae-dark .text-\[\#1B2B5B\] { color: var(--ae-heading) !important; }
+#ae-root.ae-dark .text-\[\#143A1F\] { color: var(--ae-heading) !important; }
 /* Inline light backgrounds (set via the `style` attribute) cannot be reached by
    class overrides, so they stay bright in dark mode. A `background-color` match
    is unambiguous (unlike text color), so a case-insensitive substring selector
@@ -298,11 +298,11 @@ html {
 #ae-root.ae-dark [style*="#fffdf8" i] { background: var(--ae-card) !important; }
 
 /* Inline navy TEXT that turns unreadable on dark surfaces (titles, labels,
-   prices written as `color:#1B2B5B` or `color:var(--site-primary-color)`).
+   prices written as `color:#143A1F` or `color:var(--site-primary-color)`).
    `:not([style*="background"])` keeps navy-on-gold/navy-on-light buttons intact
    (those carry a background in the same inline style). */
-#ae-root.ae-dark [style*="color:#1B2B5B" i]:not([style*="background" i]),
-#ae-root.ae-dark [style*="color: #1B2B5B" i]:not([style*="background" i]),
+#ae-root.ae-dark [style*="color:#143A1F" i]:not([style*="background" i]),
+#ae-root.ae-dark [style*="color: #143A1F" i]:not([style*="background" i]),
 #ae-root.ae-dark [style*="color:var(--site-primary-color" i]:not([style*="background" i]),
 #ae-root.ae-dark [style*="color: var(--site-primary-color" i]:not([style*="background" i]) {
   color: var(--ae-heading) !important;

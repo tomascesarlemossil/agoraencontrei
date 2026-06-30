@@ -100,7 +100,7 @@ export default function DocumentosPage() {
           <ArrowLeft className="w-5 h-5" />
         </button>
         <div>
-          <h1 className="text-xl font-bold" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>
+          <h1 className="text-xl font-bold" style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}>
             Documentos
           </h1>
           <p className="text-sm text-gray-500">Boletos, extratos e cartas de reajuste</p>
@@ -127,7 +127,7 @@ export default function DocumentosPage() {
                 className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
                   !filter ? 'text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
-                style={!filter ? { backgroundColor: '#1B2B5B' } : {}}
+                style={!filter ? { backgroundColor: '#143A1F' } : {}}
               >
                 Todos ({docs.length})
               </button>

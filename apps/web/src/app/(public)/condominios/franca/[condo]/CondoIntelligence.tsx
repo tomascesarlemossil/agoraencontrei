@@ -70,7 +70,7 @@ export default function CondoIntelligence({ condoName, condoSlug, properties }: 
     <div className="space-y-8">
       {/* Painel de Inteligência */}
       <section className="bg-white rounded-2xl border shadow-sm overflow-hidden">
-        <div className="px-6 py-4 border-b" style={{ background: 'linear-gradient(135deg, #1B2B5B, #2d4a8a)' }}>
+        <div className="px-6 py-4 border-b" style={{ background: 'linear-gradient(135deg, #143A1F, #2d4a8a)' }}>
           <h2 className="text-lg font-bold text-white flex items-center gap-2">
             <TrendingUp className="w-5 h-5 text-[#C9A84C]" />
             Painel de Inteligência — {condoName}
@@ -122,10 +122,10 @@ export default function CondoIntelligence({ condoName, condoSlug, properties }: 
       {auctions.length > 0 && (
         <section className="bg-white rounded-2xl border shadow-sm overflow-hidden">
           <div className="px-6 py-4 border-b" style={{ background: 'linear-gradient(135deg, #C9A84C, #e6c96a)' }}>
-            <h2 className="text-lg font-bold text-[#1B2B5B] flex items-center gap-2">
+            <h2 className="text-lg font-bold text-[#143A1F] flex items-center gap-2">
               🏛️ Oportunidades de Leilão no {condoName}
             </h2>
-            <p className="text-[#1B2B5B]/60 text-xs mt-0.5">Imóveis abaixo do valor de mercado neste edifício</p>
+            <p className="text-[#143A1F]/60 text-xs mt-0.5">Imóveis abaixo do valor de mercado neste edifício</p>
           </div>
           <div className="divide-y">
             {auctions.map(a => (
@@ -146,7 +146,7 @@ export default function CondoIntelligence({ condoName, condoSlug, properties }: 
                   {a.appraisalValue && (
                     <p className="text-xs text-gray-400 line-through">{fmt(Number(a.appraisalValue))}</p>
                   )}
-                  <p className="text-lg font-bold" style={{ color: '#1B2B5B' }}>{fmt(Number(a.minimumBid))}</p>
+                  <p className="text-lg font-bold" style={{ color: '#143A1F' }}>{fmt(Number(a.minimumBid))}</p>
                   {a.discountPercent && (
                     <span className="text-xs font-bold text-red-600">-{a.discountPercent}%</span>
                   )}
@@ -171,7 +171,7 @@ export default function CondoIntelligence({ condoName, condoSlug, properties }: 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-6">
           {PROFESSIONALS.map((pro, i) => (
             <div key={i} className="flex items-start gap-3 p-3 rounded-xl border hover:shadow-sm transition">
-              <div className="w-10 h-10 rounded-full bg-[#1B2B5B] flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
+              <div className="w-10 h-10 rounded-full bg-[#143A1F] flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
                 {pro.type === 'Arquiteto' ? '🏗️' : pro.type === 'Engenheiro Civil' ? '⚙️' : pro.type === 'Advogado Imobiliário' ? '⚖️' : '🎨'}
               </div>
               <div className="flex-1 min-w-0">

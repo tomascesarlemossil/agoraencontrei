@@ -6,13 +6,13 @@ import { cn } from '@/lib/utils'
 // Deterministic gradient palette per user name
 const GRADIENTS = [
   ['#1a1a2e', '#16213e'],   // deep navy
-  ['#0d3b66', '#1e6091'],   // ocean blue
+  ['#0E2A15', '#1e6091'],   // ocean blue
   ['#1b4332', '#2d6a4f'],   // deep green
   ['#3d0c02', '#7b2d00'],   // burgundy
   ['#2d1b69', '#4a2c91'],   // violet
   ['#7b3f00', '#b05a00'],   // copper
   ['#1c1c1c', '#3a3a3a'],   // charcoal
-  ['#0d1b2a', '#1a3550'],   // midnight
+  ['#0E2A15', '#1a3550'],   // midnight
 ]
 
 function getGradient(name: string): [string, string] {

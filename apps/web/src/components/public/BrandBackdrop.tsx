@@ -22,9 +22,9 @@ export function BrandBackdrop() {
       aria-hidden="true"
       className="pointer-events-none fixed inset-0 -z-10 select-none"
       style={{
-        // Verde escuro militar com leve profundidade (vinheta sutil).
+        // Verde escuro militar, alinhado ao chrome (#143A1F) com leve profundidade.
         background:
-          'radial-gradient(1200px 800px at 50% 0%, #28361f 0%, #1c2718 45%, #131b10 100%)',
+          'radial-gradient(1200px 800px at 50% 0%, #1a4527 0%, #143A1F 42%, #0a1c0d 100%)',
       }}
     >
       {/* Logo lateral esquerda — só aparece quando existe gutter (2xl+). */}

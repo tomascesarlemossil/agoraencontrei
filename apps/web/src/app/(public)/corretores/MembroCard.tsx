@@ -25,7 +25,7 @@ export function MembroCard({ membro }: { membro: Membro }) {
     <div className="bg-white rounded-2xl sm:rounded-3xl overflow-hidden shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 border border-stone-100 flex flex-col">
       {/* Header gradiente */}
       <div className="relative h-32 sm:h-48 flex items-end justify-center"
-        style={{ background: 'linear-gradient(135deg, #1B2B5B 0%, #2d4a8a 70%, #1B2B5B 100%)' }}>
+        style={{ background: 'linear-gradient(135deg, #143A1F 0%, #2d4a8a 70%, #143A1F 100%)' }}>
         <div className="absolute inset-0 opacity-10"
           style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
         {/* Avatar */}
@@ -33,7 +33,7 @@ export function MembroCard({ membro }: { membro: Membro }) {
           <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-full overflow-hidden border-4 shadow-xl bg-amber-400 flex items-center justify-center"
             style={{ borderColor: '#C9A84C' }}>
             {imgError ? (
-              <span className="text-2xl sm:text-4xl" style={{ color: '#1B2B5B', fontWeight: 'bold', lineHeight: 1 }}>
+              <span className="text-2xl sm:text-4xl" style={{ color: '#143A1F', fontWeight: 'bold', lineHeight: 1 }}>
                 {initial}
               </span>
             ) : (
@@ -53,7 +53,7 @@ export function MembroCard({ membro }: { membro: Membro }) {
 
       {/* Conteúdo */}
       <div className="pt-12 sm:pt-16 pb-4 sm:pb-6 px-3 sm:px-6 text-center flex flex-col flex-1">
-        <h3 className="text-sm sm:text-lg font-bold" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>
+        <h3 className="text-sm sm:text-lg font-bold" style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}>
           {membro.name}
         </h3>
         <p className="text-xs sm:text-sm text-gray-500 mt-0.5">{membro.role}</p>
@@ -71,7 +71,7 @@ export function MembroCard({ membro }: { membro: Membro }) {
           <div className="flex flex-wrap gap-1 sm:gap-1.5 justify-center mt-2 sm:mt-4">
             {membro.specialties.map((s) => (
               <span key={s} className="text-[10px] sm:text-xs px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-full font-medium"
-                style={{ backgroundColor: '#f0f4ff', color: '#1B2B5B' }}>
+                style={{ backgroundColor: '#f0f4ff', color: '#143A1F' }}>
                 {s}
               </span>
             ))}

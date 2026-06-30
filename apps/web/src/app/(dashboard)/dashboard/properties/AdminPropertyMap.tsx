@@ -257,7 +257,7 @@ export default function AdminPropertyMap({ statusFilter, purposeFilter, searchFi
           source: 'properties',
           filter: ['has', 'point_count'],
           paint: {
-            'circle-color': '#1B2B5B',
+            'circle-color': '#143A1F',
             'circle-radius': ['step', ['get', 'point_count'], 18, 10, 22, 50, 28],
             'circle-stroke-width': 3,
             'circle-stroke-color': '#C9A84C',
@@ -349,8 +349,8 @@ export default function AdminPropertyMap({ statusFilter, purposeFilter, searchFi
                   ${p.bathrooms > 0 ? `<span>🚿 ${p.bathrooms}</span>` : ''}
                   ${p.totalArea > 0 ? `<span>📐 ${p.totalArea}m²</span>` : ''}
                 </div>
-                <div style="font-size:14px;font-weight:700;color:#1B2B5B;margin-bottom:8px;">${priceStr}</div>
-                <a href="/dashboard/properties/${p.id}" style="display:block;width:100%;background:linear-gradient(135deg,#1B2B5B,#2d4a8a);color:white;text-align:center;padding:8px;border-radius:6px;font-size:12px;font-weight:600;text-decoration:none;">Abrir Cadastro →</a>
+                <div style="font-size:14px;font-weight:700;color:#143A1F;margin-bottom:8px;">${priceStr}</div>
+                <a href="/dashboard/properties/${p.id}" style="display:block;width:100%;background:linear-gradient(135deg,#143A1F,#2d4a8a);color:white;text-align:center;padding:8px;border-radius:6px;font-size:12px;font-weight:600;text-decoration:none;">Abrir Cadastro →</a>
               </div>
             </div>`
 

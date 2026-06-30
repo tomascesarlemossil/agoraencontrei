@@ -354,8 +354,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="icon" href="/icons/icon-16.png" type="image/png" sizes="16x16" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" />
         <link rel="manifest" href="/manifest.json" />
-        <meta name="theme-color" content="#1B2B5B" />
-        <meta name="msapplication-TileColor" content="#1B2B5B" />
+        <meta name="theme-color" content="#143A1F" />
+        <meta name="msapplication-TileColor" content="#143A1F" />
         <meta name="msapplication-TileImage" content="/icons/icon-192.png" />
         <meta name="msapplication-config" content="/browserconfig.xml" />
 

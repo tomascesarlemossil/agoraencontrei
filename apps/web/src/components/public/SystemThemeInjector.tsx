@@ -10,7 +10,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
  * reference them via var(--site-primary-color) etc.
  *
  * Also injects a <style> tag to override Tailwind arbitrary-value classes
- * (e.g. text-[#1B2B5B], bg-[#C9A84C]) that can't use CSS variables directly.
+ * (e.g. text-[#143A1F], bg-[#C9A84C]) that can't use CSS variables directly.
  *
  * Falls back gracefully: if the fetch fails the hardcoded defaults in the
  * layout's inline styles remain in effect.
@@ -59,9 +59,9 @@ export function SystemThemeInjector() {
 
 /**
  * Injects a <style> element that overrides Tailwind arbitrary-value classes
- * referencing the default hardcoded hex colors (#1B2B5B, #C9A84C, etc.)
+ * referencing the default hardcoded hex colors (#143A1F, #C9A84C, etc.)
  * with the dynamic config values. This covers classes like:
- *   text-[#1B2B5B], bg-[#1B2B5B], border-[#C9A84C], hover:bg-[#1B2B5B], etc.
+ *   text-[#143A1F], bg-[#143A1F], border-[#C9A84C], hover:bg-[#143A1F], etc.
  */
 function injectDynamicOverrides(data: {
   primaryColor?: string
@@ -72,21 +72,21 @@ function injectDynamicOverrides(data: {
 
   const rules: string[] = []
 
-  // Primary color overrides (#1B2B5B -> dynamic)
-  if (primary && primary.toLowerCase() !== '#1b2b5b') {
+  // Primary color overrides (#143A1F -> dynamic)
+  if (primary && primary.toLowerCase() !== '#143A1F') {
     rules.push(`
-      .text-\\[\\#1B2B5B\\], .text-\\[\\#1b2b5b\\] { color: ${primary} !important; }
-      .bg-\\[\\#1B2B5B\\], .bg-\\[\\#1b2b5b\\] { background-color: ${primary} !important; }
-      .border-\\[\\#1B2B5B\\], .border-\\[\\#1b2b5b\\] { border-color: ${primary} !important; }
-      .hover\\:text-\\[\\#1B2B5B\\]:hover, .hover\\:text-\\[\\#1b2b5b\\]:hover { color: ${primary} !important; }
-      .hover\\:bg-\\[\\#1B2B5B\\]:hover, .hover\\:bg-\\[\\#1b2b5b\\]:hover { background-color: ${primary} !important; }
-      .hover\\:border-\\[\\#1B2B5B\\]:hover, .hover\\:border-\\[\\#1b2b5b\\]:hover { border-color: ${primary} !important; }
-      .group-hover\\:text-\\[\\#1B2B5B\\]:is(:where(.group):hover *) { color: ${primary} !important; }
-      .group-hover\\:text-\\[\\#1b2b5b\\]:is(:where(.group):hover *) { color: ${primary} !important; }
-      .focus\\:ring-\\[\\#1B2B5B\\]:focus, .focus\\:ring-\\[\\#1b2b5b\\]:focus { --tw-ring-color: ${primary} !important; }
-      .peer-checked\\:bg-\\[\\#1B2B5B\\]:is(:where(.peer):checked ~ *) { background-color: ${primary} !important; }
-      .peer-checked\\:border-\\[\\#1B2B5B\\]:is(:where(.peer):checked ~ *) { border-color: ${primary} !important; }
-      .accent-\\[\\#1B2B5B\\], .accent-\\[\\#1b2b5b\\] { accent-color: ${primary} !important; }
+      .text-\\[\\#143A1F\\], .text-\\[\\#143A1F\\] { color: ${primary} !important; }
+      .bg-\\[\\#143A1F\\], .bg-\\[\\#143A1F\\] { background-color: ${primary} !important; }
+      .border-\\[\\#143A1F\\], .border-\\[\\#143A1F\\] { border-color: ${primary} !important; }
+      .hover\\:text-\\[\\#143A1F\\]:hover, .hover\\:text-\\[\\#143A1F\\]:hover { color: ${primary} !important; }
+      .hover\\:bg-\\[\\#143A1F\\]:hover, .hover\\:bg-\\[\\#143A1F\\]:hover { background-color: ${primary} !important; }
+      .hover\\:border-\\[\\#143A1F\\]:hover, .hover\\:border-\\[\\#143A1F\\]:hover { border-color: ${primary} !important; }
+      .group-hover\\:text-\\[\\#143A1F\\]:is(:where(.group):hover *) { color: ${primary} !important; }
+      .group-hover\\:text-\\[\\#143A1F\\]:is(:where(.group):hover *) { color: ${primary} !important; }
+      .focus\\:ring-\\[\\#143A1F\\]:focus, .focus\\:ring-\\[\\#143A1F\\]:focus { --tw-ring-color: ${primary} !important; }
+      .peer-checked\\:bg-\\[\\#143A1F\\]:is(:where(.peer):checked ~ *) { background-color: ${primary} !important; }
+      .peer-checked\\:border-\\[\\#143A1F\\]:is(:where(.peer):checked ~ *) { border-color: ${primary} !important; }
+      .accent-\\[\\#143A1F\\], .accent-\\[\\#143A1F\\] { accent-color: ${primary} !important; }
     `)
   }
 

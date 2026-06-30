@@ -25,7 +25,7 @@ function CidadeCard({ cidade, rank }: { cidade: CidadeYield; rank: number }) {
           <div className="flex items-center gap-3">
             <div
               className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-lg"
-              style={{ backgroundColor: rank <= 3 ? '#C9A84C' : '#1B2B5B' }}
+              style={{ backgroundColor: rank <= 3 ? '#C9A84C' : '#143A1F' }}
             >
               {rank}
             </div>
@@ -59,7 +59,7 @@ function CidadeCard({ cidade, rank }: { cidade: CidadeYield; rank: number }) {
         <div className="grid grid-cols-3 gap-3 mb-4">
           <div className="bg-gray-50 rounded-xl p-3 text-center">
             <div className="text-xs text-gray-500 mb-1">Lance Médio</div>
-            <div className="font-bold text-sm" style={{ color: '#1B2B5B' }}>{formatBRL(cidade.precoMedioLeilao)}</div>
+            <div className="font-bold text-sm" style={{ color: '#143A1F' }}>{formatBRL(cidade.precoMedioLeilao)}</div>
           </div>
           <div className="bg-gray-50 rounded-xl p-3 text-center">
             <div className="text-xs text-gray-500 mb-1">Aluguel Médio</div>
@@ -75,7 +75,7 @@ function CidadeCard({ cidade, rank }: { cidade: CidadeYield; rank: number }) {
         <div className="flex items-center justify-between bg-green-50 rounded-xl px-4 py-3 mb-3">
           <div className="text-sm">
             <span className="text-gray-600">Leilão: </span>
-            <span className="font-bold" style={{ color: '#1B2B5B' }}>R$ {cidade.precoM2Leilao.toLocaleString('pt-BR')}/m²</span>
+            <span className="font-bold" style={{ color: '#143A1F' }}>R$ {cidade.precoM2Leilao.toLocaleString('pt-BR')}/m²</span>
           </div>
           <ArrowRight className="w-4 h-4 text-gray-400" />
           <div className="text-sm">
@@ -150,7 +150,7 @@ export function YieldRankingClient() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero */}
-      <section className="relative py-16 px-4" style={{ backgroundColor: '#1B2B5B' }}>
+      <section className="relative py-16 px-4" style={{ backgroundColor: '#143A1F' }}>
         <div className="max-w-5xl mx-auto text-center text-white">
           <div className="inline-flex items-center gap-2 bg-white/10 rounded-full px-4 py-1.5 text-xs font-semibold mb-4" style={{ color: '#C9A84C' }}>
             <BarChart3 className="w-3.5 h-3.5" /> Inteligência de Mercado
@@ -215,7 +215,7 @@ export function YieldRankingClient() {
                     ? 'text-white'
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
-                style={sortBy === opt.key ? { backgroundColor: '#1B2B5B' } : {}}
+                style={sortBy === opt.key ? { backgroundColor: '#143A1F' } : {}}
               >
                 {opt.label}
               </button>
@@ -231,7 +231,7 @@ export function YieldRankingClient() {
         </div>
 
         {/* CTA */}
-        <div className="mt-10 bg-gradient-to-br from-[#1B2B5B] to-[#2a3f7a] rounded-2xl p-8 text-center text-white">
+        <div className="mt-10 bg-gradient-to-br from-[#143A1F] to-[#2a3f7a] rounded-2xl p-8 text-center text-white">
           <Star className="w-8 h-8 mx-auto mb-3" style={{ color: '#C9A84C' }} />
           <h3 className="text-2xl font-bold mb-2">Receber Alertas de Yield &gt; 10%</h3>
           <p className="text-white/70 mb-6 max-w-lg mx-auto">

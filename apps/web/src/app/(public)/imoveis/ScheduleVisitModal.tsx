@@ -104,7 +104,7 @@ export function ScheduleVisitModal({ propertyId, propertyTitle, propertySlug }: 
       <button
         onClick={resetAndOpen}
         className="flex items-center justify-center gap-2 w-full py-3.5 rounded-xl font-bold text-sm transition-all hover:scale-[1.02] hover:shadow-lg shadow-sm"
-        style={{ background: 'linear-gradient(135deg, #1B2B5B 0%, #2d4a8a 100%)', color: 'white' }}
+        style={{ background: 'linear-gradient(135deg, #143A1F 0%, #2d4a8a 100%)', color: 'white' }}
       >
         <Calendar className="w-4 h-4" />
         Agendar Visita
@@ -116,7 +116,7 @@ export function ScheduleVisitModal({ propertyId, propertyTitle, propertySlug }: 
             {/* Header */}
             <div className="flex items-center justify-between p-5 border-b" style={{ borderColor: '#e8e4dc' }}>
               <div>
-                <h2 className="font-bold text-lg" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>Agendar Visita</h2>
+                <h2 className="font-bold text-lg" style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}>Agendar Visita</h2>
                 <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">{propertyTitle}</p>
               </div>
               <button onClick={() => setOpen(false)} className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
@@ -130,7 +130,7 @@ export function ScheduleVisitModal({ propertyId, propertyTitle, propertySlug }: 
                   <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: '#f0f7f0' }}>
                     <CheckCircle2 className="w-8 h-8 text-green-600" />
                   </div>
-                  <h3 className="text-xl font-bold mb-2" style={{ color: '#1B2B5B' }}>Visita Agendada!</h3>
+                  <h3 className="text-xl font-bold mb-2" style={{ color: '#143A1F' }}>Visita Agendada!</h3>
                   <p className="text-gray-600 text-sm mb-1">
                     <strong>{selectedDate.split('-').reverse().join('/')}</strong> às <strong>{selectedTime}</strong>
                   </p>
@@ -138,7 +138,7 @@ export function ScheduleVisitModal({ propertyId, propertyTitle, propertySlug }: 
                   <button
                     onClick={() => setOpen(false)}
                     className="mt-6 px-8 py-2.5 rounded-xl text-sm font-semibold transition-all hover:brightness-110"
-                    style={{ backgroundColor: '#1B2B5B', color: 'white' }}
+                    style={{ backgroundColor: '#143A1F', color: 'white' }}
                   >
                     Fechar
                   </button>
@@ -157,7 +157,7 @@ export function ScheduleVisitModal({ propertyId, propertyTitle, propertySlug }: 
                           onClick={() => setSelectedDate(iso)}
                           className="flex flex-col items-center py-2.5 px-1 rounded-xl border text-xs font-medium transition-all"
                           style={isSelected
-                            ? { backgroundColor: '#1B2B5B', color: 'white', borderColor: '#1B2B5B' }
+                            ? { backgroundColor: '#143A1F', color: 'white', borderColor: '#143A1F' }
                             : { borderColor: '#e8e4dc', color: '#374151' }}
                         >
                           <span className="text-xs opacity-70">{DAY_NAMES[d.getDay()]}</span>
@@ -179,7 +179,7 @@ export function ScheduleVisitModal({ propertyId, propertyTitle, propertySlug }: 
                             onClick={() => setSelectedTime(t)}
                             className="py-2 rounded-xl border text-sm font-medium transition-all"
                             style={selectedTime === t
-                              ? { backgroundColor: '#1B2B5B', color: 'white', borderColor: '#1B2B5B' }
+                              ? { backgroundColor: '#143A1F', color: 'white', borderColor: '#143A1F' }
                               : { borderColor: '#e8e4dc', color: '#374151' }}
                           >
                             {t}
@@ -193,7 +193,7 @@ export function ScheduleVisitModal({ propertyId, propertyTitle, propertySlug }: 
                     disabled={!selectedDate || !selectedTime}
                     onClick={() => setStep('info')}
                     className="w-full mt-5 py-3 rounded-xl font-semibold text-sm transition-all hover:brightness-110 disabled:opacity-40"
-                    style={{ backgroundColor: '#1B2B5B', color: 'white' }}
+                    style={{ backgroundColor: '#143A1F', color: 'white' }}
                   >
                     Continuar
                   </button>
@@ -201,7 +201,7 @@ export function ScheduleVisitModal({ propertyId, propertyTitle, propertySlug }: 
               ) : (
                 <>
                   <div className="mb-4 p-3 rounded-xl text-sm" style={{ backgroundColor: '#f0ece4' }}>
-                    <p className="font-semibold" style={{ color: '#1B2B5B' }}>
+                    <p className="font-semibold" style={{ color: '#143A1F' }}>
                       {selectedDate.split('-').reverse().join('/')} às {selectedTime}
                     </p>
                   </div>
@@ -284,7 +284,7 @@ export function ScheduleVisitModal({ propertyId, propertyTitle, propertySlug }: 
                       onClick={handleSubmit}
                       disabled={loading}
                       className="flex-2 flex-grow py-3 rounded-xl font-semibold text-sm transition-all hover:brightness-110 disabled:opacity-50"
-                      style={{ backgroundColor: '#1B2B5B', color: 'white' }}
+                      style={{ backgroundColor: '#143A1F', color: 'white' }}
                     >
                       {loading ? 'Agendando...' : 'Confirmar Visita'}
                     </button>

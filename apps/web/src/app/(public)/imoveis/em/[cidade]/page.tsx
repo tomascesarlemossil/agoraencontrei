@@ -499,7 +499,7 @@ export default async function CidadePage(props: { params: Promise<{ cidade: stri
 
       <div className="min-h-screen bg-gray-50">
         {/* Hero */}
-        <div className="bg-[#1B2B5B] text-white py-12 px-4">
+        <div className="bg-[#143A1F] text-white py-12 px-4">
           <div className="max-w-6xl mx-auto">
             {/* Breadcrumb */}
             <nav aria-label="Breadcrumb" className="text-sm text-blue-200 mb-4 flex items-center gap-2">
@@ -544,7 +544,7 @@ export default async function CidadePage(props: { params: Promise<{ cidade: stri
           {/* Bairros */}
           {bairrosParaExibir.length > 0 && (
             <section className="mb-10">
-              <h2 className="text-xl font-bold text-[#1B2B5B] mb-2">
+              <h2 className="text-xl font-bold text-[#143A1F] mb-2">
                 Bairros em {cityName}
               </h2>
               {isFranca && (
@@ -559,7 +559,7 @@ export default async function CidadePage(props: { params: Promise<{ cidade: stri
                     href={`/imoveis/em/${params.cidade}/${cityToSlug(bairro)}`}
                     className="group flex flex-col items-center p-3 bg-white rounded-xl border hover:border-[#C9A84C] hover:shadow-md transition-all text-center"
                   >
-                    <span className="text-sm font-medium text-gray-800 group-hover:text-[#1B2B5B] leading-tight">
+                    <span className="text-sm font-medium text-gray-800 group-hover:text-[#143A1F] leading-tight">
                       {bairro}
                     </span>
                     {count > 0 && (
@@ -581,7 +581,7 @@ export default async function CidadePage(props: { params: Promise<{ cidade: stri
                         href={`/imoveis/em/franca/${cityToSlug(bairro)}`}
                         className="group flex flex-col items-center p-3 bg-white rounded-xl border hover:border-[#C9A84C] hover:shadow-md transition-all text-center"
                       >
-                        <span className="text-sm font-medium text-gray-800 group-hover:text-[#1B2B5B] leading-tight">
+                        <span className="text-sm font-medium text-gray-800 group-hover:text-[#143A1F] leading-tight">
                           {bairro}
                         </span>
                       </Link>
@@ -595,7 +595,7 @@ export default async function CidadePage(props: { params: Promise<{ cidade: stri
           {/* Condomínios e Edifícios (para todas as cidades que têm dados) */}
           {condominiosDaCidade.length > 0 && (
             <section className="mb-10">
-              <h2 className="text-xl font-bold text-[#1B2B5B] mb-2">
+              <h2 className="text-xl font-bold text-[#143A1F] mb-2">
                 Condomínios e {isFranca ? 'Edifícios' : 'Loteamentos'} em {cityName}/{estado}
               </h2>
               <p className="text-sm text-gray-500 mb-4">
@@ -608,7 +608,7 @@ export default async function CidadePage(props: { params: Promise<{ cidade: stri
                     href={`/imoveis?city=${encodeURIComponent(cityName)}&q=${encodeURIComponent(cond)}`}
                     className="group p-3 bg-white rounded-xl border hover:border-[#C9A84C] hover:shadow-md transition-all text-center"
                   >
-                    <span className="text-sm font-medium text-gray-800 group-hover:text-[#1B2B5B] leading-tight">
+                    <span className="text-sm font-medium text-gray-800 group-hover:text-[#143A1F] leading-tight">
                       {cond}
                     </span>
                   </Link>
@@ -626,7 +626,7 @@ export default async function CidadePage(props: { params: Promise<{ cidade: stri
                         href={`/imoveis?city=${encodeURIComponent(cityName)}&q=${encodeURIComponent(cond)}`}
                         className="group p-3 bg-white rounded-xl border hover:border-[#C9A84C] hover:shadow-md transition-all text-center"
                       >
-                        <span className="text-sm font-medium text-gray-800 group-hover:text-[#1B2B5B] leading-tight">
+                        <span className="text-sm font-medium text-gray-800 group-hover:text-[#143A1F] leading-tight">
                           {cond}
                         </span>
                       </Link>
@@ -640,7 +640,7 @@ export default async function CidadePage(props: { params: Promise<{ cidade: stri
           {/* Imóveis em destaque */}
           <section>
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-[#1B2B5B]">
+              <h2 className="text-xl font-bold text-[#143A1F]">
                 Imóveis disponíveis em {cityName}
               </h2>
               <Link
@@ -662,7 +662,7 @@ export default async function CidadePage(props: { params: Promise<{ cidade: stri
               <div className="text-center py-16 text-gray-500">
                 <p className="text-lg font-medium">Nenhum imóvel ativo em {cityName} no momento.</p>
                 <p className="text-sm mt-2">Entre em contato para verificar disponibilidade.</p>
-                <Link href="/imoveis" className="mt-4 inline-block px-6 py-2 bg-[#1B2B5B] text-white rounded-lg hover:bg-[#2d4a8a] transition-colors">
+                <Link href="/imoveis" className="mt-4 inline-block px-6 py-2 bg-[#143A1F] text-white rounded-lg hover:bg-[#2d4a8a] transition-colors">
                   Ver todos os imóveis
                 </Link>
               </div>
@@ -671,7 +671,7 @@ export default async function CidadePage(props: { params: Promise<{ cidade: stri
 
           {/* Texto SEO */}
           <section className="mt-12 bg-white rounded-2xl p-8 border">
-            <h2 className="text-xl font-bold text-[#1B2B5B] mb-4">
+            <h2 className="text-xl font-bold text-[#143A1F] mb-4">
               Imobiliária Lemos em {cityName}/{estado}
             </h2>
             <div className="prose prose-sm max-w-none text-gray-600 space-y-3">
@@ -705,7 +705,7 @@ export default async function CidadePage(props: { params: Promise<{ cidade: stri
           {/* Links SEO para tipos de busca (apenas Franca) */}
           {isFranca && (
             <section className="mt-8 bg-white rounded-2xl p-8 border">
-              <h2 className="text-xl font-bold text-[#1B2B5B] mb-4">
+              <h2 className="text-xl font-bold text-[#143A1F] mb-4">
                 Buscas populares em Franca/SP
               </h2>
               <div className="flex flex-wrap gap-2">
@@ -726,7 +726,7 @@ export default async function CidadePage(props: { params: Promise<{ cidade: stri
                   <Link
                     key={label}
                     href={href}
-                    className="px-3 py-1.5 bg-gray-100 hover:bg-[#1B2B5B] hover:text-white rounded-full text-sm text-gray-700 transition-colors"
+                    className="px-3 py-1.5 bg-gray-100 hover:bg-[#143A1F] hover:text-white rounded-full text-sm text-gray-700 transition-colors"
                   >
                     {label}
                   </Link>

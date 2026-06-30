@@ -167,7 +167,7 @@ export default async function CidadePage(props: { params: Promise<{ estado: stri
       />
 
       {/* Hero */}
-      <section className="bg-gradient-to-br from-[#1B2B5B] to-[#0f1c3a] text-white py-14 px-4">
+      <section className="bg-gradient-to-br from-[#143A1F] to-[#0f1c3a] text-white py-14 px-4">
         <div className="max-w-5xl mx-auto">
           <nav className="text-xs text-blue-200 mb-4 flex items-center gap-1.5">
             <Link href="/" className="hover:text-white">Início</Link>
@@ -193,7 +193,7 @@ export default async function CidadePage(props: { params: Promise<{ estado: stri
             <Link
               href={`/imoveis?city=${city.name}&purpose=SALE`}
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm"
-              style={{ background: '#C9A84C', color: '#1B2B5B' }}
+              style={{ background: '#C9A84C', color: '#143A1F' }}
             >
               <Search className="w-4 h-4" /> Buscar Imóveis
             </Link>
@@ -215,19 +215,19 @@ export default async function CidadePage(props: { params: Promise<{ estado: stri
           </h2>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div className="bg-white rounded-xl border p-4 text-center">
-              <p className="text-2xl font-bold text-[#1B2B5B]">{pop}</p>
+              <p className="text-2xl font-bold text-[#143A1F]">{pop}</p>
               <p className="text-xs text-gray-500 mt-1">Habitantes</p>
             </div>
             <div className="bg-white rounded-xl border p-4 text-center">
-              <p className="text-2xl font-bold text-[#1B2B5B]">{pib}</p>
+              <p className="text-2xl font-bold text-[#143A1F]">{pib}</p>
               <p className="text-xs text-gray-500 mt-1">PIB per capita</p>
             </div>
             <div className="bg-white rounded-xl border p-4 text-center">
-              <p className="text-2xl font-bold text-[#1B2B5B]">{area} km²</p>
+              <p className="text-2xl font-bold text-[#143A1F]">{area} km²</p>
               <p className="text-xs text-gray-500 mt-1">Área territorial</p>
             </div>
             <div className="bg-white rounded-xl border p-4 text-center">
-              <p className="text-2xl font-bold text-[#1B2B5B]">
+              <p className="text-2xl font-bold text-[#143A1F]">
                 {city.salarioMedioSM} SM
               </p>
               <p className="text-xs text-gray-500 mt-1">Salário médio</p>
@@ -239,7 +239,7 @@ export default async function CidadePage(props: { params: Promise<{ estado: stri
       <div className="max-w-6xl mx-auto px-4 py-10 space-y-12">
         {/* Money pages */}
         <section>
-          <h2 className="text-xl font-bold text-[#1B2B5B] mb-5 flex items-center gap-2">
+          <h2 className="text-xl font-bold text-[#143A1F] mb-5 flex items-center gap-2">
             <Home className="w-5 h-5 text-[#C9A84C]" />
             Imóveis em {city.name}
           </h2>
@@ -251,7 +251,7 @@ export default async function CidadePage(props: { params: Promise<{ estado: stri
                 className="bg-white rounded-xl border p-4 text-center hover:border-[#C9A84C] hover:shadow-sm transition group"
               >
                 <span className="text-2xl">{c.icon}</span>
-                <p className="text-sm font-medium text-gray-700 mt-2 group-hover:text-[#1B2B5B]">
+                <p className="text-sm font-medium text-gray-700 mt-2 group-hover:text-[#143A1F]">
                   {c.label}
                 </p>
                 <p className="text-xs text-gray-400 mt-1">{city.name}</p>
@@ -262,7 +262,7 @@ export default async function CidadePage(props: { params: Promise<{ estado: stri
 
         {/* Investimentos e Leilões */}
         <section>
-          <h2 className="text-xl font-bold text-[#1B2B5B] mb-5 flex items-center gap-2">
+          <h2 className="text-xl font-bold text-[#143A1F] mb-5 flex items-center gap-2">
             <TrendingUp className="w-5 h-5 text-[#C9A84C]" />
             Investimentos e Leilões em {city.name}
           </h2>
@@ -274,7 +274,7 @@ export default async function CidadePage(props: { params: Promise<{ estado: stri
                 className="bg-white rounded-xl border p-5 hover:border-[#C9A84C] hover:shadow-sm transition group"
               >
                 <span className="text-3xl">{c.icon}</span>
-                <p className="font-semibold text-gray-800 mt-3 group-hover:text-[#1B2B5B]">
+                <p className="font-semibold text-gray-800 mt-3 group-hover:text-[#143A1F]">
                   {c.label}
                 </p>
                 <p className="text-sm text-gray-500 mt-1">em {city.name}/{city.state}</p>
@@ -285,7 +285,7 @@ export default async function CidadePage(props: { params: Promise<{ estado: stri
 
         {/* Serviços */}
         <section>
-          <h2 className="text-xl font-bold text-[#1B2B5B] mb-5 flex items-center gap-2">
+          <h2 className="text-xl font-bold text-[#143A1F] mb-5 flex items-center gap-2">
             <Wrench className="w-5 h-5 text-[#C9A84C]" />
             Serviços Imobiliários em {city.name}
           </h2>
@@ -297,7 +297,7 @@ export default async function CidadePage(props: { params: Promise<{ estado: stri
                 className="bg-white rounded-xl border p-4 text-center hover:border-[#C9A84C] hover:shadow-sm transition group"
               >
                 <span className="text-2xl">{c.icon}</span>
-                <p className="text-sm font-medium text-gray-700 mt-2 group-hover:text-[#1B2B5B]">
+                <p className="text-sm font-medium text-gray-700 mt-2 group-hover:text-[#143A1F]">
                   {c.label}
                 </p>
               </Link>
@@ -307,7 +307,7 @@ export default async function CidadePage(props: { params: Promise<{ estado: stri
 
         {/* Conteúdo SEO */}
         <section className="bg-white rounded-2xl border p-6 sm:p-8">
-          <h2 className="text-xl font-bold text-[#1B2B5B] mb-4">
+          <h2 className="text-xl font-bold text-[#143A1F] mb-4">
             Mercado Imobiliário em {city.name}/{city.state}
           </h2>
           <div className="prose prose-sm max-w-none text-gray-600 space-y-3">
@@ -338,13 +338,13 @@ export default async function CidadePage(props: { params: Promise<{ estado: stri
 
         {/* FAQ */}
         <section className="bg-white rounded-2xl border p-6 sm:p-8">
-          <h2 className="text-xl font-bold text-[#1B2B5B] mb-5">
+          <h2 className="text-xl font-bold text-[#143A1F] mb-5">
             Perguntas Frequentes — Imóveis em {city.name}
           </h2>
           <div className="space-y-4">
             {(faqSchema.mainEntity as any[]).map((item: any, i: number) => (
               <details key={i} className="group border rounded-xl">
-                <summary className="flex items-center justify-between cursor-pointer p-4 font-medium text-gray-800 group-open:text-[#1B2B5B]">
+                <summary className="flex items-center justify-between cursor-pointer p-4 font-medium text-gray-800 group-open:text-[#143A1F]">
                   {item.name}
                   <span className="ml-2 text-gray-400 group-open:rotate-180 transition-transform">&#9660;</span>
                 </summary>
@@ -357,7 +357,7 @@ export default async function CidadePage(props: { params: Promise<{ estado: stri
         {/* Cidades vizinhas */}
         {vizinhas.length > 0 && (
           <section>
-            <h2 className="text-xl font-bold text-[#1B2B5B] mb-5 flex items-center gap-2">
+            <h2 className="text-xl font-bold text-[#143A1F] mb-5 flex items-center gap-2">
               <MapPin className="w-5 h-5 text-[#C9A84C]" />
               Outras Cidades em {city.stateName}
             </h2>
@@ -366,7 +366,7 @@ export default async function CidadePage(props: { params: Promise<{ estado: stri
                 <Link
                   key={v.slug}
                   href={`/${v.stateSlug}/${v.slug}`}
-                  className="px-4 py-2 bg-white border rounded-full text-sm text-gray-700 hover:border-[#C9A84C] hover:text-[#1B2B5B] transition"
+                  className="px-4 py-2 bg-white border rounded-full text-sm text-gray-700 hover:border-[#C9A84C] hover:text-[#143A1F] transition"
                 >
                   {v.name}
                 </Link>
@@ -395,7 +395,7 @@ export default async function CidadePage(props: { params: Promise<{ estado: stri
             <Link
               href={`/imoveis?city=${city.name}`}
               className="flex-1 sm:flex-none px-4 py-2 rounded-xl font-bold text-sm text-center"
-              style={{ background: '#C9A84C', color: '#1B2B5B' }}
+              style={{ background: '#C9A84C', color: '#143A1F' }}
             >
               Ver Marketplace
             </Link>

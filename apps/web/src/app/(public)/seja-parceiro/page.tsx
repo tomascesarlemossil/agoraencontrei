@@ -58,7 +58,7 @@ const PLANS = [
     ],
     cta: 'Criar perfil gratuito',
     ctaHref: '/parceiros/cadastro',
-    ctaStyle: 'border-2 border-[#1B2B5B] text-[#1B2B5B] hover:bg-[#1B2B5B] hover:text-white',
+    ctaStyle: 'border-2 border-[#143A1F] text-[#143A1F] hover:bg-[#143A1F] hover:text-white',
   },
   {
     id: 'PRIME',
@@ -80,7 +80,7 @@ const PLANS = [
     ],
     cta: 'Assinar Prime',
     ctaHref: '/parceiros/cadastro?plan=PRIME',
-    ctaStyle: 'bg-[#C9A84C] text-[#1B2B5B] hover:bg-[#b8943d]',
+    ctaStyle: 'bg-[#C9A84C] text-[#143A1F] hover:bg-[#b8943d]',
     ctaCheckout: true,
   },
   {
@@ -103,7 +103,7 @@ const PLANS = [
     ],
     cta: 'Assinar VIP',
     ctaHref: '/parceiros/cadastro?plan=VIP',
-    ctaStyle: 'bg-[#1B2B5B] text-white hover:bg-[#162247]',
+    ctaStyle: 'bg-[#143A1F] text-white hover:bg-[#0E2A15]',
     ctaCheckout: true,
   },
 ]
@@ -156,7 +156,7 @@ export default async function SejaParceiroPage() {
   return (
     <div className="min-h-screen bg-[#f8f6f1]">
       {/* HERO */}
-      <section className="bg-gradient-to-br from-[#1B2B5B] to-[#0f1c3a] text-white py-20 px-4">
+      <section className="bg-gradient-to-br from-[#143A1F] to-[#0f1c3a] text-white py-20 px-4">
         <div className="max-w-5xl mx-auto text-center">
           {/* Contador de leilões — prova de demanda */}
           {auctionCount > 0 && (
@@ -177,7 +177,7 @@ export default async function SejaParceiroPage() {
           <div className="flex flex-wrap justify-center gap-4">
             <Link href="/parceiros/planos"
               className="inline-flex items-center gap-2 px-8 py-4 rounded-xl font-bold text-lg"
-              style={{ background: '#C9A84C', color: '#1B2B5B' }}>
+              style={{ background: '#C9A84C', color: '#143A1F' }}>
               Ver planos e dashboard <ArrowRight className="w-5 h-5" />
             </Link>
             <Link href="/parceiros/cadastro"
@@ -213,7 +213,7 @@ export default async function SejaParceiroPage() {
       {/* COMO FUNCIONA */}
       <section className="max-w-5xl mx-auto px-4 py-16">
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-[#1B2B5B] mb-3" style={{ fontFamily: 'Georgia, serif' }}>
+          <h2 className="text-3xl font-bold text-[#143A1F] mb-3" style={{ fontFamily: 'Georgia, serif' }}>
             Como funciona
           </h2>
           <p className="text-gray-500">Em 3 passos simples você começa a receber leads</p>
@@ -221,11 +221,11 @@ export default async function SejaParceiroPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {HOW_IT_WORKS.map((step) => (
             <div key={step.step} className="bg-white rounded-2xl p-6 border text-center shadow-sm">
-              <div className="w-12 h-12 bg-[#1B2B5B]/5 rounded-xl flex items-center justify-center mx-auto mb-4">
-                <step.icon className="w-6 h-6 text-[#1B2B5B]" />
+              <div className="w-12 h-12 bg-[#143A1F]/5 rounded-xl flex items-center justify-center mx-auto mb-4">
+                <step.icon className="w-6 h-6 text-[#143A1F]" />
               </div>
               <div className="text-xs font-bold text-[#C9A84C] mb-2">PASSO {step.step}</div>
-              <h3 className="font-bold text-[#1B2B5B] text-lg mb-2">{step.title}</h3>
+              <h3 className="font-bold text-[#143A1F] text-lg mb-2">{step.title}</h3>
               <p className="text-gray-500 text-sm">{step.desc}</p>
             </div>
           ))}
@@ -261,7 +261,7 @@ export default async function SejaParceiroPage() {
       {/* TABELA DE PREÇOS */}
       <section className="max-w-6xl mx-auto px-4 py-16">
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-[#1B2B5B] mb-3" style={{ fontFamily: 'Georgia, serif' }}>
+          <h2 className="text-3xl font-bold text-[#143A1F] mb-3" style={{ fontFamily: 'Georgia, serif' }}>
             Planos e Preços
           </h2>
           <p className="text-gray-500">Comece grátis. Escale conforme seus resultados.</p>
@@ -279,7 +279,7 @@ export default async function SejaParceiroPage() {
             >
               {plan.badge && (
                 <div className={`absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-xs font-bold ${
-                  plan.highlight ? 'bg-[#C9A84C] text-[#1B2B5B]' : 'bg-[#1B2B5B] text-white'
+                  plan.highlight ? 'bg-[#C9A84C] text-[#143A1F]' : 'bg-[#143A1F] text-white'
                 }`}>
                   {plan.badge}
                 </div>
@@ -289,12 +289,12 @@ export default async function SejaParceiroPage() {
                 <div className="flex items-center gap-2 mb-1">
                   {plan.id === 'START' && <Zap className="w-5 h-5 text-gray-400" />}
                   {plan.id === 'PRIME' && <Star className="w-5 h-5 text-[#C9A84C]" />}
-                  {plan.id === 'VIP' && <Crown className="w-5 h-5 text-[#1B2B5B]" />}
-                  <h3 className="text-xl font-bold text-[#1B2B5B]">Plano {plan.name}</h3>
+                  {plan.id === 'VIP' && <Crown className="w-5 h-5 text-[#143A1F]" />}
+                  <h3 className="text-xl font-bold text-[#143A1F]">Plano {plan.name}</h3>
                 </div>
                 <p className="text-gray-500 text-sm mb-4">{plan.subtitle}</p>
                 <div className="flex items-baseline gap-1">
-                  <span className="text-4xl font-bold text-[#1B2B5B]">{plan.price}</span>
+                  <span className="text-4xl font-bold text-[#143A1F]">{plan.price}</span>
                   <span className="text-gray-500">{plan.period}</span>
                 </div>
               </div>
@@ -327,7 +327,7 @@ export default async function SejaParceiroPage() {
       <section className="bg-white border-y py-16 px-4">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-10">
-            <h2 className="text-3xl font-bold text-[#1B2B5B] mb-2" style={{ fontFamily: 'Georgia, serif' }}>
+            <h2 className="text-3xl font-bold text-[#143A1F] mb-2" style={{ fontFamily: 'Georgia, serif' }}>
               O que dizem nossos parceiros
             </h2>
           </div>
@@ -341,7 +341,7 @@ export default async function SejaParceiroPage() {
                 </div>
                 <p className="text-gray-700 text-sm mb-4 italic">"{t.text}"</p>
                 <div>
-                  <p className="font-bold text-[#1B2B5B] text-sm">{t.name}</p>
+                  <p className="font-bold text-[#143A1F] text-sm">{t.name}</p>
                   <p className="text-gray-500 text-xs">{t.role}</p>
                 </div>
               </div>
@@ -353,7 +353,7 @@ export default async function SejaParceiroPage() {
       {/* CATEGORIAS DE PARCEIROS */}
       <section className="max-w-5xl mx-auto px-4 py-16">
         <div className="text-center mb-10">
-          <h2 className="text-3xl font-bold text-[#1B2B5B] mb-3" style={{ fontFamily: 'Georgia, serif' }}>
+          <h2 className="text-3xl font-bold text-[#143A1F] mb-3" style={{ fontFamily: 'Georgia, serif' }}>
             Para quem é o AgoraEncontrei Parceiros?
           </h2>
           <p className="text-gray-500">Qualquer profissional que atende o mercado imobiliário</p>
@@ -371,14 +371,14 @@ export default async function SejaParceiroPage() {
           ].map((cat, i) => (
             <div key={i} className="bg-white rounded-xl p-4 border text-center hover:border-[#C9A84C] transition-colors cursor-default">
               <div className="text-3xl mb-2">{cat.icon}</div>
-              <p className="text-sm font-medium text-[#1B2B5B]">{cat.label}</p>
+              <p className="text-sm font-medium text-[#143A1F]">{cat.label}</p>
             </div>
           ))}
         </div>
       </section>
 
       {/* CTA FINAL */}
-      <section className="py-16 px-4 text-center" style={{ background: 'linear-gradient(135deg, #1B2B5B, #0f1c3a)' }}>
+      <section className="py-16 px-4 text-center" style={{ background: 'linear-gradient(135deg, #143A1F, #0f1c3a)' }}>
         <div className="max-w-3xl mx-auto">
           <Shield className="w-10 h-10 mx-auto mb-4" style={{ color: '#C9A84C' }} />
           <h2 className="text-3xl font-bold text-white mb-3" style={{ fontFamily: 'Georgia, serif' }}>
@@ -390,7 +390,7 @@ export default async function SejaParceiroPage() {
           <div className="flex flex-wrap justify-center gap-4">
             <Link href="/parceiros/planos"
               className="inline-flex items-center gap-2 px-8 py-4 rounded-xl font-bold text-lg"
-              style={{ background: '#C9A84C', color: '#1B2B5B' }}>
+              style={{ background: '#C9A84C', color: '#143A1F' }}>
               Ver planos e dashboard <ArrowRight className="w-5 h-5" />
             </Link>
             <Link href="/parceiros/cadastro"

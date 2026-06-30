@@ -115,7 +115,7 @@ function PropertyCardCarousel({ images, coverImage, title, isFeatured, purpose, 
         <div
           className="absolute inset-0 flex flex-col items-center justify-center gap-3"
           style={{
-            background: 'linear-gradient(135deg, #1B2B5B 0%, #243d7a 60%, #1a3366 100%)',
+            background: 'linear-gradient(135deg, #143A1F 0%, #243d7a 60%, #1a3366 100%)',
           }}
         >
           <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-14 h-14" opacity="0.5">
@@ -163,14 +163,14 @@ function PropertyCardCarousel({ images, coverImage, title, isFeatured, purpose, 
         <span
           className="text-xs font-bold px-2.5 py-1 rounded-full"
           style={{
-            backgroundColor: purpose === 'RENT' ? '#1B2B5B' : '#C9A84C',
-            color: purpose === 'RENT' ? 'white' : '#1B2B5B',
+            backgroundColor: purpose === 'RENT' ? '#143A1F' : '#C9A84C',
+            color: purpose === 'RENT' ? 'white' : '#143A1F',
           }}
         >
           {PURPOSE_LABEL[purpose] ?? purpose}
         </span>
         {isFeatured && (
-          <span className="text-xs font-bold px-2.5 py-1 rounded-full" style={{ backgroundColor: 'rgba(255,255,255,0.95)', color: '#1B2B5B' }}>
+          <span className="text-xs font-bold px-2.5 py-1 rounded-full" style={{ backgroundColor: 'rgba(255,255,255,0.95)', color: '#143A1F' }}>
             ★ Destaque
           </span>
         )}
@@ -201,7 +201,7 @@ function PropertyCard({ p }: { p: any }) {
         propertyId={p.id}
       />
       <div className="p-4">
-        <p className="font-semibold text-gray-900 line-clamp-2 text-sm leading-snug group-hover:text-[#1B2B5B] transition-colors">
+        <p className="font-semibold text-gray-900 line-clamp-2 text-sm leading-snug group-hover:text-[#143A1F] transition-colors">
           {p.title}
         </p>
         <p className="text-xs text-gray-500 mt-1 truncate">
@@ -297,7 +297,7 @@ export function LoadMoreProperties({ initialProperties, initialTotal, initialTot
             onClick={loadMore}
             disabled={loading}
             className="flex items-center gap-2 px-8 py-3 rounded-xl text-sm font-semibold transition-all hover:brightness-110 disabled:opacity-50"
-            style={{ backgroundColor: '#1B2B5B', color: 'white' }}
+            style={{ backgroundColor: '#143A1F', color: 'white' }}
           >
             {loading ? (
               <><Loader2 className="w-4 h-4 animate-spin" /> Carregando...</>

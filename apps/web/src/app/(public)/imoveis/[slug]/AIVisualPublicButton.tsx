@@ -151,7 +151,7 @@ export function AIVisualPublicButton({ propertySlug, images, title }: Props) {
         className="fixed bottom-6 right-6 z-40 flex items-center gap-2.5 px-5 py-3.5 rounded-2xl shadow-2xl font-bold text-sm transition-all hover:scale-105 hover:brightness-110 active:scale-95"
         style={{
           background: 'linear-gradient(135deg, #C9A84C, #e8c66a)',
-          color: '#1B2B5B',
+          color: '#143A1F',
           boxShadow: '0 8px 32px rgba(201,168,76,0.45)',
         }}
         aria-label="Visualizar reforma com IA"
@@ -179,7 +179,7 @@ export function AIVisualPublicButton({ propertySlug, images, title }: Props) {
               <div>
                 <div className="flex items-center gap-2 mb-1">
                   <Sparkles className="h-5 w-5" style={{ color: '#C9A84C' }} />
-                  <h2 className="text-xl font-bold" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>
+                  <h2 className="text-xl font-bold" style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}>
                     Visualize sua reforma com IA
                   </h2>
                 </div>
@@ -230,14 +230,14 @@ export function AIVisualPublicButton({ propertySlug, images, title }: Props) {
                 <div className="rounded-2xl overflow-hidden border-2" style={{ borderColor: '#C9A84C' }}>
                   <img src={outputUrl} alt="Visualização gerada por IA" loading="lazy" className="w-full object-cover" />
                   <div className="px-4 py-3 text-center space-y-3" style={{ backgroundColor: '#fffdf9' }}>
-                    <p className="text-sm font-semibold" style={{ color: '#1B2B5B' }}>
+                    <p className="text-sm font-semibold" style={{ color: '#143A1F' }}>
                       Imagem gerada com sucesso!
                     </p>
                     <a
                       href="#contato"
                       onClick={handleClose}
                       className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all hover:brightness-110"
-                      style={{ background: 'linear-gradient(135deg, #C9A84C, #e8c66a)', color: '#1B2B5B' }}
+                      style={{ background: 'linear-gradient(135deg, #C9A84C, #e8c66a)', color: '#143A1F' }}
                     >
                       Gostou? Agende uma visita!
                     </a>
@@ -317,7 +317,7 @@ export function AIVisualPublicButton({ propertySlug, images, title }: Props) {
                     type="submit"
                     disabled={loading || !description.trim()}
                     className="w-full flex items-center justify-center gap-2.5 py-3.5 rounded-xl font-bold text-sm transition-all hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed"
-                    style={{ background: 'linear-gradient(135deg, #C9A84C, #e8c66a)', color: '#1B2B5B' }}
+                    style={{ background: 'linear-gradient(135deg, #C9A84C, #e8c66a)', color: '#143A1F' }}
                   >
                     {loading ? (
                       <>

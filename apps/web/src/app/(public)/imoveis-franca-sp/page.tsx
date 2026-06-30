@@ -84,7 +84,7 @@ export default function ImoveisFrancaSPPage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(SCHEMA_WEBPAGE) }} />
 
       {/* ── HERO ── */}
-      <section className="bg-gradient-to-br from-[#1B2B5B] to-[#0f1c3a] text-white py-16 px-4">
+      <section className="bg-gradient-to-br from-[#143A1F] to-[#0f1c3a] text-white py-16 px-4">
         <div className="max-w-5xl mx-auto text-center">
           <div className="inline-flex items-center gap-2 bg-white/10 rounded-full px-4 py-1.5 text-xs font-semibold mb-4" style={{ color: '#C9A84C' }}>
             <MapPin className="w-3.5 h-3.5" /> Franca/SP · 352 mil hab. · Capital do Calçado
@@ -98,7 +98,7 @@ export default function ImoveisFrancaSPPage() {
           <div className="flex flex-wrap justify-center gap-3">
             <Link href="/imoveis?city=Franca"
               className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm hover:brightness-110 transition-all"
-              style={{ background: '#C9A84C', color: '#1B2B5B' }}>
+              style={{ background: '#C9A84C', color: '#143A1F' }}>
               <Search className="w-4 h-4" /> Ver Imóveis em Franca
             </Link>
             <a href="https://wa.me/5516981010004?text=Olá! Tenho interesse em imóveis em Franca/SP."
@@ -134,7 +134,7 @@ export default function ImoveisFrancaSPPage() {
       <section className="max-w-4xl mx-auto px-4 py-12">
         <div className="bg-white rounded-2xl p-8 border space-y-6">
 
-          <h2 className="text-xl font-bold" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>
+          <h2 className="text-xl font-bold" style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}>
             Oportunidades de Imóveis em Franca: Panorama Atual
           </h2>
           <p className="text-gray-600 text-sm leading-relaxed">
@@ -181,7 +181,7 @@ export default function ImoveisFrancaSPPage() {
                 <div className="flex items-center justify-center gap-1 text-xs font-semibold text-gray-500 mb-1">
                   {stat.icon} {stat.label}
                 </div>
-                <div className="text-base font-bold" style={{ color: '#1B2B5B' }}>{stat.value}</div>
+                <div className="text-base font-bold" style={{ color: '#143A1F' }}>{stat.value}</div>
                 <div className="text-[10px] text-gray-400">{stat.sub}</div>
               </div>
             ))}
@@ -211,7 +211,7 @@ export default function ImoveisFrancaSPPage() {
           {/* CTA de fechamento */}
           <p className="text-gray-600 text-sm leading-relaxed pt-2 border-t">
             Para conferir a lista completa e atualizada de oportunidades reais agora mesmo,{' '}
-            <a href="https://agoraencontrei.com.br" className="font-semibold underline" style={{ color: '#1B2B5B' }}>
+            <a href="https://agoraencontrei.com.br" className="font-semibold underline" style={{ color: '#143A1F' }}>
               acesse nossa vitrine principal no marketplace AgoraEncontrei
             </a>.
             Lá você filtra por preço, tipo de imóvel e status do leilão em tempo real.
@@ -221,7 +221,7 @@ export default function ImoveisFrancaSPPage() {
 
       {/* ── BAIRROS DE FRANCA ── */}
       <section className="max-w-5xl mx-auto px-4 pb-10">
-        <h2 className="text-xl font-bold mb-4" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>
+        <h2 className="text-xl font-bold mb-4" style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}>
           Imóveis por Bairro em Franca/SP
         </h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
@@ -229,7 +229,7 @@ export default function ImoveisFrancaSPPage() {
             const slug = bairro.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
             return (
               <Link key={bairro} href={`/imoveis/em/franca/${slug}`}
-                className="flex items-center gap-2 p-3 rounded-xl bg-white border border-gray-100 hover:border-[#C9A84C] hover:shadow-sm transition-all text-sm text-gray-700 hover:text-[#1B2B5B]">
+                className="flex items-center gap-2 p-3 rounded-xl bg-white border border-gray-100 hover:border-[#C9A84C] hover:shadow-sm transition-all text-sm text-gray-700 hover:text-[#143A1F]">
                 <MapPin className="w-3.5 h-3.5 flex-shrink-0" style={{ color: '#C9A84C' }} />
                 {bairro}
               </Link>
@@ -240,7 +240,7 @@ export default function ImoveisFrancaSPPage() {
 
       {/* ── LINKS INTERNOS — TIPOS DE IMÓVEL ── */}
       <section className="max-w-5xl mx-auto px-4 pb-12">
-        <h2 className="text-xl font-bold mb-5" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>
+        <h2 className="text-xl font-bold mb-5" style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}>
           Explore Imóveis em Franca/SP
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -257,7 +257,7 @@ export default function ImoveisFrancaSPPage() {
 
       {/* ── CIDADES DA REGIÃO ── */}
       <section className="max-w-5xl mx-auto px-4 pb-12">
-        <h2 className="text-xl font-bold mb-5" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>
+        <h2 className="text-xl font-bold mb-5" style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}>
           Imóveis na Região de Franca/SP
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -275,7 +275,7 @@ export default function ImoveisFrancaSPPage() {
       </section>
 
       {/* ── CTA FINAL ── */}
-      <section className="py-12 px-4 text-center" style={{ background: 'linear-gradient(135deg, #1B2B5B, #0f1c3a)' }}>
+      <section className="py-12 px-4 text-center" style={{ background: 'linear-gradient(135deg, #143A1F, #0f1c3a)' }}>
         <div className="max-w-2xl mx-auto">
           <Star className="w-8 h-8 mx-auto mb-3" style={{ color: '#C9A84C' }} />
           <h2 className="text-2xl font-bold text-white mb-2" style={{ fontFamily: 'Georgia, serif' }}>
@@ -292,7 +292,7 @@ export default function ImoveisFrancaSPPage() {
               <Phone className="w-4 h-4" /> (16) 3723-0045
             </a>
             <Link href="/"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm text-[#1B2B5B]"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm text-[#143A1F]"
               style={{ background: '#C9A84C' }}>
               <Home className="w-4 h-4" /> Ver Marketplace
             </Link>
@@ -301,7 +301,7 @@ export default function ImoveisFrancaSPPage() {
       </section>
 
       {/* ── FLOATING CTA ── */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-[#1B2B5B] p-3 text-white text-center font-bold text-sm shadow-2xl sm:hidden">
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-[#143A1F] p-3 text-white text-center font-bold text-sm shadow-2xl sm:hidden">
         <Link href="/" className="flex items-center justify-center gap-2">
           <Search className="w-4 h-4" style={{ color: '#C9A84C' }} />
           Procurando oportunidades em Franca?

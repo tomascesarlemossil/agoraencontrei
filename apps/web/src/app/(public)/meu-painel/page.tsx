@@ -32,7 +32,7 @@ interface Specialist {
 const PLAN_LABELS: Record<string, { label: string; color: string; icon: React.ElementType }> = {
   START: { label: 'Start (Gratuito)', color: 'text-gray-500', icon: Zap },
   PRIME: { label: 'Prime', color: 'text-[#C9A84C]', icon: Star },
-  VIP:   { label: 'VIP', color: 'text-[#1B2B5B]', icon: Crown },
+  VIP:   { label: 'VIP', color: 'text-[#143A1F]', icon: Crown },
 }
 
 const PORTFOLIO_STEPS = [
@@ -185,8 +185,8 @@ export default function MeuPainelPage() {
     return (
       <div className="min-h-screen bg-[#f8f6f1] flex items-center justify-center px-4">
         <div className="bg-white rounded-2xl border shadow-sm p-8 max-w-md w-full text-center">
-          <User className="w-12 h-12 text-[#1B2B5B] mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-[#1B2B5B] mb-2" style={{ fontFamily: 'Georgia, serif' }}>
+          <User className="w-12 h-12 text-[#143A1F] mx-auto mb-4" />
+          <h1 className="text-2xl font-bold text-[#143A1F] mb-2" style={{ fontFamily: 'Georgia, serif' }}>
             Meu Painel de Parceiro
           </h1>
           <p className="text-gray-500 mb-6 text-sm">
@@ -203,11 +203,11 @@ export default function MeuPainelPage() {
             onChange={e => setEmailInput(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && handleEmailSearch()}
             placeholder="seu@email.com"
-            className="w-full border rounded-xl px-4 py-3 text-sm mb-3 focus:outline-none focus:ring-2 focus:ring-[#1B2B5B]"
+            className="w-full border rounded-xl px-4 py-3 text-sm mb-3 focus:outline-none focus:ring-2 focus:ring-[#143A1F]"
           />
           <button
             onClick={handleEmailSearch}
-            className="w-full bg-[#1B2B5B] text-white rounded-xl py-3 font-bold text-sm hover:bg-[#162247] transition-colors"
+            className="w-full bg-[#143A1F] text-white rounded-xl py-3 font-bold text-sm hover:bg-[#0E2A15] transition-colors"
           >
             Acessar meu painel
           </button>
@@ -226,7 +226,7 @@ export default function MeuPainelPage() {
     return (
       <div className="min-h-screen bg-[#f8f6f1] flex items-center justify-center">
         <div className="text-center">
-          <div className="w-8 h-8 border-2 border-[#1B2B5B] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+          <div className="w-8 h-8 border-2 border-[#143A1F] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
           <p className="text-gray-500 text-sm">Carregando seu painel...</p>
         </div>
       </div>
@@ -243,7 +243,7 @@ export default function MeuPainelPage() {
   return (
     <div className="min-h-screen bg-[#f8f6f1]">
       {/* Header */}
-      <div className="bg-[#1B2B5B] text-white py-8 px-4">
+      <div className="bg-[#143A1F] text-white py-8 px-4">
         <div className="max-w-5xl mx-auto">
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div className="flex items-center gap-4">
@@ -275,7 +275,7 @@ export default function MeuPainelPage() {
                 <Eye className="w-4 h-4" /> Ver perfil público
               </a>
               <Link href={`/parceiros/editar/${specialist.id}`}
-                className="inline-flex items-center gap-2 bg-[#C9A84C] text-[#1B2B5B] px-4 py-2 rounded-xl text-sm font-bold transition-colors hover:bg-[#b8943d]">
+                className="inline-flex items-center gap-2 bg-[#C9A84C] text-[#143A1F] px-4 py-2 rounded-xl text-sm font-bold transition-colors hover:bg-[#b8943d]">
                 <Edit3 className="w-4 h-4" /> Editar perfil
               </Link>
             </div>
@@ -319,15 +319,15 @@ export default function MeuPainelPage() {
             {/* Completude do perfil */}
             <div className="bg-white rounded-2xl border p-6 shadow-sm">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="font-bold text-[#1B2B5B]">Completude do Perfil</h2>
-                <span className="text-2xl font-bold text-[#1B2B5B]">{completeness}%</span>
+                <h2 className="font-bold text-[#143A1F]">Completude do Perfil</h2>
+                <span className="text-2xl font-bold text-[#143A1F]">{completeness}%</span>
               </div>
               <div className="w-full bg-gray-100 rounded-full h-3 mb-6">
                 <div
                   className="h-3 rounded-full transition-all duration-500"
                   style={{
                     width: `${completeness}%`,
-                    background: completeness >= 75 ? '#22c55e' : completeness >= 50 ? '#C9A84C' : '#1B2B5B'
+                    background: completeness >= 75 ? '#22c55e' : completeness >= 50 ? '#C9A84C' : '#143A1F'
                   }}
                 />
               </div>
@@ -361,15 +361,15 @@ export default function MeuPainelPage() {
             {specialist.plan !== 'START' && (
               <div className="bg-white rounded-2xl border p-6 shadow-sm">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="font-bold text-[#1B2B5B] flex items-center gap-2">
+                  <h2 className="font-bold text-[#143A1F] flex items-center gap-2">
                     <BarChart2 className="w-5 h-5 text-[#C9A84C]" /> Performance do Mês
                   </h2>
-                  {loadingAnalytics && <div className="w-4 h-4 border-2 border-[#1B2B5B] border-t-transparent rounded-full animate-spin" />}
+                  {loadingAnalytics && <div className="w-4 h-4 border-2 border-[#143A1F] border-t-transparent rounded-full animate-spin" />}
                 </div>
                 {analytics ? (
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     <div className="bg-[#f8faff] rounded-xl p-3 text-center">
-                      <div className="text-2xl font-bold text-[#1B2B5B]">{analytics.monthly?.profileViews ?? 0}</div>
+                      <div className="text-2xl font-bold text-[#143A1F]">{analytics.monthly?.profileViews ?? 0}</div>
                       <div className="text-xs text-gray-500 mt-1 flex items-center justify-center gap-1"><Eye className="w-3 h-3" /> Visualizações</div>
                     </div>
                     <div className="bg-[#f8faff] rounded-xl p-3 text-center">
@@ -392,12 +392,12 @@ export default function MeuPainelPage() {
                 )}
                 {analytics?.monthly && (
                   <div className="mt-3 pt-3 border-t flex items-center justify-between text-xs text-gray-500">
-                    <span>Custo por lead: <strong className="text-[#1B2B5B]">
+                    <span>Custo por lead: <strong className="text-[#143A1F]">
                       {analytics.monthly.whatsappClicks > 0
                         ? `R$ ${((analytics.partner?.planPrice || 0) / analytics.monthly.whatsappClicks).toFixed(0)}`
                         : '—'}
                     </strong></span>
-                    <span>Total histórico: <strong className="text-[#1B2B5B]">{analytics.allTime?.totalContacts ?? 0} contatos</strong></span>
+                    <span>Total histórico: <strong className="text-[#143A1F]">{analytics.allTime?.totalContacts ?? 0} contatos</strong></span>
                   </div>
                 )}
               </div>
@@ -407,7 +407,7 @@ export default function MeuPainelPage() {
             {specialist.plan !== 'START' && (
               <div className="bg-white rounded-2xl border p-6 shadow-sm">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="font-bold text-[#1B2B5B] flex items-center gap-2">
+                  <h2 className="font-bold text-[#143A1F] flex items-center gap-2">
                     <Shield className="w-5 h-5 text-[#C9A84C]" /> Sentinela de Território
                   </h2>
                   <span className="text-xs bg-[#C9A84C]/10 text-[#C9A84C] px-2 py-1 rounded-full font-medium">
@@ -427,7 +427,7 @@ export default function MeuPainelPage() {
                           }
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-[#1B2B5B] truncate">
+                          <p className="text-sm font-medium text-[#143A1F] truncate">
                             {t.buildingName || t.neighborhood || t.city}
                           </p>
                           <p className="text-xs text-gray-500">
@@ -459,7 +459,7 @@ export default function MeuPainelPage() {
             {/* Condomínios vinculados */}
             <div className="bg-white rounded-2xl border p-6 shadow-sm">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="font-bold text-[#1B2B5B]">Condomínios Vinculados</h2>
+                <h2 className="font-bold text-[#143A1F]">Condomínios Vinculados</h2>
                 <span className="text-sm text-gray-500">{specialist.buildings?.length || 0} edifícios</span>
               </div>
               {specialist.buildings && specialist.buildings.length > 0 ? (
@@ -467,8 +467,8 @@ export default function MeuPainelPage() {
                   {specialist.buildings.map((sb, i) => (
                     <Link key={i} href={`/condominios/franca/${sb.building.slug}`}
                       className="flex items-center gap-2 p-3 bg-[#f8f6f1] rounded-xl hover:bg-[#ede9df] transition-colors text-sm">
-                      <Building2 className="w-4 h-4 text-[#1B2B5B] flex-shrink-0" />
-                      <span className="text-[#1B2B5B] font-medium truncate">{sb.building.name}</span>
+                      <Building2 className="w-4 h-4 text-[#143A1F] flex-shrink-0" />
+                      <span className="text-[#143A1F] font-medium truncate">{sb.building.name}</span>
                       <ExternalLink className="w-3 h-3 text-gray-400 ml-auto flex-shrink-0" />
                     </Link>
                   ))}
@@ -487,7 +487,7 @@ export default function MeuPainelPage() {
 
             {/* Compartilhar perfil */}
             <div className="bg-white rounded-2xl border p-6 shadow-sm">
-              <h2 className="font-bold text-[#1B2B5B] mb-3">Compartilhe seu Perfil</h2>
+              <h2 className="font-bold text-[#143A1F] mb-3">Compartilhe seu Perfil</h2>
               <p className="text-gray-500 text-sm mb-4">
                 Compartilhe este link nas suas redes sociais, WhatsApp e e-mail para receber mais contatos.
               </p>
@@ -499,7 +499,7 @@ export default function MeuPainelPage() {
                 />
                 <button
                   onClick={() => navigator.clipboard.writeText(profileUrl)}
-                  className="bg-[#1B2B5B] text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-[#162247] transition-colors"
+                  className="bg-[#143A1F] text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-[#0E2A15] transition-colors"
                 >
                   Copiar
                 </button>
@@ -524,14 +524,14 @@ export default function MeuPainelPage() {
 
             {/* Card do plano atual */}
             <div className="bg-white rounded-2xl border p-6 shadow-sm">
-              <h2 className="font-bold text-[#1B2B5B] mb-4">Seu Plano</h2>
+              <h2 className="font-bold text-[#143A1F] mb-4">Seu Plano</h2>
               <div className={`flex items-center gap-2 mb-4 p-3 rounded-xl ${
-                specialist.plan === 'VIP' ? 'bg-[#1B2B5B]/5' :
+                specialist.plan === 'VIP' ? 'bg-[#143A1F]/5' :
                 specialist.plan === 'PRIME' ? 'bg-[#C9A84C]/10' : 'bg-gray-50'
               }`}>
                 <PlanIcon className={`w-6 h-6 ${planInfo.color}`} />
                 <div>
-                  <p className="font-bold text-[#1B2B5B]">Plano {planInfo.label}</p>
+                  <p className="font-bold text-[#143A1F]">Plano {planInfo.label}</p>
                   {specialist.planExpiresAt && (
                     <p className="text-xs text-gray-500">
                       Renova em {new Date(specialist.planExpiresAt).toLocaleDateString('pt-BR')}
@@ -548,7 +548,7 @@ export default function MeuPainelPage() {
                   <button
                     onClick={() => handleUpgrade('PRIME')}
                     disabled={upgrading}
-                    className="w-full bg-[#C9A84C] text-[#1B2B5B] py-3 rounded-xl font-bold text-sm hover:bg-[#b8943d] transition-colors flex items-center justify-center gap-2"
+                    className="w-full bg-[#C9A84C] text-[#143A1F] py-3 rounded-xl font-bold text-sm hover:bg-[#b8943d] transition-colors flex items-center justify-center gap-2"
                   >
                     <Star className="w-4 h-4" />
                     {upgrading ? 'Processando...' : 'Assinar Prime — R$ 197/mês'}
@@ -556,7 +556,7 @@ export default function MeuPainelPage() {
                   <button
                     onClick={() => handleUpgrade('VIP')}
                     disabled={upgrading}
-                    className="w-full bg-[#1B2B5B] text-white py-3 rounded-xl font-bold text-sm hover:bg-[#162247] transition-colors flex items-center justify-center gap-2"
+                    className="w-full bg-[#143A1F] text-white py-3 rounded-xl font-bold text-sm hover:bg-[#0E2A15] transition-colors flex items-center justify-center gap-2"
                   >
                     <Crown className="w-4 h-4" />
                     {upgrading ? 'Processando...' : 'Assinar VIP — R$ 497/mês'}
@@ -568,7 +568,7 @@ export default function MeuPainelPage() {
                 <button
                   onClick={() => handleUpgrade('VIP')}
                   disabled={upgrading}
-                  className="w-full bg-[#1B2B5B] text-white py-3 rounded-xl font-bold text-sm hover:bg-[#162247] transition-colors flex items-center justify-center gap-2"
+                  className="w-full bg-[#143A1F] text-white py-3 rounded-xl font-bold text-sm hover:bg-[#0E2A15] transition-colors flex items-center justify-center gap-2"
                 >
                   <Crown className="w-4 h-4" />
                   {upgrading ? 'Processando...' : 'Fazer upgrade para VIP'}
@@ -578,7 +578,7 @@ export default function MeuPainelPage() {
               {specialist.plan === 'VIP' && (
                 <div className="text-center py-2">
                   <Award className="w-8 h-8 text-[#C9A84C] mx-auto mb-2" />
-                  <p className="text-sm font-medium text-[#1B2B5B]">Você está no topo!</p>
+                  <p className="text-sm font-medium text-[#143A1F]">Você está no topo!</p>
                   <p className="text-xs text-gray-500">Plano VIP ativo</p>
                 </div>
               )}
@@ -586,7 +586,7 @@ export default function MeuPainelPage() {
 
             {/* Benefícios do plano */}
             <div className="bg-white rounded-2xl border p-6 shadow-sm">
-              <h2 className="font-bold text-[#1B2B5B] mb-4">Benefícios do Plano</h2>
+              <h2 className="font-bold text-[#143A1F] mb-4">Benefícios do Plano</h2>
               <ul className="space-y-2">
                 {[
                   { text: 'Perfil público', available: true },
@@ -605,7 +605,7 @@ export default function MeuPainelPage() {
             </div>
 
             {/* Suporte */}
-            <div className="bg-[#1B2B5B] rounded-2xl p-6 text-white text-center">
+            <div className="bg-[#143A1F] rounded-2xl p-6 text-white text-center">
               <TrendingUp className="w-8 h-8 mx-auto mb-3 opacity-80" />
               <p className="font-bold mb-2">Precisa de ajuda?</p>
               <p className="text-white/70 text-xs mb-4">Nossa equipe está disponível para ajudar você a maximizar seus resultados.</p>

@@ -57,7 +57,7 @@ export function WelcomeToast() {
       <div
         className="pointer-events-auto max-w-lg mx-4 rounded-2xl p-8 text-center shadow-2xl border"
         style={{
-          background: 'linear-gradient(135deg, #1B2B5B 0%, #0f1c3a 100%)',
+          background: 'linear-gradient(135deg, #143A1F 0%, #0f1c3a 100%)',
           borderColor: 'rgba(201,168,76,0.3)',
         }}
       >

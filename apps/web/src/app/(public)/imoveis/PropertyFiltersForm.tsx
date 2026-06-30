@@ -88,7 +88,7 @@ export function PropertyFiltersForm({ initialValues }: Props) {
             onChange={e => setSearchValue(e.target.value)}
             placeholder="Buscar bairro, cidade, código..."
             aria-label="Buscar imóveis por bairro, cidade ou código"
-            className="w-full pl-9 pr-9 py-2.5 text-sm rounded-xl border focus:outline-none focus:ring-2 focus:ring-[#1B2B5B] transition-all text-gray-800 placeholder:text-gray-500"
+            className="w-full pl-9 pr-9 py-2.5 text-sm rounded-xl border focus:outline-none focus:ring-2 focus:ring-[#143A1F] transition-all text-gray-800 placeholder:text-gray-500"
             style={{ borderColor: '#e0dbd0' }}
           />
           <span className="absolute right-2 top-1/2 -translate-y-1/2">
@@ -104,7 +104,7 @@ export function PropertyFiltersForm({ initialValues }: Props) {
           name="purpose"
           defaultValue={initialValues.purpose ?? ''}
           aria-label="Finalidade do imóvel"
-          className="px-3 py-2.5 text-sm rounded-xl border focus:outline-none focus:ring-2 focus:ring-[#1B2B5B] appearance-none text-gray-800"
+          className="px-3 py-2.5 text-sm rounded-xl border focus:outline-none focus:ring-2 focus:ring-[#143A1F] appearance-none text-gray-800"
           style={{ borderColor: '#e0dbd0' }}
         >
           {PURPOSE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
@@ -113,7 +113,7 @@ export function PropertyFiltersForm({ initialValues }: Props) {
           name="type"
           defaultValue={initialValues.type ?? ''}
           aria-label="Tipo de imóvel"
-          className="px-3 py-2.5 text-sm rounded-xl border focus:outline-none focus:ring-2 focus:ring-[#1B2B5B] appearance-none text-gray-800"
+          className="px-3 py-2.5 text-sm rounded-xl border focus:outline-none focus:ring-2 focus:ring-[#143A1F] appearance-none text-gray-800"
           style={{ borderColor: '#e0dbd0' }}
         >
           {TYPE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
@@ -122,7 +122,7 @@ export function PropertyFiltersForm({ initialValues }: Props) {
           name="sort"
           defaultValue={initialValues.sort ?? 'createdAt_desc'}
           aria-label="Ordenar resultados"
-          className="px-3 py-2.5 text-sm rounded-xl border focus:outline-none focus:ring-2 focus:ring-[#1B2B5B] appearance-none text-gray-800"
+          className="px-3 py-2.5 text-sm rounded-xl border focus:outline-none focus:ring-2 focus:ring-[#143A1F] appearance-none text-gray-800"
           style={{ borderColor: '#e0dbd0' }}
         >
           {SORT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
@@ -134,7 +134,7 @@ export function PropertyFiltersForm({ initialValues }: Props) {
           type="button"
           onClick={() => setShowAdvanced(v => !v)}
           className="flex items-center gap-1.5 text-xs font-medium transition-colors"
-          style={{ color: showAdvanced ? '#1B2B5B' : '#6b7280' }}
+          style={{ color: showAdvanced ? '#143A1F' : '#6b7280' }}
           aria-expanded={showAdvanced}
           aria-controls="advanced-filters"
         >
@@ -155,7 +155,7 @@ export function PropertyFiltersForm({ initialValues }: Props) {
           type="submit"
           disabled={isPending}
           className="flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-semibold transition-all hover:brightness-110 disabled:opacity-60"
-          style={{ backgroundColor: '#1B2B5B', color: 'white' }}
+          style={{ backgroundColor: '#143A1F', color: 'white' }}
         >
           <Search className="w-3.5 h-3.5" />
           Buscar
@@ -198,7 +198,7 @@ export function PropertyFiltersForm({ initialValues }: Props) {
                     defaultChecked={(initialValues.bedrooms ?? '') === b}
                     className="sr-only peer"
                   />
-                  <span className="block text-center text-xs py-2 rounded-lg border transition-all peer-checked:bg-[#1B2B5B] peer-checked:text-white peer-checked:border-[#1B2B5B] text-gray-500 hover:border-gray-400 cursor-pointer"
+                  <span className="block text-center text-xs py-2 rounded-lg border transition-all peer-checked:bg-[#143A1F] peer-checked:text-white peer-checked:border-[#143A1F] text-gray-500 hover:border-gray-400 cursor-pointer"
                     style={{ borderColor: '#e0dbd0' }}>
                     {b || 'T'}
                   </span>
@@ -255,7 +255,7 @@ export function PropertyFiltersForm({ initialValues }: Props) {
                 name="closedCondo"
                 value="true"
                 defaultChecked={initialValues.closedCondo === 'true'}
-                className="w-4 h-4 rounded accent-[#1B2B5B] cursor-pointer"
+                className="w-4 h-4 rounded accent-[#143A1F] cursor-pointer"
               />
               <span className="text-sm font-medium text-gray-700">Condomínio Fechado</span>
             </label>

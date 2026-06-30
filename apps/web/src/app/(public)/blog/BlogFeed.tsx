@@ -82,7 +82,7 @@ export function PostCard({ post, priority = false }: { post: BlogPost; priority?
         {catName && (
           <span
             className="absolute top-3 left-3 text-xs font-semibold px-3 py-1 rounded-full text-white shadow-sm"
-            style={{ backgroundColor: '#1B2B5B' }}
+            style={{ backgroundColor: '#143A1F' }}
           >
             {catName}
           </span>
@@ -176,7 +176,7 @@ export function FeaturedCarousel({ posts }: { posts: BlogPost[] }) {
           loading="eager"
         />
       ) : (
-        <div className="absolute inset-0 w-full h-full" style={{ backgroundColor: '#1B2B5B' }} />
+        <div className="absolute inset-0 w-full h-full" style={{ backgroundColor: '#143A1F' }} />
       )}
       {/* Gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
@@ -186,7 +186,7 @@ export function FeaturedCarousel({ posts }: { posts: BlogPost[] }) {
         {catName && (
           <span
             className="self-start text-xs font-semibold px-3 py-1 rounded-full mb-3"
-            style={{ backgroundColor: '#C9A84C', color: '#1B2B5B' }}
+            style={{ backgroundColor: '#C9A84C', color: '#143A1F' }}
           >
             {catName}
           </span>
@@ -264,7 +264,7 @@ export function CategoryPills({
         className="px-4 py-2 rounded-full text-sm font-semibold border transition-all"
         style={
           active === ''
-            ? { backgroundColor: '#1B2B5B', color: 'white', borderColor: '#1B2B5B' }
+            ? { backgroundColor: '#143A1F', color: 'white', borderColor: '#143A1F' }
             : { borderColor: '#e8e4dc', color: '#374151', backgroundColor: 'white' }
         }
       >
@@ -279,7 +279,7 @@ export function CategoryPills({
           className="px-4 py-2 rounded-full text-sm font-semibold border transition-all"
           style={
             active === cat.slug
-              ? { backgroundColor: '#1B2B5B', color: 'white', borderColor: '#1B2B5B' }
+              ? { backgroundColor: '#143A1F', color: 'white', borderColor: '#143A1F' }
               : { borderColor: '#e8e4dc', color: '#374151', backgroundColor: 'white' }
           }
         >
@@ -436,7 +436,7 @@ export function BlogFeed({
             onClick={loadMore}
             disabled={loading}
             className="px-8 py-3 rounded-full text-sm font-semibold border-2 transition-all hover:shadow-md disabled:opacity-50"
-            style={{ borderColor: '#1B2B5B', color: '#1B2B5B' }}
+            style={{ borderColor: '#143A1F', color: '#143A1F' }}
           >
             {loading ? 'Carregando...' : 'Carregar mais artigos'}
           </button>

@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
           width: '100%',
           display: 'flex',
           flexDirection: 'column',
-          backgroundColor: '#1B2B5B',
+          backgroundColor: '#143A1F',
           padding: '40px 60px',
           fontFamily: 'Georgia, serif',
         }}
@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
             borderRadius: '8px',
             fontSize: '16px',
             fontWeight: 'bold',
-            color: '#1B2B5B',
+            color: '#143A1F',
           }}>
             AgoraEncontrei
           </div>

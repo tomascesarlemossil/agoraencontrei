@@ -86,7 +86,7 @@ export default function AlertasPage() {
       {/* Hero */}
       <section
         className="py-16 text-white text-center"
-        style={{ background: 'linear-gradient(135deg, #1B2B5B 0%, #2d4a8a 60%, #1B2B5B 100%)' }}
+        style={{ background: 'linear-gradient(135deg, #143A1F 0%, #2d4a8a 60%, #143A1F 100%)' }}
       >
         <div className="max-w-4xl mx-auto px-4">
           <p
@@ -111,7 +111,7 @@ export default function AlertasPage() {
         <div className="bg-white rounded-3xl shadow-sm p-8">
           <h2
             className="text-2xl font-bold mb-6"
-            style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}
+            style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}
           >
             Criar Alerta
           </h2>
@@ -126,7 +126,7 @@ export default function AlertasPage() {
                   <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
                 </svg>
               </div>
-              <h3 className="text-xl font-bold mb-2" style={{ color: '#1B2B5B' }}>
+              <h3 className="text-xl font-bold mb-2" style={{ color: '#143A1F' }}>
                 Alerta criado!
               </h3>
               <p className="text-gray-600">
@@ -138,7 +138,7 @@ export default function AlertasPage() {
                   setSubmitted(false)
                 }}
                 className="mt-6 px-6 py-2 rounded-xl text-sm font-semibold text-white transition-all hover:opacity-90"
-                style={{ backgroundColor: '#1B2B5B' }}
+                style={{ backgroundColor: '#143A1F' }}
               >
                 Criar outro alerta
               </button>
@@ -147,7 +147,7 @@ export default function AlertasPage() {
             <form onSubmit={handleSubmit} className="space-y-5">
               {/* Name */}
               <div>
-                <label htmlFor="name" className="block text-sm font-medium mb-1.5" style={{ color: '#1B2B5B' }}>
+                <label htmlFor="name" className="block text-sm font-medium mb-1.5" style={{ color: '#143A1F' }}>
                   Seu nome
                 </label>
                 <input
@@ -162,7 +162,7 @@ export default function AlertasPage() {
 
               {/* Email */}
               <div>
-                <label htmlFor="email" className="block text-sm font-medium mb-1.5" style={{ color: '#1B2B5B' }}>
+                <label htmlFor="email" className="block text-sm font-medium mb-1.5" style={{ color: '#143A1F' }}>
                   E-mail *
                 </label>
                 <input
@@ -178,7 +178,7 @@ export default function AlertasPage() {
 
               {/* City */}
               <div>
-                <label htmlFor="city" className="block text-sm font-medium mb-1.5" style={{ color: '#1B2B5B' }}>
+                <label htmlFor="city" className="block text-sm font-medium mb-1.5" style={{ color: '#143A1F' }}>
                   Cidade
                 </label>
                 <select
@@ -196,7 +196,7 @@ export default function AlertasPage() {
 
               {/* Neighborhood */}
               <div>
-                <label htmlFor="neighborhood" className="block text-sm font-medium mb-1.5" style={{ color: '#1B2B5B' }}>
+                <label htmlFor="neighborhood" className="block text-sm font-medium mb-1.5" style={{ color: '#143A1F' }}>
                   Bairro
                 </label>
                 <input
@@ -212,7 +212,7 @@ export default function AlertasPage() {
               {/* Type & Purpose row */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="type" className="block text-sm font-medium mb-1.5" style={{ color: '#1B2B5B' }}>
+                  <label htmlFor="type" className="block text-sm font-medium mb-1.5" style={{ color: '#143A1F' }}>
                     Tipo de imóvel
                   </label>
                   <select
@@ -228,7 +228,7 @@ export default function AlertasPage() {
                   </select>
                 </div>
                 <div>
-                  <label htmlFor="purpose" className="block text-sm font-medium mb-1.5" style={{ color: '#1B2B5B' }}>
+                  <label htmlFor="purpose" className="block text-sm font-medium mb-1.5" style={{ color: '#143A1F' }}>
                     Finalidade
                   </label>
                   <select
@@ -248,7 +248,7 @@ export default function AlertasPage() {
               {/* Price range */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="minPrice" className="block text-sm font-medium mb-1.5" style={{ color: '#1B2B5B' }}>
+                  <label htmlFor="minPrice" className="block text-sm font-medium mb-1.5" style={{ color: '#143A1F' }}>
                     Preço mínimo (R$)
                   </label>
                   <input
@@ -262,7 +262,7 @@ export default function AlertasPage() {
                   />
                 </div>
                 <div>
-                  <label htmlFor="maxPrice" className="block text-sm font-medium mb-1.5" style={{ color: '#1B2B5B' }}>
+                  <label htmlFor="maxPrice" className="block text-sm font-medium mb-1.5" style={{ color: '#143A1F' }}>
                     Preço máximo (R$)
                   </label>
                   <input
@@ -279,7 +279,7 @@ export default function AlertasPage() {
 
               {/* Bedrooms */}
               <div>
-                <label htmlFor="bedrooms" className="block text-sm font-medium mb-1.5" style={{ color: '#1B2B5B' }}>
+                <label htmlFor="bedrooms" className="block text-sm font-medium mb-1.5" style={{ color: '#143A1F' }}>
                   Quartos (mínimo)
                 </label>
                 <select
@@ -307,7 +307,7 @@ export default function AlertasPage() {
                 type="submit"
                 disabled={loading}
                 className="w-full py-3.5 rounded-xl text-white font-semibold transition-all hover:opacity-90 hover:shadow-lg disabled:opacity-60"
-                style={{ background: 'linear-gradient(135deg, #1B2B5B 0%, #2d4a8a 100%)' }}
+                style={{ background: 'linear-gradient(135deg, #143A1F 0%, #2d4a8a 100%)' }}
               >
                 {loading ? 'Criando alerta...' : 'Criar Alerta'}
               </button>

@@ -59,7 +59,7 @@ export default function AvaliacaoImoveisPage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
 
       <main className="min-h-screen bg-[#0f1a35]">
-        <section className="bg-gradient-to-br from-[#1B2B5B] to-[#0f1a35] py-16 px-4">
+        <section className="bg-gradient-to-br from-[#143A1F] to-[#0f1a35] py-16 px-4">
           <div className="max-w-5xl mx-auto">
             <div className="flex items-center gap-2 text-yellow-400/70 text-sm mb-4">
               <Link href="/" className="hover:text-yellow-400">Início</Link>
@@ -85,7 +85,7 @@ export default function AvaliacaoImoveisPage() {
             <div className="mt-8 flex flex-col sm:flex-row gap-3">
               <a href="https://wa.me/5516981010004?text=Olá! Gostaria de uma avaliação gratuita do meu imóvel."
                 target="_blank" rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-6 py-3 bg-yellow-400 hover:bg-yellow-300 text-[#1B2B5B] font-bold rounded-xl transition-colors">
+                className="inline-flex items-center gap-2 px-6 py-3 bg-yellow-400 hover:bg-yellow-300 text-[#143A1F] font-bold rounded-xl transition-colors">
                 <Phone className="h-5 w-5" /> Solicitar avaliação gratuita
               </a>
               <Link href="/anunciar"

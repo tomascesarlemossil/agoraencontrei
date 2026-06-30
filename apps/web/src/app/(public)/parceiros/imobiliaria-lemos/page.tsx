@@ -186,7 +186,7 @@ export default async function ImobiliariaLemosPage() {
     <main className="min-h-screen" style={{ backgroundColor: '#f9f7f4' }}>
 
       {/* ── HERO ─────────────────────────────────────────────────────────── */}
-      <section style={{ background: 'linear-gradient(135deg, #1B2B5B 0%, #2d4a8a 60%, #1B2B5B 100%)' }} className="py-16">
+      <section style={{ background: 'linear-gradient(135deg, #143A1F 0%, #2d4a8a 60%, #143A1F 100%)' }} className="py-16">
         <div className="max-w-5xl mx-auto px-4 sm:px-6">
           {/* Breadcrumb */}
           <Link
@@ -259,7 +259,7 @@ export default async function ImobiliariaLemosPage() {
                 <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(201,168,76,0.1)', color: '#C9A84C' }}>
                   {s.icon}
                 </div>
-                <span className="text-2xl font-bold" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>{s.value}</span>
+                <span className="text-2xl font-bold" style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}>{s.value}</span>
                 <span className="text-xs text-gray-500">{s.label}</span>
               </div>
             ))}
@@ -275,10 +275,10 @@ export default async function ImobiliariaLemosPage() {
             {/* Sobre */}
             <div className="bg-white rounded-2xl p-8 border" style={{ borderColor: '#e8e4dc' }}>
               <div className="flex items-center gap-3 mb-5">
-                <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(27,43,91,0.08)', color: '#1B2B5B' }}>
+                <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(20,58,31,0.08)', color: '#143A1F' }}>
                   <Award className="w-5 h-5" />
                 </div>
-                <h2 className="text-lg font-bold" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>Nossa História</h2>
+                <h2 className="text-lg font-bold" style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}>Nossa História</h2>
               </div>
               <div className="space-y-3 text-sm text-gray-600 leading-relaxed">
                 <p>
@@ -302,13 +302,13 @@ export default async function ImobiliariaLemosPage() {
                 <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(201,168,76,0.1)', color: '#C9A84C' }}>
                   <Phone className="w-5 h-5" />
                 </div>
-                <h2 className="text-lg font-bold" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>Contato & Localização</h2>
+                <h2 className="text-lg font-bold" style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}>Contato & Localização</h2>
               </div>
               <div className="space-y-4">
                 <div className="flex items-start gap-3">
                   <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: '#C9A84C' }} />
                   <div>
-                    <p className="text-sm font-semibold" style={{ color: '#1B2B5B' }}>Endereço</p>
+                    <p className="text-sm font-semibold" style={{ color: '#143A1F' }}>Endereço</p>
                     <p className="text-sm text-gray-600">Rua João Ramalho, 1060 — Centro</p>
                     <p className="text-sm text-gray-600">Franca — SP, CEP 14400-630</p>
                   </div>
@@ -316,7 +316,7 @@ export default async function ImobiliariaLemosPage() {
                 <div className="flex items-start gap-3">
                   <Phone className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: '#C9A84C' }} />
                   <div>
-                    <p className="text-sm font-semibold" style={{ color: '#1B2B5B' }}>Telefone / WhatsApp</p>
+                    <p className="text-sm font-semibold" style={{ color: '#143A1F' }}>Telefone / WhatsApp</p>
                     <a href="tel:1637230045" className="text-sm text-gray-600 hover:text-green-600 transition-colors">(16) 3723-0045</a>
                     <br />
                     <a href="https://wa.me/5516981010004" target="_blank" rel="noreferrer" className="text-sm text-gray-600 hover:text-green-600 transition-colors">(16) 98101-0004</a>
@@ -325,14 +325,14 @@ export default async function ImobiliariaLemosPage() {
                 <div className="flex items-start gap-3">
                   <Mail className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: '#C9A84C' }} />
                   <div>
-                    <p className="text-sm font-semibold" style={{ color: '#1B2B5B' }}>E-mail</p>
+                    <p className="text-sm font-semibold" style={{ color: '#143A1F' }}>E-mail</p>
                     <a href="mailto:contato@imobiliarialemos.com.br" className="text-sm text-gray-600 hover:text-blue-600 transition-colors">contato@imobiliarialemos.com.br</a>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
                   <Globe className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: '#C9A84C' }} />
                   <div>
-                    <p className="text-sm font-semibold" style={{ color: '#1B2B5B' }}>Site & Redes Sociais</p>
+                    <p className="text-sm font-semibold" style={{ color: '#143A1F' }}>Site & Redes Sociais</p>
                     <a href="https://www.imobiliarialemos.com.br" target="_blank" rel="noreferrer" className="text-sm text-gray-600 hover:text-blue-600 transition-colors">www.imobiliarialemos.com.br</a>
                     <br />
                     <a href="https://www.instagram.com/imobiliarialemos" target="_blank" rel="noreferrer" className="text-sm text-gray-600 hover:text-pink-600 transition-colors">@imobiliarialemos</a>
@@ -341,7 +341,7 @@ export default async function ImobiliariaLemosPage() {
                 <div className="flex items-start gap-3">
                   <Clock className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: '#C9A84C' }} />
                   <div>
-                    <p className="text-sm font-semibold" style={{ color: '#1B2B5B' }}>Horário de Atendimento</p>
+                    <p className="text-sm font-semibold" style={{ color: '#143A1F' }}>Horário de Atendimento</p>
                     <p className="text-sm text-gray-600">Seg–Sex: 8h às 18h</p>
                     <p className="text-sm text-gray-600">Sáb: 8h às 12h</p>
                   </div>
@@ -359,7 +359,7 @@ export default async function ImobiliariaLemosPage() {
             <span className="inline-block px-4 py-1 rounded-full text-sm font-semibold mb-3" style={{ backgroundColor: 'rgba(201,168,76,0.15)', color: '#C9A84C' }}>
               Diretoria & Operações
             </span>
-            <h2 className="text-3xl font-bold" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>
+            <h2 className="text-3xl font-bold" style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}>
               Liderança & Gestão
             </h2>
           </div>
@@ -378,7 +378,7 @@ export default async function ImobiliariaLemosPage() {
             <span className="inline-block px-4 py-1 rounded-full text-sm font-semibold mb-3" style={{ backgroundColor: 'rgba(46,125,50,0.12)', color: '#2e7d32' }}>
               Corretores
             </span>
-            <h2 className="text-3xl font-bold" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>
+            <h2 className="text-3xl font-bold" style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}>
               Especialistas em Imóveis
             </h2>
           </div>
@@ -392,7 +392,7 @@ export default async function ImobiliariaLemosPage() {
 
       {/* ── CTA FINAL ────────────────────────────────────────────────────── */}
       <section className="py-16 text-center relative overflow-hidden"
-        style={{ background: 'linear-gradient(135deg, #1B2B5B 0%, #2d4a8a 100%)' }}>
+        style={{ background: 'linear-gradient(135deg, #143A1F 0%, #2d4a8a 100%)' }}>
         <div className="absolute inset-0 opacity-5"
           style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
         <div className="relative z-10 max-w-2xl mx-auto px-4">

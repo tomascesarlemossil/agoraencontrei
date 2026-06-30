@@ -200,7 +200,7 @@ export default async function CondoPage(props: Props) {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
 
       {/* HERO — Template Elite */}
-      <section className="bg-gradient-to-br from-[#1B2B5B] to-[#0f1c3a] text-white py-14 px-4">
+      <section className="bg-gradient-to-br from-[#143A1F] to-[#0f1c3a] text-white py-14 px-4">
         <div className="max-w-5xl mx-auto">
           <nav className="text-xs text-blue-200 mb-4 flex items-center gap-1.5 flex-wrap">
             <Link href="/" className="hover:text-white">Início</Link>
@@ -230,7 +230,7 @@ export default async function CondoPage(props: Props) {
           <div className="flex flex-wrap gap-3">
             <Link href={`/imoveis?city=Franca&neighborhood=${encodeURIComponent(condoName)}`}
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm"
-              style={{ background: '#C9A84C', color: '#1B2B5B' }}>
+              style={{ background: '#C9A84C', color: '#143A1F' }}>
               <Home className="w-4 h-4" /> Ver Imóveis à Venda
             </Link>
             <Link href={`/leiloes?search=${encodeURIComponent(condoName)}`}
@@ -254,7 +254,7 @@ export default async function CondoPage(props: Props) {
 
       {/* IMÓVEIS */}
       <section className="max-w-6xl mx-auto px-4 py-10">
-        <h2 className="text-2xl font-bold text-[#1B2B5B] mb-6" style={{ fontFamily: 'Georgia, serif' }}>
+        <h2 className="text-2xl font-bold text-[#143A1F] mb-6" style={{ fontFamily: 'Georgia, serif' }}>
           Imóveis no {condoName}
         </h2>
         {properties.length > 0 ? (
@@ -271,7 +271,7 @@ export default async function CondoPage(props: Props) {
                     {hasValidImage ? (
                       <Image src={p.coverImage} alt={p.title ?? condoName} fill className="object-cover" loading="lazy" />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#1B2B5B] to-[#0f1c3a]">
+                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#143A1F] to-[#0f1c3a]">
                         <Home className="w-10 h-10 text-white/30" />
                       </div>
                     )}
@@ -281,7 +281,7 @@ export default async function CondoPage(props: Props) {
                     <p className="text-xs text-gray-500 flex items-center gap-1 mb-2">
                       <MapPin className="w-3 h-3" /> {p.neighborhood ?? condoName}, Franca/SP
                     </p>
-                    <p className="font-bold text-base" style={{ color: '#1B2B5B' }}>{fmtPrice(p)}</p>
+                    <p className="font-bold text-base" style={{ color: '#143A1F' }}>{fmtPrice(p)}</p>
                     <div className="flex gap-3 mt-2 text-xs text-gray-500">
                       {p.bedrooms > 0 && <span>{p.bedrooms} qto{p.bedrooms > 1 ? 's' : ''}</span>}
                       {p.area > 0 && <span>{p.area}m²</span>}
@@ -298,7 +298,7 @@ export default async function CondoPage(props: Props) {
             <p className="text-gray-500 mb-4">Nenhum imóvel ativo no {condoName} no momento.</p>
             <div className="flex gap-3 justify-center flex-wrap">
               <Link href="/imoveis?city=Franca"
-                className="px-5 py-2.5 rounded-xl font-bold text-sm text-white" style={{ background: '#1B2B5B' }}>
+                className="px-5 py-2.5 rounded-xl font-bold text-sm text-white" style={{ background: '#143A1F' }}>
                 Ver imóveis em Franca
               </Link>
               <a href={`https://wa.me/5516981010004?text=Olá! Quero um imóvel no ${condoName} em Franca/SP.`}
@@ -313,7 +313,7 @@ export default async function CondoPage(props: Props) {
           <div className="text-center mt-6">
             <Link href={`/imoveis?city=Franca&neighborhood=${encodeURIComponent(condoName)}`}
               className="inline-flex items-center gap-2 px-8 py-3 rounded-xl font-bold text-sm text-white"
-              style={{ background: '#1B2B5B' }}>
+              style={{ background: '#143A1F' }}>
               Ver todos os {total} imóveis no {condoName} <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
@@ -339,7 +339,7 @@ export default async function CondoPage(props: Props) {
                     )}
                   </div>
                   <p className="font-semibold text-gray-800 text-sm line-clamp-2 mb-1">{a.title}</p>
-                  <p className="text-[#1B2B5B] font-bold">
+                  <p className="text-[#143A1F] font-bold">
                     {a.minimumBid ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(Number(a.minimumBid)) : 'Consulte'}
                   </p>
                 </Link>
@@ -358,7 +358,7 @@ export default async function CondoPage(props: Props) {
       {/* ESPECIALISTAS — INTERLINKAGEM SEO */}
       <section className="max-w-6xl mx-auto px-4 pb-10">
         <div className="bg-white rounded-2xl border p-6">
-          <h2 className="text-xl font-bold text-[#1B2B5B] mb-1" style={{ fontFamily: 'Georgia, serif' }}>
+          <h2 className="text-xl font-bold text-[#143A1F] mb-1" style={{ fontFamily: 'Georgia, serif' }}>
             Especialistas que já trabalharam no {condoName}
           </h2>
           <p className="text-gray-500 text-sm mb-5">
@@ -370,12 +370,12 @@ export default async function CondoPage(props: Props) {
               {specialists.map((s: any) => (
                 <Link key={s.id} href={`/especialistas/${s.slug}`}
                   className="flex items-center gap-3 p-4 bg-[#f8f6f1] rounded-xl hover:bg-[#C9A84C]/10 transition-colors group border border-transparent hover:border-[#C9A84C]/20">
-                  <div className="w-10 h-10 rounded-full bg-[#1B2B5B]/10 flex items-center justify-center flex-shrink-0 font-bold text-[#1B2B5B]">
+                  <div className="w-10 h-10 rounded-full bg-[#143A1F]/10 flex items-center justify-center flex-shrink-0 font-bold text-[#143A1F]">
                     {s.name.charAt(0).toUpperCase()}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1">
-                      <p className="font-semibold text-[#1B2B5B] text-sm truncate group-hover:text-[#C9A84C] transition-colors">
+                      <p className="font-semibold text-[#143A1F] text-sm truncate group-hover:text-[#C9A84C] transition-colors">
                         {s.name}
                       </p>
                       {(s.plan === 'PRIME' || s.plan === 'VIP') && (
@@ -395,7 +395,7 @@ export default async function CondoPage(props: Props) {
                 Nenhum especialista cadastrado para o {condoName} ainda.
               </p>
               <Link href="/parceiros/cadastro"
-                className="inline-flex items-center gap-2 bg-[#1B2B5B] text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-[#162247] transition-colors">
+                className="inline-flex items-center gap-2 bg-[#143A1F] text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-[#0E2A15] transition-colors">
                 Cadastrar meu perfil aqui
               </Link>
             </div>
@@ -416,7 +416,7 @@ export default async function CondoPage(props: Props) {
       {/* FAQ SEO */}
       <section className="max-w-4xl mx-auto px-4 pb-12">
         <div className="bg-white rounded-2xl p-8 border">
-          <h2 className="text-xl font-bold mb-6" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>
+          <h2 className="text-xl font-bold mb-6" style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}>
             Perguntas Frequentes — {condoName}, Franca/SP
           </h2>
           <div className="space-y-5 divide-y divide-gray-100">
@@ -455,7 +455,7 @@ export default async function CondoPage(props: Props) {
       </section>
 
       {/* CTA */}
-      <section className="py-10 px-4 text-center" style={{ background: 'linear-gradient(135deg, #1B2B5B, #0f1c3a)' }}>
+      <section className="py-10 px-4 text-center" style={{ background: 'linear-gradient(135deg, #143A1F, #0f1c3a)' }}>
         <div className="max-w-2xl mx-auto">
           <Star className="w-7 h-7 mx-auto mb-3" style={{ color: '#C9A84C' }} />
           <h2 className="text-xl font-bold text-white mb-2" style={{ fontFamily: 'Georgia, serif' }}>
@@ -473,7 +473,7 @@ export default async function CondoPage(props: Props) {
               <Phone className="w-4 h-4" /> (16) 3723-0045
             </a>
             <Link href="/imoveis?city=Franca"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm text-[#1B2B5B]"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm text-[#143A1F]"
               style={{ background: '#C9A84C' }}>
               <Home className="w-4 h-4" /> Ver Todos os Imóveis
             </Link>

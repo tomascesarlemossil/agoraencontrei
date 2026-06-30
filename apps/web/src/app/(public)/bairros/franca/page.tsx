@@ -64,7 +64,7 @@ export default function FrancaNeighborhoodsPage() {
 
       <main className="min-h-screen bg-[#0f1a35]">
         {/* Hero */}
-        <section className="bg-gradient-to-br from-[#1B2B5B] to-[#0f1a35] py-16 px-4">
+        <section className="bg-gradient-to-br from-[#143A1F] to-[#0f1a35] py-16 px-4">
           <div className="max-w-6xl mx-auto">
             <div className="flex items-center gap-2 text-yellow-400/70 text-sm mb-4">
               <Link href="/" className="hover:text-yellow-400">Início</Link>
@@ -105,7 +105,7 @@ export default function FrancaNeighborhoodsPage() {
             <div className="mt-6 flex flex-col sm:flex-row gap-3">
               <Link
                 href="/imoveis?city=Franca&transactionType=SALE"
-                className="flex items-center justify-center gap-2 px-6 py-3 bg-yellow-400 hover:bg-yellow-300 text-[#1B2B5B] font-bold rounded-xl transition-colors"
+                className="flex items-center justify-center gap-2 px-6 py-3 bg-yellow-400 hover:bg-yellow-300 text-[#143A1F] font-bold rounded-xl transition-colors"
               >
                 <Home className="h-5 w-5" />
                 Ver imóveis à venda em Franca
@@ -142,7 +142,7 @@ export default function FrancaNeighborhoodsPage() {
             <div key={letter} id={`letra-${letter}`} className="mb-8">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-10 h-10 bg-yellow-400 rounded-xl flex items-center justify-center">
-                  <span className="text-[#1B2B5B] font-bold text-lg">{letter}</span>
+                  <span className="text-[#143A1F] font-bold text-lg">{letter}</span>
                 </div>
                 <h2 className="text-xl font-bold text-white">{letter}</h2>
                 <span className="text-white/40 text-sm">({groups[letter].length} bairros)</span>
@@ -165,7 +165,7 @@ export default function FrancaNeighborhoodsPage() {
         </section>
 
         {/* CTA final */}
-        <section className="bg-gradient-to-r from-[#1B2B5B] to-[#243670] py-12 px-4">
+        <section className="bg-gradient-to-r from-[#143A1F] to-[#243670] py-12 px-4">
           <div className="max-w-3xl mx-auto text-center">
             <Building2 className="h-12 w-12 text-yellow-400 mx-auto mb-4" />
             <h2 className="text-2xl font-bold text-white mb-3">
@@ -186,7 +186,7 @@ export default function FrancaNeighborhoodsPage() {
               </a>
               <Link
                 href="/anunciar"
-                className="px-8 py-3 bg-yellow-400 hover:bg-yellow-300 text-[#1B2B5B] font-bold rounded-xl transition-colors"
+                className="px-8 py-3 bg-yellow-400 hover:bg-yellow-300 text-[#143A1F] font-bold rounded-xl transition-colors"
               >
                 Anunciar meu imóvel
               </Link>

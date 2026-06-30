@@ -92,7 +92,7 @@ export default async function GuiaCidadePage(props: { params: Promise<{ estado: 
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
 
       {/* Hero */}
-      <section className="bg-gradient-to-br from-[#1B2B5B] to-[#0f1c3a] text-white py-14 px-4">
+      <section className="bg-gradient-to-br from-[#143A1F] to-[#0f1c3a] text-white py-14 px-4">
         <div className="max-w-5xl mx-auto">
           <nav className="text-xs text-blue-200 mb-4 flex items-center gap-1.5 flex-wrap">
             <Link href="/" className="hover:text-white">Início</Link>
@@ -114,24 +114,24 @@ export default async function GuiaCidadePage(props: { params: Promise<{ estado: 
       <div className="max-w-4xl mx-auto px-4 py-10 space-y-10">
         {/* Dados IBGE */}
         <section className="bg-gray-50 rounded-2xl border p-6">
-          <h2 className="text-lg font-bold text-[#1B2B5B] mb-3">
+          <h2 className="text-lg font-bold text-[#143A1F] mb-3">
             {city.name} em Números (IBGE)
           </h2>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
             <div className="bg-white rounded-xl border p-3 text-center">
-              <p className="text-lg font-bold text-[#1B2B5B]">{pop}</p>
+              <p className="text-lg font-bold text-[#143A1F]">{pop}</p>
               <p className="text-xs text-gray-500 mt-1">Habitantes</p>
             </div>
             <div className="bg-white rounded-xl border p-3 text-center">
-              <p className="text-lg font-bold text-[#1B2B5B]">{pib}</p>
+              <p className="text-lg font-bold text-[#143A1F]">{pib}</p>
               <p className="text-xs text-gray-500 mt-1">PIB per capita</p>
             </div>
             <div className="bg-white rounded-xl border p-3 text-center">
-              <p className="text-lg font-bold text-[#1B2B5B]">{city.salarioMedioSM} SM</p>
+              <p className="text-lg font-bold text-[#143A1F]">{city.salarioMedioSM} SM</p>
               <p className="text-xs text-gray-500 mt-1">Salário médio</p>
             </div>
             <div className="bg-white rounded-xl border p-3 text-center">
-              <p className="text-lg font-bold text-[#1B2B5B]">{city.areakm2} km²</p>
+              <p className="text-lg font-bold text-[#143A1F]">{city.areakm2} km²</p>
               <p className="text-xs text-gray-500 mt-1">Área</p>
             </div>
           </div>
@@ -140,7 +140,7 @@ export default async function GuiaCidadePage(props: { params: Promise<{ estado: 
 
         {/* Conteúdo do guia */}
         <section className="bg-white rounded-2xl border p-6 sm:p-8">
-          <h2 className="text-xl font-bold text-[#1B2B5B] mb-4 flex items-center gap-2">
+          <h2 className="text-xl font-bold text-[#143A1F] mb-4 flex items-center gap-2">
             <BookOpen className="w-5 h-5 text-[#C9A84C]" />
             {guia.label} em {city.name} — Guia Completo
           </h2>
@@ -166,7 +166,7 @@ export default async function GuiaCidadePage(props: { params: Promise<{ estado: 
 
         {/* Outros guias */}
         <section>
-          <h2 className="text-lg font-bold text-[#1B2B5B] mb-4">
+          <h2 className="text-lg font-bold text-[#143A1F] mb-4">
             Mais Guias sobre {city.name}
           </h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -207,7 +207,7 @@ export default async function GuiaCidadePage(props: { params: Promise<{ estado: 
             <Link
               href={`/imoveis?city=${city.name}`}
               className="flex-1 sm:flex-none px-4 py-2 rounded-xl font-bold text-sm text-center"
-              style={{ background: '#C9A84C', color: '#1B2B5B' }}
+              style={{ background: '#C9A84C', color: '#143A1F' }}
             >
               Ver Marketplace
             </Link>

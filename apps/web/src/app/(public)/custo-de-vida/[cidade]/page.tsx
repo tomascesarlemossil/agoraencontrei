@@ -192,7 +192,7 @@ export default async function CustoDeVidaPage(props: Props) {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
 
       {/* Hero */}
-      <section className="bg-gradient-to-br from-[#1B2B5B] to-[#0f1c3a] text-white py-14 px-4">
+      <section className="bg-gradient-to-br from-[#143A1F] to-[#0f1c3a] text-white py-14 px-4">
         <div className="max-w-5xl mx-auto">
           <nav className="text-xs text-blue-200 mb-4 flex items-center gap-1.5">
             <Link href="/" className="hover:text-white">Início</Link> <span>/</span>
@@ -235,7 +235,7 @@ export default async function CustoDeVidaPage(props: Props) {
 
         {/* Ranking de Bairros */}
         <section className="bg-white rounded-2xl border shadow-sm overflow-hidden">
-          <div className="px-6 py-4 border-b" style={{ background: 'linear-gradient(135deg, #1B2B5B, #2d4a8a)' }}>
+          <div className="px-6 py-4 border-b" style={{ background: 'linear-gradient(135deg, #143A1F, #2d4a8a)' }}>
             <h2 className="text-lg font-bold text-white flex items-center gap-2">
               <BarChart3 className="w-5 h-5 text-[#C9A84C]" />
               Ranking de Bairros por Valor do m²
@@ -274,7 +274,7 @@ export default async function CustoDeVidaPage(props: Props) {
         </section>
 
         {/* CTA */}
-        <div className="bg-gradient-to-r from-[#1B2B5B] to-[#2d4a8a] rounded-2xl p-8 text-center text-white">
+        <div className="bg-gradient-to-r from-[#143A1F] to-[#2d4a8a] rounded-2xl p-8 text-center text-white">
           <h2 className="text-2xl font-bold mb-2" style={{ fontFamily: 'Georgia, serif' }}>
             Quer investir em {city.name}?
           </h2>
@@ -283,7 +283,7 @@ export default async function CustoDeVidaPage(props: Props) {
           </p>
           <div className="flex flex-wrap gap-3 justify-center">
             <Link href={`/leiloes?city=${city.name}`}
-              className="px-6 py-3 rounded-xl font-bold text-sm" style={{ backgroundColor: '#C9A84C', color: '#1B2B5B' }}>
+              className="px-6 py-3 rounded-xl font-bold text-sm" style={{ backgroundColor: '#C9A84C', color: '#143A1F' }}>
               🏛️ Ver Leilões em {city.name}
             </Link>
             <Link href={`/imoveis?city=${city.name}`}

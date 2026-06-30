@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   alternates: { canonical: 'https://www.agoraencontrei.com.br/cookies' },
 }
 
-const NAVY = '#1B2B5B'
+const NAVY = '#143A1F'
 
 const CATEGORIAS = [
   {
@@ -90,11 +90,11 @@ export default function CookiesPage() {
         <h2 className="mb-3 text-xl font-bold" style={{ color: NAVY }}>Mais informações</h2>
         <p className="mb-8">
           Para entender como tratamos seus dados pessoais de forma mais ampla, consulte a nossa{' '}
-          <Link href="/politica-privacidade" className="font-semibold text-[#1B2B5B] underline">
+          <Link href="/politica-privacidade" className="font-semibold text-[#143A1F] underline">
             Política de Privacidade
           </Link>
           . Dúvidas sobre cookies ou privacidade podem ser enviadas pelo nosso{' '}
-          <Link href="/contato" className="font-semibold text-[#1B2B5B] underline">canal de contato</Link>.
+          <Link href="/contato" className="font-semibold text-[#143A1F] underline">canal de contato</Link>.
         </p>
 
         <div className="rounded-xl border border-gray-200 bg-white p-5 text-sm text-gray-500">

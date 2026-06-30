@@ -62,7 +62,7 @@ export default async function CityPage() {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
 
-      <section className="bg-gradient-to-br from-[#1B2B5B] to-[#0f1c3a] text-white py-16 px-4">
+      <section className="bg-gradient-to-br from-[#143A1F] to-[#0f1c3a] text-white py-16 px-4">
         <div className="max-w-5xl mx-auto text-center">
           <div className="inline-flex items-center gap-2 bg-white/10 rounded-full px-4 py-1.5 text-xs font-semibold mb-4" style={{ color: '#C9A84C' }}>
             <MapPin className="w-3.5 h-3.5" /> Curitiba/PR · População 1.963.726
@@ -74,7 +74,7 @@ export default async function CityPage() {
             Capital ecológica do Brasil. Planejamento urbano referência mundial. Alto IDH.
           </p>
           <div className="flex flex-wrap gap-3 justify-center">
-            <Link href={`/imoveis?city=Curitiba`} className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm" style={{ background: '#C9A84C', color: '#1B2B5B' }}>
+            <Link href={`/imoveis?city=Curitiba`} className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm" style={{ background: '#C9A84C', color: '#143A1F' }}>
               <Search className="w-4 h-4" /> Buscar Imóveis
             </Link>
             <Link href={`/leiloes?city=Curitiba`} className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm bg-white/10 text-white border border-white/20">
@@ -136,7 +136,7 @@ export default async function CityPage() {
                     {a.discountPercent && <span className="text-xs font-bold text-red-600">-{a.discountPercent}%</span>}
                   </div>
                   <p className="font-semibold text-sm text-gray-800 line-clamp-2">{a.title}</p>
-                  <p className="text-lg font-bold mt-2" style={{ color: '#1B2B5B' }}>{a.minimumBid ? fmt(Number(a.minimumBid)) : '—'}</p>
+                  <p className="text-lg font-bold mt-2" style={{ color: '#143A1F' }}>{a.minimumBid ? fmt(Number(a.minimumBid)) : '—'}</p>
                 </Link>
               ))}
             </div>
@@ -157,7 +157,7 @@ export default async function CityPage() {
                   <div className="p-4">
                     <p className="font-semibold text-sm text-gray-800 line-clamp-2">{p.title}</p>
                     <p className="text-xs text-gray-500 mt-1"><MapPin className="w-3 h-3 inline" /> {p.neighborhood}</p>
-                    <p className="font-bold text-base mt-2" style={{ color: '#1B2B5B' }}>
+                    <p className="font-bold text-base mt-2" style={{ color: '#143A1F' }}>
                       {p.price ? fmt(Number(p.price)) : p.priceRent ? `${fmt(Number(p.priceRent))}/mês` : 'Consulte'}
                     </p>
                   </div>
@@ -176,7 +176,7 @@ export default async function CityPage() {
         </section>
 
         {/* CTA */}
-        <section className="bg-gradient-to-r from-[#1B2B5B] to-[#2d4a8a] rounded-2xl p-8 text-center text-white">
+        <section className="bg-gradient-to-r from-[#143A1F] to-[#2d4a8a] rounded-2xl p-8 text-center text-white">
           <h2 className="text-2xl font-bold mb-3" style={{ fontFamily: 'Georgia, serif' }}>
             Encontre seu imóvel ideal em Curitiba
           </h2>

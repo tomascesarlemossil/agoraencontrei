@@ -134,7 +134,7 @@ export function HeroBackground({ videoUrl, videoType }: Props) {
           inset: 0,
           background: isMobile
             ? 'linear-gradient(180deg, rgba(15,28,58,0.84) 0%, rgba(15,28,58,0.62) 45%, rgba(15,28,58,0.90) 100%)'
-            : 'linear-gradient(135deg, rgba(15,28,58,0.82) 0%, rgba(27,43,91,0.78) 50%, rgba(30,53,104,0.80) 100%)',
+            : 'linear-gradient(135deg, rgba(15,28,58,0.82) 0%, rgba(20,58,31,0.78) 50%, rgba(30,53,104,0.80) 100%)',
         }}
       />
     </div>

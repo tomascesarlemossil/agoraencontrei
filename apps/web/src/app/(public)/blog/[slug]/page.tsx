@@ -196,7 +196,7 @@ export default async function BlogPostPage(props: { params: Promise<{ slug: stri
           <Link
             href="/blog"
             className="inline-flex items-center gap-2 text-sm font-medium mb-8 hover:opacity-80 transition-opacity"
-            style={{ color: '#1B2B5B' }}
+            style={{ color: '#143A1F' }}
           >
             <ArrowLeft className="w-4 h-4" />
             Voltar ao Blog
@@ -205,7 +205,7 @@ export default async function BlogPostPage(props: { params: Promise<{ slug: stri
           {/* Title */}
           <h1
             className="text-2xl sm:text-3xl lg:text-4xl font-bold leading-tight mb-4"
-            style={{ color: '#1B2B5B', fontFamily: 'Georgia, "Times New Roman", serif' }}
+            style={{ color: '#143A1F', fontFamily: 'Georgia, "Times New Roman", serif' }}
           >
             {post.title}
           </h1>
@@ -223,7 +223,7 @@ export default async function BlogPostPage(props: { params: Promise<{ slug: stri
               <Link
                 href={`/blog/categoria/${category.slug}`}
                 className="text-xs font-semibold px-3 py-1 rounded-full text-white"
-                style={{ backgroundColor: '#1B2B5B' }}
+                style={{ backgroundColor: '#143A1F' }}
               >
                 {category.name}
               </Link>
@@ -256,7 +256,7 @@ export default async function BlogPostPage(props: { params: Promise<{ slug: stri
           <div className="flex items-center gap-3 pb-8 mb-8 border-b" style={{ borderColor: '#e8e4dc' }}>
             <div
               className="w-11 h-11 rounded-full flex items-center justify-center font-bold text-white text-sm flex-shrink-0"
-              style={{ backgroundColor: '#1B2B5B' }}
+              style={{ backgroundColor: '#143A1F' }}
             >
               {(post.authorName ?? 'A').charAt(0).toUpperCase()}
             </div>
@@ -319,7 +319,7 @@ export default async function BlogPostPage(props: { params: Promise<{ slug: stri
               .blog-content h3 { font-size: 1.25em; }
               .blog-content h4 { font-size: 1.1em; }
               .blog-content p { margin-bottom: 1.25em; }
-              .blog-content a { color: #1B2B5B; text-decoration: underline; text-underline-offset: 2px; }
+              .blog-content a { color: #143A1F; text-decoration: underline; text-underline-offset: 2px; }
               .blog-content a:hover { color: #C9A84C; }
               .blog-content ul, .blog-content ol { padding-left: 1.5em; margin-bottom: 1.25em; }
               .blog-content li { margin-bottom: 0.5em; }
@@ -381,7 +381,7 @@ export default async function BlogPostPage(props: { params: Promise<{ slug: stri
             <section className="mb-12">
               <h2
                 className="text-xl sm:text-2xl font-bold mb-6"
-                style={{ color: '#1B2B5B', fontFamily: 'Georgia, "Times New Roman", serif' }}
+                style={{ color: '#143A1F', fontFamily: 'Georgia, "Times New Roman", serif' }}
               >
                 Perguntas Frequentes
               </h2>
@@ -391,11 +391,11 @@ export default async function BlogPostPage(props: { params: Promise<{ slug: stri
 
           {/* CTA Section */}
           {post.ctaFinal ? (
-            <div className="rounded-2xl p-8 sm:p-10 text-center mb-12" style={{ backgroundColor: '#1B2B5B' }}>
+            <div className="rounded-2xl p-8 sm:p-10 text-center mb-12" style={{ backgroundColor: '#143A1F' }}>
               <div dangerouslySetInnerHTML={{ __html: post.ctaFinal }} className="text-white" />
             </div>
           ) : (
-            <div className="rounded-2xl p-8 sm:p-10 text-center mb-12" style={{ backgroundColor: '#1B2B5B' }}>
+            <div className="rounded-2xl p-8 sm:p-10 text-center mb-12" style={{ backgroundColor: '#143A1F' }}>
               <h3
                 className="text-xl sm:text-2xl font-bold text-white mb-3"
                 style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}
@@ -408,7 +408,7 @@ export default async function BlogPostPage(props: { params: Promise<{ slug: stri
               <Link
                 href="/imoveis"
                 className="inline-flex items-center gap-2 px-7 py-3 rounded-full font-semibold text-sm transition-all hover:brightness-110"
-                style={{ backgroundColor: '#C9A84C', color: '#1B2B5B' }}
+                style={{ backgroundColor: '#C9A84C', color: '#143A1F' }}
               >
                 Ver Imoveis <Building className="w-4 h-4" />
               </Link>
@@ -432,7 +432,7 @@ export default async function BlogPostPage(props: { params: Promise<{ slug: stri
               <Link href={`/blog/${pillarPost.slug}`} className="group">
                 <h3
                   className="text-lg font-bold group-hover:opacity-80 transition-opacity"
-                  style={{ color: '#1B2B5B', fontFamily: 'Georgia, "Times New Roman", serif' }}
+                  style={{ color: '#143A1F', fontFamily: 'Georgia, "Times New Roman", serif' }}
                 >
                   {pillarPost.title}
                 </h3>
@@ -448,7 +448,7 @@ export default async function BlogPostPage(props: { params: Promise<{ slug: stri
             <section className="mb-12">
               <h2
                 className="text-xl sm:text-2xl font-bold mb-6"
-                style={{ color: '#1B2B5B', fontFamily: 'Georgia, "Times New Roman", serif' }}
+                style={{ color: '#143A1F', fontFamily: 'Georgia, "Times New Roman", serif' }}
               >
                 Leia tambem
               </h2>
@@ -465,7 +465,7 @@ export default async function BlogPostPage(props: { params: Promise<{ slug: stri
             <section className="mb-12">
               <h2
                 className="text-xl sm:text-2xl font-bold mb-6"
-                style={{ color: '#1B2B5B', fontFamily: 'Georgia, "Times New Roman", serif' }}
+                style={{ color: '#143A1F', fontFamily: 'Georgia, "Times New Roman", serif' }}
               >
                 Posts relacionados
               </h2>
@@ -482,7 +482,7 @@ export default async function BlogPostPage(props: { params: Promise<{ slug: stri
             <Link
               href="/blog"
               className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-sm font-semibold border-2 transition-all hover:shadow-md"
-              style={{ borderColor: '#1B2B5B', color: '#1B2B5B' }}
+              style={{ borderColor: '#143A1F', color: '#143A1F' }}
             >
               <ArrowLeft className="w-4 h-4" />
               Voltar ao Blog

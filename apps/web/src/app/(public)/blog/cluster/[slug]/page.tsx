@@ -84,7 +84,7 @@ export default async function ClusterPage(props: { params: Promise<{ slug: strin
 
       <div style={{ backgroundColor: '#f8f7f4' }}>
         {/* Hero */}
-        <section style={{ backgroundColor: '#1B2B5B' }}>
+        <section style={{ backgroundColor: '#143A1F' }}>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-20">
             {/* Breadcrumb */}
             <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-sm mb-8 flex-wrap text-white/40">
@@ -131,7 +131,7 @@ export default async function ClusterPage(props: { params: Promise<{ slug: strin
                 <Star className="w-5 h-5" style={{ color: '#C9A84C' }} />
                 <h2
                   className="text-lg sm:text-xl font-bold"
-                  style={{ color: '#1B2B5B', fontFamily: 'Georgia, "Times New Roman", serif' }}
+                  style={{ color: '#143A1F', fontFamily: 'Georgia, "Times New Roman", serif' }}
                 >
                   Artigo Principal
                 </h2>
@@ -162,7 +162,7 @@ export default async function ClusterPage(props: { params: Promise<{ slug: strin
                     </span>
                     <h3
                       className="text-xl sm:text-2xl font-bold leading-tight mb-3 group-hover:opacity-80 transition-opacity"
-                      style={{ color: '#1B2B5B', fontFamily: 'Georgia, "Times New Roman", serif' }}
+                      style={{ color: '#143A1F', fontFamily: 'Georgia, "Times New Roman", serif' }}
                     >
                       {pillarPost.title}
                     </h3>
@@ -173,7 +173,7 @@ export default async function ClusterPage(props: { params: Promise<{ slug: strin
                     )}
                     <span
                       className="inline-flex items-center gap-1 text-sm font-semibold"
-                      style={{ color: '#1B2B5B' }}
+                      style={{ color: '#143A1F' }}
                     >
                       Ler artigo completo
                       <ChevronRight className="w-4 h-4" />
@@ -189,7 +189,7 @@ export default async function ClusterPage(props: { params: Promise<{ slug: strin
             <section className="mb-12">
               <h2
                 className="text-lg sm:text-xl font-bold mb-6"
-                style={{ color: '#1B2B5B', fontFamily: 'Georgia, "Times New Roman", serif' }}
+                style={{ color: '#143A1F', fontFamily: 'Georgia, "Times New Roman", serif' }}
               >
                 Artigos do Guia
               </h2>
@@ -213,7 +213,7 @@ export default async function ClusterPage(props: { params: Promise<{ slug: strin
             <Link
               href="/blog"
               className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-sm font-semibold border-2 transition-all hover:shadow-md"
-              style={{ borderColor: '#1B2B5B', color: '#1B2B5B' }}
+              style={{ borderColor: '#143A1F', color: '#143A1F' }}
             >
               <ArrowLeft className="w-4 h-4" />
               Voltar ao Blog

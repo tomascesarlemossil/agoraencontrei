@@ -94,7 +94,7 @@ function CompareBar({ label, valueA, valueB, nameA, nameB, format = 'number' }: 
         <div className="flex items-center gap-3">
           <span className={`text-xs font-bold w-24 truncate ${winner === 'A' ? 'text-green-700' : 'text-gray-500'}`}>{nameA}</span>
           <div className="flex-1 bg-gray-100 rounded-full h-6 overflow-hidden">
-            <div className="h-full rounded-full flex items-center px-2 text-xs font-bold text-white" style={{ width: `${Math.max(pctA, 10)}%`, background: winner === 'A' ? '#16a34a' : '#1B2B5B' }}>
+            <div className="h-full rounded-full flex items-center px-2 text-xs font-bold text-white" style={{ width: `${Math.max(pctA, 10)}%`, background: winner === 'A' ? '#16a34a' : '#143A1F' }}>
               {fmt(valueA)}
             </div>
           </div>
@@ -102,7 +102,7 @@ function CompareBar({ label, valueA, valueB, nameA, nameB, format = 'number' }: 
         <div className="flex items-center gap-3">
           <span className={`text-xs font-bold w-24 truncate ${winner === 'B' ? 'text-green-700' : 'text-gray-500'}`}>{nameB}</span>
           <div className="flex-1 bg-gray-100 rounded-full h-6 overflow-hidden">
-            <div className="h-full rounded-full flex items-center px-2 text-xs font-bold text-white" style={{ width: `${Math.max(pctB, 10)}%`, background: winner === 'B' ? '#16a34a' : '#1B2B5B' }}>
+            <div className="h-full rounded-full flex items-center px-2 text-xs font-bold text-white" style={{ width: `${Math.max(pctB, 10)}%`, background: winner === 'B' ? '#16a34a' : '#143A1F' }}>
               {fmt(valueB)}
             </div>
           </div>
@@ -136,7 +136,7 @@ export default async function CompareCidadesPage(
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
 
       {/* Hero */}
-      <section className="bg-gradient-to-br from-[#1B2B5B] to-[#0f1c3a] text-white py-14 px-4">
+      <section className="bg-gradient-to-br from-[#143A1F] to-[#0f1c3a] text-white py-14 px-4">
         <div className="max-w-5xl mx-auto">
           <nav className="text-xs text-blue-200 mb-4 flex items-center gap-1.5">
             <Link href="/" className="hover:text-white">Início</Link>
@@ -163,29 +163,29 @@ export default async function CompareCidadesPage(
             <div key={city.slug} className="bg-white rounded-2xl border p-6">
               <div className="flex items-center gap-2 mb-4">
                 <MapPin className="w-5 h-5" style={{ color: '#C9A84C' }} />
-                <h2 className="text-xl font-bold" style={{ color: '#1B2B5B' }}>{city.name}/{city.state}</h2>
+                <h2 className="text-xl font-bold" style={{ color: '#143A1F' }}>{city.name}/{city.state}</h2>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="bg-gray-50 rounded-lg p-3 text-center">
-                  <p className="text-lg font-bold" style={{ color: '#1B2B5B' }}>{formatNum(city.populacao)}</p>
+                  <p className="text-lg font-bold" style={{ color: '#143A1F' }}>{formatNum(city.populacao)}</p>
                   <p className="text-[10px] text-gray-500">Habitantes</p>
                 </div>
                 <div className="bg-gray-50 rounded-lg p-3 text-center">
-                  <p className="text-lg font-bold" style={{ color: '#1B2B5B' }}>{formatCurrency(city.pibPerCapita)}</p>
+                  <p className="text-lg font-bold" style={{ color: '#143A1F' }}>{formatCurrency(city.pibPerCapita)}</p>
                   <p className="text-[10px] text-gray-500">PIB per capita</p>
                 </div>
                 <div className="bg-gray-50 rounded-lg p-3 text-center">
-                  <p className="text-lg font-bold" style={{ color: '#1B2B5B' }}>{city.salarioMedioSM} SM</p>
+                  <p className="text-lg font-bold" style={{ color: '#143A1F' }}>{city.salarioMedioSM} SM</p>
                   <p className="text-[10px] text-gray-500">Salário médio</p>
                 </div>
                 <div className="bg-gray-50 rounded-lg p-3 text-center">
-                  <p className="text-lg font-bold" style={{ color: '#1B2B5B' }}>{formatNum(city.areakm2)} km²</p>
+                  <p className="text-lg font-bold" style={{ color: '#143A1F' }}>{formatNum(city.areakm2)} km²</p>
                   <p className="text-[10px] text-gray-500">Área</p>
                 </div>
               </div>
               <Link href={`/${city.stateSlug}/${city.slug}`}
                 className="flex items-center justify-center gap-2 mt-4 py-2.5 rounded-xl text-sm font-bold text-white"
-                style={{ background: '#1B2B5B' }}>
+                style={{ background: '#143A1F' }}>
                 Ver imóveis em {city.name} <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
@@ -194,7 +194,7 @@ export default async function CompareCidadesPage(
 
         {/* Barras comparativas */}
         <div className="bg-white rounded-2xl border p-6">
-          <h2 className="text-xl font-bold mb-6" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>
+          <h2 className="text-xl font-bold mb-6" style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}>
             Comparação Detalhada
           </h2>
 
@@ -208,7 +208,7 @@ export default async function CompareCidadesPage(
         <div className="mt-8 text-center">
           <p className="text-gray-600 text-sm mb-4">
             Para conferir a lista completa e atualizada de oportunidades reais agora mesmo,{' '}
-            <a href="https://agoraencontrei.com.br" className="font-semibold underline" style={{ color: '#1B2B5B' }}>
+            <a href="https://agoraencontrei.com.br" className="font-semibold underline" style={{ color: '#143A1F' }}>
               acesse nossa vitrine principal no marketplace AgoraEncontrei
             </a>.
           </p>
@@ -216,7 +216,7 @@ export default async function CompareCidadesPage(
 
         {/* Outras comparações */}
         <div className="mt-8">
-          <h2 className="text-lg font-bold mb-4" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>
+          <h2 className="text-lg font-bold mb-4" style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}>
             Outras Comparações
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -236,7 +236,7 @@ export default async function CompareCidadesPage(
       </section>
 
       {/* Floating CTA */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-[#1B2B5B] p-3 text-white text-center font-bold text-sm shadow-2xl sm:hidden">
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-[#143A1F] p-3 text-white text-center font-bold text-sm shadow-2xl sm:hidden">
         <Link href="/" className="flex items-center justify-center gap-2">
           <Home className="w-4 h-4" style={{ color: '#C9A84C' }} />
           Marketplace AgoraEncontrei

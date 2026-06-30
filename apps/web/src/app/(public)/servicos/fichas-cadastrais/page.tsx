@@ -13,7 +13,7 @@ const FICHAS = [
     id: 'proposta-compra' as FichaType,
     title: 'Proposta de Compra',
     icon: Home,
-    color: '#1B2B5B',
+    color: '#143A1F',
     description: 'Faça uma proposta formal de compra de imóvel.',
     fields: [
       { key: 'nome', label: 'Nome completo *', type: 'text', required: true, placeholder: undefined, options: undefined },
@@ -273,7 +273,7 @@ function FichaForm({ ficha }: { ficha: Ficha }) {
 export default function FichasCadastraisPage() {
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#f8f6f1' }}>
-      <section className="py-16 text-center" style={{ backgroundColor: '#1B2B5B' }}>
+      <section className="py-16 text-center" style={{ backgroundColor: '#143A1F' }}>
         <div className="max-w-3xl mx-auto px-4">
           <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: 'rgba(201,168,76,0.15)' }}>
             <ClipboardList className="w-8 h-8" style={{ color: '#C9A84C' }} />
@@ -291,7 +291,7 @@ export default function FichasCadastraisPage() {
         ))}
 
         <div className="text-center pt-4">
-          <Link href="/servicos" className="text-sm font-medium hover:opacity-80" style={{ color: '#1B2B5B' }}>
+          <Link href="/servicos" className="text-sm font-medium hover:opacity-80" style={{ color: '#143A1F' }}>
             ← Voltar aos serviços
           </Link>
         </div>

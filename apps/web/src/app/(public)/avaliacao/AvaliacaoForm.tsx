@@ -316,7 +316,7 @@ export function AvaliacaoForm() {
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full mb-6" style={{ backgroundColor: 'rgba(201,168,76,0.15)' }}>
             <CheckCircle className="w-8 h-8" style={{ color: '#C9A84C' }} />
           </div>
-          <h3 className="text-xl font-bold mb-3" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>
+          <h3 className="text-xl font-bold mb-3" style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}>
             Solicitação enviada com sucesso!
           </h3>
           <p className="text-gray-500 text-sm max-w-sm mx-auto mb-6">
@@ -338,7 +338,7 @@ export function AvaliacaoForm() {
           <div>
             <div className="flex items-center gap-2 mb-4">
               <Sparkles className="w-5 h-5 text-[#C9A84C]" />
-              <h3 className="text-lg font-bold" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>
+              <h3 className="text-lg font-bold" style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}>
                 Avaliação Inteligente (Prévia)
               </h3>
             </div>
@@ -383,7 +383,7 @@ export function AvaliacaoForm() {
               {PROPERTY_TYPES.map(t => (
                 <button key={t.value} type="button" onClick={() => set('type', t.value)}
                   className="px-3 py-2.5 rounded-xl text-sm font-medium border-2 transition-all"
-                  style={{ borderColor: form.type === t.value ? '#C9A84C' : '#e5e7eb', backgroundColor: form.type === t.value ? 'rgba(201,168,76,0.08)' : '#fff', color: form.type === t.value ? '#1B2B5B' : '#6b7280' }}
+                  style={{ borderColor: form.type === t.value ? '#C9A84C' : '#e5e7eb', backgroundColor: form.type === t.value ? 'rgba(201,168,76,0.08)' : '#fff', color: form.type === t.value ? '#143A1F' : '#6b7280' }}
                 >{t.label}</button>
               ))}
             </div>
@@ -394,14 +394,14 @@ export function AvaliacaoForm() {
               {PURPOSES.map(p => (
                 <button key={p.value} type="button" onClick={() => set('purpose', p.value)}
                   className="px-3 py-2.5 rounded-xl text-sm font-medium border-2 transition-all"
-                  style={{ borderColor: form.purpose === p.value ? '#1B2B5B' : '#e5e7eb', backgroundColor: form.purpose === p.value ? 'rgba(27,43,91,0.06)' : '#fff', color: form.purpose === p.value ? '#1B2B5B' : '#6b7280' }}
+                  style={{ borderColor: form.purpose === p.value ? '#143A1F' : '#e5e7eb', backgroundColor: form.purpose === p.value ? 'rgba(20,58,31,0.06)' : '#fff', color: form.purpose === p.value ? '#143A1F' : '#6b7280' }}
                 >{p.label}</button>
               ))}
             </div>
           </div>
           <button type="button" disabled={!form.type || !form.purpose} onClick={() => setStep(2)}
             className="w-full py-3 rounded-xl text-sm font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-            style={{ backgroundColor: '#1B2B5B', color: '#fff' }}
+            style={{ backgroundColor: '#143A1F', color: '#fff' }}
           >Próximo →</button>
         </div>
       )}
@@ -442,7 +442,7 @@ export function AvaliacaoForm() {
           </div>
           <div className="flex gap-3">
             <button type="button" onClick={() => setStep(1)} className="flex-1 py-3 rounded-xl text-sm font-semibold border transition-all" style={{ borderColor: '#e5e7eb', color: '#6b7280' }}>← Voltar</button>
-            <button type="button" onClick={() => setStep(3)} className="flex-[2] py-3 rounded-xl text-sm font-semibold transition-all" style={{ backgroundColor: '#1B2B5B', color: '#fff' }}>Próximo →</button>
+            <button type="button" onClick={() => setStep(3)} className="flex-[2] py-3 rounded-xl text-sm font-semibold transition-all" style={{ backgroundColor: '#143A1F', color: '#fff' }}>Próximo →</button>
           </div>
         </div>
       )}
@@ -469,7 +469,7 @@ export function AvaliacaoForm() {
               {CONDITIONS.map(c => (
                 <button key={c.value} type="button" onClick={() => set('condition', c.value)}
                   className="px-3 py-2 rounded-xl text-xs font-medium border-2 transition-all"
-                  style={{ borderColor: form.condition === c.value ? '#C9A84C' : '#e5e7eb', backgroundColor: form.condition === c.value ? 'rgba(201,168,76,0.08)' : '#fff', color: form.condition === c.value ? '#1B2B5B' : '#6b7280' }}
+                  style={{ borderColor: form.condition === c.value ? '#C9A84C' : '#e5e7eb', backgroundColor: form.condition === c.value ? 'rgba(201,168,76,0.08)' : '#fff', color: form.condition === c.value ? '#143A1F' : '#6b7280' }}
                 >{c.label}</button>
               ))}
             </div>
@@ -481,7 +481,7 @@ export function AvaliacaoForm() {
               {STANDARDS.map(s => (
                 <button key={s.value} type="button" onClick={() => set('standard', s.value)}
                   className="px-3 py-2 rounded-xl text-xs font-medium border-2 transition-all"
-                  style={{ borderColor: form.standard === s.value ? '#1B2B5B' : '#e5e7eb', backgroundColor: form.standard === s.value ? 'rgba(27,43,91,0.06)' : '#fff', color: form.standard === s.value ? '#1B2B5B' : '#6b7280' }}
+                  style={{ borderColor: form.standard === s.value ? '#143A1F' : '#e5e7eb', backgroundColor: form.standard === s.value ? 'rgba(20,58,31,0.06)' : '#fff', color: form.standard === s.value ? '#143A1F' : '#6b7280' }}
                 >{s.label}</button>
               ))}
             </div>
@@ -516,7 +516,7 @@ export function AvaliacaoForm() {
             <button type="button" onClick={() => setStep(2)} className="flex-1 py-3 rounded-xl text-sm font-semibold border transition-all" style={{ borderColor: '#e5e7eb', color: '#6b7280' }}>← Voltar</button>
             <button type="button" onClick={() => setStep(4)}
               className="flex-[2] py-3 rounded-xl text-sm font-semibold transition-all"
-              style={{ backgroundColor: '#1B2B5B', color: '#fff' }}
+              style={{ backgroundColor: '#143A1F', color: '#fff' }}
             >Próximo →</button>
           </div>
         </div>
@@ -525,10 +525,10 @@ export function AvaliacaoForm() {
       {/* Step 4 — CPF + Identity Verification */}
       {step === 4 && (
         <div className="space-y-5">
-          <div className="bg-gradient-to-br from-[#1B2B5B]/5 to-[#C9A84C]/5 rounded-xl p-5 border border-[#C9A84C]/20">
+          <div className="bg-gradient-to-br from-[#143A1F]/5 to-[#C9A84C]/5 rounded-xl p-5 border border-[#C9A84C]/20">
             <div className="flex items-center gap-2 mb-3">
               <ShieldCheck className="w-5 h-5 text-[#C9A84C]" />
-              <h3 className="text-sm font-bold" style={{ color: '#1B2B5B' }}>Dados pessoais</h3>
+              <h3 className="text-sm font-bold" style={{ color: '#143A1F' }}>Dados pessoais</h3>
             </div>
             <p className="text-xs text-gray-500 mb-4">
               Informe seu CPF para gerar a avaliação. A <strong>primeira avaliação é gratuita</strong> por CPF.
@@ -618,7 +618,7 @@ export function AvaliacaoForm() {
                     </a>
                   )}
                   <button type="button" onClick={checkPaymentStatus} disabled={checkingPayment}
-                    className="w-full py-2.5 rounded-lg text-sm font-semibold bg-[#C9A84C] text-[#1B2B5B] hover:brightness-110 disabled:opacity-50 transition-all flex items-center justify-center gap-2">
+                    className="w-full py-2.5 rounded-lg text-sm font-semibold bg-[#C9A84C] text-[#143A1F] hover:brightness-110 disabled:opacity-50 transition-all flex items-center justify-center gap-2">
                     {checkingPayment ? <Loader2 className="w-4 h-4 animate-spin" /> : <Lock className="w-4 h-4" />}
                     {checkingPayment ? 'Verificando...' : 'Já paguei — Verificar'}
                   </button>
@@ -647,7 +647,7 @@ export function AvaliacaoForm() {
                 }
               }}
               className="flex-[2] py-3 rounded-xl text-sm font-semibold transition-all disabled:opacity-40 flex items-center justify-center gap-2"
-              style={{ backgroundColor: cpfStatus ? '#C9A84C' : '#1B2B5B', color: cpfStatus ? '#1B2B5B' : '#fff' }}
+              style={{ backgroundColor: cpfStatus ? '#C9A84C' : '#143A1F', color: cpfStatus ? '#143A1F' : '#fff' }}
             >
               {cpfChecking ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
               {!cpfStatus ? 'Verificar CPF' : (cpfStatus.freeAvailable || paymentConfirmed) ? 'Ver Avaliação Inteligente' : 'Pague para continuar'}
@@ -675,7 +675,7 @@ export function AvaliacaoForm() {
             <div>
               <div className="flex items-center gap-2 mb-4">
                 <Calculator className="w-5 h-5 text-[#C9A84C]" />
-                <h3 className="text-lg font-bold" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>
+                <h3 className="text-lg font-bold" style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}>
                   Avaliação Inteligente
                 </h3>
               </div>
@@ -693,7 +693,7 @@ export function AvaliacaoForm() {
               disabled={loading}
               onClick={handleSubmit}
               className="flex-[2] py-3 rounded-xl text-sm font-semibold transition-all disabled:opacity-40 flex items-center justify-center gap-2"
-              style={{ backgroundColor: '#C9A84C', color: '#1B2B5B' }}
+              style={{ backgroundColor: '#C9A84C', color: '#143A1F' }}
             >
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
               {loading ? 'Enviando...' : 'Solicitar Avaliação Presencial'}

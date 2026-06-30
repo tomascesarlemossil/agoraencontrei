@@ -532,7 +532,7 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
               'circle-color': '#C9A84C',
               'circle-radius': ['step', ['get', 'point_count'], 20, 10, 24, 50, 30],
               'circle-stroke-width': 3,
-              'circle-stroke-color': '#1B2B5B',
+              'circle-stroke-color': '#143A1F',
             },
           })
 
@@ -542,7 +542,7 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
             source: 'auctions-source',
             filter: ['has', 'point_count'],
             layout: { 'text-field': '{point_count_abbreviated}', 'text-size': 12 },
-            paint: { 'text-color': '#1B2B5B' },
+            paint: { 'text-color': '#143A1F' },
           })
 
           map.addLayer({
@@ -554,7 +554,7 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
               'circle-color': '#C9A84C',
               'circle-radius': 10,
               'circle-stroke-width': 3,
-              'circle-stroke-color': '#1B2B5B',
+              'circle-stroke-color': '#143A1F',
             },
           })
 
@@ -672,7 +672,7 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
         const size = c.count > 99 ? 52 : 44
 
         const el = document.createElement('div')
-        el.style.cssText = `display:flex;align-items:center;justify-content:center;width:${size}px;height:${size}px;border-radius:50%;background:${isSelected ? '#C9A84C' : '#1B2B5B'};color:white;font-size:13px;font-weight:700;border:3px solid ${isSelected ? '#e6c96a' : 'rgba(255,255,255,0.3)'};box-shadow:0 2px 8px rgba(0,0,0,0.3);cursor:pointer;transition:transform 0.15s;`
+        el.style.cssText = `display:flex;align-items:center;justify-content:center;width:${size}px;height:${size}px;border-radius:50%;background:${isSelected ? '#C9A84C' : '#143A1F'};color:white;font-size:13px;font-weight:700;border:3px solid ${isSelected ? '#e6c96a' : 'rgba(255,255,255,0.3)'};box-shadow:0 2px 8px rgba(0,0,0,0.3);cursor:pointer;transition:transform 0.15s;`
         el.textContent = String(c.count)
         el.style.display = showSaleLayer ? '' : 'none'
 
@@ -681,7 +681,7 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
             // Show popup
             new maplibregl.Popup({ offset: 25 })
               .setLngLat([c.resolvedLng, c.resolvedLat])
-              .setHTML(`<div style="min-width:160px"><p style="font-weight:700;margin:0 0 4px">${c.neighborhood}</p><p style="color:#666;margin:0;font-size:12px">${c.city ?? ''}${c.state ? `, ${c.state}` : ''}</p><p style="color:#1B2B5B;font-weight:600;margin:4px 0 0;font-size:13px">${c.count} imóve${c.count !== 1 ? 'is' : 'l'}</p></div>`)
+              .setHTML(`<div style="min-width:160px"><p style="font-weight:700;margin:0 0 4px">${c.neighborhood}</p><p style="color:#666;margin:0;font-size:12px">${c.city ?? ''}${c.state ? `, ${c.state}` : ''}</p><p style="color:#143A1F;font-weight:600;margin:4px 0 0;font-size:13px">${c.count} imóve${c.count !== 1 ? 'is' : 'l'}</p></div>`)
               .addTo(map)
             handleNeighborhoodClick(c.neighborhood, c.city)
           }
@@ -800,7 +800,7 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
         el.addEventListener('click', () => {
           new maplibregl.Popup({ offset: 25 })
             .setLngLat([p.lng!, p.lat!])
-            .setHTML(`<div style="min-width:200px;max-width:260px;font-family:system-ui"><div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#16a34a;font-weight:700;margin-bottom:4px">VENDA DIRETA - Proprietário</div><p style="font-weight:700;margin:0 0 4px;font-size:13px;color:#1B2B5B">${p.title}</p><p style="color:#666;margin:0 0 6px;font-size:11px">${p.neighborhood || ''} - ${p.city || ''}</p><p style="margin:2px 0;font-size:16px;font-weight:800;color:#1B2B5B">${priceStr}</p><div style="margin:6px 0"><span style="font-size:10px;background:#dcfce7;color:#16a34a;padding:2px 8px;border-radius:8px;font-weight:600">Sem comissão</span></div><a href="/imoveis/${p.slug}" style="display:block;text-align:center;margin-top:8px;padding:6px;background:#16a34a;color:white;border-radius:8px;font-size:12px;font-weight:600;text-decoration:none">Ver imóvel</a></div>`)
+            .setHTML(`<div style="min-width:200px;max-width:260px;font-family:system-ui"><div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#16a34a;font-weight:700;margin-bottom:4px">VENDA DIRETA - Proprietário</div><p style="font-weight:700;margin:0 0 4px;font-size:13px;color:#143A1F">${p.title}</p><p style="color:#666;margin:0 0 6px;font-size:11px">${p.neighborhood || ''} - ${p.city || ''}</p><p style="margin:2px 0;font-size:16px;font-weight:800;color:#143A1F">${priceStr}</p><div style="margin:6px 0"><span style="font-size:10px;background:#dcfce7;color:#16a34a;padding:2px 8px;border-radius:8px;font-weight:600">Sem comissão</span></div><a href="/imoveis/${p.slug}" style="display:block;text-align:center;margin-top:8px;padding:6px;background:#16a34a;color:white;border-radius:8px;font-size:12px;font-weight:600;text-decoration:none">Ver imóvel</a></div>`)
             .addTo(map)
         })
 
@@ -1055,13 +1055,13 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
           <div className="flex flex-col sm:flex-row gap-3">
             <button
               onClick={() => { setMapError(null); mapInstance.current = null; }}
-              className="px-5 py-2.5 rounded-xl text-sm font-semibold bg-[#1B2B5B] text-white hover:opacity-90 transition-opacity"
+              className="px-5 py-2.5 rounded-xl text-sm font-semibold bg-[#143A1F] text-white hover:opacity-90 transition-opacity"
             >
               Tentar novamente
             </button>
             <a
               href="/imoveis"
-              className="px-5 py-2.5 rounded-xl text-sm font-semibold border-2 border-[#1B2B5B] text-[#1B2B5B] hover:bg-blue-50 transition-colors text-center"
+              className="px-5 py-2.5 rounded-xl text-sm font-semibold border-2 border-[#143A1F] text-[#143A1F] hover:bg-blue-50 transition-colors text-center"
             >
               Ver listagem de imóveis
             </a>
@@ -1077,7 +1077,7 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
             <button
               onClick={startDrawing}
               className="group relative flex items-center gap-2.5 px-5 py-3 rounded-2xl text-sm font-bold shadow-2xl transition-all hover:scale-105 overflow-hidden"
-              style={{ background: 'linear-gradient(135deg, #1B2B5B 0%, #2d4a8a 100%)', color: 'white' }}
+              style={{ background: 'linear-gradient(135deg, #143A1F 0%, #2d4a8a 100%)', color: 'white' }}
             >
               <span className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
                 style={{ background: 'linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.15) 50%, transparent 60%)' }} />
@@ -1089,7 +1089,7 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
             <div className="flex items-center gap-2">
               <div
                 className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold shadow-lg"
-                style={{ backgroundColor: '#C9A84C', color: '#1B2B5B' }}
+                style={{ backgroundColor: '#C9A84C', color: '#143A1F' }}
               >
                 <PenLine className="w-4 h-4" />
                 Clique para desenhar · Duplo-clique para fechar
@@ -1131,7 +1131,7 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold shadow-lg transition-all hover:scale-105"
             style={{
               background: isSatellite ? 'linear-gradient(135deg, #C9A84C, #e8c66a)' : 'white',
-              color: isSatellite ? '#1B2B5B' : '#6b7280',
+              color: isSatellite ? '#143A1F' : '#6b7280',
               border: isSatellite ? 'none' : '1px solid #e5e7eb',
             }}
           >
@@ -1176,7 +1176,7 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
                 onClick={() => setLifeFilters(prev => ({ ...prev, [f.key]: !prev[f.key as keyof typeof prev] }))}
                 className={`px-2 py-1 rounded-lg text-[10px] font-bold transition-all ${
                   lifeFilters[f.key as keyof typeof lifeFilters]
-                    ? 'bg-[#C9A84C] text-[#1B2B5B] shadow-md'
+                    ? 'bg-[#C9A84C] text-[#143A1F] shadow-md'
                     : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
                 }`}
               >
@@ -1194,7 +1194,7 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
             onClick={() => setShowSaleLayer(v => !v)}
             className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold shadow-lg transition-all ${
               showSaleLayer
-                ? 'bg-[#1B2B5B] text-white'
+                ? 'bg-[#143A1F] text-white'
                 : 'bg-white/90 text-gray-400 border border-gray-200'
             }`}
           >
@@ -1206,7 +1206,7 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
             onClick={() => setShowAuctionLayer(v => !v)}
             className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold shadow-lg transition-all ${
               showAuctionLayer
-                ? 'text-[#1B2B5B]'
+                ? 'text-[#143A1F]'
                 : 'bg-white/90 text-gray-400 border border-gray-200'
             }`}
             style={showAuctionLayer ? { background: 'linear-gradient(135deg, #C9A84C, #e6c96a)' } : {}}
@@ -1214,7 +1214,7 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
             <span className={`w-2.5 h-2.5 rounded-full ${showAuctionLayer ? 'bg-yellow-600' : 'bg-gray-300'}`} />
             🔨 Leilão
             {auctions.length > 0 && showAuctionLayer && (
-              <span className="ml-0.5 bg-[#1B2B5B] text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">{auctions.length}</span>
+              <span className="ml-0.5 bg-[#143A1F] text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">{auctions.length}</span>
             )}
           </button>
         </div>
@@ -1226,8 +1226,8 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
           {/* Header */}
           <div className="sticky top-0 z-10 px-4 py-3 border-b" style={{ background: 'linear-gradient(135deg, #C9A84C, #e6c96a)' }}>
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-[#1B2B5B] uppercase tracking-wide">🏛️ Leilão — {sourceLabel(selectedAuction.source)}</span>
-              <button onClick={() => setSelectedAuction(null)} className="w-6 h-6 flex items-center justify-center rounded-full bg-[#1B2B5B]/20 text-[#1B2B5B] hover:bg-[#1B2B5B]/30">
+              <span className="text-xs font-bold text-[#143A1F] uppercase tracking-wide">🏛️ Leilão — {sourceLabel(selectedAuction.source)}</span>
+              <button onClick={() => setSelectedAuction(null)} className="w-6 h-6 flex items-center justify-center rounded-full bg-[#143A1F]/20 text-[#143A1F] hover:bg-[#143A1F]/30">
                 <X className="w-3.5 h-3.5" />
               </button>
             </div>
@@ -1253,7 +1253,7 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
               )}
               <div className="flex justify-between">
                 <span className="text-sm text-gray-700 font-medium">Lance Mínimo</span>
-                <span className="text-lg font-bold" style={{ color: '#1B2B5B' }}>{selectedAuction.minimumBid ? fmt(Number(selectedAuction.minimumBid)) : '—'}</span>
+                <span className="text-lg font-bold" style={{ color: '#143A1F' }}>{selectedAuction.minimumBid ? fmt(Number(selectedAuction.minimumBid)) : '—'}</span>
               </div>
               {selectedAuction.discountPercent && (
                 <div className="flex justify-between text-xs">
@@ -1266,7 +1266,7 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
             {/* Cálculo de ROI */}
             {selectedAuction.minimumBid && (
               <div className="rounded-xl p-3 space-y-2" style={{ backgroundColor: '#f0f7ff' }}>
-                <h4 className="text-xs font-bold text-[#1B2B5B] uppercase tracking-wide">📊 Cálculo de ROI</h4>
+                <h4 className="text-xs font-bold text-[#143A1F] uppercase tracking-wide">📊 Cálculo de ROI</h4>
                 {(() => {
                   const bid = Number(selectedAuction.minimumBid)
                   const appr = selectedAuction.appraisalValue ? Number(selectedAuction.appraisalValue) : bid * 1.5
@@ -1418,7 +1418,7 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
             <a
               href={`/leiloes/${selectedAuction.slug}`}
               className="block w-full text-center px-4 py-3 rounded-xl font-bold text-sm text-white active:scale-[0.98] transition-transform"
-              style={{ backgroundColor: '#1B2B5B' }}
+              style={{ backgroundColor: '#143A1F' }}
             >
               Ver Detalhes + Edital Completo →
             </a>
@@ -1477,7 +1477,7 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
                 <button
                   onClick={goToListings}
                   className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold shadow-md hover:scale-105 transition-all"
-                  style={{ background: 'linear-gradient(135deg, #C9A84C, #e6c96a)', color: '#1B2B5B' }}
+                  style={{ background: 'linear-gradient(135deg, #C9A84C, #e6c96a)', color: '#143A1F' }}
                 >
                   <Search className="w-3.5 h-3.5" />
                   Ver todos os imóveis →
@@ -1492,7 +1492,7 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
           {/* Properties grid */}
           {loadingProps ? (
             <div className="flex items-center justify-center py-8">
-              <div className="w-6 h-6 border-2 border-[#1B2B5B] border-t-transparent rounded-full animate-spin" />
+              <div className="w-6 h-6 border-2 border-[#143A1F] border-t-transparent rounded-full animate-spin" />
             </div>
           ) : properties.length === 0 ? (
             <div className="text-center py-8 text-gray-500 text-sm">
@@ -1520,7 +1520,7 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
                     )}
                     <span
                       className="absolute top-1.5 left-1.5 text-xs font-bold px-1.5 py-0.5 rounded-full"
-                      style={{ backgroundColor: p.purpose === 'RENT' ? '#1B2B5B' : p.purpose === 'AUCTION' ? '#C9A84C' : '#C9A84C', color: p.purpose === 'RENT' ? 'white' : '#1B2B5B' }}
+                      style={{ backgroundColor: p.purpose === 'RENT' ? '#143A1F' : p.purpose === 'AUCTION' ? '#C9A84C' : '#C9A84C', color: p.purpose === 'RENT' ? 'white' : '#143A1F' }}
                     >
                       {purposeLabel(p.purpose)}
                     </span>
@@ -1537,7 +1537,7 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
                       {p.bedrooms > 0 && <span className="flex items-center gap-0.5"><BedDouble className="w-3 h-3" />{p.bedrooms}</span>}
                       {p.totalArea && <span className="flex items-center gap-0.5"><Maximize className="w-3 h-3" />{p.totalArea}m²</span>}
                     </div>
-                    <p className="text-sm font-bold mt-1.5" style={{ color: '#1B2B5B' }}>
+                    <p className="text-sm font-bold mt-1.5" style={{ color: '#143A1F' }}>
                       {p.purpose === 'RENT' && p.priceRent
                         ? `${fmt(p.priceRent)}/mês`
                         : p.price

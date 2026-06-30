@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 export default function ExtratoProprietarioPage() {
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#f8f6f1' }}>
-      <section className="py-16 text-center" style={{ backgroundColor: '#1B2B5B' }}>
+      <section className="py-16 text-center" style={{ backgroundColor: '#143A1F' }}>
         <div className="max-w-3xl mx-auto px-4">
           <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: 'rgba(201,168,76,0.15)' }}>
             <BarChart3 className="w-8 h-8" style={{ color: '#C9A84C' }} />
@@ -23,8 +23,8 @@ export default function ExtratoProprietarioPage() {
       <section className="max-w-3xl mx-auto px-4 py-12">
         <div className="bg-white rounded-2xl p-8 border mb-6" style={{ borderColor: '#e8e4dc' }}>
           <div className="flex items-center gap-3 mb-4">
-            <Lock className="w-5 h-5" style={{ color: '#1B2B5B' }} />
-            <h2 className="text-xl font-bold" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>Área Restrita ao Proprietário</h2>
+            <Lock className="w-5 h-5" style={{ color: '#143A1F' }} />
+            <h2 className="text-xl font-bold" style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}>Área Restrita ao Proprietário</h2>
           </div>
           <p className="text-gray-600 mb-6">
             O extrato de repasses está disponível mediante solicitação à nossa equipe. Para proprietários com acesso ao sistema, utilize o painel de controle com suas credenciais.
@@ -58,7 +58,7 @@ export default function ExtratoProprietarioPage() {
           </div>
 
           <div className="p-4 rounded-xl text-sm" style={{ backgroundColor: '#f0ece4' }}>
-            <p className="font-semibold mb-1" style={{ color: '#1B2B5B' }}>O extrato inclui:</p>
+            <p className="font-semibold mb-1" style={{ color: '#143A1F' }}>O extrato inclui:</p>
             <ul className="text-gray-600 space-y-1">
               <li>• Aluguéis recebidos no período</li>
               <li>• Repasses realizados ao proprietário</li>
@@ -70,7 +70,7 @@ export default function ExtratoProprietarioPage() {
         </div>
 
         <div className="mt-6 text-center">
-          <Link href="/servicos" className="text-sm font-medium hover:opacity-80" style={{ color: '#1B2B5B' }}>
+          <Link href="/servicos" className="text-sm font-medium hover:opacity-80" style={{ color: '#143A1F' }}>
             ← Voltar aos serviços
           </Link>
         </div>

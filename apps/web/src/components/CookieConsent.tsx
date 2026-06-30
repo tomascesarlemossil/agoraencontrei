@@ -32,7 +32,7 @@ export function CookieConsent() {
     <div className="fixed bottom-0 left-0 right-0 z-[9999] p-4 md:p-6">
       <div
         className="max-w-4xl mx-auto rounded-2xl shadow-2xl p-5 md:p-6 flex flex-col md:flex-row items-start md:items-center gap-4"
-        style={{ backgroundColor: '#1B2B5B', border: '1px solid rgba(201, 168, 76, 0.3)' }}
+        style={{ backgroundColor: '#143A1F', border: '1px solid rgba(201, 168, 76, 0.3)' }}
       >
         <div className="flex-1 min-w-0">
           <p className="text-sm text-white/90 leading-relaxed">

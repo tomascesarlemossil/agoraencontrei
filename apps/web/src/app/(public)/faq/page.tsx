@@ -138,7 +138,7 @@ export default function FaqPage() {
         className="py-20 text-white text-center"
         style={{
           background:
-            'linear-gradient(135deg, #1B2B5B 0%, #2d4a8a 60%, #1B2B5B 100%)',
+            'linear-gradient(135deg, #143A1F 0%, #2d4a8a 60%, #143A1F 100%)',
         }}
       >
         <div className="max-w-4xl mx-auto px-4">
@@ -178,7 +178,7 @@ export default function FaqPage() {
           <HelpCircle className="w-6 h-6" style={{ color: '#C9A84C' }} />
           <h2
             className="text-2xl font-bold"
-            style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}
+            style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}
           >
             Dúvidas Mais Comuns
           </h2>
@@ -195,7 +195,7 @@ export default function FaqPage() {
         >
           <h3
             className="text-xl font-bold mb-3"
-            style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}
+            style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}
           >
             Não encontrou sua resposta?
           </h3>
@@ -206,7 +206,7 @@ export default function FaqPage() {
             <Link
               href="/contato"
               className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-white font-semibold transition-transform hover:scale-105"
-              style={{ backgroundColor: '#1B2B5B' }}
+              style={{ backgroundColor: '#143A1F' }}
             >
               Fale Conosco
             </Link>

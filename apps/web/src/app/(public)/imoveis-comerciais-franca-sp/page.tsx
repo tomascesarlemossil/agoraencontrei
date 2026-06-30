@@ -37,7 +37,7 @@ export default function TemaPage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(SCHEMA) }} />
 
       {/* HERO */}
-      <section className="bg-gradient-to-br from-[#1B2B5B] to-[#0f1c3a] text-white py-16 px-4">
+      <section className="bg-gradient-to-br from-[#143A1F] to-[#0f1c3a] text-white py-16 px-4">
         <div className="max-w-5xl mx-auto text-center">
           <div className="inline-flex items-center gap-2 bg-white/10 rounded-full px-4 py-1.5 text-xs font-semibold mb-4" style={{ color: '#C9A84C' }}>
             <MapPin className="w-3.5 h-3.5" /> Franca/SP · Imobiliária Lemos
@@ -50,7 +50,7 @@ em Franca/SP
           <div className="flex flex-wrap justify-center gap-3">
             <Link href="/imoveis?city=Franca&type=OFFICE"
               className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm hover:brightness-110 transition-all"
-              style={{ background: '#C9A84C', color: '#1B2B5B' }}>
+              style={{ background: '#C9A84C', color: '#143A1F' }}>
               <Search className="w-4 h-4" /> Ver Imóveis Comerciais
             </Link>
             <a href="https://wa.me/5516981010004?text=Olá! Preciso de ajuda com Imóveis Comerciais em Franca/SP em Franca/SP."
@@ -87,7 +87,7 @@ em Franca/SP
 
       {/* LINKS PARA O SITE */}
       <section className="max-w-5xl mx-auto px-4 pb-12">
-        <h2 className="text-xl font-bold mb-5" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>
+        <h2 className="text-xl font-bold mb-5" style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}>
           Explore Nosso Portfólio de Imóveis em Franca/SP
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -110,7 +110,7 @@ em Franca/SP
       </section>
 
       {/* CTA FINAL */}
-      <section className="py-12 px-4 text-center" style={{ background: 'linear-gradient(135deg, #1B2B5B, #0f1c3a)' }}>
+      <section className="py-12 px-4 text-center" style={{ background: 'linear-gradient(135deg, #143A1F, #0f1c3a)' }}>
         <div className="max-w-2xl mx-auto">
           <Star className="w-8 h-8 mx-auto mb-3" style={{ color: '#C9A84C' }} />
           <h2 className="text-2xl font-bold text-white mb-2" style={{ fontFamily: 'Georgia, serif' }}>
@@ -127,7 +127,7 @@ em Franca/SP
               <Phone className="w-4 h-4" /> (16) 3723-0045
             </a>
             <Link href="/"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm text-[#1B2B5B]"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm text-[#143A1F]"
               style={{ background: '#C9A84C' }}>
               <Home className="w-4 h-4" /> Página Inicial
             </Link>

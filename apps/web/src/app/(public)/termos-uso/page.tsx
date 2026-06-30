@@ -12,7 +12,7 @@ export default function TermosUsoPage() {
       {/* Hero */}
       <section
         className="py-16 text-white text-center"
-        style={{ background: 'linear-gradient(135deg, #1B2B5B 0%, #2d4a8a 60%, #1B2B5B 100%)' }}
+        style={{ background: 'linear-gradient(135deg, #143A1F 0%, #2d4a8a 60%, #143A1F 100%)' }}
       >
         <div className="max-w-4xl mx-auto px-4">
           <p
@@ -39,8 +39,8 @@ export default function TermosUsoPage() {
           <section>
             <p className="text-gray-600 leading-relaxed">
               Estes Termos de Uso regulam o acesso e a utilizacao do site{' '}
-              <strong style={{ color: '#1B2B5B' }}>AgoraEncontrei</strong>, operado pela{' '}
-              <strong style={{ color: '#1B2B5B' }}>Imobiliaria Lemos</strong>, inscrita no CNPJ sob
+              <strong style={{ color: '#143A1F' }}>AgoraEncontrei</strong>, operado pela{' '}
+              <strong style={{ color: '#143A1F' }}>Imobiliaria Lemos</strong>, inscrita no CNPJ sob
               o n. 10.962.301/0001-50, com sede em Franca/SP. Ao acessar e utilizar este site, voce
               concorda com os termos e condicoes aqui estabelecidos.
             </p>
@@ -53,7 +53,7 @@ export default function TermosUsoPage() {
           <section>
             <h2
               className="text-2xl font-bold mb-4"
-              style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}
+              style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}
             >
               1. Objeto
             </h2>
@@ -68,7 +68,7 @@ export default function TermosUsoPage() {
           <section>
             <h2
               className="text-2xl font-bold mb-4"
-              style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}
+              style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}
             >
               2. Acesso ao Site
             </h2>
@@ -91,7 +91,7 @@ export default function TermosUsoPage() {
           <section>
             <h2
               className="text-2xl font-bold mb-4"
-              style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}
+              style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}
             >
               3. Conteudo e Propriedade Intelectual
             </h2>
@@ -107,7 +107,7 @@ export default function TermosUsoPage() {
           <section>
             <h2
               className="text-2xl font-bold mb-4"
-              style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}
+              style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}
             >
               4. Informacoes sobre Imoveis
             </h2>
@@ -124,7 +124,7 @@ export default function TermosUsoPage() {
           <section>
             <h2
               className="text-2xl font-bold mb-4"
-              style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}
+              style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}
             >
               5. Responsabilidades do Usuario
             </h2>
@@ -155,7 +155,7 @@ export default function TermosUsoPage() {
           <section>
             <h2
               className="text-2xl font-bold mb-4"
-              style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}
+              style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}
             >
               6. Limitacao de Responsabilidade
             </h2>
@@ -171,7 +171,7 @@ export default function TermosUsoPage() {
           <section>
             <h2
               className="text-2xl font-bold mb-4"
-              style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}
+              style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}
             >
               7. Privacidade e Dados Pessoais
             </h2>
@@ -193,7 +193,7 @@ export default function TermosUsoPage() {
           <section>
             <h2
               className="text-2xl font-bold mb-4"
-              style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}
+              style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}
             >
               8. Alteracoes nos Termos
             </h2>
@@ -208,7 +208,7 @@ export default function TermosUsoPage() {
           <section>
             <h2
               className="text-2xl font-bold mb-4"
-              style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}
+              style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}
             >
               9. Legislacao Aplicavel e Foro
             </h2>
@@ -223,7 +223,7 @@ export default function TermosUsoPage() {
           <section>
             <h2
               className="text-2xl font-bold mb-4"
-              style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}
+              style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}
             >
               10. Contato
             </h2>
@@ -232,7 +232,7 @@ export default function TermosUsoPage() {
                 Em caso de duvidas sobre estes Termos de Uso, entre em contato:
               </p>
               <p className="text-gray-600 mt-2">
-                <strong style={{ color: '#1B2B5B' }}>Imobiliária Lemos</strong> — CNPJ 10.962.301/0001-50
+                <strong style={{ color: '#143A1F' }}>Imobiliária Lemos</strong> — CNPJ 10.962.301/0001-50
               </p>
               <p className="text-gray-600 text-sm">
                 Rua Simão Caleiro, 2383 — Vila Industrial — Franca/SP — CEP 14400-340
@@ -240,7 +240,7 @@ export default function TermosUsoPage() {
               <a
                 href="mailto:tomas@agoraencontrei.com.br"
                 className="inline-flex items-center gap-2 mt-3 px-6 py-3 rounded-xl text-white font-semibold transition-all hover:opacity-90"
-                style={{ backgroundColor: '#1B2B5B' }}
+                style={{ backgroundColor: '#143A1F' }}
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="white">
                   <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z" />

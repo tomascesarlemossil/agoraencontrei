@@ -469,10 +469,10 @@ export default async function HomePage() {
                 Avaliação profissional com dados em tempo real. 3 métodos, laudo instantâneo. 1ª avaliação gratuita por CPF.
               </p>
               <div className="flex flex-col sm:flex-row gap-3">
-                <Link href="/avaliacao" className="px-7 py-3 rounded-xl text-sm font-bold transition-all hover:brightness-110 text-center" style={{ backgroundColor: 'var(--site-accent-color, #C9A84C)', color: 'var(--site-primary-color, #1B2B5B)' }}>
+                <Link href="/avaliacao" className="px-7 py-3 rounded-xl text-sm font-bold transition-all hover:brightness-110 text-center" style={{ backgroundColor: 'var(--site-accent-color, #C9A84C)', color: 'var(--site-primary-color, #143A1F)' }}>
                   Avaliação imediata
                 </Link>
-                <a href="https://wa.me/5516981010004?text=Olá! Gostaria de uma avaliação imediata do meu imóvel." target="_blank" rel="noreferrer" className="px-7 py-3 rounded-xl text-sm font-bold border-2 transition-all hover:bg-[#1B2B5B] hover:text-white text-center" style={{ borderColor: 'var(--ae-heading)', color: 'var(--ae-heading)' }}>
+                <a href="https://wa.me/5516981010004?text=Olá! Gostaria de uma avaliação imediata do meu imóvel." target="_blank" rel="noreferrer" className="px-7 py-3 rounded-xl text-sm font-bold border-2 transition-all hover:bg-[#143A1F] hover:text-white text-center" style={{ borderColor: 'var(--ae-heading)', color: 'var(--ae-heading)' }}>
                   Falar pelo WhatsApp
                 </a>
               </div>
@@ -483,7 +483,7 @@ export default async function HomePage() {
       </SmartQuizModal>
 
       {/* ── SEJA UM PARCEIRO (após Quiz / Avaliação) ──────────────────── */}
-      <section className="py-14 px-4 sm:px-6" style={{ backgroundColor: 'var(--site-primary-color, #1B2B5B)' }}>
+      <section className="py-14 px-4 sm:px-6" style={{ backgroundColor: 'var(--site-primary-color, #143A1F)' }}>
         <div className="max-w-4xl mx-auto rounded-3xl p-8 sm:p-12 text-center" style={{ background: 'linear-gradient(135deg, rgba(201,168,76,0.18), rgba(201,168,76,0.05))', border: '1px solid rgba(201,168,76,0.35)' }}>
           <p className="text-xs sm:text-sm font-semibold uppercase tracking-widest mb-2" style={{ color: 'var(--site-accent-color, #C9A84C)' }}>
             Para imobiliárias e corretores
@@ -499,7 +499,7 @@ export default async function HomePage() {
             <Link
               href="/parceiros/planos"
               className="px-7 py-3 rounded-xl text-sm font-bold transition-all hover:brightness-110 inline-flex items-center justify-center gap-2"
-              style={{ backgroundColor: 'var(--site-accent-color, #C9A84C)', color: 'var(--site-primary-color, #1B2B5B)' }}
+              style={{ backgroundColor: 'var(--site-accent-color, #C9A84C)', color: 'var(--site-primary-color, #143A1F)' }}
             >
               Ver Planos e Assinar <ArrowRight className="w-4 h-4" />
             </Link>
@@ -517,7 +517,7 @@ export default async function HomePage() {
       </section>
 
       {/* ── 4. MARKETPLACE ────────────────────────────────────────────────── */}
-      <section style={{ backgroundColor: 'var(--site-primary-color, #1B2B5B)' }} className="py-20">
+      <section style={{ backgroundColor: 'var(--site-primary-color, #143A1F)' }} className="py-20">
         <div className="max-w-5xl mx-auto px-4 sm:px-6">
           <Reveal className="text-center mb-12">
             <p
@@ -612,7 +612,7 @@ export default async function HomePage() {
             <Link
               href="/anunciar"
               className="px-8 py-3.5 rounded-xl text-sm font-bold transition-all hover:brightness-110 text-center"
-              style={{ backgroundColor: 'var(--site-accent-color, #C9A84C)', color: 'var(--site-primary-color, #1B2B5B)' }}
+              style={{ backgroundColor: 'var(--site-accent-color, #C9A84C)', color: 'var(--site-primary-color, #143A1F)' }}
             >
               Anuncie seu Imóvel
             </Link>
@@ -678,7 +678,7 @@ export default async function HomePage() {
             </p>
             <span
               className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold transition-all group-hover:brightness-110"
-              style={{ backgroundColor: 'var(--site-primary-color, #1B2B5B)', color: 'white' }}
+              style={{ backgroundColor: 'var(--site-primary-color, #143A1F)', color: 'white' }}
             >
               Ver equipe e imóveis <ArrowRight className="w-3.5 h-3.5" />
             </span>
@@ -738,13 +738,13 @@ export default async function HomePage() {
                 >
                   <div
                     className="w-14 h-14 rounded-xl flex items-center justify-center transition-all duration-200 group-hover:scale-110"
-                    style={{ backgroundColor: 'rgba(27,43,91,0.06)', color: 'var(--ae-heading)' }}
+                    style={{ backgroundColor: 'rgba(20,58,31,0.06)', color: 'var(--ae-heading)' }}
                   >
                     <div className="group-hover:text-[#C9A84C] transition-colors duration-200" style={{ color: 'var(--ae-heading)' }}>
                       {CategoryIcons[cat.iconKey]}
                     </div>
                   </div>
-                  <span className="text-xs font-semibold text-gray-700 group-hover:text-[#1B2B5B] leading-tight transition-colors">
+                  <span className="text-xs font-semibold text-gray-700 group-hover:text-[#143A1F] leading-tight transition-colors">
                     {cat.label}
                   </span>
                 </Link>
@@ -791,7 +791,7 @@ export default async function HomePage() {
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
                   ) : (
-                    <div className="h-full flex flex-col items-center justify-center gap-2" style={{ background: 'linear-gradient(135deg, #1B2B5B, #0f1c3a)' }}>
+                    <div className="h-full flex flex-col items-center justify-center gap-2" style={{ background: 'linear-gradient(135deg, #143A1F, #0f1c3a)' }}>
                       <svg xmlns="http://www.w3.org/2000/svg" className="w-12 h-12 text-white/30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
                         <polyline points="9 22 9 12 15 12 15 22" />
@@ -803,8 +803,8 @@ export default async function HomePage() {
                     <span
                       className="text-xs font-bold px-2 py-0.5 rounded-full"
                       style={{
-                        backgroundColor: p.purpose === 'RENT' ? 'var(--site-primary-color, #1B2B5B)' : 'var(--site-accent-color, #C9A84C)',
-                        color: p.purpose === 'RENT' ? 'white' : 'var(--site-primary-color, #1B2B5B)',
+                        backgroundColor: p.purpose === 'RENT' ? 'var(--site-primary-color, #143A1F)' : 'var(--site-accent-color, #C9A84C)',
+                        color: p.purpose === 'RENT' ? 'white' : 'var(--site-primary-color, #143A1F)',
                       }}
                     >
                       {p.purpose === 'SALE' ? 'Venda' : p.purpose === 'RENT' ? 'Aluguel' : p.purpose === 'BOTH' ? 'Venda/Alug.' : 'Temporada'}
@@ -813,7 +813,7 @@ export default async function HomePage() {
                 </div>
 
                 <div className="p-4">
-                  <p className="font-semibold text-gray-900 text-sm line-clamp-2 leading-snug group-hover:text-[#1B2B5B] transition-colors">
+                  <p className="font-semibold text-gray-900 text-sm line-clamp-2 leading-snug group-hover:text-[#143A1F] transition-colors">
                     {p.title}
                   </p>
                   {(p.city || p.neighborhood) && (

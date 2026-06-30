@@ -87,16 +87,16 @@ export default function PublicProposalPage() {
   }, [id])
 
   if (loading) {
-    return <main className="flex min-h-screen items-center justify-center bg-[#f9f7f4] text-[#1B2B5B]">Carregando…</main>
+    return <main className="flex min-h-screen items-center justify-center bg-[#f9f7f4] text-[#143A1F]">Carregando…</main>
   }
 
   if (error || !data) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-[#f9f7f4] px-4">
         <div className="max-w-md rounded-2xl bg-white p-8 text-center shadow">
-          <h1 className="text-xl font-bold text-[#1B2B5B]">Proposta não encontrada</h1>
+          <h1 className="text-xl font-bold text-[#143A1F]">Proposta não encontrada</h1>
           <p className="mt-2 text-sm text-gray-600">O link expirou ou está incorreto.</p>
-          <Link href="/" className="mt-6 inline-block rounded-lg bg-[#1B2B5B] px-5 py-2.5 text-sm font-medium text-white">Voltar ao site</Link>
+          <Link href="/" className="mt-6 inline-block rounded-lg bg-[#143A1F] px-5 py-2.5 text-sm font-medium text-white">Voltar ao site</Link>
         </div>
       </main>
     )
@@ -120,7 +120,7 @@ export default function PublicProposalPage() {
               {STATUS_LABEL[data.status] ?? data.status}
             </span>
           </div>
-          <h1 className="mt-3 text-2xl font-bold text-[#1B2B5B]">Sua proposta</h1>
+          <h1 className="mt-3 text-2xl font-bold text-[#143A1F]">Sua proposta</h1>
           <p className="mt-1 text-sm text-gray-600">
             Enviada em {fmtDateTime(data.createdAt)}
           </p>
@@ -133,10 +133,10 @@ export default function PublicProposalPage() {
                   className="h-16 w-16 flex-shrink-0 rounded-lg object-cover" />
               )}
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold text-[#1B2B5B] truncate">{data.property.title}</p>
+                <p className="text-sm font-semibold text-[#143A1F] truncate">{data.property.title}</p>
                 {location && <p className="text-xs text-gray-500 mt-0.5">{location}</p>}
                 {data.property.slug && (
-                  <Link href={`/imoveis/${data.property.slug}`} className="text-xs text-[#1B2B5B] underline">
+                  <Link href={`/imoveis/${data.property.slug}`} className="text-xs text-[#143A1F] underline">
                     Ver imóvel →
                   </Link>
                 )}
@@ -147,7 +147,7 @@ export default function PublicProposalPage() {
           {/* Valor */}
           <div className="mt-4 rounded-xl bg-[#f9f7f4] p-4 text-center">
             <p className="text-[10px] uppercase tracking-wider text-gray-500 font-semibold">Valor proposto</p>
-            <p className="mt-1 text-3xl font-bold text-[#1B2B5B]">{value ?? '—'}</p>
+            <p className="mt-1 text-3xl font-bold text-[#143A1F]">{value ?? '—'}</p>
             {(down || fin) && (
               <div className="mt-2 flex justify-center gap-4 text-xs text-gray-600">
                 {down && <span>Entrada {down}</span>}
@@ -159,14 +159,14 @@ export default function PublicProposalPage() {
 
         {/* Stepper */}
         <div className="rounded-2xl bg-white p-6 shadow">
-          <h2 className="text-sm font-semibold text-[#1B2B5B]">Status da negociação</h2>
+          <h2 className="text-sm font-semibold text-[#143A1F]">Status da negociação</h2>
           {isRejected ? (
             <div className="mt-4 rounded-xl bg-red-50 p-4 text-center">
               <p className="text-sm font-semibold text-red-700">
                 {data.status === 'expired' ? 'Sua proposta expirou.' : 'Sua proposta foi recusada.'}
               </p>
               <p className="mt-1 text-xs text-red-600">Que tal explorar outras opções com nosso time?</p>
-              <Link href="/imoveis" className="mt-3 inline-block rounded-lg bg-[#1B2B5B] px-4 py-2 text-xs font-medium text-white">
+              <Link href="/imoveis" className="mt-3 inline-block rounded-lg bg-[#143A1F] px-4 py-2 text-xs font-medium text-white">
                 Ver outros imóveis
               </Link>
             </div>
@@ -179,11 +179,11 @@ export default function PublicProposalPage() {
                   <div key={step.key} className="flex flex-1 items-center">
                     <div className="flex flex-col items-center text-center flex-1">
                       <div className={`flex h-9 w-9 items-center justify-center rounded-full text-xs font-bold ${
-                        done ? 'bg-[#C9A84C] text-[#1B2B5B]' : 'bg-gray-200 text-gray-400'
+                        done ? 'bg-[#C9A84C] text-[#143A1F]' : 'bg-gray-200 text-gray-400'
                       } ${isActive ? 'ring-4 ring-[#C9A84C]/30' : ''}`}>
                         {done ? '✓' : i + 1}
                       </div>
-                      <p className={`mt-2 text-[10px] font-medium ${done ? 'text-[#1B2B5B]' : 'text-gray-400'}`}>{step.label}</p>
+                      <p className={`mt-2 text-[10px] font-medium ${done ? 'text-[#143A1F]' : 'text-gray-400'}`}>{step.label}</p>
                     </div>
                     {i < STEPS.length - 1 && (
                       <div className={`h-0.5 flex-1 mx-1 ${i < currentStep ? 'bg-[#C9A84C]' : 'bg-gray-200'}`} />
@@ -198,12 +198,12 @@ export default function PublicProposalPage() {
         {/* Timeline */}
         {data.events.length > 0 && (
           <div className="rounded-2xl bg-white p-6 shadow">
-            <h2 className="text-sm font-semibold text-[#1B2B5B]">Histórico</h2>
+            <h2 className="text-sm font-semibold text-[#143A1F]">Histórico</h2>
             <ol className="mt-4 space-y-3">
               {data.events.slice().reverse().map(ev => (
                 <li key={ev.id} className="flex gap-3 border-l-2 border-[#C9A84C] pl-3 py-1">
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold text-[#1B2B5B]">
+                    <p className="text-xs font-semibold text-[#143A1F]">
                       {STATUS_LABEL[ev.type] ?? ev.type}
                       {ev.actorType && (
                         <span className="ml-2 font-normal text-gray-500">
