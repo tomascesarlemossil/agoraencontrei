@@ -25,6 +25,23 @@ export interface ScheduleRepasseInput {
   contractId?: string
   rentalId?: string
   landlordId: string
+  landlordName?: string
+  grossValue: number
+  commissionPercent?: number
+  delayDays?: number
+  fixedDay?: number
+  /** Campos extras gravados em ScheduledRepasse.metadata (ex.: dados do rateio). */
+  metadata?: Record<string, unknown>
+}
+
+export interface SplitRepasseInput {
+  tenantId?: string
+  companyId: string
+  contractId?: string
+  rentalId?: string
+  /** Favorecido usado quando o contrato não tem rateio (beneficiários) cadastrado. */
+  fallbackLandlordId: string
+  fallbackLandlordName?: string
   grossValue: number
   commissionPercent?: number
   delayDays?: number
@@ -125,6 +142,8 @@ export async function scheduleRepasse(
         commissionPercent,
         delayDays,
         fixedDay: input.fixedDay || null,
+        ...(input.landlordName ? { landlordName: input.landlordName } : {}),
+        ...(input.metadata ?? {}),
       },
     },
   })
@@ -156,6 +175,102 @@ export async function scheduleRepasse(
   }
 
   return repasse
+}
+
+/**
+ * Agenda o repasse de um contrato **rateando** entre os beneficiários
+ * cadastrados (RepasseBeneficiary), quando houver.
+ *
+ * Regras de negócio (Uniloc favopor/secunda):
+ *   • Sem beneficiários ativos → 1 repasse de 100% para `fallbackLandlordId`
+ *     (comportamento histórico preservado).
+ *   • Com beneficiários ativos → 1 repasse por favorecido, proporcional ao
+ *     seu `percentage`. A comissão é aplicada sobre a parte de cada um, então
+ *     a soma dos brutos e a soma das comissões batem com o total.
+ *   • O resto de arredondamento (centavos) é absorvido pelo ÚLTIMO favorecido,
+ *     garantindo que Σ(brutos) === grossValue exatamente.
+ *
+ * Retorna a lista de ScheduledRepasse criados.
+ */
+export async function scheduleRepasseWithSplit(
+  prisma: PrismaClient,
+  input: SplitRepasseInput,
+): Promise<any[]> {
+  const beneficiaries = input.contractId
+    ? await (prisma as any).repasseBeneficiary.findMany({
+        where: { contractId: input.contractId, isActive: true },
+        orderBy: { createdAt: 'asc' },
+      })
+    : []
+
+  // Monta a lista de partes (favorecido + percentual).
+  type Share = { landlordId: string; landlordName?: string; pct: number; role: string; beneficiaryId: string | null }
+  let shares: Share[]
+
+  if (beneficiaries.length > 0) {
+    const totalPct = beneficiaries.reduce((s: number, b: any) => s + Number(b.percentage), 0)
+    if (Math.abs(totalPct - 100) > 0.01) {
+      // Configuração inválida não deve gerar repasses errados silenciosamente.
+      throw new Error(
+        `RATEIO_INVALIDO: soma dos percentuais dos beneficiários do contrato ${input.contractId} ` +
+        `é ${totalPct.toFixed(2)}% (esperado 100%).`,
+      )
+    }
+    shares = beneficiaries.map((b: any) => ({
+      landlordId: b.clientId || input.fallbackLandlordId,
+      landlordName: b.name,
+      pct: Number(b.percentage),
+      role: b.role,
+      beneficiaryId: b.id,
+    }))
+  } else {
+    shares = [{
+      landlordId: input.fallbackLandlordId,
+      landlordName: input.fallbackLandlordName,
+      pct: 100,
+      role: 'OWNER',
+      beneficiaryId: null,
+    }]
+  }
+
+  // Distribui o bruto em centavos para evitar erro de arredondamento; o
+  // último favorecido absorve o resto, de modo que a soma feche com o total.
+  const totalCents = Math.round(input.grossValue * 100)
+  let allocatedCents = 0
+  const created: any[] = []
+
+  for (let i = 0; i < shares.length; i++) {
+    const share = shares[i]
+    const isLast = i === shares.length - 1
+    const shareCents = isLast
+      ? totalCents - allocatedCents
+      : Math.round(totalCents * share.pct / 100)
+    allocatedCents += shareCents
+    const shareGross = shareCents / 100
+    if (shareGross <= 0) continue
+
+    const repasse = await scheduleRepasse(prisma, {
+      tenantId: input.tenantId,
+      companyId: input.companyId,
+      contractId: input.contractId,
+      rentalId: input.rentalId,
+      landlordId: share.landlordId,
+      landlordName: share.landlordName,
+      grossValue: shareGross,
+      commissionPercent: input.commissionPercent,
+      delayDays: input.delayDays,
+      fixedDay: input.fixedDay,
+      metadata: {
+        split: shares.length > 1,
+        beneficiaryId: share.beneficiaryId,
+        role: share.role,
+        sharePercent: share.pct,
+      },
+    })
+    created.push(repasse)
+  }
+
+  return created
 }
 
 /**

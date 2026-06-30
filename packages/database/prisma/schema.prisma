@@ -1181,6 +1181,7 @@ model Contract {
   documents         Document[]
   legalCases        LegalCase[]
   history           ContractHistory[]
+  repasseBeneficiaries RepasseBeneficiary[]
   @@unique([companyId, legacyId])
   @@index([companyId])
   @@index([tenantId])
@@ -1188,6 +1189,36 @@ model Contract {
   @@index([propertyId])
   @@index([status])
   @@map("contracts")
+}
+
+/// Beneficiários do rateio de repasse de um contrato.
+///
+/// Permite que o aluguel recebido seja dividido entre vários
+/// proprietários/favorecidos com percentuais distintos — equivalente às
+/// tabelas `favore`/`secunlo`/`favopor`/`secunda` do sistema legado Uniloc.
+/// Quando um contrato NÃO tem beneficiários cadastrados, o repasse continua
+/// indo 100% para `Contract.landlordId` (comportamento atual preservado).
+model RepasseBeneficiary {
+  id          String   @id @default(cuid())
+  companyId   String
+  contractId  String
+  contract    Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  clientId    String?  // Client.id do favorecido (destino da transferência), se cadastrado
+  name        String   // Nome do favorecido (desnormalizado p/ histórico)
+  percentage  Decimal  @db.Decimal(5, 2) // % do repasse líquido destinado a este favorecido
+  role        String   @default("OWNER") // OWNER (locador) | SECONDARY (locador secundário) | FAVORED (favorecido/terceiro)
+  // Dados bancários do favorecido (opcionais — usados na transferência)
+  bankName    String?
+  bankAgency  String?
+  bankAccount String?
+  pixKey      String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([companyId])
+  @@index([contractId])
+  @@map("repasse_beneficiaries")
 }
 
 model Rental {
