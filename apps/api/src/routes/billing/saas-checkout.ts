@@ -571,4 +571,48 @@ export default async function saasBillingRoutes(app: FastifyInstance) {
       },
     })
   })
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // POST /offline-purchase — compra da edição OFFLINE (licença instalável)
+  // PÚBLICO. Cria a cobrança no Asaas com externalReference
+  // 'offline-license:<plan>:<email>'. Ao confirmar, o webhook emite a licença
+  // assinada e envia por e-mail com o link do instalador.
+  // ═══════════════════════════════════════════════════════════════════════════
+  app.post('/offline-purchase', async (req, reply) => {
+    const body = req.body as { name?: string; cpfCnpj?: string; email?: string; phone?: string; plan?: string }
+    const name = (body.name || '').trim()
+    const email = (body.email || '').trim()
+    const cpfCnpj = (body.cpfCnpj || '').replace(/\D/g, '')
+    const plan = (body.plan || 'basic').toLowerCase()
+    if (!name || !email || !cpfCnpj) {
+      return reply.status(400).send({ error: 'Informe nome, e-mail e CPF/CNPJ.' })
+    }
+    const OFFLINE_PRICES: Record<string, number> = { basic: 797 } // licença anual
+    const value = OFFLINE_PRICES[plan]
+    if (!value) return reply.status(400).send({ error: 'Plano offline inválido.' })
+    if (!env.ASAAS_API_KEY) return reply.status(503).send({ error: 'Pagamento indisponível no momento.' })
+
+    try {
+      const customer = await findOrCreateCustomer({ name, cpfCnpj, email, mobilePhone: body.phone })
+      const due = new Date(); due.setDate(due.getDate() + 3)
+      const charge = await createCharge({
+        customer: customer.id,
+        billingType: 'UNDEFINED' as AsaasBillingType,
+        value,
+        dueDate: due.toISOString().slice(0, 10),
+        description: `AgoraEncontrei Software (offline) — plano ${plan}`,
+        externalReference: `offline-license:${plan}:${email}`,
+      })
+      return reply.send({
+        success: true,
+        paymentUrl: charge.invoiceUrl,
+        pixCode: charge.pixCode,
+        boletoUrl: charge.bankSlipUrl,
+        value, plan,
+      })
+    } catch (err: any) {
+      app.log.error(`[offline-purchase] ${err?.message || err}`)
+      return reply.status(502).send({ error: 'Não foi possível criar a cobrança. Tente novamente.' })
+    }
+  })
 }

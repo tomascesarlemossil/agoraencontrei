@@ -43,6 +43,12 @@ jobs:
         run: pnpm db:generate
         continue-on-error: true
 
+      # tomas-knowledge precisa ser buildado ANTES de api/web (ambos importam o
+      # pacote; sem o dist gera ERR_MODULE_NOT_FOUND / "Module not found").
+      # Mesma sequência do Dockerfile de produção.
+      - name: Build packages (tomas-knowledge)
+        run: pnpm --filter @agoraencontrei/tomas-knowledge build
+
       - name: Build API (Fastify → dist)
         run: pnpm --filter @agoraencontrei/api build
         continue-on-error: true
