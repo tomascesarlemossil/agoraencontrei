@@ -125,17 +125,26 @@ Priorizado por impacto operacional numa imobiliária de locação:
    com reconciliação de centavos), modelos `Agreement`/`AgreementInstallment`, rota
    `/api/v1/agreements`. Migration `20260630000003_add_agreements`.
 
-### Ainda pendente (parcial — próximos passos)
-5. **Conciliação bancária** — importar extrato/CNAB de retorno para baixa automática e
-   bater caixa × banco.
-6. **Notificação formal padronizada** — tipo, assunto, situação e data de resolução
-   (cobrança amigável → extrajudicial).
-7. **Permissões granulares por módulo** — complementar `UserRole` com flags por recurso.
+5. ~~**Conciliação bancária**~~ ✅ **Implementado** — `BankReconciliation` +
+   `BankStatementEntry`, parsers CSV/CNAB400 e engine de matching (`matchEntries`), com
+   baixa automática opcional. Rota `/api/v1/reconciliation`.
+6. ~~**Notificação formal padronizada**~~ ✅ **Implementado** — `FormalNotice` (tipo,
+   assunto, situação, data de resolução). Rota `/api/v1/notices`.
+7. ~~**Permissões granulares por módulo**~~ ✅ **Implementado** — `UserModulePermission`
+   + guard `requirePermission` (opt-in) + rota `/api/v1/permissions`.
+   Migrations 5–7: `20260630000004_add_notices_reconciliation_permissions`.
 
-> Estas recomendações são apenas de **funcionalidade**; nenhuma migração de dados é
-> proposta ou necessária.
+### Ainda pendente (parcial)
+- **Carnê de IPTU parcelado** — hoje só `Rental.iptuAmount` (valor por cobrança); falta
+  o carnê anual por imóvel com rateio de parcelas (Uniloc `iptu`/`lanciptu`).
+- **Frontend (telas)** dos módulos novos.
+
+> Estas funcionalidades são apenas de **código**; nenhuma migração de dados foi feita.
 >
-> **Antes do deploy:** rodar `pnpm db:generate && pnpm typecheck` no ambiente de dev
-> (o engine do Prisma não funciona neste container) e aplicar as 4 migrations no Neon
-> (são idempotentes). A validação aqui foi por checagem de sintaxe (`node strip-types`)
-> e testes unitários da matemática (rateio, rescisão e parcelas — todos fecham em centavos).
+> **Estado da validação (neste container):** dependências instaladas, **Prisma client
+> gerado** (engine baixado manualmente), **`tsc --noEmit` sem nenhum erro novo** (só 11
+> pré-existentes em `automation.ts`/`tomas.service.ts`) e **suíte de 21 testes 100% verde**.
+>
+> **Antes do deploy:** aplicar as **5 migrations** (`20260630000000`..`20260630000004`)
+> no banco Neon — são idempotentes (`IF NOT EXISTS`) e o projeto não roda
+> `prisma migrate deploy` automaticamente.
