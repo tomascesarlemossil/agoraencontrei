@@ -7,6 +7,7 @@ import { HeroBackground } from './HeroBackground'
 import { SmartQuizButton, SmartQuizModal } from './SmartQuiz'
 import { PresentationSection } from './PresentationSection'
 import { getThemeById } from './themes/site-themes'
+import { Reveal } from '@/components/public/Reveal'
 
 export const metadata: Metadata = {
   title: 'AgoraEncontrei — Marketplace Imobiliário de Franca/SP | Imobiliária Lemos',
@@ -385,8 +386,8 @@ export default async function HomePage() {
 
           {/* Título — responsivo */}
           <h1
-            className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-3 sm:mb-4 leading-[1.15]"
-            style={{ fontFamily: 'Georgia, serif', textShadow: '0 2px 12px rgba(0,0,0,0.4)' }}
+            className="text-5xl sm:text-6xl lg:text-7xl font-bold text-white mb-3 sm:mb-4 leading-[1.05] tracking-[-0.02em]"
+            style={{ fontFamily: theme.typography.heroFont, textShadow: '0 2px 12px rgba(0,0,0,0.4)' }}
           >
             Encontre o imóvel
             <br />
@@ -457,11 +458,11 @@ export default async function HomePage() {
                 Responda 5 perguntas rápidas e nossa IA encontra os imóveis perfeitos para o seu perfil — em menos de 2 minutos.
               </p>
               <SmartQuizButton />
-              <p className="text-gray-400 text-xs mt-3">Gratuito · 2 minutos · Sem compromisso</p>
+              <p className="text-gray-500 text-xs mt-3">Gratuito · 2 minutos · Sem compromisso</p>
             </div>
             <div className="hidden lg:block absolute" style={{ display: 'none' }} />
             <div className="bg-white px-8 py-10 flex flex-col justify-center border-t lg:border-t-0 lg:border-l border-gray-200">
-              <h2 className="text-2xl sm:text-3xl font-bold mb-3" style={{ color: 'var(--site-primary-color, #1B2B5B)', fontFamily: 'Georgia, serif' }}>
+              <h2 className="text-2xl sm:text-3xl font-bold mb-3" style={{ color: 'var(--site-primary-color, #1B2B5B)', fontFamily: '"Playfair Display", Georgia, serif' }}>
                 Quer saber quanto vale seu imóvel?
               </h2>
               <p className="text-gray-500 text-sm mb-8 max-w-sm leading-relaxed">
@@ -487,7 +488,7 @@ export default async function HomePage() {
           <p className="text-xs sm:text-sm font-semibold uppercase tracking-widest mb-2" style={{ color: 'var(--site-accent-color, #C9A84C)' }}>
             Para imobiliárias e corretores
           </p>
-          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3" style={{ fontFamily: 'Georgia, serif' }}>
+          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3" style={{ fontFamily: '"Playfair Display", Georgia, serif' }}>
             Seja um Parceiro do AgoraEncontrei
           </h2>
           <p className="text-white/70 text-sm sm:text-base mb-6 max-w-2xl mx-auto leading-relaxed">
@@ -518,7 +519,7 @@ export default async function HomePage() {
       {/* ── 4. MARKETPLACE ────────────────────────────────────────────────── */}
       <section style={{ backgroundColor: 'var(--site-primary-color, #1B2B5B)' }} className="py-20">
         <div className="max-w-5xl mx-auto px-4 sm:px-6">
-          <div className="text-center mb-12">
+          <Reveal className="text-center mb-12">
             <p
               className="text-[11px] font-semibold uppercase tracking-[0.2em] mb-3"
               style={{ color: 'var(--site-accent-color, #C9A84C)' }}
@@ -527,17 +528,17 @@ export default async function HomePage() {
             </p>
             <h2
               className="text-2xl sm:text-3xl font-bold text-white leading-snug"
-              style={{ fontFamily: 'Georgia, serif' }}
+              style={{ fontFamily: '"Playfair Display", Georgia, serif' }}
             >
               O Marketplace Imobiliário de{' '}
               <span style={{ color: 'var(--site-accent-color, #C9A84C)' }}>Franca e Região</span>
             </h2>
-            <p className="text-white/50 text-sm mt-4 max-w-2xl mx-auto leading-relaxed">
+            <p className="text-white/60 text-sm mt-4 max-w-2xl mx-auto leading-relaxed">
               O AgoraEncontrei é a plataforma mais avançada para compra, venda e locação de imóveis
               em Franca/SP e região. Aberto para corretores, proprietários e investidores
               anunciarem com tecnologia de ponta.
             </p>
-          </div>
+          </Reveal>
 
           {/* Feature cards — clickable links */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
@@ -599,7 +600,7 @@ export default async function HomePage() {
                 style={{ backgroundColor: 'rgba(255,255,255,0.06)', border: '1px solid rgba(201,168,76,0.15)' }}
               >
                 {feat.icon}
-                <p className="text-white font-semibold text-sm mb-1" style={{ fontFamily: 'Georgia, serif' }}>
+                <p className="text-white font-semibold text-sm mb-1" style={{ fontFamily: '"Playfair Display", Georgia, serif' }}>
                   {feat.label}
                 </p>
                 <p className="text-white/40 text-xs leading-relaxed">{feat.desc}</p>
@@ -640,15 +641,15 @@ export default async function HomePage() {
       */}
       {siteSettings.partnersShowcaseEnabled === true && (
       <section className="max-w-6xl mx-auto px-4 sm:px-6 py-16">
-        <div className="text-center mb-10">
+        <Reveal className="text-center mb-10">
           <p className="text-sm font-semibold uppercase tracking-widest mb-2" style={{ color: 'var(--site-accent-color, #C9A84C)' }}>
             Marketplace Imobiliário
           </p>
-          <h2 className="text-2xl font-bold" style={{ color: 'var(--site-primary-color, #1B2B5B)', fontFamily: 'Georgia, serif' }}>
+          <h2 className="text-2xl font-bold" style={{ color: 'var(--site-primary-color, #1B2B5B)', fontFamily: '"Playfair Display", Georgia, serif' }}>
             Nossas Imobiliárias Parceiras
           </h2>
           <p className="text-gray-500 text-sm mt-1">Imobiliárias e profissionais parceiros anunciando no marketplace</p>
-        </div>
+        </Reveal>
 
         <div className="flex flex-wrap justify-center gap-6">
           {/* Card Imobiliária Lemos */}
@@ -669,7 +670,7 @@ export default async function HomePage() {
                 className="w-full h-full object-contain drop-shadow-xl"
               />
             </div>
-            <h3 className="text-xl font-bold mb-1" style={{ color: 'var(--site-primary-color, #1B2B5B)', fontFamily: 'Georgia, serif' }}>Imobiliária Lemos</h3>
+            <h3 className="text-xl font-bold mb-1" style={{ color: 'var(--site-primary-color, #1B2B5B)', fontFamily: '"Playfair Display", Georgia, serif' }}>Imobiliária Lemos</h3>
             <p className="text-xs text-gray-500 mb-1">Franca — SP</p>
             <p className="text-xs font-semibold mb-4" style={{ color: '#C9A84C' }}>Desde 2002 · +22 anos de tradição</p>
             <p className="text-xs text-gray-500 leading-relaxed mb-5">
@@ -694,7 +695,7 @@ export default async function HomePage() {
             <div className="w-28 h-28 rounded-full flex items-center justify-center mb-4 border-4 border-dashed" style={{ borderColor: '#C9A84C', backgroundColor: 'rgba(201,168,76,0.08)' }}>
               <span className="text-5xl font-bold" style={{ color: '#C9A84C' }}>+</span>
             </div>
-            <h3 className="text-xl font-bold mb-1" style={{ color: 'var(--site-primary-color, #1B2B5B)', fontFamily: 'Georgia, serif' }}>Seja um Parceiro</h3>
+            <h3 className="text-xl font-bold mb-1" style={{ color: 'var(--site-primary-color, #1B2B5B)', fontFamily: '"Playfair Display", Georgia, serif' }}>Seja um Parceiro</h3>
             <p className="text-xs text-gray-500 mb-4">Sua imobiliária aqui</p>
             <p className="text-xs text-gray-500 leading-relaxed mb-5">
               Anuncie seus imóveis no maior marketplace imobiliário de Franca. Tecnologia de ponta, sem custo inicial.
@@ -719,12 +720,12 @@ export default async function HomePage() {
       {/* ── 4. CATEGORIAS (tipos de imóvel com ícones SVG profissionais) ──── */}
       <section style={{ backgroundColor: 'var(--site-background-color, #f8f6f1)' }} className="py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="text-center mb-10">
-            <h2 className="text-2xl font-bold" style={{ color: 'var(--site-primary-color, #1B2B5B)', fontFamily: 'Georgia, serif' }}>
+          <Reveal className="text-center mb-10">
+            <h2 className="text-2xl font-bold" style={{ color: 'var(--site-primary-color, #1B2B5B)', fontFamily: '"Playfair Display", Georgia, serif' }}>
               O que você procura?
             </h2>
             <p className="text-gray-500 text-sm mt-1">Selecione o tipo de imóvel e explore as opções</p>
-          </div>
+          </Reveal>
 
           <div className="grid grid-cols-4 sm:grid-cols-4 lg:grid-cols-8 gap-3">
             {CATEGORIES.map(cat => {
@@ -757,12 +758,12 @@ export default async function HomePage() {
       {featured.length > 0 && (
         <section className="max-w-7xl mx-auto px-4 sm:px-6 py-16">
           <div className="flex items-center justify-between mb-8">
-            <div>
-              <h2 className="text-2xl font-bold" style={{ color: 'var(--site-primary-color, #1B2B5B)', fontFamily: 'Georgia, serif' }}>
+            <Reveal direction="right">
+              <h2 className="text-2xl font-bold" style={{ color: 'var(--site-primary-color, #1B2B5B)', fontFamily: '"Playfair Display", Georgia, serif' }}>
                 Imóveis em Destaque
               </h2>
               <p className="text-gray-500 text-sm mt-0.5">Imóveis selecionados pela nossa equipe para você</p>
-            </div>
+            </Reveal>
             <Link
               href="/imoveis"
               className="flex items-center gap-2 text-sm font-semibold hover:gap-3 transition-all"
@@ -857,7 +858,7 @@ export default async function HomePage() {
             { label: 'Famílias atendidas', value: '5.000+' },
           ].map(stat => (
             <div key={stat.label} className="text-center">
-              <p className="text-2xl font-bold" style={{ color: 'var(--site-accent-color, #C9A84C)', fontFamily: 'Georgia, serif' }}>
+              <p className="text-2xl font-bold" style={{ color: 'var(--site-accent-color, #C9A84C)', fontFamily: '"Playfair Display", Georgia, serif' }}>
                 {stat.value}
               </p>
               <p className="text-gray-500 text-xs mt-0.5">{stat.label}</p>
@@ -865,7 +866,7 @@ export default async function HomePage() {
           ))}
         </div>
         <div className="text-center mb-6">
-          <h2 className="text-xl font-bold" style={{ color: 'var(--site-primary-color, #1B2B5B)', fontFamily: 'Georgia, serif' }}>Siga-nos nas Redes Sociais</h2>
+          <h2 className="text-xl font-bold" style={{ color: 'var(--site-primary-color, #1B2B5B)', fontFamily: '"Playfair Display", Georgia, serif' }}>Siga-nos nas Redes Sociais</h2>
           <p className="text-gray-500 text-sm mt-1">Acompanhe os melhores imóveis, dicas e novidades</p>
         </div>
         <div className="flex flex-wrap justify-center gap-4">
