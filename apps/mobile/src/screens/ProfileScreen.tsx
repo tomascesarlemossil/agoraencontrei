@@ -2,10 +2,13 @@ import React from 'react'
 import { View, Text, StyleSheet, Switch, Pressable, ScrollView } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
+import { useNavigation } from '@react-navigation/native'
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { useApp } from '../context/AppContext'
 import { FONT_SIZE, RADIUS, SPACING } from '../utils/theme'
 import { triggerHaptic } from '../utils/performance'
 import { Brand } from '../components/Brand'
+import type { RootStackParamList } from '../navigation/types'
 
 function Row({ icon, label, right, onPress, color, textColor }: any) {
   return (
@@ -21,6 +24,7 @@ function Row({ icon, label, right, onPress, color, textColor }: any) {
 export function ProfileScreen() {
   const { colors, isDarkMode, toggleDarkMode, notificationsEnabled, toggleNotifications, user, signOut } = useApp()
   const insets = useSafeAreaInsets()
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>()
   return (
     <ScrollView style={{ backgroundColor: colors.background }}
       contentContainerStyle={{ paddingTop: insets.top + SPACING.base, paddingBottom: insets.bottom + SPACING.xl }}>
@@ -40,6 +44,9 @@ export function ProfileScreen() {
         <Row icon="language" label="Idioma — Português" textColor={colors.text} color={colors.border}
           right={<Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />} />
         <Row icon="heart" label="Meus Favoritos" textColor={colors.text} color={colors.border}
+          right={<Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />} />
+        <Row icon="ribbon" label="Avaliação Imediata de Imóvel" textColor={colors.text} color={colors.border}
+          onPress={() => { triggerHaptic('light'); navigation.navigate('Avaliacao') }}
           right={<Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />} />
       </View>
 

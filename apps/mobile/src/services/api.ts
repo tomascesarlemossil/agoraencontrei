@@ -71,11 +71,20 @@ export const Properties = {
     const qs = new URLSearchParams(Object.entries(params).map(([k, v]) => [k, String(v)])).toString()
     return api(`/api/v1/public/free-listing${qs ? `?${qs}` : ''}`)
   },
+  get: (id: string | number) => api(`/api/v1/public/free-listing/${id}`),
+}
+
+export const Valuation = {
+  // Avaliação imediata (1ª grátis por CPF) — mesma rota pública da web.
+  create: (payload: Record<string, unknown>) =>
+    api('/api/v1/public/valuation', { method: 'POST', body: payload }),
 }
 
 export const Auth = {
   login: (email: string, password: string) =>
     api('/api/v1/auth/login', { method: 'POST', body: { email, password } }),
+  register: (payload: { name: string; email: string; password: string; phone?: string }) =>
+    api('/api/v1/auth/register', { method: 'POST', body: payload }),
   me: () => api('/api/v1/auth/me', { auth: true }),
 }
 

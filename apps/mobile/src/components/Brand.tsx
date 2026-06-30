@@ -1,24 +1,18 @@
 import React from 'react'
-import { View, Text, StyleSheet } from 'react-native'
-import { COLORS } from '../utils/theme'
+import { Image, StyleSheet } from 'react-native'
 
 /**
- * Marca textual AgoraEncontrei (Agora em navy, Encontrei em gold).
- * Substituir/acompanhar pelo logo oficial (monograma AE) quando os assets
- * forem adicionados em src/assets/ (icon.png, splash.png, logo.png).
+ * Marca oficial AgoraEncontrei (logo horizontal com o monograma AE).
+ * Usa o asset transparente, então fica bem sobre fundos claros (headers).
  */
+const LOGO = require('../assets/logo-header.png')
+const ASPECT = 2560 / 1440 // largura / altura do PNG oficial
+
 export function Brand({ size = 22 }: { size?: number }) {
-  return (
-    <View style={styles.row}>
-      <Text style={[styles.txt, { fontSize: size }]}>
-        <Text style={{ color: COLORS.navy }}>Agora</Text>
-        <Text style={{ color: COLORS.gold }}>Encontrei</Text>
-      </Text>
-    </View>
-  )
+  // `size` = altura desejada; largura mantém a proporção do logo.
+  return <Image source={LOGO} style={[styles.logo, { height: size, width: size * ASPECT }]} resizeMode="contain" />
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center' },
-  txt: { fontWeight: '800', letterSpacing: -0.5 },
+  logo: { alignSelf: 'flex-start' },
 })

@@ -1,9 +1,12 @@
 import React, { memo } from 'react'
 import { View, Text, Image, StyleSheet, Pressable } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
+import { useNavigation } from '@react-navigation/native'
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { useApp } from '../context/AppContext'
 import { FONT_SIZE, RADIUS, SPACING } from '../utils/theme'
 import { triggerHaptic, formatBRL } from '../utils/performance'
+import type { RootStackParamList } from '../navigation/types'
 
 export type Property = {
   id?: string | number
@@ -20,12 +23,13 @@ export type Property = {
 
 function Card({ property, onPress }: { property: Property; onPress?: () => void }) {
   const { colors } = useApp()
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>()
   const img = property.imageUrl || property.images?.[0]
   return (
     <Pressable
       accessible accessibilityRole="button"
       accessibilityLabel={`Imóvel ${property.title || ''}`}
-      onPress={() => { triggerHaptic('light'); onPress?.() }}
+      onPress={() => { triggerHaptic('light'); onPress ? onPress() : navigation.navigate('PropertyDetail', { property }) }}
       style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}
     >
       {img ? (

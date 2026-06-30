@@ -5,7 +5,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/native'
 import * as SplashScreen from 'expo-splash-screen'
 import { AppProvider, useApp } from './src/context/AppContext'
-import { MainNavigator } from './src/navigation/MainNavigator'
+import { RootNavigator } from './src/navigation/RootNavigator'
 
 SplashScreen.preventAutoHideAsync().catch(() => {})
 
@@ -26,7 +26,7 @@ function Root() {
     <View style={{ flex: 1, backgroundColor: colors.background }} onLayout={onLayout}>
       <StatusBar style={isDarkMode ? 'light' : 'dark'} />
       <NavigationContainer theme={navTheme}>
-        <MainNavigator />
+        <RootNavigator />
       </NavigationContainer>
     </View>
   )
