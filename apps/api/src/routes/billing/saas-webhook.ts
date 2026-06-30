@@ -113,6 +113,8 @@ export default async function saasWebhookRoutes(app: FastifyInstance) {
         await handleTenantEvent(app, prisma, event, payment, externalRef)
       } else if (externalRef?.startsWith('module:')) {
         await handleModuleEvent(app, prisma, event, payment, externalRef)
+      } else if (externalRef?.startsWith('addon:')) {
+        await handleAddonEvent(app, prisma, event, payment, externalRef)
       } else {
         // Not a SaaS event — pass through (might be handled by finance webhook)
         app.log.info(`[saas-webhook] Unrecognized ref: ${externalRef}, skipping`)
@@ -521,6 +523,87 @@ async function handleModuleEvent(
 
         app.log.info(`[saas-webhook] Module ${moduleSlug} CANCELLED for tenant ${tenantId}`)
       }
+      break
+    }
+  }
+}
+
+/**
+ * Handle add-on package payment events (property-quota / highlight packs).
+ * externalReference format: "addon:{addonId}".
+ */
+async function handleAddonEvent(
+  app: any,
+  prisma: any,
+  event: string,
+  payment: any,
+  externalRef: string,
+) {
+  const addonId = externalRef.replace('addon:', '').trim()
+  if (!addonId) {
+    app.log.warn(`[saas-webhook] Invalid addon ref: ${externalRef}`)
+    return
+  }
+
+  const addon = await prisma.tenantAddon.findUnique({
+    where: { id: addonId },
+  }).catch(() => null)
+
+  if (!addon) {
+    app.log.warn(`[saas-webhook] Addon not found: ${addonId}`)
+    return
+  }
+
+  switch (event) {
+    case 'PAYMENT_RECEIVED':
+    case 'PAYMENT_CONFIRMED': {
+      // Idempotency: don't re-activate an already active add-on.
+      if (addon.status === 'active') {
+        app.log.info(`[saas-webhook] Addon ${addonId} already active`)
+        return
+      }
+
+      await prisma.tenantAddon.update({
+        where: { id: addon.id },
+        data: {
+          status: 'active',
+          activatedAt: new Date(),
+          cancelledAt: null,
+          asaasChargeId: payment.id,
+          metadata: { ...(addon.metadata ?? {}), paymentValue: payment.value, activatedViaWebhook: true },
+        },
+      })
+
+      app.log.info(`[saas-webhook] Addon ${addon.packageSlug} (${addonId}) ACTIVATED for tenant ${addon.tenantId}`)
+
+      await app.prisma.auditLog.create({
+        data: {
+          companyId: 'platform',
+          action: 'saas.addon.activated' as any,
+          resource: 'tenant_addon',
+          resourceId: addon.id,
+          payload: { packageSlug: addon.packageSlug, tenantId: addon.tenantId, paymentId: payment.id, value: payment.value } as any,
+        },
+      }).catch(() => {})
+
+      break
+    }
+
+    case 'PAYMENT_OVERDUE': {
+      await prisma.tenantAddon.update({
+        where: { id: addon.id },
+        data: { status: 'suspended' },
+      })
+      break
+    }
+
+    case 'PAYMENT_DELETED':
+    case 'PAYMENT_REFUNDED': {
+      await prisma.tenantAddon.update({
+        where: { id: addon.id },
+        data: { status: 'cancelled', cancelledAt: new Date() },
+      })
+      app.log.info(`[saas-webhook] Addon ${addon.packageSlug} (${addonId}) CANCELLED for tenant ${addon.tenantId}`)
       break
     }
   }

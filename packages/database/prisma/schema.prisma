@@ -3157,6 +3157,32 @@ model TenantModuleActivation {
   @@map("tenant_module_activations")
 }
 
+/// Pacotes avulsos contratados por um tenant (cota extra de imóveis, destaques).
+/// Empilháveis: um tenant pode ter vários add-ons ativos do mesmo tipo, somando
+/// quantidades à cota base do plano (PlanDefinition.maxProperties).
+model TenantAddon {
+  id             String    @id @default(cuid())
+  tenantId       String
+  kind           String                              // "property_quota" | "highlight" | "super_highlight"
+  packageSlug    String                              // ex: "PKG10", "DEST3"
+  label          String
+  quantity       Int                                 // imóveis extras OU vagas de destaque
+  price          Decimal   @db.Decimal(10, 2)
+  billingType    String    @default("recurring")     // "recurring" | "one_time"
+  status         String    @default("pending_payment") // "pending_payment" | "active" | "suspended" | "cancelled"
+  asaasChargeId  String?                             // ID da cobrança/assinatura no Asaas
+  activatedAt    DateTime?
+  expiresAt      DateTime?
+  cancelledAt    DateTime?
+  metadata       Json      @default("{}")
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([tenantId, status])
+  @@index([asaasChargeId])
+  @@map("tenant_addons")
+}
+
 /// Pedido de serviço por tenant
 model TenantServiceOrder {
   id             String    @id @default(cuid())

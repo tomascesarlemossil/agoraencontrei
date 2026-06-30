@@ -1,12 +1,17 @@
 'use client'
 
 import Link from 'next/link'
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import {
   CheckCircle, XCircle, Star, Crown, Zap, ArrowRight,
   BarChart3, MapPin, Bell, TrendingUp, Shield, Lock,
   Calculator, Eye, Target, Users, Building2, MessageCircle,
-  ChevronRight, Award, Clock, Sparkles, DollarSign,
+  ChevronRight, Award, Clock, Sparkles, DollarSign, Loader2,
 } from 'lucide-react'
+import { useAuthStore } from '@/stores/auth.store'
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 
 // ── Planos Avulsos (Site, CRM, Pacotes de Imóveis) ─────────────────────────
 const AVULSO_PLANS = [
@@ -253,6 +258,47 @@ const FAQ = [
 ]
 
 export function PlanosContent() {
+  const router = useRouter()
+  const [addonLoading, setAddonLoading] = useState<string | null>(null)
+  const [addonError, setAddonError] = useState<string | null>(null)
+
+  // Contrata um pacote avulso (cota de imóveis ou destaques) via Asaas.
+  // Exige login: parceiro precisa estar autenticado para vincular ao seu tenant.
+  async function handleAddonCheckout(packageSlug: string) {
+    setAddonError(null)
+    const { accessToken } = useAuthStore.getState()
+    if (!accessToken) {
+      router.push(`/login?next=${encodeURIComponent('/parceiros/planos')}`)
+      return
+    }
+    setAddonLoading(packageSlug)
+    try {
+      const res = await fetch(`${API_URL}/api/v1/billing/saas/addon`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({ packageSlug }),
+      })
+      const json = await res.json().catch(() => null)
+      if (!res.ok || !json?.data?.paymentUrl) {
+        if (res.status === 401) {
+          router.push(`/login?next=${encodeURIComponent('/parceiros/planos')}`)
+          return
+        }
+        setAddonError(json?.message || 'Não foi possível gerar a cobrança. Tente novamente.')
+        return
+      }
+      // Redireciona para a fatura do Asaas.
+      window.location.href = json.data.paymentUrl
+    } catch {
+      setAddonError('Falha de conexão. Verifique sua internet e tente novamente.')
+    } finally {
+      setAddonLoading(null)
+    }
+  }
+
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#f8f6f1' }}>
 
@@ -681,6 +727,14 @@ export function PlanosContent() {
           ))}
         </div>
 
+        {/* Erro de checkout de pacotes */}
+        {addonError && (
+          <div className="max-w-lg mx-auto mb-6 rounded-xl border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700 flex items-start gap-2">
+            <XCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+            <span>{addonError}</span>
+          </div>
+        )}
+
         {/* Pacotes de Imóveis */}
         <div className="mb-8">
           <h3 className="text-lg font-bold text-[#1B2B5B] mb-4 text-center" style={{ fontFamily: 'Georgia, serif' }}>
@@ -692,12 +746,15 @@ export function PlanosContent() {
                 <p className="text-2xl font-bold text-[#1B2B5B]">{plan.qty}</p>
                 <p className="text-xs text-gray-500 mb-3">imóveis anunciados</p>
                 <p className="text-xl font-bold mb-4" style={{ color: '#C9A84C' }}>R$ {plan.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}<span className="text-sm text-gray-400">/mês</span></p>
-                <a href={`https://wa.me/5516981010004?text=Olá! Quero o pacote de ${plan.qty} imóveis do AgoraEncontrei.`}
-                  target="_blank" rel="noreferrer"
-                  className="block py-2.5 rounded-lg text-xs font-bold transition-all hover:brightness-110"
+                <button
+                  type="button"
+                  onClick={() => handleAddonCheckout(plan.id)}
+                  disabled={addonLoading !== null}
+                  className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-xs font-bold transition-all hover:brightness-110 disabled:opacity-60 disabled:cursor-not-allowed"
                   style={{ backgroundColor: '#C9A84C', color: '#1B2B5B' }}>
-                  Assinar {plan.label}
-                </a>
+                  {addonLoading === plan.id && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                  {addonLoading === plan.id ? 'Gerando cobrança...' : `Assinar ${plan.label}`}
+                </button>
               </div>
             ))}
           </div>
@@ -717,12 +774,15 @@ export function PlanosContent() {
                 <p className="text-sm font-bold text-[#1B2B5B]">{plan.label}</p>
                 <p className="text-xs text-gray-500 mb-3">imóveis em destaque</p>
                 <p className="text-xl font-bold mb-4" style={{ color: '#C9A84C' }}>R$ {plan.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}<span className="text-sm text-gray-400">/mês</span></p>
-                <a href={`https://wa.me/5516981010004?text=Olá! Quero o plano de ${plan.label} do AgoraEncontrei.`}
-                  target="_blank" rel="noreferrer"
-                  className="block py-2.5 rounded-lg text-xs font-bold transition-all hover:brightness-110"
+                <button
+                  type="button"
+                  onClick={() => handleAddonCheckout(plan.id)}
+                  disabled={addonLoading !== null}
+                  className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-xs font-bold transition-all hover:brightness-110 disabled:opacity-60 disabled:cursor-not-allowed"
                   style={{ backgroundColor: '#1B2B5B', color: 'white' }}>
-                  Assinar {plan.label}
-                </a>
+                  {addonLoading === plan.id && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                  {addonLoading === plan.id ? 'Gerando cobrança...' : `Assinar ${plan.label}`}
+                </button>
               </div>
             ))}
           </div>
