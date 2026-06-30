@@ -114,13 +114,18 @@ Priorizado por impacto operacional numa imobiliária de locação:
    Sem beneficiários cadastrados, mantém 100% para `Contract.landlordId`. Endpoints:
    `GET/PUT /api/v1/repasse/contracts/:contractId/beneficiaries`. Migration:
    `20260630000000_add_repasse_beneficiaries`.
-2. **Módulo Contas a Pagar + Cheques** — despesas da imobiliária e de terceiros
-   (`cadespe`/`cp_cheqs`): favorecido, vencimento, status, controle de cheques pré-datados.
-3. **Motor de rescisão** — usar os campos já existentes em `Contract`/`Rental` para
-   calcular automaticamente o acerto de saída (proporcional + IPTU pro-rata + multa +
-   bonificação + caução).
-4. **Acordos/renegociação** — novo cronograma de parcelas para débitos em atraso, com
-   vínculo aos lançamentos originais.
+2. ~~**Módulo Contas a Pagar + Cheques**~~ ✅ **Implementado** — modelos `AccountPayable`
+   e `BankCheck`, rota `/api/v1/payables` (CRUD, marcar paga, summary, cheques com
+   compensar/cancelar). Migration `20260630000001_add_accounts_payable_checks`.
+3. ~~**Motor de rescisão**~~ ✅ **Implementado** — serviço puro `calculateRescission`
+   (aluguel/IPTU proporcionais, multa proporcional ao período restante, débitos, bonificação,
+   caução), modelo `Rescission`, rota `/api/v1/rescission` (preview/persistir/confirmar).
+   Migration `20260630000002_add_rescissions`.
+4. ~~**Acordos/renegociação**~~ ✅ **Implementado** — `generateInstallmentPlan` (parcelas
+   com reconciliação de centavos), modelos `Agreement`/`AgreementInstallment`, rota
+   `/api/v1/agreements`. Migration `20260630000003_add_agreements`.
+
+### Ainda pendente (parcial — próximos passos)
 5. **Conciliação bancária** — importar extrato/CNAB de retorno para baixa automática e
    bater caixa × banco.
 6. **Notificação formal padronizada** — tipo, assunto, situação e data de resolução
@@ -129,3 +134,8 @@ Priorizado por impacto operacional numa imobiliária de locação:
 
 > Estas recomendações são apenas de **funcionalidade**; nenhuma migração de dados é
 > proposta ou necessária.
+>
+> **Antes do deploy:** rodar `pnpm db:generate && pnpm typecheck` no ambiente de dev
+> (o engine do Prisma não funciona neste container) e aplicar as 4 migrations no Neon
+> (são idempotentes). A validação aqui foi por checagem de sintaxe (`node strip-types`)
+> e testes unitários da matemática (rateio, rescisão e parcelas — todos fecham em centavos).
