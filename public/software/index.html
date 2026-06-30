@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AgoraEncontrei Software — Sistema imobiliário inteligente, online ou no seu PC</title>
+<meta name="description" content="O sistema imobiliário completo da AgoraEncontrei. Use na nuvem ou instale offline na sua máquina. CRM, IA Tomás, vitrine de imóveis. A partir de R$ 97/mês." />
+<meta property="og:title" content="AgoraEncontrei Software" />
+<meta property="og:description" content="Seu sistema imobiliário completo — na nuvem ou no seu PC." />
+<style>
+  :root{
+    --bg:#0a0e1a; --panel:#121829; --panel2:#1a2138; --ink:#eef2ff; --muted:#9aa7c7;
+    --brand:#4f7cff; --brand2:#22d3a6; --gold:#f4c542; --line:#26304d; --radius:16px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:'Segoe UI',system-ui,-apple-system,Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink);line-height:1.6;-webkit-font-smoothing:antialiased}
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:1140px;margin:0 auto;padding:0 20px}
+  .btn{display:inline-block;padding:14px 26px;border-radius:999px;font-weight:700;font-size:16px;cursor:pointer;border:none;transition:transform .15s ease,box-shadow .15s ease}
+  .btn:hover{transform:translateY(-2px)}
+  .btn-primary{background:linear-gradient(135deg,var(--brand),var(--brand2));color:#fff;box-shadow:0 10px 30px rgba(79,124,255,.35)}
+  .btn-ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+  .tag{display:inline-block;font-size:13px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--brand2);background:rgba(34,211,166,.1);padding:6px 14px;border-radius:999px;border:1px solid rgba(34,211,166,.25)}
+
+  /* NAV */
+  header{position:sticky;top:0;z-index:50;backdrop-filter:blur(12px);background:rgba(10,14,26,.7);border-bottom:1px solid var(--line)}
+  nav{display:flex;align-items:center;justify-content:space-between;height:68px}
+  .logo{font-weight:800;font-size:20px;letter-spacing:-.02em}
+  .logo span{color:var(--brand2)}
+  .nav-links{display:flex;gap:26px;align-items:center}
+  .nav-links a{color:var(--muted);font-weight:600;font-size:15px}
+  .nav-links a:hover{color:var(--ink)}
+  @media(max-width:760px){.nav-links a:not(.btn){display:none}}
+
+  /* HERO */
+  .hero{padding:80px 0 60px;text-align:center;position:relative;overflow:hidden}
+  .hero::before{content:"";position:absolute;inset:0;background:radial-gradient(600px 300px at 50% -10%,rgba(79,124,255,.25),transparent 70%);pointer-events:none}
+  .hero h1{font-size:clamp(34px,6vw,60px);line-height:1.05;font-weight:800;letter-spacing:-.03em;margin:18px 0 18px}
+  .hero h1 em{font-style:normal;background:linear-gradient(135deg,var(--brand),var(--brand2));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .hero p.sub{font-size:clamp(17px,2.4vw,21px);color:var(--muted);max-width:680px;margin:0 auto 34px}
+  .hero-cta{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+  .trust{margin-top:30px;color:var(--muted);font-size:14px}
+
+  /* MODES */
+  .section{padding:70px 0}
+  .section h2{font-size:clamp(26px,4vw,40px);font-weight:800;letter-spacing:-.02em;text-align:center;margin-bottom:12px}
+  .section .lead{color:var(--muted);text-align:center;max-width:640px;margin:0 auto 46px;font-size:17px}
+  .modes{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+  @media(max-width:760px){.modes{grid-template-columns:1fr}}
+  .mode{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:var(--radius);padding:32px}
+  .mode h3{font-size:23px;margin-bottom:6px;display:flex;align-items:center;gap:10px}
+  .mode .badge{font-size:12px;padding:4px 10px;border-radius:999px;background:rgba(79,124,255,.15);color:var(--brand);font-weight:700}
+  .mode ul{list-style:none;margin-top:18px}
+  .mode li{padding:8px 0 8px 30px;position:relative;color:#cfd8f0}
+  .mode li::before{content:"✓";position:absolute;left:0;color:var(--brand2);font-weight:800}
+
+  /* FEATURES */
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+  @media(max-width:860px){.grid3{grid-template-columns:1fr}}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:26px}
+  .card .ico{font-size:30px;margin-bottom:12px}
+  .card h4{font-size:18px;margin-bottom:6px}
+  .card p{color:var(--muted);font-size:15px}
+
+  /* PRICING */
+  .plans{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;align-items:stretch}
+  @media(max-width:860px){.plans{grid-template-columns:1fr}}
+  .plan{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:30px;display:flex;flex-direction:column}
+  .plan.hot{border-color:var(--brand);box-shadow:0 0 0 1px var(--brand),0 20px 50px rgba(79,124,255,.2);position:relative}
+  .plan.hot .ribbon{position:absolute;top:-13px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,var(--brand),var(--brand2));color:#fff;font-size:12px;font-weight:800;padding:5px 16px;border-radius:999px;letter-spacing:.04em}
+  .plan h3{font-size:20px}
+  .plan .tagline{color:var(--muted);font-size:14px;min-height:40px}
+  .plan .price{font-size:40px;font-weight:800;margin:12px 0 2px}
+  .plan .price small{font-size:16px;color:var(--muted);font-weight:600}
+  .plan .year{color:var(--brand2);font-size:13px;font-weight:700;margin-bottom:18px}
+  .plan ul{list-style:none;margin:8px 0 22px;flex:1}
+  .plan li{padding:7px 0 7px 26px;position:relative;font-size:14.5px;color:#cfd8f0}
+  .plan li::before{content:"✓";position:absolute;left:0;color:var(--brand2);font-weight:800}
+  .plan .btn{width:100%;text-align:center}
+
+  /* OFFLINE */
+  .offline{background:linear-gradient(135deg,rgba(79,124,255,.08),rgba(34,211,166,.06));border:1px solid var(--line);border-radius:24px;padding:46px;text-align:center}
+  .offline h2{margin-bottom:10px}
+  .steps{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:34px;text-align:left}
+  @media(max-width:860px){.steps{grid-template-columns:1fr 1fr}}
+  @media(max-width:520px){.steps{grid-template-columns:1fr}}
+  .step{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px}
+  .step .n{font-size:13px;font-weight:800;color:var(--brand);background:rgba(79,124,255,.12);width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:8px;margin-bottom:10px}
+  .step h4{font-size:16px;margin-bottom:4px}
+  .step p{color:var(--muted);font-size:14px}
+
+  /* FAQ */
+  details{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px 22px;margin-bottom:12px}
+  details summary{cursor:pointer;font-weight:700;font-size:16px;list-style:none}
+  details summary::-webkit-details-marker{display:none}
+  details summary::after{content:"+";float:right;color:var(--brand)}
+  details[open] summary::after{content:"−"}
+  details p{color:var(--muted);margin-top:12px;font-size:15px}
+
+  /* CTA FINAL */
+  .final{text-align:center;padding:80px 0}
+  .final h2{font-size:clamp(28px,5vw,46px);margin-bottom:16px}
+  .final p{color:var(--muted);font-size:18px;margin-bottom:28px}
+
+  footer{border-top:1px solid var(--line);padding:34px 0;color:var(--muted);font-size:14px;text-align:center}
+  .note{max-width:720px;margin:24px auto 0;font-size:13px;color:#6b7799}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <nav>
+      <div class="logo">Agora<span>Encontrei</span> Software</div>
+      <div class="nav-links">
+        <a href="#modos">Online ou Offline</a>
+        <a href="#recursos">Recursos</a>
+        <a href="#planos">Planos</a>
+        <a href="#planos" class="btn btn-primary" style="padding:10px 20px;font-size:14px">Começar agora</a>
+      </div>
+    </nav>
+  </div>
+</header>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="wrap">
+    <span class="tag">Sistema imobiliário inteligente</span>
+    <h1>Seu sistema imobiliário completo —<br><em>na nuvem ou no seu PC.</em></h1>
+    <p class="sub">CRM, vitrine de imóveis e o assistente de IA Tomás atendendo seus leads 24/7.
+      Use online em segundos ou instale offline na sua máquina. A partir de <strong>R$ 97/mês</strong>.</p>
+    <div class="hero-cta">
+      <a href="#planos" class="btn btn-primary">Ver planos e preços</a>
+      <a href="#modos" class="btn btn-ghost">Online ou offline?</a>
+    </div>
+    <p class="trust">✓ No ar em 24h (online) &nbsp;·&nbsp; ✓ Instalação em 10 min (offline) &nbsp;·&nbsp; ✓ Pagamento 100% online</p>
+  </div>
+</section>
+
+<!-- MODOS -->
+<section class="section" id="modos">
+  <div class="wrap">
+    <h2>Do seu jeito: online ou offline</h2>
+    <p class="lead">A mesma plataforma poderosa, entregue da forma que faz sentido para o seu negócio.</p>
+    <div class="modes">
+      <div class="mode">
+        <h3>☁️ Online <span class="badge">SaaS</span></h3>
+        <p style="color:var(--muted)">Acesse de qualquer lugar. A gente cuida de tudo.</p>
+        <ul>
+          <li>Seu site no ar em até 24h</li>
+          <li>Subdomínio próprio (seunome.agoraencontrei.com.br)</li>
+          <li>Atualizações automáticas, sem você fazer nada</li>
+          <li>Backup e segurança na nossa nuvem</li>
+          <li>Acesso pelo celular, tablet ou computador</li>
+        </ul>
+      </div>
+      <div class="mode">
+        <h3>💻 Offline <span class="badge">Local</span></h3>
+        <p style="color:var(--muted)">Instalado na sua máquina. Seus dados, seu controle.</p>
+        <ul>
+          <li>Instalador para Windows (.exe)</li>
+          <li>Funciona sem internet no dia a dia</li>
+          <li>Seus dados ficam no seu computador</li>
+          <li>Licença ativada com uma chave única</li>
+          <li>Atualiza sozinho quando você estiver online</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- RECURSOS -->
+<section class="section" id="recursos" style="background:#070b16">
+  <div class="wrap">
+    <h2>Tudo que uma imobiliária precisa</h2>
+    <p class="lead">Recursos profissionais, prontos para usar desde o primeiro dia.</p>
+    <div class="grid3">
+      <div class="card"><div class="ico">🏠</div><h4>Gestão de imóveis</h4><p>Cadastre, organize e publique seus imóveis com fotos, mapa e tour virtual.</p></div>
+      <div class="card"><div class="ico">👥</div><h4>CRM de leads</h4><p>Capture contatos, acompanhe negociações e nunca perca uma oportunidade.</p></div>
+      <div class="card"><div class="ico">🤖</div><h4>Tomás IA</h4><p>O corretor virtual que conversa com seus clientes e qualifica leads automaticamente.</p></div>
+      <div class="card"><div class="ico">📱</div><h4>WhatsApp integrado</h4><p>Atenda e responda direto pelo WhatsApp, com automações inteligentes.</p></div>
+      <div class="card"><div class="ico">🔎</div><h4>Vitrine + SEO</h4><p>Site profissional que aparece no Google e converte visitantes em clientes.</p></div>
+      <div class="card"><div class="ico">📊</div><h4>Relatórios</h4><p>Acompanhe desempenho, leads e vendas com painéis claros e objetivos.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- PLANOS -->
+<section class="section" id="planos">
+  <div class="wrap">
+    <h2>Escolha seu plano</h2>
+    <p class="lead">Comece no Basic e suba quando quiser. Sem fidelidade, cancele quando precisar.</p>
+    <div class="plans">
+      <!-- BASIC -->
+      <div class="plan">
+        <h3>Basic / Lite</h3>
+        <p class="tagline">Presença digital profissional para começar.</p>
+        <div class="price">R$ 97<small>/mês</small></div>
+        <div class="year">ou R$ 970/ano — 2 meses grátis</div>
+        <ul>
+          <li>Até 30 imóveis publicados</li>
+          <li>CRM básico (leads + contatos)</li>
+          <li>Site/vitrine profissional</li>
+          <li>Tomás IA — 50 conversas/mês</li>
+          <li>Suporte por e-mail</li>
+        </ul>
+        <a href="#contato" class="btn btn-ghost" data-plan="lite">Assinar Basic</a>
+      </div>
+      <!-- PREMIUM -->
+      <div class="plan hot">
+        <div class="ribbon">MAIS POPULAR</div>
+        <h3>Premium</h3>
+        <p class="tagline">IA + Leads + automação para escalar.</p>
+        <div class="price">R$ 297<small>/mês</small></div>
+        <div class="year">ou R$ 2.970/ano — 2 meses grátis</div>
+        <ul>
+          <li>Tudo do Basic</li>
+          <li>Até 200 imóveis</li>
+          <li>CRM avançado (pipeline + automações)</li>
+          <li>Tomás IA — 1000 conversas/mês + voz</li>
+          <li>WhatsApp Cloud API + Leilões</li>
+          <li>Até 5 corretores</li>
+        </ul>
+        <a href="#contato" class="btn btn-primary" data-plan="pro">Assinar Premium</a>
+      </div>
+      <!-- SUPER -->
+      <div class="plan">
+        <h3>Super Premium</h3>
+        <p class="tagline">Domine sua região, sem limites.</p>
+        <div class="price">R$ 597<small>/mês</small></div>
+        <div class="year">ou R$ 5.970/ano — 2 meses grátis</div>
+        <ul>
+          <li>Tudo do Premium</li>
+          <li>Imóveis e leads ilimitados</li>
+          <li>Domínio próprio (.com.br)</li>
+          <li>Split de pagamentos</li>
+          <li>Usuários ilimitados</li>
+          <li>Onboarding e suporte dedicado</li>
+        </ul>
+        <a href="#contato" class="btn btn-ghost" data-plan="enterprise">Assinar Super</a>
+      </div>
+    </div>
+    <p class="note">💻 <strong>Quer a versão offline (instalada no seu PC)?</strong> Disponível a partir do plano Basic —
+      licença anual com atualizações e suporte inclusos. Fale com a gente para receber o instalador.</p>
+  </div>
+</section>
+
+<!-- OFFLINE -->
+<section class="section">
+  <div class="wrap">
+    <div class="offline" id="offline">
+      <span class="tag">Versão local</span>
+      <h2>Prefere instalar no seu computador?</h2>
+      <p style="color:var(--muted);max-width:620px;margin:8px auto 0">
+        Compre, baixe o instalador e ative com sua chave. Funciona offline no dia a dia
+        e sincroniza quando você estiver online.</p>
+      <div class="steps">
+        <div class="step"><div class="n">1</div><h4>Pague online</h4><p>Escolha a licença e finalize o pagamento com segurança.</p></div>
+        <div class="step"><div class="n">2</div><h4>Baixe o instalador</h4><p>Receba o link do .exe e sua chave de licença por e-mail.</p></div>
+        <div class="step"><div class="n">3</div><h4>Instale e ative</h4><p>Rode o instalador, cole a chave e pronto — software liberado.</p></div>
+        <div class="step"><div class="n">4</div><h4>Use offline</h4><p>Trabalhe sem internet; atualizações chegam quando você conectar.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="section" style="background:#070b16">
+  <div class="wrap" style="max-width:820px">
+    <h2>Perguntas frequentes</h2>
+    <div style="margin-top:40px">
+      <details open><summary>Qual a diferença entre online e offline?</summary>
+        <p>No <strong>online</strong>, o sistema roda na nossa nuvem e você acessa pelo navegador, de qualquer lugar.
+        No <strong>offline</strong>, o sistema é instalado no seu computador e funciona mesmo sem internet — seus dados ficam com você.</p></details>
+      <details><summary>O pagamento é automático?</summary>
+        <p>Sim. Você assina online, o pagamento é processado na hora e o acesso (ou a chave da versão offline) é liberado automaticamente por e-mail.</p></details>
+      <details><summary>Posso começar no Basic e mudar depois?</summary>
+        <p>Pode. O upgrade para Premium ou Super Premium é feito a qualquer momento, sem perder seus dados.</p></details>
+      <details><summary>A IA Tomás funciona offline?</summary>
+        <p>O Basic offline funciona 100% sem internet para o seu dia a dia. A IA Tomás é um recurso que pode ser
+        ativado como complemento (requer conexão no momento das conversas com IA).</p></details>
+      <details><summary>Preciso entender de tecnologia?</summary>
+        <p>Não. O online está no ar em até 24h e o offline instala em poucos minutos, com passo a passo simples.</p></details>
+    </div>
+  </div>
+</section>
+
+<!-- CTA FINAL -->
+<section class="final" id="contato">
+  <div class="wrap">
+    <h2>Pronto para vender mais imóveis?</h2>
+    <p>Comece hoje. Online em minutos ou instalado no seu PC.</p>
+    <a href="#planos" class="btn btn-primary">Quero começar</a>
+    <p class="note">Ao prosseguir você será direcionado ao checkout seguro. Dúvidas? Fale com nosso time.</p>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="logo" style="font-size:17px;margin-bottom:8px">Agora<span>Encontrei</span> Software</div>
+    © 2026 AgoraEncontrei — Imobiliária Lemos. Todos os direitos reservados.
+    <div class="note">
+      Esta página é um protótipo de vendas. Os botões de assinatura devem ser conectados ao checkout
+      (Asaas) — ver <code>docs/AGORAENCONTREI_SOFTWARE_COMERCIALIZACAO.md</code>.
+    </div>
+  </div>
+</footer>
+
+<script>
+  // Liga os CTAs de plano ao checkout. Ajuste a URL base conforme o ambiente.
+  // Hoje só registra a intenção; conectar ao endpoint /api/v1/billing/saas/checkout.
+  document.querySelectorAll('[data-plan]').forEach(function(el){
+    el.addEventListener('click', function(e){
+      var plan = el.getAttribute('data-plan');
+      // TODO: redirecionar para o checkout real, ex:
+      // window.location.href = '/parceiros/checkout?plan=' + plan;
+      console.log('Plano escolhido:', plan);
+    });
+  });
+</script>
+</body>
+</html>
