@@ -518,6 +518,132 @@ export default async function saasBillingRoutes(app: FastifyInstance) {
     }
   })
 
+  // ───────────────────────────────────────────────────────────────────────────
+  // POST /addon — contratar pacote avulso (cota de imóveis ou destaques).
+  // Catálogo é server-authoritative (preço/quantidade NUNCA vêm do frontend).
+  // Add-ons são empilháveis: cada compra cria um novo TenantAddon e a cota
+  // efetiva = maxProperties do plano + soma das quantidades ativas.
+  // ───────────────────────────────────────────────────────────────────────────
+  const ADDON_CATALOG: Record<string, { kind: string; label: string; quantity: number; price: number; billingType: 'recurring' | 'one_time' }> = {
+    PKG10: { kind: 'property_quota',   label: '10 Imóveis',         quantity: 10, price: 150,    billingType: 'recurring' },
+    PKG20: { kind: 'property_quota',   label: '20 Imóveis',         quantity: 20, price: 199.90, billingType: 'recurring' },
+    PKG30: { kind: 'property_quota',   label: '30 Imóveis',         quantity: 30, price: 249.90, billingType: 'recurring' },
+    DEST3: { kind: 'highlight',        label: '3 Destaques',        quantity: 3,  price: 60,     billingType: 'recurring' },
+    DEST6: { kind: 'super_highlight',  label: '6 Super Destaques',  quantity: 6,  price: 99.90,  billingType: 'recurring' },
+  }
+
+  app.post('/addon', {
+    schema: { tags: ['saas-billing'], summary: 'Purchase property-quota / highlight add-on package' },
+    preHandler: [app.authenticate],
+  }, async (req, reply) => {
+    if (!env.ASAAS_API_KEY) {
+      return reply.status(503).send({ error: 'ASAAS_NOT_CONFIGURED' })
+    }
+
+    const body = z.object({ packageSlug: z.string() }).parse(req.body)
+    const pkg = ADDON_CATALOG[body.packageSlug]
+    if (!pkg) {
+      return reply.status(404).send({ error: 'PACKAGE_NOT_FOUND' })
+    }
+
+    // Tenant derivado do usuário autenticado (não confiamos num tenantId do body).
+    const tenant = await prisma.tenant.findFirst({
+      where: { companyId: req.user.cid },
+    })
+    if (!tenant) {
+      return reply.status(404).send({ error: 'TENANT_NOT_FOUND', message: 'Nenhum site/parceiro vinculado a esta conta.' })
+    }
+
+    const asaasCustomerId = (tenant.settings as any)?.asaasCustomerId
+    if (!asaasCustomerId) {
+      return reply.status(400).send({ error: 'NO_BILLING_ACCOUNT', message: 'Tenant sem conta de faturamento.' })
+    }
+
+    // 1. Cria o add-on em pending_payment para obter o id usado na externalReference.
+    const addon = await prisma.tenantAddon.create({
+      data: {
+        tenantId: tenant.id,
+        kind: pkg.kind,
+        packageSlug: body.packageSlug,
+        label: pkg.label,
+        quantity: pkg.quantity,
+        price: pkg.price,
+        billingType: pkg.billingType,
+        status: 'pending_payment',
+        metadata: { requestedBy: req.user.sub },
+      },
+    })
+
+    try {
+      // 2. Gera cobrança/assinatura no Asaas com externalReference = addon:{id}.
+      const nextDue = new Date()
+      nextDue.setDate(nextDue.getDate() + 1)
+      const dueDate = nextDue.toISOString().split('T')[0]
+
+      let chargeId: string
+      if (pkg.billingType === 'recurring') {
+        const sub = await createSubscription({
+          customer: asaasCustomerId,
+          billingType: 'UNDEFINED' as AsaasBillingType,
+          value: pkg.price,
+          nextDueDate: dueDate,
+          cycle: 'MONTHLY',
+          description: `AgoraEncontrei — Pacote ${pkg.label}`,
+          externalReference: `addon:${addon.id}`,
+        })
+        chargeId = sub.id
+      } else {
+        const charge = await createCharge({
+          customer: asaasCustomerId,
+          billingType: 'UNDEFINED' as AsaasBillingType,
+          value: pkg.price,
+          dueDate,
+          description: `AgoraEncontrei — Pacote ${pkg.label} (avulso)`,
+          externalReference: `addon:${addon.id}`,
+        })
+        chargeId = charge.id
+      }
+
+      // 3. Vincula a cobrança ao add-on.
+      await prisma.tenantAddon.update({
+        where: { id: addon.id },
+        data: { asaasChargeId: chargeId },
+      })
+
+      // 4. Auditoria.
+      await app.prisma.auditLog.create({
+        data: {
+          companyId: 'platform',
+          action: 'saas.addon.purchase' as any,
+          resource: 'tenant_addon',
+          resourceId: addon.id,
+          userId: req.user.sub,
+          payload: { packageSlug: body.packageSlug, price: pkg.price, chargeId, tenantId: tenant.id } as any,
+        },
+      }).catch(() => {})
+
+      return reply.status(201).send({
+        success: true,
+        data: {
+          addonId: addon.id,
+          package: pkg.label,
+          kind: pkg.kind,
+          quantity: pkg.quantity,
+          price: pkg.price,
+          billingType: pkg.billingType,
+          asaasChargeId: chargeId,
+          paymentUrl: `https://www.asaas.com/c/${chargeId}`,
+          message: 'Cobrança gerada! O pacote será ativado após a confirmação do pagamento.',
+        },
+      })
+    } catch (err: any) {
+      // Falhou ao gerar cobrança — remove o add-on pendente órfão.
+      await prisma.tenantAddon.delete({ where: { id: addon.id } }).catch(() => {})
+      app.log.error(`[saas-billing] Addon purchase failed: ${err.message}`)
+      return reply.status(500).send({ error: 'PURCHASE_FAILED', message: 'Erro ao gerar cobrança.' })
+    }
+  })
+
   // ═══════════════════════════════════════════════════════════════════════════
   // GET /tenant/billing — Tenant billing status
   // ═══════════════════════════════════════════════════════════════════════════

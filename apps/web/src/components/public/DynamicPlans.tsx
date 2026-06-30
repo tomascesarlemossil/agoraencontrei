@@ -6,7 +6,7 @@ import {
   Bot, MessageCircle, BarChart3, Globe, Code, EyeOff, Users,
   FileText, Lock, Loader2, X, Monitor, Cloud, Download,
 } from 'lucide-react'
-import { ALL_THEMES, THEME_REGISTRY } from '@/lib/site-factory/theme-registry'
+import { ALL_THEMES } from '@/lib/site-factory/theme-registry'
 import { ThemePreviewModal } from './ThemePreviewModal'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
@@ -706,12 +706,13 @@ export function DynamicPlans() {
                   })}
                 </div>
 
-                {previewKey && (THEME_REGISTRY as any)[previewKey] && (
+                {previewKey && (
                   <ThemePreviewModal
-                    theme={(THEME_REGISTRY as any)[previewKey]}
-                    selected={checkoutForm.layoutType === previewKey}
-                    onChoose={() => {
-                      const th = (THEME_REGISTRY as any)[previewKey]
+                    themes={ALL_THEMES}
+                    index={Math.max(0, ALL_THEMES.findIndex(t => t.key === previewKey))}
+                    onIndexChange={(i) => setPreviewKey(ALL_THEMES[i].key)}
+                    selectedKey={checkoutForm.layoutType}
+                    onChoose={(th) => {
                       setCheckoutForm(f => ({ ...f, layoutType: th.key, primaryColor: th.accentHex }))
                       setPreviewKey(null)
                     }}

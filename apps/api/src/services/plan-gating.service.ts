@@ -43,7 +43,7 @@ export async function assertWithinPlanQuota(
   quota: PlanQuota,
 ): Promise<void> {
   const tenant = await prisma.tenant
-    .findFirst({ where: { companyId }, select: { plan: true } })
+    .findFirst({ where: { companyId }, select: { id: true, plan: true } })
     .catch(() => null)
   if (!tenant) return // plataforma / empresa sem plano SaaS
 
@@ -55,8 +55,20 @@ export async function assertWithinPlanQuota(
     .catch(() => null)
   if (!plan) return // plano não cadastrado — não bloqueia
 
-  const limit = quota === 'properties' ? plan.maxProperties : plan.maxUsers
-  if (limit == null || limit < 0) return // ilimitado
+  const baseLimit = quota === 'properties' ? plan.maxProperties : plan.maxUsers
+  if (baseLimit == null || baseLimit < 0) return // ilimitado
+
+  // Pacotes avulsos de cota de imóveis (TenantAddon) somam à cota base do plano.
+  let limit = baseLimit
+  if (quota === 'properties') {
+    const addons = await (prisma as any).tenantAddon
+      .aggregate({
+        where: { tenantId: tenant.id, kind: 'property_quota', status: 'active' },
+        _sum: { quantity: true },
+      })
+      .catch(() => null)
+    limit = baseLimit + (addons?._sum?.quantity ?? 0)
+  }
 
   const current = quota === 'properties'
     ? await prisma.property.count({ where: { companyId } })
