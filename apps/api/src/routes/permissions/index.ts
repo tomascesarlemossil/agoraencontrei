@@ -14,7 +14,7 @@ import { z } from 'zod'
 /** Módulos conhecidos do sistema (para a UI de permissões). */
 export const MODULES = [
   'properties', 'contracts', 'clients', 'leads', 'finance', 'payables',
-  'repasse', 'rescission', 'agreements', 'reconciliation', 'notices',
+  'repasse', 'rescission', 'agreements', 'reconciliation', 'notices', 'iptu',
   'reports', 'settings', 'users',
 ] as const
 

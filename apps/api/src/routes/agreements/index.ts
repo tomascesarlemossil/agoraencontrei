@@ -10,6 +10,7 @@
  */
 
 import type { FastifyInstance } from 'fastify'
+import { requirePermission } from '../../utils/permissions.js'
 import { z } from 'zod'
 import { generateInstallmentPlan } from '../../services/agreement.service.js'
 
@@ -27,10 +28,12 @@ const createSchema = z.object({
 
 export default async function agreementsRoutes(app: FastifyInstance) {
   app.addHook('preHandler', app.authenticate)
+  const canView = requirePermission('agreements', 'view')
+  const canEdit = requirePermission('agreements', 'edit')
   const db = () => app.prisma as any
 
   // POST /preview — pré-visualiza o cronograma sem salvar
-  app.post('/preview', {
+  app.post('/preview', { preHandler: canEdit,
     schema: { tags: ['agreements'], summary: 'Preview installment plan' },
   }, async (req, reply) => {
     const b = z.object({
@@ -49,7 +52,7 @@ export default async function agreementsRoutes(app: FastifyInstance) {
   })
 
   // POST / — cria acordo e gera as parcelas
-  app.post('/', {
+  app.post('/', { preHandler: canEdit,
     schema: { tags: ['agreements'], summary: 'Create agreement with schedule' },
   }, async (req, reply) => {
     const b = createSchema.parse(req.body)
@@ -96,7 +99,7 @@ export default async function agreementsRoutes(app: FastifyInstance) {
   })
 
   // GET / — lista acordos
-  app.get('/', {
+  app.get('/', { preHandler: canView,
     schema: { tags: ['agreements'], summary: 'List agreements' },
   }, async (req, reply) => {
     const q = req.query as any
@@ -113,7 +116,7 @@ export default async function agreementsRoutes(app: FastifyInstance) {
   })
 
   // GET /:id — acordo + parcelas
-  app.get('/:id', {
+  app.get('/:id', { preHandler: canView,
     schema: { tags: ['agreements'], summary: 'Get agreement with schedule' },
   }, async (req, reply) => {
     const { id } = req.params as { id: string }
@@ -126,7 +129,7 @@ export default async function agreementsRoutes(app: FastifyInstance) {
   })
 
   // POST /:id/installments/:number/pay — paga uma parcela; fecha o acordo se todas pagas
-  app.post('/:id/installments/:number/pay', {
+  app.post('/:id/installments/:number/pay', { preHandler: canEdit,
     schema: { tags: ['agreements'], summary: 'Pay an installment' },
   }, async (req, reply) => {
     const { id, number } = req.params as { id: string; number: string }
@@ -174,7 +177,7 @@ export default async function agreementsRoutes(app: FastifyInstance) {
   })
 
   // POST /:id/cancel — cancela o acordo
-  app.post('/:id/cancel', {
+  app.post('/:id/cancel', { preHandler: canEdit,
     schema: { tags: ['agreements'], summary: 'Cancel agreement' },
   }, async (req, reply) => {
     const { id } = req.params as { id: string }
