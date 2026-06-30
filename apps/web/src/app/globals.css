@@ -239,6 +239,18 @@ html {
    is syntactically identical to navy-on-gold buttons, so it needs per-surface
    handling (see --ae-heading conversions) rather than a blanket override. */
 #ae-root.ae-dark .text-\[\#1B2B5B\] { color: var(--ae-heading) !important; }
+/* Inline light backgrounds (set via the `style` attribute) cannot be reached by
+   class overrides, so they stay bright in dark mode. A `background-color` match
+   is unambiguous (unlike text color), so a case-insensitive substring selector
+   safely darkens them. Verified against the deployed HTML: e.g. the /avaliacao
+   section + form option cards and the home social buttons use inline #fff. */
+#ae-root.ae-dark [style*="background-color:#fff" i],
+#ae-root.ae-dark [style*="background-color: #fff" i] { background-color: var(--ae-card) !important; }
+#ae-root.ae-dark [style*="background-color:#f8f6f1" i],
+#ae-root.ae-dark [style*="background-color: #f8f6f1" i],
+#ae-root.ae-dark [style*="background-color:#f8f5f0" i],
+#ae-root.ae-dark [style*="background-color:#fafafa" i],
+#ae-root.ae-dark [style*="background-color:#f9fafb" i] { background-color: var(--ae-surface) !important; }
 /* Inputs on dark public surfaces: dark field, light text. */
 #ae-root.ae-dark input:not([type='checkbox']):not([type='radio']),
 #ae-root.ae-dark textarea,
