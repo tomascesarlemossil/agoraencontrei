@@ -68,7 +68,9 @@
 /* and remain harmless where no `.dark` ancestor exists.                        */
 /* Dashboard dark-themed inputs override this with their own text-white.       */
 
-/* Public pages (all wrapped in <main id="main-content">) */
+/* Public pages (all wrapped in <main id="main-content">) — light fields get
+   dark text. Dark-background fields are handled by the dark-field rule below,
+   which is given higher specificity so it always wins. */
 #main-content input:not([type="checkbox"]):not([type="radio"]),
 #main-content textarea,
 #main-content select {
@@ -105,6 +107,42 @@ input[style*="background"], textarea[style*="background"] {
 .dark .bg-white input::placeholder,
 .dark .bg-white textarea::placeholder {
   color: #9ca3af;
+}
+
+/* ── Universal dark-field rule ─────────────────────────────────────────────── */
+/* Any input/textarea/select that declares its OWN dark background gets light    */
+/* text + readable placeholder + dark native color-scheme — in EVERY context     */
+/* (public light page, public dark mode, dashboard, portaled modals). This is    */
+/* what guarantees you can always see what you type. Two specificity tiers:      */
+/* the #main-content tier outranks the light-page rule above; the plain tier     */
+/* covers the dashboard and any portaled modal. */
+#main-content input[class*="bg-gray-8"]:not([type="checkbox"]):not([type="radio"]),
+#main-content input[class*="bg-gray-9"]:not([type="checkbox"]):not([type="radio"]),
+#main-content input[class*="bg-black"]:not([type="checkbox"]):not([type="radio"]),
+#main-content input[class*="bg-white/"]:not([type="checkbox"]):not([type="radio"]),
+#main-content input[class*="bg-slate-8"]:not([type="checkbox"]):not([type="radio"]),
+#main-content input[class*="bg-slate-9"]:not([type="checkbox"]):not([type="radio"]),
+#main-content textarea[class*="bg-gray-8"], #main-content textarea[class*="bg-gray-9"],
+#main-content textarea[class*="bg-black"], #main-content textarea[class*="bg-white/"],
+#main-content select[class*="bg-gray-8"], #main-content select[class*="bg-gray-9"],
+#main-content select[class*="bg-black"], #main-content select[class*="bg-white/"],
+input[class*="bg-gray-8"], input[class*="bg-gray-9"], input[class*="bg-black"], input[class*="bg-white/"], input[class*="bg-slate-8"], input[class*="bg-slate-9"],
+textarea[class*="bg-gray-8"], textarea[class*="bg-gray-9"], textarea[class*="bg-black"], textarea[class*="bg-white/"], textarea[class*="bg-slate-8"], textarea[class*="bg-slate-9"],
+select[class*="bg-gray-8"], select[class*="bg-gray-9"], select[class*="bg-black"], select[class*="bg-white/"], select[class*="bg-slate-8"], select[class*="bg-slate-9"] {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  caret-color: #ffffff;
+  color-scheme: dark;
+}
+#main-content input[class*="bg-gray-8"]::placeholder, #main-content input[class*="bg-gray-9"]::placeholder,
+#main-content input[class*="bg-black"]::placeholder, #main-content input[class*="bg-white/"]::placeholder,
+input[class*="bg-gray-8"]::placeholder, input[class*="bg-gray-9"]::placeholder,
+input[class*="bg-black"]::placeholder, input[class*="bg-white/"]::placeholder,
+input[class*="bg-slate-8"]::placeholder, input[class*="bg-slate-9"]::placeholder,
+textarea[class*="bg-gray-8"]::placeholder, textarea[class*="bg-gray-9"]::placeholder,
+textarea[class*="bg-black"]::placeholder, textarea[class*="bg-white/"]::placeholder {
+  color: rgba(255, 255, 255, 0.6) !important;
+  -webkit-text-fill-color: rgba(255, 255, 255, 0.6) !important;
 }
 
 /* ── Dashboard: Force white text on all dark-bg inputs ─────────────────────── */
@@ -251,6 +289,24 @@ html {
 #ae-root.ae-dark [style*="background-color:#f8f5f0" i],
 #ae-root.ae-dark [style*="background-color:#fafafa" i],
 #ae-root.ae-dark [style*="background-color:#f9fafb" i] { background-color: var(--ae-surface) !important; }
+/* Inline `background-color: white` (keyword) and light inline gradients
+   (e.g. the hero "Busca Inteligente" card: background: linear-gradient(#fffdf8,#fff)). */
+#ae-root.ae-dark [style*="background-color:white" i],
+#ae-root.ae-dark [style*="background-color: white" i],
+#ae-root.ae-dark [style*="background:#fff" i],
+#ae-root.ae-dark [style*="background: #fff" i],
+#ae-root.ae-dark [style*="#fffdf8" i] { background: var(--ae-card) !important; }
+
+/* Inline navy TEXT that turns unreadable on dark surfaces (titles, labels,
+   prices written as `color:#1B2B5B` or `color:var(--site-primary-color)`).
+   `:not([style*="background"])` keeps navy-on-gold/navy-on-light buttons intact
+   (those carry a background in the same inline style). */
+#ae-root.ae-dark [style*="color:#1B2B5B" i]:not([style*="background" i]),
+#ae-root.ae-dark [style*="color: #1B2B5B" i]:not([style*="background" i]),
+#ae-root.ae-dark [style*="color:var(--site-primary-color" i]:not([style*="background" i]),
+#ae-root.ae-dark [style*="color: var(--site-primary-color" i]:not([style*="background" i]) {
+  color: var(--ae-heading) !important;
+}
 /* Inputs on dark public surfaces: dark field, light text. */
 #ae-root.ae-dark input:not([type='checkbox']):not([type='radio']),
 #ae-root.ae-dark textarea,
