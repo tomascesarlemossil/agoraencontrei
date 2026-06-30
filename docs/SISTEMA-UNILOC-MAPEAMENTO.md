@@ -93,7 +93,7 @@ Boa parte já existe (o schema Prisma já cita `legacyId` do Uniloc). Comparativ
 | Repasse simples ao proprietário | `OwnerRepasse`, `ScheduledRepasse` | ✅ |
 | Caixa / transações | `Transaction`, `FinancialForecast` | ✅ |
 | Nota fiscal de serviço | `FiscalNote` | ✅ |
-| **Rateio de repasse multi-proprietário/favorecido** | — | ⚠️ **Lacuna** |
+| **Rateio de repasse multi-proprietário/favorecido** | `RepasseBeneficiary` + `scheduleRepasseWithSplit` | ✅ **Implementado** |
 | **Contas a pagar + cheques pré-datados** | — | ⚠️ **Lacuna** |
 | **Conciliação bancária / CNAB retorno** | parcial (Asaas webhook) | ⚠️ **Parcial** |
 | **Acordos / renegociação de dívida** | — | ⚠️ **Lacuna** |
@@ -108,9 +108,12 @@ Boa parte já existe (o schema Prisma já cita `legacyId` do Uniloc). Comparativ
 
 Priorizado por impacto operacional numa imobiliária de locação:
 
-1. **Rateio de repasse multi-proprietário** — `OwnerRepasse` hoje tem um único
-   `landlordId`. Imóveis com co-proprietários/favorecidos precisam de uma tabela de
-   participantes (`% por favorecido`), como `favopor`/`secunda`/`secunlo` faziam.
+1. ~~**Rateio de repasse multi-proprietário**~~ ✅ **Implementado** — modelo
+   `RepasseBeneficiary` (participantes com `%` + dados bancários por favorecido) e função
+   `scheduleRepasseWithSplit` que rateia o repasse entre os beneficiários do contrato.
+   Sem beneficiários cadastrados, mantém 100% para `Contract.landlordId`. Endpoints:
+   `GET/PUT /api/v1/repasse/contracts/:contractId/beneficiaries`. Migration:
+   `20260630000000_add_repasse_beneficiaries`.
 2. **Módulo Contas a Pagar + Cheques** — despesas da imobiliária e de terceiros
    (`cadespe`/`cp_cheqs`): favorecido, vencimento, status, controle de cheques pré-datados.
 3. **Motor de rescisão** — usar os campos já existentes em `Contract`/`Rental` para

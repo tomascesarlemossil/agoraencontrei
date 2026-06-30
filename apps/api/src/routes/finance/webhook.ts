@@ -14,7 +14,7 @@
 import type { FastifyInstance } from 'fastify'
 import { env } from '../../utils/env.js'
 import type { AsaasWebhookEvent } from '../../services/asaas.service.js'
-import { scheduleRepasse } from '../../services/repasse.service.js'
+import { scheduleRepasseWithSplit } from '../../services/repasse.service.js'
 import { safeStringEqual } from '../../utils/crypto-safe.js'
 import { notify } from '../../services/notification.service.js'
 import { dispatchWebhooks } from '../../services/outgoing-webhook.service.js'
@@ -225,12 +225,16 @@ export default async function asaasWebhookRoutes(app: FastifyInstance) {
                   : undefined
                 const fixedDay = contractFixedDay ?? tenantFixedDay
 
-                await scheduleRepasse(app.prisma as any, {
+                // Rateia entre os beneficiários do contrato (RepasseBeneficiary).
+                // Sem beneficiários cadastrados, cai em 1 repasse de 100% para
+                // contract.landlordId (comportamento histórico preservado).
+                await scheduleRepasseWithSplit(app.prisma as any, {
                   tenantId: tenant?.id || undefined,
                   companyId: contract.companyId,
                   contractId: rental.contractId ?? undefined,
                   rentalId,
-                  landlordId: contract.landlordId,
+                  fallbackLandlordId: contract.landlordId,
+                  fallbackLandlordName: contract.landlordName ?? undefined,
                   grossValue: payment.value,
                   commissionPercent,
                   delayDays,
