@@ -15,6 +15,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { MessageCircle, X, Send, Mic, MicOff, Loader2, MapPin, Bed, Car, ChevronRight, AlertCircle } from 'lucide-react'
 import { useBodyScrollLock } from '@/lib/use-body-scroll-lock'
+import { useLiveDictation } from '@/components/ui/useLiveDictation'
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -393,9 +394,16 @@ export default function TomasWidget({ propertyContext }: TomasWidgetProps) {
 
   // ── Open state: chat panel ────────────────────────────────────────────────
 
-  const isRecording = audioState === 'recording'
-  const isAudioBusy = audioState === 'requesting' || audioState === 'stopping' || audioState === 'uploading'
-  const isAudioError = audioState === 'error'
+  // Ditado por voz com transcrição AO VIVO (Web Speech + fallback Whisper).
+  // O texto aparece no campo enquanto a pessoa fala; ao terminar, é enviado.
+  const dictation = useLiveDictation({
+    onInterim: (t) => setInput(t),
+    onResult: (t) => { setInput(''); void sendMessage(t) },
+  })
+  const isRecording = dictation.isRecording
+  const isAudioBusy = dictation.isProcessing
+  const isAudioError = dictation.isError
+  const audioErrorMsg = dictation.errorMsg
 
   return (
     <div
@@ -591,10 +599,10 @@ export default function TomasWidget({ propertyContext }: TomasWidgetProps) {
       </div>
 
       {/* Audio error feedback */}
-      {audioError && (
+      {audioErrorMsg && (
         <div className="mx-3 mb-1 flex items-center gap-2 rounded-lg bg-red-500/10 border border-red-500/20 px-3 py-2 flex-shrink-0">
           <AlertCircle className="h-3.5 w-3.5 text-red-400 flex-shrink-0" />
-          <span className="text-xs text-red-400/80">{audioError}</span>
+          <span className="text-xs text-red-400/80">{audioErrorMsg}</span>
         </div>
       )}
 
@@ -612,7 +620,7 @@ export default function TomasWidget({ propertyContext }: TomasWidgetProps) {
           {/* Microphone button — FUNCTIONAL */}
           <button
             type="button"
-            onClick={isRecording ? stopRecording : startRecording}
+            onClick={isRecording ? dictation.stop : dictation.start}
             disabled={isAudioBusy || loading}
             className={`rounded-lg p-2 transition-all flex-shrink-0 ${
               isRecording

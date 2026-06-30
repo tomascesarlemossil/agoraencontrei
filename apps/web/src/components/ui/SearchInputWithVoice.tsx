@@ -50,7 +50,9 @@ export const SearchInputWithVoice = forwardRef<HTMLInputElement, SearchInputWith
           {...props}
         />
         <span className="absolute right-2 top-1/2 -translate-y-1/2">
-          <VoiceInputButton onResult={handleVoice} dark={dark} />
+          {/* onInterim = atualização ao vivo do campo enquanto a pessoa fala;
+              onResult = texto final (mesmo handler, idempotente). */}
+          <VoiceInputButton onResult={handleVoice} onInterim={handleVoice} dark={dark} />
         </span>
       </div>
     )

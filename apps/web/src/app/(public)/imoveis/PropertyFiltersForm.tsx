@@ -93,6 +93,7 @@ export function PropertyFiltersForm({ initialValues }: Props) {
           />
           <span className="absolute right-2 top-1/2 -translate-y-1/2">
             <VoiceInputButton
+              onInterim={text => setSearchValue(text)}
               onResult={text => {
                 setSearchValue(text)
                 setTimeout(() => formRef.current?.requestSubmit(), 300)
