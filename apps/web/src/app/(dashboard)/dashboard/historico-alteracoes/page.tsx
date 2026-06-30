@@ -261,10 +261,10 @@ export default function HistoricoAlteracoesPage() {
             className="h-10 w-10 rounded-xl flex items-center justify-center flex-shrink-0"
             style={{ backgroundColor: '#EEF2FF' }}
           >
-            <History className="h-5 w-5" style={{ color: '#1B2B5B' }} />
+            <History className="h-5 w-5" style={{ color: '#143A1F' }} />
           </div>
           <div>
-            <h1 className="text-xl font-bold" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>
+            <h1 className="text-xl font-bold" style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}>
               Histórico de Alterações
             </h1>
             <p className="text-sm text-gray-500">

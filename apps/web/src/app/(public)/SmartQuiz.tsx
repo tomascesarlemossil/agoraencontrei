@@ -124,7 +124,7 @@ export function SmartQuizButton() {
     <button
       onClick={open}
       className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl text-sm font-bold transition-all hover:scale-105 hover:shadow-lg active:scale-100 w-fit"
-      style={{ background: 'linear-gradient(135deg, #1B2B5B, #2d4a99)', color: 'white' }}
+      style={{ background: 'linear-gradient(135deg, #143A1F, #2d4a99)', color: 'white' }}
     >
       <Sparkles className="w-4 h-4" />
       Iniciar Quiz Inteligente
@@ -270,7 +270,7 @@ export function SmartQuiz({ children }: { children?: React.ReactNode }) {
                   <button
                     onClick={handleBack}
                     className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors"
-                    style={{ color: '#1B2B5B' }}
+                    style={{ color: '#143A1F' }}
                   >
                     <ChevronLeft className="w-5 h-5" />
                   </button>
@@ -278,7 +278,7 @@ export function SmartQuiz({ children }: { children?: React.ReactNode }) {
                 <div className="flex-1 h-1.5 rounded-full bg-gray-100 overflow-hidden">
                   <div
                     className="h-full rounded-full transition-all duration-500"
-                    style={{ width: `${progress}%`, background: 'linear-gradient(90deg, #1B2B5B, #C9A84C)' }}
+                    style={{ width: `${progress}%`, background: 'linear-gradient(90deg, #143A1F, #C9A84C)' }}
                   />
                 </div>
                 <button
@@ -293,7 +293,7 @@ export function SmartQuiz({ children }: { children?: React.ReactNode }) {
               <div className="flex items-center gap-2">
                 <div
                   className="w-8 h-8 rounded-full flex items-center justify-center text-sm shrink-0"
-                  style={{ background: 'linear-gradient(135deg, #1B2B5B, #2d4a99)' }}
+                  style={{ background: 'linear-gradient(135deg, #143A1F, #2d4a99)' }}
                 >
                   🤖
                 </div>
@@ -310,7 +310,7 @@ export function SmartQuiz({ children }: { children?: React.ReactNode }) {
               {transitioning && (
                 <div className="py-12 text-center">
                   <div className="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center text-2xl"
-                    style={{ background: 'linear-gradient(135deg, #1B2B5B15, #C9A84C15)' }}>
+                    style={{ background: 'linear-gradient(135deg, #143A1F15, #C9A84C15)' }}>
                     🤖
                   </div>
                   <p className="text-gray-700 font-medium text-base max-w-xs mx-auto">{transitionMsg}</p>
@@ -331,7 +331,7 @@ export function SmartQuiz({ children }: { children?: React.ReactNode }) {
                   >
                     <CheckCircle2 className="w-10 h-10" style={{ color: '#25D366' }} />
                   </div>
-                  <h3 className="text-xl font-bold mb-2" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>
+                  <h3 className="text-xl font-bold mb-2" style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}>
                     Perfeito, {formData.name.split(' ')[0]}!
                   </h3>
                   <p className="text-gray-500 text-sm mb-2">
@@ -345,7 +345,7 @@ export function SmartQuiz({ children }: { children?: React.ReactNode }) {
               {/* Quiz question */}
               {!transitioning && !done && step < totalSteps && (
                 <div className="pt-2">
-                  <h3 className="text-xl font-bold mb-1 leading-snug" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>
+                  <h3 className="text-xl font-bold mb-1 leading-snug" style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}>
                     {currentStep.question}
                   </h3>
                   <p className="text-gray-500 text-sm mb-6 leading-relaxed">{currentStep.subtitle}</p>
@@ -386,7 +386,7 @@ export function SmartQuiz({ children }: { children?: React.ReactNode }) {
                   >
                     <span className="text-xl shrink-0">🤖</span>
                     <p className="text-sm text-gray-600 leading-relaxed">
-                      Encontrei <strong style={{ color: '#1B2B5B' }}>imóveis perfeitos</strong> para você! Me passa seus dados para eu personalizar ainda mais e ter um corretor disponível para te ajudar.
+                      Encontrei <strong style={{ color: '#143A1F' }}>imóveis perfeitos</strong> para você! Me passa seus dados para eu personalizar ainda mais e ter um corretor disponível para te ajudar.
                     </p>
                   </div>
 

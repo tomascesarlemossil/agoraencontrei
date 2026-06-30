@@ -37,9 +37,9 @@ const PLAN_INFO = {
   VIP: {
     name: 'VIP',
     price: 497,
-    icon: <Crown className="w-6 h-6 text-[#1B2B5B]" />,
-    color: '#1B2B5B',
-    bg: 'rgba(27,43,91,0.08)',
+    icon: <Crown className="w-6 h-6 text-[#143A1F]" />,
+    color: '#143A1F',
+    bg: 'rgba(20,58,31,0.08)',
     features: [
       'Tudo do Prime +',
       'Sentinela territorial exclusiva',
@@ -180,7 +180,7 @@ function CheckoutContent() {
   return (
     <div className="min-h-screen bg-[#f8f6f1]">
       {/* Header */}
-      <header className="bg-[#1B2B5B] py-4 px-6">
+      <header className="bg-[#143A1F] py-4 px-6">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <Link href="/">
             <Image src="/logo-ae-v2.png" alt="AgoraEncontrei" width={140} height={40} className="h-8 w-auto" />
@@ -206,7 +206,7 @@ function CheckoutContent() {
                 >
                   {planInfo.icon}
                   <div>
-                    <p className="font-bold text-[#1B2B5B]">Plano {planInfo.name}</p>
+                    <p className="font-bold text-[#143A1F]">Plano {planInfo.name}</p>
                     <p className="text-xs text-gray-500">Assinatura mensal recorrente</p>
                   </div>
                 </div>
@@ -223,7 +223,7 @@ function CheckoutContent() {
                 <div className="border-t pt-4">
                   <div className="flex items-baseline justify-between">
                     <span className="text-gray-500 text-sm">Total mensal</span>
-                    <span className="text-2xl font-bold text-[#1B2B5B]">{fmt(planInfo.price)}</span>
+                    <span className="text-2xl font-bold text-[#143A1F]">{fmt(planInfo.price)}</span>
                   </div>
                   <p className="text-xs text-gray-400 mt-1">Renovação automática. Cancele quando quiser.</p>
                 </div>
@@ -238,7 +238,7 @@ function CheckoutContent() {
             {/* Formulário de pagamento */}
             <div className="md:col-span-3">
               <div className="bg-white rounded-2xl border p-6">
-                <h1 className="text-xl font-bold text-[#1B2B5B] mb-6">Dados de pagamento</h1>
+                <h1 className="text-xl font-bold text-[#143A1F] mb-6">Dados de pagamento</h1>
 
                 {error && (
                   <div className="flex items-start gap-2 p-4 bg-red-50 border border-red-200 rounded-xl mb-6 text-sm text-red-700">
@@ -290,7 +290,7 @@ function CheckoutContent() {
                       onChange={e => setName(e.target.value)}
                       placeholder="Seu nome completo"
                       required
-                      className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#1B2B5B] transition-colors"
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#143A1F] transition-colors"
                     />
                   </div>
 
@@ -303,7 +303,7 @@ function CheckoutContent() {
                       onChange={e => setEmail(e.target.value)}
                       placeholder="seu@email.com"
                       required
-                      className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#1B2B5B] transition-colors"
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#143A1F] transition-colors"
                     />
                   </div>
 
@@ -316,7 +316,7 @@ function CheckoutContent() {
                       onChange={e => setCpfCnpj(formatCpfCnpj(e.target.value))}
                       placeholder="000.000.000-00"
                       required
-                      className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#1B2B5B] transition-colors"
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#143A1F] transition-colors"
                     />
                   </div>
 
@@ -328,7 +328,7 @@ function CheckoutContent() {
                       value={phone}
                       onChange={e => setPhone(e.target.value)}
                       placeholder="(16) 99999-9999"
-                      className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#1B2B5B] transition-colors"
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#143A1F] transition-colors"
                     />
                   </div>
 
@@ -343,7 +343,7 @@ function CheckoutContent() {
                           className="mt-0.5 w-4 h-4 accent-yellow-500 flex-shrink-0"
                         />
                         <span className="text-xs text-gray-700 leading-relaxed">
-                          <strong className="text-[#1B2B5B]">Quero ser Membro Fundador 💎</strong> — Meu preço de R$ 497/mês fica congelado vitaliciamente enquanto a assinatura estiver ativa. Recebo o selo exclusivo &quot;Fundador&quot; e prioridade máxima (score 100) em todos os meus territórios.
+                          <strong className="text-[#143A1F]">Quero ser Membro Fundador 💎</strong> — Meu preço de R$ 497/mês fica congelado vitaliciamente enquanto a assinatura estiver ativa. Recebo o selo exclusivo &quot;Fundador&quot; e prioridade máxima (score 100) em todos os meus territórios.
                         </span>
                       </label>
                     </div>
@@ -358,7 +358,7 @@ function CheckoutContent() {
                     />
                     <span className="text-xs text-gray-600 leading-relaxed">
                       Li e concordo com os{' '}
-                      <Link href="/termos-uso" className="underline text-[#1B2B5B] hover:text-blue-700" target="_blank">Termos de Uso</Link>{' '}e com o{' '}
+                      <Link href="/termos-uso" className="underline text-[#143A1F] hover:text-blue-700" target="_blank">Termos de Uso</Link>{' '}e com o{' '}
                       <Link href="/parceiros/contrato" className="underline text-[#C9A84C] hover:text-yellow-700" target="_blank">Contrato de Adesão</Link>.
                       Estou ciente do aporte inicial de R$ 990, da cobrança mensal do plano e de que os
                       valores podem ser reajustados a cada 5 meses mediante aviso prévio.
@@ -369,7 +369,7 @@ function CheckoutContent() {
                     type="submit"
                     disabled={step === 'processing' || !acceptedTerms}
                     className="w-full flex items-center justify-center gap-2 py-4 rounded-xl font-bold text-base transition-all hover:brightness-110 disabled:opacity-60 disabled:cursor-not-allowed"
-                    style={{ backgroundColor: planInfo.color, color: plan === 'PRIME' ? '#1B2B5B' : 'white' }}
+                    style={{ backgroundColor: planInfo.color, color: plan === 'PRIME' ? '#143A1F' : 'white' }}
                   >
                     {step === 'processing' ? (
                       <><Loader2 className="w-5 h-5 animate-spin" /> Processando...</>
@@ -399,7 +399,7 @@ function CheckoutContent() {
 
               {result.subscriptionId === 'PENDING_MANUAL' ? (
                 <>
-                  <h1 className="text-2xl font-bold text-[#1B2B5B] mb-3">Interesse registrado! 🎉</h1>
+                  <h1 className="text-2xl font-bold text-[#143A1F] mb-3">Interesse registrado! 🎉</h1>
                   <p className="text-gray-600 mb-6">
                     Nossa equipe entrará em contato em até <strong>2 horas</strong> para finalizar sua assinatura do Plano {planInfo.name}.
                   </p>
@@ -409,7 +409,7 @@ function CheckoutContent() {
                 </>
               ) : (
                 <>
-                  <h1 className="text-2xl font-bold text-[#1B2B5B] mb-3">Assinatura criada! 🎉</h1>
+                  <h1 className="text-2xl font-bold text-[#143A1F] mb-3">Assinatura criada! 🎉</h1>
                   <p className="text-gray-600 mb-6">
                     Plano <strong>{planInfo.name}</strong> ativado. Seu perfil será promovido em até 24h após confirmação do pagamento.
                   </p>
@@ -417,7 +417,7 @@ function CheckoutContent() {
                   {/* Aporte inicial — cobrança única de implantação */}
                   {result.aporte && (
                     <div className="mb-6 rounded-xl border-2 border-[#C9A84C]/40 bg-[#C9A84C]/5 p-4 text-left">
-                      <p className="text-sm font-bold text-[#1B2B5B]">
+                      <p className="text-sm font-bold text-[#143A1F]">
                         Aporte inicial — R$ {result.aporte.value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                         {billingType === 'PIX' && <span className="ml-1 text-xs font-semibold text-emerald-600">(PIX com 6,80% off)</span>}
                       </p>
@@ -428,7 +428,7 @@ function CheckoutContent() {
                         href={result.aporte.bankSlipUrl || result.aporte.invoiceUrl}
                         target="_blank" rel="noopener noreferrer"
                         className="inline-flex items-center justify-center gap-2 w-full py-3 rounded-xl text-sm font-bold transition-all hover:brightness-110"
-                        style={{ backgroundColor: '#C9A84C', color: '#1B2B5B' }}
+                        style={{ backgroundColor: '#C9A84C', color: '#143A1F' }}
                       >
                         <ExternalLink className="w-4 h-4" /> Pagar aporte inicial
                       </a>
@@ -448,7 +448,7 @@ function CheckoutContent() {
                       {result.pixCopiaECola && (
                         <button
                           onClick={copyPix}
-                          className="flex items-center gap-2 mx-auto px-4 py-2 bg-[#1B2B5B] text-white rounded-xl text-sm font-medium hover:bg-[#162247] transition-colors"
+                          className="flex items-center gap-2 mx-auto px-4 py-2 bg-[#143A1F] text-white rounded-xl text-sm font-medium hover:bg-[#0E2A15] transition-colors"
                         >
                           {copied ? <CheckCircle2 className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                           {copied ? 'Copiado!' : 'Copiar código PIX'}
@@ -464,7 +464,7 @@ function CheckoutContent() {
                         href={result.bankSlipUrl}
                         target="_blank"
                         rel="noreferrer"
-                        className="inline-flex items-center gap-2 px-6 py-3 bg-[#1B2B5B] text-white rounded-xl font-semibold hover:bg-[#162247] transition-colors"
+                        className="inline-flex items-center gap-2 px-6 py-3 bg-[#143A1F] text-white rounded-xl font-semibold hover:bg-[#0E2A15] transition-colors"
                       >
                         <ExternalLink className="w-4 h-4" /> Abrir boleto bancário
                       </a>
@@ -478,7 +478,7 @@ function CheckoutContent() {
                         href={result.invoiceUrl}
                         target="_blank"
                         rel="noreferrer"
-                        className="text-sm text-[#1B2B5B] underline hover:text-[#162247]"
+                        className="text-sm text-[#143A1F] underline hover:text-[#0E2A15]"
                       >
                         Ver fatura completa
                       </a>
@@ -495,7 +495,7 @@ function CheckoutContent() {
                     <div key={i} className="flex items-center gap-3">
                       <span className="text-lg">{tool.icon}</span>
                       <div>
-                        <p className="text-sm font-semibold text-[#1B2B5B]">{tool.name}</p>
+                        <p className="text-sm font-semibold text-[#143A1F]">{tool.name}</p>
                         <p className="text-xs text-gray-400">{tool.desc}</p>
                       </div>
                     </div>
@@ -520,7 +520,7 @@ function CheckoutContent() {
                 <Link
                   href="/meu-painel"
                   className="w-full inline-flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-sm transition-all"
-                  style={{ backgroundColor: planInfo.color, color: plan === 'PRIME' ? '#1B2B5B' : 'white' }}
+                  style={{ backgroundColor: planInfo.color, color: plan === 'PRIME' ? '#143A1F' : 'white' }}
                 >
                   Acessar meu dashboard privado →
                 </Link>
@@ -533,7 +533,7 @@ function CheckoutContent() {
                   </Link>
                   <Link
                     href="/"
-                    className="flex-1 px-5 py-2.5 bg-[#1B2B5B] text-white rounded-xl font-semibold hover:bg-[#162247] transition-colors text-sm text-center"
+                    className="flex-1 px-5 py-2.5 bg-[#143A1F] text-white rounded-xl font-semibold hover:bg-[#0E2A15] transition-colors text-sm text-center"
                   >
                     Ir para o Início
                   </Link>
@@ -551,7 +551,7 @@ export default function CheckoutPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-[#1B2B5B]" />
+        <Loader2 className="w-8 h-8 animate-spin text-[#143A1F]" />
       </div>
     }>
       <CheckoutContent />

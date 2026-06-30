@@ -22,14 +22,14 @@ const SERVICES = [
     title: 'Compra e Venda',
     description: 'Assessoria completa na compra e venda de imóveis. Avaliação gratuita, divulgação nos principais portais e suporte jurídico até a escritura.',
     href: '/imoveis?purpose=SALE',
-    color: '#1B2B5B',
+    color: '#143A1F',
   },
   {
     icon: Home,
     title: 'Locação',
     description: 'Administração completa de contratos de locação. Cobrança, repasse ao proprietário, vistoria e manutenção do imóvel durante toda a vigência.',
     href: '/imoveis?purpose=RENT',
-    color: '#1B2B5B',
+    color: '#143A1F',
   },
   {
     icon: CreditCard,
@@ -92,7 +92,7 @@ const SERVICES = [
     title: 'Vídeo para Imóveis',
     description: 'Tour virtual, vídeo de apresentação e vídeo marketing para redes sociais e portais imobiliários.',
     href: '/servicos/video-imoveis',
-    color: '#1B2B5B',
+    color: '#143A1F',
   },
   {
     icon: Plane,
@@ -135,7 +135,7 @@ export default function ServicosPage() {
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#f8f6f1' }}>
       {/* Hero */}
-      <section className="py-16 text-center" style={{ backgroundColor: '#1B2B5B' }}>
+      <section className="py-16 text-center" style={{ backgroundColor: '#143A1F' }}>
         <div className="max-w-4xl mx-auto px-4">
           <h1 className="text-3xl sm:text-4xl font-bold text-white mb-4" style={{ fontFamily: 'Georgia, serif' }}>
             Nossos Serviços
@@ -162,7 +162,7 @@ export default function ServicosPage() {
               >
                 <svc.icon className="w-6 h-6" style={{ color: svc.color }} />
               </div>
-              <h2 className="font-bold text-gray-900 mb-2 group-hover:text-[#1B2B5B] transition-colors" style={{ fontFamily: 'Georgia, serif' }}>
+              <h2 className="font-bold text-gray-900 mb-2 group-hover:text-[#143A1F] transition-colors" style={{ fontFamily: 'Georgia, serif' }}>
                 {svc.title}
               </h2>
               <p className="text-sm text-gray-500 leading-relaxed">
@@ -180,8 +180,8 @@ export default function ServicosPage() {
       <section className="max-w-6xl mx-auto px-4 pb-8">
         <div className="rounded-2xl border overflow-hidden" style={{ borderColor: '#e8e4dc', backgroundColor: '#fff' }}>
           <div className="px-6 py-4 border-b flex items-center gap-2" style={{ borderColor: '#ede9df', backgroundColor: '#fafaf8' }}>
-            <MapPin className="w-5 h-5" style={{ color: '#1B2B5B' }} />
-            <h2 className="font-bold text-base" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>
+            <MapPin className="w-5 h-5" style={{ color: '#143A1F' }} />
+            <h2 className="font-bold text-base" style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}>
               Prefeitura de Franca — Serviços Online
             </h2>
           </div>
@@ -193,7 +193,7 @@ export default function ServicosPage() {
               className="flex items-start gap-3 p-4 rounded-xl border hover:shadow-md transition-all group"
               style={{ borderColor: '#e8e4dc' }}
             >
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: 'rgba(27,43,91,0.08)', color: '#1B2B5B' }}>
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: 'rgba(20,58,31,0.08)', color: '#143A1F' }}>
                 <MapPin className="w-5 h-5" />
               </div>
               <div className="flex-1">
@@ -264,7 +264,7 @@ export default function ServicosPage() {
 
       {/* Contact CTA */}
       <section className="max-w-4xl mx-auto px-4 pb-16">
-        <div className="rounded-2xl p-8 text-white text-center" style={{ backgroundColor: '#1B2B5B' }}>
+        <div className="rounded-2xl p-8 text-white text-center" style={{ backgroundColor: '#143A1F' }}>
           <h2 className="text-2xl font-bold mb-3" style={{ fontFamily: 'Georgia, serif' }}>
             Precisa de ajuda?
           </h2>

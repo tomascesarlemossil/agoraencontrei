@@ -145,7 +145,7 @@ export default function BlogManagementPage() {
           <button
             onClick={() => setEditing({ ...EMPTY_POST })}
             className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all hover:brightness-110"
-            style={{ backgroundColor: '#C9A84C', color: '#1B2B5B' }}
+            style={{ backgroundColor: '#C9A84C', color: '#143A1F' }}
           >
             <Plus className="w-4 h-4" /> Novo Post
           </button>
@@ -221,7 +221,7 @@ export default function BlogManagementPage() {
       {/* Editor Modal */}
       {editing && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(0,0,0,0.8)' }}>
-          <div className="bg-[#1a2744] rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto border border-white/10">
+          <div className="bg-[#0E2A15] rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto border border-white/10">
             <div className="flex items-center justify-between p-5 border-b border-white/10">
               <h2 className="font-bold text-lg text-white">{editing.id ? 'Editar Post' : 'Novo Post'}</h2>
               <button onClick={() => setEditing(null)} className="p-2 rounded-lg hover:bg-white/10 transition-colors">
@@ -253,7 +253,7 @@ export default function BlogManagementPage() {
                     <div>
                       <label className="text-xs text-white/60 font-semibold mb-1 block">Categoria</label>
                       <select {...field('category')} className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white outline-none focus:border-yellow-400/50">
-                        {CATEGORIES.map(c => <option key={c.value} value={c.value} style={{ backgroundColor: '#1a2744' }}>{c.label}</option>)}
+                        {CATEGORIES.map(c => <option key={c.value} value={c.value} style={{ backgroundColor: '#0E2A15' }}>{c.label}</option>)}
                       </select>
                     </div>
                     <div>
@@ -387,7 +387,7 @@ export default function BlogManagementPage() {
                 onClick={savePost}
                 disabled={saving || !editing.title?.trim()}
                 className="flex-2 flex-grow flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all hover:brightness-110 disabled:opacity-50"
-                style={{ backgroundColor: '#C9A84C', color: '#1B2B5B' }}
+                style={{ backgroundColor: '#C9A84C', color: '#143A1F' }}
               >
                 {saving ? <><Loader2 className="w-4 h-4 animate-spin" /> Salvando...</> : <><Save className="w-4 h-4" /> Salvar</>}
               </button>

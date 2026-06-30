@@ -127,7 +127,7 @@ export default function LeilaoPage() {
   return (
     <>
       {/* HERO */}
-      <section className="bg-gradient-to-br from-[#1B2B5B] to-[#0f1c3a] text-white py-16 px-4">
+      <section className="bg-gradient-to-br from-[#143A1F] to-[#0f1c3a] text-white py-16 px-4">
         <div className="max-w-5xl mx-auto text-center">
           <div className="inline-flex items-center gap-2 bg-white/10 rounded-full px-4 py-1.5 text-xs font-semibold mb-4" style={{ color: '#C9A84C' }}>
             <MapPin className="w-3.5 h-3.5" /> Franca/SP e Região · Imobiliária Lemos
@@ -141,7 +141,7 @@ export default function LeilaoPage() {
           <div className="flex flex-wrap justify-center gap-3 mb-8">
             <a href="#listagem"
               className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm hover:brightness-110 transition-all"
-              style={{ background: '#C9A84C', color: '#1B2B5B' }}>
+              style={{ background: '#C9A84C', color: '#143A1F' }}>
               <Search className="w-4 h-4" /> Ver Imóveis Disponíveis
             </a>
             <a href="https://wa.me/5516981010004?text=Olá! Preciso de ajuda com leilão de imóveis em Franca/SP."
@@ -193,7 +193,7 @@ export default function LeilaoPage() {
       <section id="listagem" className="max-w-6xl mx-auto px-4 pb-12">
         <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
           <div>
-            <h2 className="text-xl font-bold" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>
+            <h2 className="text-xl font-bold" style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}>
               Imóveis da Caixa Econômica Federal
             </h2>
             {updatedAt && (
@@ -229,7 +229,7 @@ export default function LeilaoPage() {
               <select
                 value={filterType}
                 onChange={e => setFilterType(e.target.value)}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B2B5B]/20"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#143A1F]/20"
               >
                 <option value="">Todos os tipos</option>
                 {uniqueTypes.map(t => <option key={t} value={t}>{t}</option>)}
@@ -240,7 +240,7 @@ export default function LeilaoPage() {
               <select
                 value={filterCity}
                 onChange={e => setFilterCity(e.target.value)}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B2B5B]/20"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#143A1F]/20"
               >
                 <option value="">Todas as cidades</option>
                 {uniqueCities.map(c => <option key={c} value={c}>{c}</option>)}
@@ -251,7 +251,7 @@ export default function LeilaoPage() {
               <select
                 value={filterSaleType}
                 onChange={e => setFilterSaleType(e.target.value)}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B2B5B]/20"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#143A1F]/20"
               >
                 <option value="">Todas as modalidades</option>
                 <option value="Licitação">Licitação Aberta</option>
@@ -265,7 +265,7 @@ export default function LeilaoPage() {
               <select
                 value={sortBy}
                 onChange={e => setSortBy(e.target.value as 'discount' | 'price')}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B2B5B]/20"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#143A1F]/20"
               >
                 <option value="discount">Maior desconto</option>
                 <option value="price">Menor preço</option>
@@ -277,7 +277,7 @@ export default function LeilaoPage() {
                 id="financeable"
                 checked={filterFinanceable}
                 onChange={e => setFilterFinanceable(e.target.checked)}
-                className="rounded border-gray-300 text-[#1B2B5B]"
+                className="rounded border-gray-300 text-[#143A1F]"
               />
               <label htmlFor="financeable" className="text-sm text-gray-700">Somente financiáveis pela Caixa</label>
             </div>
@@ -287,7 +287,7 @@ export default function LeilaoPage() {
         {/* Loading */}
         {loading && (
           <div className="text-center py-16">
-            <div className="inline-block w-8 h-8 border-4 border-[#1B2B5B]/20 border-t-[#1B2B5B] rounded-full animate-spin mb-4" />
+            <div className="inline-block w-8 h-8 border-4 border-[#143A1F]/20 border-t-[#143A1F] rounded-full animate-spin mb-4" />
             <p className="text-gray-500 text-sm">Carregando imóveis da Caixa Econômica Federal...</p>
           </div>
         )}
@@ -297,7 +297,7 @@ export default function LeilaoPage() {
           <div className="text-center py-16">
             <AlertCircle className="w-10 h-10 text-red-400 mx-auto mb-3" />
             <p className="text-gray-600 text-sm mb-4">{error}</p>
-            <button onClick={fetchAuctions} className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#1B2B5B] text-white text-sm font-medium">
+            <button onClick={fetchAuctions} className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#143A1F] text-white text-sm font-medium">
               <RefreshCw className="w-4 h-4" /> Tentar novamente
             </button>
           </div>
@@ -310,7 +310,7 @@ export default function LeilaoPage() {
             {(filterType || filterCity || filterSaleType || filterFinanceable) && (
               <button
                 onClick={() => { setFilterType(''); setFilterCity(''); setFilterSaleType(''); setFilterFinanceable(false) }}
-                className="ml-2 text-xs text-[#1B2B5B] underline"
+                className="ml-2 text-xs text-[#143A1F] underline"
               >
                 limpar filtros
               </button>
@@ -327,7 +327,7 @@ export default function LeilaoPage() {
                 <div className="p-4 pb-3 flex-1">
                   <div className="flex items-start justify-between gap-2 mb-3">
                     <div className="flex items-center gap-2">
-                      <div className="w-9 h-9 rounded-xl flex items-center justify-center text-white flex-shrink-0" style={{ background: '#1B2B5B' }}>
+                      <div className="w-9 h-9 rounded-xl flex items-center justify-center text-white flex-shrink-0" style={{ background: '#143A1F' }}>
                         {getPropertyIcon(item.propertyType)}
                       </div>
                       <div>
@@ -349,7 +349,7 @@ export default function LeilaoPage() {
 
                   {/* Price */}
                   <div className="mb-3">
-                    <div className="text-lg font-bold" style={{ color: '#1B2B5B' }}>
+                    <div className="text-lg font-bold" style={{ color: '#143A1F' }}>
                       {formatCurrency(item.price)}
                     </div>
                     {item.appraisalValue > 0 && item.appraisalValue !== item.price && (
@@ -397,7 +397,7 @@ export default function LeilaoPage() {
                     target="_blank"
                     rel="noreferrer noopener"
                     className="flex-1 inline-flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold text-white transition-all hover:brightness-110"
-                    style={{ background: '#1B2B5B' }}
+                    style={{ background: '#143A1F' }}
                   >
                     <ExternalLink className="w-3.5 h-3.5" />
                     Ver na Caixa
@@ -424,7 +424,7 @@ export default function LeilaoPage() {
             <p className="text-gray-500 text-sm">Nenhum imóvel encontrado com esses filtros.</p>
             <button
               onClick={() => { setFilterType(''); setFilterCity(''); setFilterSaleType(''); setFilterFinanceable(false) }}
-              className="mt-3 text-sm text-[#1B2B5B] underline"
+              className="mt-3 text-sm text-[#143A1F] underline"
             >
               Limpar filtros
             </button>
@@ -435,7 +435,7 @@ export default function LeilaoPage() {
       {/* CONTEÚDO SEO */}
       <section className="max-w-4xl mx-auto px-4 pb-12">
         <div className="bg-white rounded-2xl p-8 border space-y-6">
-          <h2 className="text-xl font-bold" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>
+          <h2 className="text-xl font-bold" style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}>
             Tudo sobre Leilão de Imóveis em Franca/SP
           </h2>
           <div>
@@ -459,7 +459,7 @@ export default function LeilaoPage() {
 
       {/* LINKS INTERNOS */}
       <section className="max-w-5xl mx-auto px-4 pb-12">
-        <h2 className="text-xl font-bold mb-5" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>
+        <h2 className="text-xl font-bold mb-5" style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}>
           Explore Nosso Portfólio de Imóveis em Franca/SP
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -482,7 +482,7 @@ export default function LeilaoPage() {
       </section>
 
       {/* CTA FINAL */}
-      <section className="py-12 px-4 text-center" style={{ background: 'linear-gradient(135deg, #1B2B5B, #0f1c3a)' }}>
+      <section className="py-12 px-4 text-center" style={{ background: 'linear-gradient(135deg, #143A1F, #0f1c3a)' }}>
         <div className="max-w-2xl mx-auto">
           <Star className="w-8 h-8 mx-auto mb-3" style={{ color: '#C9A84C' }} />
           <h2 className="text-2xl font-bold text-white mb-2" style={{ fontFamily: 'Georgia, serif' }}>
@@ -499,7 +499,7 @@ export default function LeilaoPage() {
               <Phone className="w-4 h-4" /> (16) 3723-0045
             </a>
             <Link href="/"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm text-[#1B2B5B]"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm text-[#143A1F]"
               style={{ background: '#C9A84C' }}>
               <Home className="w-4 h-4" /> Página Inicial
             </Link>

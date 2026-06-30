@@ -144,19 +144,19 @@ export function FloatingChatbot() {
       {open && (
         <div
           className="w-80 sm:w-96 rounded-2xl overflow-hidden shadow-2xl border"
-          style={{ borderColor: 'rgba(27,43,91,0.15)' }}
+          style={{ borderColor: 'rgba(20,58,31,0.15)' }}
         >
           {/* Header */}
           <div
             className="flex items-center justify-between px-4 py-3"
-            style={{ backgroundColor: '#1B2B5B' }}
+            style={{ backgroundColor: '#143A1F' }}
           >
             <div className="flex items-center gap-2.5">
               <div
                 className="h-9 w-9 rounded-xl flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
                 style={{ background: 'linear-gradient(135deg, #C9A84C, #e6c96a)' }}
               >
-                <span style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif', fontSize: 11 }}>IL</span>
+                <span style={{ color: '#143A1F', fontFamily: 'Georgia, serif', fontSize: 11 }}>IL</span>
               </div>
               <div>
                 <p className="text-white text-sm font-bold leading-none">Imobiliária Lemos</p>
@@ -182,7 +182,7 @@ export function FloatingChatbot() {
                 {msg.role === 'bot' && (
                   <div
                     className="w-6 h-6 rounded-lg flex items-center justify-center text-white text-[9px] font-bold mr-2 flex-shrink-0 mt-0.5"
-                    style={{ background: 'linear-gradient(135deg, #1B2B5B, #2d4a8a)' }}
+                    style={{ background: 'linear-gradient(135deg, #143A1F, #2d4a8a)' }}
                   >
                     IL
                   </div>
@@ -190,7 +190,7 @@ export function FloatingChatbot() {
                 <div
                   className="max-w-[78%] rounded-2xl px-3.5 py-2.5 text-xs leading-relaxed whitespace-pre-wrap"
                   style={{
-                    backgroundColor: msg.role === 'bot' ? '#f0ece4' : '#1B2B5B',
+                    backgroundColor: msg.role === 'bot' ? '#f0ece4' : '#143A1F',
                     color: msg.role === 'bot' ? '#374151' : 'white',
                     borderBottomLeftRadius: msg.role === 'bot' ? '4px' : undefined,
                     borderBottomRightRadius: msg.role === 'user' ? '4px' : undefined,
@@ -206,7 +206,7 @@ export function FloatingChatbot() {
               <div className="flex items-center gap-2">
                 <div
                   className="w-6 h-6 rounded-lg flex items-center justify-center text-white text-[9px] font-bold flex-shrink-0"
-                  style={{ background: 'linear-gradient(135deg, #1B2B5B, #2d4a8a)' }}
+                  style={{ background: 'linear-gradient(135deg, #143A1F, #2d4a8a)' }}
                 >
                   IL
                 </div>
@@ -230,7 +230,7 @@ export function FloatingChatbot() {
                     key={qr}
                     onClick={() => sendMessage(qr)}
                     className="text-xs px-2.5 py-1.5 rounded-full border-2 transition-all hover:brightness-110 font-medium"
-                    style={{ borderColor: '#C9A84C', color: '#1B2B5B', backgroundColor: 'rgba(201,168,76,0.08)' }}
+                    style={{ borderColor: '#C9A84C', color: '#143A1F', backgroundColor: 'rgba(201,168,76,0.08)' }}
                   >
                     {qr}
                   </button>
@@ -266,8 +266,8 @@ export function FloatingChatbot() {
               onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(input) } }}
               placeholder={isTyping ? 'Aguarde...' : 'Digite sua mensagem...'}
               aria-label="Digite sua mensagem para o assistente"
-              className="flex-1 px-3 py-2 rounded-xl border focus:outline-none focus:ring-1 focus:ring-[#1B2B5B] placeholder-gray-400"
-              style={{ borderColor: '#e0dbd0', backgroundColor: '#ffffff', color: '#111827', caretColor: '#1B2B5B', opacity: 1, fontSize: '16px' }}
+              className="flex-1 px-3 py-2 rounded-xl border focus:outline-none focus:ring-1 focus:ring-[#143A1F] placeholder-gray-400"
+              style={{ borderColor: '#e0dbd0', backgroundColor: '#ffffff', color: '#111827', caretColor: '#143A1F', opacity: 1, fontSize: '16px' }}
               autoComplete="off"
               autoCorrect="off"
               spellCheck={false}
@@ -276,7 +276,7 @@ export function FloatingChatbot() {
               onClick={() => sendMessage(input)}
               disabled={!input.trim() || isTyping}
               className="p-2 rounded-xl transition-all hover:brightness-110 disabled:opacity-40"
-              style={{ backgroundColor: '#1B2B5B', color: 'white' }}
+              style={{ backgroundColor: '#143A1F', color: 'white' }}
               aria-label="Enviar mensagem"
             >
               <Send className="w-3.5 h-3.5" />
@@ -289,7 +289,7 @@ export function FloatingChatbot() {
       <button
         onClick={() => setOpen(v => !v)}
         className="h-14 w-14 rounded-2xl shadow-xl flex items-center justify-center transition-all hover:scale-105 hover:shadow-2xl relative"
-        style={{ backgroundColor: '#1B2B5B' }}
+        style={{ backgroundColor: '#143A1F' }}
         aria-label="Chat com Imobiliária Lemos"
       >
         {open ? (
@@ -303,7 +303,7 @@ export function FloatingChatbot() {
             className="absolute -top-1 -right-1 h-4 w-4 rounded-full flex items-center justify-center"
             style={{ backgroundColor: '#C9A84C' }}
           >
-            <span className="text-[#1B2B5B] text-[9px] font-extrabold">1</span>
+            <span className="text-[#143A1F] text-[9px] font-extrabold">1</span>
           </div>
         )}
       </button>

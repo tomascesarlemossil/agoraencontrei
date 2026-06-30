@@ -83,7 +83,7 @@ export default async function NeighborhoodPage(props: Props) {
 
       <main className="min-h-screen bg-[#0f1a35]">
         {/* Hero */}
-        <section className="bg-gradient-to-br from-[#1B2B5B] to-[#0f1a35] py-16 px-4">
+        <section className="bg-gradient-to-br from-[#143A1F] to-[#0f1a35] py-16 px-4">
           <div className="max-w-5xl mx-auto">
             <div className="flex items-center gap-2 text-yellow-400/70 text-sm mb-4">
               <Link href="/" className="hover:text-yellow-400">Início</Link>
@@ -111,7 +111,7 @@ export default async function NeighborhoodPage(props: Props) {
             <div className="mt-8 flex flex-col sm:flex-row gap-3">
               <Link
                 href={`${searchUrl}&transactionType=SALE`}
-                className="flex items-center justify-center gap-2 px-6 py-3 bg-yellow-400 hover:bg-yellow-300 text-[#1B2B5B] font-bold rounded-xl transition-colors"
+                className="flex items-center justify-center gap-2 px-6 py-3 bg-yellow-400 hover:bg-yellow-300 text-[#143A1F] font-bold rounded-xl transition-colors"
               >
                 <Home className="h-5 w-5" />
                 Imóveis à Venda em {name}
@@ -189,7 +189,7 @@ export default async function NeighborhoodPage(props: Props) {
             {/* Sidebar */}
             <div className="space-y-4">
               {/* Card de contato */}
-              <div className="bg-gradient-to-br from-[#1B2B5B] to-[#243670] border border-yellow-400/20 rounded-2xl p-5">
+              <div className="bg-gradient-to-br from-[#143A1F] to-[#243670] border border-yellow-400/20 rounded-2xl p-5">
                 <div className="flex items-center gap-2 mb-3">
                   <Star className="h-5 w-5 text-yellow-400 fill-yellow-400" />
                   <span className="text-white font-bold">Imobiliária Lemos</span>
@@ -208,7 +208,7 @@ export default async function NeighborhoodPage(props: Props) {
                 </a>
                 <Link
                   href="/anunciar"
-                  className="flex items-center justify-center gap-2 w-full py-3 mt-2 bg-yellow-400 hover:bg-yellow-300 text-[#1B2B5B] font-bold rounded-xl transition-colors text-sm"
+                  className="flex items-center justify-center gap-2 w-full py-3 mt-2 bg-yellow-400 hover:bg-yellow-300 text-[#143A1F] font-bold rounded-xl transition-colors text-sm"
                 >
                   Anunciar meu imóvel
                 </Link>

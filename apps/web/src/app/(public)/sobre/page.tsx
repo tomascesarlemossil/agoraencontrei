@@ -63,7 +63,7 @@ export default function SobrePage() {
         className="py-20 text-white text-center"
         style={{
           background:
-            'linear-gradient(135deg, #1B2B5B 0%, #2d4a8a 60%, #1B2B5B 100%)',
+            'linear-gradient(135deg, #143A1F 0%, #2d4a8a 60%, #143A1F 100%)',
         }}
       >
         <div className="max-w-4xl mx-auto px-4">
@@ -130,7 +130,7 @@ export default function SobrePage() {
             </p>
             <h2
               className="text-3xl font-bold mb-6"
-              style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}
+              style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}
             >
               Mais de duas décadas dedicadas ao mercado imobiliário
             </h2>
@@ -166,14 +166,14 @@ export default function SobrePage() {
               <div className="flex items-center gap-4 mb-4">
                 <div
                   className="w-14 h-14 rounded-full flex items-center justify-center text-white text-xl font-bold"
-                  style={{ backgroundColor: '#1B2B5B' }}
+                  style={{ backgroundColor: '#143A1F' }}
                 >
                   NP
                 </div>
                 <div>
                   <p
                     className="font-bold text-lg"
-                    style={{ color: '#1B2B5B' }}
+                    style={{ color: '#143A1F' }}
                   >
                     Noêmia Pires Lemos
                   </p>
@@ -197,14 +197,14 @@ export default function SobrePage() {
               <div className="flex items-center gap-4 mb-4">
                 <div
                   className="w-14 h-14 rounded-full flex items-center justify-center text-white text-xl font-bold"
-                  style={{ backgroundColor: '#1B2B5B' }}
+                  style={{ backgroundColor: '#143A1F' }}
                 >
                   NL
                 </div>
                 <div>
                   <p
                     className="font-bold text-lg"
-                    style={{ color: '#1B2B5B' }}
+                    style={{ color: '#143A1F' }}
                   >
                     Nilton Lemos
                   </p>
@@ -228,7 +228,7 @@ export default function SobrePage() {
         className="py-16"
         style={{
           background:
-            'linear-gradient(135deg, #1B2B5B 0%, #2d4a8a 60%, #1B2B5B 100%)',
+            'linear-gradient(135deg, #143A1F 0%, #2d4a8a 60%, #143A1F 100%)',
         }}
       >
         <div className="max-w-4xl mx-auto px-4 text-center text-white">
@@ -259,7 +259,7 @@ export default function SobrePage() {
           </p>
           <h2
             className="text-3xl font-bold"
-            style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}
+            style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}
           >
             Nossos Valores
           </h2>
@@ -279,7 +279,7 @@ export default function SobrePage() {
               </div>
               <h3
                 className="text-xl font-bold mb-2"
-                style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}
+                style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}
               >
                 {value.title}
               </h3>
@@ -300,7 +300,7 @@ export default function SobrePage() {
           <Users className="w-10 h-10 mx-auto mb-4" style={{ color: '#C9A84C' }} />
           <h2
             className="text-2xl font-bold mb-3"
-            style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}
+            style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}
           >
             Conheça Nossa Equipe
           </h2>
@@ -312,7 +312,7 @@ export default function SobrePage() {
           <Link
             href="/corretores"
             className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-white font-semibold transition-transform hover:scale-105"
-            style={{ backgroundColor: '#1B2B5B' }}
+            style={{ backgroundColor: '#143A1F' }}
           >
             <Building2 className="w-5 h-5" />
             Ver Equipe Completa

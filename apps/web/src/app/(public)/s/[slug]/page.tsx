@@ -209,7 +209,7 @@ export default async function SeoPage({
             <Link
               href={`/imoveis?city=${encodeURIComponent(page.cidade)}&state=${page.uf}`}
               className="inline-flex items-center px-5 py-2.5 text-sm font-medium text-white rounded-lg transition-colors hover:opacity-90"
-              style={{ backgroundColor: '#1B2B5B' }}
+              style={{ backgroundColor: '#143A1F' }}
             >
               Ver Imoveis Disponiveis
             </Link>
@@ -370,7 +370,7 @@ export default async function SeoPage({
         {/* Bottom CTA */}
         <div
           className="rounded-xl p-8 text-center"
-          style={{ backgroundColor: '#1B2B5B' }}
+          style={{ backgroundColor: '#143A1F' }}
         >
           <h2 className="text-xl font-bold text-white mb-2">
             Quer ajuda para encontrar o imovel ideal?
@@ -402,7 +402,7 @@ export default async function SeoPage({
       {/* Floating CTA — barra fixa no rodapé */}
       <div
         className="fixed bottom-0 left-0 right-0 z-50 shadow-2xl border-t border-white/10"
-        style={{ backgroundColor: '#1B2B5B' }}
+        style={{ backgroundColor: '#143A1F' }}
       >
         <div className="max-w-4xl mx-auto px-4 py-3 flex flex-col sm:flex-row items-center justify-between gap-2">
           <p className="text-white text-sm font-medium text-center sm:text-left">
@@ -423,7 +423,7 @@ export default async function SeoPage({
             <Link
               href="/"
               className="inline-flex items-center px-4 py-2 text-xs font-bold rounded-lg transition-opacity hover:opacity-90"
-              style={{ backgroundColor: '#C9A84C', color: '#1B2B5B' }}
+              style={{ backgroundColor: '#C9A84C', color: '#143A1F' }}
             >
               Ver Marketplace
             </Link>

@@ -24,7 +24,7 @@ export default function Error({
         {/* Icon */}
         <div
           className="mx-auto mb-6 w-20 h-20 rounded-2xl flex items-center justify-center"
-          style={{ backgroundColor: '#1B2B5B' }}
+          style={{ backgroundColor: '#143A1F' }}
         >
           <AlertTriangle className="w-10 h-10" style={{ color: '#C9A84C' }} />
         </div>
@@ -32,11 +32,11 @@ export default function Error({
         {/* Message */}
         <h1
           className="text-2xl font-bold mb-3"
-          style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}
+          style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}
         >
           Algo deu errado
         </h1>
-        <p className="text-sm mb-8" style={{ color: '#1B2B5B', opacity: 0.6 }}>
+        <p className="text-sm mb-8" style={{ color: '#143A1F', opacity: 0.6 }}>
           Ocorreu um erro inesperado. Tente novamente ou volte para a página inicial.
         </p>
 
@@ -53,7 +53,7 @@ export default function Error({
           <Link
             href="/"
             className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium text-white transition-opacity hover:opacity-90"
-            style={{ backgroundColor: '#1B2B5B' }}
+            style={{ backgroundColor: '#143A1F' }}
           >
             <Home className="w-4 h-4" />
             Página Inicial
@@ -62,7 +62,7 @@ export default function Error({
 
         {/* Error digest for debugging */}
         {error.digest && (
-          <p className="mt-8 text-xs" style={{ color: '#1B2B5B', opacity: 0.3 }}>
+          <p className="mt-8 text-xs" style={{ color: '#143A1F', opacity: 0.3 }}>
             Código: {error.digest}
           </p>
         )}

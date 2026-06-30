@@ -136,7 +136,7 @@ export default function FinanciamentosPage() {
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#f8f6f1' }}>
       {/* Hero */}
-      <div className="py-14 px-4 text-center" style={{ background: 'linear-gradient(135deg, #1B2B5B 0%, #2d4a8a 100%)' }}>
+      <div className="py-14 px-4 text-center" style={{ background: 'linear-gradient(135deg, #143A1F 0%, #2d4a8a 100%)' }}>
         <p className="text-sm font-semibold uppercase tracking-widest mb-3" style={{ color: '#C9A84C' }}>
           Crédito Imobiliário
         </p>
@@ -173,7 +173,7 @@ export default function FinanciamentosPage() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-14">
         {/* Bank grid */}
         <div className="mb-10">
-          <h2 className="text-2xl font-bold mb-2 text-center" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>
+          <h2 className="text-2xl font-bold mb-2 text-center" style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}>
             Simule nas maiores instituições financeiras
           </h2>
           <p className="text-center text-gray-500 text-sm mb-8">
@@ -223,7 +223,7 @@ export default function FinanciamentosPage() {
 
         {/* Simulator anchor */}
         <div id="simulador" className="bg-white rounded-3xl p-8 border shadow-sm mb-10" style={{ borderColor: '#e8e4dc' }}>
-          <h2 className="text-xl font-bold mb-2" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>
+          <h2 className="text-xl font-bold mb-2" style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}>
             Precisa de orientação para financiar?
           </h2>
           <p className="text-gray-500 text-sm mb-6">
@@ -246,7 +246,7 @@ export default function FinanciamentosPage() {
             <Link
               href="/imoveis?purpose=SALE"
               className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm transition-all hover:brightness-110 border-2"
-              style={{ borderColor: '#1B2B5B', color: '#1B2B5B' }}
+              style={{ borderColor: '#143A1F', color: '#143A1F' }}
             >
               Ver imóveis à venda
             </Link>
@@ -255,7 +255,7 @@ export default function FinanciamentosPage() {
 
         {/* Tips */}
         <div>
-          <h2 className="text-xl font-bold mb-6 text-center" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>
+          <h2 className="text-xl font-bold mb-6 text-center" style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}>
             Dicas para financiar com sucesso
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -268,7 +268,7 @@ export default function FinanciamentosPage() {
                   {tip.icon}
                 </div>
                 <div>
-                  <p className="font-bold text-sm mb-1" style={{ color: '#1B2B5B' }}>{tip.title}</p>
+                  <p className="font-bold text-sm mb-1" style={{ color: '#143A1F' }}>{tip.title}</p>
                   <p className="text-xs text-gray-500 leading-relaxed">{tip.desc}</p>
                 </div>
               </div>

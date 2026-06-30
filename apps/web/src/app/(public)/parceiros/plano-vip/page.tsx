@@ -37,14 +37,14 @@ const SENTINELA_FEATURES = [
     title: 'Exclusividade por condomínio',
     desc: 'Reivindique um condomínio e seja o único profissional exibido naquela página. Nenhum concorrente aparece no seu território.',
     badge: 'Exclusivo VIP',
-    badgeColor: '#1B2B5B',
+    badgeColor: '#143A1F',
   },
   {
     icon: MapPin,
     title: 'Domínio por bairro',
     desc: 'Marque um bairro inteiro como seu território. Todos os imóveis e condomínios daquele bairro exibem o seu perfil em destaque.',
     badge: 'Exclusivo VIP',
-    badgeColor: '#1B2B5B',
+    badgeColor: '#143A1F',
   },
   {
     icon: Bell,
@@ -65,7 +65,7 @@ const SENTINELA_FEATURES = [
     title: 'Visibilidade exclusiva no mapa',
     desc: 'No mapa de busca do site, apenas o seu pin aparece nos condomínios do seu território. Visibilidade 100% sua.',
     badge: 'Destaque no mapa',
-    badgeColor: '#1B2B5B',
+    badgeColor: '#143A1F',
   },
   {
     icon: TrendingUp,
@@ -135,7 +135,7 @@ export default function PlanoVIPPage() {
       {/* ── HERO ──────────────────────────────────────────────────────────────── */}
       <section
         className="relative overflow-hidden py-24 px-4"
-        style={{ background: 'linear-gradient(135deg, #0f1c3a 0%, #1B2B5B 60%, #243a73 100%)' }}
+        style={{ background: 'linear-gradient(135deg, #0f1c3a 0%, #143A1F 60%, #243a73 100%)' }}
       >
         {/* Padrão de fundo decorativo */}
         <div className="absolute inset-0 opacity-5 pointer-events-none"
@@ -176,7 +176,7 @@ export default function PlanoVIPPage() {
             <Link
               href="/parceiros/cadastro?plan=VIP"
               className="inline-flex items-center gap-2 px-10 py-4 rounded-2xl font-bold text-lg transition-all hover:brightness-110 shadow-lg"
-              style={{ background: '#C9A84C', color: '#1B2B5B' }}
+              style={{ background: '#C9A84C', color: '#143A1F' }}
             >
               Ativar Plano VIP agora <ArrowRight className="w-5 h-5" />
             </Link>
@@ -202,10 +202,10 @@ export default function PlanoVIPPage() {
       <section className="py-20 px-4 bg-[#f8f6f1]">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-14">
-            <div className="inline-flex items-center gap-2 bg-[#1B2B5B]/8 text-[#1B2B5B] px-4 py-1.5 rounded-full text-sm font-semibold mb-4">
+            <div className="inline-flex items-center gap-2 bg-[#143A1F]/8 text-[#143A1F] px-4 py-1.5 rounded-full text-sm font-semibold mb-4">
               <Shield className="w-4 h-4" /> A tecnologia central do Plano VIP
             </div>
-            <h2 className="text-3xl sm:text-4xl font-bold text-[#1B2B5B] mb-4" style={{ fontFamily: 'Georgia, serif' }}>
+            <h2 className="text-3xl sm:text-4xl font-bold text-[#143A1F] mb-4" style={{ fontFamily: 'Georgia, serif' }}>
               O que é o Sentinela Territorial?
             </h2>
             <p className="text-gray-600 text-lg max-w-3xl mx-auto leading-relaxed">
@@ -229,7 +229,7 @@ export default function PlanoVIPPage() {
                 title: 'O sistema protege',
                 desc: 'O Sentinela bloqueia outros profissionais de aparecer no seu território com exclusividade.',
                 icon: Shield,
-                color: '#1B2B5B',
+                color: '#143A1F',
               },
               {
                 step: '03',
@@ -249,14 +249,14 @@ export default function PlanoVIPPage() {
                 <div className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: item.color }}>
                   Passo {item.step}
                 </div>
-                <h3 className="text-lg font-bold text-[#1B2B5B] mb-2">{item.title}</h3>
+                <h3 className="text-lg font-bold text-[#143A1F] mb-2">{item.title}</h3>
                 <p className="text-gray-500 text-sm leading-relaxed">{item.desc}</p>
               </div>
             ))}
           </div>
 
           {/* Alerta de escassez */}
-          <div className="bg-[#1B2B5B] rounded-2xl p-6 flex items-start gap-4 text-white">
+          <div className="bg-[#143A1F] rounded-2xl p-6 flex items-start gap-4 text-white">
             <AlertTriangle className="w-6 h-6 flex-shrink-0 mt-0.5" style={{ color: '#C9A84C' }} />
             <div>
               <p className="font-bold mb-1">Territórios são limitados por definição</p>
@@ -274,7 +274,7 @@ export default function PlanoVIPPage() {
       <section className="py-20 px-4 bg-white">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-14">
-            <h2 className="text-3xl sm:text-4xl font-bold text-[#1B2B5B] mb-4" style={{ fontFamily: 'Georgia, serif' }}>
+            <h2 className="text-3xl sm:text-4xl font-bold text-[#143A1F] mb-4" style={{ fontFamily: 'Georgia, serif' }}>
               Tudo que o Sentinela faz por você
             </h2>
             <p className="text-gray-500 text-lg max-w-2xl mx-auto">
@@ -284,10 +284,10 @@ export default function PlanoVIPPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {SENTINELA_FEATURES.map((feature, i) => (
-              <div key={i} className="group bg-[#f8f6f1] hover:bg-white rounded-2xl border border-transparent hover:border-[#1B2B5B]/10 p-6 transition-all hover:shadow-md">
+              <div key={i} className="group bg-[#f8f6f1] hover:bg-white rounded-2xl border border-transparent hover:border-[#143A1F]/10 p-6 transition-all hover:shadow-md">
                 <div className="flex items-start justify-between mb-4">
-                  <div className="w-12 h-12 rounded-xl bg-[#1B2B5B]/8 flex items-center justify-center flex-shrink-0">
-                    <feature.icon className="w-6 h-6 text-[#1B2B5B]" />
+                  <div className="w-12 h-12 rounded-xl bg-[#143A1F]/8 flex items-center justify-center flex-shrink-0">
+                    <feature.icon className="w-6 h-6 text-[#143A1F]" />
                   </div>
                   <span
                     className="text-xs font-bold px-2.5 py-1 rounded-full"
@@ -296,7 +296,7 @@ export default function PlanoVIPPage() {
                     {feature.badge}
                   </span>
                 </div>
-                <h3 className="font-bold text-[#1B2B5B] mb-2 text-base">{feature.title}</h3>
+                <h3 className="font-bold text-[#143A1F] mb-2 text-base">{feature.title}</h3>
                 <p className="text-gray-500 text-sm leading-relaxed">{feature.desc}</p>
               </div>
             ))}
@@ -308,7 +308,7 @@ export default function PlanoVIPPage() {
       <section className="py-20 px-4 bg-[#f8f6f1]">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-3xl sm:text-4xl font-bold text-[#1B2B5B] mb-4" style={{ fontFamily: 'Georgia, serif' }}>
+            <h2 className="text-3xl sm:text-4xl font-bold text-[#143A1F] mb-4" style={{ fontFamily: 'Georgia, serif' }}>
               O dashboard completo do Plano VIP
             </h2>
             <p className="text-gray-500 text-lg max-w-2xl mx-auto">
@@ -318,7 +318,7 @@ export default function PlanoVIPPage() {
 
           <div className="bg-white rounded-3xl border shadow-sm overflow-hidden">
             {/* Header do card */}
-            <div className="p-6 border-b flex items-center gap-3" style={{ background: 'linear-gradient(135deg, #1B2B5B, #243a73)' }}>
+            <div className="p-6 border-b flex items-center gap-3" style={{ background: 'linear-gradient(135deg, #143A1F, #243a73)' }}>
               <Crown className="w-6 h-6" style={{ color: '#C9A84C' }} />
               <div>
                 <p className="font-bold text-white">Dashboard Privado — Plano VIP</p>
@@ -331,16 +331,16 @@ export default function PlanoVIPPage() {
               {ALL_VIP_TOOLS.map((tool, i) => (
                 <div key={i} className="flex items-center gap-4 px-6 py-4 hover:bg-[#f8f6f1] transition-colors">
                   <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                    tool.vipOnly ? 'bg-[#1B2B5B]/8' : 'bg-[#C9A84C]/10'
+                    tool.vipOnly ? 'bg-[#143A1F]/8' : 'bg-[#C9A84C]/10'
                   }`}>
-                    <tool.icon className={`w-5 h-5 ${tool.vipOnly ? 'text-[#1B2B5B]' : 'text-[#C9A84C]'}`} />
+                    <tool.icon className={`w-5 h-5 ${tool.vipOnly ? 'text-[#143A1F]' : 'text-[#C9A84C]'}`} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-[#1B2B5B] text-sm">{tool.name}</p>
+                    <p className="font-semibold text-[#143A1F] text-sm">{tool.name}</p>
                     <p className="text-gray-400 text-xs">{tool.desc}</p>
                   </div>
                   {tool.vipOnly ? (
-                    <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-[#1B2B5B]/8 text-[#1B2B5B] flex-shrink-0">
+                    <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-[#143A1F]/8 text-[#143A1F] flex-shrink-0">
                       Exclusivo VIP
                     </span>
                   ) : (
@@ -365,7 +365,7 @@ export default function PlanoVIPPage() {
       <section className="py-20 px-4 bg-white">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-[#1B2B5B] mb-3" style={{ fontFamily: 'Georgia, serif' }}>
+            <h2 className="text-3xl font-bold text-[#143A1F] mb-3" style={{ fontFamily: 'Georgia, serif' }}>
               Por que o VIP vale mais?
             </h2>
             <p className="text-gray-500">Compare o que cada plano oferece</p>
@@ -384,12 +384,12 @@ export default function PlanoVIPPage() {
                     <p className="text-sm font-bold" style={{ color: '#C9A84C' }}>Prime</p>
                     <p className="text-xs text-gray-400">R$ 197/mês</p>
                   </th>
-                  <th className="p-4 text-center bg-[#1B2B5B]/5">
+                  <th className="p-4 text-center bg-[#143A1F]/5">
                     <div className="flex items-center justify-center gap-1 mb-0.5">
-                      <Crown className="w-4 h-4" style={{ color: '#1B2B5B' }} />
-                      <p className="text-sm font-bold text-[#1B2B5B]">VIP</p>
+                      <Crown className="w-4 h-4" style={{ color: '#143A1F' }} />
+                      <p className="text-sm font-bold text-[#143A1F]">VIP</p>
                     </div>
-                    <p className="text-xs font-semibold" style={{ color: '#1B2B5B' }}>R$ 497/mês</p>
+                    <p className="text-xs font-semibold" style={{ color: '#143A1F' }}>R$ 497/mês</p>
                   </th>
                 </tr>
               </thead>
@@ -409,7 +409,7 @@ export default function PlanoVIPPage() {
                         : <span className="text-gray-200 text-lg font-bold mx-auto block text-center">—</span>
                       }
                     </td>
-                    <td className="p-4 text-center bg-[#1B2B5B]/3">
+                    <td className="p-4 text-center bg-[#143A1F]/3">
                       {row.vip
                         ? <CheckCircle className="w-5 h-5 text-green-500 mx-auto" />
                         : <span className="text-gray-200 text-lg font-bold mx-auto block text-center">—</span>
@@ -425,7 +425,7 @@ export default function PlanoVIPPage() {
             <Link
               href="/parceiros/cadastro?plan=VIP"
               className="inline-flex items-center gap-2 px-10 py-4 rounded-2xl font-bold text-lg transition-all hover:brightness-110 shadow-md"
-              style={{ background: '#1B2B5B', color: 'white' }}
+              style={{ background: '#143A1F', color: 'white' }}
             >
               <Crown className="w-5 h-5" style={{ color: '#C9A84C' }} />
               Quero o Plano VIP <ArrowRight className="w-5 h-5" />
@@ -438,7 +438,7 @@ export default function PlanoVIPPage() {
       <section className="py-20 px-4 bg-[#f8f6f1]">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-[#1B2B5B] mb-3" style={{ fontFamily: 'Georgia, serif' }}>
+            <h2 className="text-3xl font-bold text-[#143A1F] mb-3" style={{ fontFamily: 'Georgia, serif' }}>
               O mercado de Franca/SP em números
             </h2>
             <p className="text-gray-500">Entenda o tamanho da oportunidade que você pode dominar</p>
@@ -453,7 +453,7 @@ export default function PlanoVIPPage() {
             ].map((stat, i) => (
               <div key={i} className="bg-white rounded-2xl border p-6 text-center shadow-sm">
                 <stat.icon className="w-6 h-6 mx-auto mb-3 text-[#C9A84C]" />
-                <p className="text-3xl font-bold text-[#1B2B5B] mb-1">{stat.value}</p>
+                <p className="text-3xl font-bold text-[#143A1F] mb-1">{stat.value}</p>
                 <p className="text-sm font-semibold text-gray-700 mb-1">{stat.label}</p>
                 <p className="text-xs text-gray-400">{stat.sub}</p>
               </div>
@@ -466,7 +466,7 @@ export default function PlanoVIPPage() {
               <Clock className="w-8 h-8 text-[#C9A84C]" />
             </div>
             <div className="flex-1 text-center md:text-left">
-              <h3 className="text-xl font-bold text-[#1B2B5B] mb-2">Cada dia sem o Sentinela é um dia que seu concorrente pode reivindicar seu território</h3>
+              <h3 className="text-xl font-bold text-[#143A1F] mb-2">Cada dia sem o Sentinela é um dia que seu concorrente pode reivindicar seu território</h3>
               <p className="text-gray-500 text-sm leading-relaxed">
                 Os melhores condomínios de Franca/SP — Collis Residence, Residencial Dom Bosco, Piemonte, Safra — ainda estão disponíveis.
                 Quando um VIP os reivindicar, você precisará esperar na fila. Aja agora.
@@ -475,7 +475,7 @@ export default function PlanoVIPPage() {
             <Link
               href="/parceiros/cadastro?plan=VIP"
               className="flex-shrink-0 inline-flex items-center gap-2 px-8 py-4 rounded-2xl font-bold text-base transition-all hover:brightness-110"
-              style={{ background: '#C9A84C', color: '#1B2B5B' }}
+              style={{ background: '#C9A84C', color: '#143A1F' }}
             >
               Garantir meu território <ChevronRight className="w-5 h-5" />
             </Link>
@@ -487,7 +487,7 @@ export default function PlanoVIPPage() {
       <section className="py-20 px-4 bg-white">
         <div className="max-w-3xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-[#1B2B5B] mb-3" style={{ fontFamily: 'Georgia, serif' }}>
+            <h2 className="text-3xl font-bold text-[#143A1F] mb-3" style={{ fontFamily: 'Georgia, serif' }}>
               Perguntas frequentes
             </h2>
           </div>
@@ -495,7 +495,7 @@ export default function PlanoVIPPage() {
           <div className="space-y-4">
             {FAQS.map((faq, i) => (
               <div key={i} className="bg-[#f8f6f1] rounded-2xl p-6">
-                <p className="font-bold text-[#1B2B5B] mb-3 flex items-start gap-2">
+                <p className="font-bold text-[#143A1F] mb-3 flex items-start gap-2">
                   <span className="text-[#C9A84C] font-bold flex-shrink-0">P.</span>
                   {faq.q}
                 </p>
@@ -509,7 +509,7 @@ export default function PlanoVIPPage() {
       {/* ── CTA FINAL ─────────────────────────────────────────────────────────── */}
       <section
         className="py-24 px-4 text-center"
-        style={{ background: 'linear-gradient(135deg, #0f1c3a 0%, #1B2B5B 60%, #243a73 100%)' }}
+        style={{ background: 'linear-gradient(135deg, #0f1c3a 0%, #143A1F 60%, #243a73 100%)' }}
       >
         <div className="max-w-3xl mx-auto">
           <div className="w-20 h-20 rounded-full bg-[#C9A84C]/15 border border-[#C9A84C]/30 flex items-center justify-center mx-auto mb-8">
@@ -528,7 +528,7 @@ export default function PlanoVIPPage() {
             <Link
               href="/parceiros/cadastro?plan=VIP"
               className="inline-flex items-center gap-2 px-12 py-5 rounded-2xl font-bold text-xl transition-all hover:brightness-110 shadow-xl"
-              style={{ background: '#C9A84C', color: '#1B2B5B' }}
+              style={{ background: '#C9A84C', color: '#143A1F' }}
             >
               <Crown className="w-6 h-6" />
               Ativar Plano VIP — R$ 497/mês

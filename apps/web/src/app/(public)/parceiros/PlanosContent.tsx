@@ -78,7 +78,7 @@ const PLANS = [
     iconColor: '#C9A84C',
     borderColor: 'border-[#C9A84C]',
     bgColor: 'bg-[#C9A84C]/5',
-    ctaStyle: 'bg-[#C9A84C] text-[#1B2B5B] hover:bg-[#b8943d]',
+    ctaStyle: 'bg-[#C9A84C] text-[#143A1F] hover:bg-[#b8943d]',
     tools: [
       { name: 'Dashboard de analytics', desc: 'Visualizações, cliques no WhatsApp e impressões em condomínios', included: true },
       { name: 'Calculadora ROI de leilões', desc: 'ITBI, reforma, desocupação, retorno estimado e score de oportunidade', included: true },
@@ -98,12 +98,12 @@ const PLANS = [
     subtitle: 'Para imobiliárias e equipes',
     highlight: false,
     badge: 'Completo',
-    badgeColor: '#1B2B5B',
+    badgeColor: '#143A1F',
     icon: Crown,
-    iconColor: '#1B2B5B',
-    borderColor: 'border-[#1B2B5B]',
-    bgColor: 'bg-[#1B2B5B]/5',
-    ctaStyle: 'bg-[#1B2B5B] text-white hover:bg-[#162247]',
+    iconColor: '#143A1F',
+    borderColor: 'border-[#143A1F]',
+    bgColor: 'bg-[#143A1F]/5',
+    ctaStyle: 'bg-[#143A1F] text-white hover:bg-[#0E2A15]',
     tools: [
       { name: 'Dashboard de analytics', desc: 'Visualizações, cliques no WhatsApp e impressões em condomínios', included: true },
       { name: 'Calculadora ROI de leilões', desc: 'ITBI, reforma, desocupação, retorno estimado e score de oportunidade', included: true },
@@ -129,8 +129,8 @@ const DASHBOARD_TOOLS = [
   },
   {
     icon: Calculator,
-    color: '#1B2B5B',
-    bg: 'bg-[#1B2B5B]/10',
+    color: '#143A1F',
+    bg: 'bg-[#143A1F]/10',
     title: 'Calculadora ROI de Leilões',
     desc: 'Calcule o retorno real de qualquer leilão: ITBI, cartório, advogado, desocupação, reforma e lucro estimado. Score de oportunidade de 0 a 100.',
     plan: 'Prime+',
@@ -197,7 +197,7 @@ const PLATFORM_FEATURES = [
   {
     group: 'Conversão e Vendas',
     icon: DollarSign,
-    color: '#1B2B5B',
+    color: '#143A1F',
     items: [
       { name: 'Propostas 100% online', desc: 'Cliente envia proposta pelo site e acompanha o status em tempo real (enviada → negociação → aceita)' },
       { name: 'Resposta de proposta em 1 clique', desc: 'Corretor aceita, faz contra-proposta ou recusa — cliente é notificado na hora' },
@@ -305,7 +305,7 @@ export function PlanosContent() {
       {/* ── Hero ─────────────────────────────────────────────────────────── */}
       <section
         className="relative overflow-hidden py-20 px-4"
-        style={{ background: 'linear-gradient(135deg, #1B2B5B 0%, #0f1c3a 60%, #1a1a2e 100%)' }}
+        style={{ background: 'linear-gradient(135deg, #143A1F 0%, #0f1c3a 60%, #1a1a2e 100%)' }}
       >
         {/* Grid pattern */}
         <div
@@ -354,7 +354,7 @@ export function PlanosContent() {
             <Link
               href="#planos"
               className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl text-sm font-bold transition-all hover:brightness-110"
-              style={{ backgroundColor: '#C9A84C', color: '#1B2B5B' }}
+              style={{ backgroundColor: '#C9A84C', color: '#143A1F' }}
             >
               Ver planos e preços <ArrowRight className="w-4 h-4" />
             </Link>
@@ -374,7 +374,7 @@ export function PlanosContent() {
           <p className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: '#C9A84C' }}>
             O que você acessa
           </p>
-          <h2 className="text-2xl sm:text-3xl font-bold text-[#1B2B5B]" style={{ fontFamily: 'Georgia, serif' }}>
+          <h2 className="text-2xl sm:text-3xl font-bold text-[#143A1F]" style={{ fontFamily: 'Georgia, serif' }}>
             Ferramentas exclusivas do dashboard privado
           </h2>
           <p className="text-gray-500 mt-3 max-w-xl mx-auto text-sm leading-relaxed">
@@ -392,12 +392,12 @@ export function PlanosContent() {
                   <Icon className="w-6 h-6" style={{ color: tool.color }} />
                 </div>
                 <div className="flex items-start justify-between gap-2 mb-2">
-                  <h3 className="font-bold text-[#1B2B5B] text-sm leading-tight">{tool.title}</h3>
+                  <h3 className="font-bold text-[#143A1F] text-sm leading-tight">{tool.title}</h3>
                   <span
                     className="text-xs px-2 py-0.5 rounded-full font-semibold flex-shrink-0"
                     style={{
-                      backgroundColor: tool.plan === 'VIP' ? 'rgba(27,43,91,0.1)' : 'rgba(201,168,76,0.15)',
-                      color: tool.plan === 'VIP' ? '#1B2B5B' : '#b8943d',
+                      backgroundColor: tool.plan === 'VIP' ? 'rgba(20,58,31,0.1)' : 'rgba(201,168,76,0.15)',
+                      color: tool.plan === 'VIP' ? '#143A1F' : '#b8943d',
                     }}
                   >
                     {tool.plan}
@@ -410,10 +410,10 @@ export function PlanosContent() {
         </div>
 
         {/* Aviso de segurança */}
-        <div className="mt-8 flex items-start gap-3 p-4 rounded-2xl border" style={{ backgroundColor: 'rgba(27,43,91,0.04)', borderColor: 'rgba(27,43,91,0.12)' }}>
-          <Shield className="w-5 h-5 text-[#1B2B5B] flex-shrink-0 mt-0.5" />
+        <div className="mt-8 flex items-start gap-3 p-4 rounded-2xl border" style={{ backgroundColor: 'rgba(20,58,31,0.04)', borderColor: 'rgba(20,58,31,0.12)' }}>
+          <Shield className="w-5 h-5 text-[#143A1F] flex-shrink-0 mt-0.5" />
           <div>
-            <p className="text-sm font-semibold text-[#1B2B5B]">Acesso 100% isolado e seguro</p>
+            <p className="text-sm font-semibold text-[#143A1F]">Acesso 100% isolado e seguro</p>
             <p className="text-xs text-gray-500 mt-0.5">
               O dashboard do parceiro é completamente separado do sistema administrativo.
               Você vê apenas seus próprios dados. Configurações do sistema, backups, dados de outros usuários
@@ -430,7 +430,7 @@ export function PlanosContent() {
             <p className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: '#C9A84C' }}>
               Tudo em um só lugar
             </p>
-            <h2 className="text-2xl sm:text-3xl font-bold text-[#1B2B5B]" style={{ fontFamily: 'Georgia, serif' }}>
+            <h2 className="text-2xl sm:text-3xl font-bold text-[#143A1F]" style={{ fontFamily: 'Georgia, serif' }}>
               Plataforma completa de vendas imobiliárias com IA
             </h2>
             <p className="text-gray-500 mt-3 max-w-2xl mx-auto text-sm leading-relaxed">
@@ -449,14 +449,14 @@ export function PlanosContent() {
                     <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${grp.color}1a` }}>
                       <GroupIcon className="w-5 h-5" style={{ color: grp.color }} />
                     </div>
-                    <h3 className="font-bold text-[#1B2B5B] text-base">{grp.group}</h3>
+                    <h3 className="font-bold text-[#143A1F] text-base">{grp.group}</h3>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 px-6 py-5">
                     {grp.items.map((item) => (
                       <div key={item.name} className="flex items-start gap-2.5">
                         <CheckCircle className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: grp.color }} />
                         <div>
-                          <p className="text-sm font-semibold text-[#1B2B5B] leading-tight">{item.name}</p>
+                          <p className="text-sm font-semibold text-[#143A1F] leading-tight">{item.name}</p>
                           <p className="text-xs text-gray-500 leading-snug mt-0.5">{item.desc}</p>
                         </div>
                       </div>
@@ -480,7 +480,7 @@ export function PlanosContent() {
           <p className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: '#C9A84C' }}>
             Planos e preços
           </p>
-          <h2 className="text-2xl sm:text-3xl font-bold text-[#1B2B5B]" style={{ fontFamily: 'Georgia, serif' }}>
+          <h2 className="text-2xl sm:text-3xl font-bold text-[#143A1F]" style={{ fontFamily: 'Georgia, serif' }}>
             Escolha o plano ideal para você
           </h2>
           <p className="text-gray-500 mt-2 text-sm">Pagamento via PIX, boleto ou cartão de crédito.</p>
@@ -491,7 +491,7 @@ export function PlanosContent() {
           <div className="px-6 py-4 border-b border-gray-100" style={{ backgroundColor: 'rgba(201,168,76,0.08)' }}>
             <div className="flex items-center gap-2">
               <DollarSign className="w-5 h-5" style={{ color: '#C9A84C' }} />
-              <h3 className="font-bold text-[#1B2B5B]">Investimento inicial — aporte de R$ {APORTE_INICIAL}</h3>
+              <h3 className="font-bold text-[#143A1F]">Investimento inicial — aporte de R$ {APORTE_INICIAL}</h3>
             </div>
             <p className="text-xs text-gray-500 mt-1">
               Toda contratação inclui um aporte inicial único de implantação, cobrado junto com o início das parcelas mensais do plano escolhido.
@@ -501,26 +501,26 @@ export function PlanosContent() {
             <div className="p-5">
               <div className="flex items-center gap-2 mb-1">
                 <span className="text-lg">⚡</span>
-                <p className="text-sm font-bold text-[#1B2B5B]">À vista no PIX</p>
+                <p className="text-sm font-bold text-[#143A1F]">À vista no PIX</p>
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: 'rgba(16,185,129,0.12)', color: '#059669' }}>
                   -6,80%
                 </span>
               </div>
-              <p className="text-2xl font-bold text-[#1B2B5B]">R$ {APORTE_PIX.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+              <p className="text-2xl font-bold text-[#143A1F]">R$ {APORTE_PIX.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
               <p className="text-xs text-gray-500 mt-1">Aprovação imediata. Economia de R$ {(APORTE_INICIAL - APORTE_PIX).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}.</p>
             </div>
             <div className="p-5">
               <div className="flex items-center gap-2 mb-1">
                 <span className="text-lg">💳</span>
-                <p className="text-sm font-bold text-[#1B2B5B]">Parcelado</p>
+                <p className="text-sm font-bold text-[#143A1F]">Parcelado</p>
               </div>
-              <p className="text-2xl font-bold text-[#1B2B5B]">R$ {APORTE_INICIAL}</p>
+              <p className="text-2xl font-bold text-[#143A1F]">R$ {APORTE_INICIAL}</p>
               <p className="text-xs text-gray-500 mt-1">No boleto ou cartão de crédito, podendo ser dividido (sujeito a taxa da operadora).</p>
             </div>
           </div>
           <div className="px-6 py-3 bg-gray-50 text-xs text-gray-500 flex items-start gap-2">
             <Clock className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
-            <span>As parcelas mensais do plano (Prime ou VIP) iniciam junto com o aporte. Valores sujeitos a reajuste a cada 5 meses — veja o <Link href="/parceiros/contrato" className="underline text-[#1B2B5B] font-medium">contrato</Link>.</span>
+            <span>As parcelas mensais do plano (Prime ou VIP) iniciam junto com o aporte. Valores sujeitos a reajuste a cada 5 meses — veja o <Link href="/parceiros/contrato" className="underline text-[#143A1F] font-medium">contrato</Link>.</span>
           </div>
         </div>
 
@@ -535,7 +535,7 @@ export function PlanosContent() {
                 {plan.badge && (
                   <div
                     className="absolute top-0 right-0 px-4 py-1.5 text-xs font-bold rounded-bl-xl"
-                    style={{ backgroundColor: plan.badgeColor, color: plan.id === 'VIP' ? 'white' : '#1B2B5B' }}
+                    style={{ backgroundColor: plan.badgeColor, color: plan.id === 'VIP' ? 'white' : '#143A1F' }}
                   >
                     {plan.badge}
                   </div>
@@ -546,17 +546,17 @@ export function PlanosContent() {
                   <div className="flex items-center gap-3 mb-4">
                     <div
                       className="w-12 h-12 rounded-xl flex items-center justify-center"
-                      style={{ backgroundColor: plan.id === 'VIP' ? 'rgba(27,43,91,0.12)' : 'rgba(201,168,76,0.15)' }}
+                      style={{ backgroundColor: plan.id === 'VIP' ? 'rgba(20,58,31,0.12)' : 'rgba(201,168,76,0.15)' }}
                     >
                       <PlanIcon className="w-6 h-6" style={{ color: plan.iconColor }} />
                     </div>
                     <div>
-                      <h3 className="text-lg font-bold text-[#1B2B5B]">Plano {plan.name}</h3>
+                      <h3 className="text-lg font-bold text-[#143A1F]">Plano {plan.name}</h3>
                       <p className="text-xs text-gray-500">{plan.subtitle}</p>
                     </div>
                   </div>
                   <div className="flex items-end gap-1">
-                    <span className="text-4xl font-bold text-[#1B2B5B]">R$ {plan.price}</span>
+                    <span className="text-4xl font-bold text-[#143A1F]">R$ {plan.price}</span>
                     <span className="text-gray-400 text-sm mb-1">{plan.period}</span>
                   </div>
                 </div>
@@ -572,7 +572,7 @@ export function PlanosContent() {
                           : <XCircle className="w-4 h-4 text-gray-300 flex-shrink-0 mt-0.5" />
                         }
                         <div>
-                          <p className="text-sm font-medium text-[#1B2B5B] leading-tight">{tool.name}</p>
+                          <p className="text-sm font-medium text-[#143A1F] leading-tight">{tool.name}</p>
                           <p className="text-xs text-gray-400 leading-tight mt-0.5">{tool.desc}</p>
                         </div>
                       </li>
@@ -592,7 +592,7 @@ export function PlanosContent() {
                   {plan.id === 'VIP' && (
                     <Link
                       href="/parceiros/plano-vip"
-                      className="w-full inline-flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium mt-2 border border-[#1B2B5B]/20 text-[#1B2B5B] hover:bg-[#1B2B5B]/5 transition-all"
+                      className="w-full inline-flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium mt-2 border border-[#143A1F]/20 text-[#143A1F] hover:bg-[#143A1F]/5 transition-all"
                     >
                       <Shield className="w-4 h-4" /> Saiba mais sobre o Sentinela Territorial
                     </Link>
@@ -617,7 +617,7 @@ export function PlanosContent() {
       </section>
 
       {/* ── Como funciona o checkout ─────────────────────────────────────── */}
-      <section style={{ backgroundColor: '#1B2B5B' }} className="py-16 px-4">
+      <section style={{ backgroundColor: '#143A1F' }} className="py-16 px-4">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-10">
             <p className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: '#C9A84C' }}>
@@ -693,7 +693,7 @@ export function PlanosContent() {
       <section className="max-w-5xl mx-auto px-4 py-16">
         <div className="text-center mb-10">
           <p className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: '#C9A84C' }}>Soluções Avulsas</p>
-          <h2 className="text-2xl font-bold text-[#1B2B5B]" style={{ fontFamily: 'Georgia, serif' }}>
+          <h2 className="text-2xl font-bold text-[#143A1F]" style={{ fontFamily: 'Georgia, serif' }}>
             Site Próprio, CRM e Pacotes de Imóveis
           </h2>
           <p className="text-gray-500 text-sm mt-2">Contrate apenas o que você precisa. Sem mensalidade obrigatória.</p>
@@ -703,10 +703,10 @@ export function PlanosContent() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
           {AVULSO_PLANS.map(plan => (
             <div key={plan.id} className="bg-white rounded-2xl border border-gray-200 p-6 hover:shadow-lg transition-all">
-              <h3 className="text-lg font-bold text-[#1B2B5B] mb-1" style={{ fontFamily: 'Georgia, serif' }}>{plan.name}</h3>
+              <h3 className="text-lg font-bold text-[#143A1F] mb-1" style={{ fontFamily: 'Georgia, serif' }}>{plan.name}</h3>
               <p className="text-gray-500 text-xs mb-4">{plan.desc}</p>
               <div className="flex items-baseline gap-1 mb-4">
-                <span className="text-3xl font-bold text-[#1B2B5B]">R$ {plan.price.toLocaleString('pt-BR')}</span>
+                <span className="text-3xl font-bold text-[#143A1F]">R$ {plan.price.toLocaleString('pt-BR')}</span>
                 <span className="text-gray-400 text-sm">/{plan.period}</span>
               </div>
               <div className="space-y-2 mb-6">
@@ -720,7 +720,7 @@ export function PlanosContent() {
               <a href={`https://wa.me/5516981010004?text=Olá! Tenho interesse no ${plan.name} do AgoraEncontrei.`}
                 target="_blank" rel="noreferrer"
                 className="block text-center py-3 rounded-xl text-sm font-bold transition-all hover:brightness-110"
-                style={{ backgroundColor: '#1B2B5B', color: 'white' }}>
+                style={{ backgroundColor: '#143A1F', color: 'white' }}>
                 Contratar {plan.name}
               </a>
             </div>
@@ -737,13 +737,13 @@ export function PlanosContent() {
 
         {/* Pacotes de Imóveis */}
         <div className="mb-8">
-          <h3 className="text-lg font-bold text-[#1B2B5B] mb-4 text-center" style={{ fontFamily: 'Georgia, serif' }}>
+          <h3 className="text-lg font-bold text-[#143A1F] mb-4 text-center" style={{ fontFamily: 'Georgia, serif' }}>
             Pacotes de Anúncios de Imóveis
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {IMOVEIS_PLANS.map(plan => (
               <div key={plan.id} className="bg-white rounded-xl border border-gray-200 p-5 text-center hover:shadow-lg hover:border-[#C9A84C] transition-all">
-                <p className="text-2xl font-bold text-[#1B2B5B]">{plan.qty}</p>
+                <p className="text-2xl font-bold text-[#143A1F]">{plan.qty}</p>
                 <p className="text-xs text-gray-500 mb-3">imóveis anunciados</p>
                 <p className="text-xl font-bold mb-4" style={{ color: '#C9A84C' }}>R$ {plan.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}<span className="text-sm text-gray-400">/mês</span></p>
                 <button
@@ -751,7 +751,7 @@ export function PlanosContent() {
                   onClick={() => handleAddonCheckout(plan.id)}
                   disabled={addonLoading !== null}
                   className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-xs font-bold transition-all hover:brightness-110 disabled:opacity-60 disabled:cursor-not-allowed"
-                  style={{ backgroundColor: '#C9A84C', color: '#1B2B5B' }}>
+                  style={{ backgroundColor: '#C9A84C', color: '#143A1F' }}>
                   {addonLoading === plan.id && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                   {addonLoading === plan.id ? 'Gerando cobrança...' : `Assinar ${plan.label}`}
                 </button>
@@ -762,7 +762,7 @@ export function PlanosContent() {
 
         {/* Destaques */}
         <div>
-          <h3 className="text-lg font-bold text-[#1B2B5B] mb-4 text-center" style={{ fontFamily: 'Georgia, serif' }}>
+          <h3 className="text-lg font-bold text-[#143A1F] mb-4 text-center" style={{ fontFamily: 'Georgia, serif' }}>
             Planos de Destaque
           </h3>
           <p className="text-center text-xs text-gray-500 mb-4">Seus imóveis aparecem no topo das buscas com selo dourado de destaque</p>
@@ -771,7 +771,7 @@ export function PlanosContent() {
               <div key={plan.id} className="bg-white rounded-xl border-2 p-5 text-center hover:shadow-lg transition-all"
                 style={{ borderColor: plan.qty === 6 ? '#C9A84C' : '#e5e7eb' }}>
                 <p className="text-3xl mb-2">{plan.icon}</p>
-                <p className="text-sm font-bold text-[#1B2B5B]">{plan.label}</p>
+                <p className="text-sm font-bold text-[#143A1F]">{plan.label}</p>
                 <p className="text-xs text-gray-500 mb-3">imóveis em destaque</p>
                 <p className="text-xl font-bold mb-4" style={{ color: '#C9A84C' }}>R$ {plan.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}<span className="text-sm text-gray-400">/mês</span></p>
                 <button
@@ -779,7 +779,7 @@ export function PlanosContent() {
                   onClick={() => handleAddonCheckout(plan.id)}
                   disabled={addonLoading !== null}
                   className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-xs font-bold transition-all hover:brightness-110 disabled:opacity-60 disabled:cursor-not-allowed"
-                  style={{ backgroundColor: '#1B2B5B', color: 'white' }}>
+                  style={{ backgroundColor: '#143A1F', color: 'white' }}>
                   {addonLoading === plan.id && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                   {addonLoading === plan.id ? 'Gerando cobrança...' : `Assinar ${plan.label}`}
                 </button>
@@ -792,7 +792,7 @@ export function PlanosContent() {
       {/* ── Comparativo de planos (tabela) ───────────────────────────────── */}
       <section className="max-w-4xl mx-auto px-4 py-16">
         <div className="text-center mb-10">
-          <h2 className="text-2xl font-bold text-[#1B2B5B]" style={{ fontFamily: 'Georgia, serif' }}>
+          <h2 className="text-2xl font-bold text-[#143A1F]" style={{ fontFamily: 'Georgia, serif' }}>
             Comparativo completo
           </h2>
         </div>
@@ -804,11 +804,11 @@ export function PlanosContent() {
             <div className="p-4 text-center border-l">
               <div className="flex items-center justify-center gap-1.5 mb-1">
                 <Star className="w-4 h-4 text-[#C9A84C]" />
-                <span className="font-bold text-[#1B2B5B]">Prime</span>
+                <span className="font-bold text-[#143A1F]">Prime</span>
               </div>
               <div className="text-sm font-bold text-[#C9A84C]">R$ 197/mês</div>
             </div>
-            <div className="p-4 text-center border-l" style={{ backgroundColor: '#1B2B5B' }}>
+            <div className="p-4 text-center border-l" style={{ backgroundColor: '#143A1F' }}>
               <div className="flex items-center justify-center gap-1.5 mb-1">
                 <Crown className="w-4 h-4 text-[#C9A84C]" />
                 <span className="font-bold text-white">VIP</span>
@@ -846,7 +846,7 @@ export function PlanosContent() {
                     : <XCircle className="w-5 h-5 text-gray-200" />
                   }
                 </div>
-                <div className={`p-3.5 text-center border-l flex items-center justify-center ${isRestricted ? '' : 'bg-[#1B2B5B]/3'}`}>
+                <div className={`p-3.5 text-center border-l flex items-center justify-center ${isRestricted ? '' : 'bg-[#143A1F]/3'}`}>
                   {row.vip
                     ? <CheckCircle className="w-5 h-5 text-green-500" />
                     : <XCircle className="w-5 h-5 text-gray-300" />
@@ -862,14 +862,14 @@ export function PlanosContent() {
           <Link
             href="/parceiros/cadastro?plan=PRIME"
             className="inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl text-sm font-bold transition-all hover:brightness-110"
-            style={{ backgroundColor: '#C9A84C', color: '#1B2B5B' }}
+            style={{ backgroundColor: '#C9A84C', color: '#143A1F' }}
           >
             <Star className="w-4 h-4" /> Assinar Prime — R$ 197/mês
           </Link>
           <Link
             href="/parceiros/cadastro?plan=VIP"
             className="inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl text-sm font-bold transition-all"
-            style={{ backgroundColor: '#1B2B5B', color: 'white' }}
+            style={{ backgroundColor: '#143A1F', color: 'white' }}
           >
             <Crown className="w-4 h-4" /> Assinar VIP — R$ 497/mês
           </Link>
@@ -880,7 +880,7 @@ export function PlanosContent() {
       <section style={{ backgroundColor: '#f0ece4' }} className="py-16 px-4">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-10">
-            <h2 className="text-2xl font-bold text-[#1B2B5B]" style={{ fontFamily: 'Georgia, serif' }}>
+            <h2 className="text-2xl font-bold text-[#143A1F]" style={{ fontFamily: 'Georgia, serif' }}>
               O que dizem nossos parceiros
             </h2>
           </div>
@@ -915,19 +915,19 @@ export function PlanosContent() {
                 <div className="flex items-center gap-3">
                   <div
                     className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold text-white flex-shrink-0"
-                    style={{ backgroundColor: '#1B2B5B' }}
+                    style={{ backgroundColor: '#143A1F' }}
                   >
                     {t.name[0]}
                   </div>
                   <div>
-                    <p className="text-sm font-bold text-[#1B2B5B]">{t.name}</p>
+                    <p className="text-sm font-bold text-[#143A1F]">{t.name}</p>
                     <p className="text-xs text-gray-400">{t.role}</p>
                   </div>
                   <span
                     className="ml-auto text-xs px-2 py-0.5 rounded-full font-semibold"
                     style={{
-                      backgroundColor: t.plan === 'VIP' ? 'rgba(27,43,91,0.1)' : 'rgba(201,168,76,0.15)',
-                      color: t.plan === 'VIP' ? '#1B2B5B' : '#b8943d',
+                      backgroundColor: t.plan === 'VIP' ? 'rgba(20,58,31,0.1)' : 'rgba(201,168,76,0.15)',
+                      color: t.plan === 'VIP' ? '#143A1F' : '#b8943d',
                     }}
                   >
                     {t.plan}
@@ -942,14 +942,14 @@ export function PlanosContent() {
       {/* ── FAQ ─────────────────────────────────────────────────────────── */}
       <section className="max-w-3xl mx-auto px-4 py-16">
         <div className="text-center mb-10">
-          <h2 className="text-2xl font-bold text-[#1B2B5B]" style={{ fontFamily: 'Georgia, serif' }}>
+          <h2 className="text-2xl font-bold text-[#143A1F]" style={{ fontFamily: 'Georgia, serif' }}>
             Perguntas frequentes
           </h2>
         </div>
         <div className="space-y-3">
           {FAQ.map((item, i) => (
             <div key={i} className="bg-white rounded-2xl border p-5 shadow-sm">
-              <h3 className="font-bold text-[#1B2B5B] text-sm mb-2 flex items-start gap-2">
+              <h3 className="font-bold text-[#143A1F] text-sm mb-2 flex items-start gap-2">
                 <ChevronRight className="w-4 h-4 text-[#C9A84C] flex-shrink-0 mt-0.5" />
                 {item.q}
               </h3>
@@ -962,7 +962,7 @@ export function PlanosContent() {
       {/* ── CTA final ───────────────────────────────────────────────────── */}
       <section
         className="py-16 px-4"
-        style={{ background: 'linear-gradient(135deg, #1B2B5B 0%, #0f1c3a 100%)' }}
+        style={{ background: 'linear-gradient(135deg, #143A1F 0%, #0f1c3a 100%)' }}
       >
         <div className="max-w-2xl mx-auto text-center">
           <Award className="w-12 h-12 mx-auto mb-4" style={{ color: '#C9A84C' }} />
@@ -977,7 +977,7 @@ export function PlanosContent() {
             <Link
               href="/parceiros/cadastro?plan=PRIME"
               className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl text-sm font-bold transition-all hover:brightness-110"
-              style={{ backgroundColor: '#C9A84C', color: '#1B2B5B' }}
+              style={{ backgroundColor: '#C9A84C', color: '#143A1F' }}
             >
               <Star className="w-4 h-4" /> Começar com Prime — R$ 197/mês
             </Link>

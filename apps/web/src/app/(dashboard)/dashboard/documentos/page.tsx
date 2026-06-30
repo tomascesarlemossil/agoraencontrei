@@ -469,7 +469,7 @@ export default function DocumentosPage() {
 
   // ── render ──────────────────────────────────────────────────────────────────
   return (
-    <div className="flex h-full bg-[#0d1b3e] text-white min-h-screen relative">
+    <div className="flex h-full bg-[#0C2412] text-white min-h-screen relative">
 
       {/* ── Mobile sidebar overlay backdrop ──────────────────────────────────── */}
       {isMobile && sidebarOpen && (
@@ -546,7 +546,7 @@ export default function DocumentosPage() {
                 }`}>
                   {done
                     ? <CheckCircle2 className="w-3 h-3" />
-                    : <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold ${active ? 'bg-yellow-400 text-[#0d1b3e]' : 'bg-white/10 text-white/40'}`}>{num}</span>}
+                    : <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold ${active ? 'bg-yellow-400 text-[#0C2412]' : 'bg-white/10 text-white/40'}`}>{num}</span>}
                   {label}
                 </div>
               </div>
@@ -636,7 +636,7 @@ export default function DocumentosPage() {
                   onClick={handleIdentify}
                   disabled={identifying || (!command.trim() && uploadedImages.length === 0)}
                   className="flex items-center gap-2.5 px-6 py-2.5 rounded-xl text-sm font-bold transition-all hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed w-full sm:w-auto justify-center"
-                  style={{ background: 'linear-gradient(135deg, #C9A84C, #e8c66a)', color: '#1B2B5B' }}
+                  style={{ background: 'linear-gradient(135deg, #C9A84C, #e8c66a)', color: '#143A1F' }}
                 >
                   {identifying
                     ? <><Loader2 className="w-4 h-4 animate-spin" /> Analisando...</>
@@ -722,7 +722,7 @@ export default function DocumentosPage() {
                       onClick={handleGenerate}
                       disabled={generating}
                       className="flex items-center gap-2.5 px-8 py-3 rounded-xl text-sm font-bold transition-all hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed"
-                      style={{ background: 'linear-gradient(135deg, #C9A84C, #e8c66a)', color: '#1B2B5B' }}
+                      style={{ background: 'linear-gradient(135deg, #C9A84C, #e8c66a)', color: '#143A1F' }}
                     >
                       {generating
                         ? <><Loader2 className="w-4 h-4 animate-spin" /> Gerando documento...</>
@@ -767,7 +767,7 @@ export default function DocumentosPage() {
                   <button
                     onClick={handleDownloadWord}
                     className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-semibold transition-all hover:brightness-110"
-                    style={{ background: 'linear-gradient(135deg, #C9A84C, #e8c66a)', color: '#1B2B5B' }}
+                    style={{ background: 'linear-gradient(135deg, #C9A84C, #e8c66a)', color: '#143A1F' }}
                   >
                     <Download className="w-3.5 h-3.5" /> Baixar Word
                   </button>
@@ -813,7 +813,7 @@ export default function DocumentosPage() {
                     onClick={handleApplyRefinement}
                     disabled={refining || !refinementText.trim()}
                     className="flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-bold transition-all hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed"
-                    style={{ background: 'linear-gradient(135deg, #C9A84C, #e8c66a)', color: '#1B2B5B' }}
+                    style={{ background: 'linear-gradient(135deg, #C9A84C, #e8c66a)', color: '#143A1F' }}
                   >
                     {refining
                       ? <><Loader2 className="w-4 h-4 animate-spin" /> Aplicando...</>
@@ -852,7 +852,7 @@ export default function DocumentosPage() {
                       <button
                         onClick={() => reopenHistoryItem(item)}
                         className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all hover:brightness-110"
-                        style={{ background: 'linear-gradient(135deg, #C9A84C, #e8c66a)', color: '#1B2B5B' }}
+                        style={{ background: 'linear-gradient(135deg, #C9A84C, #e8c66a)', color: '#143A1F' }}
                       >
                         <RefreshCw className="w-3 h-3" /> Reabrir
                       </button>

@@ -82,7 +82,7 @@ export default async function CategoryPage(props: { params: Promise<{ slug: stri
 
       <div style={{ backgroundColor: '#f8f7f4' }}>
         {/* Hero */}
-        <section style={{ backgroundColor: '#1B2B5B' }}>
+        <section style={{ backgroundColor: '#143A1F' }}>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-20">
             {/* Breadcrumb */}
             <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-sm mb-8 flex-wrap text-white/40">
@@ -134,7 +134,7 @@ export default async function CategoryPage(props: { params: Promise<{ slug: stri
             <Link
               href="/blog"
               className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-sm font-semibold border-2 transition-all hover:shadow-md"
-              style={{ borderColor: '#1B2B5B', color: '#1B2B5B' }}
+              style={{ borderColor: '#143A1F', color: '#143A1F' }}
             >
               <ArrowLeft className="w-4 h-4" />
               Voltar ao Blog

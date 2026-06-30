@@ -146,7 +146,7 @@ export default async function BairroPage(props: { params: Promise<{ cidade: stri
 
       <div className="min-h-screen bg-gray-50">
         {/* Hero */}
-        <div className="bg-[#1B2B5B] text-white py-12 px-4">
+        <div className="bg-[#143A1F] text-white py-12 px-4">
           <div className="max-w-6xl mx-auto">
             <nav className="text-sm text-blue-200 mb-4 flex items-center gap-2 flex-wrap">
               <Link href="/" className="hover:text-white">Início</Link>
@@ -198,10 +198,10 @@ export default async function BairroPage(props: { params: Promise<{ cidade: stri
             <div className="text-center py-16 text-gray-500">
               <p className="text-lg font-medium">Nenhum imóvel ativo no {bairroName} no momento.</p>
               <div className="flex gap-3 justify-center mt-4">
-                <Link href={`/imoveis/em/${params.cidade}`} className="px-6 py-2 bg-[#1B2B5B] text-white rounded-lg hover:bg-[#2d4a8a] transition-colors">
+                <Link href={`/imoveis/em/${params.cidade}`} className="px-6 py-2 bg-[#143A1F] text-white rounded-lg hover:bg-[#2d4a8a] transition-colors">
                   Ver imóveis em {cityName}
                 </Link>
-                <Link href="/imoveis" className="px-6 py-2 border border-[#1B2B5B] text-[#1B2B5B] rounded-lg hover:bg-gray-100 transition-colors">
+                <Link href="/imoveis" className="px-6 py-2 border border-[#143A1F] text-[#143A1F] rounded-lg hover:bg-gray-100 transition-colors">
                   Todos os imóveis
                 </Link>
               </div>
@@ -210,7 +210,7 @@ export default async function BairroPage(props: { params: Promise<{ cidade: stri
 
           {/* FAQ SEO */}
           <section className="mt-12 bg-white rounded-2xl p-8 border">
-            <h2 className="text-xl font-bold text-[#1B2B5B] mb-6">
+            <h2 className="text-xl font-bold text-[#143A1F] mb-6">
               Perguntas Frequentes — Imóveis no {bairroName}
             </h2>
             <div className="space-y-5">

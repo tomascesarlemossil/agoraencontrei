@@ -97,7 +97,7 @@ export default function LoteamentoMapPage({ params }: { params: Promise<{ slug: 
     <main className="min-h-screen bg-gray-50 py-10 px-4">
       <div className="mx-auto max-w-6xl">
         {/* Header */}
-        <h1 className="text-2xl sm:text-3xl font-bold" style={{ color: '#1B2B5B' }}>{data.name}</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold" style={{ color: '#143A1F' }}>{data.name}</h1>
         {(data.city || data.state) && (
           <p className="mt-1 flex items-center gap-1 text-sm text-gray-500">
             <MapPin size={14} /> {[data.city, data.state].filter(Boolean).join(' - ')}
@@ -110,7 +110,7 @@ export default function LoteamentoMapPage({ params }: { params: Promise<{ slug: 
           {(['AVAILABLE', 'RESERVED', 'NEGOTIATING', 'SOLD'] as const).map(s => (
             <div key={s} className="rounded-xl border border-gray-200 bg-white px-3 py-2">
               <span className={`inline-block h-2.5 w-2.5 rounded-full ${STATUS[s].dot} mr-1.5`} />
-              <span className="text-sm font-semibold" style={{ color: '#1B2B5B' }}>
+              <span className="text-sm font-semibold" style={{ color: '#143A1F' }}>
                 {data.stats.count[s] ?? 0}
               </span>
               <span className="text-xs text-gray-400 ml-1">{STATUS[s].label}</span>
@@ -128,7 +128,7 @@ export default function LoteamentoMapPage({ params }: { params: Promise<{ slug: 
 
         {/* Interactive map */}
         <div className="mt-6 rounded-2xl border border-gray-200 bg-white p-4 overflow-x-auto">
-          <h2 className="font-semibold mb-3" style={{ color: '#1B2B5B' }}>Mapa de lotes</h2>
+          <h2 className="font-semibold mb-3" style={{ color: '#143A1F' }}>Mapa de lotes</h2>
           {mapped.length === 0 ? (
             <p className="text-sm text-gray-400">Mapa em preparação.</p>
           ) : (
@@ -165,12 +165,12 @@ export default function LoteamentoMapPage({ params }: { params: Promise<{ slug: 
         {/* Unmapped lots list */}
         {unmapped.length > 0 && (
           <div className="mt-4 rounded-2xl border border-gray-200 bg-white p-4">
-            <h2 className="font-semibold mb-2" style={{ color: '#1B2B5B' }}>Outros lotes</h2>
+            <h2 className="font-semibold mb-2" style={{ color: '#143A1F' }}>Outros lotes</h2>
             <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-4">
               {unmapped.map(l => (
                 <button key={l.id} onClick={() => { setSelected(l); setReserved(false); setError('') }}
                   className="flex items-center justify-between rounded-lg border border-gray-200 px-3 py-2 text-left hover:border-blue-300">
-                  <span className="text-sm" style={{ color: '#1B2B5B' }}>
+                  <span className="text-sm" style={{ color: '#143A1F' }}>
                     {l.quadra ? `Q${l.quadra} ` : ''}Lote {l.numero}
                   </span>
                   <span className={`h-2.5 w-2.5 rounded-full ${STATUS[l.status].dot}`} />
@@ -187,7 +187,7 @@ export default function LoteamentoMapPage({ params }: { params: Promise<{ slug: 
           onClick={() => setSelected(null)}>
           <div className="w-full max-w-md rounded-2xl bg-white p-6" onClick={e => e.stopPropagation()}>
             <div className="flex items-start justify-between">
-              <h3 className="text-lg font-bold" style={{ color: '#1B2B5B' }}>
+              <h3 className="text-lg font-bold" style={{ color: '#143A1F' }}>
                 {selected.quadra ? `Quadra ${selected.quadra} · ` : ''}Lote {selected.numero}
               </h3>
               <button onClick={() => setSelected(null)} className="text-gray-400 hover:text-gray-700">
@@ -199,10 +199,10 @@ export default function LoteamentoMapPage({ params }: { params: Promise<{ slug: 
             </span>
 
             <dl className="mt-4 grid grid-cols-2 gap-y-2 text-sm">
-              {selected.area != null && <><dt className="text-gray-400">Área</dt><dd className="text-right" style={{ color: '#1B2B5B' }}>{selected.area} m²</dd></>}
-              {selected.frente != null && <><dt className="text-gray-400">Frente</dt><dd className="text-right" style={{ color: '#1B2B5B' }}>{selected.frente} m</dd></>}
-              {selected.fundo != null && <><dt className="text-gray-400">Fundo</dt><dd className="text-right" style={{ color: '#1B2B5B' }}>{selected.fundo} m</dd></>}
-              {selected.sunPosition && <><dt className="text-gray-400">Posição do sol</dt><dd className="text-right" style={{ color: '#1B2B5B' }}>{selected.sunPosition}</dd></>}
+              {selected.area != null && <><dt className="text-gray-400">Área</dt><dd className="text-right" style={{ color: '#143A1F' }}>{selected.area} m²</dd></>}
+              {selected.frente != null && <><dt className="text-gray-400">Frente</dt><dd className="text-right" style={{ color: '#143A1F' }}>{selected.frente} m</dd></>}
+              {selected.fundo != null && <><dt className="text-gray-400">Fundo</dt><dd className="text-right" style={{ color: '#143A1F' }}>{selected.fundo} m</dd></>}
+              {selected.sunPosition && <><dt className="text-gray-400">Posição do sol</dt><dd className="text-right" style={{ color: '#143A1F' }}>{selected.sunPosition}</dd></>}
               <dt className="text-gray-400">Valor</dt><dd className="text-right font-bold" style={{ color: '#C9A84C' }}>{brl(selected.price)}</dd>
             </dl>
             {selected.description && <p className="mt-3 text-sm text-gray-600">{selected.description}</p>}
@@ -210,7 +210,7 @@ export default function LoteamentoMapPage({ params }: { params: Promise<{ slug: 
             {reserved ? (
               <div className="mt-5 text-center">
                 <CheckCircle2 className="mx-auto h-10 w-10 text-emerald-500" />
-                <p className="mt-2 text-sm font-medium" style={{ color: '#1B2B5B' }}>
+                <p className="mt-2 text-sm font-medium" style={{ color: '#143A1F' }}>
                   Lote reservado! A equipe entrará em contato.
                 </p>
               </div>
@@ -229,7 +229,7 @@ export default function LoteamentoMapPage({ params }: { params: Promise<{ slug: 
                 {error && <p className="text-xs text-red-600">{error}</p>}
                 <button type="submit" disabled={reserving}
                   className="flex w-full items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-semibold text-white disabled:opacity-60"
-                  style={{ backgroundColor: '#1B2B5B' }}>
+                  style={{ backgroundColor: '#143A1F' }}>
                   {reserving && <Loader2 className="h-4 w-4 animate-spin" />}
                   Tenho interesse — reservar
                 </button>

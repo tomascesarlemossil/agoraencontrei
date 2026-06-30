@@ -25,7 +25,7 @@ export default function EngenhariaConstrucaoPage() {
   return (
     <main className="min-h-screen" style={{ background: 'linear-gradient(135deg, #f8f7f4 0%, #fff 100%)' }}>
       {/* Hero */}
-      <section className="py-16 px-4 text-center" style={{ background: 'linear-gradient(135deg, #1B2B5B 0%, #2d4a8a 100%)' }}>
+      <section className="py-16 px-4 text-center" style={{ background: 'linear-gradient(135deg, #143A1F 0%, #2d4a8a 100%)' }}>
         <div className="max-w-3xl mx-auto">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-6" style={{ background: 'rgba(201,168,76,0.2)' }}>
             <HardHat className="w-8 h-8" style={{ color: '#C9A84C' }} />
@@ -51,16 +51,16 @@ export default function EngenhariaConstrucaoPage() {
       {/* Services */}
       <section className="py-16 px-4">
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-2xl font-bold text-center mb-10" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>
+          <h2 className="text-2xl font-bold text-center mb-10" style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}>
             Serviços de Engenharia
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             {SERVICES.map(({ icon: Icon, title, desc }) => (
               <div key={title} className="bg-white rounded-2xl p-6 border shadow-sm" style={{ borderColor: '#e8e4dc' }}>
-                <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl mb-4" style={{ background: 'rgba(27,43,91,0.08)' }}>
-                  <Icon className="w-6 h-6" style={{ color: '#1B2B5B' }} />
+                <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl mb-4" style={{ background: 'rgba(20,58,31,0.08)' }}>
+                  <Icon className="w-6 h-6" style={{ color: '#143A1F' }} />
                 </div>
-                <h3 className="font-bold mb-2" style={{ color: '#1B2B5B' }}>{title}</h3>
+                <h3 className="font-bold mb-2" style={{ color: '#143A1F' }}>{title}</h3>
                 <p className="text-sm text-gray-600">{desc}</p>
               </div>
             ))}
@@ -71,7 +71,7 @@ export default function EngenhariaConstrucaoPage() {
       {/* CTA */}
       <section className="py-12 px-4 text-center">
         <div className="max-w-xl mx-auto bg-white rounded-3xl border shadow-sm p-8" style={{ borderColor: '#e8e4dc' }}>
-          <h2 className="text-xl font-bold mb-3" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>
+          <h2 className="text-xl font-bold mb-3" style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}>
             Precisa de um engenheiro em Franca/SP?
           </h2>
           <p className="text-gray-500 text-sm mb-6">Entre em contato e receba orientação especializada sem compromisso.</p>
@@ -88,7 +88,7 @@ export default function EngenhariaConstrucaoPage() {
             <Link
               href="/servicos"
               className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm border transition-all hover:shadow-sm"
-              style={{ borderColor: '#1B2B5B', color: '#1B2B5B' }}
+              style={{ borderColor: '#143A1F', color: '#143A1F' }}
             >
               Ver todos os serviços <ArrowRight className="w-4 h-4" />
             </Link>

@@ -32,7 +32,7 @@ function Field({ label, required, children }: { label: string; required?: boolea
 }
 
 const inputCls = "w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-1 focus:ring-indigo-500/50"
-const selectCls = "w-full bg-[#1a2744] border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-indigo-500/50"
+const selectCls = "w-full bg-[#0E2A15] border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-indigo-500/50"
 
 export default function NovoProcessoPage() {
   const router = useRouter()
@@ -309,7 +309,7 @@ export default function NovoProcessoPage() {
             </button>
           </Link>
           <button type="submit" disabled={saving}
-            className="flex items-center gap-2 px-5 py-2 bg-yellow-400 rounded-lg text-sm font-bold text-[#1B2B5B] hover:bg-yellow-300 disabled:opacity-50 transition-colors">
+            className="flex items-center gap-2 px-5 py-2 bg-yellow-400 rounded-lg text-sm font-bold text-[#143A1F] hover:bg-yellow-300 disabled:opacity-50 transition-colors">
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             {saving ? 'Salvando...' : 'Salvar Processo'}
           </button>

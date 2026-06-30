@@ -294,7 +294,7 @@ function StatBox({ value, label, icon: Icon }: { value: string | number; label: 
   return (
     <div className="flex flex-col items-center justify-center py-5 px-4 gap-2 min-w-0">
       {Icon && <Icon className="w-7 h-7" style={{ color: '#C9A84C' }} strokeWidth={1.5} />}
-      <span className="text-xl font-bold leading-none" style={{ color: '#1B2B5B' }}>{value}</span>
+      <span className="text-xl font-bold leading-none" style={{ color: '#143A1F' }}>{value}</span>
       <span className="text-xs text-gray-500 font-medium text-center leading-tight">{label}</span>
     </div>
   )
@@ -432,7 +432,7 @@ export default async function PropertyDetailPage(props: { params: Promise<{ slug
             {/* Direct Videos (MP4/WebM from property.videos) */}
             {p.videos && (p.videos as string[]).length > 0 && (
               <div className="space-y-3">
-                <h3 className="text-sm font-semibold flex items-center gap-2" style={{ color: '#1B2B5B' }}>
+                <h3 className="text-sm font-semibold flex items-center gap-2" style={{ color: '#143A1F' }}>
                   <Video className="w-4 h-4" style={{ color: '#C9A84C' }} />
                   Vídeos do Imóvel
                 </h3>
@@ -473,11 +473,11 @@ export default async function PropertyDetailPage(props: { params: Promise<{ slug
             {/* ── Title + Price Card ───────────────────────── */}
             <div className="bg-white rounded-2xl border shadow-sm overflow-hidden" style={{ borderColor: '#ddd9d0' }}>
               {/* Top accent bar */}
-              <div className="h-1 w-full" style={{ background: 'linear-gradient(90deg, #1B2B5B 60%, #C9A84C)' }} />
+              <div className="h-1 w-full" style={{ background: 'linear-gradient(90deg, #143A1F 60%, #C9A84C)' }} />
               <div className="p-6">
                 {/* Tags */}
                 <div className="flex flex-wrap items-center gap-2 mb-3">
-                  <span className="text-xs font-bold px-3 py-1 rounded-full" style={{ backgroundColor: '#1B2B5B', color: 'white' }}>
+                  <span className="text-xs font-bold px-3 py-1 rounded-full" style={{ backgroundColor: '#143A1F', color: 'white' }}>
                     {PURPOSE_LABEL[p.purpose] ?? p.purpose}
                   </span>
                   <span className="text-xs font-semibold px-3 py-1 rounded-full border" style={{ borderColor: '#C9A84C', color: '#C9A84C' }}>
@@ -492,7 +492,7 @@ export default async function PropertyDetailPage(props: { params: Promise<{ slug
                 </div>
 
                 {/* Title */}
-                <h1 className="text-xl sm:text-2xl font-bold leading-snug mb-2" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>
+                <h1 className="text-xl sm:text-2xl font-bold leading-snug mb-2" style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}>
                   {p.title}
                 </h1>
 
@@ -509,16 +509,16 @@ export default async function PropertyDetailPage(props: { params: Promise<{ slug
                 <div className="rounded-xl border p-4 mb-4" style={{ borderColor: '#ddd9d0', backgroundColor: '#faf9f6' }}>
                   {hasSale && (
                     <div className="flex items-baseline justify-between border-b pb-3 mb-3" style={{ borderColor: '#ede9df' }}>
-                      <span className="font-bold text-sm" style={{ color: '#1B2B5B' }}>Venda</span>
-                      <span className="text-2xl font-bold" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>
+                      <span className="font-bold text-sm" style={{ color: '#143A1F' }}>Venda</span>
+                      <span className="text-2xl font-bold" style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}>
                         {p.valueUnderConsultation ? 'Sob Consulta' : fmtCurrency(Number(p.price))}
                       </span>
                     </div>
                   )}
                   {hasRent && (
                     <div className={`flex items-baseline justify-between ${(iptu || p.condoFee) ? 'border-b pb-3 mb-3' : ''}`} style={{ borderColor: '#ede9df' }}>
-                      <span className="font-bold text-sm" style={{ color: '#1B2B5B' }}>Locação</span>
-                      <span className="text-2xl font-bold" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>
+                      <span className="font-bold text-sm" style={{ color: '#143A1F' }}>Locação</span>
+                      <span className="text-2xl font-bold" style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}>
                         {fmtCurrency(Number(p.priceRent))}<span className="text-sm font-normal text-gray-500">/mês</span>
                       </span>
                     </div>
@@ -538,7 +538,7 @@ export default async function PropertyDetailPage(props: { params: Promise<{ slug
                   {totalRent && (
                     <div className="flex items-baseline justify-between border-t pt-3 mt-1.5" style={{ borderColor: '#ede9df' }}>
                       <span className="text-sm font-semibold text-gray-600">Total Locação/mês</span>
-                      <span className="text-sm font-bold" style={{ color: '#1B2B5B' }}>{fmtCurrency(totalRent)}</span>
+                      <span className="text-sm font-bold" style={{ color: '#143A1F' }}>{fmtCurrency(totalRent)}</span>
                     </div>
                   )}
                 </div>
@@ -628,14 +628,14 @@ export default async function PropertyDetailPage(props: { params: Promise<{ slug
                 {youtubeId && (
                   <a href={p.videoUrl} target="_blank" rel="noreferrer"
                     className="flex flex-col items-center justify-center gap-1.5 py-3 px-2 rounded-xl border-2 text-xs font-semibold transition-all hover:shadow-md hover:bg-gray-50"
-                    style={{ borderColor: '#ddd9d0', color: '#1B2B5B' }}>
+                    style={{ borderColor: '#ddd9d0', color: '#143A1F' }}>
                     <Video className="w-4 h-4" style={{ color: '#C9A84C' }} />
                     Vídeo
                   </a>
                 )}
                 <a href={`https://wa.me/${whatsappNum}?text=${whatsappMsg}`} target="_blank" rel="noreferrer"
                   className="flex flex-col items-center justify-center gap-1.5 py-3 px-2 rounded-xl border-2 text-xs font-semibold transition-all hover:shadow-md hover:bg-gray-50"
-                  style={{ borderColor: '#ddd9d0', color: '#1B2B5B' }}>
+                  style={{ borderColor: '#ddd9d0', color: '#143A1F' }}>
                   <Phone className="w-4 h-4" style={{ color: '#C9A84C' }} />
                   Corretor
                 </a>
@@ -646,7 +646,7 @@ export default async function PropertyDetailPage(props: { params: Promise<{ slug
             {/* ── Description ──────────────────────────────── */}
             <div className="bg-white rounded-2xl border shadow-sm overflow-hidden" style={{ borderColor: '#ddd9d0' }}>
               <div className="flex items-center gap-2 px-6 py-4 border-b" style={{ borderColor: '#ede9df' }}>
-                <h2 className="text-lg font-bold" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>
+                <h2 className="text-lg font-bold" style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}>
                   Descrição do imóvel
                 </h2>
               </div>
@@ -673,7 +673,7 @@ export default async function PropertyDetailPage(props: { params: Promise<{ slug
             {(featureCategories.length > 0 || p.bedrooms > 0) && (
               <div className="bg-white rounded-2xl border shadow-sm overflow-hidden" style={{ borderColor: '#ddd9d0' }}>
                 <div className="flex items-center gap-2 px-6 py-4 border-b" style={{ borderColor: '#ede9df' }}>
-                  <h2 className="text-lg font-bold" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>
+                  <h2 className="text-lg font-bold" style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}>
                     Características
                   </h2>
                 </div>
@@ -682,7 +682,7 @@ export default async function PropertyDetailPage(props: { params: Promise<{ slug
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-6 gap-y-6">
                       {featureCategories.map(cat => (
                         <div key={cat.label}>
-                          <p className="text-xs font-bold uppercase tracking-wide mb-2.5" style={{ color: '#1B2B5B' }}>{cat.label}</p>
+                          <p className="text-xs font-bold uppercase tracking-wide mb-2.5" style={{ color: '#143A1F' }}>{cat.label}</p>
                           <ul className="space-y-1.5">
                             {cat.items.map(item => (
                               <li key={item} className="flex items-center gap-2 text-sm text-gray-700">
@@ -699,7 +699,7 @@ export default async function PropertyDetailPage(props: { params: Promise<{ slug
                       {/* Build basic characteristics from property data */}
                       {(p.bedrooms > 0 || p.suites > 0 || p.bathrooms > 0) && (
                         <div>
-                          <p className="text-xs font-bold uppercase tracking-wide mb-2.5" style={{ color: '#1B2B5B' }}>Cômodos</p>
+                          <p className="text-xs font-bold uppercase tracking-wide mb-2.5" style={{ color: '#143A1F' }}>Cômodos</p>
                           <ul className="space-y-1.5">
                             {p.bedrooms > 0 && <li className="flex items-center gap-2 text-sm text-gray-700"><CheckCircle2 className="w-4 h-4 flex-shrink-0" style={{ color: '#C9A84C' }} />{p.bedrooms} Dormitório{p.bedrooms > 1 ? 's' : ''}</li>}
                             {p.suites > 0 && <li className="flex items-center gap-2 text-sm text-gray-700"><CheckCircle2 className="w-4 h-4 flex-shrink-0" style={{ color: '#C9A84C' }} />{p.suites} Suíte{p.suites > 1 ? 's' : ''}</li>}
@@ -720,7 +720,7 @@ export default async function PropertyDetailPage(props: { params: Promise<{ slug
               p.closedCondo || p.floor || p.commonArea || p.condoName || p.referencePoint) && (
               <div className="bg-white rounded-2xl border shadow-sm overflow-hidden" style={{ borderColor: '#ddd9d0' }}>
                 <div className="flex items-center gap-2 px-6 py-4 border-b" style={{ borderColor: '#ede9df' }}>
-                  <h2 className="text-lg font-bold" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>
+                  <h2 className="text-lg font-bold" style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}>
                     Detalhes do Imóvel
                   </h2>
                 </div>
@@ -756,7 +756,7 @@ export default async function PropertyDetailPage(props: { params: Promise<{ slug
             {(p.purpose === 'SALE' || p.purpose === 'BOTH') && !p.valueUnderConsultation && Number(p.price) > 0 && (
               <div className="bg-white rounded-2xl border shadow-sm overflow-hidden" style={{ borderColor: '#ddd9d0' }}>
                 <div className="flex items-center gap-2 px-6 py-4 border-b" style={{ borderColor: '#ede9df' }}>
-                  <h2 className="text-lg font-bold" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>
+                  <h2 className="text-lg font-bold" style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}>
                     Simule seu Financiamento
                   </h2>
                 </div>
@@ -783,7 +783,7 @@ export default async function PropertyDetailPage(props: { params: Promise<{ slug
             {(p.city || p.neighborhood) && (
               <div className="bg-white rounded-2xl border shadow-sm overflow-hidden" style={{ borderColor: '#ddd9d0' }}>
                 <div className="flex items-center gap-2 px-6 py-4 border-b" style={{ borderColor: '#ede9df' }}>
-                  <h2 className="text-lg font-bold" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>
+                  <h2 className="text-lg font-bold" style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}>
                     Localização
                   </h2>
                 </div>
@@ -811,7 +811,7 @@ export default async function PropertyDetailPage(props: { params: Promise<{ slug
             {/* ── Similar Properties ────────────────────────── */}
             <div className="bg-white rounded-2xl border shadow-sm overflow-hidden" style={{ borderColor: '#ddd9d0' }}>
               <div className="flex items-center gap-2 px-6 py-4 border-b" style={{ borderColor: '#ede9df' }}>
-                <h2 className="text-lg font-bold" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>
+                <h2 className="text-lg font-bold" style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}>
                   Imóveis Semelhantes
                 </h2>
               </div>
@@ -863,7 +863,7 @@ export default async function PropertyDetailPage(props: { params: Promise<{ slug
                 <CopyLinkButton url={propertyUrl} />
                 <a href={`https://wa.me/${whatsappNum}?text=${whatsappMsg}`} target="_blank" rel="noreferrer"
                   className="ml-auto flex items-center gap-1.5 text-xs font-semibold hover:underline"
-                  style={{ color: '#1B2B5B' }}>
+                  style={{ color: '#143A1F' }}>
                   <Share2 className="w-3.5 h-3.5" />
                   Indicar
                 </a>
@@ -874,7 +874,7 @@ export default async function PropertyDetailPage(props: { params: Promise<{ slug
             {p.company && (
               <div className="bg-white rounded-2xl border p-4 text-center" style={{ borderColor: '#ddd9d0' }}>
                 <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">Anúncio de</p>
-                <p className="font-bold text-sm" style={{ color: '#1B2B5B' }}>{p.company.name}</p>
+                <p className="font-bold text-sm" style={{ color: '#143A1F' }}>{p.company.name}</p>
                 {p.company.phone && (
                   <a href={`tel:${p.company.phone}`} className="text-xs mt-0.5 block hover:opacity-80 flex items-center justify-center gap-1"
                     style={{ color: '#C9A84C' }}>
@@ -912,7 +912,7 @@ function BrokerCard({ broker, whatsappNum, whatsappMsg, visitMsg, p, condoName }
   return (
     <>
       {/* Gradient top bar */}
-      <div className="h-1.5 w-full" style={{ background: 'linear-gradient(90deg, #1B2B5B 0%, #2d4a8a 50%, #C9A84C 100%)' }} />
+      <div className="h-1.5 w-full" style={{ background: 'linear-gradient(90deg, #143A1F 0%, #2d4a8a 50%, #C9A84C 100%)' }} />
 
       {/* Condomínio badge (quando detectado) */}
       {condoName && (
@@ -931,16 +931,16 @@ function BrokerCard({ broker, whatsappNum, whatsappMsg, visitMsg, p, condoName }
       <div className="p-5 border-b" style={{ borderColor: '#ede9df' }}>
         {hasSale && (
           <div className={`flex items-baseline justify-between ${hasRent || iptu ? 'mb-2' : ''}`}>
-            <span className="font-bold text-sm" style={{ color: '#1B2B5B' }}>Venda</span>
-            <span className="text-xl font-bold" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>
+            <span className="font-bold text-sm" style={{ color: '#143A1F' }}>Venda</span>
+            <span className="text-xl font-bold" style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}>
               {p.valueUnderConsultation ? 'Sob Consulta' : fmtCurr(Number(p.price))}
             </span>
           </div>
         )}
         {hasRent && (
           <div className="flex items-baseline justify-between mb-1">
-            <span className="font-bold text-sm" style={{ color: '#1B2B5B' }}>Locação</span>
-            <span className="text-xl font-bold" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>
+            <span className="font-bold text-sm" style={{ color: '#143A1F' }}>Locação</span>
+            <span className="text-xl font-bold" style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}>
               {fmtCurr(Number(p.priceRent))}<span className="text-xs font-normal text-gray-500">/mês</span>
             </span>
           </div>
@@ -960,7 +960,7 @@ function BrokerCard({ broker, whatsappNum, whatsappMsg, visitMsg, p, condoName }
         {totalRent && hasRent && (iptu || condoFeeNum) && (
           <div className="flex items-baseline justify-between text-sm pt-2 mt-1 border-t font-semibold" style={{ borderColor: '#ede9df' }}>
             <span className="text-gray-600">Total/mês</span>
-            <span style={{ color: '#1B2B5B' }}>{fmtCurr(totalRent)}</span>
+            <span style={{ color: '#143A1F' }}>{fmtCurr(totalRent)}</span>
           </div>
         )}
       </div>
@@ -976,13 +976,13 @@ function BrokerCard({ broker, whatsappNum, whatsappMsg, visitMsg, p, condoName }
               style={{ border: '2.5px solid #C9A84C' }} />
           ) : (
             <div className="h-16 w-16 rounded-2xl flex items-center justify-center text-white text-2xl font-bold flex-shrink-0 shadow-md"
-              style={{ background: 'linear-gradient(135deg, #1B2B5B, #2d4a8a)', border: '2.5px solid #C9A84C' }}>
+              style={{ background: 'linear-gradient(135deg, #143A1F, #2d4a8a)', border: '2.5px solid #C9A84C' }}>
               {broker?.name?.charAt(0).toUpperCase() ?? 'L'}
             </div>
           )}
           {/* Info */}
           <div className="min-w-0 flex-1">
-            <p className="font-bold text-base leading-tight truncate" style={{ color: '#1B2B5B' }}>
+            <p className="font-bold text-base leading-tight truncate" style={{ color: '#143A1F' }}>
               {broker?.name ?? 'Imobiliária Lemos'}
             </p>
             <p className="text-xs text-gray-500 mt-0.5">{(broker as any)?.cargo ?? 'Corretor de Imóveis'}</p>
@@ -1019,7 +1019,7 @@ function BrokerCard({ broker, whatsappNum, whatsappMsg, visitMsg, p, condoName }
           />
           <a href={`tel:${broker?.phone ?? '1637230045'}`}
             className="flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold transition-all hover:shadow-md"
-            style={{ backgroundColor: '#f5f3ef', color: '#1B2B5B', border: '2px solid #ddd9d0' }}>
+            style={{ backgroundColor: '#f5f3ef', color: '#143A1F', border: '2px solid #ddd9d0' }}>
             <Phone className="w-4 h-4" style={{ color: '#C9A84C' }} />
             Ligar
           </a>
@@ -1039,14 +1039,14 @@ function BrokerCard({ broker, whatsappNum, whatsappMsg, visitMsg, p, condoName }
 
         {/* Imobiliária info footer */}
         <div className="flex items-center gap-2.5 pt-3 mt-1 border-t" style={{ borderColor: '#ede9df' }}>
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#1B2B5B' }}>
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#143A1F' }}>
             <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
               <polyline points="9 22 9 12 15 12 15 22"/>
             </svg>
           </div>
           <div className="min-w-0">
-            <p className="text-xs font-bold truncate" style={{ color: '#1B2B5B' }}>Imobiliária Lemos</p>
+            <p className="text-xs font-bold truncate" style={{ color: '#143A1F' }}>Imobiliária Lemos</p>
             <p className="text-[11px] text-gray-400">(16) 3723-0045 · CRECI-J 61053-F</p>
           </div>
         </div>

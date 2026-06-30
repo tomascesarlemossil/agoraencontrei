@@ -59,16 +59,16 @@ export default function PublicVisitFeedbackPage() {
   }
 
   if (loading) {
-    return <main className="flex min-h-screen items-center justify-center bg-[#f9f7f4] text-[#1B2B5B]">Carregando…</main>
+    return <main className="flex min-h-screen items-center justify-center bg-[#f9f7f4] text-[#143A1F]">Carregando…</main>
   }
 
   if (error && !visit) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-[#f9f7f4] px-4">
         <div className="max-w-md rounded-2xl bg-white p-8 text-center shadow">
-          <h1 className="text-xl font-bold text-[#1B2B5B]">Visita não encontrada</h1>
+          <h1 className="text-xl font-bold text-[#143A1F]">Visita não encontrada</h1>
           <p className="mt-2 text-sm text-gray-600">O link expirou ou está incorreto.</p>
-          <Link href="/" className="mt-6 inline-block rounded-lg bg-[#1B2B5B] px-5 py-2.5 text-sm font-medium text-white">Voltar ao site</Link>
+          <Link href="/" className="mt-6 inline-block rounded-lg bg-[#143A1F] px-5 py-2.5 text-sm font-medium text-white">Voltar ao site</Link>
         </div>
       </main>
     )
@@ -79,9 +79,9 @@ export default function PublicVisitFeedbackPage() {
       <main className="flex min-h-screen items-center justify-center bg-[#f9f7f4] px-4">
         <div className="max-w-md rounded-2xl bg-white p-8 text-center shadow">
           <div className="mx-auto h-12 w-12 rounded-full bg-emerald-100 flex items-center justify-center text-2xl">✓</div>
-          <h1 className="mt-4 text-xl font-bold text-[#1B2B5B]">Obrigado pela avaliação!</h1>
+          <h1 className="mt-4 text-xl font-bold text-[#143A1F]">Obrigado pela avaliação!</h1>
           <p className="mt-2 text-sm text-gray-600">Sua opinião nos ajuda a melhorar o atendimento.</p>
-          <Link href="/" className="mt-6 inline-block rounded-lg bg-[#C9A84C] px-5 py-2.5 text-sm font-medium text-[#1B2B5B]">Ver mais imóveis</Link>
+          <Link href="/" className="mt-6 inline-block rounded-lg bg-[#C9A84C] px-5 py-2.5 text-sm font-medium text-[#143A1F]">Ver mais imóveis</Link>
         </div>
       </main>
     )
@@ -95,7 +95,7 @@ export default function PublicVisitFeedbackPage() {
       <div className="w-full max-w-md rounded-2xl bg-white p-7 shadow">
         <div className="text-center">
           <p className="text-xs uppercase tracking-wider text-[#C9A84C] font-semibold">Imobiliária Lemos</p>
-          <h1 className="mt-2 text-2xl font-bold text-[#1B2B5B]">Como foi sua visita?</h1>
+          <h1 className="mt-2 text-2xl font-bold text-[#143A1F]">Como foi sua visita?</h1>
           <p className="mt-1 text-sm text-gray-600">
             Olá <strong>{visit?.visitorName?.split(' ')[0]}</strong>, conte pra gente como foi visitar <strong>{propLabel}</strong>{location ? ` (${location})` : ''}.
           </p>
@@ -121,7 +121,7 @@ export default function PublicVisitFeedbackPage() {
           rows={4}
           maxLength={2000}
           placeholder="Conte o que achou — o imóvel atendeu? Tem interesse? Quer ver opções parecidas?"
-          className="mt-4 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-[#1B2B5B] focus:outline-none focus:ring-1 focus:ring-[#1B2B5B]"
+          className="mt-4 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-[#143A1F] focus:outline-none focus:ring-1 focus:ring-[#143A1F]"
           style={{ fontSize: '16px' }}
         />
 
@@ -130,7 +130,7 @@ export default function PublicVisitFeedbackPage() {
         <button
           onClick={submit}
           disabled={submitting || !rating}
-          className="mt-5 w-full rounded-lg bg-[#1B2B5B] px-5 py-3 text-sm font-semibold text-white disabled:opacity-50"
+          className="mt-5 w-full rounded-lg bg-[#143A1F] px-5 py-3 text-sm font-semibold text-white disabled:opacity-50"
         >
           {submitting ? 'Enviando…' : 'Enviar avaliação'}
         </button>

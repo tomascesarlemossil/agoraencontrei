@@ -34,13 +34,13 @@ function PriceDisplay({ price, priceRent, purpose }: { price: number | null; pri
         </div>
         <div className="flex items-center justify-between">
           <span className="text-xs font-medium text-gray-500">Locacao</span>
-          <span className="text-sm font-bold" style={{ color: '#1B2B5B' }}>{fmt.format(Number(priceRent))}/mes</span>
+          <span className="text-sm font-bold" style={{ color: '#143A1F' }}>{fmt.format(Number(priceRent))}/mes</span>
         </div>
       </div>
     )
   }
-  if (hasRent) return <p className="text-base font-bold mt-3" style={{ color: '#1B2B5B' }}>{fmt.format(Number(priceRent))}/mes</p>
-  if (hasSale) return <p className="text-base font-bold mt-3" style={{ color: '#1B2B5B' }}>{fmt.format(Number(price))}</p>
+  if (hasRent) return <p className="text-base font-bold mt-3" style={{ color: '#143A1F' }}>{fmt.format(Number(priceRent))}/mes</p>
+  if (hasSale) return <p className="text-base font-bold mt-3" style={{ color: '#143A1F' }}>{fmt.format(Number(price))}</p>
   return <p className="text-sm font-medium mt-3 text-gray-500">Consulte</p>
 }
 
@@ -86,7 +86,7 @@ export default function FavoritosPage() {
         <div>
           <h1
             className="text-2xl font-bold flex items-center gap-3"
-            style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}
+            style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}
           >
             <Heart className="w-6 h-6 text-red-500 fill-red-500" />
             Meus Favoritos
@@ -114,7 +114,7 @@ export default function FavoritosPage() {
       {/* Loading state */}
       {loading && (
         <div className="flex flex-col items-center justify-center py-20">
-          <Loader2 className="w-8 h-8 animate-spin" style={{ color: '#1B2B5B' }} />
+          <Loader2 className="w-8 h-8 animate-spin" style={{ color: '#143A1F' }} />
           <p className="text-gray-500 text-sm mt-3">Carregando favoritos...</p>
         </div>
       )}
@@ -130,7 +130,7 @@ export default function FavoritosPage() {
           <button
             onClick={() => window.location.reload()}
             className="px-6 py-2.5 rounded-xl text-sm font-semibold text-white transition-all hover:brightness-110"
-            style={{ backgroundColor: '#1B2B5B' }}
+            style={{ backgroundColor: '#143A1F' }}
           >
             Tentar novamente
           </button>
@@ -142,11 +142,11 @@ export default function FavoritosPage() {
         <div className="text-center py-16">
           <div
             className="inline-flex items-center justify-center w-20 h-20 rounded-full mb-6"
-            style={{ backgroundColor: 'rgba(27, 43, 91, 0.08)' }}
+            style={{ backgroundColor: 'rgba(20, 58, 31, 0.08)' }}
           >
             <Heart className="w-10 h-10 text-gray-400" />
           </div>
-          <p className="text-gray-700 text-xl font-bold mb-2" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>
+          <p className="text-gray-700 text-xl font-bold mb-2" style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}>
             Nenhum imovel favoritado
           </p>
           <p className="text-gray-500 text-sm mb-8 max-w-md mx-auto">
@@ -156,14 +156,14 @@ export default function FavoritosPage() {
             <Link
               href="/imoveis"
               className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold transition-all hover:brightness-110"
-              style={{ backgroundColor: '#1B2B5B', color: 'white' }}
+              style={{ backgroundColor: '#143A1F', color: 'white' }}
             >
               Explorar imoveis
             </Link>
             <Link
               href="/imoveis?purpose=SALE"
               className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold transition-all hover:brightness-110"
-              style={{ backgroundColor: '#C9A84C', color: '#1B2B5B' }}
+              style={{ backgroundColor: '#C9A84C', color: '#143A1F' }}
             >
               Imoveis a venda
             </Link>
@@ -193,7 +193,7 @@ export default function FavoritosPage() {
                     />
                   ) : (
                     <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 opacity-20">
-                      <Building2 className="w-10 h-10" style={{ color: '#1B2B5B' }} />
+                      <Building2 className="w-10 h-10" style={{ color: '#143A1F' }} />
                       <span className="text-xs font-medium text-gray-500">Foto em breve</span>
                     </div>
                   )}
@@ -203,8 +203,8 @@ export default function FavoritosPage() {
                     <span
                       className="text-xs font-bold px-2.5 py-1 rounded-full"
                       style={{
-                        backgroundColor: p.purpose === 'RENT' ? '#1B2B5B' : '#C9A84C',
-                        color: p.purpose === 'RENT' ? 'white' : '#1B2B5B',
+                        backgroundColor: p.purpose === 'RENT' ? '#143A1F' : '#C9A84C',
+                        color: p.purpose === 'RENT' ? 'white' : '#143A1F',
                       }}
                     >
                       {PURPOSE_LABEL[p.purpose] ?? p.purpose}
@@ -214,7 +214,7 @@ export default function FavoritosPage() {
 
                 {/* Content */}
                 <div className="p-4">
-                  <p className="font-semibold text-gray-900 line-clamp-2 text-sm leading-snug group-hover:text-[#1B2B5B] transition-colors">
+                  <p className="font-semibold text-gray-900 line-clamp-2 text-sm leading-snug group-hover:text-[#143A1F] transition-colors">
                     {p.title}
                   </p>
                   <p className="text-xs text-gray-500 mt-1 truncate">

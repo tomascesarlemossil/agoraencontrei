@@ -220,7 +220,7 @@ function LandingPage({ config, auctions }: { config: LandingConfig; auctions: an
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
-      <section className="bg-gradient-to-br from-[#1B2B5B] via-[#243866] to-[#0f172a] text-white px-4 py-14">
+      <section className="bg-gradient-to-br from-[#143A1F] via-[#243866] to-[#0f172a] text-white px-4 py-14">
         <div className="mx-auto max-w-6xl">
           <nav className="mb-5 text-xs text-white/60">
             <Link href="/" className="hover:text-white">Início</Link> <span className="mx-1">/</span>
@@ -234,7 +234,7 @@ function LandingPage({ config, auctions }: { config: LandingConfig; auctions: an
             <h1 className="mb-4 text-3xl font-bold leading-tight sm:text-5xl" style={{ fontFamily: 'Georgia, serif' }}>{config.h1}</h1>
             <p className="max-w-2xl text-base leading-7 text-white/75">{config.description}</p>
             <div className="mt-7 flex flex-wrap gap-3">
-              <Link href={`/leiloes?city=${encodeURIComponent(config.city)}${config.search ? `&search=${encodeURIComponent(config.search)}` : ''}`} className="inline-flex items-center gap-2 rounded-xl bg-[#C9A84C] px-5 py-3 text-sm font-bold text-[#1B2B5B]">
+              <Link href={`/leiloes?city=${encodeURIComponent(config.city)}${config.search ? `&search=${encodeURIComponent(config.search)}` : ''}`} className="inline-flex items-center gap-2 rounded-xl bg-[#C9A84C] px-5 py-3 text-sm font-bold text-[#143A1F]">
                 Ver oportunidades <ArrowRight className="h-4 w-4" />
               </Link>
               <Link href="/leiloes/comparativo" className="inline-flex items-center gap-2 rounded-xl border border-white/20 px-5 py-3 text-sm font-bold text-white hover:bg-white/10">
@@ -247,19 +247,19 @@ function LandingPage({ config, auctions }: { config: LandingConfig; auctions: an
 
       <main className="mx-auto max-w-6xl space-y-10 px-4 py-10">
         <section className="grid gap-4 md:grid-cols-4">
-          <div className="rounded-2xl border bg-white p-5 shadow-sm"><Building2 className="mb-3 h-6 w-6 text-[#C9A84C]" /><p className="text-2xl font-bold text-[#1B2B5B]">{auctions.length || '—'}</p><p className="text-sm text-gray-500">oportunidades encontradas</p></div>
-          <div className="rounded-2xl border bg-white p-5 shadow-sm"><TrendingUp className="mb-3 h-6 w-6 text-[#C9A84C]" /><p className="text-2xl font-bold text-[#1B2B5B]">ROI</p><p className="text-sm text-gray-500">leitura por lance, custos e avaliação</p></div>
-          <div className="rounded-2xl border bg-white p-5 shadow-sm"><ShieldCheck className="mb-3 h-6 w-6 text-[#C9A84C]" /><p className="text-2xl font-bold text-[#1B2B5B]">Risco</p><p className="text-sm text-gray-500">ocupação, edital e matrícula</p></div>
-          <div className="rounded-2xl border bg-white p-5 shadow-sm"><Calculator className="mb-3 h-6 w-6 text-[#C9A84C]" /><p className="text-2xl font-bold text-[#1B2B5B]">Cálculo</p><p className="text-sm text-gray-500">custos de arrematação e margem</p></div>
+          <div className="rounded-2xl border bg-white p-5 shadow-sm"><Building2 className="mb-3 h-6 w-6 text-[#C9A84C]" /><p className="text-2xl font-bold text-[#143A1F]">{auctions.length || '—'}</p><p className="text-sm text-gray-500">oportunidades encontradas</p></div>
+          <div className="rounded-2xl border bg-white p-5 shadow-sm"><TrendingUp className="mb-3 h-6 w-6 text-[#C9A84C]" /><p className="text-2xl font-bold text-[#143A1F]">ROI</p><p className="text-sm text-gray-500">leitura por lance, custos e avaliação</p></div>
+          <div className="rounded-2xl border bg-white p-5 shadow-sm"><ShieldCheck className="mb-3 h-6 w-6 text-[#C9A84C]" /><p className="text-2xl font-bold text-[#143A1F]">Risco</p><p className="text-sm text-gray-500">ocupação, edital e matrícula</p></div>
+          <div className="rounded-2xl border bg-white p-5 shadow-sm"><Calculator className="mb-3 h-6 w-6 text-[#C9A84C]" /><p className="text-2xl font-bold text-[#143A1F]">Cálculo</p><p className="text-sm text-gray-500">custos de arrematação e margem</p></div>
         </section>
 
         <section>
           <div className="mb-5 flex items-end justify-between gap-4">
             <div>
-              <h2 className="text-2xl font-bold text-[#1B2B5B]">Imóveis em destaque</h2>
+              <h2 className="text-2xl font-bold text-[#143A1F]">Imóveis em destaque</h2>
               <p className="text-sm text-gray-500">Lista dinâmica atualizada a partir da base de leilões do AgoraEncontrei.</p>
             </div>
-            <Link href="/leiloes" className="hidden text-sm font-semibold text-[#1B2B5B] md:inline-flex">Ver todos</Link>
+            <Link href="/leiloes" className="hidden text-sm font-semibold text-[#143A1F] md:inline-flex">Ver todos</Link>
           </div>
           {auctions.length > 0 ? (
             <div className="grid gap-5 md:grid-cols-3">
@@ -271,7 +271,7 @@ function LandingPage({ config, auctions }: { config: LandingConfig; auctions: an
                     <h3 className="line-clamp-2 text-sm font-bold text-gray-900">{a.title}</h3>
                     <p className="mt-2 flex items-center gap-1 text-xs text-gray-500"><MapPin className="h-3 w-3" /> {a.neighborhood || config.neighborhood || config.city}, {a.city || config.city}</p>
                     <p className="mt-4 text-xs text-gray-400">Lance mínimo</p>
-                    <p className="text-xl font-extrabold text-[#1B2B5B]">{a.minimumBid ? fmt(Number(a.minimumBid)) : 'Sob consulta'}</p>
+                    <p className="text-xl font-extrabold text-[#143A1F]">{a.minimumBid ? fmt(Number(a.minimumBid)) : 'Sob consulta'}</p>
                   </div>
                 </Link>
               ))}
@@ -281,21 +281,21 @@ function LandingPage({ config, auctions }: { config: LandingConfig; auctions: an
               <Building2 className="mx-auto mb-3 h-10 w-10 text-gray-300" />
               <h3 className="text-lg font-bold text-gray-800">Nenhum anúncio ativo foi encontrado para este recorte agora.</h3>
               <p className="mx-auto mt-2 max-w-2xl text-sm leading-6 text-gray-500">A página permanece útil para capturar demanda orgânica, orientar o comprador e encaminhar para o mapa de leilões quando novos lotes forem importados.</p>
-              <Link href="/leiloes" className="mt-5 inline-flex rounded-xl bg-[#1B2B5B] px-5 py-3 text-sm font-bold text-white">Ver todos os leilões</Link>
+              <Link href="/leiloes" className="mt-5 inline-flex rounded-xl bg-[#143A1F] px-5 py-3 text-sm font-bold text-white">Ver todos os leilões</Link>
             </div>
           )}
         </section>
 
         <section className="rounded-2xl border bg-[#f8f6f1] p-6">
-          <h2 className="mb-3 text-xl font-bold text-[#1B2B5B]">Como analisar este tipo de oportunidade</h2>
+          <h2 className="mb-3 text-xl font-bold text-[#143A1F]">Como analisar este tipo de oportunidade</h2>
           <p className="leading-7 text-gray-700">Antes de dar lance, compare o valor de avaliação com imóveis semelhantes no mesmo bairro, estime ITBI, registro, comissão do leiloeiro, condomínio, débitos e eventual custo de desocupação. O AgoraEncontrei prioriza páginas que combinam intenção local, leitura de risco e consulta dinâmica ao inventário de leilões.</p>
         </section>
 
         <section>
-          <h2 className="mb-4 text-xl font-bold text-[#1B2B5B]">Buscas relacionadas em Franca/SP</h2>
+          <h2 className="mb-4 text-xl font-bold text-[#143A1F]">Buscas relacionadas em Franca/SP</h2>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {related.map(item => (
-              <Link key={item.slug} href={`/leiloes/${item.slug}`} className="rounded-xl border bg-white p-4 text-sm font-semibold text-gray-700 hover:border-[#C9A84C] hover:text-[#1B2B5B]">{item.h1}</Link>
+              <Link key={item.slug} href={`/leiloes/${item.slug}`} className="rounded-xl border bg-white p-4 text-sm font-semibold text-gray-700 hover:border-[#C9A84C] hover:text-[#143A1F]">{item.h1}</Link>
             ))}
           </div>
         </section>
@@ -321,7 +321,7 @@ export default async function LeilaoPage(props: Props) {
           <div className="mb-4 text-5xl">🔍</div>
           <h1 className="mb-2 text-2xl font-bold text-gray-800">Leilão não encontrado</h1>
           <p className="mb-4 text-gray-500">O leilão que você procura pode ter sido encerrado ou removido.</p>
-          <a href="/leiloes" className="rounded-lg bg-[#1B2B5B] px-6 py-3 font-semibold text-white">
+          <a href="/leiloes" className="rounded-lg bg-[#143A1F] px-6 py-3 font-semibold text-white">
             Ver Todos os Leilões
           </a>
         </div>

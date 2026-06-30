@@ -29,7 +29,7 @@ export default function ImoveisNuporangaPage() {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(SCHEMA) }} />
 
-      <section className="bg-gradient-to-br from-[#1B2B5B] to-[#0f1c3a] text-white py-16 px-4">
+      <section className="bg-gradient-to-br from-[#143A1F] to-[#0f1c3a] text-white py-16 px-4">
         <div className="max-w-5xl mx-auto text-center">
           <div className="inline-flex items-center gap-2 bg-white/10 rounded-full px-4 py-1.5 text-xs font-semibold mb-4" style={{ color: '#C9A84C' }}>
             <MapPin className="w-3.5 h-3.5" /> Nuporanga/SP · 65km de Franca · 7,8 mil hab.
@@ -43,7 +43,7 @@ export default function ImoveisNuporangaPage() {
           <div className="flex flex-wrap justify-center gap-3">
             <Link href="/imoveis/em/nuporanga"
               className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm hover:brightness-110 transition-all"
-              style={{ background: '#C9A84C', color: '#1B2B5B' }}>
+              style={{ background: '#C9A84C', color: '#143A1F' }}>
               <Search className="w-4 h-4" /> Ver Imóveis em Nuporanga
             </Link>
             <a href="https://wa.me/5516981010004?text=Olá! Tenho interesse em imóveis em Nuporanga/SP."
@@ -71,7 +71,7 @@ export default function ImoveisNuporangaPage() {
 
       <section className="max-w-4xl mx-auto px-4 py-12">
         <div className="bg-white rounded-2xl p-8 border space-y-6">
-          <h2 className="text-xl font-bold" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>
+          <h2 className="text-xl font-bold" style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}>
             Oportunidades de Imóveis em Nuporanga: Panorama Atual
           </h2>
           <p className="text-gray-600 text-sm leading-relaxed">
@@ -104,7 +104,7 @@ export default function ImoveisNuporangaPage() {
 
           <p className="text-gray-600 text-sm leading-relaxed pt-2 border-t">
             Para conferir a lista completa e atualizada de oportunidades reais agora mesmo,{' '}
-            <a href="https://agoraencontrei.com.br" className="font-semibold underline" style={{ color: '#1B2B5B' }}>
+            <a href="https://agoraencontrei.com.br" className="font-semibold underline" style={{ color: '#143A1F' }}>
               acesse nossa vitrine principal no marketplace AgoraEncontrei
             </a>.
             Lá você filtra por preço, tipo de imóvel e status do leilão em tempo real.
@@ -113,7 +113,7 @@ export default function ImoveisNuporangaPage() {
       </section>
 
       <section className="max-w-5xl mx-auto px-4 pb-12">
-        <h2 className="text-xl font-bold mb-5" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>Explore Imóveis na Região</h2>
+        <h2 className="text-xl font-bold mb-5" style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}>Explore Imóveis na Região</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {[
             { href: '/imoveis/em/nuporanga', label: 'Todos os Imóveis em Nuporanga', icon: '🏠' },
@@ -133,7 +133,7 @@ export default function ImoveisNuporangaPage() {
         </div>
       </section>
 
-      <section className="py-12 px-4 text-center" style={{ background: 'linear-gradient(135deg, #1B2B5B, #0f1c3a)' }}>
+      <section className="py-12 px-4 text-center" style={{ background: 'linear-gradient(135deg, #143A1F, #0f1c3a)' }}>
         <div className="max-w-2xl mx-auto">
           <Star className="w-8 h-8 mx-auto mb-3" style={{ color: '#C9A84C' }} />
           <h2 className="text-2xl font-bold text-white mb-2" style={{ fontFamily: 'Georgia, serif' }}>AgoraEncontrei — Marketplace Imobiliário</h2>
@@ -141,12 +141,12 @@ export default function ImoveisNuporangaPage() {
           <div className="flex flex-wrap justify-center gap-3">
             <a href="https://wa.me/5516981010004" target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm bg-[#25D366] text-white"><MessageCircle className="w-4 h-4" /> WhatsApp</a>
             <a href="tel:+551637230045" className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm bg-white/10 text-white border border-white/20"><Phone className="w-4 h-4" /> (16) 3723-0045</a>
-            <Link href="/" className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm text-[#1B2B5B]" style={{ background: '#C9A84C' }}><Home className="w-4 h-4" /> Marketplace</Link>
+            <Link href="/" className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm text-[#143A1F]" style={{ background: '#C9A84C' }}><Home className="w-4 h-4" /> Marketplace</Link>
           </div>
         </div>
       </section>
 
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-[#1B2B5B] p-3 text-white text-center font-bold text-sm shadow-2xl sm:hidden">
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-[#143A1F] p-3 text-white text-center font-bold text-sm shadow-2xl sm:hidden">
         <Link href="/" className="flex items-center justify-center gap-2">
           <Search className="w-4 h-4" style={{ color: '#C9A84C' }} />
           Oportunidades em Nuporanga?

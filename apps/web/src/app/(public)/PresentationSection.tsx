@@ -126,7 +126,7 @@ export function PresentationSection({ videoUrl, bannerUrl, bannerLink, title, su
         <p className="text-xs font-semibold uppercase tracking-widest mb-1" style={{ color: '#C9A84C' }}>
           Imobiliária Lemos
         </p>
-        <h2 className="text-2xl font-bold" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>
+        <h2 className="text-2xl font-bold" style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}>
           {title ?? 'Conheça o nosso novo site'}
         </h2>
         {subtitle && (
@@ -199,7 +199,7 @@ export function PresentationSection({ videoUrl, bannerUrl, bannerLink, title, su
         {/* Lemos badge */}
         <div
           className="absolute top-4 right-4 px-3 py-1.5 rounded-full text-xs font-bold backdrop-blur-sm"
-          style={{ backgroundColor: 'rgba(201,168,76,0.9)', color: '#1B2B5B' }}
+          style={{ backgroundColor: 'rgba(201,168,76,0.9)', color: '#143A1F' }}
         >
           Imobiliária Lemos
         </div>
@@ -221,8 +221,8 @@ export function PresentationSection({ videoUrl, bannerUrl, bannerLink, title, su
         </a>
         <Link
           href="/imoveis"
-          className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold border-2 transition-all hover:bg-[#1B2B5B] hover:text-white"
-          style={{ borderColor: '#1B2B5B', color: '#1B2B5B' }}
+          className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold border-2 transition-all hover:bg-[#143A1F] hover:text-white"
+          style={{ borderColor: '#143A1F', color: '#143A1F' }}
         >
           Ver imóveis disponíveis
         </Link>

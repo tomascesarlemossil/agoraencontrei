@@ -27,7 +27,7 @@ function FaqItem({
         className="w-full flex items-center justify-between gap-4 p-5 text-left hover:bg-gray-50/50 transition-colors"
         aria-expanded={isOpen}
       >
-        <span className="font-semibold text-sm sm:text-base" style={{ color: '#1B2B5B' }}>
+        <span className="font-semibold text-sm sm:text-base" style={{ color: '#143A1F' }}>
           {question}
         </span>
         <ChevronDown

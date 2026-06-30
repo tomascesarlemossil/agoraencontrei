@@ -198,7 +198,7 @@ export function PropertyGallery({
             {purposeLabel && (
               <span
                 className="text-xs font-bold px-3 py-1.5 rounded-full shadow"
-                style={{ backgroundColor: '#C9A84C', color: '#1B2B5B' }}
+                style={{ backgroundColor: '#C9A84C', color: '#143A1F' }}
               >
                 {purposeLabel}
               </span>
@@ -206,7 +206,7 @@ export function PropertyGallery({
             {typeLabel && (
               <span
                 className="text-xs font-bold px-3 py-1.5 rounded-full shadow"
-                style={{ backgroundColor: 'rgba(255,255,255,0.92)', color: '#1B2B5B' }}
+                style={{ backgroundColor: 'rgba(255,255,255,0.92)', color: '#143A1F' }}
               >
                 {typeLabel}
               </span>
@@ -218,7 +218,7 @@ export function PropertyGallery({
             <div className="absolute bottom-4 right-4">
               <button
                 className="flex items-center gap-2 text-xs font-semibold px-3 py-2 rounded-xl backdrop-blur-sm transition-all hover:scale-105"
-                style={{ backgroundColor: 'rgba(255,255,255,0.92)', color: '#1B2B5B' }}
+                style={{ backgroundColor: 'rgba(255,255,255,0.92)', color: '#143A1F' }}
                 onClick={e => { e.stopPropagation(); setLightboxIndex(0) }}
               >
                 <Images className="w-3.5 h-3.5" />
@@ -257,7 +257,7 @@ export function PropertyGallery({
                 {i === 3 && remaining > 0 && (
                   <div
                     className="absolute inset-0 flex flex-col items-center justify-center text-white font-bold"
-                    style={{ backgroundColor: 'rgba(27,43,91,0.75)' }}
+                    style={{ backgroundColor: 'rgba(20,58,31,0.75)' }}
                   >
                     <span className="text-lg leading-none">+{remaining}</span>
                     <span className="text-[10px] opacity-80 mt-0.5">fotos</span>

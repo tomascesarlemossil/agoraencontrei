@@ -192,7 +192,7 @@ export function PropostaOnline({ propertyId, propertyTitle, propertyPrice, prope
       <button
         onClick={() => setOpen(true)}
         className="flex items-center justify-center gap-2 w-full py-3 rounded-xl text-sm font-bold transition-all hover:brightness-110"
-        style={{ backgroundColor: '#1B2B5B', color: 'white' }}
+        style={{ backgroundColor: '#143A1F', color: 'white' }}
       >
         <ShoppingCart className="w-4 h-4" />
         Comprar 100% Online
@@ -206,7 +206,7 @@ export function PropostaOnline({ propertyId, propertyTitle, propertyPrice, prope
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b" style={{ borderColor: '#f0ece4' }}>
           <div>
-            <h2 className="font-bold text-lg" style={{ color: '#1B2B5B' }}>Proposta de Compra Online</h2>
+            <h2 className="font-bold text-lg" style={{ color: '#143A1F' }}>Proposta de Compra Online</h2>
             <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">{propertyTitle}</p>
           </div>
           <button onClick={() => setOpen(false)} className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
@@ -225,7 +225,7 @@ export function PropostaOnline({ propertyId, propertyTitle, propertyPrice, prope
               Nossa equipe irá analisar junto ao proprietário e retornará em até <strong>24 horas</strong>.
             </p>
             {proposalCode && (
-              <div className="bg-[#1B2B5B] rounded-xl p-4 mb-4 text-center">
+              <div className="bg-[#143A1F] rounded-xl p-4 mb-4 text-center">
                 <div className="flex items-center justify-center gap-1 mb-1">
                   <Shield className="w-3.5 h-3.5 text-[#C9A84C]" />
                   <p className="text-white/60 text-xs">Código de verificação jurídica</p>
@@ -246,7 +246,7 @@ export function PropostaOnline({ propertyId, propertyTitle, propertyPrice, prope
             <button
               onClick={() => { setOpen(false); setStep('dados'); setForm(INITIAL) }}
               className="px-6 py-2.5 rounded-xl text-sm font-semibold text-white transition-all hover:brightness-110"
-              style={{ backgroundColor: '#1B2B5B' }}
+              style={{ backgroundColor: '#143A1F' }}
             >
               Fechar
             </button>
@@ -330,7 +330,7 @@ export function PropostaOnline({ propertyId, propertyTitle, propertyPrice, prope
                   {propertyPrice && (
                     <div className="rounded-xl p-3 text-sm" style={{ backgroundColor: '#f8f6f1' }}>
                       <span className="text-gray-500">Preço de tabela: </span>
-                      <span className="font-bold" style={{ color: '#1B2B5B' }}>
+                      <span className="font-bold" style={{ color: '#143A1F' }}>
                         {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(propertyPrice)}
                       </span>
                     </div>
@@ -530,7 +530,7 @@ export function PropostaOnline({ propertyId, propertyTitle, propertyPrice, prope
                     <div className="border-t pt-2" style={{ borderColor: '#e8e4dc' }}>
                       <div className="flex justify-between">
                         <span className="text-gray-500">Proposta:</span>
-                        <span className="font-bold" style={{ color: '#1B2B5B' }}>{form.valorProposta || '(não informado)'}</span>
+                        <span className="font-bold" style={{ color: '#143A1F' }}>{form.valorProposta || '(não informado)'}</span>
                       </div>
                       <div className="flex justify-between mt-1">
                         <span className="text-gray-500">Pagamento:</span>
@@ -566,7 +566,7 @@ export function PropostaOnline({ propertyId, propertyTitle, propertyPrice, prope
                 <button
                   onClick={() => setStep(STEPS[stepIndex - 1])}
                   className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold border hover:bg-gray-50 transition-colors"
-                  style={{ borderColor: '#e8e4dc', color: '#1B2B5B' }}
+                  style={{ borderColor: '#e8e4dc', color: '#143A1F' }}
                 >
                   <ChevronLeft className="w-4 h-4" /> Anterior
                 </button>
@@ -599,7 +599,7 @@ export function PropostaOnline({ propertyId, propertyTitle, propertyPrice, prope
                   onClick={submit}
                   disabled={loading}
                   className="flex items-center gap-1.5 px-6 py-2 rounded-lg text-sm font-bold text-white transition-all hover:brightness-110 disabled:opacity-50"
-                  style={{ backgroundColor: '#1B2B5B' }}
+                  style={{ backgroundColor: '#143A1F' }}
                 >
                   {loading ? 'Enviando...' : '✓ Enviar Proposta'}
                 </button>

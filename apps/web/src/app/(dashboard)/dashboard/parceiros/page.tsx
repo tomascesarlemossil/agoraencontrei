@@ -28,7 +28,7 @@ const PLAN_CONFIG = {
   },
   VIP: {
     label: 'VIP',
-    color: '#1B2B5B',
+    color: '#143A1F',
     bg: 'bg-blue-50',
     border: 'border-blue-200',
     badge: 'bg-blue-100 text-blue-800',
@@ -146,7 +146,7 @@ export default function ParceirosPage() {
     return (
       <div className="p-6 flex items-center justify-center min-h-[400px]">
         <div className="text-center">
-          <div className="w-10 h-10 border-4 border-[#1B2B5B] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+          <div className="w-10 h-10 border-4 border-[#143A1F] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
           <p className="text-gray-500 text-sm">Carregando parceiros...</p>
         </div>
       </div>
@@ -165,7 +165,7 @@ export default function ParceirosPage() {
           href="/seja-parceiro"
           target="_blank"
           className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white"
-          style={{ background: '#1B2B5B' }}
+          style={{ background: '#143A1F' }}
         >
           <ExternalLink className="w-4 h-4" />
           Ver landing page
@@ -266,7 +266,7 @@ export default function ParceirosPage() {
               onClick={() => setActiveTab(tab)}
               className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                 activeTab === tab
-                  ? 'bg-[#1B2B5B] text-white'
+                  ? 'bg-[#143A1F] text-white'
                   : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               }`}
             >
@@ -389,7 +389,7 @@ export default function ParceirosPage() {
       </div>
 
       {/* Footer CTA */}
-      <div className="bg-gradient-to-r from-[#1B2B5B] to-[#2d4a8a] rounded-xl p-6 text-white flex items-center justify-between">
+      <div className="bg-gradient-to-r from-[#143A1F] to-[#2d4a8a] rounded-xl p-6 text-white flex items-center justify-between">
         <div>
           <p className="font-bold text-lg">Quer mais parceiros Prime/VIP?</p>
           <p className="text-white/70 text-sm mt-1">Compartilhe a landing page e aumente o MRR</p>
@@ -398,7 +398,7 @@ export default function ParceirosPage() {
           href="/seja-parceiro"
           target="_blank"
           className="px-5 py-2.5 rounded-xl font-bold text-sm"
-          style={{ background: '#C9A84C', color: '#1B2B5B' }}
+          style={{ background: '#C9A84C', color: '#143A1F' }}
         >
           Ver landing page →
         </Link>

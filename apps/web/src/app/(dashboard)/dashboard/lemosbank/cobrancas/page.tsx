@@ -590,7 +590,7 @@ export default function CobrancasPage() {
         <button
           onClick={() => setShowNovaCobranca(true)}
           className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-xl text-white hover:opacity-90 transition-opacity"
-          style={{ backgroundColor: '#1B2B5B' }}
+          style={{ backgroundColor: '#143A1F' }}
         >
           <Plus className="w-4 h-4" />
           Nova Cobrança Avulsa

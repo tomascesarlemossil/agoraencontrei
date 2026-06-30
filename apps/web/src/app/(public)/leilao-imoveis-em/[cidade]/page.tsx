@@ -44,13 +44,13 @@ export default async function LeilaoCidadePage(props: { params: Promise<{ cidade
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
-      <section className="bg-gradient-to-br from-[#1B2B5B] to-[#0f1c3a] text-white py-14 px-4">
+      <section className="bg-gradient-to-br from-[#143A1F] to-[#0f1c3a] text-white py-14 px-4">
         <div className="max-w-5xl mx-auto">
           <nav className="text-xs text-blue-200 mb-4 flex items-center gap-1.5"><Link href="/" className="hover:text-white">Início</Link> <span>/</span> <Link href="/imoveis" className="hover:text-white">Imóveis</Link> <span>/</span> <span>{city.name}/{city.state}</span></nav>
           <h1 className="text-3xl sm:text-4xl font-bold mb-3" style={{ fontFamily: 'Georgia, serif' }}>Imóveis em Leilão em <span style={{ color: '#C9A84C' }}>{city.name}/{city.state}</span></h1>
           <p className="text-white/70 text-lg mb-6">{properties.length > 0 ? `${properties.length}+ imóveis disponíveis` : 'Imóveis disponíveis'} em leilão em {city.name}.</p>
           <div className="flex flex-wrap gap-3">
-            <Link href={`/imoveis?city=${city.name}&purpose=SALE`} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm" style={{ background: '#C9A84C', color: '#1B2B5B' }}><Search className="w-4 h-4" /> Buscar</Link>
+            <Link href={`/imoveis?city=${city.name}&purpose=SALE`} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm" style={{ background: '#C9A84C', color: '#143A1F' }}><Search className="w-4 h-4" /> Buscar</Link>
             <Link href={`/leilao-imoveis-em/${params.cidade}`} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm bg-white/10 text-white border border-white/20">🏛️ Leilões</Link>
           </div>
         </div>
@@ -75,7 +75,7 @@ export default async function LeilaoCidadePage(props: { params: Promise<{ cidade
                 <div className="p-4">
                   <p className="font-bold text-sm text-gray-800 line-clamp-2">{p.title}</p>
                   <p className="text-xs text-gray-500 mt-1"><MapPin className="w-3 h-3 inline" /> {p.neighborhood}, {city.name}</p>
-                  <p className="font-bold text-base mt-2" style={{ color: '#1B2B5B' }}>{p.price ? fmt(Number(p.price)) : 'Consulte'}</p>
+                  <p className="font-bold text-base mt-2" style={{ color: '#143A1F' }}>{p.price ? fmt(Number(p.price)) : 'Consulte'}</p>
                 </div>
               </Link>
             ))}
@@ -84,7 +84,7 @@ export default async function LeilaoCidadePage(props: { params: Promise<{ cidade
           <div className="text-center py-12 bg-white rounded-2xl border">
             <Building className="w-10 h-10 mx-auto mb-3 text-gray-300" />
             <p className="text-gray-500 mb-4">Nenhum imóvel em leilão em {city.name} no momento.</p>
-            <Link href="/imoveis" className="px-5 py-2.5 rounded-xl font-bold text-sm text-white" style={{ background: '#1B2B5B' }}>Ver todos os imóveis</Link>
+            <Link href="/imoveis" className="px-5 py-2.5 rounded-xl font-bold text-sm text-white" style={{ background: '#143A1F' }}>Ver todos os imóveis</Link>
           </div>
         )}
 

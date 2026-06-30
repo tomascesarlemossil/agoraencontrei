@@ -241,9 +241,9 @@ export default async function LeilaoPage({
       />
 
       {/* ── Hero ──────────────────────────────────────────────────────── */}
-      <section className="relative bg-[#1B2B5B] text-white py-16 px-4">
+      <section className="relative bg-[#143A1F] text-white py-16 px-4">
         <div className="max-w-5xl mx-auto text-center">
-          <span className="inline-block bg-[#C9A84C] text-[#1B2B5B] text-sm font-bold px-4 py-1 rounded-full mb-4">
+          <span className="inline-block bg-[#C9A84C] text-[#143A1F] text-sm font-bold px-4 py-1 rounded-full mb-4">
             Até {discount}% de desconto
           </span>
           <h1 className="text-3xl md:text-5xl font-extrabold mb-4">
@@ -272,7 +272,7 @@ export default async function LeilaoPage({
             <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">
               Preço Leilão
             </p>
-            <p className="text-2xl font-bold text-[#1B2B5B]">
+            <p className="text-2xl font-bold text-[#143A1F]">
               R$ {priceAuction.toLocaleString('pt-BR')}/m²
             </p>
           </div>
@@ -287,7 +287,7 @@ export default async function LeilaoPage({
       {/* ── Auction Listings Grid ─────────────────────────────────────── */}
       {listings.length > 0 && (
         <section className="max-w-5xl mx-auto px-4 py-12">
-          <h2 className="text-2xl font-bold text-[#1B2B5B] mb-6">
+          <h2 className="text-2xl font-bold text-[#143A1F] mb-6">
             Principais Oportunidades em {cityName}
           </h2>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -312,7 +312,7 @@ export default async function LeilaoPage({
                     <p className="text-xs text-gray-500 mb-2">{item.address}</p>
                   )}
                   <div className="flex items-center justify-between">
-                    <p className="text-lg font-bold text-[#1B2B5B]">
+                    <p className="text-lg font-bold text-[#143A1F]">
                       R$ {item.price.toLocaleString('pt-BR')}
                     </p>
                     {item.discount && (
@@ -339,7 +339,7 @@ export default async function LeilaoPage({
               key={block.type}
               className="bg-white rounded-lg border p-6"
             >
-              <h2 className="text-xl font-bold text-[#1B2B5B] mb-2">
+              <h2 className="text-xl font-bold text-[#143A1F] mb-2">
                 {block.title}
               </h2>
               <p className="text-gray-700 leading-relaxed">{block.content}</p>
@@ -363,7 +363,7 @@ export default async function LeilaoPage({
 
       {/* ── FAQ ───────────────────────────────────────────────────────── */}
       <section className="max-w-5xl mx-auto px-4 py-12">
-        <h2 className="text-2xl font-bold text-[#1B2B5B] mb-6">
+        <h2 className="text-2xl font-bold text-[#143A1F] mb-6">
           Perguntas Frequentes
         </h2>
         <dl className="space-y-6">
@@ -379,7 +379,7 @@ export default async function LeilaoPage({
       </section>
 
       {/* ── CTA WhatsApp ──────────────────────────────────────────────── */}
-      <section className="bg-[#1B2B5B] py-12 px-4 text-center">
+      <section className="bg-[#143A1F] py-12 px-4 text-center">
         <h2 className="text-2xl font-bold text-white mb-3">
           Quer ajuda para arrematar em {cityName}?
         </h2>

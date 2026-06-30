@@ -153,7 +153,7 @@ export default function JuridicoPage() {
             <Download className="w-3.5 h-3.5" /> Exportar CSV
           </button>
           <Link href="/dashboard/juridico/novo"
-            className="flex items-center gap-1.5 px-4 py-2 bg-yellow-400 rounded-lg text-xs font-bold text-[#1B2B5B] hover:bg-yellow-300 transition-colors">
+            className="flex items-center gap-1.5 px-4 py-2 bg-yellow-400 rounded-lg text-xs font-bold text-[#143A1F] hover:bg-yellow-300 transition-colors">
             <Plus className="w-3.5 h-3.5" /> Novo Processo
           </Link>
         </div>

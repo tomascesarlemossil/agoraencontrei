@@ -88,7 +88,7 @@ export default async function BairroPage(props: Props) {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
       {/* HERO */}
-      <section className="bg-gradient-to-br from-[#1B2B5B] to-[#0f1c3a] text-white py-14 px-4">
+      <section className="bg-gradient-to-br from-[#143A1F] to-[#0f1c3a] text-white py-14 px-4">
         <div className="max-w-5xl mx-auto">
           <nav className="text-xs text-blue-200 mb-4 flex items-center gap-1.5 flex-wrap">
             <Link href="/" className="hover:text-white">Início</Link>
@@ -155,7 +155,7 @@ export default async function BairroPage(props: Props) {
                       />
                     </div>
                   ) : (
-                    <div className="aspect-video overflow-hidden bg-gradient-to-br from-[#1B2B5B] to-[#0f1c3a] flex items-center justify-center">
+                    <div className="aspect-video overflow-hidden bg-gradient-to-br from-[#143A1F] to-[#0f1c3a] flex items-center justify-center">
                       <svg xmlns="http://www.w3.org/2000/svg" className="w-12 h-12 text-white/30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
                         <polyline points="9 22 9 12 15 12 15 22" />
@@ -169,7 +169,7 @@ export default async function BairroPage(props: Props) {
                       {p.purpose === 'SALE' ? 'Venda' : 'Aluguel'}
                     </p>
                     <h3 className="font-semibold text-gray-800 text-sm line-clamp-2 mb-2">{p.title}</h3>
-                    <p className="text-lg font-bold" style={{ color: '#1B2B5B' }}>{fmtPrice(p)}</p>
+                    <p className="text-lg font-bold" style={{ color: '#143A1F' }}>{fmtPrice(p)}</p>
                     <div className="flex gap-3 text-xs text-gray-500 mt-2 flex-wrap">
                       {p.bedrooms > 0 && <span>{p.bedrooms} quarto{p.bedrooms > 1 ? 's' : ''}</span>}
                       {p.bathrooms > 0 && <span>{p.bathrooms} banheiro{p.bathrooms > 1 ? 's' : ''}</span>}
@@ -185,7 +185,7 @@ export default async function BairroPage(props: Props) {
               <div className="text-center mt-6">
                 <Link href={`/imoveis?city=Franca&neighborhood=${encodeURIComponent(neighborhoodName)}`}
                   className="inline-flex items-center gap-2 px-8 py-3 rounded-xl font-bold text-sm text-white"
-                  style={{ background: '#1B2B5B' }}>
+                  style={{ background: '#143A1F' }}>
                   Ver todos os {total} imóveis no {neighborhoodName} <ArrowRight className="w-4 h-4" />
                 </Link>
               </div>
@@ -197,7 +197,7 @@ export default async function BairroPage(props: Props) {
             <p className="text-gray-500 mb-4">Nenhum imóvel ativo no {neighborhoodName} no momento.</p>
             <div className="flex gap-3 justify-center flex-wrap">
               <Link href="/imoveis?city=Franca"
-                className="px-5 py-2.5 rounded-xl font-bold text-sm text-white" style={{ background: '#1B2B5B' }}>
+                className="px-5 py-2.5 rounded-xl font-bold text-sm text-white" style={{ background: '#143A1F' }}>
                 Ver imóveis em Franca
               </Link>
               <a href={`https://wa.me/5516981010004?text=Olá! Quero um imóvel no ${encodeURIComponent(neighborhoodName)} em Franca/SP.`}
@@ -213,7 +213,7 @@ export default async function BairroPage(props: Props) {
       {/* FAQ SEO */}
       <section className="max-w-4xl mx-auto px-4 pb-12">
         <div className="bg-white rounded-2xl p-8 border">
-          <h2 className="text-xl font-bold mb-6" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>
+          <h2 className="text-xl font-bold mb-6" style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}>
             Perguntas Frequentes — Imóveis no {neighborhoodName}
           </h2>
           <div className="space-y-5">
@@ -243,7 +243,7 @@ export default async function BairroPage(props: Props) {
       </section>
 
       {/* CTA */}
-      <section className="py-10 px-4 text-center" style={{ background: 'linear-gradient(135deg, #1B2B5B, #0f1c3a)' }}>
+      <section className="py-10 px-4 text-center" style={{ background: 'linear-gradient(135deg, #143A1F, #0f1c3a)' }}>
         <div className="max-w-2xl mx-auto">
           <Star className="w-7 h-7 mx-auto mb-3" style={{ color: '#C9A84C' }} />
           <h2 className="text-xl font-bold text-white mb-2" style={{ fontFamily: 'Georgia, serif' }}>
@@ -261,7 +261,7 @@ export default async function BairroPage(props: Props) {
               <Phone className="w-4 h-4" /> (16) 3723-0045
             </a>
             <Link href="/imoveis?city=Franca"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm text-[#1B2B5B]"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm text-[#143A1F]"
               style={{ background: '#C9A84C' }}>
               <Home className="w-4 h-4" /> Ver Todos os Imóveis
             </Link>

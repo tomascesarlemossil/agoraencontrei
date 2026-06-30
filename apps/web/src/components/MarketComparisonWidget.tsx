@@ -79,7 +79,7 @@ export function MarketComparisonWidget({ auctionPrice, city, state, neighborhood
 
   return (
     <div className="bg-white rounded-2xl border shadow-sm overflow-hidden">
-      <div className="px-5 py-4 border-b" style={{ backgroundColor: '#1B2B5B' }}>
+      <div className="px-5 py-4 border-b" style={{ backgroundColor: '#143A1F' }}>
         <h3 className="text-white font-bold flex items-center gap-2">
           <BarChart3 className="w-4 h-4" style={{ color: '#C9A84C' }} />
           Comparação de Mercado
@@ -93,7 +93,7 @@ export function MarketComparisonWidget({ auctionPrice, city, state, neighborhood
           <div className="flex items-end justify-between mb-2">
             <div>
               <div className="text-xs text-gray-500">Valor do Leilão</div>
-              <div className="text-xl font-bold" style={{ color: '#1B2B5B' }}>{formatBRL(auctionPrice)}</div>
+              <div className="text-xl font-bold" style={{ color: '#143A1F' }}>{formatBRL(auctionPrice)}</div>
             </div>
             <div className="text-right">
               <div className="text-xs text-gray-500">Valor no ZAP</div>
@@ -106,7 +106,7 @@ export function MarketComparisonWidget({ auctionPrice, city, state, neighborhood
               className="absolute left-0 top-0 h-full rounded-full"
               style={{
                 width: `${Math.min(100, (auctionPrice / data.zapPrice) * 100)}%`,
-                backgroundColor: '#1B2B5B',
+                backgroundColor: '#143A1F',
               }}
             />
           </div>

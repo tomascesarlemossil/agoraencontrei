@@ -45,7 +45,7 @@ export default function ContatoPage() {
       {/* Hero */}
       <section
         className="py-16 text-white text-center"
-        style={{ background: 'linear-gradient(135deg, #1B2B5B 0%, #2d4a8a 60%, #1B2B5B 100%)' }}
+        style={{ background: 'linear-gradient(135deg, #143A1F 0%, #2d4a8a 60%, #143A1F 100%)' }}
       >
         <div className="max-w-4xl mx-auto px-4">
           <p
@@ -73,7 +73,7 @@ export default function ContatoPage() {
             <div>
               <h2
                 className="text-2xl font-bold mb-6"
-                style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}
+                style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}
               >
                 Informações de Contato
               </h2>
@@ -84,14 +84,14 @@ export default function ContatoPage() {
               <div className="flex items-start gap-4 p-4 rounded-2xl bg-white shadow-sm">
                 <div
                   className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center"
-                  style={{ backgroundColor: '#1B2B5B' }}
+                  style={{ backgroundColor: '#143A1F' }}
                 >
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="white">
                     <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z" />
                   </svg>
                 </div>
                 <div>
-                  <p className="text-sm font-semibold" style={{ color: '#1B2B5B' }}>Telefone</p>
+                  <p className="text-sm font-semibold" style={{ color: '#143A1F' }}>Telefone</p>
                   <a href="tel:1637230045" className="text-gray-600 hover:text-blue-800 transition-colors">
                     (16) 3723-0045
                   </a>
@@ -109,7 +109,7 @@ export default function ContatoPage() {
                   </svg>
                 </div>
                 <div>
-                  <p className="text-sm font-semibold" style={{ color: '#1B2B5B' }}>WhatsApp</p>
+                  <p className="text-sm font-semibold" style={{ color: '#143A1F' }}>WhatsApp</p>
                   <a
                     href="https://wa.me/5516981010004?text=Olá!%20Gostaria%20de%20mais%20informações."
                     target="_blank"
@@ -132,7 +132,7 @@ export default function ContatoPage() {
                   </svg>
                 </div>
                 <div>
-                  <p className="text-sm font-semibold" style={{ color: '#1B2B5B' }}>E-mail</p>
+                  <p className="text-sm font-semibold" style={{ color: '#143A1F' }}>E-mail</p>
                   <a
                     href="mailto:tomas@agoraencontrei.com.br"
                     className="text-gray-600 hover:text-blue-800 transition-colors"
@@ -146,14 +146,14 @@ export default function ContatoPage() {
               <div className="flex items-start gap-4 p-4 rounded-2xl bg-white shadow-sm">
                 <div
                   className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center"
-                  style={{ backgroundColor: '#1B2B5B' }}
+                  style={{ backgroundColor: '#143A1F' }}
                 >
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="white">
                     <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
                   </svg>
                 </div>
                 <div>
-                  <p className="text-sm font-semibold" style={{ color: '#1B2B5B' }}>Endereço</p>
+                  <p className="text-sm font-semibold" style={{ color: '#143A1F' }}>Endereço</p>
                   <p className="text-gray-600">Rua Simão Caleiro, 2383 — Vila Industrial<br />Franca/SP — CEP 14400-340</p>
                 </div>
               </div>
@@ -164,7 +164,7 @@ export default function ContatoPage() {
           <div className="bg-white rounded-3xl shadow-sm p-8">
             <h2
               className="text-2xl font-bold mb-6"
-              style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}
+              style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}
             >
               Envie sua Mensagem
             </h2>
@@ -179,7 +179,7 @@ export default function ContatoPage() {
                     <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
                   </svg>
                 </div>
-                <h3 className="text-xl font-bold mb-2" style={{ color: '#1B2B5B' }}>
+                <h3 className="text-xl font-bold mb-2" style={{ color: '#143A1F' }}>
                   Mensagem recebida!
                 </h3>
                 <p className="text-gray-600">
@@ -191,7 +191,7 @@ export default function ContatoPage() {
                     setSubmitted(false)
                   }}
                   className="mt-6 px-6 py-2 rounded-xl text-sm font-semibold text-white transition-all hover:opacity-90"
-                  style={{ backgroundColor: '#1B2B5B' }}
+                  style={{ backgroundColor: '#143A1F' }}
                 >
                   Enviar outra mensagem
                 </button>
@@ -203,7 +203,7 @@ export default function ContatoPage() {
                   <input name="website_url" type="text" value={honeypot} onChange={e => setHoneypot(e.target.value)} autoComplete="off" tabIndex={-1} />
                 </div>
                 <div>
-                  <label htmlFor="name" className="block text-sm font-medium mb-1.5" style={{ color: '#1B2B5B' }}>
+                  <label htmlFor="name" className="block text-sm font-medium mb-1.5" style={{ color: '#143A1F' }}>
                     Nome
                   </label>
                   <input
@@ -217,7 +217,7 @@ export default function ContatoPage() {
                   />
                 </div>
                 <div>
-                  <label htmlFor="email" className="block text-sm font-medium mb-1.5" style={{ color: '#1B2B5B' }}>
+                  <label htmlFor="email" className="block text-sm font-medium mb-1.5" style={{ color: '#143A1F' }}>
                     E-mail
                   </label>
                   <input
@@ -231,7 +231,7 @@ export default function ContatoPage() {
                   />
                 </div>
                 <div>
-                  <label htmlFor="phone" className="block text-sm font-medium mb-1.5" style={{ color: '#1B2B5B' }}>
+                  <label htmlFor="phone" className="block text-sm font-medium mb-1.5" style={{ color: '#143A1F' }}>
                     Telefone
                   </label>
                   <input
@@ -244,7 +244,7 @@ export default function ContatoPage() {
                   />
                 </div>
                 <div>
-                  <label htmlFor="message" className="block text-sm font-medium mb-1.5" style={{ color: '#1B2B5B' }}>
+                  <label htmlFor="message" className="block text-sm font-medium mb-1.5" style={{ color: '#143A1F' }}>
                     Mensagem
                   </label>
                   <textarea
@@ -266,7 +266,7 @@ export default function ContatoPage() {
                   type="submit"
                   disabled={submitting}
                   className="w-full py-3.5 rounded-xl text-white font-semibold transition-all hover:opacity-90 hover:shadow-lg disabled:opacity-60 disabled:cursor-not-allowed"
-                  style={{ background: 'linear-gradient(135deg, #1B2B5B 0%, #2d4a8a 100%)' }}
+                  style={{ background: 'linear-gradient(135deg, #143A1F 0%, #2d4a8a 100%)' }}
                 >
                   {submitting ? 'Enviando...' : 'Enviar Mensagem'}
                 </button>
@@ -278,7 +278,7 @@ export default function ContatoPage() {
         {/* CTA final */}
         <section
           className="text-center py-12 mt-16 rounded-3xl relative overflow-hidden"
-          style={{ background: 'linear-gradient(135deg, #1B2B5B 0%, #2d4a8a 100%)' }}
+          style={{ background: 'linear-gradient(135deg, #143A1F 0%, #2d4a8a 100%)' }}
         >
           <div
             className="absolute inset-0 opacity-5"

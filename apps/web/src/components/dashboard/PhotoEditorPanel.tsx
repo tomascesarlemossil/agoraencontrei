@@ -272,7 +272,7 @@ export function PhotoEditorPanel({ propertyId, photos, onPhotosUpdated, onClose 
 
   return (
     <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-[#1a2744] border border-white/10 rounded-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
+      <div className="bg-[#0E2A15] border border-white/10 rounded-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
           <div className="flex items-center gap-3">
@@ -307,7 +307,7 @@ export function PhotoEditorPanel({ propertyId, photos, onPhotosUpdated, onClose 
                   Aplicar outro filtro
                 </button>
                 <button onClick={onClose}
-                  className="px-4 py-2 bg-yellow-400 hover:bg-yellow-300 text-[#1B2B5B] rounded-xl text-sm font-bold transition-colors">
+                  className="px-4 py-2 bg-yellow-400 hover:bg-yellow-300 text-[#143A1F] rounded-xl text-sm font-bold transition-colors">
                   Concluir
                 </button>
               </div>
@@ -487,7 +487,7 @@ export function PhotoEditorPanel({ propertyId, photos, onPhotosUpdated, onClose 
                     )}
                     {/* Label */}
                     {previewData && !loadingPreview && (
-                      <div className="absolute top-2 left-2 bg-yellow-400 text-[#1B2B5B] text-[10px] font-bold px-2 py-1 rounded-lg">
+                      <div className="absolute top-2 left-2 bg-yellow-400 text-[#143A1F] text-[10px] font-bold px-2 py-1 rounded-lg">
                         Preview: {filters.find(f => f.id === selectedFilterId)?.name}
                       </div>
                     )}
@@ -534,7 +534,7 @@ export function PhotoEditorPanel({ propertyId, photos, onPhotosUpdated, onClose 
                     </button>
                     <button
                       onClick={handleApplyAll}
-                      className="w-full flex items-center justify-center gap-2 bg-yellow-400 hover:bg-yellow-300 text-[#1B2B5B] py-3 rounded-xl text-sm font-bold transition-colors"
+                      className="w-full flex items-center justify-center gap-2 bg-yellow-400 hover:bg-yellow-300 text-[#143A1F] py-3 rounded-xl text-sm font-bold transition-colors"
                     >
                       <Layers className="h-4 w-4" />
                       Aplicar em todas as {photos.length} fotos

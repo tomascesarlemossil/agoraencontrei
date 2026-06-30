@@ -25,7 +25,7 @@ function Accordion({
       >
         <span
           className="font-semibold text-sm sm:text-base"
-          style={{ color: '#1B2B5B' }}
+          style={{ color: '#143A1F' }}
         >
           {question}
         </span>

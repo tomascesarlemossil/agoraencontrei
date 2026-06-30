@@ -13,7 +13,7 @@ const APORTE_PIX = 922.68
 function Clause({ n, title, children }: { n: string; title: string; children: React.ReactNode }) {
   return (
     <div className="mb-6">
-      <h2 className="text-sm font-bold text-[#1B2B5B] mb-2">{n}. {title}</h2>
+      <h2 className="text-sm font-bold text-[#143A1F] mb-2">{n}. {title}</h2>
       <div className="text-sm text-gray-600 leading-relaxed space-y-2">{children}</div>
     </div>
   )
@@ -23,14 +23,14 @@ export default function ContratoPage() {
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#f8f6f1' }}>
       <div className="max-w-3xl mx-auto px-4 py-10">
-        <Link href="/parceiros/planos" className="inline-flex items-center gap-1.5 text-sm text-[#1B2B5B] mb-6 hover:underline">
+        <Link href="/parceiros/planos" className="inline-flex items-center gap-1.5 text-sm text-[#143A1F] mb-6 hover:underline">
           <ArrowLeft className="w-4 h-4" /> Voltar aos planos
         </Link>
 
         <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 sm:p-10">
           <div className="flex items-center gap-3 mb-2">
             <FileText className="w-6 h-6" style={{ color: '#C9A84C' }} />
-            <h1 className="text-xl sm:text-2xl font-bold text-[#1B2B5B]" style={{ fontFamily: 'Georgia, serif' }}>
+            <h1 className="text-xl sm:text-2xl font-bold text-[#143A1F]" style={{ fontFamily: 'Georgia, serif' }}>
               Contrato de Adesão e Licença de Uso
             </h1>
           </div>
@@ -174,7 +174,7 @@ export default function ContratoPage() {
             <Link
               href="/parceiros/planos"
               className="mt-5 inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-bold transition-all hover:brightness-110"
-              style={{ backgroundColor: '#C9A84C', color: '#1B2B5B' }}
+              style={{ backgroundColor: '#C9A84C', color: '#143A1F' }}
             >
               Voltar e escolher meu plano
             </Link>

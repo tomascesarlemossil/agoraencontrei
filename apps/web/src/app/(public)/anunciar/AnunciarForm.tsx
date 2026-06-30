@@ -166,7 +166,7 @@ export function AnunciarForm() {
         >
           <CheckCircle className="w-8 h-8" style={{ color: '#C9A84C' }} />
         </div>
-        <h3 className="text-xl font-bold mb-2" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>
+        <h3 className="text-xl font-bold mb-2" style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}>
           Solicitação recebida!
         </h3>
         <p className="text-gray-500 text-sm max-w-sm mx-auto mb-6">
@@ -196,7 +196,7 @@ export function AnunciarForm() {
       </div>
       {/* Header */}
       <div className="px-6 py-5 border-b" style={{ borderColor: '#ede9df', backgroundColor: '#fafaf8' }}>
-        <h2 className="text-lg font-bold" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>
+        <h2 className="text-lg font-bold" style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}>
           Dados do seu Imóvel
         </h2>
         <p className="text-sm text-gray-500 mt-0.5">Preencha as informações e entraremos em contato em até 24h</p>
@@ -206,7 +206,7 @@ export function AnunciarForm() {
         {/* Type + Purpose */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-semibold mb-2" style={{ color: '#1B2B5B' }}>
+            <label className="block text-sm font-semibold mb-2" style={{ color: '#143A1F' }}>
               Tipo de imóvel <span className="text-red-500">*</span>
             </label>
             <div className="grid grid-cols-2 gap-2">
@@ -223,8 +223,8 @@ export function AnunciarForm() {
                   <span
                     className="block text-center text-xs py-2 px-1 rounded-xl border-2 transition-all font-medium"
                     style={{
-                      borderColor: form.type === t.value ? '#1B2B5B' : '#e0dbd0',
-                      backgroundColor: form.type === t.value ? '#1B2B5B' : 'white',
+                      borderColor: form.type === t.value ? '#143A1F' : '#e0dbd0',
+                      backgroundColor: form.type === t.value ? '#143A1F' : 'white',
                       color: form.type === t.value ? 'white' : '#374151',
                     }}
                   >
@@ -236,7 +236,7 @@ export function AnunciarForm() {
           </div>
 
           <div>
-            <label className="block text-sm font-semibold mb-2" style={{ color: '#1B2B5B' }}>
+            <label className="block text-sm font-semibold mb-2" style={{ color: '#143A1F' }}>
               Objetivo <span className="text-red-500">*</span>
             </label>
             <div className="grid grid-cols-1 gap-2">
@@ -255,7 +255,7 @@ export function AnunciarForm() {
                     style={{
                       borderColor: form.purpose === p.value ? '#C9A84C' : '#e0dbd0',
                       backgroundColor: form.purpose === p.value ? 'rgba(201,168,76,0.08)' : 'white',
-                      color: form.purpose === p.value ? '#1B2B5B' : '#374151',
+                      color: form.purpose === p.value ? '#143A1F' : '#374151',
                     }}
                   >
                     {p.label}
@@ -279,14 +279,14 @@ export function AnunciarForm() {
 
         {/* Address */}
         <div>
-          <label className="block text-sm font-semibold mb-2" style={{ color: '#1B2B5B' }}>Localização</label>
+          <label className="block text-sm font-semibold mb-2" style={{ color: '#143A1F' }}>Localização</label>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <input
               type="text"
               placeholder="Endereço (rua, número)"
               value={form.address}
               onChange={e => set('address', e.target.value)}
-              className="w-full px-4 py-3 text-sm rounded-xl border focus:outline-none focus:ring-2 focus:ring-[#1B2B5B] text-gray-800"
+              className="w-full px-4 py-3 text-sm rounded-xl border focus:outline-none focus:ring-2 focus:ring-[#143A1F] text-gray-800"
               style={{ borderColor: '#e0dbd0' }}
             />
             <input
@@ -294,7 +294,7 @@ export function AnunciarForm() {
               placeholder="Bairro"
               value={form.neighborhood}
               onChange={e => set('neighborhood', e.target.value)}
-              className="w-full px-4 py-3 text-sm rounded-xl border focus:outline-none focus:ring-2 focus:ring-[#1B2B5B] text-gray-800"
+              className="w-full px-4 py-3 text-sm rounded-xl border focus:outline-none focus:ring-2 focus:ring-[#143A1F] text-gray-800"
               style={{ borderColor: '#e0dbd0' }}
             />
             <input
@@ -302,7 +302,7 @@ export function AnunciarForm() {
               placeholder="Cidade"
               value={form.city}
               onChange={e => set('city', e.target.value)}
-              className="w-full px-4 py-3 text-sm rounded-xl border focus:outline-none focus:ring-2 focus:ring-[#1B2B5B] text-gray-800"
+              className="w-full px-4 py-3 text-sm rounded-xl border focus:outline-none focus:ring-2 focus:ring-[#143A1F] text-gray-800"
               style={{ borderColor: '#e0dbd0' }}
             />
             <select
@@ -320,7 +320,7 @@ export function AnunciarForm() {
 
         {/* Characteristics */}
         <div>
-          <label className="block text-sm font-semibold mb-2" style={{ color: '#1B2B5B' }}>Características</label>
+          <label className="block text-sm font-semibold mb-2" style={{ color: '#143A1F' }}>Características</label>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div>
               <p className="text-xs text-gray-500 mb-1">Área (m²)</p>
@@ -375,7 +375,7 @@ export function AnunciarForm() {
         {/* Price + Media */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-semibold mb-2" style={{ color: '#1B2B5B' }}>Valor pretendido (R$)</label>
+            <label className="block text-sm font-semibold mb-2" style={{ color: '#143A1F' }}>Valor pretendido (R$)</label>
             <input
               type="text"
               placeholder="Ex: 350.000 ou deixe em branco para avaliação"
@@ -386,7 +386,7 @@ export function AnunciarForm() {
             />
           </div>
           <div>
-            <label className="block text-sm font-semibold mb-2" style={{ color: '#1B2B5B' }}>Link de vídeo / tour virtual</label>
+            <label className="block text-sm font-semibold mb-2" style={{ color: '#143A1F' }}>Link de vídeo / tour virtual</label>
             <input
               type="url"
               placeholder="YouTube, Google Drive, etc."
@@ -402,7 +402,7 @@ export function AnunciarForm() {
         <div className="rounded-xl border" style={{ borderColor: '#C9A84C30', backgroundColor: 'rgba(201,168,76,0.03)' }}>
           <div className="p-4 border-b flex items-center gap-2" style={{ borderColor: '#C9A84C20' }}>
             <Camera className="w-4 h-4" style={{ color: '#C9A84C' }} />
-            <p className="text-sm font-semibold" style={{ color: '#1B2B5B' }}>Fotos do imóvel</p>
+            <p className="text-sm font-semibold" style={{ color: '#143A1F' }}>Fotos do imóvel</p>
             <span className="ml-auto text-xs text-gray-500">{photos.length}/30 fotos</span>
           </div>
           <div className="p-4">
@@ -458,7 +458,7 @@ export function AnunciarForm() {
 
         {/* Notes */}
         <div>
-          <label className="block text-sm font-semibold mb-2" style={{ color: '#1B2B5B' }}>Informações adicionais</label>
+          <label className="block text-sm font-semibold mb-2" style={{ color: '#143A1F' }}>Informações adicionais</label>
           <textarea
             rows={3}
             placeholder="Reformas recentes, diferenciais, motivo da venda, etc."
@@ -474,7 +474,7 @@ export function AnunciarForm() {
 
         {/* Contact */}
         <div>
-          <label className="block text-sm font-semibold mb-2" style={{ color: '#1B2B5B' }}>Seus dados de contato</label>
+          <label className="block text-sm font-semibold mb-2" style={{ color: '#143A1F' }}>Seus dados de contato</label>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <input
               type="text"
@@ -482,7 +482,7 @@ export function AnunciarForm() {
               value={form.name}
               onChange={e => set('name', e.target.value)}
               required
-              className="w-full px-4 py-3 text-sm rounded-xl border focus:outline-none focus:ring-2 focus:ring-[#1B2B5B] text-gray-800"
+              className="w-full px-4 py-3 text-sm rounded-xl border focus:outline-none focus:ring-2 focus:ring-[#143A1F] text-gray-800"
               style={{ borderColor: '#e0dbd0' }}
             />
             <input
@@ -491,7 +491,7 @@ export function AnunciarForm() {
               value={form.phone}
               onChange={e => set('phone', e.target.value)}
               required
-              className="w-full px-4 py-3 text-sm rounded-xl border focus:outline-none focus:ring-2 focus:ring-[#1B2B5B] text-gray-800"
+              className="w-full px-4 py-3 text-sm rounded-xl border focus:outline-none focus:ring-2 focus:ring-[#143A1F] text-gray-800"
               style={{ borderColor: '#e0dbd0' }}
             />
             <input
@@ -510,7 +510,7 @@ export function AnunciarForm() {
           type="submit"
           disabled={loading || !form.name || !form.phone || !form.type || !form.purpose}
           className="w-full py-4 rounded-2xl text-sm font-bold transition-all hover:brightness-110 disabled:opacity-50 flex items-center justify-center gap-2"
-          style={{ background: 'linear-gradient(135deg, #1B2B5B 0%, #2d4a8a 100%)', color: 'white' }}
+          style={{ background: 'linear-gradient(135deg, #143A1F 0%, #2d4a8a 100%)', color: 'white' }}
         >
           {loading ? (
             <><Loader2 className="w-4 h-4 animate-spin" /> Enviando...</>

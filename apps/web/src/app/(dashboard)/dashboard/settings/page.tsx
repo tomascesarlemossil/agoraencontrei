@@ -71,7 +71,7 @@ function DarkSelect({ label, children, ...props }: React.SelectHTMLAttributes<HT
       <select
         {...props}
         className={cn(
-          'bg-[#1a2740] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white outline-none focus:border-yellow-400/50 w-full transition-colors',
+          'bg-[#0E2A15] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white outline-none focus:border-yellow-400/50 w-full transition-colors',
           props.className,
         )}
       >
@@ -117,7 +117,7 @@ function SaveButton({ loading, saved }: { loading: boolean; saved: boolean }) {
       type="submit"
       disabled={loading}
       className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all hover:brightness-110 disabled:opacity-50"
-      style={{ background: 'linear-gradient(135deg, #C9A84C, #e8c66a)', color: '#1B2B5B' }}
+      style={{ background: 'linear-gradient(135deg, #C9A84C, #e8c66a)', color: '#143A1F' }}
     >
       {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : saved ? <CheckCircle2 className="w-4 h-4" /> : <Save className="w-4 h-4" />}
       {loading ? 'Salvando...' : saved ? 'Salvo!' : 'Salvar'}
@@ -303,7 +303,7 @@ export default function SettingsPage() {
     enableSmartQuiz: true,
     enableProposal: true,
     footerText: '',
-    primaryColor: '#1B2B5B',
+    primaryColor: '#143A1F',
     accentColor: '#C9A84C',
   })
 
@@ -682,7 +682,7 @@ export default function SettingsPage() {
               <p className="text-white/70 text-sm">{teamUsers?.length ?? 0} membros na equipe</p>
               <button onClick={() => setShowNewUser(true)}
                 className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold"
-                style={{ background: 'linear-gradient(135deg, #1B2B5B, #2d4a99)', color: 'white' }}>
+                style={{ background: 'linear-gradient(135deg, #143A1F, #2d4a99)', color: 'white' }}>
                 <Plus className="w-4 h-4" /> Adicionar Membro
               </button>
             </div>
@@ -942,7 +942,7 @@ export default function SettingsPage() {
                     onClick={() => updateTeamUserMutation.mutate()}
                     disabled={updateTeamUserMutation.isPending || !editUser.name}
                     className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold disabled:opacity-50"
-                    style={{ background: 'linear-gradient(135deg, #C9A84C, #e8c66a)', color: '#1B2B5B' }}>
+                    style={{ background: 'linear-gradient(135deg, #C9A84C, #e8c66a)', color: '#143A1F' }}>
                     {updateTeamUserMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                     {editUserSaved ? 'Salvo!' : 'Salvar Alterações'}
                   </button>
@@ -1081,7 +1081,7 @@ export default function SettingsPage() {
                   onClick={() => createUserMutation.mutate()}
                   disabled={createUserMutation.isPending || !newUser.name || !newUser.email || !newUser.password}
                   className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold disabled:opacity-50"
-                  style={{ background: 'linear-gradient(135deg, #C9A84C, #e8c66a)', color: '#1B2B5B' }}>
+                  style={{ background: 'linear-gradient(135deg, #C9A84C, #e8c66a)', color: '#143A1F' }}>
                   {createUserMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
                   Adicionar
                 </button>
@@ -1198,7 +1198,7 @@ export default function SettingsPage() {
                   onClick={() => changePwdMutation.mutate()}
                   disabled={changePwdMutation.isPending || !pwd.current || !pwd.next || !pwd.confirm}
                   className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold disabled:opacity-50"
-                  style={{ background: 'linear-gradient(135deg, #C9A84C, #e8c66a)', color: '#1B2B5B' }}>
+                  style={{ background: 'linear-gradient(135deg, #C9A84C, #e8c66a)', color: '#143A1F' }}>
                   {changePwdMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Shield className="w-4 h-4" />}
                   Alterar Senha
                 </button>
@@ -1329,7 +1329,7 @@ export default function SettingsPage() {
                 onClick={() => saveSiteSettingsMutation.mutate()}
                 disabled={saveSiteSettingsMutation.isPending}
                 className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold disabled:opacity-50"
-                style={{ background: 'linear-gradient(135deg, #C9A84C, #e8c66a)', color: '#1B2B5B' }}>
+                style={{ background: 'linear-gradient(135deg, #C9A84C, #e8c66a)', color: '#143A1F' }}>
                 {saveSiteSettingsMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : siteSaved ? <CheckCircle2 className="w-4 h-4" /> : <Save className="w-4 h-4" />}
                 {siteSaved ? 'Salvo!' : 'Salvar configurações'}
               </button>
@@ -1409,7 +1409,7 @@ export default function SettingsPage() {
                 onClick={() => saveIntegrationsMutation.mutate()}
                 disabled={saveIntegrationsMutation.isPending}
                 className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold disabled:opacity-50"
-                style={{ background: 'linear-gradient(135deg, #C9A84C, #e8c66a)', color: '#1B2B5B' }}>
+                style={{ background: 'linear-gradient(135deg, #C9A84C, #e8c66a)', color: '#143A1F' }}>
                 {saveIntegrationsMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : integSaved ? <CheckCircle2 className="w-4 h-4" /> : <Save className="w-4 h-4" />}
                 {integSaved ? 'Salvo!' : 'Salvar tokens'}
               </button>
@@ -1452,7 +1452,7 @@ export default function SettingsPage() {
                 />
                 <div className="flex gap-3">
                   <button onClick={() => document.getElementById('import-data-file')?.click()}
-                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-[#1B2B5B]"
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-[#143A1F]"
                     style={{ background: 'linear-gradient(135deg, #C9A84C, #e8c66a)' }}>
                     <Upload className="w-4 h-4" /> Upload CSV ou JSON
                   </button>

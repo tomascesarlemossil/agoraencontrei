@@ -54,7 +54,7 @@ export default function ContratosPage() {
           <ArrowLeft className="w-5 h-5" />
         </button>
         <div>
-          <h1 className="text-xl font-bold" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>Meus Contratos</h1>
+          <h1 className="text-xl font-bold" style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}>Meus Contratos</h1>
           <p className="text-sm text-gray-500">{contracts.length} contrato(s)</p>
         </div>
       </div>

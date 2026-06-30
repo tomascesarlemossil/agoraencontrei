@@ -108,7 +108,7 @@ export default function DepoimentosPage() {
         className="py-20 text-white text-center"
         style={{
           background:
-            'linear-gradient(135deg, #1B2B5B 0%, #2d4a8a 60%, #1B2B5B 100%)',
+            'linear-gradient(135deg, #143A1F 0%, #2d4a8a 60%, #143A1F 100%)',
         }}
       >
         <div className="max-w-4xl mx-auto px-4">
@@ -154,7 +154,7 @@ export default function DepoimentosPage() {
           </p>
           <h2
             className="text-3xl font-bold"
-            style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}
+            style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}
           >
             O que dizem sobre nós
           </h2>
@@ -186,14 +186,14 @@ export default function DepoimentosPage() {
               <div className="flex items-center gap-3">
                 <div
                   className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-sm"
-                  style={{ backgroundColor: '#1B2B5B' }}
+                  style={{ backgroundColor: '#143A1F' }}
                 >
                   {testimonial.initials}
                 </div>
                 <div>
                   <p
                     className="font-bold"
-                    style={{ color: '#1B2B5B' }}
+                    style={{ color: '#143A1F' }}
                   >
                     {testimonial.name}
                   </p>
@@ -220,7 +220,7 @@ export default function DepoimentosPage() {
           />
           <h2
             className="text-2xl font-bold mb-3"
-            style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}
+            style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}
           >
             Quer fazer parte dos nossos clientes satisfeitos?
           </h2>
@@ -232,7 +232,7 @@ export default function DepoimentosPage() {
           <Link
             href="/avaliacao"
             className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-white font-semibold transition-transform hover:scale-105"
-            style={{ backgroundColor: '#1B2B5B' }}
+            style={{ backgroundColor: '#143A1F' }}
           >
             <Star className="w-5 h-5" aria-hidden="true" />
             Solicitar Avaliação Gratuita

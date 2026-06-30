@@ -49,7 +49,7 @@ export function ValuationResults({ result, propertyArea }: Props) {
       <div className="bg-white rounded-xl border border-gray-200 p-4">
         <div className="flex items-center gap-2 mb-3">
           <DollarSign className="w-4 h-4 text-[#C9A84C]" />
-          <span className="text-sm font-bold" style={{ color: '#1B2B5B' }}>Faixa de Negociação</span>
+          <span className="text-sm font-bold" style={{ color: '#143A1F' }}>Faixa de Negociação</span>
         </div>
         <div className="relative h-8 bg-gradient-to-r from-red-100 via-yellow-100 to-green-100 rounded-full overflow-hidden">
           {/* Min marker */}
@@ -82,7 +82,7 @@ export function ValuationResults({ result, propertyArea }: Props) {
           <div className="flex items-start gap-2">
             <AlertTriangle className={`w-4 h-4 mt-0.5 ${result.anomaly.isOverpriced ? 'text-red-500' : 'text-green-600'}`} />
             <div>
-              <p className="text-sm font-bold" style={{ color: '#1B2B5B' }}>
+              <p className="text-sm font-bold" style={{ color: '#143A1F' }}>
                 {result.anomaly.isOverpriced ? 'Imóvel Super-Avaliado' : 'Oportunidade Detectada!'}
               </p>
               <p className="text-xs text-gray-600 mt-1">{result.anomaly.recommendation}</p>
@@ -100,7 +100,7 @@ export function ValuationResults({ result, propertyArea }: Props) {
       <div className="bg-white rounded-xl border border-gray-200 p-4">
         <div className="flex items-center gap-2 mb-4">
           <BarChart3 className="w-4 h-4 text-[#C9A84C]" />
-          <span className="text-sm font-bold" style={{ color: '#1B2B5B' }}>Metodologias de Avaliação</span>
+          <span className="text-sm font-bold" style={{ color: '#143A1F' }}>Metodologias de Avaliação</span>
         </div>
         <div className="space-y-3">
           {result.methods.map(m => {
@@ -109,7 +109,7 @@ export function ValuationResults({ result, propertyArea }: Props) {
             return (
               <div key={m.name}>
                 <div className="flex justify-between text-[11px] mb-1">
-                  <span className="font-medium" style={{ color: '#1B2B5B' }}>{m.name} ({(m.weight * 100).toFixed(0)}%)</span>
+                  <span className="font-medium" style={{ color: '#143A1F' }}>{m.name} ({(m.weight * 100).toFixed(0)}%)</span>
                   <span className="font-mono font-bold">{formatBRL(m.value)}</span>
                 </div>
                 <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
@@ -117,7 +117,7 @@ export function ValuationResults({ result, propertyArea }: Props) {
                     className="h-full rounded-full transition-all"
                     style={{
                       width: `${barWidth}%`,
-                      backgroundColor: m.name === 'Comparativa' ? '#1B2B5B' : m.name === 'Renda' ? '#C9A84C' : '#6B7280',
+                      backgroundColor: m.name === 'Comparativa' ? '#143A1F' : m.name === 'Renda' ? '#C9A84C' : '#6B7280',
                     }}
                   />
                 </div>
@@ -132,7 +132,7 @@ export function ValuationResults({ result, propertyArea }: Props) {
       {result.comparables.length > 0 && (
         <div className="bg-white rounded-xl border border-gray-200 p-4">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-sm font-bold" style={{ color: '#1B2B5B' }}>Comparáveis Encontrados</span>
+            <span className="text-sm font-bold" style={{ color: '#143A1F' }}>Comparáveis Encontrados</span>
             <span className="text-[10px] text-gray-400">{result.comparablesCount} imóveis similares</span>
           </div>
           <div className="overflow-x-auto">
@@ -176,7 +176,7 @@ export function ValuationResults({ result, propertyArea }: Props) {
       {/* Adjustments */}
       {result.adjustments.length > 0 && (
         <div className="bg-white rounded-xl border border-gray-200 p-4">
-          <span className="text-sm font-bold" style={{ color: '#1B2B5B' }}>Ajustes Aplicados</span>
+          <span className="text-sm font-bold" style={{ color: '#143A1F' }}>Ajustes Aplicados</span>
           <div className="mt-3 space-y-2">
             {result.adjustments.map((a, i) => (
               <div key={i} className="flex items-center justify-between text-[11px]">
@@ -202,7 +202,7 @@ export function ValuationResults({ result, propertyArea }: Props) {
       <div className="bg-white rounded-xl border border-gray-200 p-4">
         <div className="flex items-center gap-2 mb-3">
           <DollarSign className="w-4 h-4 text-[#C9A84C]" />
-          <span className="text-sm font-bold" style={{ color: '#1B2B5B' }}>Estratégia de Preço</span>
+          <span className="text-sm font-bold" style={{ color: '#143A1F' }}>Estratégia de Preço</span>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-[11px]">
@@ -218,7 +218,7 @@ export function ValuationResults({ result, propertyArea }: Props) {
               {result.pricingStrategy.map(s => (
                 <tr key={s.scenario}>
                   <td className="py-2 font-medium text-gray-700">{s.scenario}</td>
-                  <td className="py-2 text-right font-mono font-bold" style={{ color: '#1B2B5B' }}>{formatBRL(s.price)}</td>
+                  <td className="py-2 text-right font-mono font-bold" style={{ color: '#143A1F' }}>{formatBRL(s.price)}</td>
                   <td className="py-2 text-right text-red-500 font-mono">{s.discount > 0 ? `-${s.discount}%` : '—'}</td>
                   <td className="py-2 text-right text-gray-500">{s.timeframeDays} dias</td>
                 </tr>
@@ -240,7 +240,7 @@ export function ValuationResults({ result, propertyArea }: Props) {
               confidenceColor === 'green' ? 'text-green-600' :
               confidenceColor === 'yellow' ? 'text-yellow-600' : 'text-red-600'
             }`} />
-            <span className="text-sm font-bold" style={{ color: '#1B2B5B' }}>
+            <span className="text-sm font-bold" style={{ color: '#143A1F' }}>
               Confiabilidade: {result.confidence}/100 — {confidenceLabel}
             </span>
           </div>

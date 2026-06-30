@@ -125,7 +125,7 @@ export default async function LeilaoBairroPage(props: Props) {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
 
-      <section className="bg-gradient-to-br from-[#1B2B5B] to-[#0f1c3a] text-white py-14 px-4">
+      <section className="bg-gradient-to-br from-[#143A1F] to-[#0f1c3a] text-white py-14 px-4">
         <div className="max-w-5xl mx-auto">
           <nav className="text-xs text-blue-200 mb-4 flex items-center gap-1.5 flex-wrap">
             <Link href="/" className="hover:text-white">Início</Link> <span>/</span>
@@ -143,7 +143,7 @@ export default async function LeilaoBairroPage(props: Props) {
           </p>
           <div className="flex flex-wrap gap-3">
             <Link href={`/leiloes?search=${encodeURIComponent(loc.bairro)}&city=${encodeURIComponent(loc.cidade)}`}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm" style={{ background: '#C9A84C', color: '#1B2B5B' }}>
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm" style={{ background: '#C9A84C', color: '#143A1F' }}>
               <Search className="w-4 h-4" /> Buscar no Mapa
             </Link>
             <a href={`https://wa.me/5516981010004?text=Olá! Vi leilões no ${loc.bairroDisplay} em ${loc.cidadeDisplay} no AgoraEncontrei.`}
@@ -171,7 +171,7 @@ export default async function LeilaoBairroPage(props: Props) {
                     <MapPin className="w-3 h-3" /> {a.neighborhood || loc.bairroDisplay}, {a.city || loc.cidadeDisplay}
                   </p>
                   {a.appraisalValue && <p className="text-xs text-gray-400 line-through">Avaliação: {fmt(Number(a.appraisalValue))}</p>}
-                  <p className="text-xl font-bold mt-1" style={{ color: '#1B2B5B' }}>{a.minimumBid ? fmt(Number(a.minimumBid)) : '—'}</p>
+                  <p className="text-xl font-bold mt-1" style={{ color: '#143A1F' }}>{a.minimumBid ? fmt(Number(a.minimumBid)) : '—'}</p>
                   <div className="flex gap-2 mt-3 text-xs text-gray-500">
                     {a.totalArea && <span>{a.totalArea}m²</span>}
                     {a.bedrooms > 0 && <span>{a.bedrooms} quartos</span>}
@@ -186,7 +186,7 @@ export default async function LeilaoBairroPage(props: Props) {
             <Building className="w-10 h-10 mx-auto mb-3 text-gray-300" />
             <p className="text-gray-500 mb-4">Nenhum leilão ativo no {loc.bairroDisplay} no momento.</p>
             <div className="flex gap-3 justify-center flex-wrap">
-              <Link href="/leiloes" className="px-5 py-2.5 rounded-xl font-bold text-sm text-white" style={{ background: '#1B2B5B' }}>Ver todos os leilões</Link>
+              <Link href="/leiloes" className="px-5 py-2.5 rounded-xl font-bold text-sm text-white" style={{ background: '#143A1F' }}>Ver todos os leilões</Link>
               <Link href={`/imoveis?city=${loc.cidade}&neighborhood=${encodeURIComponent(loc.bairro)}`}
                 className="px-5 py-2.5 rounded-xl font-bold text-sm border text-gray-700">Imóveis à venda</Link>
             </div>

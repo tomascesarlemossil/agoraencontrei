@@ -12,7 +12,7 @@ export default function PoliticaPrivacidadePage() {
       {/* Hero */}
       <section
         className="py-16 text-white text-center"
-        style={{ background: 'linear-gradient(135deg, #1B2B5B 0%, #2d4a8a 60%, #1B2B5B 100%)' }}
+        style={{ background: 'linear-gradient(135deg, #143A1F 0%, #2d4a8a 60%, #143A1F 100%)' }}
       >
         <div className="max-w-4xl mx-auto px-4">
           <p
@@ -38,9 +38,9 @@ export default function PoliticaPrivacidadePage() {
           {/* Intro */}
           <section>
             <p className="text-gray-600 leading-relaxed">
-              A <strong style={{ color: '#1B2B5B' }}>Imobiliaria Lemos</strong>, inscrita no CNPJ
+              A <strong style={{ color: '#143A1F' }}>Imobiliaria Lemos</strong>, inscrita no CNPJ
               sob o n. 10.962.301/0001-50, com sede em Franca/SP, responsavel pela plataforma{' '}
-              <strong style={{ color: '#1B2B5B' }}>AgoraEncontrei</strong>, apresenta esta Politica
+              <strong style={{ color: '#143A1F' }}>AgoraEncontrei</strong>, apresenta esta Politica
               de Privacidade em conformidade com a{' '}
               <strong>Lei Geral de Protecao de Dados Pessoais (LGPD - Lei 13.709/2018)</strong>.
             </p>
@@ -53,7 +53,7 @@ export default function PoliticaPrivacidadePage() {
           <section>
             <h2
               className="text-2xl font-bold mb-4"
-              style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}
+              style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}
             >
               1. Dados Pessoais Coletados
             </h2>
@@ -64,36 +64,36 @@ export default function PoliticaPrivacidadePage() {
               <div className="flex items-start gap-3 p-4 rounded-2xl" style={{ backgroundColor: '#f9f7f4' }}>
                 <div
                   className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center mt-0.5"
-                  style={{ backgroundColor: '#1B2B5B' }}
+                  style={{ backgroundColor: '#143A1F' }}
                 >
                   <span className="text-white text-xs font-bold">1</span>
                 </div>
                 <div>
-                  <p className="font-semibold text-sm" style={{ color: '#1B2B5B' }}>Visitantes e Leads</p>
+                  <p className="font-semibold text-sm" style={{ color: '#143A1F' }}>Visitantes e Leads</p>
                   <p className="text-gray-600 text-sm">Nome, e-mail e telefone (formularios de contato e interesse em imoveis).</p>
                 </div>
               </div>
               <div className="flex items-start gap-3 p-4 rounded-2xl" style={{ backgroundColor: '#f9f7f4' }}>
                 <div
                   className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center mt-0.5"
-                  style={{ backgroundColor: '#1B2B5B' }}
+                  style={{ backgroundColor: '#143A1F' }}
                 >
                   <span className="text-white text-xs font-bold">2</span>
                 </div>
                 <div>
-                  <p className="font-semibold text-sm" style={{ color: '#1B2B5B' }}>Clientes (Locatarios e Compradores)</p>
+                  <p className="font-semibold text-sm" style={{ color: '#143A1F' }}>Clientes (Locatarios e Compradores)</p>
                   <p className="text-gray-600 text-sm">Nome, e-mail, telefone e CPF, necessarios para formalizacao de contratos e gestao de locacoes.</p>
                 </div>
               </div>
               <div className="flex items-start gap-3 p-4 rounded-2xl" style={{ backgroundColor: '#f9f7f4' }}>
                 <div
                   className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center mt-0.5"
-                  style={{ backgroundColor: '#1B2B5B' }}
+                  style={{ backgroundColor: '#143A1F' }}
                 >
                   <span className="text-white text-xs font-bold">3</span>
                 </div>
                 <div>
-                  <p className="font-semibold text-sm" style={{ color: '#1B2B5B' }}>Dados de Navegacao</p>
+                  <p className="font-semibold text-sm" style={{ color: '#143A1F' }}>Dados de Navegacao</p>
                   <p className="text-gray-600 text-sm">Endereco IP, tipo de navegador, paginas acessadas e dados de cookies (conforme secao 5).</p>
                 </div>
               </div>
@@ -104,7 +104,7 @@ export default function PoliticaPrivacidadePage() {
           <section>
             <h2
               className="text-2xl font-bold mb-4"
-              style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}
+              style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}
             >
               2. Finalidade do Tratamento
             </h2>
@@ -143,7 +143,7 @@ export default function PoliticaPrivacidadePage() {
           <section>
             <h2
               className="text-2xl font-bold mb-4"
-              style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}
+              style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}
             >
               3. Base Legal
             </h2>
@@ -160,7 +160,7 @@ export default function PoliticaPrivacidadePage() {
           <section>
             <h2
               className="text-2xl font-bold mb-4"
-              style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}
+              style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}
             >
               4. Compartilhamento com Terceiros
             </h2>
@@ -170,15 +170,15 @@ export default function PoliticaPrivacidadePage() {
             </p>
             <div className="grid sm:grid-cols-3 gap-4">
               <div className="p-4 rounded-2xl text-center" style={{ backgroundColor: '#f9f7f4' }}>
-                <p className="font-semibold text-sm" style={{ color: '#1B2B5B' }}>Google Analytics (GA4)</p>
+                <p className="font-semibold text-sm" style={{ color: '#143A1F' }}>Google Analytics (GA4)</p>
                 <p className="text-gray-500 text-xs mt-1">Analise de trafego e comportamento de navegacao</p>
               </div>
               <div className="p-4 rounded-2xl text-center" style={{ backgroundColor: '#f9f7f4' }}>
-                <p className="font-semibold text-sm" style={{ color: '#1B2B5B' }}>Facebook / Meta Pixel</p>
+                <p className="font-semibold text-sm" style={{ color: '#143A1F' }}>Facebook / Meta Pixel</p>
                 <p className="text-gray-500 text-xs mt-1">Campanhas de marketing e remarketing</p>
               </div>
               <div className="p-4 rounded-2xl text-center" style={{ backgroundColor: '#f9f7f4' }}>
-                <p className="font-semibold text-sm" style={{ color: '#1B2B5B' }}>Asaas</p>
+                <p className="font-semibold text-sm" style={{ color: '#143A1F' }}>Asaas</p>
                 <p className="text-gray-500 text-xs mt-1">Processamento de pagamentos e cobrancas</p>
               </div>
             </div>
@@ -192,7 +192,7 @@ export default function PoliticaPrivacidadePage() {
           <section>
             <h2
               className="text-2xl font-bold mb-4"
-              style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}
+              style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}
             >
               5. Cookies
             </h2>
@@ -222,7 +222,7 @@ export default function PoliticaPrivacidadePage() {
           <section>
             <h2
               className="text-2xl font-bold mb-4"
-              style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}
+              style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}
             >
               6. Seus Direitos (LGPD)
             </h2>
@@ -248,7 +248,7 @@ export default function PoliticaPrivacidadePage() {
                     </svg>
                   </div>
                   <div>
-                    <p className="font-semibold text-sm" style={{ color: '#1B2B5B' }}>{right.title}</p>
+                    <p className="font-semibold text-sm" style={{ color: '#143A1F' }}>{right.title}</p>
                     <p className="text-gray-600 text-xs mt-0.5">{right.desc}</p>
                   </div>
                 </div>
@@ -260,7 +260,7 @@ export default function PoliticaPrivacidadePage() {
           <section>
             <h2
               className="text-2xl font-bold mb-4"
-              style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}
+              style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}
             >
               7. Prazo de Retencao dos Dados
             </h2>
@@ -286,7 +286,7 @@ export default function PoliticaPrivacidadePage() {
           <section>
             <h2
               className="text-2xl font-bold mb-4"
-              style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}
+              style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}
             >
               8. Medidas de Seguranca
             </h2>
@@ -319,19 +319,19 @@ export default function PoliticaPrivacidadePage() {
           <section>
             <h2
               className="text-2xl font-bold mb-4"
-              style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}
+              style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}
             >
               9. Controlador e Contato
             </h2>
             <div className="p-6 rounded-2xl" style={{ backgroundColor: '#f9f7f4' }}>
               <p className="text-gray-600 leading-relaxed">
-                <strong style={{ color: '#1B2B5B' }}>Controlador:</strong> Imobiliaria Lemos
+                <strong style={{ color: '#143A1F' }}>Controlador:</strong> Imobiliaria Lemos
               </p>
               <p className="text-gray-600">
-                <strong style={{ color: '#1B2B5B' }}>CNPJ:</strong> 10.962.301/0001-50
+                <strong style={{ color: '#143A1F' }}>CNPJ:</strong> 10.962.301/0001-50
               </p>
               <p className="text-gray-600">
-                <strong style={{ color: '#1B2B5B' }}>Endereço:</strong> Rua Simão Caleiro, 2383 — Vila Industrial — Franca/SP — CEP 14400-340
+                <strong style={{ color: '#143A1F' }}>Endereço:</strong> Rua Simão Caleiro, 2383 — Vila Industrial — Franca/SP — CEP 14400-340
               </p>
               <p className="text-gray-600 mt-3">
                 Para exercer seus direitos ou esclarecer duvidas sobre o tratamento de dados pessoais,
@@ -340,7 +340,7 @@ export default function PoliticaPrivacidadePage() {
               <a
                 href="mailto:tomas@agoraencontrei.com.br"
                 className="inline-flex items-center gap-2 mt-3 px-6 py-3 rounded-xl text-white font-semibold transition-all hover:opacity-90"
-                style={{ backgroundColor: '#1B2B5B' }}
+                style={{ backgroundColor: '#143A1F' }}
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="white">
                   <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z" />
@@ -354,7 +354,7 @@ export default function PoliticaPrivacidadePage() {
           <section>
             <h2
               className="text-2xl font-bold mb-4"
-              style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}
+              style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}
             >
               10. Alteracoes nesta Politica
             </h2>

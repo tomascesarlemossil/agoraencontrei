@@ -23,7 +23,7 @@ const NAV_LINKS = [
 ]
 
 const SERVICOS_MENU = [
-  { href: '/servicos', icon: <Wrench className="w-4 h-4" />, label: 'Nossos Serviços', desc: 'Visão geral de todos os serviços', color: '#1B2B5B' },
+  { href: '/servicos', icon: <Wrench className="w-4 h-4" />, label: 'Nossos Serviços', desc: 'Visão geral de todos os serviços', color: '#143A1F' },
   { href: '/anunciar', icon: <Building className="w-4 h-4" />, label: 'Cadastre seu Imóvel', desc: 'Venda ou alugue seu imóvel conosco', color: '#dc2626' },
   { href: '/servicos/2via-boleto', icon: <CreditCard className="w-4 h-4" />, label: '2ª Via de Boleto', desc: 'Solicite a segunda via rapidamente', color: '#C9A84C' },
   { href: '/servicos/extrato-proprietario', icon: <BarChart3 className="w-4 h-4" />, label: 'Extrato do Proprietário', desc: 'Consulte repasses e extratos', color: '#C9A84C' },
@@ -31,7 +31,7 @@ const SERVICOS_MENU = [
   { href: '/servicos/fichas-cadastrais', icon: <ClipboardList className="w-4 h-4" />, label: 'Fichas Cadastrais', desc: 'Propostas e cadastros online', color: '#16a34a' },
   { href: '/financiamentos#simulador', icon: <Home className="w-4 h-4" />, label: 'Simule seu Financiamento', desc: 'Calcule parcelas e taxas', color: '#2563eb' },
   { href: '/parceiros/planos', icon: <Handshake className="w-4 h-4" />, label: 'Seja um Parceiro', desc: 'Dashboard privado — Planos Prime e VIP', color: '#C9A84C' },
-  { href: '/parceiros/plano-vip', icon: <Shield className="w-4 h-4" />, label: 'Sentinela Territorial VIP', desc: 'Exclusividade em condomínios e bairros', color: '#1B2B5B' },
+  { href: '/parceiros/plano-vip', icon: <Shield className="w-4 h-4" />, label: 'Sentinela Territorial VIP', desc: 'Exclusividade em condomínios e bairros', color: '#143A1F' },
   { href: '/leiloes', icon: <Gavel className="w-4 h-4" />, label: 'Leilões Imobiliários', desc: 'Imóveis com até 50% de desconto', color: '#7c3aed' },
 ]
 
@@ -111,9 +111,9 @@ export function Navbar() {
       <header
         className="sticky top-0 z-50 transition-all duration-300"
         style={{
-          backgroundColor: 'var(--site-primary-color, #1B2B5B)',
+          backgroundColor: 'var(--site-primary-color, #143A1F)',
           backdropFilter: scrolled ? 'blur(12px)' : 'none',
-          boxShadow: scrolled ? '0 2px 24px rgba(27,43,91,0.3)' : 'none',
+          boxShadow: scrolled ? '0 2px 24px rgba(20,58,31,0.3)' : 'none',
         }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
@@ -166,7 +166,7 @@ export function Navbar() {
               {servicosOpen && (
                 <div
                   className="absolute left-0 top-full mt-2 w-72 rounded-xl shadow-2xl border overflow-hidden"
-                  style={{ backgroundColor: '#152347', borderColor: 'rgba(255,255,255,0.1)' }}
+                  style={{ backgroundColor: '#0E2A15', borderColor: 'rgba(255,255,255,0.1)' }}
                 >
                   <div className="px-4 py-2.5 border-b" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
                     <p className="text-white/40 text-xs uppercase tracking-wider font-semibold">Serviços Disponíveis</p>
@@ -213,7 +213,7 @@ export function Navbar() {
               {accessOpen && (
                 <div
                   className="absolute right-0 top-full mt-2 w-64 rounded-xl shadow-2xl border overflow-hidden"
-                  style={{ backgroundColor: '#152347', borderColor: 'rgba(255,255,255,0.1)' }}
+                  style={{ backgroundColor: '#0E2A15', borderColor: 'rgba(255,255,255,0.1)' }}
                 >
                   <div className="px-4 py-2.5 border-b" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
                     <p className="text-white/40 text-xs uppercase tracking-wider font-semibold">Escolha sua área</p>
@@ -249,7 +249,7 @@ export function Navbar() {
               target="_blank"
               rel="noreferrer"
               className="hidden sm:flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg transition-all hover:brightness-110"
-              style={{ backgroundColor: 'var(--site-accent-color, #C9A84C)', color: 'var(--site-primary-color, #1B2B5B)' }}
+              style={{ backgroundColor: 'var(--site-accent-color, #C9A84C)', color: 'var(--site-primary-color, #143A1F)' }}
             >
               Falar com corretor
             </a>
@@ -301,7 +301,7 @@ export function Navbar() {
         className="fixed top-0 right-0 bottom-0 z-50 md:hidden flex flex-col transition-transform duration-300 ease-in-out"
         style={{
           width: 'min(85vw, 340px)',
-          backgroundColor: '#0d1e3d',
+          backgroundColor: '#0E2A15',
           transform: menuOpen ? 'translateX(0)' : 'translateX(100%)',
           boxShadow: '-8px 0 40px rgba(0,0,0,0.5)',
         }}
@@ -309,7 +309,7 @@ export function Navbar() {
         {/* Header do drawer */}
         <div
           className="flex items-center justify-between px-5 py-4 flex-shrink-0 border-b"
-          style={{ borderColor: 'rgba(255,255,255,0.08)', backgroundColor: '#1B2B5B' }}
+          style={{ borderColor: 'rgba(255,255,255,0.08)', backgroundColor: '#143A1F' }}
         >
           <div className="flex items-center gap-2.5">
             <Image
@@ -436,7 +436,7 @@ export function Navbar() {
         {/* Footer fixo do drawer — botões de ação */}
         <div
           className="flex-shrink-0 px-4 py-4 border-t space-y-2"
-          style={{ borderColor: 'rgba(255,255,255,0.08)', backgroundColor: '#0d1e3d' }}
+          style={{ borderColor: 'rgba(255,255,255,0.08)', backgroundColor: '#0E2A15' }}
         >
           <a
             href="https://wa.me/5516981010004?text=Olá! Vim pelo site e gostaria de mais informações."
@@ -444,7 +444,7 @@ export function Navbar() {
             rel="noreferrer"
             onClick={closeMenu}
             className="flex items-center justify-center gap-2 w-full py-3.5 text-sm font-bold rounded-xl transition-all active:scale-95"
-            style={{ backgroundColor: '#C9A84C', color: '#1B2B5B' }}
+            style={{ backgroundColor: '#C9A84C', color: '#143A1F' }}
           >
             <Phone className="w-4 h-4" />
             Falar com corretor

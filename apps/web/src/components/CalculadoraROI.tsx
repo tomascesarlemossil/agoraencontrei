@@ -140,10 +140,10 @@ export function CalculadoraROI({
               <circle cx="18" cy="18" r="15.91" fill="none" stroke={score >= 70 ? '#15803d' : score >= 50 ? '#ca8a04' : '#dc2626'} strokeWidth="3"
                 strokeDasharray={`${score}, 100`} strokeLinecap="round" />
             </svg>
-            <span className="absolute inset-0 flex items-center justify-center text-xs font-bold" style={{ color: '#1B2B5B' }}>{score}</span>
+            <span className="absolute inset-0 flex items-center justify-center text-xs font-bold" style={{ color: '#143A1F' }}>{score}</span>
           </div>
           <div className="flex-1">
-            <p className="text-sm font-bold" style={{ color: '#1B2B5B' }}>Score de Oportunidade</p>
+            <p className="text-sm font-bold" style={{ color: '#143A1F' }}>Score de Oportunidade</p>
             <div className="flex items-center gap-2 text-xs text-gray-500">
               <span>Risco: <strong className={riskColor}>{apiData.riskLevel === 'LOW' ? 'Baixo' : apiData.riskLevel === 'HIGH' ? 'Alto' : 'Médio'}</strong></span>
               <span>•</span>
@@ -325,7 +325,7 @@ export function CalculadoraROI({
             <div className="bg-white rounded-xl p-4 border text-sm space-y-3 mb-3">
               <div className="flex items-center gap-2 mb-2">
                 <BarChart3 className="w-4 h-4 text-green-700" />
-                <span className="font-bold text-sm" style={{ color: '#1B2B5B' }}>Cenários de Retorno (10 anos)</span>
+                <span className="font-bold text-sm" style={{ color: '#143A1F' }}>Cenários de Retorno (10 anos)</span>
               </div>
               <div className="grid grid-cols-3 gap-2">
                 {([

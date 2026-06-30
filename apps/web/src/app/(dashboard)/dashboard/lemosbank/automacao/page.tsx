@@ -17,7 +17,7 @@ const fmt = (v: number | null | undefined) =>
 
 const fmtPct = (v: number) => `${v.toFixed(1)}%`
 
-const NAVY = '#1B2B5B'
+const NAVY = '#143A1F'
 const GOLD = '#C9A84C'
 
 // ── Componentes ──────────────────────────────────────────────────────────────

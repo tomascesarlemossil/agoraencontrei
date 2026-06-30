@@ -98,7 +98,7 @@ export default function GuiaCompletoFrancaPage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
 
       {/* Hero */}
-      <section className="bg-gradient-to-br from-[#1B2B5B] to-[#0f1c3a] text-white py-16 px-4">
+      <section className="bg-gradient-to-br from-[#143A1F] to-[#0f1c3a] text-white py-16 px-4">
         <div className="max-w-4xl mx-auto">
           <nav className="text-xs text-blue-200 mb-4 flex items-center gap-1.5 flex-wrap">
             <Link href="/" className="hover:text-white">Início</Link>
@@ -123,7 +123,7 @@ export default function GuiaCompletoFrancaPage() {
             <Link
               href="/imoveis?city=Franca&purpose=SALE"
               className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm"
-              style={{ background: '#C9A84C', color: '#1B2B5B' }}
+              style={{ background: '#C9A84C', color: '#143A1F' }}
             >
               <Home className="w-4 h-4" /> Ver Imóveis à Venda
             </Link>
@@ -140,7 +140,7 @@ export default function GuiaCompletoFrancaPage() {
       {/* Table of Contents */}
       <nav className="bg-blue-50 border-b py-6 px-4">
         <div className="max-w-4xl mx-auto">
-          <p className="text-sm font-semibold text-[#1B2B5B] mb-3">Neste guia:</p>
+          <p className="text-sm font-semibold text-[#143A1F] mb-3">Neste guia:</p>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-sm">
             {[
               ['#panorama', 'Panorama Geral'],
@@ -150,7 +150,7 @@ export default function GuiaCompletoFrancaPage() {
               ['#valorizacao', 'Zonas de Valorização'],
               ['#faq', 'Perguntas Frequentes'],
             ].map(([href, label]) => (
-              <a key={href} href={href} className="text-[#1B2B5B] hover:underline">
+              <a key={href} href={href} className="text-[#143A1F] hover:underline">
                 {label}
               </a>
             ))}
@@ -162,7 +162,7 @@ export default function GuiaCompletoFrancaPage() {
         <article className="prose prose-lg max-w-none">
           {/* Panorama */}
           <section id="panorama" className="mb-12">
-            <h2 className="text-2xl font-bold text-[#1B2B5B] mb-4 flex items-center gap-2">
+            <h2 className="text-2xl font-bold text-[#143A1F] mb-4 flex items-center gap-2">
               <MapPin className="w-6 h-6 text-[#C9A84C]" />
               Panorama do Mercado Imobiliário em Franca
             </h2>
@@ -183,7 +183,7 @@ export default function GuiaCompletoFrancaPage() {
 
           {/* Preços */}
           <section id="precos" className="mb-12">
-            <h2 className="text-2xl font-bold text-[#1B2B5B] mb-4 flex items-center gap-2">
+            <h2 className="text-2xl font-bold text-[#143A1F] mb-4 flex items-center gap-2">
               <TrendingUp className="w-6 h-6 text-[#C9A84C]" />
               Preços do Metro Quadrado em Franca ({YEAR})
             </h2>
@@ -195,7 +195,7 @@ export default function GuiaCompletoFrancaPage() {
             <div className="not-prose overflow-x-auto mb-6">
               <table className="w-full text-sm border-collapse">
                 <thead>
-                  <tr className="bg-[#1B2B5B] text-white">
+                  <tr className="bg-[#143A1F] text-white">
                     <th className="p-3 text-left rounded-tl-lg">Bairro</th>
                     <th className="p-3 text-center">Zona</th>
                     <th className="p-3 text-right">m² Venda</th>
@@ -207,7 +207,7 @@ export default function GuiaCompletoFrancaPage() {
                   {BAIRROS_FRANCA.sort((a, b) => b.m2Venda - a.m2Venda).slice(0, 15).map((b, i) => (
                     <tr key={b.slug} className={i % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
                       <td className="p-3 font-medium">
-                        <Link href={`/bairros/franca/${b.slug}`} className="text-[#1B2B5B] hover:underline">
+                        <Link href={`/bairros/franca/${b.slug}`} className="text-[#143A1F] hover:underline">
                           {b.name}
                         </Link>
                       </td>
@@ -241,12 +241,12 @@ export default function GuiaCompletoFrancaPage() {
 
           {/* Melhores Bairros */}
           <section id="melhores-bairros" className="mb-12">
-            <h2 className="text-2xl font-bold text-[#1B2B5B] mb-4 flex items-center gap-2">
+            <h2 className="text-2xl font-bold text-[#143A1F] mb-4 flex items-center gap-2">
               <Home className="w-6 h-6 text-[#C9A84C]" />
               Melhores Bairros para Morar em Franca
             </h2>
 
-            <h3 className="text-xl font-semibold text-[#1B2B5B] mt-6 mb-3">Bairros Nobres</h3>
+            <h3 className="text-xl font-semibold text-[#143A1F] mt-6 mb-3">Bairros Nobres</h3>
             <div className="not-prose grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
               {bairrosNobres.slice(0, 6).map(b => (
                 <Link
@@ -254,7 +254,7 @@ export default function GuiaCompletoFrancaPage() {
                   href={`/bairros/franca/${b.slug}`}
                   className="bg-white rounded-xl border p-4 hover:border-[#C9A84C] hover:shadow-sm transition"
                 >
-                  <p className="font-bold text-[#1B2B5B]">{b.name}</p>
+                  <p className="font-bold text-[#143A1F]">{b.name}</p>
                   <p className="text-sm text-gray-500 mt-1">{b.descricao}</p>
                   <div className="flex items-center gap-4 mt-3 text-xs text-gray-400">
                     <span>R$ {b.m2Venda.toLocaleString('pt-BR')}/m²</span>
@@ -265,7 +265,7 @@ export default function GuiaCompletoFrancaPage() {
               ))}
             </div>
 
-            <h3 className="text-xl font-semibold text-[#1B2B5B] mt-6 mb-3">Bairros com Melhor Custo-Benefício</h3>
+            <h3 className="text-xl font-semibold text-[#143A1F] mt-6 mb-3">Bairros com Melhor Custo-Benefício</h3>
             <p className="text-gray-700 leading-relaxed">
               Para quem busca boa infraestrutura sem pagar preço de bairro nobre,
               as opções incluem: {bairrosPopulares.filter(b => b.scoreComodidade >= 60).slice(0, 5).map(b =>
@@ -277,7 +277,7 @@ export default function GuiaCompletoFrancaPage() {
 
           {/* Leilões e Investimentos */}
           <section id="leiloes" className="mb-12">
-            <h2 className="text-2xl font-bold text-[#1B2B5B] mb-4 flex items-center gap-2">
+            <h2 className="text-2xl font-bold text-[#143A1F] mb-4 flex items-center gap-2">
               <Gavel className="w-6 h-6 text-[#C9A84C]" />
               Leilões e Oportunidades de Investimento
             </h2>
@@ -292,13 +292,13 @@ export default function GuiaCompletoFrancaPage() {
             </ul>
 
             <div className="not-prose bg-gradient-to-r from-blue-50 to-amber-50 rounded-2xl border p-6 my-6">
-              <p className="font-bold text-[#1B2B5B] mb-2">Bairros com mais oportunidades em leilão:</p>
+              <p className="font-bold text-[#143A1F] mb-2">Bairros com mais oportunidades em leilão:</p>
               <div className="flex flex-wrap gap-2">
                 {bairrosComLeilao.slice(0, 8).map(b => (
                   <Link
                     key={b.slug}
                     href={`/leilao-imoveis/${b.slug}-franca-sp`}
-                    className="px-3 py-1.5 bg-white rounded-full text-sm text-[#1B2B5B] border hover:border-[#C9A84C] transition"
+                    className="px-3 py-1.5 bg-white rounded-full text-sm text-[#143A1F] border hover:border-[#C9A84C] transition"
                   >
                     {b.name}
                   </Link>
@@ -315,7 +315,7 @@ export default function GuiaCompletoFrancaPage() {
                 className="bg-white rounded-xl border p-4 text-center hover:border-[#C9A84C] transition"
               >
                 <p className="text-2xl mb-2">📊</p>
-                <p className="font-bold text-sm text-[#1B2B5B]">Terminal de Investimento</p>
+                <p className="font-bold text-sm text-[#143A1F]">Terminal de Investimento</p>
                 <p className="text-xs text-gray-500 mt-1">DCF, VPL, TIR, Monte Carlo</p>
               </Link>
               <Link
@@ -323,7 +323,7 @@ export default function GuiaCompletoFrancaPage() {
                 className="bg-white rounded-xl border p-4 text-center hover:border-[#C9A84C] transition"
               >
                 <p className="text-2xl mb-2">🏠</p>
-                <p className="font-bold text-sm text-[#1B2B5B]">Avaliação de Imóvel</p>
+                <p className="font-bold text-sm text-[#143A1F]">Avaliação de Imóvel</p>
                 <p className="text-xs text-gray-500 mt-1">3 métodos + anomalia detection</p>
               </Link>
               <Link
@@ -331,7 +331,7 @@ export default function GuiaCompletoFrancaPage() {
                 className="bg-white rounded-xl border p-4 text-center hover:border-[#C9A84C] transition"
               >
                 <p className="text-2xl mb-2">🏛️</p>
-                <p className="font-bold text-sm text-[#1B2B5B]">Leilões em Franca</p>
+                <p className="font-bold text-sm text-[#143A1F]">Leilões em Franca</p>
                 <p className="text-xs text-gray-500 mt-1">Judicial e extrajudicial</p>
               </Link>
             </div>
@@ -339,7 +339,7 @@ export default function GuiaCompletoFrancaPage() {
 
           {/* Valorização */}
           <section id="valorizacao" className="mb-12">
-            <h2 className="text-2xl font-bold text-[#1B2B5B] mb-4 flex items-center gap-2">
+            <h2 className="text-2xl font-bold text-[#143A1F] mb-4 flex items-center gap-2">
               <Building2 className="w-6 h-6 text-[#C9A84C]" />
               Zonas de Valorização e Expansão
             </h2>
@@ -364,13 +364,13 @@ export default function GuiaCompletoFrancaPage() {
 
           {/* FAQ */}
           <section id="faq" className="mb-12">
-            <h2 className="text-2xl font-bold text-[#1B2B5B] mb-6">
+            <h2 className="text-2xl font-bold text-[#143A1F] mb-6">
               Perguntas Frequentes — Imóveis em Franca/SP
             </h2>
             <div className="not-prose space-y-3">
               {faqItems.map((item, i) => (
                 <details key={i} className="group border rounded-xl bg-white">
-                  <summary className="flex items-center justify-between cursor-pointer p-4 font-medium text-gray-800 group-open:text-[#1B2B5B]">
+                  <summary className="flex items-center justify-between cursor-pointer p-4 font-medium text-gray-800 group-open:text-[#143A1F]">
                     {item.q}
                     <span className="ml-2 text-gray-400 group-open:rotate-180 transition-transform">&#9660;</span>
                   </summary>
@@ -382,7 +382,7 @@ export default function GuiaCompletoFrancaPage() {
 
           {/* Internal links hub */}
           <section className="not-prose bg-gray-50 rounded-2xl border p-6">
-            <h2 className="text-lg font-bold text-[#1B2B5B] mb-4">Explore mais em Franca/SP</h2>
+            <h2 className="text-lg font-bold text-[#143A1F] mb-4">Explore mais em Franca/SP</h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-sm">
               {[
                 ['/sp/franca/imoveis-a-venda', 'Imóveis à Venda'],
@@ -404,7 +404,7 @@ export default function GuiaCompletoFrancaPage() {
                 <Link
                   key={href}
                   href={href}
-                  className="px-3 py-2 bg-white rounded-lg border text-[#1B2B5B] hover:border-[#C9A84C] transition"
+                  className="px-3 py-2 bg-white rounded-lg border text-[#143A1F] hover:border-[#C9A84C] transition"
                 >
                   {label}
                 </Link>
@@ -433,7 +433,7 @@ export default function GuiaCompletoFrancaPage() {
             <Link
               href="/imoveis?city=Franca"
               className="flex-1 sm:flex-none px-4 py-2 rounded-xl font-bold text-sm text-center"
-              style={{ background: '#C9A84C', color: '#1B2B5B' }}
+              style={{ background: '#C9A84C', color: '#143A1F' }}
             >
               Ver Marketplace
             </Link>

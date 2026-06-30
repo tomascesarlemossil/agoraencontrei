@@ -185,7 +185,7 @@ export default async function ClusterPage(props: { params: Promise<{ estado: str
       />
 
       {/* Hero */}
-      <section className="bg-gradient-to-br from-[#1B2B5B] to-[#0f1c3a] text-white py-14 px-4">
+      <section className="bg-gradient-to-br from-[#143A1F] to-[#0f1c3a] text-white py-14 px-4">
         <div className="max-w-5xl mx-auto">
           <nav className="text-xs text-blue-200 mb-4 flex items-center gap-1.5 flex-wrap">
             <Link href="/" className="hover:text-white">Início</Link>
@@ -213,7 +213,7 @@ export default async function ClusterPage(props: { params: Promise<{ estado: str
             <Link
               href={`/imoveis?city=${city.name}`}
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm"
-              style={{ background: '#C9A84C', color: '#1B2B5B' }}
+              style={{ background: '#C9A84C', color: '#143A1F' }}
             >
               <Search className="w-4 h-4" /> Ver Todos
             </Link>
@@ -231,7 +231,7 @@ export default async function ClusterPage(props: { params: Promise<{ estado: str
         {/* Imóveis */}
         {properties.length > 0 ? (
           <section>
-            <h2 className="text-xl font-bold text-[#1B2B5B] mb-5">
+            <h2 className="text-xl font-bold text-[#143A1F] mb-5">
               {meta.title} em {city.name}
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -258,7 +258,7 @@ export default async function ClusterPage(props: { params: Promise<{ estado: str
                     <p className="text-xs text-gray-500 mt-1">
                       <MapPin className="w-3 h-3 inline" /> {p.neighborhood}, {city.name}
                     </p>
-                    <p className="font-bold text-base mt-2" style={{ color: '#1B2B5B' }}>
+                    <p className="font-bold text-base mt-2" style={{ color: '#143A1F' }}>
                       {p.price
                         ? Number(p.price).toLocaleString('pt-BR', {
                             style: 'currency',
@@ -275,7 +275,7 @@ export default async function ClusterPage(props: { params: Promise<{ estado: str
         ) : (
           <section className="bg-white rounded-2xl border p-8 text-center">
             <p className="text-4xl mb-4">{meta.icon}</p>
-            <h2 className="text-xl font-bold text-[#1B2B5B] mb-2">{meta.h1}</h2>
+            <h2 className="text-xl font-bold text-[#143A1F] mb-2">{meta.h1}</h2>
             <p className="text-gray-500 mb-6">
               Cadastre-se para receber alertas quando novos imóveis forem
               disponibilizados em {city.name}.
@@ -283,7 +283,7 @@ export default async function ClusterPage(props: { params: Promise<{ estado: str
             <Link
               href="/alertas"
               className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm"
-              style={{ background: '#C9A84C', color: '#1B2B5B' }}
+              style={{ background: '#C9A84C', color: '#143A1F' }}
             >
               Criar Alerta Gratuito
             </Link>
@@ -292,7 +292,7 @@ export default async function ClusterPage(props: { params: Promise<{ estado: str
 
         {/* Conteúdo SEO */}
         <section className="bg-gray-50 rounded-2xl border p-6">
-          <h2 className="text-lg font-bold text-[#1B2B5B] mb-3">
+          <h2 className="text-lg font-bold text-[#143A1F] mb-3">
             {meta.title} em {city.name}/{city.state} — Guia Completo
           </h2>
           <div className="prose prose-sm max-w-none text-gray-600 space-y-3">
@@ -320,7 +320,7 @@ export default async function ClusterPage(props: { params: Promise<{ estado: str
 
         {/* Clusters relacionados */}
         <section>
-          <h2 className="text-lg font-bold text-[#1B2B5B] mb-4">
+          <h2 className="text-lg font-bold text-[#143A1F] mb-4">
             Mais opções em {city.name}
           </h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -358,7 +358,7 @@ export default async function ClusterPage(props: { params: Promise<{ estado: str
             <Link
               href={`/imoveis?city=${city.name}`}
               className="flex-1 sm:flex-none px-4 py-2 rounded-xl font-bold text-sm text-center"
-              style={{ background: '#C9A84C', color: '#1B2B5B' }}
+              style={{ background: '#C9A84C', color: '#143A1F' }}
             >
               Ver Marketplace
             </Link>

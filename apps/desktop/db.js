@@ -21,14 +21,40 @@ const DB_PASS = 'agora_local' // banco é local-only, sem exposição de rede
 const DB_PORT = Number(process.env.AGORA_DB_PORT || 54329)
 
 /**
+ * Resolve um diretório de dados em caminho **somente ASCII**.
+ *
+ * O `initdb` do Postgres falha quando o caminho do pgdata contém caracteres
+ * não-ASCII — caso clássico: usuário do Windows com acento (ex.: "TOMÁS").
+ * O perfil do usuário vira `C:\Users\TOMÁS\AppData\Roaming\...` e o initdb
+ * aborta com `invalid byte sequence for encoding "UTF8": 0xc1 ...` (0xc1 = "Á"
+ * no code page 1252 do Windows). Por isso colocamos o banco FORA do perfil,
+ * em `C:\ProgramData\AgoraEncontrei` (ASCII, comum a todos os usuários).
+ *
+ * @param {string} fallbackDir  usado se nenhum candidato ASCII puder ser criado
+ */
+function resolveAsciiDataRoot(fallbackDir) {
+  const isAscii = (s) => /^[\x00-\x7F]*$/.test(s)
+  const candidates = []
+  if (process.env.ProgramData) candidates.push(path.join(process.env.ProgramData, 'AgoraEncontrei'))
+  const sysDrive = process.env.SystemDrive || 'C:'
+  candidates.push(path.join(sysDrive + path.sep, 'AgoraEncontrei'))
+  for (const base of candidates) {
+    if (!isAscii(base)) continue
+    try { fs.mkdirSync(base, { recursive: true }); return base } catch { /* tenta o próximo */ }
+  }
+  return fallbackDir // último recurso (pode ter acento, mas só se nada acima deu certo)
+}
+
+/**
  * Sobe o Postgres embarcado e devolve a connection string.
  * @param {string} userDataDir  app.getPath('userData')
  */
 async function startDatabase(userDataDir) {
   const mod = require('embedded-postgres')
   const EmbeddedPostgres = mod.default || mod // suporta export default (ESM) e CJS
-  const databaseDir = path.join(userDataDir, 'pgdata')
-  const readyMarker = path.join(userDataDir, 'db-ready.json')
+  const dataRoot = resolveAsciiDataRoot(userDataDir)
+  const databaseDir = path.join(dataRoot, 'pgdata')
+  const readyMarker = path.join(dataRoot, 'db-ready.json')
   const ready = fs.existsSync(readyMarker)
 
   // Auto-recuperação: se o banco NÃO está marcado como pronto (1ª vez ou uma

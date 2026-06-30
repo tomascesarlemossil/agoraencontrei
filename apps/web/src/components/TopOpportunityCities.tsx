@@ -74,7 +74,7 @@ export function TopOpportunityCities() {
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
-          <h2 className="text-2xl md:text-3xl font-black tracking-tight" style={{ color: '#1B2B5B' }}>
+          <h2 className="text-2xl md:text-3xl font-black tracking-tight" style={{ color: '#143A1F' }}>
             ONDE ESTÁ O LUCRO?
           </h2>
           <p className="text-gray-500 text-sm md:text-base mt-2">
@@ -94,7 +94,7 @@ export function TopOpportunityCities() {
               {/* Rank badge */}
               <div
                 className="absolute -top-3 -left-1 text-xs font-black px-2.5 py-1 rounded-full text-white"
-                style={{ backgroundColor: index === 0 ? '#C9A84C' : '#1B2B5B' }}
+                style={{ backgroundColor: index === 0 ? '#C9A84C' : '#143A1F' }}
               >
                 #{index + 1}
               </div>
@@ -102,7 +102,7 @@ export function TopOpportunityCities() {
               {/* City name */}
               <div className="mt-2 flex items-center gap-1.5 mb-3">
                 <MapPin className="w-4 h-4 text-gray-400 group-hover:text-white/80 transition-colors" />
-                <h3 className="font-bold text-sm truncate group-hover:text-white transition-colors" style={{ color: '#1B2B5B' }}>
+                <h3 className="font-bold text-sm truncate group-hover:text-white transition-colors" style={{ color: '#143A1F' }}>
                   {city.city}
                 </h3>
               </div>

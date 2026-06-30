@@ -168,19 +168,19 @@ export function HeroSearchForm() {
     <div className="w-full max-w-2xl mx-auto">
       {/* Navigation pills — layout limpo e uniforme */}
       <div className="flex flex-wrap items-center justify-center gap-2 mb-6">
-        <a href="/imoveis?purpose=RENT" className="px-4 py-2.5 rounded-full text-sm font-bold transition-all hover:scale-105" style={{ backgroundColor: 'white', color: '#1B2B5B' }}>
+        <a href="/imoveis?purpose=RENT" className="px-4 py-2.5 rounded-full text-sm font-bold transition-all hover:scale-105" style={{ backgroundColor: 'white', color: '#143A1F' }}>
           Alugar
         </a>
-        <a href="/imoveis?purpose=SALE" className="px-4 py-2.5 rounded-full text-sm font-bold transition-all hover:scale-105" style={{ backgroundColor: 'white', color: '#1B2B5B' }}>
+        <a href="/imoveis?purpose=SALE" className="px-4 py-2.5 rounded-full text-sm font-bold transition-all hover:scale-105" style={{ backgroundColor: 'white', color: '#143A1F' }}>
           Comprar
         </a>
         <a href="/anunciar" className="px-4 py-2.5 rounded-full text-sm font-bold transition-all hover:scale-105" style={{ backgroundColor: 'rgba(255,255,255,0.15)', color: 'white', border: '1px solid rgba(255,255,255,0.3)' }}>
           Anunciar Imóveis
         </a>
-        <a href="/leiloes" className="px-4 py-2.5 rounded-full text-sm font-bold transition-all hover:scale-105" style={{ background: 'linear-gradient(135deg, #C9A84C, #e6c96a)', color: '#1B2B5B' }}>
+        <a href="/leiloes" className="px-4 py-2.5 rounded-full text-sm font-bold transition-all hover:scale-105" style={{ background: 'linear-gradient(135deg, #C9A84C, #e6c96a)', color: '#143A1F' }}>
           🏛️ Leilões
         </a>
-        <a href="/parceiros/planos" className="px-4 py-2.5 rounded-full text-sm font-bold transition-all hover:scale-105" style={{ background: 'linear-gradient(135deg, #C9A84C, #e6c96a)', color: '#1B2B5B' }}>
+        <a href="/parceiros/planos" className="px-4 py-2.5 rounded-full text-sm font-bold transition-all hover:scale-105" style={{ background: 'linear-gradient(135deg, #C9A84C, #e6c96a)', color: '#143A1F' }}>
           🤝 Seja um Parceiro
         </a>
       </div>
@@ -216,7 +216,7 @@ export function HeroSearchForm() {
                 onKeyDown={e => e.key === 'Enter' && handleAiSearch()}
                 placeholder="Descreva o imóvel ideal..."
                 className="flex-1 text-sm text-gray-800 placeholder-gray-400 focus:outline-none bg-transparent font-medium border-b-2 pb-1.5 transition-colors"
-                style={{ borderColor: aiQuery ? '#1B2B5B' : '#e5e7eb' }}
+                style={{ borderColor: aiQuery ? '#143A1F' : '#e5e7eb' }}
                 autoFocus
               />
               <VoiceInputButton onResult={text => { setAiQuery(text); setTimeout(handleAiSearch, 300) }} />
@@ -225,7 +225,7 @@ export function HeroSearchForm() {
                 onClick={handleAiSearch}
                 disabled={aiLoading || !aiQuery.trim() || isPending}
                 className="flex items-center gap-2 px-5 py-3 rounded-2xl text-sm font-bold transition-all hover:brightness-110 disabled:opacity-50 flex-shrink-0"
-                style={{ backgroundColor: '#1B2B5B', color: 'white' }}
+                style={{ backgroundColor: '#143A1F', color: 'white' }}
               >
                 {aiLoading || isPending ? (
                   <><Loader2 className="w-4 h-4 animate-spin" /> Buscando...</>
@@ -251,7 +251,7 @@ export function HeroSearchForm() {
         <form onSubmit={handleManualSearch}>
           {/* City */}
           <label className="flex items-start gap-4 px-5 py-4 border-b cursor-pointer hover:bg-gray-50 transition-colors" style={{ borderColor: '#f0ece4' }}>
-            <MapPin className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: '#1B2B5B' }} />
+            <MapPin className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: '#143A1F' }} />
             <div className="flex-1 min-w-0">
               <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-0.5">Cidade</p>
               <input
@@ -266,7 +266,7 @@ export function HeroSearchForm() {
           {/* Neighborhood */}
           <div className="relative" ref={neighborhoodRef}>
             <label className="flex items-start gap-4 px-5 py-4 border-b cursor-pointer hover:bg-gray-50 transition-colors" style={{ borderColor: '#f0ece4' }}>
-              <Home className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: '#1B2B5B' }} />
+              <Home className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: '#143A1F' }} />
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-0.5">Bairro</p>
                 <input
@@ -305,7 +305,7 @@ export function HeroSearchForm() {
           {/* Price + Bedrooms row */}
           <div className="grid grid-cols-2">
             <label className="flex items-start gap-3 px-5 py-4 border-r cursor-pointer hover:bg-gray-50 transition-colors relative" style={{ borderColor: '#f0ece4' }}>
-              <DollarSign className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: '#1B2B5B' }} />
+              <DollarSign className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: '#143A1F' }} />
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-0.5">
                   Valor até
@@ -326,7 +326,7 @@ export function HeroSearchForm() {
             </label>
 
             <label className="flex items-start gap-3 px-5 py-4 cursor-pointer hover:bg-gray-50 transition-colors relative">
-              <BedDouble className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: '#1B2B5B' }} />
+              <BedDouble className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: '#143A1F' }} />
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-0.5">Quartos</p>
                 <div className="relative">
@@ -351,7 +351,7 @@ export function HeroSearchForm() {
               type="submit"
               disabled={isPending}
               className="w-full py-4 rounded-2xl text-sm font-bold transition-all hover:brightness-110 disabled:opacity-60 flex items-center justify-center gap-2"
-              style={{ backgroundColor: '#C9A84C', color: '#1B2B5B' }}
+              style={{ backgroundColor: '#C9A84C', color: '#143A1F' }}
             >
               <Search className="w-4 h-4" />
               Buscar imóveis
@@ -365,7 +365,7 @@ export function HeroSearchForm() {
         type="button"
         onClick={handleMapSearch}
         className="group mt-5 w-full relative flex items-center justify-between gap-4 px-6 py-4 rounded-2xl overflow-hidden transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl shadow-lg"
-        style={{ background: 'linear-gradient(135deg, rgba(27,43,91,0.92) 0%, rgba(45,74,138,0.95) 60%, rgba(27,43,91,0.92) 100%)', backdropFilter: 'blur(8px)', border: '1px solid rgba(201,168,76,0.3)' }}
+        style={{ background: 'linear-gradient(135deg, rgba(20,58,31,0.92) 0%, rgba(45,74,138,0.95) 60%, rgba(20,58,31,0.92) 100%)', backdropFilter: 'blur(8px)', border: '1px solid rgba(201,168,76,0.3)' }}
       >
         {/* Animated dot pattern background */}
         <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle, rgba(201,168,76,0.8) 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
@@ -382,7 +382,7 @@ export function HeroSearchForm() {
           </div>
         </div>
         {/* Right: animated pill button */}
-        <div className="relative z-10 flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-xs transition-all group-hover:scale-105" style={{ background: 'linear-gradient(135deg, #C9A84C, #e6c96a)', color: '#1B2B5B' }}>
+        <div className="relative z-10 flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-xs transition-all group-hover:scale-105" style={{ background: 'linear-gradient(135deg, #C9A84C, #e6c96a)', color: '#143A1F' }}>
           <span className="relative flex h-2 w-2">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-current opacity-75" />
             <span className="relative inline-flex rounded-full h-2 w-2 bg-current" />

@@ -12,7 +12,7 @@
 import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 import argon2 from 'argon2'
-import { randomBytes } from 'node:crypto'
+import { randomBytes, createPrivateKey, createPublicKey } from 'node:crypto'
 import { env } from '../../utils/env.js'
 import {
   findOrCreateCustomer,
@@ -767,6 +767,27 @@ export default async function saasBillingRoutes(app: FastifyInstance) {
     } catch (err: any) {
       app.log.error(`[offline-purchase] ${err?.message || err}`)
       return reply.status(502).send({ error: 'Não foi possível criar a cobrança. Tente novamente.' })
+    }
+  })
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // GET /license-pubkey — diagnóstico do licenciamento offline (PÚBLICO/seguro).
+  // Devolve APENAS a chave PÚBLICA derivada da LICENSE_PRIVATE_KEY configurada
+  // no servidor — chave pública não é segredo. Serve para confirmar que a chave
+  // do Railway é o par da chave embutida no app (apps/desktop/license.js), sem
+  // jamais expor a privada. Em caso de troca de chave, é só comparar de novo.
+  // ═══════════════════════════════════════════════════════════════════════════
+  app.get('/license-pubkey', async (_req, reply) => {
+    if (!env.LICENSE_PRIVATE_KEY) {
+      return reply.send({ configured: false, publicKey: null })
+    }
+    try {
+      const priv = createPrivateKey(env.LICENSE_PRIVATE_KEY)
+      const publicKey = createPublicKey(priv).export({ type: 'spki', format: 'pem' }).toString().trim()
+      const publicKeyB64 = createPublicKey(priv).export({ type: 'spki', format: 'der' }).toString('base64')
+      return reply.send({ configured: true, publicKey, publicKeyB64 })
+    } catch {
+      return reply.status(500).send({ configured: true, error: 'LICENSE_PRIVATE_KEY inválida (não é uma chave PEM ed25519 válida).' })
     }
   })
 }

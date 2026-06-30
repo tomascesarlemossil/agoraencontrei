@@ -74,7 +74,7 @@ export default async function BairroPage(props: { params: Promise<{ estado: stri
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
 
       {/* Hero */}
-      <section className="bg-gradient-to-br from-[#1B2B5B] to-[#0f1c3a] text-white py-14 px-4">
+      <section className="bg-gradient-to-br from-[#143A1F] to-[#0f1c3a] text-white py-14 px-4">
         <div className="max-w-5xl mx-auto">
           <nav className="text-xs text-blue-200 mb-4 flex items-center gap-1.5 flex-wrap">
             <Link href="/" className="hover:text-white">Início</Link>
@@ -106,7 +106,7 @@ export default async function BairroPage(props: { params: Promise<{ estado: stri
           <div className="flex flex-wrap gap-3">
             <Link href={`/imoveis?city=${city.name}&neighborhood=${bairro.name}`}
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm"
-              style={{ background: '#C9A84C', color: '#1B2B5B' }}>
+              style={{ background: '#C9A84C', color: '#143A1F' }}>
               <Search className="w-4 h-4" /> Ver Imóveis no {bairro.name}
             </Link>
             {bairro.temLeiloes && (
@@ -127,24 +127,24 @@ export default async function BairroPage(props: { params: Promise<{ estado: stri
           </h2>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div className="bg-white rounded-xl border p-4 text-center">
-              <p className="text-2xl font-bold text-[#1B2B5B]">R$ {bairro.m2Venda.toLocaleString('pt-BR')}</p>
+              <p className="text-2xl font-bold text-[#143A1F]">R$ {bairro.m2Venda.toLocaleString('pt-BR')}</p>
               <p className="text-xs text-gray-500 mt-1">m² Venda (média)</p>
             </div>
             <div className="bg-white rounded-xl border p-4 text-center">
-              <p className="text-2xl font-bold text-[#1B2B5B]">R$ {bairro.m2Aluguel}/m²</p>
+              <p className="text-2xl font-bold text-[#143A1F]">R$ {bairro.m2Aluguel}/m²</p>
               <p className="text-xs text-gray-500 mt-1">m² Aluguel (média)</p>
             </div>
             <div className="bg-white rounded-xl border p-4 text-center">
               <div className="flex items-center justify-center gap-1">
                 <Star className="w-4 h-4" style={{ color: '#C9A84C' }} />
-                <p className="text-2xl font-bold text-[#1B2B5B]">{bairro.scoreComodidade}</p>
+                <p className="text-2xl font-bold text-[#143A1F]">{bairro.scoreComodidade}</p>
               </div>
               <p className="text-xs text-gray-500 mt-1">Score Comodidade /100</p>
             </div>
             <div className="bg-white rounded-xl border p-4 text-center">
               <div className="flex items-center justify-center gap-1">
                 <Navigation className="w-4 h-4 text-gray-400" />
-                <p className="text-2xl font-bold text-[#1B2B5B]">{bairro.distanciaCentroKm}km</p>
+                <p className="text-2xl font-bold text-[#143A1F]">{bairro.distanciaCentroKm}km</p>
               </div>
               <p className="text-xs text-gray-500 mt-1">do Centro</p>
             </div>
@@ -154,7 +154,7 @@ export default async function BairroPage(props: { params: Promise<{ estado: stri
 
       {/* Pontos de Interesse */}
       <section className="max-w-5xl mx-auto px-4 py-8">
-        <h2 className="text-xl font-bold mb-4" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>
+        <h2 className="text-xl font-bold mb-4" style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}>
           Pontos de Interesse Próximos
         </h2>
         <div className="flex flex-wrap gap-2">
@@ -167,7 +167,7 @@ export default async function BairroPage(props: { params: Promise<{ estado: stri
 
         {/* SEO Content */}
         <div className="mt-8 bg-white rounded-2xl border p-6">
-          <h3 className="font-bold text-lg mb-3" style={{ color: '#1B2B5B' }}>
+          <h3 className="font-bold text-lg mb-3" style={{ color: '#143A1F' }}>
             Sobre o {bairro.name} em {city.name}/{city.state}
           </h3>
           <p className="text-gray-600 text-sm leading-relaxed mb-4">
@@ -183,7 +183,7 @@ export default async function BairroPage(props: { params: Promise<{ estado: stri
           </p>
           <p className="text-gray-600 text-sm leading-relaxed mt-4 border-t pt-4">
             Para conferir a lista completa e atualizada de oportunidades reais,{' '}
-            <a href="https://agoraencontrei.com.br" className="font-semibold underline" style={{ color: '#1B2B5B' }}>
+            <a href="https://agoraencontrei.com.br" className="font-semibold underline" style={{ color: '#143A1F' }}>
               acesse o marketplace AgoraEncontrei
             </a>.
           </p>
@@ -192,14 +192,14 @@ export default async function BairroPage(props: { params: Promise<{ estado: stri
 
       {/* Bairros similares */}
       <section className="max-w-5xl mx-auto px-4 pb-8">
-        <h2 className="text-xl font-bold mb-4" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>
+        <h2 className="text-xl font-bold mb-4" style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}>
           Bairros Similares em {city.name}
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {[...vizinhos, ...outrosZonas].slice(0, 8).map(b => (
             <Link key={b.slug} href={`/${params.estado}/${params.cidade}/bairro/${b.slug}`}
               className="bg-white rounded-xl border p-4 hover:border-[#C9A84C] transition-all">
-              <p className="font-semibold text-sm" style={{ color: '#1B2B5B' }}>{b.name}</p>
+              <p className="font-semibold text-sm" style={{ color: '#143A1F' }}>{b.name}</p>
               <div className="flex items-center justify-between mt-2 text-xs text-gray-500">
                 <span>R$ {b.m2Venda}/m²</span>
                 <span className={`px-2 py-0.5 rounded-full ${zonaColors[b.zona].bg} ${zonaColors[b.zona].text}`}>
@@ -212,7 +212,7 @@ export default async function BairroPage(props: { params: Promise<{ estado: stri
       </section>
 
       {/* Floating CTA */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-[#1B2B5B] p-3 text-white text-center font-bold text-sm shadow-2xl sm:hidden">
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-[#143A1F] p-3 text-white text-center font-bold text-sm shadow-2xl sm:hidden">
         <Link href={`/imoveis?city=${city.name}&neighborhood=${bairro.name}`} className="flex items-center justify-center gap-2">
           <Search className="w-4 h-4" style={{ color: '#C9A84C' }} />
           Imóveis no {bairro.name}

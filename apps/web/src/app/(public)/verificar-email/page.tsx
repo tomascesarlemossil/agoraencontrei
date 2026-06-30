@@ -60,8 +60,8 @@ function VerificarEmailContent() {
       <div className="max-w-md w-full bg-white rounded-2xl shadow-lg p-8 text-center">
         {status === 'loading' && (
           <>
-            <Loader2 className="w-12 h-12 mx-auto mb-4 animate-spin" style={{ color: '#1B2B5B' }} />
-            <h1 className="text-xl font-bold mb-2" style={{ color: '#1B2B5B' }}>Verificando seu e-mail...</h1>
+            <Loader2 className="w-12 h-12 mx-auto mb-4 animate-spin" style={{ color: '#143A1F' }} />
+            <h1 className="text-xl font-bold mb-2" style={{ color: '#143A1F' }}>Verificando seu e-mail...</h1>
             <p className="text-gray-500">Aguarde um momento.</p>
           </>
         )}
@@ -71,12 +71,12 @@ function VerificarEmailContent() {
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-green-100 flex items-center justify-center">
               <CheckCircle className="w-8 h-8 text-green-600" />
             </div>
-            <h1 className="text-xl font-bold mb-2" style={{ color: '#1B2B5B' }}>E-mail verificado!</h1>
+            <h1 className="text-xl font-bold mb-2" style={{ color: '#143A1F' }}>E-mail verificado!</h1>
             <p className="text-gray-500 mb-6">{message}</p>
             <p className="text-sm text-gray-400 mb-4">Redirecionando para o seu painel...</p>
             <Link href="/dashboard"
               className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm text-white"
-              style={{ background: '#1B2B5B' }}>
+              style={{ background: '#143A1F' }}>
               Ir para o meu painel
             </Link>
           </>
@@ -87,12 +87,12 @@ function VerificarEmailContent() {
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-red-100 flex items-center justify-center">
               <XCircle className="w-8 h-8 text-red-600" />
             </div>
-            <h1 className="text-xl font-bold mb-2" style={{ color: '#1B2B5B' }}>Erro na verificação</h1>
+            <h1 className="text-xl font-bold mb-2" style={{ color: '#143A1F' }}>Erro na verificação</h1>
             <p className="text-gray-500 mb-6">{message}</p>
             <div className="space-y-3">
               <Link href="/login"
                 className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm text-white w-full justify-center"
-                style={{ background: '#1B2B5B' }}>
+                style={{ background: '#143A1F' }}>
                 Ir para Login
               </Link>
               <Link href="/register"
@@ -111,7 +111,7 @@ export default function VerificarEmailPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin" style={{ color: '#1B2B5B' }} />
+        <Loader2 className="w-8 h-8 animate-spin" style={{ color: '#143A1F' }} />
       </div>
     }>
       <VerificarEmailContent />

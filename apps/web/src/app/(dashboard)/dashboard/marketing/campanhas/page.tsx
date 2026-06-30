@@ -115,7 +115,7 @@ export default function CampanhasPage() {
         <button
           onClick={() => setShowForm(true)}
           className="flex items-center gap-1.5 sm:gap-2 px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-medium rounded-xl text-white transition-colors hover:opacity-90 shrink-0"
-          style={{ backgroundColor: '#1B2B5B' }}
+          style={{ backgroundColor: '#143A1F' }}
         >
           <Plus className="w-4 h-4" />
           <span className="hidden sm:inline">Nova Campanha</span>
@@ -234,7 +234,7 @@ export default function CampanhasPage() {
                   type="submit"
                   disabled={createMutation.isPending}
                   className="flex-1 px-4 py-2 text-sm font-medium rounded-xl text-white disabled:opacity-50"
-                  style={{ backgroundColor: '#1B2B5B' }}
+                  style={{ backgroundColor: '#143A1F' }}
                 >
                   {createMutation.isPending ? 'Criando...' : 'Criar Campanha'}
                 </button>
