@@ -86,6 +86,7 @@ import saasWebhookRoutes from './routes/billing/saas-webhook.js'
 import asaasWebhookRoutes from './routes/finance/webhook.js'
 import tenantRoutes from './routes/tenants/index.js'
 import repasseRoutes from './routes/repasse/index.js'
+import payablesRoutes from './routes/payables/index.js'
 import signatureRoutes from './routes/signatures/index.js'
 import auctionAIRoutes from './routes/auction-ai/index.js'
 import importRoutes from './routes/import/index.js'
@@ -835,6 +836,7 @@ async function bootstrap() {
   await app.register(asaasWebhookRoutes,       { prefix: '/api/v1/finance/webhook' })
   await app.register(tenantRoutes,             { prefix: '/api/v1/tenants' })
   await app.register(repasseRoutes,            { prefix: '/api/v1/repasse' })
+  await app.register(payablesRoutes,           { prefix: '/api/v1/payables' })
   await app.register(signatureRoutes,          { prefix: '/api/v1/signatures' })
   await app.register(auctionAIRoutes,          { prefix: '/api/v1/auction-ai' })
   await app.register(importRoutes,             { prefix: '/api/v1/import' })

@@ -94,7 +94,7 @@ Boa parte já existe (o schema Prisma já cita `legacyId` do Uniloc). Comparativ
 | Caixa / transações | `Transaction`, `FinancialForecast` | ✅ |
 | Nota fiscal de serviço | `FiscalNote` | ✅ |
 | **Rateio de repasse multi-proprietário/favorecido** | `RepasseBeneficiary` + `scheduleRepasseWithSplit` | ✅ **Implementado** |
-| **Contas a pagar + cheques pré-datados** | — | ⚠️ **Lacuna** |
+| **Contas a pagar + cheques pré-datados** | `AccountPayable` + `BankCheck` + rota `/payables` | ✅ **Implementado** |
 | **Conciliação bancária / CNAB retorno** | parcial (Asaas webhook) | ⚠️ **Parcial** |
 | **Acordos / renegociação de dívida** | — | ⚠️ **Lacuna** |
 | **Cálculo automatizado de rescisão** | campos existem, sem motor | ⚠️ **Parcial** |
