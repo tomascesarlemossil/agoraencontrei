@@ -12,7 +12,8 @@
 import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 import argon2 from 'argon2'
-import { randomBytes, createPrivateKey, createPublicKey } from 'node:crypto'
+import { randomBytes, createPublicKey } from 'node:crypto'
+import { loadLicensePrivateKey } from '../../services/license.service.js'
 import { env } from '../../utils/env.js'
 import {
   findOrCreateCustomer,
@@ -782,7 +783,9 @@ export default async function saasBillingRoutes(app: FastifyInstance) {
       return reply.send({ configured: false, publicKey: null })
     }
     try {
-      const priv = createPrivateKey(env.LICENSE_PRIVATE_KEY)
+      // usa o mesmo carregador tolerante a formato do issueLicense (aceita PEM
+      // com quebras reais, `\n` literais, aspas ou base64 puro)
+      const priv = loadLicensePrivateKey()
       const publicKey = createPublicKey(priv).export({ type: 'spki', format: 'pem' }).toString().trim()
       const publicKeyB64 = createPublicKey(priv).export({ type: 'spki', format: 'der' }).toString('base64')
       return reply.send({ configured: true, publicKey, publicKeyB64 })
