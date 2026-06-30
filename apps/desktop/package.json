@@ -17,7 +17,9 @@
     "artifactName": "AgoraEncontrei-Software-Setup.${ext}",
     "npmRebuild": false,
     "directories": { "output": "dist" },
-    "files": ["main.js", "preload.js", "license.js", "db.js", "renderer/**", "server/**"],
+    "//asar": "asar=false: o PostgreSQL embarcado (@embedded-postgres) resolve initdb.exe/postgres.exe via path.resolve(import.meta.url). Dentro de um app.asar isso vira um caminho não-executável (spawn ENOENT). Sem asar, os binários nativos ficam como arquivos reais em resources/app/ e o spawn funciona.",
+    "asar": false,
+    "files": ["main.js", "preload.js", "license.js", "db.js", "renderer/**", "server/**", "node_modules/**"],
     "win": {
       "target": ["nsis"]
     },

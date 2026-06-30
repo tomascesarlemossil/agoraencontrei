@@ -14,7 +14,6 @@
  */
 const path = require('node:path')
 const fs = require('node:fs')
-const { spawn } = require('node:child_process')
 
 const DB_NAME = 'agora'
 const DB_USER = 'agora'
@@ -37,6 +36,7 @@ async function startDatabase(userDataDir) {
     password: DB_PASS,
     port: DB_PORT,
     persistent: true,
+    onError: (msg) => { try { console.error('[postgres]', String(msg)) } catch { /* noop */ } },
   })
 
   if (firstRun) {
@@ -52,19 +52,30 @@ async function startDatabase(userDataDir) {
 }
 
 /**
- * Aplica as migrations Prisma no banco local (idempotente — só aplica o que falta).
- * Empacotamos a pasta prisma/ (schema + migrations) e o engine em ./server/prisma.
+ * Cria o schema no banco local aplicando o SQL das migrations diretamente, via
+ * o cliente `pg` do Postgres embarcado — SEM depender do CLI/engine do Prisma
+ * em runtime (que seria frágil dentro de um instalador). O bundle concatena
+ * todas as migrations em ./server/prisma/all-migrations.sql, em ordem.
+ *
+ * Idempotente o suficiente para a edição offline: só roda no firstRun (banco
+ * recém-criado e vazio). Em execuções seguintes o pgdata já existe e pulamos.
+ *
+ * @param {object} pg        instância do EmbeddedPostgres
+ * @param {string} prismaDir caminho de ./server/prisma
  */
-function runMigrations(databaseUrl, prismaDir) {
-  return new Promise((resolve, reject) => {
-    const env = { ...process.env, DATABASE_URL: databaseUrl, DIRECT_DATABASE_URL: databaseUrl }
-    const bin = process.platform === 'win32' ? 'prisma.cmd' : 'prisma'
-    const child = spawn(bin, ['migrate', 'deploy', `--schema=${path.join(prismaDir, 'schema.prisma')}`], {
-      env, stdio: 'inherit', shell: process.platform === 'win32',
-    })
-    child.on('error', reject)
-    child.on('exit', (code) => (code === 0 ? resolve() : reject(new Error('migrate deploy falhou: ' + code))))
-  })
+async function applySchema(pg, prismaDir) {
+  const sqlPath = path.join(prismaDir, 'all-migrations.sql')
+  if (!fs.existsSync(sqlPath)) {
+    throw new Error('Schema do banco não encontrado no pacote (all-migrations.sql).')
+  }
+  const sql = fs.readFileSync(sqlPath, 'utf8')
+  const client = pg.getPgClient(DB_NAME, '127.0.0.1')
+  await client.connect()
+  try {
+    await client.query(sql)
+  } finally {
+    await client.end().catch(() => {})
+  }
 }
 
-module.exports = { startDatabase, runMigrations, DB_NAME, DB_PORT }
+module.exports = { startDatabase, applySchema, DB_NAME, DB_PORT }
