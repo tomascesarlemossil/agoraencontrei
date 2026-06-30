@@ -20,19 +20,24 @@
 
 import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
+import { requirePermission } from '../../utils/permissions.js'
 
 const PAYABLE_STATUS = ['PENDING', 'PAID', 'CANCELLED'] as const
 const CHECK_STATUS = ['PENDING', 'CLEARED', 'CANCELLED'] as const
 
 export default async function payablesRoutes(app: FastifyInstance) {
   app.addHook('preHandler', app.authenticate)
+  // Enforcement de permissão por módulo: leitura exige 'view', escrita 'edit'.
+  // Opt-in: usuários sem permissões cadastradas continuam liberados.
+  const canView = requirePermission('payables', 'view')
+  const canEdit = requirePermission('payables', 'edit')
   const db = () => app.prisma as any
 
   // ── Contas a Pagar ────────────────────────────────────────────────────────
 
   // GET / — lista contas a pagar
   app.get('/', {
-    schema: { tags: ['payables'], summary: 'List accounts payable' },
+    preHandler: canView, schema: { tags: ['payables'], summary: 'List accounts payable' },
   }, async (req, reply) => {
     const q = req.query as any
     const where: any = { companyId: req.user.cid }
@@ -61,7 +66,7 @@ export default async function payablesRoutes(app: FastifyInstance) {
 
   // GET /summary — totais por status
   app.get('/summary', {
-    schema: { tags: ['payables'], summary: 'Accounts payable summary' },
+    preHandler: canView, schema: { tags: ['payables'], summary: 'Accounts payable summary' },
   }, async (req, reply) => {
     const companyId = req.user.cid
     const now = new Date()
@@ -91,7 +96,7 @@ export default async function payablesRoutes(app: FastifyInstance) {
 
   // POST / — cria conta a pagar
   app.post('/', {
-    schema: { tags: ['payables'], summary: 'Create account payable' },
+    preHandler: canEdit, schema: { tags: ['payables'], summary: 'Create account payable' },
   }, async (req, reply) => {
     const body = z.object({
       description: z.string().min(1),
@@ -129,7 +134,7 @@ export default async function payablesRoutes(app: FastifyInstance) {
 
   // PATCH /:id — atualiza campos editáveis
   app.patch('/:id', {
-    schema: { tags: ['payables'], summary: 'Update account payable' },
+    preHandler: canEdit, schema: { tags: ['payables'], summary: 'Update account payable' },
   }, async (req, reply) => {
     const { id } = req.params as { id: string }
     const existing = await db().accountPayable.findFirst({ where: { id, companyId: req.user.cid } })
@@ -164,7 +169,7 @@ export default async function payablesRoutes(app: FastifyInstance) {
 
   // POST /:id/pay — marca como paga
   app.post('/:id/pay', {
-    schema: { tags: ['payables'], summary: 'Mark account payable as paid' },
+    preHandler: canEdit, schema: { tags: ['payables'], summary: 'Mark account payable as paid' },
   }, async (req, reply) => {
     const { id } = req.params as { id: string }
     const existing = await db().accountPayable.findFirst({ where: { id, companyId: req.user.cid } })
@@ -191,7 +196,7 @@ export default async function payablesRoutes(app: FastifyInstance) {
 
   // DELETE /:id — cancela (não apaga, mantém histórico)
   app.delete('/:id', {
-    schema: { tags: ['payables'], summary: 'Cancel account payable' },
+    preHandler: canEdit, schema: { tags: ['payables'], summary: 'Cancel account payable' },
   }, async (req, reply) => {
     const { id } = req.params as { id: string }
     const existing = await db().accountPayable.findFirst({ where: { id, companyId: req.user.cid } })
@@ -204,7 +209,7 @@ export default async function payablesRoutes(app: FastifyInstance) {
 
   // GET /checks — lista cheques
   app.get('/checks', {
-    schema: { tags: ['payables'], summary: 'List bank checks' },
+    preHandler: canView, schema: { tags: ['payables'], summary: 'List bank checks' },
   }, async (req, reply) => {
     const q = req.query as any
     const where: any = { companyId: req.user.cid }
@@ -215,7 +220,7 @@ export default async function payablesRoutes(app: FastifyInstance) {
 
   // POST /checks — cria cheque (opcionalmente vinculado a uma conta a pagar)
   app.post('/checks', {
-    schema: { tags: ['payables'], summary: 'Create bank check' },
+    preHandler: canEdit, schema: { tags: ['payables'], summary: 'Create bank check' },
   }, async (req, reply) => {
     const body = z.object({
       checkNumber: z.string().min(1),
@@ -257,7 +262,7 @@ export default async function payablesRoutes(app: FastifyInstance) {
 
   // POST /checks/:id/clear — compensa cheque
   app.post('/checks/:id/clear', {
-    schema: { tags: ['payables'], summary: 'Clear bank check' },
+    preHandler: canEdit, schema: { tags: ['payables'], summary: 'Clear bank check' },
   }, async (req, reply) => {
     const { id } = req.params as { id: string }
     const existing = await db().bankCheck.findFirst({ where: { id, companyId: req.user.cid } })
@@ -271,7 +276,7 @@ export default async function payablesRoutes(app: FastifyInstance) {
 
   // POST /checks/:id/cancel — cancela cheque
   app.post('/checks/:id/cancel', {
-    schema: { tags: ['payables'], summary: 'Cancel bank check' },
+    preHandler: canEdit, schema: { tags: ['payables'], summary: 'Cancel bank check' },
   }, async (req, reply) => {
     const { id } = req.params as { id: string }
     const existing = await db().bankCheck.findFirst({ where: { id, companyId: req.user.cid } })

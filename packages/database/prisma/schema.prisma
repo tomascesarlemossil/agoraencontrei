@@ -1478,6 +1478,101 @@ model AgreementInstallment {
   @@map("agreement_installments")
 }
 
+/// Notificação formal/extrajudicial ao inquilino/locador (equivalente Uniloc notifics).
+/// Distinta de `Notification` (avisos in-app do sistema).
+model FormalNotice {
+  id          String    @id @default(cuid())
+  companyId   String
+  contractId  String?
+  legacyId    String?   // n_codnot
+  recipient   String    @default("TENANT") // TENANT | LANDLORD | OTHER
+  recipientName String?
+  type        String    // AVISO_COBRANCA | EXTRAJUDICIAL | DESPEJO | REAJUSTE | RENOVACAO | OUTRO
+  subject     String    // assunto
+  body        String?   // notas/conteúdo
+  status      String    @default("OPEN") // OPEN | SENT | ACKNOWLEDGED | RESOLVED | CANCELLED
+  noticeDate  DateTime  @default(now()) // data da notificação
+  resolvedAt  DateTime? // data de resolução
+  operator    String?   // userId que emitiu
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([companyId])
+  @@index([contractId])
+  @@index([status])
+  @@map("formal_notices")
+}
+
+// ── Conciliação bancária (extrato / CNAB retorno) ──────────────────────────
+// Equivalente Uniloc: movbanco + baixa por CNAB (campos BAIXACNAB).
+
+/// Lote de importação de extrato/retorno bancário.
+model BankReconciliation {
+  id            String               @id @default(cuid())
+  companyId     String
+  source        String               @default("CSV") // CNAB240 | CNAB400 | OFX | CSV | MANUAL
+  reference     String?              // nome do arquivo / referência
+  bankCode      String?
+  importedAt    DateTime             @default(now())
+  totalEntries  Int                  @default(0)
+  matchedCount  Int                  @default(0)
+  unmatchedCount Int                 @default(0)
+  status        String               @default("IMPORTED") // IMPORTED | RECONCILED | PARTIAL
+  createdBy     String?
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+
+  entries       BankStatementEntry[]
+
+  @@index([companyId])
+  @@index([status])
+  @@map("bank_reconciliations")
+}
+
+/// Movimento individual de um extrato/retorno bancário.
+model BankStatementEntry {
+  id               String             @id @default(cuid())
+  reconciliationId String
+  reconciliation   BankReconciliation @relation(fields: [reconciliationId], references: [id], onDelete: Cascade)
+  companyId        String
+  entryDate        DateTime
+  amount           Decimal            @db.Decimal(12, 2)
+  direction        String             @default("CREDIT") // CREDIT | DEBIT
+  description      String?
+  nossoNumero      String?            // identificador do boleto (liga ao Rental/Invoice)
+  documentNumber   String?
+  occurrenceCode   String?            // código de ocorrência CNAB (ex: 06 = liquidação)
+  matchStatus      String             @default("UNMATCHED") // UNMATCHED | MATCHED | IGNORED
+  matchedRentalId  String?
+  matchedInvoiceId String?
+  createdAt        DateTime           @default(now())
+
+  @@index([reconciliationId])
+  @@index([companyId])
+  @@index([matchStatus])
+  @@index([nossoNumero])
+  @@map("bank_statement_entries")
+}
+
+/// Permissão granular de um usuário por módulo (complementa UserRole).
+/// Equivalente Uniloc: usuarios.U_MODULO* (~50 flags por usuário).
+model UserModulePermission {
+  id         String   @id @default(cuid())
+  companyId  String
+  userId     String
+  module     String   // ex: properties | contracts | finance | payables | repasse | rescission | agreements | reports
+  canView    Boolean  @default(true)
+  canEdit    Boolean  @default(false)
+  canDelete  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([userId, module])
+  @@index([companyId])
+  @@index([userId])
+  @@map("user_module_permissions")
+}
+
 // ── NF-e / Notas Fiscais de Serviço ───────────────────────────────────────
 
 enum FiscalNoteStatus {
