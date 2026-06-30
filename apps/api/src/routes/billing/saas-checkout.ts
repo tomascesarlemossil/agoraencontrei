@@ -587,28 +587,56 @@ export default async function saasBillingRoutes(app: FastifyInstance) {
     if (!name || !email || !cpfCnpj) {
       return reply.status(400).send({ error: 'Informe nome, e-mail e CPF/CNPJ.' })
     }
-    const OFFLINE_PRICES: Record<string, number> = { basic: 797 } // licença anual
-    const value = OFFLINE_PRICES[plan]
-    if (!value) return reply.status(400).send({ error: 'Plano offline inválido.' })
+    // Catálogo offline: mensal/anual são RECORRENTES (assinatura); vitalícia é
+    // pagamento ÚNICO. Em todos, o externalReference 'offline-license:...' aciona
+    // a emissão da licença no webhook quando o pagamento é confirmado.
+    const OFFLINE_PLANS: Record<string, { value: number; cycle: 'MONTHLY' | 'YEARLY' | null; label: string }> = {
+      'offline-mensal':    { value: 197,  cycle: 'MONTHLY', label: 'Offline Mensal' },
+      'offline-anual':     { value: 1970, cycle: 'YEARLY',  label: 'Offline Anual' },
+      'offline-vitalicia': { value: 2497, cycle: null,      label: 'Offline Vitalícia' },
+      basic:               { value: 797,  cycle: null,      label: 'Offline (legado)' }, // compat
+    }
+    const def = OFFLINE_PLANS[plan]
+    if (!def) return reply.status(400).send({ error: 'Plano offline inválido.', available: Object.keys(OFFLINE_PLANS) })
     if (!env.ASAAS_API_KEY) return reply.status(503).send({ error: 'Pagamento indisponível no momento.' })
 
     try {
       const customer = await findOrCreateCustomer({ name, cpfCnpj, email, mobilePhone: body.phone })
       const due = new Date(); due.setDate(due.getDate() + 3)
+      const dueDate = due.toISOString().slice(0, 10)
+      const externalReference = `offline-license:${plan}:${email}`
+      const description = `Sistema Administrador AgoraEncontrei (offline) — ${def.label}`
+
+      if (def.cycle) {
+        // RECORRENTE — Asaas gera e envia o 1º boleto/PIX ao e-mail do cliente.
+        const sub = await createSubscription({
+          customer: customer.id,
+          billingType: 'UNDEFINED' as AsaasBillingType,
+          value: def.value,
+          nextDueDate: dueDate,
+          cycle: def.cycle,
+          description,
+          externalReference,
+        })
+        return reply.send({
+          success: true, recurring: true, subscriptionId: sub.id, value: def.value, plan,
+          message: 'Assinatura criada. O Asaas enviará o boleto/PIX da 1ª cobrança ao seu e-mail.',
+        })
+      }
+
+      // PAGAMENTO ÚNICO (vitalícia/legado)
       const charge = await createCharge({
         customer: customer.id,
         billingType: 'UNDEFINED' as AsaasBillingType,
-        value,
-        dueDate: due.toISOString().slice(0, 10),
-        description: `AgoraEncontrei Software (offline) — plano ${plan}`,
-        externalReference: `offline-license:${plan}:${email}`,
+        value: def.value,
+        dueDate,
+        description,
+        externalReference,
       })
       return reply.send({
-        success: true,
-        paymentUrl: charge.invoiceUrl,
-        pixCode: charge.pixCode,
-        boletoUrl: charge.bankSlipUrl,
-        value, plan,
+        success: true, recurring: false,
+        paymentUrl: charge.invoiceUrl, pixCode: charge.pixCode, boletoUrl: charge.bankSlipUrl,
+        value: def.value, plan,
       })
     } catch (err: any) {
       app.log.error(`[offline-purchase] ${err?.message || err}`)
