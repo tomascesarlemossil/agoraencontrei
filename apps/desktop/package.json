@@ -20,7 +20,8 @@
     "npmRebuild": false,
     "directories": { "output": "dist" },
     "asar": false,
-    "files": ["main.js", "preload.js", "license.js", "db.js", "renderer/**", "server/**", "node_modules/**"],
+    "files": ["main.js", "preload.js", "license.js", "db.js", "renderer/**", "node_modules/**"],
+    "extraResources": [{ "from": "server", "to": "server" }],
     "win": {
       "target": ["nsis"]
     },

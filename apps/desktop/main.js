@@ -19,6 +19,10 @@ const LOCAL_URL = process.env.AGORA_LOCAL_URL || `http://127.0.0.1:${WEB_PORT}`
 
 let mainWindow = null
 
+// O servidor embarcado vai como extraResources → no app instalado fica em
+// process.resourcesPath/server; em dev (não empacotado) fica em ./server.
+const SERVER_DIR = app.isPackaged ? path.join(process.resourcesPath, 'server') : path.join(__dirname, 'server')
+
 // Rede de segurança: um erro num processo filho (Postgres/servidor) jamais pode
 // derrubar o processo principal com o diálogo cru "A JavaScript error occurred".
 // Mostramos uma mensagem amigável e seguimos — o app continua de pé.
@@ -138,7 +142,7 @@ async function startEmbeddedServer() {
 
   // 2) Schema: enquanto o banco não estiver marcado como pronto, aplicamos o SQL
   //    das migrations direto (sem CLI Prisma) e gravamos o marcador no sucesso.
-  const prismaDir = path.join(__dirname, 'server', 'prisma')
+  const prismaDir = path.join(SERVER_DIR, 'prisma')
   if (!ready) {
     await applySchema(pg, prismaDir)
     fs.writeFileSync(readyMarker, JSON.stringify({ at: new Date().toISOString() }))
@@ -147,7 +151,7 @@ async function startEmbeddedServer() {
   // 3) API Fastify embarcada (se empacotada em ./server/api).
   //    JWT_SECRET/COOKIE_SECRET são obrigatórios (≥32 chars) — sem eles a API
   //    sai na validação de env. Como o app é local-only, segredos fixos servem.
-  const apiDir = path.join(__dirname, 'server', 'api')
+  const apiDir = path.join(SERVER_DIR, 'api')
   const apiEntry = findApiEntry(apiDir)
   if (apiEntry) {
     spawnNode(apiEntry, apiDir, {
@@ -165,7 +169,7 @@ async function startEmbeddedServer() {
   }
 
   // 4) Web Next standalone (se empacotado em ./server/web).
-  const webDir = path.join(__dirname, 'server', 'web')
+  const webDir = path.join(SERVER_DIR, 'web')
   const webEntry = findWebEntry(webDir)
   if (!webEntry) {
     throw new Error('Servidor web não encontrado no pacote (server/web). Reinstale o aplicativo.')

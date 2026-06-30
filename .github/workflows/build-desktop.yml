@@ -89,6 +89,22 @@ jobs:
       - name: Build installer (electron-builder)
         run: pnpm --filter @agoraencontrei/desktop dist
 
+      # Confirma que a API (node_modules + engine do Prisma) REALMENTE entrou no
+      # app empacotado — o electron-builder pode descartar node_modules aninhados.
+      # Falha o build (sem publicar) se faltar, evitando um instalador inútil.
+      - name: Verify API packed into app
+        shell: bash
+        run: |
+          # server/ vai como extraResources → fica em resources/server (NÃO em resources/app).
+          SRV="apps/desktop/dist/win-unpacked/resources/server"
+          echo "--- conteúdo de server/api ---"; ls "$SRV/api" 2>/dev/null || echo '  (server/api ausente!)'
+          test -f "$SRV/api/dist/server.js"            && echo "✓ dist/server.js"        || { echo "✗ dist/server.js";  exit 1; }
+          test -d "$SRV/api/node_modules/fastify"      && echo "✓ fastify"               || { echo "✗ fastify";        exit 1; }
+          test -d "$SRV/api/node_modules/@prisma/client" && echo "✓ @prisma/client"      || { echo "✗ @prisma/client"; exit 1; }
+          ls "$SRV/api/node_modules/.prisma/client/"*query_engine-windows*.node >/dev/null 2>&1 && echo "✓ engine windows" || { echo "✗ engine windows"; exit 1; }
+          test -d "$SRV/web/apps/web/.next"            && echo "✓ web .next"             || { echo "✗ web .next";      exit 1; }
+          echo "Tamanho do app empacotado (resources):"; du -sh "apps/desktop/dist/win-unpacked/resources" 2>/dev/null || true
+
       - name: Upload .exe artifact
         uses: actions/upload-artifact@v4
         with:
