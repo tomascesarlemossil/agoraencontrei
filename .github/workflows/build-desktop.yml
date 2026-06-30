@@ -76,9 +76,15 @@ jobs:
           echo '--- apps/api/dist ---'; ls apps/api/dist 2>/dev/null | head -20 || echo '  (vazio)'
           echo '--- apps/web/.next/standalone ---'; ls apps/web/.next/standalone 2>/dev/null | head -20 || echo '  (vazio)'
 
-      - name: Bundle embedded server
+      - name: Bundle embedded server (web + prisma SQL)
         run: pnpm --filter @agoraencontrei/desktop bundle
         continue-on-error: true
+
+      # Monta a API Fastify offline: pnpm deploy (node_modules achatado) + dist +
+      # Prisma Client com engine do Windows. Falha aqui DEVE quebrar o build —
+      # um instalador sem a API não serve para o modo 100% offline.
+      - name: Assemble offline API (pnpm deploy + prisma)
+        run: pnpm --filter @agoraencontrei/desktop assemble-api
 
       - name: Build installer (electron-builder)
         run: pnpm --filter @agoraencontrei/desktop dist
