@@ -2,6 +2,7 @@ import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 import { createAuditLog } from '../../services/audit.service.js'
 import { assertWithinPlanQuota, PlanLimitError } from '../../services/plan-gating.service.js'
+import { invalidateSiteSettingsCache } from '../public/index.js'
 
 const UpdateUserBody = z.object({
   name: z.string().min(2).max(100).optional(),
@@ -263,6 +264,11 @@ export default async function usersRoutes(app: FastifyInstance) {
     const newSettings = { ...currentSettings, ...updates }
 
     await app.prisma.company.update({ where: { id: req.user.cid }, data: { settings: newSettings } })
+
+    // Invalida o cache público do /site-settings para a mudança (ex.: imagem
+    // do hero) refletir na home imediatamente, sem esperar o TTL.
+    await invalidateSiteSettingsCache(app.redis, req.user.cid).catch(() => {})
+
     return reply.send({ success: true, settings: newSettings })
   })
 

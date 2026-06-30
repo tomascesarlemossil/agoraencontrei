@@ -220,6 +220,17 @@ async function cacheSet(redis: FastifyInstance['redis'], key: string, value: unk
   memCacheSet(key, value, ttl)
 }
 
+/**
+ * Invalida o cache do /site-settings de uma empresa (Redis + memória).
+ * Deve ser chamado pelo admin sempre que salvar a config do site, para a
+ * mudança (ex.: imagem do hero) refletir na hora em vez de esperar o TTL.
+ */
+export async function invalidateSiteSettingsCache(redis: FastifyInstance['redis'], companyId: string): Promise<void> {
+  const key = `pub:site-settings:v1:${companyId}`
+  _memCache.delete(key)
+  if (redis) { try { await redis.del(key) } catch { /* ignore */ } }
+}
+
 export default async function publicRoutes(app: FastifyInstance) {
   // No auth required — public endpoints
 
@@ -985,6 +996,8 @@ export default async function publicRoutes(app: FastifyInstance) {
 
     const siteSettingsResult = {
       // ── Legado (compatibilidade) ──────────────────────────────────────
+      // O painel "Configurações do site" (users/site-settings) grava estes
+      // campos no topo de settings; por isso o topo tem precedência.
       heroVideoUrl:  settings.heroVideoUrl  ?? siteConfig.heroVideoUrl  ?? null,
       heroVideoType: settings.heroVideoType ?? siteConfig.heroVideoType ?? 'youtube',
       logoUrl:       settings.logoUrl       ?? company.logoUrl          ?? null,
@@ -1080,7 +1093,7 @@ export default async function publicRoutes(app: FastifyInstance) {
       presentationTitle:      siteConfig.presentationTitle      ?? null,
       presentationSubtitle:   siteConfig.presentationSubtitle   ?? null,
     };
-    await cacheSet(app.redis, cacheKey, siteSettingsResult, 600); // 10 min cache
+    await cacheSet(app.redis, cacheKey, siteSettingsResult, 60); // 60s — config é editável no admin, cache curto + invalidação no save
     return reply.send(siteSettingsResult);
   })
 
