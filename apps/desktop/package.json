@@ -20,8 +20,24 @@
     "npmRebuild": false,
     "directories": { "output": "dist" },
     "asar": false,
-    "files": ["main.js", "preload.js", "license.js", "db.js", "renderer/**", "node_modules/**"],
-    "extraResources": [{ "from": "server", "to": "server" }],
+    "files": [
+      "main.js", "preload.js", "license.js", "db.js", "renderer/**", "node_modules/**",
+      "!**/*.map", "!**/*.d.ts", "!**/*.md", "!**/*.markdown",
+      "!**/__tests__/**", "!**/.github/**"
+    ],
+    "extraResources": [{
+      "from": "server",
+      "to": "server",
+      "filter": [
+        "**/*",
+        "!**/*.map", "!**/*.d.ts",
+        "!**/*.md", "!**/*.markdown",
+        "!**/LICENSE*", "!**/LICENCE*", "!**/CHANGELOG*", "!**/README*", "!**/AUTHORS*",
+        "!**/.github/**", "!**/__tests__/**", "!**/.nyc_output/**", "!**/coverage/**",
+        "!**/libquery_engine-*", "!**/*query_engine-debian*", "!**/*query_engine-linux*",
+        "!**/*query_engine-darwin*", "!**/*.dylib", "!**/*.so.node"
+      ]
+    }],
     "win": {
       "target": ["nsis"]
     },
