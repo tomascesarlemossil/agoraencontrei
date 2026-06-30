@@ -10,6 +10,7 @@
  */
 
 import type { FastifyInstance } from 'fastify'
+import { requirePermission } from '../../utils/permissions.js'
 import { z } from 'zod'
 
 const TYPES = ['AVISO_COBRANCA', 'EXTRAJUDICIAL', 'DESPEJO', 'REAJUSTE', 'RENOVACAO', 'OUTRO'] as const
@@ -17,9 +18,11 @@ const RECIPIENTS = ['TENANT', 'LANDLORD', 'OTHER'] as const
 
 export default async function noticesRoutes(app: FastifyInstance) {
   app.addHook('preHandler', app.authenticate)
+  const canView = requirePermission('notices', 'view')
+  const canEdit = requirePermission('notices', 'edit')
   const db = () => app.prisma as any
 
-  app.get('/', { schema: { tags: ['notices'], summary: 'List formal notices' } }, async (req, reply) => {
+  app.get('/', { preHandler: canView, schema: { tags: ['notices'], summary: 'List formal notices' } }, async (req, reply) => {
     const q = req.query as any
     const where: any = { companyId: req.user.cid }
     if (q.status) where.status = q.status
@@ -29,7 +32,7 @@ export default async function noticesRoutes(app: FastifyInstance) {
     return reply.send({ success: true, data: rows })
   })
 
-  app.post('/', { schema: { tags: ['notices'], summary: 'Create formal notice' } }, async (req, reply) => {
+  app.post('/', { preHandler: canEdit, schema: { tags: ['notices'], summary: 'Create formal notice' } }, async (req, reply) => {
     const b = z.object({
       contractId: z.string().optional(),
       recipient: z.enum(RECIPIENTS).default('TENANT'),
@@ -61,7 +64,7 @@ export default async function noticesRoutes(app: FastifyInstance) {
     return reply.status(201).send({ success: true, data: created })
   })
 
-  app.patch('/:id', { schema: { tags: ['notices'], summary: 'Update formal notice' } }, async (req, reply) => {
+  app.patch('/:id', { preHandler: canEdit, schema: { tags: ['notices'], summary: 'Update formal notice' } }, async (req, reply) => {
     const { id } = req.params as { id: string }
     const existing = await db().formalNotice.findFirst({ where: { id, companyId: req.user.cid } })
     if (!existing) return reply.status(404).send({ error: 'NOT_FOUND' })
@@ -83,7 +86,7 @@ export default async function noticesRoutes(app: FastifyInstance) {
     return reply.send({ success: true, data: updated })
   })
 
-  app.post('/:id/send', { schema: { tags: ['notices'], summary: 'Mark notice as sent' } }, async (req, reply) => {
+  app.post('/:id/send', { preHandler: canEdit, schema: { tags: ['notices'], summary: 'Mark notice as sent' } }, async (req, reply) => {
     const { id } = req.params as { id: string }
     const existing = await db().formalNotice.findFirst({ where: { id, companyId: req.user.cid } })
     if (!existing) return reply.status(404).send({ error: 'NOT_FOUND' })
@@ -91,7 +94,7 @@ export default async function noticesRoutes(app: FastifyInstance) {
     return reply.send({ success: true, data: updated })
   })
 
-  app.post('/:id/resolve', { schema: { tags: ['notices'], summary: 'Resolve notice' } }, async (req, reply) => {
+  app.post('/:id/resolve', { preHandler: canEdit, schema: { tags: ['notices'], summary: 'Resolve notice' } }, async (req, reply) => {
     const { id } = req.params as { id: string }
     const existing = await db().formalNotice.findFirst({ where: { id, companyId: req.user.cid } })
     if (!existing) return reply.status(404).send({ error: 'NOT_FOUND' })
@@ -99,7 +102,7 @@ export default async function noticesRoutes(app: FastifyInstance) {
     return reply.send({ success: true, data: updated })
   })
 
-  app.delete('/:id', { schema: { tags: ['notices'], summary: 'Cancel notice' } }, async (req, reply) => {
+  app.delete('/:id', { preHandler: canEdit, schema: { tags: ['notices'], summary: 'Cancel notice' } }, async (req, reply) => {
     const { id } = req.params as { id: string }
     const existing = await db().formalNotice.findFirst({ where: { id, companyId: req.user.cid } })
     if (!existing) return reply.status(404).send({ error: 'NOT_FOUND' })

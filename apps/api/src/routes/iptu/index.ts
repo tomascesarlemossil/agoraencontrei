@@ -11,15 +11,18 @@
  */
 
 import type { FastifyInstance } from 'fastify'
+import { requirePermission } from '../../utils/permissions.js'
 import { z } from 'zod'
 import { generateInstallmentPlan } from '../../services/agreement.service.js'
 
 export default async function iptuRoutes(app: FastifyInstance) {
   app.addHook('preHandler', app.authenticate)
+  const canView = requirePermission('iptu', 'view')
+  const canEdit = requirePermission('iptu', 'edit')
   const db = () => app.prisma as any
 
   // POST / — cria carnê e gera parcelas
-  app.post('/', { schema: { tags: ['iptu'], summary: 'Create IPTU carnê with installments' } }, async (req, reply) => {
+  app.post('/', { preHandler: canEdit, schema: { tags: ['iptu'], summary: 'Create IPTU carnê with installments' } }, async (req, reply) => {
     const b = z.object({
       propertyId: z.string().optional(),
       contractId: z.string().optional(),
@@ -58,7 +61,7 @@ export default async function iptuRoutes(app: FastifyInstance) {
   })
 
   // GET / — lista carnês
-  app.get('/', { schema: { tags: ['iptu'], summary: 'List IPTU carnês' } }, async (req, reply) => {
+  app.get('/', { preHandler: canView, schema: { tags: ['iptu'], summary: 'List IPTU carnês' } }, async (req, reply) => {
     const q = req.query as any
     const where: any = { companyId: req.user.cid }
     if (q.propertyId) where.propertyId = q.propertyId
@@ -69,7 +72,7 @@ export default async function iptuRoutes(app: FastifyInstance) {
   })
 
   // GET /:id — carnê + parcelas
-  app.get('/:id', { schema: { tags: ['iptu'], summary: 'Get IPTU carnê' } }, async (req, reply) => {
+  app.get('/:id', { preHandler: canView, schema: { tags: ['iptu'], summary: 'Get IPTU carnê' } }, async (req, reply) => {
     const { id } = req.params as { id: string }
     const row = await db().iptuCarne.findFirst({ where: { id, companyId: req.user.cid }, include: { schedule: { orderBy: { number: 'asc' } } } })
     if (!row) return reply.status(404).send({ error: 'NOT_FOUND' })
@@ -77,7 +80,7 @@ export default async function iptuRoutes(app: FastifyInstance) {
   })
 
   // POST /:id/installments/:number/pay
-  app.post('/:id/installments/:number/pay', { schema: { tags: ['iptu'], summary: 'Pay IPTU installment' } }, async (req, reply) => {
+  app.post('/:id/installments/:number/pay', { preHandler: canEdit, schema: { tags: ['iptu'], summary: 'Pay IPTU installment' } }, async (req, reply) => {
     const { id, number } = req.params as { id: string; number: string }
     const carne = await db().iptuCarne.findFirst({ where: { id, companyId: req.user.cid }, select: { id: true, status: true } })
     if (!carne) return reply.status(404).send({ error: 'NOT_FOUND' })
@@ -96,7 +99,7 @@ export default async function iptuRoutes(app: FastifyInstance) {
   })
 
   // POST /:id/cancel
-  app.post('/:id/cancel', { schema: { tags: ['iptu'], summary: 'Cancel IPTU carnê' } }, async (req, reply) => {
+  app.post('/:id/cancel', { preHandler: canEdit, schema: { tags: ['iptu'], summary: 'Cancel IPTU carnê' } }, async (req, reply) => {
     const { id } = req.params as { id: string }
     const carne = await db().iptuCarne.findFirst({ where: { id, companyId: req.user.cid }, select: { id: true } })
     if (!carne) return reply.status(404).send({ error: 'NOT_FOUND' })

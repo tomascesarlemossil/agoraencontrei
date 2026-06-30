@@ -10,6 +10,7 @@
  */
 
 import type { FastifyInstance } from 'fastify'
+import { requirePermission } from '../../utils/permissions.js'
 import { z } from 'zod'
 import {
   parseCsvStatement,
@@ -21,10 +22,12 @@ import {
 
 export default async function reconciliationRoutes(app: FastifyInstance) {
   app.addHook('preHandler', app.authenticate)
+  const canView = requirePermission('reconciliation', 'view')
+  const canEdit = requirePermission('reconciliation', 'edit')
   const db = () => app.prisma as any
 
   // POST /import — importa + concilia
-  app.post('/import', {
+  app.post('/import', { preHandler: canEdit,
     schema: { tags: ['reconciliation'], summary: 'Import statement and reconcile' },
   }, async (req, reply) => {
     const b = z.object({
@@ -132,7 +135,7 @@ export default async function reconciliationRoutes(app: FastifyInstance) {
   })
 
   // GET / — lista lotes
-  app.get('/', { schema: { tags: ['reconciliation'], summary: 'List reconciliation batches' } }, async (req, reply) => {
+  app.get('/', { preHandler: canView, schema: { tags: ['reconciliation'], summary: 'List reconciliation batches' } }, async (req, reply) => {
     const rows = await db().bankReconciliation.findMany({
       where: { companyId: req.user.cid }, orderBy: { importedAt: 'desc' }, take: 100,
     })
@@ -140,7 +143,7 @@ export default async function reconciliationRoutes(app: FastifyInstance) {
   })
 
   // GET /:id — lote + entradas
-  app.get('/:id', { schema: { tags: ['reconciliation'], summary: 'Get reconciliation with entries' } }, async (req, reply) => {
+  app.get('/:id', { preHandler: canView, schema: { tags: ['reconciliation'], summary: 'Get reconciliation with entries' } }, async (req, reply) => {
     const { id } = req.params as { id: string }
     const row = await db().bankReconciliation.findFirst({
       where: { id, companyId: req.user.cid },
@@ -151,7 +154,7 @@ export default async function reconciliationRoutes(app: FastifyInstance) {
   })
 
   // POST /entries/:id/match — concilia manualmente uma entrada a um aluguel
-  app.post('/entries/:id/match', { schema: { tags: ['reconciliation'], summary: 'Manually match an entry' } }, async (req, reply) => {
+  app.post('/entries/:id/match', { preHandler: canEdit, schema: { tags: ['reconciliation'], summary: 'Manually match an entry' } }, async (req, reply) => {
     const { id } = req.params as { id: string }
     const b = z.object({ rentalId: z.string(), settle: z.boolean().default(false) }).parse(req.body)
 

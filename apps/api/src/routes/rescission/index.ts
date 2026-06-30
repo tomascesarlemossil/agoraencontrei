@@ -11,6 +11,7 @@
  */
 
 import type { FastifyInstance } from 'fastify'
+import { requirePermission } from '../../utils/permissions.js'
 import { z } from 'zod'
 import { calculateRescission, type RescissionInput } from '../../services/rescission.service.js'
 
@@ -29,6 +30,8 @@ const inputSchema = z.object({
 
 export default async function rescissionRoutes(app: FastifyInstance) {
   app.addHook('preHandler', app.authenticate)
+  const canView = requirePermission('rescission', 'view')
+  const canEdit = requirePermission('rescission', 'edit')
   const db = () => app.prisma as any
 
   /** Monta o input do cálculo a partir do body + (opcional) dados do contrato. */
@@ -76,7 +79,7 @@ export default async function rescissionRoutes(app: FastifyInstance) {
   }
 
   // POST /preview — calcula sem persistir
-  app.post('/preview', {
+  app.post('/preview', { preHandler: canEdit,
     schema: { tags: ['rescission'], summary: 'Preview rescission settlement (no save)' },
   }, async (req, reply) => {
     const body = inputSchema.parse(req.body)
@@ -86,7 +89,7 @@ export default async function rescissionRoutes(app: FastifyInstance) {
   })
 
   // POST /contracts/:contractId — calcula e persiste
-  app.post('/contracts/:contractId', {
+  app.post('/contracts/:contractId', { preHandler: canEdit,
     schema: { tags: ['rescission'], summary: 'Calculate and persist rescission for a contract' },
   }, async (req, reply) => {
     const { contractId } = req.params as { contractId: string }
@@ -123,7 +126,7 @@ export default async function rescissionRoutes(app: FastifyInstance) {
   })
 
   // GET /contracts/:contractId — lista rescisões do contrato
-  app.get('/contracts/:contractId', {
+  app.get('/contracts/:contractId', { preHandler: canView,
     schema: { tags: ['rescission'], summary: 'List rescissions of a contract' },
   }, async (req, reply) => {
     const { contractId } = req.params as { contractId: string }
@@ -135,7 +138,7 @@ export default async function rescissionRoutes(app: FastifyInstance) {
   })
 
   // POST /:id/confirm — confirma a rescisão
-  app.post('/:id/confirm', {
+  app.post('/:id/confirm', { preHandler: canEdit,
     schema: { tags: ['rescission'], summary: 'Confirm a rescission' },
   }, async (req, reply) => {
     const { id } = req.params as { id: string }
