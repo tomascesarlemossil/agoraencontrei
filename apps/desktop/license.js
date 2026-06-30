@@ -17,7 +17,7 @@ const crypto = require('node:crypto')
 // Chave pública do emissor (PLACEHOLDER — trocar pela real na geração de chaves).
 // Formato SPKI PEM ed25519.
 const PUBLIC_KEY = `-----BEGIN PUBLIC KEY-----
-MCowBQYDK2VwAyEAGb9ECWmEzf6FQbrBZ9w7lshQhqowtrbLDFw4rXAxZuE=
+MCowBQYDK2VwAyEAUW3071JVqE3WKlex0rgdFzz211xHgngIAbQzGFpPa38=
 -----END PUBLIC KEY-----`
 
 const GRACE_DAYS = 30
