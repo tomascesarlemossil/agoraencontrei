@@ -19,6 +19,41 @@ import { safeStringEqual } from '../../utils/crypto-safe.js'
 import { notify } from '../../services/notification.service.js'
 import { dispatchWebhooks } from '../../services/outgoing-webhook.service.js'
 import { recordEvent } from '../../services/system-event.service.js'
+import { issueLicense, isLicensingConfigured, oneYearFromNow } from '../../services/license.service.js'
+import { sendEmail } from '../../services/email.service.js'
+
+/**
+ * Venda da edição OFFLINE: quando o Asaas confirma um pagamento cujo
+ * externalReference é "offline-license:<plan>:<email>", emitimos a chave de
+ * licença assinada e enviamos por e-mail com o link do instalador. Totalmente
+ * isolado do fluxo de aluguel — qualquer erro aqui é logado e não afeta o resto.
+ */
+async function handleOfflineLicensePurchase(app: FastifyInstance, externalRef: string): Promise<void> {
+  const parts = externalRef.split(':')          // ["offline-license", plan, email...]
+  const plan = parts[1] || 'basic'
+  const email = parts.slice(2).join(':').trim() // e-mail pode conter ':'? não, mas é defensivo
+  if (!email) { app.log.warn('[offline-license] sem e-mail no externalReference'); return }
+  if (!isLicensingConfigured()) { app.log.error('[offline-license] LICENSE_PRIVATE_KEY ausente'); return }
+
+  const expires = oneYearFromNow()
+  const key = issueLicense({ customer: email, plan, email, expires })
+  const downloadUrl = env.SOFTWARE_DOWNLOAD_URL || 'https://www.agoraencontrei.com.br/software'
+
+  const html = `
+    <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;color:#1B2B5B">
+      <h2>Sua licença do AgoraEncontrei Software</h2>
+      <p>Pagamento confirmado — obrigado pela compra! 🎉</p>
+      <p><strong>1.</strong> Baixe o instalador: <a href="${downloadUrl}">${downloadUrl}</a></p>
+      <p><strong>2.</strong> Instale e, na tela de ativação, cole a sua chave de licença:</p>
+      <pre style="background:#f4f6fb;border:1px solid #d7def0;border-radius:8px;padding:12px;white-space:pre-wrap;word-break:break-all;font-size:12px">${key}</pre>
+      <p>Plano: <strong>${plan}</strong> · Validade: <strong>${expires}</strong></p>
+      <p style="color:#6b7799;font-size:13px">Guarde este e-mail. Em caso de dúvida, responda esta mensagem.</p>
+    </div>`
+
+  const res = await sendEmail({ to: email, subject: 'Sua licença — AgoraEncontrei Software', html })
+  if (res.success) app.log.info(`[offline-license] licença enviada para ${email}`)
+  else app.log.error(`[offline-license] falha ao enviar e-mail: ${res.error}`)
+}
 
 function isUniqueConstraintError(err: any): boolean {
   return err?.code === 'P2002'
@@ -140,6 +175,12 @@ export default async function asaasWebhookRoutes(app: FastifyInstance) {
       switch (event) {
         case 'PAYMENT_RECEIVED':
         case 'PAYMENT_CONFIRMED': {
+          // 0. Venda da edição OFFLINE — emite licença + e-mail (isolado do aluguel).
+          if (externalRef?.startsWith('offline-license:')) {
+            await handleOfflineLicensePurchase(app, externalRef)
+              .catch((e: any) => app.log.error(`[offline-license] ${e?.message || e}`))
+          }
+
           // 1. Atualiza o rental para PAID
           if (rentalId) {
             await app.prisma.rental.update({

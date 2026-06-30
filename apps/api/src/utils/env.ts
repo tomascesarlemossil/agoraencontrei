@@ -64,6 +64,10 @@ const envSchema = z.object({
   ASAAS_WALLET_ID:      z.string().optional(),
   ASAAS_WEBHOOK_SECRET: z.string().optional(),
 
+  // Licenciamento da edição offline (assina chaves ed25519). PEM PKCS8.
+  LICENSE_PRIVATE_KEY:  z.string().optional(),
+  SOFTWARE_DOWNLOAD_URL: z.string().optional(), // link do instalador .exe enviado ao cliente
+
   // Email
   SMTP_HOST: z.string().optional(),
   SMTP_PORT: z.coerce.number().optional(),
