@@ -4,6 +4,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useEffect, useRef, useState } from 'react'
 import { useBodyScrollLock } from '@/lib/use-body-scroll-lock'
+import { ThemeToggle } from './ThemeToggle'
 import {
   Menu, X, ChevronDown, ChevronRight,
   LayoutDashboard, UserCheck, Users, CreditCard,
@@ -239,6 +240,9 @@ export function Navbar() {
                 </div>
               )}
             </div>
+
+            {/* Light/dark toggle (public site) */}
+            <ThemeToggle className="flex items-center justify-center p-2 rounded-lg text-white/80 hover:text-white hover:bg-white/10 transition-colors border border-white/20" />
 
             <a
               href="https://wa.me/5516981010004?text=Olá! Vim pelo site e gostaria de mais informações."

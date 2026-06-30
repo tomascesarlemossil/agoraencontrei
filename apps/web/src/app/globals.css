@@ -182,6 +182,63 @@ html {
   text-size-adjust: 100%;
 }
 
+/* ── Public site theming (light/dark) ─────────────────────────────────────── */
+/* The scope lives on the public layout wrapper (#ae-root.ae-light/.ae-dark),  */
+/* set server-side + by a no-flash inline script and toggled from the navbar.  */
+/* Dark mode only flips background-type tokens + a curated set of hardcoded     */
+/* light utilities; the gold accent and navy chrome are intentionally kept.    */
+#ae-root {
+  --ae-surface: #f8f6f1;                       /* page background */
+  --ae-card: #ffffff;                          /* cards / panels  */
+  --ae-heading: var(--site-primary-color, #1B2B5B); /* titles on light surfaces */
+  --ae-body: #4b5563;                          /* gray-600 body   */
+  --ae-muted: #6b7280;                         /* gray-500 muted  */
+  --ae-border: #e5e7eb;                        /* gray-200 border */
+  background-color: var(--ae-surface);
+  transition: background-color 0.3s ease;
+}
+
+#ae-root.ae-dark {
+  --ae-surface: #0e1117;
+  --ae-card: #171a21;
+  --ae-heading: #f3f4f6;
+  --ae-body: #c7ccd4;
+  --ae-muted: #9aa1ab;
+  --ae-border: rgba(255, 255, 255, 0.08);
+  /* Flip the background-only site tokens so var()-driven sections darken.      */
+  /* (--site-primary-color / --site-accent-color are left intact: they are     */
+  /*  reused for navy chrome backgrounds and the gold accent.)                  */
+  --site-background-color: #0e1117;
+  --site-secondary-color: #0e1117;
+  --site-card-bg: #171a21;
+  --site-card-border: rgba(255, 255, 255, 0.08);
+  --site-wave: #0e1117;
+  color-scheme: dark;
+}
+
+/* Map common hardcoded light utilities onto the dark surfaces. The #ae-root id */
+/* keeps these above the light-page input fixes (#main-content …) in cascade.   */
+#ae-root.ae-dark .bg-white { background-color: var(--ae-card) !important; }
+#ae-root.ae-dark .text-gray-900,
+#ae-root.ae-dark .text-gray-800 { color: var(--ae-heading) !important; }
+#ae-root.ae-dark .text-gray-700,
+#ae-root.ae-dark .text-gray-600 { color: var(--ae-body) !important; }
+#ae-root.ae-dark .text-gray-500,
+#ae-root.ae-dark .text-gray-400 { color: var(--ae-muted) !important; }
+#ae-root.ae-dark .border-gray-100,
+#ae-root.ae-dark .border-gray-200,
+#ae-root.ae-dark .border-gray-300 { border-color: var(--ae-border) !important; }
+/* Inputs on dark public surfaces: dark field, light text. */
+#ae-root.ae-dark input:not([type='checkbox']):not([type='radio']),
+#ae-root.ae-dark textarea,
+#ae-root.ae-dark select {
+  background-color: var(--ae-card) !important;
+  color: var(--ae-heading) !important;
+  border-color: var(--ae-border) !important;
+}
+#ae-root.ae-dark input::placeholder,
+#ae-root.ae-dark textarea::placeholder { color: var(--ae-muted) !important; }
+
 /* ── Accessibility: honor prefers-reduced-motion ──────────────────────────── */
 /* Users who request reduced motion get near-instant transitions/animations.  */
 /* Framer Motion reveals already opt out via useReducedMotion; this is the     */

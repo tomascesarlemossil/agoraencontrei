@@ -40,9 +40,16 @@ const FOOTER_SERVICOS = [
   { href: '/anunciar', label: 'Cadastre seu Imóvel' },
 ]
 
+// No-flash theme bootstrap: resolves the saved theme (cookie → localStorage →
+// system preference) and applies the `.ae-light` / `.ae-dark` class to the
+// wrapper before first paint. Scoped to the public layout only.
+const AE_THEME_SCRIPT = `(function(){try{var m=document.cookie.match(/(?:^|; )ae-theme=([^;]+)/);var t=m?m[1]:null;if(!t){try{t=localStorage.getItem('ae-theme')}catch(e){}}if(!t){t=(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light'}var el=document.currentScript.parentElement;el.classList.remove('ae-light','ae-dark');el.classList.add(t==='dark'?'ae-dark':'ae-light')}catch(e){}})();`
+
 export default function PublicLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#f8f6f1' }}>
+    <div id="ae-root" suppressHydrationWarning className="min-h-screen ae-light" style={{ backgroundColor: 'var(--ae-surface)' }}>
+      {/* eslint-disable-next-line @next/next/no-sync-scripts */}
+      <script dangerouslySetInnerHTML={{ __html: AE_THEME_SCRIPT }} />
       {/* Top info bar */}
       <div style={{ backgroundColor: '#1B2B5B' }} className="hidden lg:block">
         <div className="max-w-7xl mx-auto px-6 h-9 flex items-center justify-between text-xs text-white/70">

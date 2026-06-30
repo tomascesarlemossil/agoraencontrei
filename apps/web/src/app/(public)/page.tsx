@@ -443,10 +443,10 @@ export default async function HomePage() {
 
       {/* ── SMART QUIZ + CTA AVALIAÇÃO ─────────────────────────────────── */}
       <SmartQuizModal>
-      <section style={{ backgroundColor: theme.colors.secondary }} className="py-14">
+      <section style={{ backgroundColor: 'var(--site-secondary-color, #f8f6f1)' }} className="py-14">
         <div className="max-w-5xl mx-auto px-4 sm:px-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 rounded-3xl overflow-hidden shadow-xl border border-gray-200/60">
-            <div className="px-8 py-10 flex flex-col justify-center" style={{ backgroundColor: theme.colors.secondary }}>
+            <div className="px-8 py-10 flex flex-col justify-center" style={{ backgroundColor: 'var(--site-secondary-color, #f8f6f1)' }}>
               <div className="inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-bold mb-5 w-fit" style={{ backgroundColor: theme.colors.badge, color: theme.colors.badgeText }}>
                 <Sparkles className="w-3.5 h-3.5" />
                 Busca Inteligente com IA
@@ -462,7 +462,7 @@ export default async function HomePage() {
             </div>
             <div className="hidden lg:block absolute" style={{ display: 'none' }} />
             <div className="bg-white px-8 py-10 flex flex-col justify-center border-t lg:border-t-0 lg:border-l border-gray-200">
-              <h2 className="text-2xl sm:text-3xl font-bold mb-3" style={{ color: 'var(--site-primary-color, #1B2B5B)', fontFamily: '"Playfair Display", Georgia, serif' }}>
+              <h2 className="text-2xl sm:text-3xl font-bold mb-3" style={{ color: 'var(--ae-heading)', fontFamily: '"Playfair Display", Georgia, serif' }}>
                 Quer saber quanto vale seu imóvel?
               </h2>
               <p className="text-gray-500 text-sm mb-8 max-w-sm leading-relaxed">
@@ -472,7 +472,7 @@ export default async function HomePage() {
                 <Link href="/avaliacao" className="px-7 py-3 rounded-xl text-sm font-bold transition-all hover:brightness-110 text-center" style={{ backgroundColor: 'var(--site-accent-color, #C9A84C)', color: 'var(--site-primary-color, #1B2B5B)' }}>
                   Avaliação imediata
                 </Link>
-                <a href="https://wa.me/5516981010004?text=Olá! Gostaria de uma avaliação imediata do meu imóvel." target="_blank" rel="noreferrer" className="px-7 py-3 rounded-xl text-sm font-bold border-2 transition-all hover:bg-[#1B2B5B] hover:text-white text-center" style={{ borderColor: 'var(--site-primary-color, #1B2B5B)', color: 'var(--site-primary-color, #1B2B5B)' }}>
+                <a href="https://wa.me/5516981010004?text=Olá! Gostaria de uma avaliação imediata do meu imóvel." target="_blank" rel="noreferrer" className="px-7 py-3 rounded-xl text-sm font-bold border-2 transition-all hover:bg-[#1B2B5B] hover:text-white text-center" style={{ borderColor: 'var(--ae-heading)', color: 'var(--ae-heading)' }}>
                   Falar pelo WhatsApp
                 </a>
               </div>
@@ -645,7 +645,7 @@ export default async function HomePage() {
           <p className="text-sm font-semibold uppercase tracking-widest mb-2" style={{ color: 'var(--site-accent-color, #C9A84C)' }}>
             Marketplace Imobiliário
           </p>
-          <h2 className="text-2xl font-bold" style={{ color: 'var(--site-primary-color, #1B2B5B)', fontFamily: '"Playfair Display", Georgia, serif' }}>
+          <h2 className="text-2xl font-bold" style={{ color: 'var(--ae-heading)', fontFamily: '"Playfair Display", Georgia, serif' }}>
             Nossas Imobiliárias Parceiras
           </h2>
           <p className="text-gray-500 text-sm mt-1">Imobiliárias e profissionais parceiros anunciando no marketplace</p>
@@ -670,7 +670,7 @@ export default async function HomePage() {
                 className="w-full h-full object-contain drop-shadow-xl"
               />
             </div>
-            <h3 className="text-xl font-bold mb-1" style={{ color: 'var(--site-primary-color, #1B2B5B)', fontFamily: '"Playfair Display", Georgia, serif' }}>Imobiliária Lemos</h3>
+            <h3 className="text-xl font-bold mb-1" style={{ color: 'var(--ae-heading)', fontFamily: '"Playfair Display", Georgia, serif' }}>Imobiliária Lemos</h3>
             <p className="text-xs text-gray-500 mb-1">Franca — SP</p>
             <p className="text-xs font-semibold mb-4" style={{ color: '#C9A84C' }}>Desde 2002 · +22 anos de tradição</p>
             <p className="text-xs text-gray-500 leading-relaxed mb-5">
@@ -695,7 +695,7 @@ export default async function HomePage() {
             <div className="w-28 h-28 rounded-full flex items-center justify-center mb-4 border-4 border-dashed" style={{ borderColor: '#C9A84C', backgroundColor: 'rgba(201,168,76,0.08)' }}>
               <span className="text-5xl font-bold" style={{ color: '#C9A84C' }}>+</span>
             </div>
-            <h3 className="text-xl font-bold mb-1" style={{ color: 'var(--site-primary-color, #1B2B5B)', fontFamily: '"Playfair Display", Georgia, serif' }}>Seja um Parceiro</h3>
+            <h3 className="text-xl font-bold mb-1" style={{ color: 'var(--ae-heading)', fontFamily: '"Playfair Display", Georgia, serif' }}>Seja um Parceiro</h3>
             <p className="text-xs text-gray-500 mb-4">Sua imobiliária aqui</p>
             <p className="text-xs text-gray-500 leading-relaxed mb-5">
               Anuncie seus imóveis no maior marketplace imobiliário de Franca. Tecnologia de ponta, sem custo inicial.
@@ -721,7 +721,7 @@ export default async function HomePage() {
       <section style={{ backgroundColor: 'var(--site-background-color, #f8f6f1)' }} className="py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <Reveal className="text-center mb-10">
-            <h2 className="text-2xl font-bold" style={{ color: 'var(--site-primary-color, #1B2B5B)', fontFamily: '"Playfair Display", Georgia, serif' }}>
+            <h2 className="text-2xl font-bold" style={{ color: 'var(--ae-heading)', fontFamily: '"Playfair Display", Georgia, serif' }}>
               O que você procura?
             </h2>
             <p className="text-gray-500 text-sm mt-1">Selecione o tipo de imóvel e explore as opções</p>
@@ -738,9 +738,9 @@ export default async function HomePage() {
                 >
                   <div
                     className="w-14 h-14 rounded-xl flex items-center justify-center transition-all duration-200 group-hover:scale-110"
-                    style={{ backgroundColor: 'rgba(27,43,91,0.06)', color: '#1B2B5B' }}
+                    style={{ backgroundColor: 'rgba(27,43,91,0.06)', color: 'var(--ae-heading)' }}
                   >
-                    <div className="group-hover:text-[#C9A84C] transition-colors duration-200" style={{ color: 'var(--site-primary-color, #1B2B5B)' }}>
+                    <div className="group-hover:text-[#C9A84C] transition-colors duration-200" style={{ color: 'var(--ae-heading)' }}>
                       {CategoryIcons[cat.iconKey]}
                     </div>
                   </div>
@@ -759,7 +759,7 @@ export default async function HomePage() {
         <section className="max-w-7xl mx-auto px-4 sm:px-6 py-16">
           <div className="flex items-center justify-between mb-8">
             <Reveal direction="right">
-              <h2 className="text-2xl font-bold" style={{ color: 'var(--site-primary-color, #1B2B5B)', fontFamily: '"Playfair Display", Georgia, serif' }}>
+              <h2 className="text-2xl font-bold" style={{ color: 'var(--ae-heading)', fontFamily: '"Playfair Display", Georgia, serif' }}>
                 Imóveis em Destaque
               </h2>
               <p className="text-gray-500 text-sm mt-0.5">Imóveis selecionados pela nossa equipe para você</p>
@@ -838,7 +838,7 @@ export default async function HomePage() {
                       </span>
                     )}
                   </div>
-                  <p className="text-base font-bold mt-3" style={{ color: 'var(--site-primary-color, #1B2B5B)' }}>
+                  <p className="text-base font-bold mt-3" style={{ color: 'var(--ae-heading)' }}>
                     {formatPrice(p)}
                   </p>
                 </div>
@@ -866,7 +866,7 @@ export default async function HomePage() {
           ))}
         </div>
         <div className="text-center mb-6">
-          <h2 className="text-xl font-bold" style={{ color: 'var(--site-primary-color, #1B2B5B)', fontFamily: '"Playfair Display", Georgia, serif' }}>Siga-nos nas Redes Sociais</h2>
+          <h2 className="text-xl font-bold" style={{ color: 'var(--ae-heading)', fontFamily: '"Playfair Display", Georgia, serif' }}>Siga-nos nas Redes Sociais</h2>
           <p className="text-gray-500 text-sm mt-1">Acompanhe os melhores imóveis, dicas e novidades</p>
         </div>
         <div className="flex flex-wrap justify-center gap-4">
