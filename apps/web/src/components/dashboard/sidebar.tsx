@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils'
 import { useAuth } from '@/hooks/useAuth'
 import { useState, useEffect } from 'react'
 import {
+  Handshake, Split, FileWarning, ShieldCheck, Wallet,
   LayoutDashboard,
   Building2,
   Users,
@@ -115,7 +116,13 @@ const lemosbankSubItems = [
   { href: '/dashboard/lemosbank/boletos',      icon: ReceiptText, label: 'Boletos' },
   { href: '/dashboard/lemosbank/cobrancas',    icon: Receipt,    label: 'Cobranças' },
   { href: '/dashboard/lemosbank/repasses',     icon: RefreshCw,  label: 'Repasses' },
+  { href: '/dashboard/lemosbank/rateio-repasse', icon: Split,    label: 'Rateio de Repasse' },
+  { href: '/dashboard/lemosbank/contas-a-pagar', icon: Wallet,   label: 'Contas a Pagar' },
+  { href: '/dashboard/lemosbank/conciliacao',  icon: Landmark,   label: 'Conciliação' },
+  { href: '/dashboard/lemosbank/acordos',      icon: Handshake,  label: 'Acordos' },
   { href: '/dashboard/lemosbank/rescisoes',    icon: Scissors,   label: 'Rescisões' },
+  { href: '/dashboard/lemosbank/acerto-rescisao', icon: Scissors, label: 'Acerto de Rescisão' },
+  { href: '/dashboard/lemosbank/notificacoes-formais', icon: FileWarning, label: 'Notificações Formais' },
   { href: '/dashboard/lemosbank/automacao',    icon: Zap,        label: 'Automação' },
   { href: '/dashboard/lemosbank/relatorios',   icon: BarChart3,  label: 'Relatórios' },
   { href: '/dashboard/lemosbank/historico',             icon: Archive,      label: 'Histórico' },
@@ -132,6 +139,7 @@ const juridicoSubItems = [
 const bottomItems = [
   { href: '/dashboard/historico-alteracoes', icon: History,  label: 'Hist. Alterações' },
   { href: '/dashboard/notifications',        icon: Bell,     label: 'Notificações' },
+  { href: '/dashboard/permissoes',           icon: ShieldCheck, label: 'Permissões' },
   { href: '/dashboard/settings',             icon: Settings, label: 'Configurações' },
 ]
 
