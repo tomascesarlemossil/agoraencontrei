@@ -93,5 +93,22 @@ contas a pagar, comissões, notas fiscais).
 - Papéis de acesso rígidos demais (RBAC sem granularidade por módulo).
 - Não guardar histórico de reajustes e de baixas (perde rastreabilidade fiscal).
 
+## Implementações de referência (neste repositório)
+Padrões já implementados e testados — reaproveite a abordagem ao construir sistemas novos:
+- **Rateio de repasse**: `apps/api/src/services/repasse.service.ts` (`scheduleRepasseWithSplit`)
+  + modelo `RepasseBeneficiary`. Reconciliação de centavos: o último beneficiário absorve o resto.
+- **Motor de rescisão**: `apps/api/src/services/rescission.service.ts` (`calculateRescission`) —
+  função PURA, fácil de testar; proporcional por dias + multa proporcional ao período restante.
+- **Acordos/parcelas**: `apps/api/src/services/agreement.service.ts` (`generateInstallmentPlan`) —
+  clamp de fim de mês + centavos na última parcela.
+- **Conciliação bancária**: `apps/api/src/services/reconciliation.service.ts` — parsers CSV/CNAB400
+  e `matchEntries` (por nosso número, depois valor+data, sem reusar candidato).
+- **Permissões por módulo**: `apps/api/src/utils/permissions.ts` (`requirePermission`, opt-in).
+- **Testes**: `apps/api/test/*.test.ts` com `node:test` via `tsx` (sem libs extras).
+
+> Lição-chave: extraia a regra de negócio numa **função pura** (sem I/O) e teste a matemática
+> isoladamente — dinheiro deve fechar em centavos sempre (aloque em inteiros de centavos e
+> deixe o último item absorver o resto).
+
 ---
 **Referência de mapeamento detalhada:** `docs/SISTEMA-UNILOC-MAPEAMENTO.md`.
