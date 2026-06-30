@@ -1,9 +1,10 @@
 /**
- * Design System — AgoraEncontrei (navy + gold premium).
- * Cores/escala vindas da identidade visual oficial.
+ * Design System — AgoraEncontrei (verde escuro militar + dourado).
+ * Cores/escala vindas da identidade visual oficial. A chave `navy` é mantida
+ * para compatibilidade com as telas, mas agora carrega o verde da marca.
  */
 export const COLORS = {
-  navy: '#0D1B3E',
+  navy: '#143A1F', // verde escuro militar (cor primária da marca)
   gold: '#C9A84C',
   white: '#FFFFFF',
   // secundárias

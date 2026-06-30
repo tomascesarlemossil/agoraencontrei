@@ -37,10 +37,13 @@ async function handleOfflineLicensePurchase(app: FastifyInstance, externalRef: s
 
   const expires = oneYearFromNow()
   const key = issueLicense({ customer: email, plan, email, expires })
-  const downloadUrl = env.SOFTWARE_DOWNLOAD_URL || 'https://www.agoraencontrei.com.br/software'
+  // Link do INSTALADOR (não a landing /software). Sem env var, aponta direto
+  // para o release público do GitHub — sempre o .exe mais recente.
+  const downloadUrl = env.SOFTWARE_DOWNLOAD_URL
+    || 'https://github.com/tomascesarlemossil/agoraencontrei/releases/download/desktop-latest/AgoraEncontrei-Software-Setup.exe'
 
   const html = `
-    <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;color:#1B2B5B">
+    <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;color:#143A1F">
       <h2>Sua licença do Sistema Administrador AgoraEncontrei</h2>
       <p>Pagamento confirmado — obrigado pela compra! 🎉</p>
       <p><strong>1.</strong> Baixe o instalador: <a href="${downloadUrl}">${downloadUrl}</a></p>
