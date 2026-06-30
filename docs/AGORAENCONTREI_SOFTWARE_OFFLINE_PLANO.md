@@ -44,17 +44,24 @@ Para cobrir 100% do IMOBILI, falta reforçar o **núcleo de locação**:
 
 ## 3. Estratégia de empacotamento offline (recomendada)
 
-### Opção A — Desktop wrapper (Electron) — **recomendada**
-1. **Banco local:** Prisma com **SQLite** (arquivo único no PC do cliente) — sem servidor de banco.
+### Opção A — Desktop wrapper (Electron) + **Postgres embarcado** — ✅ ESCOLHIDA
+1. **Banco local:** **PostgreSQL portátil embarcado** (`embedded-postgres`) — implementado em
+   `apps/desktop/db.js`. **Mesmo schema/código da nuvem**; as 36 migrations aplicam sem mudança.
 2. **App embarcado:** Next.js standalone + Fastify rodando em `localhost` dentro do Electron.
 3. **Instalador:** `electron-builder` → `.exe` (NSIS) para Windows, ícone próprio.
 4. **Aparência:** abre como um programa normal (igual ao IMOBILI), mas moderno.
 5. **Atualização:** `electron-updater` quando houver internet.
 
-### Opção B — Docker Desktop
-- `docker-compose` empacotado. Mais robusto, porém exige Docker (fricção para leigo). Não recomendado para Basic.
+### Por que NÃO SQLite (revisão técnica)
+O schema usa `String[]` (arrays), `Decimal` e **enums nativos** do Postgres em 68 modelos.
+SQLite não suporta isso nativamente no Prisma — exigiria reescrever schema **e** todo o código
+que lê arrays/enums. **Postgres embarcado elimina esse risco**: zero alteração de schema/código.
 
-> **Decisão:** Opção A para o Basic. Migrar o schema para suportar SQLite é o item técnico principal.
+### Opção B — Docker Desktop (descartada para o Basic)
+- Exige Docker instalado (fricção para leigo). Postgres embarcado entrega o mesmo sem essa dependência.
+
+> **Decisão:** Electron + Postgres embarcado. O item técnico principal passa a ser o **bundle do
+> servidor standalone** (Next+Fastify) dentro do app — não mais a conversão de banco.
 
 ---
 
@@ -82,7 +89,7 @@ Pagamento (Asaas) confirmado
 | **F0 — Spec** | Mapear 100% das telas do IMOBILI | 🔴 screenshots de cada tela (ou código) |
 | **F1 — Locação** | Modelos `Guarantor`, fluxo de Inquilino/Contrato/Parcelas | eu |
 | **F2 — Edição** | Plano "Locação Basic" no catálogo + gating | eu |
-| **F3 — Offline** | Schema SQLite + wrapper Electron + build `.exe` | eu (+ teste no Windows) |
+| **F3 — Offline** | Wrapper Electron + Postgres embarcado + bundle do servidor + build `.exe` | eu (+ teste no Windows) |
 | **F4 — Licença** | Gerador + validador de chave | eu + 🔴 política |
 | **F5 — Pagamento** | Ligar Asaas produção | 🔴 chave + CNPJ |
 | **F6 — Lançar** | Landing + e-mails + suporte | 🔴 domínio/verba |

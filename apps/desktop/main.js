@@ -51,17 +51,40 @@ function createWindow(startUrl) {
   mainWindow.on('closed', () => { mainWindow = null })
 }
 
+const { startDatabase, runMigrations } = require('./db')
+
+let pgHandle = null
+
 /**
- * Sobe os serviços locais (API + web) embarcados. Placeholder: na versão final,
- * inicia o Fastify standalone apontando para DATABASE_URL=file:./agora.db (SQLite)
- * e o Next standalone. Por ora, retorna a URL local esperada.
+ * Sobe os serviços locais embarcados: 1) PostgreSQL portátil, 2) migrations,
+ * 3) servidor Fastify+Next standalone. Retorna a URL local para a janela.
  */
 async function startEmbeddedServer() {
-  // TODO(offline): spawn do servidor standalone empacotado em ./server
+  const userData = app.getPath('userData')
+
+  // 1) Banco local (Postgres embarcado) — mesmo schema/código da nuvem.
+  const { pg, url, firstRun } = await startDatabase(userData)
+  pgHandle = pg
+  process.env.DATABASE_URL = url
+  process.env.DIRECT_DATABASE_URL = url
+
+  // 2) Migrations (idempotente). prisma/ é empacotado em ./server/prisma.
+  const prismaDir = path.join(__dirname, 'server', 'prisma')
+  if (fs.existsSync(path.join(prismaDir, 'schema.prisma'))) {
+    await runMigrations(url, prismaDir)
+  }
+
+  // 3) Servidor standalone embarcado (Fastify + Next).
   //   const { startServer } = require('./server/index.js')
-  //   await startServer({ databaseUrl: `file:${path.join(app.getPath('userData'), 'agora.db')}` })
+  //   await startServer({ databaseUrl: url })
+  void firstRun
   return LOCAL_URL
 }
+
+// Encerra o Postgres ao sair, evitando lock no diretório de dados.
+app.on('before-quit', async () => {
+  try { if (pgHandle) await pgHandle.stop() } catch { /* noop */ }
+})
 
 app.whenReady().then(async () => {
   // 1) Licença — sem ativação válida, abre a tela de ativação.

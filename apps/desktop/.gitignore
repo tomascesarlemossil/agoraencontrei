@@ -1,5 +1,9 @@
 node_modules/
 dist/
+# bundle do servidor (gerado por scripts/bundle-server.mjs)
+server/
+# dados do Postgres embarcado em runtime
+pgdata/
 # NUNCA versionar chaves privadas de licença
 *-private.pem
 license-private.pem

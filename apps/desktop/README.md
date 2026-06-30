@@ -15,7 +15,9 @@ banco **SQLite local** e **ativação por licença assinada**.
 | `preload.js` | Bridge seguro renderer↔main (ativação + onboarding) |
 | `renderer/activate.html` | Tela de ativação (cola a chave) |
 | `renderer/onboarding.html` | 1ª execução: **começar do zero** ou **importar backup** |
+| `db.js` | **PostgreSQL embarcado** (portátil) + `prisma migrate deploy` local |
 | `tools/license-cli.js` | **Servidor**: gera par de chaves e emite licenças assinadas |
+| `scripts/bundle-server.mjs` | Monta `./server` (prisma + builds) antes de empacotar |
 | `package.json` | electron + electron-builder (gera `.exe` NSIS) |
 
 ## O produto sai VAZIO (sem dados de terceiros)
@@ -55,14 +57,19 @@ pnpm install
 pnpm --filter @agoraencontrei/desktop dist   # gera dist/AgoraEncontrei Software Setup.exe
 ```
 
+## Banco local: PostgreSQL embarcado (não SQLite)
+
+`db.js` sobe um **Postgres portátil** (`embedded-postgres`) em `userData/pgdata`, na porta local
+54329, e aplica as **36 migrations** existentes via `prisma migrate deploy`. Assim o **mesmo schema
+e o mesmo código** da versão nuvem rodam offline — sem reescrever nada.
+Motivo: o schema usa arrays/`Decimal`/enums nativos do Postgres, incompatíveis com SQLite no Prisma.
+
 ## Roadmap para 100% offline
 
-1. **SQLite:** adaptar o schema Prisma para `provider = "sqlite"` (datasource alternativo) e
-   gerar migrations SQLite. Os tipos `Decimal`/arrays precisam de ajuste.
-2. **Servidor embarcado:** empacotar a API Fastify + Next standalone em `./server` e dar
-   `spawn` no `startEmbeddedServer()` de `main.js`, com `DATABASE_URL=file:agora.db`.
-3. **Importador local:** embutir o leitor DBF/Paradox (`scripts/imobili-migrator/`) para o
-   cliente importar a carteira legada direto no app.
+1. ✅ **Banco:** Postgres embarcado + migrations (`db.js`).
+2. **Servidor embarcado:** buildar os apps (`pnpm build`), rodar `pnpm --filter @agoraencontrei/desktop bundle`
+   (monta `./server`) e ativar o `spawn` do servidor em `startEmbeddedServer()`.
+3. **Importador local:** embutir o leitor DBF/Paradox (`scripts/imobili-migrator/`) na tela de importação.
 4. **Auto-update:** `electron-updater` apontando para os releases (quando online).
 
 ## Segurança
