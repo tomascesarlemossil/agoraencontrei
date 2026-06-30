@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useRef, useCallback } from 'react'
-import { Send, Loader2, Sparkles, MapPin, Bed, Car, FileText, MessageSquare, Calendar } from 'lucide-react'
+import { useState, useRef, useCallback, useEffect } from 'react'
+import { Send, Loader2, Sparkles, MapPin, Bed, Car, FileText, MessageSquare, Calendar, Volume2, VolumeX } from 'lucide-react'
 import { useAuthStore } from '@/stores/auth.store'
 import { VoiceInputButton } from '@/components/ui/VoiceInputButton'
+import { TomasVoiceController } from './tomas_voice_controller'
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -53,10 +54,33 @@ export default function TomasCommandBar() {
   const inputRef = useRef<HTMLInputElement>(null)
   const { accessToken } = useAuthStore()
 
+  // ── TTS: Tomás lê as respostas (Web Speech API, grátis) ────────────────────
+  const [speakEnabled, setSpeakEnabled] = useState(false)
+  const speakEnabledRef = useRef(false)
+  const voiceRef = useRef<TomasVoiceController | null>(null)
+
+  useEffect(() => {
+    voiceRef.current = new TomasVoiceController({ lang: 'pt-BR', rate: 1.02 })
+    try { setSpeakEnabled(localStorage.getItem('tomas_voice_on') === '1') } catch { /* noop */ }
+    return () => { voiceRef.current?.destroy(); voiceRef.current = null }
+  }, [])
+  useEffect(() => { speakEnabledRef.current = speakEnabled }, [speakEnabled])
+
+  const toggleSpeak = useCallback(() => {
+    setSpeakEnabled(prev => {
+      const next = !prev
+      try { localStorage.setItem('tomas_voice_on', next ? '1' : '0') } catch { /* noop */ }
+      if (next) voiceRef.current?.enqueue({ text: 'Voz ativada.', source: 'system', priority: true })
+      else voiceRef.current?.cancel()
+      return next
+    })
+  }, [])
+
   const runCommand = useCallback(async (prefilled?: string) => {
     const text = (prefilled ?? query).trim()
     if (!text || loading) return
 
+    voiceRef.current?.cancel()
     setQuery('')
     setLoading(true)
     setResponse(null)
@@ -79,6 +103,9 @@ export default function TomasCommandBar() {
       const data: TomasResponse = await res.json()
       setResponse(data)
       setHistory(prev => [...prev, { query: text, response: data }].slice(-10))
+      if (speakEnabledRef.current && data.message) {
+        voiceRef.current?.enqueue({ text: data.message, source: 'assistant_final' })
+      }
     } catch {
       setResponse({
         chatId: '',
@@ -107,6 +134,17 @@ export default function TomasCommandBar() {
           <div className="text-sm font-semibold text-white">Tomás Copilot</div>
           <div className="text-xs text-gray-500">Pergunte ou peça algo ao Tomás</div>
         </div>
+        <button
+          onClick={toggleSpeak}
+          className={`ml-auto rounded-lg p-1.5 transition-colors ${
+            speakEnabled ? 'text-yellow-500 hover:bg-gray-800' : 'text-gray-500 hover:bg-gray-800 hover:text-white'
+          }`}
+          title={speakEnabled ? 'Desativar voz do Tomás' : 'Ativar voz do Tomás (ele lê as respostas)'}
+          aria-label={speakEnabled ? 'Desativar voz do Tomás' : 'Ativar voz do Tomás'}
+          aria-pressed={speakEnabled}
+        >
+          {speakEnabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
+        </button>
       </div>
 
       {/* Input */}
