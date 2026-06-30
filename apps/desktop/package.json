@@ -1,0 +1,35 @@
+{
+  "name": "@agoraencontrei/desktop",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AgoraEncontrei Software — edição offline (instalável no Windows). Empacota a plataforma para rodar local com banco SQLite e ativação por licença.",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win nsis",
+    "dist:dir": "electron-builder --dir"
+  },
+  "build": {
+    "appId": "com.agoraencontrei.software",
+    "productName": "AgoraEncontrei Software",
+    "directories": { "output": "dist", "buildResources": "resources" },
+    "files": ["main.js", "preload.js", "license.js", "renderer/**", "server/**"],
+    "win": {
+      "target": ["nsis"],
+      "icon": "resources/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "shortcutName": "AgoraEncontrei Software"
+    }
+  },
+  "devDependencies": {
+    "electron": "^31.0.0",
+    "electron-builder": "^24.13.3"
+  },
+  "dependencies": {
+    "electron-updater": "^6.2.1"
+  }
+}

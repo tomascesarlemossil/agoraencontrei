@@ -1,0 +1,6 @@
+node_modules/
+dist/
+# NUNCA versionar chaves privadas de licença
+*-private.pem
+license-private.pem
+*.db

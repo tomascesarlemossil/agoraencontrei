@@ -308,15 +308,20 @@
 </footer>
 
 <script>
-  // Liga os CTAs de plano ao checkout. Ajuste a URL base conforme o ambiente.
-  // Hoje só registra a intenção; conectar ao endpoint /api/v1/billing/saas/checkout.
+  // CHECKOUT REAL: a página /parceiros/planos já implementa o fluxo completo
+  // (catálogo via /api/v1/public/catalog → formulário subdomínio+nome →
+  //  POST /api/v1/billing/saas/checkout → assinatura Asaas). Aqui apenas
+  //  encaminhamos o lead para lá, levando o plano escolhido como hint (#plano).
+  var CHECKOUT_URL = '/parceiros/planos';
   document.querySelectorAll('[data-plan]').forEach(function(el){
-    el.addEventListener('click', function(e){
-      var plan = el.getAttribute('data-plan');
-      // TODO: redirecionar para o checkout real, ex:
-      // window.location.href = '/parceiros/checkout?plan=' + plan;
-      console.log('Plano escolhido:', plan);
-    });
+    el.setAttribute('href', CHECKOUT_URL + '#' + el.getAttribute('data-plan'));
+  });
+  // CTAs genéricos ("#planos"/"#contato") seguem rolando na página;
+  // o botão final "Quero começar" também leva ao checkout real.
+  document.querySelectorAll('a[href="#contato"]').forEach(function(el){
+    if (el.textContent.trim().toLowerCase().indexOf('come') !== -1) {
+      el.setAttribute('href', CHECKOUT_URL);
+    }
   });
 </script>
 </body>
