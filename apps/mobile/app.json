@@ -1,0 +1,34 @@
+{
+  "expo": {
+    "name": "AgoraEncontrei",
+    "slug": "agoraencontrei",
+    "scheme": "agoraencontrei",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "icon": "./src/assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./src/assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0D1B3E"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.agoraencontrei.app",
+      "buildNumber": "1"
+    },
+    "android": {
+      "package": "com.agoraencontrei.app",
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "foregroundImage": "./src/assets/adaptive-icon.png",
+        "backgroundColor": "#0D1B3E"
+      }
+    },
+    "extra": {
+      "apiUrl": "https://api-production-669c.up.railway.app"
+    },
+    "plugins": ["expo-splash-screen"]
+  }
+}
