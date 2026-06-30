@@ -1,0 +1,44 @@
+name: Mobile CI (typecheck)
+
+# Verificação automática do app mobile: instala as deps e roda o TypeScript
+# (tsc --noEmit). Confirma que o app compila sem erros de tipo a cada push.
+
+on:
+  push:
+    branches:
+      - claude/agoraencontrei-mobile-app
+      - main
+    paths:
+      - 'apps/mobile/**'
+      - '.github/workflows/mobile-ci.yml'
+  pull_request:
+    paths:
+      - 'apps/mobile/**'
+  workflow_dispatch:
+
+jobs:
+  typecheck:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.0.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      # Instala só as deps do app mobile (não o monorepo inteiro).
+      - name: Install mobile deps
+        run: pnpm install --no-frozen-lockfile --filter @agoraencontrei/mobile
+
+      - name: TypeScript (tsc --noEmit)
+        run: pnpm --filter @agoraencontrei/mobile typecheck
+
+      - name: Expo Doctor (config sanity)
+        run: cd apps/mobile && npx --yes expo-doctor || true
+        continue-on-error: true
