@@ -29,18 +29,32 @@ export function isLicensingConfigured(): boolean {
  * envolto em aspas ou com espaços. Sem isso, `createPrivateKey` falha com
  * "invalid PEM". Aqui aceitamos:
  *   - PEM com quebras de linha reais (ideal)
- *   - PEM em linha única com `\n` literais (caso comum em env vars)
+ *   - PEM em linha única com `\n` literais
+ *   - PEM com quebras REMOVIDAS (base64 colado/espaçado) — caso comum em env vars
  *   - valor entre aspas / com espaços nas pontas
+ *
+ * Estratégia: extrai o corpo base64 entre os marcadores BEGIN/END, descarta
+ * QUALQUER caractere que não seja base64 e reconstrói um PEM limpo (linhas de
+ * 64). Assim funciona independentemente de como o painel achatou o valor.
  */
 export function loadLicensePrivateKey(): crypto.KeyObject {
   let raw = (env.LICENSE_PRIVATE_KEY || '').trim()
   if (!raw) throw new Error('LICENSE_PRIVATE_KEY não configurada')
-  // remove aspas externas que alguns painéis adicionam
+  // aspas externas que alguns painéis adicionam
   if ((raw.startsWith('"') && raw.endsWith('"')) || (raw.startsWith("'") && raw.endsWith("'"))) {
     raw = raw.slice(1, -1).trim()
   }
-  // \n / \r\n literais → quebras reais (env vars costumam achatar o PEM)
+  // \n / \r\n literais → quebras reais
   raw = raw.replace(/\\r\\n/g, '\n').replace(/\\n/g, '\n').replace(/\\r/g, '\n')
+
+  // Reconstrói o PEM a partir do corpo, tolerando qualquer espaçamento.
+  const m = raw.match(/-----BEGIN ([A-Z0-9 ]+?)-----([\s\S]*?)-----END \1-----/)
+  if (m) {
+    const label = m[1].trim()
+    const body = m[2].replace(/[^A-Za-z0-9+/=]/g, '') // só base64
+    const wrapped = (body.match(/.{1,64}/g) || []).join('\n')
+    raw = `-----BEGIN ${label}-----\n${wrapped}\n-----END ${label}-----\n`
+  }
   return crypto.createPrivateKey(raw)
 }
 
