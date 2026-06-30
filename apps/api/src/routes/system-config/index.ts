@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify'
 import { createAuditLog } from '../../services/audit.service.js'
+import { invalidateSiteSettingsCache } from '../public/index.js'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DEFAULT SYSTEM CONFIG — todas as configurações padrão do sistema
@@ -569,6 +570,10 @@ export default async function systemConfigRoutes(app: FastifyInstance) {
       where: { id: req.user.cid },
       data:  { settings: { ...currentSettings, systemConfig: newConfig } },
     })
+
+    // Invalida o cache público do /site-settings para a mudança (ex.: imagem
+    // do hero) refletir na home imediatamente, sem esperar o TTL.
+    await invalidateSiteSettingsCache(app.redis, req.user.cid).catch(() => {})
 
     await createAuditLog({
       prisma: app.prisma as any,
