@@ -5,4 +5,5 @@ export type RootStackParamList = {
   PropertyDetail: { property: Property }
   Avaliacao: undefined
   Auth: { mode?: 'login' | 'register' } | undefined
+  Favorites: undefined
 }

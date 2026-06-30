@@ -22,9 +22,10 @@ export type Property = {
 }
 
 function Card({ property, onPress }: { property: Property; onPress?: () => void }) {
-  const { colors } = useApp()
+  const { colors, isFavorite, toggleFavorite } = useApp()
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>()
   const img = property.imageUrl || property.images?.[0]
+  const fav = property.id != null && isFavorite(property.id)
   return (
     <Pressable
       accessible accessibilityRole="button"
@@ -38,6 +39,13 @@ function Card({ property, onPress }: { property: Property; onPress?: () => void 
         <View style={[styles.image, styles.noImage, { backgroundColor: colors.lightGray }]}>
           <Ionicons name="home" size={32} color={colors.midGray} />
         </View>
+      )}
+      {property.id != null && (
+        <Pressable accessibilityRole="button" accessibilityLabel={fav ? 'Remover dos favoritos' : 'Favoritar'}
+          hitSlop={8} onPress={() => { triggerHaptic(fav ? 'light' : 'success'); toggleFavorite(property.id!) }}
+          style={styles.heart}>
+          <Ionicons name={fav ? 'heart' : 'heart-outline'} size={22} color={fav ? colors.error : '#fff'} />
+        </Pressable>
       )}
       <View style={styles.body}>
         {!!property.price && (
@@ -71,6 +79,7 @@ function Spec({ icon, label, color }: { icon: keyof typeof Ionicons.glyphMap; la
 const styles = StyleSheet.create({
   card: { borderRadius: RADIUS.lg, borderWidth: 1, overflow: 'hidden', marginBottom: SPACING.base },
   image: { width: '100%', height: 180 },
+  heart: { position: 'absolute', top: 10, right: 10, backgroundColor: 'rgba(0,0,0,0.35)', borderRadius: 999, padding: 7 },
   noImage: { alignItems: 'center', justifyContent: 'center' },
   body: { padding: SPACING.base },
   price: { fontSize: FONT_SIZE.lg, fontWeight: '800' },

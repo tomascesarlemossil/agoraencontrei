@@ -44,6 +44,7 @@ export function ProfileScreen() {
         <Row icon="language" label="Idioma — Português" textColor={colors.text} color={colors.border}
           right={<Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />} />
         <Row icon="heart" label="Meus Favoritos" textColor={colors.text} color={colors.border}
+          onPress={() => { triggerHaptic('light'); navigation.navigate('Favorites') }}
           right={<Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />} />
         <Row icon="ribbon" label="Avaliação Imediata de Imóvel" textColor={colors.text} color={colors.border}
           onPress={() => { triggerHaptic('light'); navigation.navigate('Avaliacao') }}
@@ -59,7 +60,7 @@ export function ProfileScreen() {
           </Pressable>
         ) : (
           <Pressable accessibilityRole="button" accessibilityLabel="Entrar"
-            onPress={() => triggerHaptic('light')}
+            onPress={() => { triggerHaptic('light'); navigation.navigate('Auth', { mode: 'login' }) }}
             style={[styles.btn, { backgroundColor: colors.navy, borderColor: colors.navy }]}>
             <Text style={{ color: colors.white, fontWeight: '700' }}>Entrar / Cadastrar</Text>
           </Pressable>

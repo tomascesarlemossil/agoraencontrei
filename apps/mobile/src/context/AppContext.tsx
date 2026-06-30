@@ -18,6 +18,9 @@ type AppContextType = {
   user: User
   signIn: (token: string, user: User) => Promise<void>
   signOut: () => Promise<void>
+  favorites: string[]
+  isFavorite: (id: string | number) => boolean
+  toggleFavorite: (id: string | number) => void
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined)
@@ -29,17 +32,20 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [language, setLanguage] = useState('pt-BR')
   const [notificationsEnabled, setNotificationsEnabled] = useState(true)
   const [user, setUser] = useState<User>(null)
+  const [favorites, setFavorites] = useState<string[]>([])
 
   useEffect(() => {
     (async () => {
       try {
-        const [theme, lang, token] = await Promise.all([
+        const [theme, lang, token, favs] = await Promise.all([
           AsyncStorage.getItem('@theme'),
           AsyncStorage.getItem('@lang'),
           getToken(),
+          AsyncStorage.getItem('@favorites'),
         ])
         if (theme) setIsDarkMode(theme === 'dark')
         if (lang) setLanguage(lang)
+        if (favs) { try { setFavorites(JSON.parse(favs)) } catch { /* noop */ } }
         if (token) {
           // Restaura sessão validando o token contra o MESMO backend da web.
           try { const me: any = await Auth.me(); setUser(me?.user || me || null) } catch { await persistToken(null) }
@@ -65,12 +71,23 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     await persistToken(null); setUser(null)
   }, [])
 
+  const isFavorite = useCallback((id: string | number) => favorites.includes(String(id)), [favorites])
+  const toggleFavorite = useCallback((id: string | number) => {
+    setFavorites((prev) => {
+      const key = String(id)
+      const next = prev.includes(key) ? prev.filter((x) => x !== key) : [...prev, key]
+      AsyncStorage.setItem('@favorites', JSON.stringify(next))
+      return next
+    })
+  }, [])
+
   const colors = buildColors(isDarkMode)
 
   return (
     <AppContext.Provider value={{
       ready, isDarkMode, toggleDarkMode, colors, language, changeLanguage,
       notificationsEnabled, toggleNotifications, user, signIn, signOut,
+      favorites, isFavorite, toggleFavorite,
     }}>
       {children}
     </AppContext.Provider>

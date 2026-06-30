@@ -74,6 +74,13 @@ export const Properties = {
   get: (id: string | number) => api(`/api/v1/public/free-listing/${id}`),
 }
 
+export const Auctions = {
+  list: (params: Record<string, string | number> = {}) => {
+    const qs = new URLSearchParams(Object.entries(params).map(([k, v]) => [k, String(v)])).toString()
+    return api(`/api/v1/public/auctions${qs ? `?${qs}` : ''}`)
+  },
+}
+
 export const Valuation = {
   // Avaliação imediata (1ª grátis por CPF) — mesma rota pública da web.
   create: (payload: Record<string, unknown>) =>
