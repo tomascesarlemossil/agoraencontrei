@@ -13,9 +13,10 @@
  */
 
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { MessageCircle, X, Send, Mic, MicOff, Loader2, MapPin, Bed, Car, ChevronRight, AlertCircle } from 'lucide-react'
+import { MessageCircle, X, Send, Mic, MicOff, Loader2, MapPin, Bed, Car, ChevronRight, AlertCircle, Volume2, VolumeX } from 'lucide-react'
 import { useBodyScrollLock } from '@/lib/use-body-scroll-lock'
 import { useLiveDictation } from '@/components/ui/useLiveDictation'
+import { TomasVoiceController } from './tomas_voice_controller'
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -105,6 +106,34 @@ export default function TomasWidget({ propertyContext }: TomasWidgetProps) {
   const audioStreamRef = useRef<MediaStream | null>(null)
   const audioTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
+  // ── TTS: Tomás fala as respostas (Web Speech API, grátis) ──────────────────
+  const [speakEnabled, setSpeakEnabled] = useState(false)
+  const speakEnabledRef = useRef(false)
+  const voiceRef = useRef<TomasVoiceController | null>(null)
+
+  useEffect(() => {
+    voiceRef.current = new TomasVoiceController({ lang: 'pt-BR', rate: 1.02 })
+    try { setSpeakEnabled(localStorage.getItem('tomas_voice_on') === '1') } catch { /* noop */ }
+    return () => { voiceRef.current?.destroy(); voiceRef.current = null }
+  }, [])
+
+  useEffect(() => { speakEnabledRef.current = speakEnabled }, [speakEnabled])
+
+  const toggleSpeak = useCallback(() => {
+    setSpeakEnabled(prev => {
+      const next = !prev
+      try { localStorage.setItem('tomas_voice_on', next ? '1' : '0') } catch { /* noop */ }
+      if (next) {
+        // "Aquece" a síntese DENTRO do gesto do usuário — libera o áudio no
+        // iOS/Chrome para as próximas falas e confirma que está ativo.
+        voiceRef.current?.enqueue({ text: 'Voz ativada.', source: 'system', priority: true })
+      } else {
+        voiceRef.current?.cancel()
+      }
+      return next
+    })
+  }, [])
+
   // ── Viewport height fix for mobile keyboard ───────────────────────────────
   useEffect(() => {
     if (!open) return
@@ -179,6 +208,9 @@ export default function TomasWidget({ propertyContext }: TomasWidgetProps) {
     const content = (prefilled ?? input).trim()
     if (!content || loading) return
 
+    // Nova pergunta do usuário interrompe qualquer fala em andamento.
+    voiceRef.current?.cancel()
+
     const userMsg: ChatMessage = { role: 'user', content }
     const nextMessages = [...messages, userMsg]
     setMessages(nextMessages)
@@ -207,14 +239,13 @@ export default function TomasWidget({ propertyContext }: TomasWidgetProps) {
       setMessages(prev => [...prev, { role: 'assistant', content: data.message }])
       setActions(data.actions || [])
       setShortlist(data.shortlist || [])
+      if (speakEnabledRef.current && data.message) {
+        voiceRef.current?.enqueue({ text: data.message, source: 'assistant_final' })
+      }
     } catch {
-      setMessages(prev => [
-        ...prev,
-        {
-          role: 'assistant',
-          content: 'Tive uma dificuldade aqui, mas continuo com você. Me diga novamente o que precisa.',
-        },
-      ])
+      const fallback = 'Tive uma dificuldade aqui, mas continuo com você. Me diga novamente o que precisa.'
+      setMessages(prev => [...prev, { role: 'assistant', content: fallback }])
+      if (speakEnabledRef.current) voiceRef.current?.enqueue({ text: fallback, source: 'assistant_final' })
     } finally {
       setLoading(false)
     }
@@ -429,12 +460,28 @@ export default function TomasWidget({ propertyContext }: TomasWidgetProps) {
             </div>
           </div>
         </div>
-        <button
-          onClick={() => setOpen(false)}
-          className="rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-800 hover:text-white"
-        >
-          <X className="h-4 w-4" />
-        </button>
+        <div className="flex items-center gap-1">
+          {/* Toggle: Tomás fala as respostas (voz grátis do navegador) */}
+          <button
+            onClick={toggleSpeak}
+            className={`rounded-lg p-1.5 transition-colors ${
+              speakEnabled
+                ? 'text-yellow-500 hover:bg-gray-800'
+                : 'text-gray-500 hover:bg-gray-800 hover:text-white'
+            }`}
+            title={speakEnabled ? 'Desativar voz do Tomás' : 'Ativar voz do Tomás (ele lê as respostas)'}
+            aria-label={speakEnabled ? 'Desativar voz do Tomás' : 'Ativar voz do Tomás'}
+            aria-pressed={speakEnabled}
+          >
+            {speakEnabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
+          </button>
+          <button
+            onClick={() => setOpen(false)}
+            className="rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-800 hover:text-white"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
       </div>
 
       {/* Messages */}
