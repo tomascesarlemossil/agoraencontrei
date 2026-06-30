@@ -2,14 +2,17 @@
  * Monta o servidor embarcado da edição offline em apps/desktop/server/.
  *
  * Copia para ./server:
- *   - prisma/ (schema + 36 migrations) → para `migrate deploy` local
- *   - o build standalone da API (Fastify) e do Web (Next standalone)
+ *   - prisma/  (schema + migrations)            → `migrate deploy` local
+ *   - api/     (build standalone do Fastify + node_modules)
+ *   - web/     (Next standalone: server.js + node_modules + .next/static + public)
+ *
+ * IMPORTANTE: o Next standalone e a API precisam dos respectivos node_modules
+ * para rodar — por isso COPIAMOS node_modules (com dereference, pois no pnpm
+ * são symlinks). O Next também exige copiar .next/static e public ao lado do
+ * server.js manualmente (não vão no standalone por padrão).
  *
  * Pré-requisito: ter buildado os apps antes (pnpm build na raiz).
  * Uso: node scripts/bundle-server.mjs
- *
- * NB: este script assume os caminhos de saída padrão. Ajuste DIRS conforme a
- * config de build de cada app (ex.: Next `output: 'standalone'`).
  */
 import fs from 'node:fs'
 import path from 'node:path'
@@ -19,35 +22,72 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const ROOT = path.resolve(__dirname, '..', '..', '..')      // raiz do monorepo
 const SERVER = path.resolve(__dirname, '..', 'server')       // apps/desktop/server
 
-function copyDir(src, dest) {
-  if (!fs.existsSync(src)) { console.warn(`  ⚠️  ausente: ${src} (build feito?)`); return false }
-  fs.mkdirSync(dest, { recursive: true })
-  for (const entry of fs.readdirSync(src, { withFileTypes: true })) {
-    const s = path.join(src, entry.name)
-    const d = path.join(dest, entry.name)
-    if (entry.name === 'node_modules' || entry.name === '.git') continue
-    if (entry.isDirectory()) copyDir(s, d)
-    else fs.copyFileSync(s, d)
+function exists(p) { return fs.existsSync(p) }
+
+// cpSync com dereference resolve os symlinks do pnpm copiando os arquivos reais.
+// Resiliente: um erro de cópia (ex.: node_modules do pnpm) nunca quebra o build.
+function copy(src, dest, { optional = false } = {}) {
+  if (!exists(src)) {
+    if (!optional) console.warn(`  ⚠️  ausente: ${src} (build feito?)`)
+    return false
   }
-  return true
+  try {
+    fs.mkdirSync(path.dirname(dest), { recursive: true })
+    fs.cpSync(src, dest, { recursive: true, dereference: true })
+    return true
+  } catch (e) {
+    console.warn(`  ⚠️  falha ao copiar ${src}: ${e.message}`)
+    return false
+  }
 }
 
 console.log('Montando apps/desktop/server ...')
+fs.rmSync(SERVER, { recursive: true, force: true })
 fs.mkdirSync(SERVER, { recursive: true })
 
-const steps = [
-  ['prisma',     path.join(ROOT, 'packages', 'database', 'prisma'), path.join(SERVER, 'prisma')],
-  ['api build',  path.join(ROOT, 'apps', 'api', 'dist'),            path.join(SERVER, 'api')],
-  ['web standalone', path.join(ROOT, 'apps', 'web', '.next', 'standalone'), path.join(SERVER, 'web')],
-]
+let ok = 0, total = 0
 
-let ok = 0
-for (const [label, src, dest] of steps) {
-  process.stdout.write(`  • ${label}: `)
-  const done = copyDir(src, dest)
-  console.log(done ? '✓' : 'pulado')
-  if (done) ok++
-}
+// 1) Prisma (schema + migrations) + SQL concatenado para aplicar offline.
+total++
+process.stdout.write('  • prisma: ')
+const prismaSrc = path.join(ROOT, 'packages', 'database', 'prisma')
+if (copy(prismaSrc, path.join(SERVER, 'prisma'))) {
+  // Concatena migrations/<ts>_nome/migration.sql em ordem cronológica → all-migrations.sql.
+  // db.js aplica esse SQL no 1º boot, sem precisar do CLI/engine do Prisma.
+  const migDir = path.join(prismaSrc, 'migrations')
+  let sql = ''
+  if (exists(migDir)) {
+    const dirs = fs.readdirSync(migDir, { withFileTypes: true })
+      .filter((d) => d.isDirectory()).map((d) => d.name).sort()
+    for (const d of dirs) {
+      const f = path.join(migDir, d, 'migration.sql')
+      if (exists(f)) sql += `\n-- ===== ${d} =====\n` + fs.readFileSync(f, 'utf8') + '\n'
+    }
+  }
+  fs.writeFileSync(path.join(SERVER, 'prisma', 'all-migrations.sql'), sql)
+  console.log(`✓ (${sql.length} bytes de schema)`) ; ok++
+} else console.log('pulado')
 
-console.log(`\n${ok}/${steps.length} componentes copiados para ./server`)
+// 2) Web — Next standalone (self-contained com node_modules) + static + public.
+total++
+process.stdout.write('  • web (Next standalone): ')
+const standalone = path.join(ROOT, 'apps', 'web', '.next', 'standalone')
+if (copy(standalone, path.join(SERVER, 'web'))) {
+  // O server.js do monorepo fica em server/web/apps/web/server.js.
+  const webAppDir = path.join(SERVER, 'web', 'apps', 'web')
+  copy(path.join(ROOT, 'apps', 'web', '.next', 'static'), path.join(webAppDir, '.next', 'static'), { optional: true })
+  copy(path.join(ROOT, 'apps', 'web', 'public'), path.join(webAppDir, 'public'), { optional: true })
+  ok++; console.log('✓')
+} else console.log('pulado')
+
+// 3) API — Fastify compilada + node_modules (necessário para rodar standalone).
+total++
+process.stdout.write('  • api (Fastify + node_modules): ')
+const apiDist = path.join(ROOT, 'apps', 'api', 'dist')
+if (copy(apiDist, path.join(SERVER, 'api'))) {
+  copy(path.join(ROOT, 'apps', 'api', 'node_modules'), path.join(SERVER, 'api', 'node_modules'), { optional: true })
+  ok++; console.log('✓')
+} else console.log('pulado')
+
+console.log(`\n${ok}/${total} componentes copiados para ./server`)
 console.log('Em seguida: pnpm --filter @agoraencontrei/desktop dist  → gera o instalador .exe')
