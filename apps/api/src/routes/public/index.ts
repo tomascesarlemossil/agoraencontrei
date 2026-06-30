@@ -10,6 +10,10 @@ const PublicFilters = z.object({
   limit:        z.coerce.number().int().min(1).max(50).default(12),
   search:       z.string().optional(),
   ids:          z.string().optional(),  // CSV de IDs para favoritos/comparação
+  // Tenant scoping: restrict results to a single partner's properties.
+  // companyId filters directly; tenantSlug resolves the tenant's companyId first.
+  companyId:    z.string().optional(),
+  tenantSlug:   z.string().optional(),
   // type and purpose: coerce to uppercase then validate against enum — invalid values return 400
   type:         z.preprocess(
     v => typeof v === 'string' ? v.toUpperCase() : v,
@@ -230,10 +234,24 @@ export default async function publicRoutes(app: FastifyInstance) {
     }
     const filters = _parsed.data
 
-    // Show properties from ALL companies (marketplace) — not just one
+    // Tenant scoping: when companyId or tenantSlug is provided, restrict the
+    // listing to that single partner (used by tenant clone sites). Otherwise the
+    // endpoint behaves as a marketplace and shows properties from all companies.
+    let scopedCompanyId: string | undefined = filters.companyId
+    if (!scopedCompanyId && filters.tenantSlug) {
+      const tenant = await (app.prisma as any).tenant?.findUnique?.({
+        where: { subdomain: filters.tenantSlug },
+        select: { companyId: true },
+      }).catch(() => null)
+      // tenantSlug given but not found → scope to nothing instead of leaking the
+      // whole marketplace under a partner's domain.
+      scopedCompanyId = tenant?.companyId ?? '__no_such_tenant__'
+    }
+
     const where: any = {
       status: 'ACTIVE',
       authorizedPublish: true,
+      ...(scopedCompanyId && { companyId: scopedCompanyId }),
       ...(filters.ids && { id: { in: filters.ids.split(',').map(s => s.trim()).filter(Boolean) } }),
       ...(filters.search && {
         OR: [
@@ -299,7 +317,9 @@ export default async function publicRoutes(app: FastifyInstance) {
       app.prisma.property.findMany({
         where,
         select: PUBLIC_PROPERTY_SELECT,
-        orderBy: [{ isFeatured: 'desc' }, orderBy],
+        // Super Destaque (isPremium) first, then Destaque (isFeatured), then the
+        // requested sort order.
+        orderBy: [{ isPremium: 'desc' }, { isFeatured: 'desc' }, orderBy],
         skip,
         take: limit,
       }),
@@ -317,10 +337,12 @@ export default async function publicRoutes(app: FastifyInstance) {
         })
       : items
 
-    // Fallback: when no results found, relax filters progressively to show similar properties
+    // Fallback: when no results found, relax filters progressively to show similar properties.
+    // Skipped for tenant-scoped requests — a partner site must never fall back to
+    // another company's (default marketplace) inventory.
     let fallbackItems: any[] = []
     let isFallback = false
-    if (total === 0 && page === 1) {
+    if (total === 0 && page === 1 && !scopedCompanyId) {
       isFallback = true
       const baseWhere = { companyId: company.id, status: 'ACTIVE' as const, authorizedPublish: true }
 

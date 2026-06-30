@@ -26,6 +26,30 @@ interface TenantData {
   companyId: string
 }
 
+interface TenantProperty {
+  id: string
+  slug: string | null
+  title: string
+  type: string
+  purpose: string
+  price: number | null
+  priceRent: number | null
+  valueUnderConsultation: boolean | null
+  city: string | null
+  neighborhood: string | null
+  bedrooms: number | null
+  bathrooms: number | null
+  parkingSpaces: number | null
+  coverImage: string | null
+  images: string[] | null
+  isFeatured: boolean
+  isPremium: boolean
+}
+
+// Canonical main-site URL — tenant subdomains don't serve property detail pages,
+// so cards link back to the main domain where /imovel/[slug] is rendered.
+const MAIN_SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.agoraencontrei.com.br'
+
 async function getTenantBySubdomain(slug: string): Promise<TenantData | null> {
   try {
     const res = await fetch(`${API_URL}/api/v1/public/tenant/${slug}`, {
@@ -37,6 +61,31 @@ async function getTenantBySubdomain(slug: string): Promise<TenantData | null> {
   } catch {
     return null
   }
+}
+
+// Fetch the tenant's real properties, scoped by companyId. Results come back
+// ordered Super Destaque (isPremium) → Destaque (isFeatured) → rest from the API.
+async function getTenantProperties(companyId: string): Promise<TenantProperty[]> {
+  try {
+    const res = await fetch(
+      `${API_URL}/api/v1/public/properties?companyId=${encodeURIComponent(companyId)}&limit=12`,
+      { next: { revalidate: 60 } },
+    )
+    if (!res.ok) return []
+    const json = await res.json()
+    return Array.isArray(json.data) ? json.data : []
+  } catch {
+    return []
+  }
+}
+
+function formatTenantPrice(p: TenantProperty): string {
+  if (p.valueUnderConsultation) return 'Sob consulta'
+  const isRent = p.purpose === 'RENT'
+  const value = isRent ? p.priceRent ?? p.price : p.price ?? p.priceRent
+  if (!value) return 'Sob consulta'
+  const formatted = `R$ ${value.toLocaleString('pt-BR')}`
+  return isRent ? `${formatted}/mês` : formatted
 }
 
 export async function generateMetadata({
@@ -91,6 +140,7 @@ export default async function TenantPage({
 
   const theme = resolveTheme(tenant.layoutType)
   const accentColor = tenant.primaryColor || theme.accentHex
+  const properties = await getTenantProperties(tenant.companyId)
 
   return (
     <div className={`min-h-screen ${theme.bg} ${theme.text}`}>
@@ -181,31 +231,66 @@ export default async function TenantPage({
              theme.key === 'landscape_living' ? 'Terrenos e Loteamentos' :
              'Imóveis em Destaque'}
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[1, 2, 3].map(i => (
-              <div key={i} className={`${theme.card} ${theme.cardHover} border rounded-lg overflow-hidden transition-all`}>
-                <div className="h-48 bg-gradient-to-br from-gray-200 to-gray-300 relative">
-                  {theme.key === 'fast_sales_pro' && (
-                    <span className="absolute top-2 left-2 bg-rose-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
-                      Oportunidade
-                    </span>
-                  )}
-                  {theme.key === 'luxury_gold' && (
-                    <span className="absolute top-2 left-2 bg-amber-500 text-gray-950 text-[10px] font-bold px-2 py-0.5 rounded-full">
-                      Exclusivo
-                    </span>
-                  )}
-                </div>
-                <div className="p-4">
-                  <p className={`text-sm font-semibold ${theme.text}`}>Casa exemplo {i}</p>
-                  <p className={`text-xs ${theme.textMuted} mt-1`}>Jardim Petráglia • 3 quartos • 2 vagas</p>
-                  <p className="mt-2 font-bold" style={{ color: accentColor }}>
-                    R$ {(350000 + i * 50000).toLocaleString('pt-BR')}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
+          {properties.length === 0 ? (
+            <div className={`text-center py-16 ${theme.textMuted}`}>
+              <p className="text-lg font-medium">Novos imóveis em breve.</p>
+              <p className="text-sm mt-2">
+                Estamos preparando as melhores oportunidades. Fale conosco para
+                receber as novidades em primeira mão.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {properties.map(prop => {
+                const image = prop.coverImage || prop.images?.[0] || null
+                const details = [
+                  prop.bedrooms ? `${prop.bedrooms} quartos` : null,
+                  prop.bathrooms ? `${prop.bathrooms} banheiros` : null,
+                  prop.parkingSpaces ? `${prop.parkingSpaces} vagas` : null,
+                ].filter(Boolean).join(' • ')
+                const location = [prop.neighborhood, prop.city].filter(Boolean).join(', ')
+                return (
+                  <a
+                    key={prop.id}
+                    href={`${MAIN_SITE_URL}/imovel/${prop.slug ?? prop.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`${theme.card} ${theme.cardHover} border rounded-lg overflow-hidden transition-all block`}
+                  >
+                    <div className="h-48 bg-gradient-to-br from-gray-200 to-gray-300 relative">
+                      {image && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={image}
+                          alt={prop.title}
+                          className="absolute inset-0 w-full h-full object-cover"
+                          loading="lazy"
+                        />
+                      )}
+                      {prop.isPremium ? (
+                        <span className="absolute top-2 left-2 bg-amber-500 text-gray-950 text-[10px] font-bold px-2 py-0.5 rounded-full z-10">
+                          Super Destaque
+                        </span>
+                      ) : prop.isFeatured ? (
+                        <span className="absolute top-2 left-2 bg-rose-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full z-10">
+                          Destaque
+                        </span>
+                      ) : null}
+                    </div>
+                    <div className="p-4">
+                      <p className={`text-sm font-semibold ${theme.text} line-clamp-1`}>{prop.title}</p>
+                      <p className={`text-xs ${theme.textMuted} mt-1 line-clamp-1`}>
+                        {[location, details].filter(Boolean).join(' • ')}
+                      </p>
+                      <p className="mt-2 font-bold" style={{ color: accentColor }}>
+                        {formatTenantPrice(prop)}
+                      </p>
+                    </div>
+                  </a>
+                )
+              })}
+            </div>
+          )}
         </div>
       </section>
 
