@@ -228,6 +228,17 @@ html {
 #ae-root.ae-dark .border-gray-100,
 #ae-root.ae-dark .border-gray-200,
 #ae-root.ae-dark .border-gray-300 { border-color: var(--ae-border) !important; }
+/* Light section/utility backgrounds used across the internal public pages. */
+#ae-root.ae-dark .bg-gray-50,
+#ae-root.ae-dark .bg-gray-100,
+#ae-root.ae-dark .bg-\[\#f8f6f1\] { background-color: var(--ae-surface) !important; }
+#ae-root.ae-dark .bg-gray-200 { background-color: #20242c !important; }
+/* Navy heading text written as a Tailwind arbitrary value (text-[#1B2B5B]) is
+   the dominant title pattern on internal pages → remap to a readable token.
+   NOTE: inline `style={{ color: '#1B2B5B' }}` is deliberately NOT remapped — it
+   is syntactically identical to navy-on-gold buttons, so it needs per-surface
+   handling (see --ae-heading conversions) rather than a blanket override. */
+#ae-root.ae-dark .text-\[\#1B2B5B\] { color: var(--ae-heading) !important; }
 /* Inputs on dark public surfaces: dark field, light text. */
 #ae-root.ae-dark input:not([type='checkbox']):not([type='radio']),
 #ae-root.ae-dark textarea,
