@@ -26,6 +26,12 @@ updates:
           - "minor"
     allow:
       - dependency-type: "all"
+    # Bumps de versão MAIOR quebram o build (ex.: prisma 5→7 derrubou a produção,
+    # electron 31→42, nodemailer 8→9, typescript 5→6). Majors devem ser feitos
+    # MANUALMENTE, com teste. O Dependabot fica só com patch/minor seguros.
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
     commit-message:
       prefix: "chore(deps)"
       prefix-development: "chore(deps-dev)"
