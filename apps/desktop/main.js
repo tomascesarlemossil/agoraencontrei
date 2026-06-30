@@ -10,11 +10,28 @@
  */
 const { app, BrowserWindow, dialog, ipcMain } = require('electron')
 const path = require('node:path')
+const fs = require('node:fs')
 const { checkLicense, activateLicense } = require('./license')
 
 const LOCAL_URL = process.env.AGORA_LOCAL_URL || 'http://127.0.0.1:3100/app'
 
 let mainWindow = null
+
+// Flag de primeira execução: o produto SAI VAZIO. No 1º boot o usuário escolhe
+// "começar do zero" ou "importar backup" (onboarding.html).
+function initFlagPath() {
+  return path.join(app.getPath('userData'), 'initialized.json')
+}
+function isInitialized() {
+  try { return JSON.parse(fs.readFileSync(initFlagPath(), 'utf8')).done === true }
+  catch { return false }
+}
+function markInitialized(mode) {
+  try {
+    fs.mkdirSync(app.getPath('userData'), { recursive: true })
+    fs.writeFileSync(initFlagPath(), JSON.stringify({ done: true, mode, at: new Date().toISOString() }))
+  } catch { /* noop */ }
+}
 
 function createWindow(startUrl) {
   mainWindow = new BrowserWindow({
@@ -51,8 +68,11 @@ app.whenReady().then(async () => {
   const lic = await checkLicense(app.getPath('userData'))
   if (!lic.valid) {
     createWindow(`file://${path.join(__dirname, 'renderer', 'activate.html')}`)
+  } else if (!isInitialized()) {
+    // 2) Primeira execução: onboarding (vazio → começar do zero ou importar).
+    createWindow(`file://${path.join(__dirname, 'renderer', 'onboarding.html')}`)
   } else {
-    // 2) Sobe serviços locais e abre a aplicação.
+    // 3) Sobe serviços locais e abre a aplicação.
     try {
       const url = await startEmbeddedServer()
       createWindow(url)
@@ -75,6 +95,18 @@ ipcMain.handle('license:activate', async (_evt, key) => {
     mainWindow.loadURL(url)
   }
   return res
+})
+
+// IPC: escolha do onboarding (primeira execução).
+ipcMain.handle('app:onboard', async (_evt, choice) => {
+  const mode = choice && choice.mode === 'import' ? 'import' : 'fresh'
+  markInitialized(mode)
+  const url = await startEmbeddedServer().catch(() => LOCAL_URL)
+  if (mainWindow) {
+    // 'import' abre direto o assistente de importação da app; 'fresh' o painel.
+    mainWindow.loadURL(mode === 'import' ? `${url}?onboarding=import` : url)
+  }
+  return { ok: true, mode }
 })
 
 app.on('window-all-closed', () => {

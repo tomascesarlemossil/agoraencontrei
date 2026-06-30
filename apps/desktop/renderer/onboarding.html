@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bem-vindo — AgoraEncontrei Software</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Segoe UI',system-ui,sans-serif;background:#0a0e1a;color:#eef2ff;
+    min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+  .wrap{max-width:760px;text-align:center}
+  .logo{font-weight:800;font-size:24px;margin-bottom:8px}
+  .logo span{color:#22d3a6}
+  p.sub{color:#9aa7c7;margin-bottom:36px}
+  .cards{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  @media(max-width:640px){.cards{grid-template-columns:1fr}}
+  .card{background:#121829;border:1px solid #26304d;border-radius:18px;padding:30px;cursor:pointer;
+    transition:transform .15s, border-color .15s;text-align:left}
+  .card:hover{transform:translateY(-3px);border-color:#4f7cff}
+  .card .ico{font-size:34px;margin-bottom:12px}
+  .card h3{font-size:19px;margin-bottom:8px}
+  .card p{color:#9aa7c7;font-size:14px;line-height:1.5}
+  .msg{margin-top:22px;color:#22d3a6;font-size:14px;min-height:20px}
+</style></head><body>
+  <div class="wrap">
+    <div class="logo">Agora<span>Encontrei</span> Software</div>
+    <p class="sub">Bem-vindo! Como você quer começar?</p>
+    <div class="cards">
+      <div class="card" id="fresh">
+        <div class="ico">✨</div>
+        <h3>Começar do zero</h3>
+        <p>Inicie com o sistema limpo e cadastre seus imóveis, proprietários e
+        contratos no seu ritmo. Ideal para quem está começando.</p>
+      </div>
+      <div class="card" id="import">
+        <div class="ico">📦</div>
+        <h3>Importar meu backup</h3>
+        <p>Já usa outro sistema? Importe o backup (Paradox/DBF do IMOBILI, Uniloc e
+        outros) e traga sua carteira inteira sem redigitar nada.</p>
+      </div>
+    </div>
+    <div class="msg" id="msg"></div>
+  </div>
+<script>
+  const msg = document.getElementById('msg')
+  document.getElementById('fresh').addEventListener('click', async () => {
+    msg.textContent = 'Preparando o sistema...'
+    await window.agora.onboard({ mode: 'fresh' })
+  })
+  document.getElementById('import').addEventListener('click', async () => {
+    msg.textContent = 'Abrindo o assistente de importação...'
+    await window.agora.onboard({ mode: 'import' })
+  })
+</script>
+</body></html>

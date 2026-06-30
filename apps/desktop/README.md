@@ -12,10 +12,25 @@ banco **SQLite local** e **ativação por licença assinada**.
 |---|---|
 | `main.js` | Processo principal Electron: checa licença → sobe servidor local → abre janela |
 | `license.js` | Validação **offline** da chave (ed25519) + cache com grace period |
-| `preload.js` | Bridge seguro renderer↔main (só ativação de licença) |
+| `preload.js` | Bridge seguro renderer↔main (ativação + onboarding) |
 | `renderer/activate.html` | Tela de ativação (cola a chave) |
+| `renderer/onboarding.html` | 1ª execução: **começar do zero** ou **importar backup** |
 | `tools/license-cli.js` | **Servidor**: gera par de chaves e emite licenças assinadas |
 | `package.json` | electron + electron-builder (gera `.exe` NSIS) |
+
+## O produto sai VAZIO (sem dados de terceiros)
+
+O instalador entrega o sistema **limpo**. No fluxo de boot:
+
+```
+ativação de licença → 1ª execução? → onboarding → app
+                                       ├─ "Começar do zero"  → painel limpo
+                                       └─ "Importar backup"   → assistente de importação
+```
+
+O comprador escolhe começar do zero **ou** importar o backup do seu sistema antigo
+(IMOBILI/Paradox, Uniloc/DBF, etc.) usando o migrador em `scripts/imobili-migrator/`.
+Nenhum dado da Imobiliária Lemos (ou de qualquer outra) é embarcado.
 
 ## Ativação de licença (já funciona)
 
