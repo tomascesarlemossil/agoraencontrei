@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { Phone, MapPin, Instagram, Facebook, Youtube } from 'lucide-react'
 import { Navbar } from '@/components/public/Navbar'
+import { BrandBackdrop } from '@/components/public/BrandBackdrop'
 import TomasWidget from '@/components/tomas/TomasWidget'
 import { SkipNav } from '@/components/SkipNav'
 
@@ -47,9 +48,21 @@ const AE_THEME_SCRIPT = `(function(){try{var m=document.cookie.match(/(?:^|; )ae
 
 export default function PublicLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div id="ae-root" suppressHydrationWarning className="min-h-screen ae-light" style={{ backgroundColor: 'var(--ae-surface)' }}>
-      {/* eslint-disable-next-line @next/next/no-sync-scripts */}
-      <script dangerouslySetInnerHTML={{ __html: AE_THEME_SCRIPT }} />
+    <>
+      {/* Papel de parede institucional: verde escuro militar + monograma AE
+          em cada lateral (aparece nas telas largas, atrás do conteúdo). */}
+      <BrandBackdrop />
+      {/* Em telas largas (2xl+) o conteúdo vira um painel centralizado, revelando
+          o verde militar e os logos nas laterais. Abaixo disso ocupa a largura
+          toda — layout e leitura idênticos ao anterior (zero regressão). */}
+      <div
+        id="ae-root"
+        suppressHydrationWarning
+        className="relative min-h-screen ae-light 2xl:max-w-[1600px] 2xl:mx-auto 2xl:shadow-[0_0_60px_rgba(0,0,0,0.45)]"
+        style={{ backgroundColor: 'var(--ae-surface)' }}
+      >
+        {/* eslint-disable-next-line @next/next/no-sync-scripts */}
+        <script dangerouslySetInnerHTML={{ __html: AE_THEME_SCRIPT }} />
       {/* Top info bar */}
       <div style={{ backgroundColor: '#1B2B5B' }} className="hidden lg:block">
         <div className="max-w-7xl mx-auto px-6 h-9 flex items-center justify-between text-xs text-white/70">
@@ -275,6 +288,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
           </div>
         </div>
       </footer>
-    </div>
+      </div>
+    </>
   )
 }
