@@ -39,13 +39,13 @@ function PriceDisplay({ price, priceRent, purpose }: { price: number | null; pri
         </div>
         <div className="flex items-center justify-between">
           <span className="text-xs font-medium text-gray-500">Locação</span>
-          <span className="text-sm font-bold" style={{ color: '#1B2B5B' }}>{fmt.format(Number(priceRent))}/mês</span>
+          <span className="text-sm font-bold" style={{ color: 'var(--ae-heading)' }}>{fmt.format(Number(priceRent))}/mês</span>
         </div>
       </div>
     )
   }
-  if (hasRent) return <p className="text-base font-bold mt-3" style={{ color: '#1B2B5B' }}>{fmt.format(Number(priceRent))}/mês</p>
-  if (hasSale) return <p className="text-base font-bold mt-3" style={{ color: '#1B2B5B' }}>{fmt.format(Number(price))}</p>
+  if (hasRent) return <p className="text-base font-bold mt-3" style={{ color: 'var(--ae-heading)' }}>{fmt.format(Number(priceRent))}/mês</p>
+  if (hasSale) return <p className="text-base font-bold mt-3" style={{ color: 'var(--ae-heading)' }}>{fmt.format(Number(price))}</p>
   return <p className="text-sm font-medium mt-3 text-gray-500">Consulte</p>
 }
 
