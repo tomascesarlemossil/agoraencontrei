@@ -14,10 +14,10 @@ const fs = require('node:fs')
 const path = require('node:path')
 const crypto = require('node:crypto')
 
-// Chave pública do emissor (PLACEHOLDER — trocar pela real na geração de chaves).
-// Formato SPKI PEM ed25519.
+// Chave pública do emissor (ed25519, SPKI PEM). Par da LICENSE_PRIVATE_KEY
+// configurada no Railway — licenças assinadas lá validam aqui offline.
 const PUBLIC_KEY = `-----BEGIN PUBLIC KEY-----
-MCowBQYDK2VwAyEAUW3071JVqE3WKlex0rgdFzz211xHgngIAbQzGFpPa38=
+MCowBQYDK2VwAyEAUTzswml+/2KjhLzZ6wcEd9w4BDxHL+hwO8Lgxnsi4mc=
 -----END PUBLIC KEY-----`
 
 const GRACE_DAYS = 30
