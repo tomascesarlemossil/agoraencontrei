@@ -131,15 +131,17 @@ async function startEmbeddedServer() {
   const userData = app.getPath('userData')
 
   // 1) Banco local (Postgres embarcado) — mesmo schema/código da nuvem.
-  const { pg, url, firstRun } = await startDatabase(userData)
+  const { pg, url, ready, readyMarker } = await startDatabase(userData)
   pgHandle = pg
   process.env.DATABASE_URL = url
   process.env.DIRECT_DATABASE_URL = url
 
-  // 2) Schema: no 1º boot aplicamos o SQL das migrations direto (sem CLI Prisma).
+  // 2) Schema: enquanto o banco não estiver marcado como pronto, aplicamos o SQL
+  //    das migrations direto (sem CLI Prisma) e gravamos o marcador no sucesso.
   const prismaDir = path.join(__dirname, 'server', 'prisma')
-  if (firstRun) {
+  if (!ready) {
     await applySchema(pg, prismaDir)
+    fs.writeFileSync(readyMarker, JSON.stringify({ at: new Date().toISOString() }))
   }
 
   // 3) API Fastify embarcada (se empacotada em ./server/api).

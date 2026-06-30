@@ -28,7 +28,18 @@ async function startDatabase(userDataDir) {
   const mod = require('embedded-postgres')
   const EmbeddedPostgres = mod.default || mod // suporta export default (ESM) e CJS
   const databaseDir = path.join(userDataDir, 'pgdata')
-  const firstRun = !fs.existsSync(path.join(databaseDir, 'PG_VERSION'))
+  const readyMarker = path.join(userDataDir, 'db-ready.json')
+  const ready = fs.existsSync(readyMarker)
+
+  // Auto-recuperação: se o banco NÃO está marcado como pronto (1ª vez ou uma
+  // tentativa anterior falhou no meio), começamos do zero. Isso remove resíduo
+  // problemático — ex.: um cluster criado em WIN1252 (locale do Windows) que
+  // rejeita caracteres UTF-8 do schema (Prestação, ─, etc.). Como o schema ainda
+  // não foi aplicado, não há dados reais do usuário para perder.
+  if (!ready && fs.existsSync(databaseDir)) {
+    try { fs.rmSync(databaseDir, { recursive: true, force: true }) } catch { /* noop */ }
+  }
+  const needInit = !fs.existsSync(path.join(databaseDir, 'PG_VERSION'))
 
   const pg = new EmbeddedPostgres({
     databaseDir,
@@ -36,19 +47,22 @@ async function startDatabase(userDataDir) {
     password: DB_PASS,
     port: DB_PORT,
     persistent: true,
+    // Cluster em UTF-8 (locale C para portabilidade) — o schema e os dados
+    // PT-BR exigem UTF-8; sem isso o initdb herda o locale .1252 do Windows.
+    initdbFlags: ['--encoding=UTF8', '--locale=C'],
     onError: (msg) => { try { console.error('[postgres]', String(msg)) } catch { /* noop */ } },
   })
 
-  if (firstRun) {
+  if (needInit) {
     await pg.initialise()
   }
   await pg.start()
-  if (firstRun) {
+  if (needInit) {
     await pg.createDatabase(DB_NAME).catch(() => {})
   }
 
   const url = `postgresql://${DB_USER}:${DB_PASS}@127.0.0.1:${DB_PORT}/${DB_NAME}`
-  return { pg, url, firstRun }
+  return { pg, url, ready, readyMarker }
 }
 
 /**
@@ -72,6 +86,7 @@ async function applySchema(pg, prismaDir) {
   const client = pg.getPgClient(DB_NAME, '127.0.0.1')
   await client.connect()
   try {
+    await client.query("SET client_encoding TO 'UTF8'")
     await client.query(sql)
   } finally {
     await client.end().catch(() => {})
