@@ -1340,6 +1340,67 @@ model FinancialForecast {
   @@map("financial_forecasts")
 }
 
+// ── Contas a Pagar + Cheques (financeiro interno da imobiliária) ───────────
+// Equivalente Uniloc: cadespe (despesas/contas a pagar) e cp_cheqs (cheques).
+
+/// Conta a pagar / despesa da imobiliária ou de terceiros (cadespe).
+model AccountPayable {
+  id            String      @id @default(cuid())
+  companyId     String
+  legacyId      String?     // coddes
+  description   String      // descricao
+  payeeName     String      // favorecido
+  payeeId       String?     // Contact/Client.id do favorecido, se cadastrado
+  category      String?     // grupo / plano de contas
+  documentNumber String?    // documento
+  amount        Decimal     @db.Decimal(12, 2)
+  dueDate       DateTime    // vencimento
+  status        String      @default("PENDING") // PENDING | PAID | CANCELLED
+  paidAt        DateTime?   // pagamento
+  paymentDoc    String?     // doc_pagto (comprovante)
+  paymentMethod String?     // PIX | TED | BOLETO | DINHEIRO | CHEQUE
+  contractId    String?     // vínculo opcional a contrato
+  propertyId    String?     // vínculo opcional a imóvel
+  notes         String?
+  createdBy     String?     // userId (usercad)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  checks        BankCheck[]
+
+  @@index([companyId])
+  @@index([status])
+  @@index([dueDate])
+  @@map("accounts_payable")
+}
+
+/// Cheque emitido / pré-datado (cp_cheqs).
+model BankCheck {
+  id              String          @id @default(cuid())
+  companyId       String
+  legacyId        String?         // codcp
+  checkNumber     String          // cheque_n
+  amount          Decimal         @db.Decimal(12, 2) // valor_cp
+  bankCode        String?         // codban
+  payeeName       String?         // favorecp
+  category        String?         // codgr / grupo
+  issueDate       DateTime?       // dataemi
+  dueDate         DateTime?       // data_cp (data do cheque / pré-datado)
+  status          String          @default("PENDING") // PENDING | CLEARED | CANCELLED (situcp)
+  clearedAt       DateTime?
+  accountPayableId String?        // vínculo à conta a pagar que originou
+  accountPayable  AccountPayable? @relation(fields: [accountPayableId], references: [id])
+  notes           String?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@index([companyId])
+  @@index([status])
+  @@index([dueDate])
+  @@index([accountPayableId])
+  @@map("bank_checks")
+}
+
 // ── NF-e / Notas Fiscais de Serviço ───────────────────────────────────────
 
 enum FiscalNoteStatus {
