@@ -1,0 +1,3 @@
+# Exports contêm dados pessoais reais (CPF, nomes, endereços) — NUNCA versionar.
+export/
+*.json
