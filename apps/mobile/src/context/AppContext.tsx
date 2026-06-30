@@ -3,6 +3,7 @@ import { useColorScheme } from 'react-native'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { buildColors, ThemeColors } from '../utils/theme'
 import { getToken, setToken as persistToken, Auth } from '../services/api'
+import { t as translate, TKey } from '../utils/i18n'
 
 type User = { id: string; name?: string; email: string; role?: string } | null
 
@@ -13,6 +14,7 @@ type AppContextType = {
   colors: ThemeColors
   language: string
   changeLanguage: (lang: string) => void
+  t: (key: TKey) => string
   notificationsEnabled: boolean
   toggleNotifications: () => void
   user: User
@@ -82,10 +84,11 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   }, [])
 
   const colors = buildColors(isDarkMode)
+  const t = useCallback((key: TKey) => translate(language, key), [language])
 
   return (
     <AppContext.Provider value={{
-      ready, isDarkMode, toggleDarkMode, colors, language, changeLanguage,
+      ready, isDarkMode, toggleDarkMode, colors, language, changeLanguage, t,
       notificationsEnabled, toggleNotifications, user, signIn, signOut,
       favorites, isFavorite, toggleFavorite,
     }}>

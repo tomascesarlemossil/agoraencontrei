@@ -32,7 +32,7 @@ function daysLeft(endsAt?: string): string | null {
 }
 
 export function AuctionsScreen() {
-  const { colors } = useApp()
+  const { colors, t } = useApp()
   const insets = useSafeAreaInsets()
   const [items, setItems] = useState<Auction[]>([])
   const [loading, setLoading] = useState(true)
@@ -50,8 +50,8 @@ export function AuctionsScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.background, paddingTop: insets.top }}>
       <View style={styles.header}>
-        <Text style={[styles.h1, { color: colors.text }]}>Leilões</Text>
-        <Text style={[styles.sub, { color: colors.textSecondary }]}>Oportunidades com score e ROI — ao vivo.</Text>
+        <Text style={[styles.h1, { color: colors.text }]}>{t('auctions')}</Text>
+        <Text style={[styles.sub, { color: colors.textSecondary }]}>{t('auctionsSubtitle')}</Text>
       </View>
       {loading ? (
         <ActivityIndicator color={colors.gold} style={{ marginTop: SPACING.xl }} />
@@ -88,7 +88,7 @@ export function AuctionsScreen() {
               </Pressable>
             )
           }}
-          ListEmptyComponent={<Text style={[styles.empty, { color: colors.textSecondary }]}>Nenhum leilão disponível agora. Puxe para atualizar.</Text>}
+          ListEmptyComponent={<Text style={[styles.empty, { color: colors.textSecondary }]}>{t('noAuctions')}</Text>}
           {...flatListOptimizationProps}
         />
       )}

@@ -9,7 +9,7 @@ import { flatListOptimizationProps, triggerHaptic } from '../utils/performance'
 import { PropertyCard, Property } from '../components/PropertyCard'
 
 export function SearchScreen() {
-  const { colors } = useApp()
+  const { colors, t } = useApp()
   const insets = useSafeAreaInsets()
   const [q, setQ] = useState('')
   const [items, setItems] = useState<Property[]>([])
@@ -31,7 +31,7 @@ export function SearchScreen() {
         <Ionicons name="search" size={20} color={colors.textSecondary} />
         <TextInput
           value={q} onChangeText={setQ} onSubmitEditing={search} returnKeyType="search"
-          placeholder="Cidade, bairro ou tipo de imóvel" placeholderTextColor={colors.textSecondary}
+          placeholder={t('searchPlaceholder')} placeholderTextColor={colors.textSecondary}
           style={[styles.input, { color: colors.text }]}
         />
         <Pressable accessibilityRole="button" accessibilityLabel="Buscar" onPress={search}>
@@ -48,7 +48,7 @@ export function SearchScreen() {
           contentContainerStyle={{ padding: SPACING.base, paddingBottom: insets.bottom + SPACING.xl }}
           ListEmptyComponent={
             <Text style={[styles.empty, { color: colors.textSecondary }]}>
-              {searched ? 'Nenhum imóvel encontrado.' : 'Busque imóveis em tempo real.'}
+              {searched ? t('notFound') : t('searchHint')}
             </Text>
           }
           {...flatListOptimizationProps}

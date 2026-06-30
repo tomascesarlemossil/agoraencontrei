@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react'
+import React, { useCallback, useEffect } from 'react'
 import { View } from 'react-native'
 import { StatusBar } from 'expo-status-bar'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
@@ -6,15 +6,21 @@ import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/
 import * as SplashScreen from 'expo-splash-screen'
 import { AppProvider, useApp } from './src/context/AppContext'
 import { RootNavigator } from './src/navigation/RootNavigator'
+import { registerForPush } from './src/services/notifications'
 
 SplashScreen.preventAutoHideAsync().catch(() => {})
 
 function Root() {
-  const { ready, isDarkMode, colors } = useApp()
+  const { ready, isDarkMode, colors, notificationsEnabled } = useApp()
 
   const onLayout = useCallback(() => {
     if (ready) SplashScreen.hideAsync().catch(() => {})
   }, [ready])
+
+  // Registra para push quando o usuário tem notificações ligadas.
+  useEffect(() => {
+    if (ready && notificationsEnabled) registerForPush().catch(() => {})
+  }, [ready, notificationsEnabled])
 
   if (!ready) return null
 

@@ -29,6 +29,9 @@
     "extra": {
       "apiUrl": "https://api-production-669c.up.railway.app"
     },
-    "plugins": ["expo-splash-screen"]
+    "plugins": [
+      "expo-splash-screen",
+      ["expo-notifications", { "color": "#C9A84C" }]
+    ]
   }
 }

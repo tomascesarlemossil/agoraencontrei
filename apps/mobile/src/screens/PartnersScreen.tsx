@@ -13,7 +13,7 @@ const WEB_CHECKOUT = 'https://www.agoraencontrei.com.br/parceiros/cadastro'
 type Plan = { id: string; slug: string; name: string; description?: string; priceMonthly: number; features?: string[]; highlighted?: boolean }
 
 export function PartnersScreen() {
-  const { colors } = useApp()
+  const { colors, t } = useApp()
   const insets = useSafeAreaInsets()
   const [plans, setPlans] = useState<Plan[]>([])
   const [loading, setLoading] = useState(true)
@@ -29,7 +29,7 @@ export function PartnersScreen() {
   return (
     <ScrollView style={{ backgroundColor: colors.background }}
       contentContainerStyle={{ padding: SPACING.base, paddingTop: insets.top + SPACING.base, paddingBottom: insets.bottom + SPACING.xl }}>
-      <Text style={[styles.h1, { color: colors.text }]}>Seja um Parceiro</Text>
+      <Text style={[styles.h1, { color: colors.text }]}>{t('beAPartner')}</Text>
       <Text style={[styles.sub, { color: colors.textSecondary }]}>
         Planos do sistema AgoraEncontrei — os mesmos da plataforma web, ao vivo.
       </Text>
@@ -55,7 +55,7 @@ export function PartnersScreen() {
             <Pressable accessibilityRole="button" accessibilityLabel={`Assinar ${p.name} no site`}
               onPress={() => { triggerHaptic('light'); Linking.openURL(`${WEB_CHECKOUT}?plan=${p.slug}`) }}
               style={[styles.cta, { backgroundColor: p.highlighted ? colors.gold : colors.navy }]}>
-              <Text style={[styles.ctaTxt, { color: p.highlighted ? colors.navy : colors.white }]}>Assinar no site</Text>
+              <Text style={[styles.ctaTxt, { color: p.highlighted ? colors.navy : colors.white }]}>{t('subscribeOnSite')}</Text>
               <Ionicons name="open-outline" size={16} color={p.highlighted ? colors.navy : colors.white} />
             </Pressable>
           </View>

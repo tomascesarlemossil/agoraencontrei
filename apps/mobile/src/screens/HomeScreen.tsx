@@ -9,7 +9,7 @@ import { PropertyCard, Property } from '../components/PropertyCard'
 import { Brand } from '../components/Brand'
 
 export function HomeScreen() {
-  const { colors } = useApp()
+  const { colors, t } = useApp()
   const insets = useSafeAreaInsets()
   const [items, setItems] = useState<Property[]>([])
   const [loading, setLoading] = useState(true)
@@ -33,7 +33,7 @@ export function HomeScreen() {
     <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
       <View style={styles.header}>
         <Brand size={26} />
-        <Text style={[styles.tagline, { color: colors.textSecondary }]}>Marketplace Imobiliário</Text>
+        <Text style={[styles.tagline, { color: colors.textSecondary }]}>{t('tagline')}</Text>
       </View>
       {loading ? (
         <ActivityIndicator color={colors.gold} style={{ marginTop: SPACING.xl }} />
@@ -44,11 +44,11 @@ export function HomeScreen() {
           renderItem={({ item }) => <PropertyCard property={item} />}
           contentContainerStyle={{ padding: SPACING.base, paddingBottom: insets.bottom + SPACING.xl }}
           ListHeaderComponent={
-            <Text style={[styles.section, { color: colors.text }]}>Imóveis em destaque</Text>
+            <Text style={[styles.section, { color: colors.text }]}>{t('featured')}</Text>
           }
           ListEmptyComponent={
             <Text style={[styles.empty, { color: colors.textSecondary }]}>
-              Nenhum imóvel disponível agora. Puxe para atualizar.
+              {t('noProperties')}
             </Text>
           }
           refreshControl={
