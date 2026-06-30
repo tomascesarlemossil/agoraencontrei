@@ -1401,6 +1401,37 @@ model BankCheck {
   @@map("bank_checks")
 }
 
+/// Acerto de rescisão de contrato (equivalente Uniloc rescisao/resclncs).
+/// Guarda o resultado calculado por `calculateRescission` + o detalhamento.
+model Rescission {
+  id             String   @id @default(cuid())
+  companyId      String
+  contractId     String
+  legacyId       String?  // codcon/coddoc original
+  exitDate       DateTime // data de saída/entrega das chaves
+  proRataRent    Decimal  @db.Decimal(12, 2) @default(0)
+  proRataIptu    Decimal  @db.Decimal(12, 2) @default(0)
+  penaltyValue   Decimal  @db.Decimal(12, 2) @default(0)
+  outstandingValue Decimal @db.Decimal(12, 2) @default(0)
+  bonusValue     Decimal  @db.Decimal(12, 2) @default(0)
+  depositRefund  Decimal  @db.Decimal(12, 2) @default(0)
+  totalDebits    Decimal  @db.Decimal(12, 2) @default(0)
+  totalCredits   Decimal  @db.Decimal(12, 2) @default(0)
+  netResult      Decimal  @db.Decimal(12, 2) @default(0) // >0 inquilino paga; <0 a devolver
+  settlement     String   @default("SETTLED") // TENANT | TENANT_REFUND | SETTLED
+  status         String   @default("DRAFT")   // DRAFT | CONFIRMED | SETTLED
+  items          Json     @default("[]")       // detalhamento das linhas
+  notes          String?
+  createdBy      String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([companyId])
+  @@index([contractId])
+  @@index([status])
+  @@map("rescissions")
+}
+
 // ── NF-e / Notas Fiscais de Serviço ───────────────────────────────────────
 
 enum FiscalNoteStatus {

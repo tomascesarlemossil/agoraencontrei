@@ -97,7 +97,7 @@ Boa parte já existe (o schema Prisma já cita `legacyId` do Uniloc). Comparativ
 | **Contas a pagar + cheques pré-datados** | `AccountPayable` + `BankCheck` + rota `/payables` | ✅ **Implementado** |
 | **Conciliação bancária / CNAB retorno** | parcial (Asaas webhook) | ⚠️ **Parcial** |
 | **Acordos / renegociação de dívida** | — | ⚠️ **Lacuna** |
-| **Cálculo automatizado de rescisão** | campos existem, sem motor | ⚠️ **Parcial** |
+| **Cálculo automatizado de rescisão** | `calculateRescission` + `Rescission` + rota `/rescission` | ✅ **Implementado** |
 | **Notificação formal/extrajudicial** | `legal` + `alerts` (parcial) | ⚠️ **Parcial** |
 | Carnê de IPTU parcelado | `Rental.iptuAmount` (sem carnê) | ⚠️ **Parcial** |
 | Permissões granulares por módulo | `UserRole` (papéis fixos) | ⚠️ **Parcial** |
