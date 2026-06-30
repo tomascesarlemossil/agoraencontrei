@@ -1,6 +1,13 @@
-# Relatório da Carteira Real (Uniloc) — Imobiliária Lemos
+# Teste da Funcionalidade "Importar Backup" (com dados Uniloc)
 
-> Extraído de `data/uniloc/backup_extraido/*.dbf` com o leitor `scripts/imobili-migrator/dbf_reader.py`.
+> ⚠️ **IMPORTANTE — propósito deste documento:** a AgoraEncontrei Software (versão de venda)
+> sai **VAZIA**. Estes dados da Imobiliária Lemos **NÃO são embarcados no produto** e **NÃO foram
+> carregados em nenhum banco**. Foram usados **somente para validar a funcionalidade de importação
+> de backup** que o produto oferece ao comprador — provando que um cliente consegue subir o backup
+> do seu sistema antigo e ver a carteira aparecer. Cada comprador decide: **importar o próprio backup**
+> ou **começar do zero**.
+>
+> Extraído de `data/uniloc/backup_extraido/*.dbf` com `scripts/imobili-migrator/dbf_reader.py`.
 > **Apenas números agregados** — nenhum dado pessoal (CPF/nome) aparece aqui nem é versionado.
 > Os JSON com dados pessoais são gerados localmente e ficam fora do Git (`.gitignore`).
 
