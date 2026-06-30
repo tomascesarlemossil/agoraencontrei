@@ -20,6 +20,12 @@ const dados = {
     indiceReajuste: 'IPCA', multa: 3 },
   parcela: { competencia: '06/2026', vencimento: '2026-06-10', valor: 1850.5 },
   cobranca: { totalDevido: 1850.5 },
+  recibo: { valor: 1850.5, competencia: '06/2026', vencimento: '2026-06-10' },
+  rescisao: { data: '2026-07-15', multa: 1850.5, devolucao: 900 },
+  vistoria: { tipo: 'Vistoria de Entrada', data: '2026-07-01', pintura: 'Bom', obsPintura: 'recém-pintado',
+    piso: 'Bom', obsPiso: '', eletrica: 'Bom', obsEletrica: '', hidraulica: 'Regular',
+    obsHidraulica: 'torneira da cozinha pinga', esquadrias: 'Bom', obsEsquadrias: '',
+    observacoes: 'Imóvel entregue limpo e em boas condições.' },
   data: { hoje: new Date('2026-06-30') },
 }
 

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="UTF-8"><style>
+  body{font-family:'Times New Roman',serif;font-size:12pt;line-height:1.7;color:#000;max-width:700px;margin:40px auto;padding:0 30px;text-align:justify}
+  h1{font-size:15pt;text-align:center;color:#1B2B5B;margin-bottom:24px}
+  .assinaturas{margin-top:60px;display:flex;justify-content:space-between;gap:40px;text-align:center}
+  .assinaturas div{flex:1;border-top:1px solid #000;padding-top:6px;font-size:11pt}
+</style></head><body>
+  <h1>DISTRATO / RESCISÃO DE CONTRATO DE LOCAÇÃO</h1>
+
+  <p>Pelo presente instrumento, <strong>{{locador.nome}}</strong> (LOCADOR) e
+  <strong>{{locatario.nome}}</strong> (LOCATÁRIO), partes do Contrato de Locação do imóvel
+  situado em <strong>{{imovel.endereco}}</strong>, iniciado em {{contrato.inicio|data}},
+  resolvem, de comum acordo, RESCINDIR o referido contrato nos termos abaixo.</p>
+
+  <p><strong>1.</strong> A rescisão produz efeitos a partir de
+  <strong>{{rescisao.data|data}}</strong>, data da entrega das chaves.</p>
+
+  {{#se rescisao.multa}}<p><strong>2.</strong> Em razão da rescisão antecipada, o LOCATÁRIO
+  pagará multa proporcional no valor de <strong>{{rescisao.multa|moeda}}</strong>.</p>{{/se}}
+
+  {{#se rescisao.devolucao}}<p><strong>3.</strong> Será devolvido ao LOCATÁRIO o valor de
+  <strong>{{rescisao.devolucao|moeda}}</strong>, referente à caução/saldo apurado.</p>{{/se}}
+
+  <p><strong>4.</strong> As partes dão mútua e plena quitação, nada mais tendo a reclamar
+  uma da outra, ressalvados eventuais débitos apurados em vistoria final.</p>
+
+  <p style="text-align:center;margin-top:26px">{{empresa.cidade}}, {{data.hoje|extenso}}.</p>
+
+  <div class="assinaturas">
+    <div>{{locador.nome}}<br>LOCADOR(A)</div>
+    <div>{{locatario.nome}}<br>LOCATÁRIO(A)</div>
+  </div>
+</body></html>
