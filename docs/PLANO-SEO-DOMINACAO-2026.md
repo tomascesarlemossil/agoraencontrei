@@ -202,3 +202,27 @@ bem-delimitada e de maior alavancagem que você pediu nesta rodada.
 > ⚠️ Nota de risco registrada: você optou por máxima cobertura. O guarda-corpo da
 > Seção 3 (`indexar=false` até passar o quality gate) é o que permite escalar a milhões
 > de URLs **sem** ser penalizado pelo Google. Recomendo mantê-lo ligado.
+
+---
+
+## 7. Status de execução
+
+### ✅ Fase 1 — Grupo E ENTREGUE (código no ar ao fazer merge)
+- `seo-clusters.ts` → novo `CLUSTERS_GROUP_E` com **31 clusters** de produtos modernos, incluído em `ALL_CLUSTERS`
+- `/[estado]/[cidade]/servicos/[cluster]/page.tsx` → `SERVICOS` map estendido (12 → **43** serviços); renderiza + SSG por cidade
+- `sitemap.ts` → `SERVICO_SLUGS` com os 31 novos slugs
+- **Resultado:** ~31 × 152 cidades ≈ **4.700 páginas novas** já geradas; escala automática para 5.570 cidades quando `IBGE` completo for ativado
+- Validado: 43 slugs únicos, sem duplicados, arquivos compilam (esbuild OK)
+
+### ⏳ Fases que dependem de rodar contra PRODUÇÃO (não executadas autonomamente)
+Estas exigem credenciais e infraestrutura viva (Neon, Redis, chaves de IA, Service
+Account do Google) e o CSV de 1M URLs — não devem ser disparadas sem supervisão:
+
+1. **Migration `seo_paginas`** (colunas `conteudo_ai`, `familia_url`, `prioridade`, `indexar`) → rodar no Neon
+2. **`import-ibge-all-cities.ts`** → expandir de 152 → 5.570 cidades no banco
+3. **`seed-1m-urls.ts`** → importar o CSV de 1M URLs (CSV precisa ser fornecido)
+4. **`generate-seo-content-batch.ts`** → gerar conteúdo IA em lote (consome ANTHROPIC/OPENAI key)
+5. **Google Indexing API** → disparar indexação em massa (Service Account)
+
+> Quando você liberar o ambiente (ou aprovar rodar cada script), eu conduzo essas etapas
+> uma a uma com o guarda-corpo de qualidade ligado.
