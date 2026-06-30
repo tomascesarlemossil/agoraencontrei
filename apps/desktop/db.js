@@ -26,7 +26,8 @@ const DB_PORT = Number(process.env.AGORA_DB_PORT || 54329)
  * @param {string} userDataDir  app.getPath('userData')
  */
 async function startDatabase(userDataDir) {
-  const EmbeddedPostgres = require('embedded-postgres')
+  const mod = require('embedded-postgres')
+  const EmbeddedPostgres = mod.default || mod // suporta export default (ESM) e CJS
   const databaseDir = path.join(userDataDir, 'pgdata')
   const firstRun = !fs.existsSync(path.join(databaseDir, 'PG_VERSION'))
 
