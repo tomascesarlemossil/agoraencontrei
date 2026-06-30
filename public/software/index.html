@@ -308,11 +308,11 @@
 </footer>
 
 <script>
-  // CHECKOUT REAL: a página /parceiros/planos já implementa o fluxo completo
+  // CHECKOUT REAL: /parceiros/cadastro renderiza DynamicPlans (planos do software
   // (catálogo via /api/v1/public/catalog → formulário subdomínio+nome →
   //  POST /api/v1/billing/saas/checkout → assinatura Asaas). Aqui apenas
   //  encaminhamos o lead para lá, levando o plano escolhido como hint (#plano).
-  var CHECKOUT_URL = '/parceiros/planos';
+  var CHECKOUT_URL = '/parceiros/cadastro';
   document.querySelectorAll('[data-plan]').forEach(function(el){
     el.setAttribute('href', CHECKOUT_URL + '#' + el.getAttribute('data-plan'));
   });
