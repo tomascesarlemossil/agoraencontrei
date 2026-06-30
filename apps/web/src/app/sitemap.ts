@@ -583,6 +583,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
           'arquiteto', 'engenheiro-civil', 'pedreiro', 'empreiteira', 'construtora',
           'avaliacao-de-imovel', 'vistoria-de-imovel', 'topografia',
           'regularizacao-de-imovel', 'fotografia-de-imovel', 'drone', 'decoracao-de-interiores',
+          // Grupo E — produtos & serviços modernos (avaliação, IA, mídia, CRM, locação, planos)
+          'avaliacao-online-de-imovel', 'quanto-vale-meu-imovel', 'preco-do-metro-quadrado',
+          'fotos-de-imovel-com-ia', 'tour-virtual-360', 'home-staging-virtual',
+          'video-com-drone', 'planta-humanizada',
+          'anuncio-de-imovel-com-ia', 'divulgar-imovel-nos-portais', 'anunciar-imovel-gratis',
+          'captacao-de-imoveis',
+          'crm-imobiliario', 'automacao-de-leads', 'atendimento-com-ia', 'whatsapp-imobiliario',
+          'funil-de-vendas-imobiliario', 'lead-scoring',
+          'software-para-imobiliaria', 'gestao-de-aluguel', 'gestao-de-locacao',
+          'repasse-ao-proprietario', 'cobranca-de-aluguel', 'contrato-digital',
+          'administracao-de-imoveis',
+          'plano-para-corretor', 'assinatura-corretor', 'plano-para-imobiliaria',
+          'site-para-corretor', 'programa-de-afiliados', 'seja-um-parceiro',
         ]
         const INVEST_SLUGS = [
           'leilao-de-imoveis', 'leilao-judicial-de-imoveis', 'imoveis-caixa',
