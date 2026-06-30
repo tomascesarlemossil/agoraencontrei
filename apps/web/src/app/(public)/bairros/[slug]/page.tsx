@@ -13,6 +13,7 @@ function getNeighborhood(slug: string) {
 }
 
 export async function generateStaticParams() {
+  if (process.env.MINIMAL_SSG === '1') return []  // build offline (.exe) nao precisa das paginas SEO publicas
   return FRANCA_NEIGHBORHOODS_SEO.map(n => ({ slug: n.slug }))
 }
 

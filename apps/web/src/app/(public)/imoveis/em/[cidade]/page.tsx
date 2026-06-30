@@ -440,6 +440,7 @@ export async function generateMetadata(props: { params: Promise<{ cidade: string
 }
 
 export async function generateStaticParams() {
+  if (process.env.MINIMAL_SSG === '1') return []  // build offline (.exe) nao precisa das paginas SEO publicas
   return Object.keys(CIDADES).map(cidade => ({ cidade }))
 }
 

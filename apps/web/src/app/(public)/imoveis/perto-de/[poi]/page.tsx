@@ -75,6 +75,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
 }
 
 export function generateStaticParams() {
+  if (process.env.MINIMAL_SSG === '1') return []  // build offline (.exe) nao precisa das paginas SEO publicas
   return Object.keys(POIS).map(poi => ({ poi }))
 }
 

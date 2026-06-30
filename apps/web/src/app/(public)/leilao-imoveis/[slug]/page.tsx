@@ -46,6 +46,7 @@ function fmt(v: number) {
 type Props = { params: Promise<{ slug: string }> }
 
 export function generateStaticParams() {
+  if (process.env.MINIMAL_SSG === '1') return []  // build offline (.exe) nao precisa das paginas SEO publicas
   return Object.keys(LOCATIONS).map(slug => ({ slug }))
 }
 

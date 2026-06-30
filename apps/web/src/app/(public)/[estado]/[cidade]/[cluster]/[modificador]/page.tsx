@@ -45,6 +45,7 @@ function clusterLabel(cluster: string): string {
 }
 
 export async function generateStaticParams() {
+  if (process.env.MINIMAL_SSG === '1') return []  // build offline (.exe) nao precisa das paginas SEO publicas
   const params: { estado: string; cidade: string; cluster: string; modificador: string }[] = []
   // Gerar apenas para as top 20 cidades por população para não explodir o build
   const topCidades = IBGE_CITIES_152.sort((a, b) => b.populacao - a.populacao).slice(0, 20)

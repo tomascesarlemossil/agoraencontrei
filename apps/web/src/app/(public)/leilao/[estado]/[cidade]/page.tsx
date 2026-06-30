@@ -112,6 +112,7 @@ const TOP_20_CITIES = [
 ]
 
 export async function generateStaticParams() {
+  if (process.env.MINIMAL_SSG === '1') return []  // build offline (.exe) nao precisa das paginas SEO publicas
   return TOP_20_CITIES
 }
 
