@@ -1,58 +1,58 @@
-# Migrador IMOBILI → AgoraEncontrei Software
+# Migrador de sistemas legados → AgoraEncontrei Software
 
-Ferramentas para importar a base de dados do sistema legado **IMOBILI**
-(Delphi/BDE/**Paradox**) para a plataforma AgoraEncontrei.
+Importa a carteira de sistemas imobiliários legados para a plataforma.
+Cobre dois formatos de banco:
 
-## Status: ✅ Leitura de Paradox validada
+- **Paradox `.DB`** (sistema **IMOBILI** — Delphi/BDE) → `paradox_reader.py`
+- **DBF / FoxPro** (sistema **Uniloc**) → `dbf_reader.py`
 
-`paradox_reader.py` lê tabelas Paradox `.DB` **sem depender do BDE** (parser do binário).
-Testado com sucesso contra um arquivo real do cliente (`Backup.Db`):
+## Pipeline completo (Uniloc) — ✅ validado com dados reais
 
 ```
-$ python3 paradox_reader.py /caminho/Tabela.DB
-Tabela:   Controle
-Registros:10902
-Campos:   25  (versão 12 = Paradox 7)
---------------------------------------------------
-  Num_Cupom         AutoInc    (4)
-  Codigo            LongInt    (4)
-  Codigo_Barra      Alpha      (13)
-  Data              Date       (4)
-  Valor_Venda       Currency   (8)
-  ...
+DBF (data/uniloc) → build_import.py → import_payload.json → load_to_db.mjs → banco
+       leitura          mapeamento        (PII, gitignored)     gravação (Prisma)
 ```
 
-Lê: nome da tabela, nº de registros, e **todos os campos com nome + tipo + tamanho**.
-
-## O que falta para a migração completa
-
-1. **Receber a pasta de DADOS do IMOBILI** (as tabelas reais de negócio):
-   `Propriet.DB`, `Imoveis.DB`, `Inquilin.DB`, `Fiadores.DB`, `Contrato.DB`,
-   `Parcelas.DB` + índices `.PX/.X*/.Y*`. Ficam na máquina do cliente, perto do `IMOBILI.exe`.
-2. **Leitura de registros** (não só do esquema): implementar o decode dos blocos de dados
-   Paradox (já temos record_size, header_size e tipos — base pronta).
-3. **Mapa de campos** Paradox → Prisma (rascunho abaixo).
-
-## Mapa de campos previsto (a confirmar com as tabelas reais)
-
-| Paradox | → Prisma | Observação |
-|---|---|---|
-| `Propriet.DB` | `Client` (role LANDLORD) | nome, CPF/CNPJ, banco, PIX → repasse |
-| `Inquilin.DB` | `Client` (role TENANT) | dados cadastrais + renda |
-| `Fiadores.DB` | `Client` (role GUARANTOR) | vínculo via `Contract.guarantorId` |
-| `Imoveis.DB` | `Property` | endereço, IPTU, tipo, proprietário |
-| `Contrato.DB` | `Contract` | início, prazo, valor, reajuste, comissão, multa |
-| `Parcelas.DB` | `Rental` | vencimento, valor, pago, juros, multa, repasse |
-| `Movim.DB` | `Transaction` | movimentação financeira |
-
-> A plataforma já tem campos `legacyId` / `importSource` em todos esses modelos —
-> projetada para receber exatamente este tipo de importação (idempotente, sem duplicar).
-
-## Como usar (quando a pasta de dados chegar)
-
+### 1. Dry-run (lê + mapeia + valida, NÃO grava)
 ```bash
-# 1. Inspecionar o esquema de cada tabela
-python3 paradox_reader.py DADOS/Imoveis.DB --json imoveis_schema.json
-
-# 2. (próximo passo) exportar registros para JSON e importar via API da plataforma
+python3 build_import.py /caminho/backup_extraido
 ```
+Resultado real na carteira da Imobiliária Lemos:
+
+| Métrica | Valor |
+|---|---|
+| Clients (252 locadores + 904 inquilinos + 1025 fiadores) | **2.181** |
+| Properties | **623** (0 sem dono) |
+| Contracts **100% resolvidos** (locador+inquilino+imóvel) | **982 / 982** |
+| Contratos com fiador (via junção `contfia`) | **809** |
+| Pessoas sem CPF/CNPJ | **0** |
+
+### 2. Carga no banco (idempotente, grava só com `--confirm`)
+```bash
+# simulação (não grava)
+DATABASE_URL=... node load_to_db.mjs --company <companyId> --user <userId>
+# carga real (validar antes com --limit 20)
+DATABASE_URL=... node load_to_db.mjs --company <id> --user <id> --limit 20 --confirm
+DATABASE_URL=... node load_to_db.mjs --company <id> --user <id> --confirm
+```
+Idempotente por `legacyId` + `importSource: 'uniloc'` — reexecutar **não duplica**.
+
+## Ferramentas
+
+| Arquivo | Função |
+|---|---|
+| `dbf_reader.py` | Lê tabelas DBF/FoxPro (esquema + registros + memo `.fpt`), encoding cp1252 |
+| `paradox_reader.py` | Lê tabelas Paradox `.DB` (IMOBILI) — esquema validado |
+| `build_import.py` | Mapeia DBF → payloads Prisma + valida vínculos (dry-run) |
+| `load_to_db.mjs` | Grava o payload no banco via Prisma (idempotente, guarded) |
+
+## Segurança / LGPD
+
+- Os JSON exportados contêm **dados pessoais reais** (CPF, nomes) e estão **fora do Git** (`.gitignore`).
+- `load_to_db.mjs` só grava com `--confirm` explícito e credenciais de banco fornecidas pelo operador.
+- Recomenda-se primeira carga com `--limit` para conferência antes do volume total.
+
+## Para o IMOBILI (Paradox)
+
+Quando a pasta de dados do IMOBILI (`C:\DB\*.DB`) estiver disponível, o mesmo fluxo se aplica
+trocando o leitor por `paradox_reader.py`. O `build_import.py` pode ganhar um modo `--paradox`.
