@@ -1432,6 +1432,52 @@ model Rescission {
   @@map("rescissions")
 }
 
+/// Acordo / renegociação de dívida em atraso (equivalente Uniloc acordos).
+model Agreement {
+  id            String                 @id @default(cuid())
+  companyId     String
+  contractId    String?
+  legacyId      String?
+  tenantName    String?                // inquilino (desnormalizado)
+  originalDebt  Decimal                @db.Decimal(12, 2) // dívida original
+  discountValue Decimal                @db.Decimal(12, 2) @default(0)
+  agreedValue   Decimal                @db.Decimal(12, 2) // valor acordado (= original - desconto + acréscimos)
+  installments  Int                    // nº de parcelas
+  firstDueDate  DateTime
+  status        String                 @default("ACTIVE") // ACTIVE | FULFILLED | BROKEN | CANCELLED
+  notes         String?
+  createdBy     String?
+  createdAt     DateTime               @default(now())
+  updatedAt     DateTime               @updatedAt
+
+  schedule      AgreementInstallment[]
+
+  @@index([companyId])
+  @@index([contractId])
+  @@index([status])
+  @@map("agreements")
+}
+
+/// Parcela de um acordo.
+model AgreementInstallment {
+  id          String    @id @default(cuid())
+  agreementId String
+  agreement   Agreement @relation(fields: [agreementId], references: [id], onDelete: Cascade)
+  number      Int       // nº da parcela (1..N)
+  dueDate     DateTime
+  amount      Decimal   @db.Decimal(12, 2)
+  status      String    @default("PENDING") // PENDING | PAID | OVERDUE
+  paidAt      DateTime?
+  paidAmount  Decimal?  @db.Decimal(12, 2)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([agreementId, number])
+  @@index([agreementId])
+  @@index([status])
+  @@map("agreement_installments")
+}
+
 // ── NF-e / Notas Fiscais de Serviço ───────────────────────────────────────
 
 enum FiscalNoteStatus {

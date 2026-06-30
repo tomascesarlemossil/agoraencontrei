@@ -96,7 +96,7 @@ Boa parte já existe (o schema Prisma já cita `legacyId` do Uniloc). Comparativ
 | **Rateio de repasse multi-proprietário/favorecido** | `RepasseBeneficiary` + `scheduleRepasseWithSplit` | ✅ **Implementado** |
 | **Contas a pagar + cheques pré-datados** | `AccountPayable` + `BankCheck` + rota `/payables` | ✅ **Implementado** |
 | **Conciliação bancária / CNAB retorno** | parcial (Asaas webhook) | ⚠️ **Parcial** |
-| **Acordos / renegociação de dívida** | — | ⚠️ **Lacuna** |
+| **Acordos / renegociação de dívida** | `Agreement` + `AgreementInstallment` + rota `/agreements` | ✅ **Implementado** |
 | **Cálculo automatizado de rescisão** | `calculateRescission` + `Rescission` + rota `/rescission` | ✅ **Implementado** |
 | **Notificação formal/extrajudicial** | `legal` + `alerts` (parcial) | ⚠️ **Parcial** |
 | Carnê de IPTU parcelado | `Rental.iptuAmount` (sem carnê) | ⚠️ **Parcial** |
