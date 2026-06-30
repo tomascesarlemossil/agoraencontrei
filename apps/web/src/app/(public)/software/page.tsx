@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 
 /**
  * /software — página de vendas do Sistema Administrador AgoraEncontrei.
@@ -94,6 +94,17 @@ export default function SoftwarePage() {
     setMsg({ text: '', kind: '' })
   }, [])
   const close = useCallback(() => setPlan(null), [])
+
+  // Vindo de /parceiros/cadastro (?plan=offline-anual) já abrimos o checkout
+  // com o plano escolhido — sem o cliente precisar reencontrar o plano aqui.
+  useEffect(() => {
+    const id = new URLSearchParams(window.location.search).get('plan')
+    const match = OFFLINE_PLANS.find((p) => p.id === id)
+    if (match) {
+      setPlan({ id: match.id, label: match.label })
+      requestAnimationFrame(() => document.getElementById('offline')?.scrollIntoView({ behavior: 'smooth' }))
+    }
+  }, [])
 
   const submit = useCallback(async () => {
     const { name, email, cpfCnpj, phone } = form

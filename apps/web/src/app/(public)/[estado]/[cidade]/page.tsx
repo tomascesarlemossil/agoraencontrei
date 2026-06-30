@@ -37,6 +37,7 @@ const SERVICE_CLUSTERS = [
 ]
 
 export async function generateStaticParams() {
+  if (process.env.MINIMAL_SSG === '1') return []  // build offline (.exe) nao precisa das paginas SEO publicas
   return IBGE_CITIES_152.map(city => ({
     estado: city.stateSlug,
     cidade: city.slug,

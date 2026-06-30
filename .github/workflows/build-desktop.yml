@@ -20,7 +20,7 @@ permissions:
 jobs:
   build-windows:
     runs-on: windows-latest
-    timeout-minutes: 40
+    timeout-minutes: 60
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -58,6 +58,11 @@ jobs:
         continue-on-error: true
         env:
           NEXT_TELEMETRY_DISABLED: '1'
+          # O instalador offline não embute as ~13 mil páginas SEO públicas
+          # (comparar de cidades = 11.476, etc.). Sem o cache de build do Vercel,
+          # gerá-las a frio no runner Windows estourava o timeout. MINIMAL_SSG=1
+          # faz os generateStaticParams retornarem [] (as rotas seguem via ISR).
+          MINIMAL_SSG: '1'
           # Build não acessa o banco; valores fictícios evitam falha de validação de env.
           DATABASE_URL: 'postgresql://user:pass@127.0.0.1:5432/db'
           DIRECT_DATABASE_URL: 'postgresql://user:pass@127.0.0.1:5432/db'

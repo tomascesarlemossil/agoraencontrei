@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import {
   CheckCircle, Crown, Star, Zap, ArrowRight, Shield, Sparkles,
   Bot, MessageCircle, BarChart3, Globe, Code, EyeOff, Users,
-  FileText, Lock, Loader2, X,
+  FileText, Lock, Loader2, X, Monitor, Cloud, Download,
 } from 'lucide-react'
 import { ALL_THEMES, THEME_REGISTRY } from '@/lib/site-factory/theme-registry'
 import { ThemePreviewModal } from './ThemePreviewModal'
@@ -91,6 +91,28 @@ const MODULE_ICONS: Record<string, typeof Bot> = {
 function formatPrice(val: string | number): string {
   return Number(val).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
 }
+
+// Edição OFFLINE (instalada no PC do cliente). Não vem do catálogo da API
+// porque é outro modelo de entrega — mas precisa aparecer LADO A LADO com os
+// planos na nuvem para o cliente comparar e escolher sem se perder. Cada card
+// leva ao checkout offline (/software) já com o plano pré-selecionado.
+const OFFLINE_PLANS = [
+  {
+    id: 'offline-mensal', name: 'Offline Mensal', price: '197', unit: '/mês',
+    note: 'cobrança recorrente', hot: false,
+    feats: ['Instalado no seu Windows', 'Dados 100% na sua máquina', 'Funciona sem internet', 'Importa o backup do seu sistema atual'],
+  },
+  {
+    id: 'offline-anual', name: 'Offline Anual', price: '1.970', unit: '/ano',
+    note: '≈ R$ 164/mês · 2 meses grátis', hot: true,
+    feats: ['Tudo do Offline Mensal', 'Economia de ~2 meses', 'Atualizações + suporte', 'Prioridade no suporte'],
+  },
+  {
+    id: 'offline-vitalicia', name: 'Offline Vitalícia', price: '2.497', unit: ' único',
+    note: 'pague uma vez, use para sempre', hot: false,
+    feats: ['Licença sem mensalidade', '1 ano de atualizações inclusas', 'Sem dependência de internet', 'Ideal para quem prefere comprar'],
+  },
+]
 
 export function DynamicPlans() {
   const [plans, setPlans] = useState<PlanDef[]>([])
@@ -270,6 +292,87 @@ export function DynamicPlans() {
             </div>
           )
         })}
+      </div>
+
+      {/* Edição Offline — lado a lado com os planos na nuvem, para o cliente
+          enxergar as duas formas de usar o sistema e escolher sem se perder. */}
+      <div className="max-w-5xl mx-auto">
+        <div className="flex flex-col items-center text-center mb-6 sm:mb-8">
+          <span className="inline-flex items-center gap-2 text-[11px] sm:text-xs font-bold uppercase tracking-wide text-emerald-400 bg-emerald-500/10 border border-emerald-500/25 px-3 py-1 rounded-full">
+            <Monitor className="w-3.5 h-3.5" /> Prefere no seu PC?
+          </span>
+          <h3 className="text-2xl sm:text-3xl font-bold text-white mt-3">Edição Offline — instalada no seu computador</h3>
+          <p className="text-gray-400 max-w-2xl mt-2 text-sm sm:text-base">
+            Mesmo sistema (CRM, imóveis, contratos, aluguéis e cobrança com a IA Tomás), só que rodando
+            no seu Windows, com os dados na sua máquina e funcionando sem internet. Ideal para quem migra
+            de um sistema desktop antigo.
+          </p>
+          <div className="flex items-center gap-2 mt-3 text-[11px] sm:text-xs text-gray-500">
+            <Cloud className="w-3.5 h-3.5 text-blue-400" /> Na nuvem (acima)
+            <span className="mx-1">vs</span>
+            <Monitor className="w-3.5 h-3.5 text-emerald-400" /> No seu PC (abaixo)
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3 px-2 sm:px-0">
+          {OFFLINE_PLANS.map(op => (
+            <div
+              key={op.id}
+              className={`relative flex flex-col rounded-xl sm:rounded-2xl border bg-gradient-to-b from-emerald-950/20 to-transparent backdrop-blur-sm p-4 sm:p-6 transition-all hover:scale-[1.01] sm:hover:scale-[1.02] ${
+                op.hot ? 'border-emerald-500/50 ring-2 ring-emerald-500/50 shadow-lg shadow-emerald-500/10 order-first sm:order-none' : 'border-emerald-500/25'
+              }`}
+            >
+              {op.hot && (
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                  <span className="bg-emerald-500 text-gray-950 text-[10px] sm:text-xs font-bold px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full whitespace-nowrap">
+                    Melhor valor
+                  </span>
+                </div>
+              )}
+
+              <div className="flex items-center gap-2.5 sm:gap-3 mb-3 sm:mb-4">
+                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center flex-shrink-0">
+                  <Monitor className="w-4 h-4 sm:w-5 sm:h-5" />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="text-base sm:text-lg font-bold text-white">{op.name}</h3>
+                  <p className="text-[11px] sm:text-xs text-gray-400 truncate">No seu PC · {op.note}</p>
+                </div>
+              </div>
+
+              <div className="mb-4 sm:mb-6">
+                <div className="flex items-baseline gap-1">
+                  <span className="text-2xl sm:text-3xl font-bold text-white">R$ {op.price}</span>
+                  <span className="text-xs sm:text-sm text-gray-400">{op.unit}</span>
+                </div>
+                <p className="text-[11px] sm:text-xs text-emerald-400 mt-1">{op.note}</p>
+              </div>
+
+              <ul className="space-y-1.5 sm:space-y-2 mb-4 sm:mb-6 flex-1">
+                {op.feats.map((f, i) => (
+                  <li key={i} className="flex items-start gap-2 text-xs sm:text-sm">
+                    <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
+                    <span className="text-gray-300">{f}</span>
+                  </li>
+                ))}
+              </ul>
+
+              <a
+                href={`/software?plan=${op.id}`}
+                className={`flex items-center justify-center gap-1.5 w-full text-center py-2.5 sm:py-3 rounded-lg sm:rounded-xl font-bold text-xs sm:text-sm transition cursor-pointer ${
+                  op.hot ? 'bg-emerald-500 hover:bg-emerald-400 text-gray-950' : 'bg-emerald-600/90 hover:bg-emerald-500 text-white'
+                }`}
+              >
+                <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> Quero no meu PC
+              </a>
+            </div>
+          ))}
+        </div>
+
+        <p className="text-center text-xs sm:text-sm text-gray-500 mt-5">
+          Pagou? Você recebe o link do instalador <strong className="text-gray-400">.exe</strong> + a chave de licença por e-mail.
+          {' '}<a href="/software" className="text-emerald-400 hover:underline">Ver detalhes da edição offline →</a>
+        </p>
       </div>
 
       {/* Modules add-ons */}

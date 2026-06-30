@@ -27,6 +27,7 @@ const GUIAS: Record<string, { label: string; desc: string; icon: string }> = {
 }
 
 export async function generateStaticParams() {
+  if (process.env.MINIMAL_SSG === '1') return []  // build offline (.exe) nao precisa das paginas SEO publicas
   const params: { estado: string; cidade: string; cluster: string }[] = []
   for (const city of IBGE_CITIES_152) {
     for (const cluster of Object.keys(GUIAS)) {

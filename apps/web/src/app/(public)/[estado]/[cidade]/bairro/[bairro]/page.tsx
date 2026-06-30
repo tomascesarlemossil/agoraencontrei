@@ -13,6 +13,7 @@ import { IBGE_CITY_BY_SLUG } from '@/data/seo-ibge-cities-expanded'
 export const revalidate = 86400
 
 export function generateStaticParams() {
+  if (process.env.MINIMAL_SSG === '1') return []  // build offline (.exe) nao precisa das paginas SEO publicas
   // Gerar apenas para Franca (por agora)
   return BAIRROS_FRANCA.map(b => ({
     estado: 'sp',

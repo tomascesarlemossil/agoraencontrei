@@ -21,6 +21,7 @@ const ALL_CITIES_SORTED = IBGE_CITIES_152
   .sort((a, b) => b.populacao - a.populacao)
 
 export function generateStaticParams() {
+  if (process.env.MINIMAL_SSG === '1') return []  // build offline (.exe) nao precisa das paginas SEO publicas
   const params: { 'cidadeA-vs-cidadeB': string }[] = []
   for (let i = 0; i < ALL_CITIES_SORTED.length; i++) {
     for (let j = i + 1; j < ALL_CITIES_SORTED.length; j++) {
