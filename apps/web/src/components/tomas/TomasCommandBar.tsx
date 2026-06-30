@@ -3,6 +3,7 @@
 import { useState, useRef, useCallback } from 'react'
 import { Send, Loader2, Sparkles, MapPin, Bed, Car, FileText, MessageSquare, Calendar } from 'lucide-react'
 import { useAuthStore } from '@/stores/auth.store'
+import { VoiceInputButton } from '@/components/ui/VoiceInputButton'
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -121,6 +122,12 @@ export default function TomasCommandBar() {
               if (e.key === 'Enter') runCommand()
             }}
             disabled={loading}
+          />
+          {/* Voz com transcrição ao vivo: texto aparece enquanto fala, depois envia. */}
+          <VoiceInputButton
+            dark
+            onInterim={(t) => setQuery(t)}
+            onResult={(t) => { setQuery(t); setTimeout(() => runCommand(t), 200) }}
           />
           <button
             onClick={() => runCommand()}

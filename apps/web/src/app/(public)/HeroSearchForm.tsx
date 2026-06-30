@@ -219,7 +219,10 @@ export function HeroSearchForm() {
                 style={{ borderColor: aiQuery ? '#143A1F' : '#e5e7eb' }}
                 autoFocus
               />
-              <VoiceInputButton onResult={text => { setAiQuery(text); setTimeout(handleAiSearch, 300) }} />
+              <VoiceInputButton
+                onInterim={text => setAiQuery(text)}
+                onResult={text => { setAiQuery(text); setTimeout(handleAiSearch, 300) }}
+              />
               <button
                 type="button"
                 onClick={handleAiSearch}
