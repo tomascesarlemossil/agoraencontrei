@@ -89,6 +89,9 @@ import repasseRoutes from './routes/repasse/index.js'
 import payablesRoutes from './routes/payables/index.js'
 import rescissionRoutes from './routes/rescission/index.js'
 import agreementsRoutes from './routes/agreements/index.js'
+import noticesRoutes from './routes/notices/index.js'
+import reconciliationRoutes from './routes/reconciliation/index.js'
+import permissionsRoutes from './routes/permissions/index.js'
 import signatureRoutes from './routes/signatures/index.js'
 import auctionAIRoutes from './routes/auction-ai/index.js'
 import importRoutes from './routes/import/index.js'
@@ -841,6 +844,9 @@ async function bootstrap() {
   await app.register(payablesRoutes,           { prefix: '/api/v1/payables' })
   await app.register(rescissionRoutes,         { prefix: '/api/v1/rescission' })
   await app.register(agreementsRoutes,         { prefix: '/api/v1/agreements' })
+  await app.register(noticesRoutes,            { prefix: '/api/v1/notices' })
+  await app.register(reconciliationRoutes,     { prefix: '/api/v1/reconciliation' })
+  await app.register(permissionsRoutes,        { prefix: '/api/v1/permissions' })
   await app.register(signatureRoutes,          { prefix: '/api/v1/signatures' })
   await app.register(auctionAIRoutes,          { prefix: '/api/v1/auction-ai' })
   await app.register(importRoutes,             { prefix: '/api/v1/import' })
