@@ -15,7 +15,7 @@ on:
       - '.github/workflows/build-desktop.yml'
 
 permissions:
-  contents: read
+  contents: write   # necessário para publicar o instalador num Release
 
 jobs:
   build-windows:
@@ -87,3 +87,18 @@ jobs:
             apps/desktop/dist/*.blockmap
           if-no-files-found: error
           retention-days: 30
+
+      # Publica o instalador num Release com tag fixa "desktop-latest", gerando
+      # uma URL pública estável para o SOFTWARE_DOWNLOAD_URL:
+      #   https://github.com/<owner>/<repo>/releases/download/desktop-latest/AgoraEncontrei-Software-Setup.exe
+      - name: Publish installer to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: desktop-latest
+          name: AgoraEncontrei Software (instalador offline)
+          body: |
+            Instalador da edição offline. Baixe o `.exe`, instale e ative com sua chave de licença.
+            Atualizado automaticamente a cada build do app desktop.
+          files: |
+            apps/desktop/dist/AgoraEncontrei-Software-Setup.exe
+          make_latest: "true"
