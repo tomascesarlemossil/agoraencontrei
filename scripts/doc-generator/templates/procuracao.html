@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="UTF-8"><style>
+  body{font-family:'Times New Roman',serif;font-size:12pt;line-height:1.8;color:#000;max-width:700px;margin:40px auto;padding:0 30px;text-align:justify}
+  h1{font-size:15pt;text-align:center;color:#1B2B5B;margin-bottom:24px}
+  .assina{margin-top:64px;text-align:center}
+</style></head><body>
+  <h1>PROCURAÇÃO</h1>
+
+  <p><strong>OUTORGANTE:</strong> {{locador.nome}}, inscrito(a) no CPF/CNPJ sob nº
+  {{locador.cpfCnpj}}{{#se locador.endereco}}, residente em {{locador.endereco}}{{/se}}.</p>
+
+  <p><strong>OUTORGADA:</strong> {{empresa.nome}}, inscrita no CNPJ sob nº {{empresa.cnpj}},
+  com sede em {{empresa.endereco}}.</p>
+
+  <p>Pelo presente instrumento, o OUTORGANTE nomeia e constitui sua bastante procuradora a
+  OUTORGADA, à qual confere amplos poderes para <strong>administrar o(s) imóvel(is)</strong>
+  de sua propriedade, especialmente o situado em <strong>{{imovel.endereco}}</strong>, podendo
+  para tanto: anunciar e agenciar locação; selecionar inquilinos e fiadores; assinar contratos
+  de locação e seus aditivos; receber aluguéis e encargos; emitir recibos e dar quitação;
+  promover cobranças amigáveis e judiciais; efetuar repasses; e praticar todos os atos
+  necessários ao bom e fiel cumprimento deste mandato.</p>
+
+  <p style="text-align:center;margin-top:26px">{{empresa.cidade}}, {{data.hoje|extenso}}.</p>
+
+  <div class="assina">
+    <p>_______________________________________<br>{{locador.nome}}<br>OUTORGANTE</p>
+  </div>
+</body></html>

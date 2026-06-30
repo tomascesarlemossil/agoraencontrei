@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="UTF-8"><style>
+  body{font-family:'Times New Roman',serif;font-size:12pt;line-height:1.7;color:#000;max-width:680px;margin:40px auto;padding:0 30px}
+  .cab{text-align:center;border-bottom:2px solid #1B2B5B;padding-bottom:10px;margin-bottom:22px}
+  .cab h1{font-size:15pt;color:#1B2B5B;margin:0}
+  .valor{font-size:18pt;font-weight:bold;border:1px solid #1B2B5B;border-radius:6px;display:inline-block;padding:6px 18px;margin:8px 0}
+  .corpo{text-align:justify;margin:18px 0}
+  .assina{margin-top:56px;text-align:center}
+</style></head><body>
+  <div class="cab">
+    <h1>RECIBO DE ALUGUEL</h1>
+    <small>{{empresa.nome}}{{#se empresa.creci}} · CRECI {{empresa.creci}}{{/se}}</small>
+  </div>
+
+  <p class="valor">{{recibo.valor|moeda}}</p>
+
+  <p class="corpo">Recebemos de <strong>{{locatario.nome}}</strong>, CPF {{locatario.cpfCnpj}},
+  a importância de <strong>{{recibo.valor|moeda}}</strong>, referente ao aluguel
+  do imóvel situado em <strong>{{imovel.endereco}}</strong>, competência
+  <strong>{{recibo.competencia}}</strong>, com vencimento em {{recibo.vencimento|data}}.</p>
+
+  <p class="corpo">Para clareza e como prova de quitação da referida parcela, firmamos o presente recibo.</p>
+
+  <p style="text-align:right">{{empresa.cidade}}, {{data.hoje|extenso}}.</p>
+
+  <div class="assina">
+    <p>_______________________________________<br>{{empresa.nome}}</p>
+  </div>
+</body></html>
