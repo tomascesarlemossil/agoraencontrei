@@ -27,25 +27,41 @@
 
 ## 2. Modelo de dados — tabelas Paradox (≈45) → Prisma
 
-Extraídas de `IMOBILI.exe`. Mapeamento para os modelos que **já existem** na plataforma e os que faltam criar.
+Extraídas de `IMOBILI.exe`. Mapeamento para os modelos da plataforma.
+
+> ### 🟢 ACHADO CRÍTICO (revisado após ler o `schema.prisma`)
+> **A plataforma `agoraencontrei` JÁ TEM o núcleo de locação completo** — e foi projetada para
+> **importar um sistema legado** (campos `legacyId`, `c_codcon`, `i_endereco`, `importSource: uniloc|univen`).
+> Portanto **NÃO se cria `Tenant`/`Guarantor` novos** (havia inclusive risco de colidir com o
+> modelo SaaS `Tenant`). O que o IMOBILI faz já está coberto assim:
+> - **Inquilino / Proprietário / Fiador** → modelo `Client` com `roles: ClientRole[]` (TENANT/LANDLORD/GUARANTOR)
+> - **Contrato de locação** → `Contract` (já tem reajuste IGPM/IPCA, comissão, multa, fiador, 2º fiador,
+>   seguro, vistoria de entrada/saída, rescisão, renovação, boleto)
+> - **Parcelas/mensalidades** → `Rental` (já tem boleto, PIX, juros, multa, IPTU, repasse, baixa, estorno)
+> - **Repasse ao proprietário** → `OwnerRepasse` + campos de repasse no `Rental`
+> - **Movimentação financeira / conta corrente** → `Transaction`
+>
+> **Consequência comercial:** a plataforma **já é um superconjunto do IMOBILI**. O trabalho restante
+> é (a) **migrar os dados** do cliente, (b) **empacotar offline**, (c) fechar lacunas pontuais (DIMOB,
+> controle de chaves, cheques pré). Muito menos do que parecia.
 
 ### 2.1 Cadastros base
 | Tabela IMOBILI | Conteúdo | Modelo destino | Status |
 |---|---|---|---|
-| `Propriet.DB` | Proprietários | `PropertyOwner` | ✅ existe |
-| `Imoveis.DB` | Imóveis (carteira de locação) | `Property` | ✅ existe (+campos locação) |
-| `Inquilin.DB` | Inquilinos / locatários | `Tenant` (novo) | 🔴 criar |
-| `Fiadores.DB` | Fiadores / garantidores | `Guarantor` (novo) | 🔴 criar |
-| `InqFia.DB` | Relação inquilino↔fiador | relação no contrato | 🔴 criar |
+| `Propriet.DB` | Proprietários | `Client` (role LANDLORD) / `PropertyOwner` | ✅ existe |
+| `Imoveis.DB` | Imóveis (carteira de locação) | `Property` | ✅ existe |
+| `Inquilin.DB` | Inquilinos / locatários | `Client` (role TENANT) | ✅ existe |
+| `Fiadores.DB` | Fiadores / garantidores | `Client` (role GUARANTOR) | ✅ existe |
+| `InqFia.DB` | Relação inquilino↔fiador | `Contract.guarantorId`/`guarantor2Id` | ✅ existe |
 | `Corretor.DB` | Corretores | `User`/`Specialist` | ✅ existe |
 | `Forne.DB` | Fornecedores | `Supplier` (novo) | 🟡 opcional |
 | `Empresa.DB` | Dados da imobiliária | `Company` | ✅ existe |
-| `Tecnica_Cliente.DB` | Ficha técnica do cliente | campos em `Contact` | 🟡 |
+| `Tecnica_Cliente.DB` | Ficha técnica do cliente | campos em `Client` | ✅ |
 
 ### 2.2 Contratos & operação de locação
 | Tabela | Conteúdo | Destino | Status |
 |---|---|---|---|
-| `Contrato.DB` | Contratos de locação | `Contract`/`Rental` | 🟡 reforçar |
+| `Contrato.DB` | Contratos de locação | `Contract` | ✅ existe (completo) |
 | `ControleChaves.DB` | Controle de entrega de chaves | `KeyControl` (novo) | 🔴 criar |
 | `Compromiso.DB` | Compromissos / agenda | `Activity` | ✅ existe |
 | `Historic.DB` | Histórico de movimentações | `AuditLog`/`Activity` | ✅ existe |
@@ -55,7 +71,7 @@ Extraídas de `IMOBILI.exe`. Mapeamento para os modelos que **já existem** na p
 ### 2.3 Financeiro, cobrança & boletos
 | Tabela | Conteúdo | Destino | Status |
 |---|---|---|---|
-| `Parcelas.DB` | Parcelas/mensalidades do aluguel | `Installment` (novo) | 🔴 criar |
+| `Parcelas.DB` | Parcelas/mensalidades do aluguel | `Rental` | ✅ existe (completo) |
 | `Boletos.DB` | Boletos emitidos | `Invoice`/`Boleto` | 🟡 (Asaas) |
 | `Nosso_Numero.db` | Nosso número (banco) | gerado por Asaas | ✅ |
 | `Taxa_Boleto.db` | Taxas de boleto | config billing | 🟡 |
@@ -130,24 +146,29 @@ O IMOBILI gera documentos via Word/RTF. Inventário (reconstruir como **template
 
 ---
 
-## 5. Plano de reconstrução (Edição Locação)
+## 5. Plano de reconstrução (Edição Locação) — REVISADO
 
-| Fase | Entregável | Esforço |
+> O núcleo de locação **já existe** (§2). Logo, **L1–L3 já estão prontos** na plataforma.
+> O foco real passa a ser: migração de dados, lacunas pontuais e empacotamento.
+
+| Fase | Entregável | Status |
 |---|---|---|
-| **L1** | Modelos Prisma novos: `Tenant`, `Guarantor`, `Installment`, `KeyControl`, `PostDatedCheck` | médio |
-| **L2** | Fluxo de Contrato de Locação (vincula imóvel+proprietário+inquilino+fiador) | médio |
-| **L3** | Motor de parcelas: geração mensal, reajuste por índice, juros/multa | médio |
-| **L4** | Boletos/cobrança via **Asaas** (substitui spdBoleto) + régua de cobrança | médio |
-| **L5** | Repasse ao proprietário (extrato/conta corrente) — reusa `OwnerRepasse` | baixo |
-| **L6** | Gerador de documentos (templates dos 44 .doc → PDF) | médio |
-| **L7** | Módulo **DIMOB** + Informe de IR | médio/alto |
-| **L8** | Empacotamento offline (Electron + SQLite) — ver `AGORAENCONTREI_SOFTWARE_OFFLINE_PLANO.md` | alto |
-| **L9** | **Migrador de dados** Paradox `.DB` → Postgres/SQLite (importa a base atual do cliente) | médio |
+| ~~L1~~ | Modelos de Inquilino/Proprietário/Fiador/Contrato/Parcela | ✅ **já existe** (`Client`+`Contract`+`Rental`) |
+| ~~L2~~ | Fluxo de Contrato de Locação | ✅ **já existe** |
+| ~~L3~~ | Motor de parcelas + reajuste + juros/multa | ✅ **já existe** (`Rental`) |
+| **L4** | Boletos/cobrança via **Asaas** + régua de cobrança | 🟡 existe base; ligar Asaas prod |
+| **L5** | Repasse ao proprietário (extrato/conta corrente) | ✅ `OwnerRepasse` |
+| **L6** | Gerador de documentos (44 templates `.doc` → PDF) | 🔴 a fazer |
+| **L7** | Módulo **DIMOB** + Informe de IR ao proprietário | 🔴 a fazer (verificar `FiscalNote`) |
+| **L8** | Lacunas: `KeyControl` (chaves), `PostDatedCheck` (cheque pré) | 🟡 pequeno |
+| **L9** | **Migrador Paradox `.DB` → plataforma** (importa a carteira atual) | 🔴 prioridade |
+| **L10** | Empacotamento offline (Electron + SQLite) | 🔴 grande |
 
-> **L9 é decisivo comercialmente:** permite ao cliente do IMOBILI migrar a carteira existente
-> sem redigitar nada. Faço um conversor lendo as tabelas Paradox (`.DB`) e importando.
-> Para isso preciso de **uma cópia das tabelas de dados reais** (a pasta de dados do IMOBILI,
-> ex.: `Imoveis.DB`, `Contrato.DB`, `Propriet.DB`, `Inquilin.DB`, `Parcelas.DB`).
+> **L9 é o item de maior valor comercial:** a plataforma já tem campos `legacyId` e `importSource`
+> exatamente para isso. Eu escrevo um conversor que lê as tabelas Paradox e popula `Client`/`Contract`/`Rental`.
+> **Para construir e testar o migrador, preciso da pasta de DADOS do IMOBILI** — as tabelas reais:
+> `Propriet.DB`, `Imoveis.DB`, `Inquilin.DB`, `Fiadores.DB`, `Contrato.DB`, `Parcelas.DB`
+> (e seus índices `.PX/.X*/.Y*`). Ficam na pasta de dados do sistema (perto do `IMOBILI.exe`).
 
 ---
 
