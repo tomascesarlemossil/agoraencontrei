@@ -8,6 +8,7 @@
     "build": "tsc --project tsconfig.build.json || true",
     "start": "node dist/server.js",
     "typecheck": "tsc --noEmit",
+    "test": "tsx --test test/*.test.ts",
     "lint": "eslint src --ext .ts"
   },
   "dependencies": {
