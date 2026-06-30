@@ -1,0 +1,71 @@
+name: Build Desktop (.exe)
+
+# Compila a edição OFFLINE (AgoraEncontrei Software) num runner Windows na nuvem
+# e publica o instalador .exe como artifact — sem precisar de toolchain local.
+#
+# Disparo: manual (workflow_dispatch) ou ao mexer em apps/desktop no branch de trabalho.
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - claude/agoraencontrei-system-sales-8uth7f
+    paths:
+      - 'apps/desktop/**'
+      - '.github/workflows/build-desktop.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    timeout-minutes: 40
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.0.0
+
+      - name: Setup Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Prisma generate
+        run: pnpm db:generate
+        continue-on-error: true
+
+      - name: Build apps (api + web)
+        run: pnpm build
+        continue-on-error: true
+        env:
+          NEXT_TELEMETRY_DISABLED: '1'
+          # Build estático não acessa o banco; valores fictícios evitam falha de env.
+          DATABASE_URL: 'postgresql://user:pass@127.0.0.1:5432/db'
+          JWT_SECRET: 'ci-build-only-secret-key-32chars-min'
+          COOKIE_SECRET: 'ci-build-only-secret-key-32chars-min'
+
+      - name: Bundle embedded server
+        run: pnpm --filter @agoraencontrei/desktop bundle
+        continue-on-error: true
+
+      - name: Build installer (electron-builder)
+        run: pnpm --filter @agoraencontrei/desktop dist
+
+      - name: Upload .exe artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: AgoraEncontrei-Software-Setup
+          path: |
+            apps/desktop/dist/*.exe
+            apps/desktop/dist/*.blockmap
+          if-no-files-found: error
+          retention-days: 30
