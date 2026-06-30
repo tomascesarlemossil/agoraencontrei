@@ -145,11 +145,23 @@ async function startEmbeddedServer() {
   }
 
   // 3) API Fastify embarcada (se empacotada em ./server/api).
+  //    JWT_SECRET/COOKIE_SECRET são obrigatórios (≥32 chars) — sem eles a API
+  //    sai na validação de env. Como o app é local-only, segredos fixos servem.
   const apiDir = path.join(__dirname, 'server', 'api')
   const apiEntry = findApiEntry(apiDir)
   if (apiEntry) {
-    spawnNode(apiEntry, apiDir, { PORT: String(API_PORT), HOST: '127.0.0.1', DATABASE_URL: url, DIRECT_DATABASE_URL: url }, 'API')
-    await waitForPort(API_PORT).catch((e) => friendlyError('API local demorou a responder', e))
+    spawnNode(apiEntry, apiDir, {
+      PORT: String(API_PORT),
+      HOST: '127.0.0.1',
+      DATABASE_URL: url,
+      DIRECT_DATABASE_URL: url,
+      JWT_SECRET: 'agora-offline-local-jwt-secret-key-0001',
+      COOKIE_SECRET: 'agora-offline-local-cookie-secret-0001',
+      APP_URL: `http://127.0.0.1:${API_PORT}`,
+      WEB_URL: `http://127.0.0.1:${WEB_PORT}`,
+    }, 'API')
+    // Bootstrap da API é pesado (rotas, plugins, 1ªs queries) — damos 60s.
+    await waitForPort(API_PORT, 60000).catch((e) => friendlyError('API local demorou a responder', e))
   }
 
   // 4) Web Next standalone (se empacotado em ./server/web).

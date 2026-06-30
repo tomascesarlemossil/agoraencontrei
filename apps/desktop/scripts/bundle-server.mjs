@@ -80,14 +80,8 @@ if (copy(standalone, path.join(SERVER, 'web'))) {
   ok++; console.log('✓')
 } else console.log('pulado')
 
-// 3) API — Fastify compilada + node_modules (necessário para rodar standalone).
-total++
-process.stdout.write('  • api (Fastify + node_modules): ')
-const apiDist = path.join(ROOT, 'apps', 'api', 'dist')
-if (copy(apiDist, path.join(SERVER, 'api'))) {
-  copy(path.join(ROOT, 'apps', 'api', 'node_modules'), path.join(SERVER, 'api', 'node_modules'), { optional: true })
-  ok++; console.log('✓')
-} else console.log('pulado')
+// 3) API — montada à parte por scripts/assemble-offline-api.mjs (pnpm deploy +
+//    Prisma client com engine do Windows). Aqui só web + prisma SQL.
 
 console.log(`\n${ok}/${total} componentes copiados para ./server`)
-console.log('Em seguida: pnpm --filter @agoraencontrei/desktop dist  → gera o instalador .exe')
+console.log('Em seguida: node scripts/assemble-offline-api.mjs  → monta a API; depois electron-builder')

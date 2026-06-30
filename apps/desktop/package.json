@@ -8,7 +8,9 @@
   "scripts": {
     "start": "electron .",
     "bundle": "node scripts/bundle-server.mjs",
-    "dist": "node scripts/bundle-server.mjs && electron-builder --win nsis",
+    "assemble-api": "node scripts/assemble-offline-api.mjs",
+    "dist": "electron-builder --win nsis",
+    "dist:full": "node scripts/bundle-server.mjs && node scripts/assemble-offline-api.mjs && electron-builder --win nsis",
     "dist:dir": "electron-builder --dir"
   },
   "build": {
