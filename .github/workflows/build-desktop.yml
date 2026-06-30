@@ -43,15 +43,27 @@ jobs:
         run: pnpm db:generate
         continue-on-error: true
 
-      - name: Build apps (api + web)
-        run: pnpm build
+      - name: Build API (Fastify → dist)
+        run: pnpm --filter @agoraencontrei/api build
+        continue-on-error: true
+
+      - name: Build Web (Next standalone)
+        run: pnpm --filter web build
         continue-on-error: true
         env:
           NEXT_TELEMETRY_DISABLED: '1'
-          # Build estático não acessa o banco; valores fictícios evitam falha de env.
+          # Build não acessa o banco; valores fictícios evitam falha de validação de env.
           DATABASE_URL: 'postgresql://user:pass@127.0.0.1:5432/db'
+          DIRECT_DATABASE_URL: 'postgresql://user:pass@127.0.0.1:5432/db'
           JWT_SECRET: 'ci-build-only-secret-key-32chars-min'
           COOKIE_SECRET: 'ci-build-only-secret-key-32chars-min'
+
+      - name: Diagnose build outputs
+        if: always()
+        shell: bash
+        run: |
+          echo '--- apps/api/dist ---'; ls apps/api/dist 2>/dev/null | head -20 || echo '  (vazio)'
+          echo '--- apps/web/.next/standalone ---'; ls apps/web/.next/standalone 2>/dev/null | head -20 || echo '  (vazio)'
 
       - name: Bundle embedded server
         run: pnpm --filter @agoraencontrei/desktop bundle
