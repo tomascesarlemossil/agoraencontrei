@@ -1,4 +1,4 @@
-# AgoraEncontrei Software — Edição Offline (Desktop)
+# Sistema Administrador AgoraEncontrei — Edição Offline (Desktop)
 
 Empacotamento da plataforma para rodar **instalada no Windows**, offline, com
 banco **SQLite local** e **ativação por licença assinada**.
@@ -54,7 +54,7 @@ chave por e-mail — fechando o fluxo de venda automatizado da versão offline.
 
 ```bash
 pnpm install
-pnpm --filter @agoraencontrei/desktop dist   # gera dist/AgoraEncontrei Software Setup.exe
+pnpm --filter @agoraencontrei/desktop dist   # gera dist/Sistema Administrador AgoraEncontrei Setup.exe
 ```
 
 ## Banco local: PostgreSQL embarcado (não SQLite)

@@ -41,7 +41,7 @@ async function handleOfflineLicensePurchase(app: FastifyInstance, externalRef: s
 
   const html = `
     <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;color:#1B2B5B">
-      <h2>Sua licença do AgoraEncontrei Software</h2>
+      <h2>Sua licença do Sistema Administrador AgoraEncontrei</h2>
       <p>Pagamento confirmado — obrigado pela compra! 🎉</p>
       <p><strong>1.</strong> Baixe o instalador: <a href="${downloadUrl}">${downloadUrl}</a></p>
       <p><strong>2.</strong> Instale e, na tela de ativação, cole a sua chave de licença:</p>
@@ -50,7 +50,7 @@ async function handleOfflineLicensePurchase(app: FastifyInstance, externalRef: s
       <p style="color:#6b7799;font-size:13px">Guarde este e-mail. Em caso de dúvida, responda esta mensagem.</p>
     </div>`
 
-  const res = await sendEmail({ to: email, subject: 'Sua licença — AgoraEncontrei Software', html })
+  const res = await sendEmail({ to: email, subject: 'Sua licença — Sistema Administrador AgoraEncontrei', html })
   if (res.success) app.log.info(`[offline-license] licença enviada para ${email}`)
   else app.log.error(`[offline-license] falha ao enviar e-mail: ${res.error}`)
 }
