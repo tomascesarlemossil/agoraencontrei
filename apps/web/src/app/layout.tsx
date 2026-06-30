@@ -333,15 +333,17 @@ const jsonLdWebsite = {
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  // Root stays light by default; the dashboard scopes `.dark` on its own
+  // layout wrapper. Public, portal and auth areas render light.
   return (
-    <html lang="pt-BR" suppressHydrationWarning className="dark">
+    <html lang="pt-BR" suppressHydrationWarning>
       <head>
         {/* ── Preconnect para recursos externos críticos (melhora LCP/FCP) ── */}
         <link rel="preconnect" href="https://api-production-669c.up.railway.app" />
         <link rel="preconnect" href="https://agoraencontrei-media.s3.us-east-1.amazonaws.com" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=Playfair+Display:ital,wght@0,400..900;1,400..700&display=swap" rel="stylesheet" />
         <link rel="dns-prefetch" href="https://tiles.openfreemap.org" />
         <link rel="dns-prefetch" href="https://nominatim.openstreetmap.org" />
         <link rel="dns-prefetch" href="https://cdnuso.com" />

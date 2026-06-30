@@ -58,7 +58,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
             </span>
           </div>
           <div className="flex items-center gap-4">
-            <span className="text-white/50">Marketplace Imobiliário · Franca/SP</span>
+            <span className="text-white/70">Marketplace Imobiliário · Franca/SP</span>
             <a href="https://www.instagram.com/imobiliarialemos" target="_blank" rel="noreferrer" className="flex items-center gap-1 hover:text-white transition-colors" aria-label="Instagram da Imobiliária Lemos (@imobiliarialemos)">
               <Instagram className="w-3.5 h-3.5" aria-hidden="true" />
             </a>
@@ -104,16 +104,16 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
                   <span className="text-[10px] font-medium" style={{ color: '#9ca3af', letterSpacing: '0.04em' }}>Marketplace</span>
                 </div>
               </div>
-              <p className="text-white/50 text-xs leading-relaxed">
+              <p className="text-white/70 text-xs leading-relaxed">
                 O Marketplace Imobiliário de Franca e Região.
               </p>
-              <p className="text-white/40 text-xs mt-1">
+              <p className="text-white/60 text-xs mt-1">
                 Criado pela <span className="text-white/60 font-medium">Imobiliária Lemos</span>, referência desde 2002.
               </p>
 
               {/* Social media */}
               <div className="mt-5">
-                <p className="text-white/30 text-xs uppercase tracking-wider mb-3">Redes Sociais</p>
+                <p className="text-white/55 text-xs uppercase tracking-wider mb-3">Redes Sociais</p>
                 <div className="flex flex-col gap-2">
                   <a
                     href="https://www.instagram.com/imobiliarialemos"
@@ -125,7 +125,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
                     <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 text-white/60 group-hover:text-white transition-colors" style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
                       <Instagram className="w-3.5 h-3.5" />
                     </div>
-                    <span className="text-white/50 text-xs group-hover:text-white transition-colors">@imobiliarialemos</span>
+                    <span className="text-white/70 text-xs group-hover:text-white transition-colors">@imobiliarialemos</span>
                   </a>
                   <a
                     href="https://www.instagram.com/tomaslemosbr"
@@ -137,7 +137,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
                     <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 text-white/60 group-hover:text-white transition-colors" style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
                       <Instagram className="w-3.5 h-3.5" />
                     </div>
-                    <span className="text-white/50 text-xs group-hover:text-white transition-colors">@tomaslemosbr</span>
+                    <span className="text-white/70 text-xs group-hover:text-white transition-colors">@tomaslemosbr</span>
                   </a>
                   <a
                     href="https://www.youtube.com/@imobiliarialemos"
@@ -149,7 +149,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
                     <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 text-white/60 group-hover:text-white transition-colors" style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
                       <Youtube className="w-3.5 h-3.5" />
                     </div>
-                    <span className="text-white/50 text-xs group-hover:text-white transition-colors">Imobiliária Lemos</span>
+                    <span className="text-white/70 text-xs group-hover:text-white transition-colors">Imobiliária Lemos</span>
                   </a>
                   <a
                     href="https://facebook.com/imobiliarialemos"
@@ -161,7 +161,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
                     <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 text-white/60 group-hover:text-white transition-colors" style={{ backgroundColor: 'rgba(255,255,255,0.08)' }}>
                       <Facebook className="w-3.5 h-3.5" />
                     </div>
-                    <span className="text-white/50 text-xs group-hover:text-white transition-colors">imobiliarialemos</span>
+                    <span className="text-white/70 text-xs group-hover:text-white transition-colors">imobiliarialemos</span>
                   </a>
                 </div>
               </div>
@@ -173,7 +173,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
               <ul className="space-y-2.5">
                 {FOOTER_IMOVEIS.map(l => (
                   <li key={l.href}>
-                    <Link href={l.href} className="text-white/50 text-sm hover:text-white transition-colors">{l.label}</Link>
+                    <Link href={l.href} className="text-white/70 text-sm hover:text-white transition-colors">{l.label}</Link>
                   </li>
                 ))}
               </ul>
@@ -185,7 +185,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
               <ul className="space-y-2.5">
                 {FOOTER_SERVICOS.map(l => (
                   <li key={l.href}>
-                    <Link href={l.href} className="text-white/50 text-sm hover:text-white transition-colors">{l.label}</Link>
+                    <Link href={l.href} className="text-white/70 text-sm hover:text-white transition-colors">{l.label}</Link>
                   </li>
                 ))}
               </ul>
@@ -193,19 +193,19 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
               <p className="text-sm font-semibold mt-6 mb-3 tracking-wide uppercase" style={{ color: '#C9A84C' }}>Área de Acesso</p>
               <ul className="space-y-2.5">
                 <li>
-                  <Link href="/login" className="flex items-center gap-2 text-white/50 text-sm hover:text-white transition-colors group">
+                  <Link href="/login" className="flex items-center gap-2 text-white/70 text-sm hover:text-white transition-colors group">
                     <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ backgroundColor: '#C9A84C' }} />
                     Painel Administrativo
                   </Link>
                 </li>
                 <li>
-                  <Link href="/login" className="flex items-center gap-2 text-white/50 text-sm hover:text-white transition-colors">
+                  <Link href="/login" className="flex items-center gap-2 text-white/70 text-sm hover:text-white transition-colors">
                     <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ backgroundColor: '#4a90d9' }} />
                     Área do Corretor
                   </Link>
                 </li>
                 <li>
-                  <Link href="/portal/login" className="flex items-center gap-2 text-white/50 text-sm hover:text-white transition-colors">
+                  <Link href="/portal/login" className="flex items-center gap-2 text-white/70 text-sm hover:text-white transition-colors">
                     <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ backgroundColor: '#5cb85c' }} />
                     Portal do Cliente
                   </Link>
@@ -218,28 +218,28 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
               <p className="text-sm font-semibold mb-4 tracking-wide uppercase" style={{ color: '#C9A84C' }}>Contato</p>
               <ul className="space-y-3 text-sm">
                 <li>
-                  <p className="text-white/40 text-xs uppercase tracking-wider mb-0.5">Fixo</p>
+                  <p className="text-white/60 text-xs uppercase tracking-wider mb-0.5">Fixo</p>
                   <a href="tel:1637230045" className="text-white/70 hover:text-white transition-colors">(16) 3723-0045</a>
                 </li>
                 <li>
-                  <p className="text-white/40 text-xs uppercase tracking-wider mb-0.5">Vendas / Locação</p>
+                  <p className="text-white/60 text-xs uppercase tracking-wider mb-0.5">Vendas / Locação</p>
                   <a href="tel:16981010004" className="text-white/70 hover:text-white transition-colors">(16) 98101-0004</a>
                 </li>
                 <li>
-                  <p className="text-white/40 text-xs uppercase tracking-wider mb-0.5">WhatsApp</p>
+                  <p className="text-white/60 text-xs uppercase tracking-wider mb-0.5">WhatsApp</p>
                   <a href="https://wa.me/5516981010004" target="_blank" rel="noreferrer"
                     className="hover:opacity-80 transition-opacity" style={{ color: '#C9A84C' }}>
                     (16) 98101-0004
                   </a>
                 </li>
                 <li className="pt-1">
-                  <p className="text-white/40 text-xs uppercase tracking-wider mb-0.5">Endereço</p>
+                  <p className="text-white/60 text-xs uppercase tracking-wider mb-0.5">Endereço</p>
                   <p className="text-white/60 text-sm leading-relaxed">
                     Rua Simão Caleiro, 2383<br />
                     Vila Industrial — Franca/SP<br />
                     CEP 14400-340
                   </p>
-                  <p className="text-white/40 text-xs mt-1">CNPJ: 10.962.301/0001-50</p>
+                  <p className="text-white/60 text-xs mt-1">CNPJ: 10.962.301/0001-50</p>
                   <a
                     href="https://www.imobiliarialemos.com.br"
                     target="_blank"
@@ -255,15 +255,15 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
           </div>
 
           <div className="border-t border-white/10 pt-6 flex flex-col sm:flex-row justify-between items-center gap-4">
-            <p className="text-white/50 text-xs">
+            <p className="text-white/70 text-xs">
               © {new Date().getFullYear()} AgoraEncontrei Marketplace. Todos os direitos reservados.
             </p>
             <div className="flex items-center gap-4">
-              <Link href="/termos-uso" className="text-white/40 text-xs hover:text-white/70 transition-colors">Termos de Uso</Link>
+              <Link href="/termos-uso" className="text-white/60 text-xs hover:text-white/70 transition-colors">Termos de Uso</Link>
               <span className="text-white/20 text-xs">·</span>
-              <Link href="/politica-privacidade" className="text-white/40 text-xs hover:text-white/70 transition-colors">Política de Privacidade</Link>
+              <Link href="/politica-privacidade" className="text-white/60 text-xs hover:text-white/70 transition-colors">Política de Privacidade</Link>
               <span className="text-white/20 text-xs">·</span>
-              <p className="text-white/40 text-xs">Criado pela Imobiliária Lemos · Fundada em 2002</p>
+              <p className="text-white/60 text-xs">Criado pela Imobiliária Lemos · Fundada em 2002</p>
             </div>
           </div>
         </div>

@@ -63,8 +63,9 @@
 }
 
 /* ── Fix: ensure form inputs on light-background pages have dark text ──────── */
-/* Root <html> has class="dark" for dashboard, but public/portal pages use    */
-/* light backgrounds. This forces dark text on inputs in those contexts.       */
+/* The root <html> is light; `.dark` is scoped to the dashboard layout wrapper. */
+/* These rules guard public/portal inputs against inherited light-on-light text */
+/* and remain harmless where no `.dark` ancestor exists.                        */
 /* Dashboard dark-themed inputs override this with their own text-white.       */
 
 /* Public pages (all wrapped in <main id="main-content">) */
@@ -116,10 +117,10 @@ input[style*="background"], textarea[style*="background"] {
 .dark main.bg-gray-950 input:not([type="checkbox"]):not([type="radio"]),
 .dark main.bg-gray-950 textarea,
 .dark main.bg-gray-950 select,
-html.dark input[class*="bg-white/5"]:not([type="checkbox"]):not([type="radio"]),
-html.dark textarea[class*="bg-white/5"],
-html.dark input[class*="border-white"]:not([type="checkbox"]):not([type="radio"]),
-html.dark textarea[class*="border-white"] {
+.dark input[class*="bg-white/5"]:not([type="checkbox"]):not([type="radio"]),
+.dark textarea[class*="bg-white/5"],
+.dark input[class*="border-white"]:not([type="checkbox"]):not([type="radio"]),
+.dark textarea[class*="border-white"] {
   color: #ffffff !important;
   color-scheme: dark;
   -webkit-text-fill-color: #ffffff !important;
@@ -135,7 +136,7 @@ html.dark textarea[class*="border-white"] {
 .dark .bg-gray-950 input:-webkit-autofill,
 .dark .bg-gray-950 input:-webkit-autofill:hover,
 .dark .bg-gray-950 input:-webkit-autofill:focus,
-html.dark input:-webkit-autofill {
+.dark input:-webkit-autofill {
   -webkit-text-fill-color: #ffffff !important;
   -webkit-box-shadow: 0 0 0 1000px rgba(255,255,255,0.05) inset !important;
   box-shadow: 0 0 0 1000px rgba(255,255,255,0.05) inset !important;
@@ -150,8 +151,8 @@ html.dark input:-webkit-autofill {
 .dark .bg-gray-950 input[type="date"],
 .dark .bg-gray-950 input[type="datetime-local"],
 .dark .bg-gray-950 input[type="time"],
-html.dark input[type="date"],
-html.dark input[type="datetime-local"] {
+.dark input[type="date"],
+.dark input[type="datetime-local"] {
   color-scheme: dark;
 }
 /* Select dropdown content (Radix popover on dark) */
@@ -179,4 +180,19 @@ html.dark input[type="datetime-local"] {
 html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
+}
+
+/* ── Accessibility: honor prefers-reduced-motion ──────────────────────────── */
+/* Users who request reduced motion get near-instant transitions/animations.  */
+/* Framer Motion reveals already opt out via useReducedMotion; this is the     */
+/* CSS-side net for hover transforms and other tailwind transitions.           */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
 }

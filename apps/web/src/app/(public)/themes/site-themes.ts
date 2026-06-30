@@ -106,9 +106,9 @@ export const themeClassicBlue: SiteTheme = {
     buttonBorder: 'transparent',
   },
   typography: {
-    heroFont: 'Georgia, serif',
+    heroFont: '"Playfair Display", Georgia, serif',
     bodyFont: 'Inter, sans-serif',
-    heroSize: 'text-4xl sm:text-5xl lg:text-6xl',
+    heroSize: 'text-5xl sm:text-6xl lg:text-7xl',
     heroWeight: 'font-bold',
     sectionTitleSize: 'text-2xl',
     sectionTitleWeight: 'font-bold',
