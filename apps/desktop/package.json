@@ -6,14 +6,16 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "dist": "electron-builder --win nsis",
+    "bundle": "node scripts/bundle-server.mjs",
+    "dist": "node scripts/bundle-server.mjs && electron-builder --win nsis",
     "dist:dir": "electron-builder --dir"
   },
   "build": {
     "appId": "com.agoraencontrei.software",
     "productName": "AgoraEncontrei Software",
     "directories": { "output": "dist", "buildResources": "resources" },
-    "files": ["main.js", "preload.js", "license.js", "renderer/**", "server/**"],
+    "files": ["main.js", "preload.js", "license.js", "db.js", "renderer/**", "server/**"],
+    "extraResources": ["node_modules/@embedded-postgres/**"],
     "win": {
       "target": ["nsis"],
       "icon": "resources/icon.ico"
@@ -30,6 +32,10 @@
     "electron-builder": "^24.13.3"
   },
   "dependencies": {
-    "electron-updater": "^6.2.1"
+    "electron-updater": "^6.2.1",
+    "embedded-postgres": "^17.5.0-beta.16",
+    "@embedded-postgres/windows-x64": "^17.5.0-beta.16",
+    "@prisma/client": "^5.22.0",
+    "prisma": "^5.22.0"
   }
 }
