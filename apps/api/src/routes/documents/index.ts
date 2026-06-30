@@ -1,7 +1,34 @@
 import type { FastifyInstance } from 'fastify'
+import { render, buildContractData, TEMPLATES, listTemplates } from '../../services/document-generator.service.js'
 
 export default async function documentsRoutes(app: FastifyInstance) {
   app.addHook('preHandler', app.authenticate)
+
+  // GET /api/v1/documents/templates — lista templates disponíveis
+  app.get('/templates', async (_req, reply) => {
+    return reply.send({ templates: listTemplates() })
+  })
+
+  // POST /api/v1/documents/generate — gera um documento (HTML) de um contrato
+  // body: { contractId: string, template: 'cobranca'|'recibo'|'contrato-residencial' }
+  app.post('/generate', async (req, reply) => {
+    const cid = req.user.cid
+    const body = req.body as { contractId?: string; template?: string }
+    const tplKey = body.template || 'contrato-residencial'
+    const tpl = TEMPLATES[tplKey]
+    if (!tpl) return reply.status(400).send({ error: 'TEMPLATE_NOT_FOUND', available: listTemplates() })
+    if (!body.contractId) return reply.status(400).send({ error: 'CONTRACT_ID_REQUIRED' })
+
+    const contract = await app.prisma.contract.findFirst({
+      where: { id: body.contractId, companyId: cid },
+      include: { landlord: true, tenant: true, guarantor: true, property: true, company: true },
+    })
+    if (!contract) return reply.status(404).send({ error: 'CONTRACT_NOT_FOUND' })
+
+    const data = buildContractData(contract, (contract as any).company)
+    const html = render(tpl, data)
+    return reply.send({ template: tplKey, contractId: body.contractId, html })
+  })
 
   // GET /api/v1/documents — list documents with filters
   app.get('/', async (req, reply) => {
