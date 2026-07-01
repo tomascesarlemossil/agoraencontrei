@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify'
 import nodemailer from 'nodemailer'
-import { createCharge, findOrCreateCustomer } from '../../services/asaas.service.js'
+import { createCharge, findOrCreateCustomer, getPixQrCode } from '../../services/asaas.service.js'
 import { env } from '../../utils/env.js'
 import { createAuditLog } from '../../services/audit.service.js'
 
@@ -1456,23 +1456,46 @@ export default async function financeRoutes(app: FastifyInstance) {
       })
     }
 
-    // Create or find Asaas customer for the tenant
-    const asaasCustomer = await findOrCreateCustomer({
-      name:    contract.tenant.name,
-      cpfCnpj: contract.tenant.document,
-      email:   contract.tenant.email  ?? undefined,
-      phone:   contract.tenant.phone  ?? undefined,
-    })
+    // Create Asaas customer + charge (+ PIX QR code) — wrapped so any Asaas
+    // failure surfaces as a controlled 502 instead of an unhandled 500.
+    const billingType = body.billingType ?? 'PIX'
+    let asaasCharge: Awaited<ReturnType<typeof createCharge>>
+    let pixCode:   string | null = null
+    let pixQrCode: string | null = null
+    try {
+      const asaasCustomer = await findOrCreateCustomer({
+        name:    contract.tenant.name,
+        cpfCnpj: contract.tenant.document,
+        email:   contract.tenant.email  ?? undefined,
+        phone:   contract.tenant.phone  ?? undefined,
+      })
 
-    // Create Asaas charge
-    const asaasCharge = await createCharge({
-      customer:          asaasCustomer.id,
-      billingType:       body.billingType ?? 'PIX',
-      value:             body.amount,
-      dueDate:           body.dueDate,
-      description:       body.description,
-      externalReference: contract.legacyId ?? contract.id,
-    })
+      asaasCharge = await createCharge({
+        customer:          asaasCustomer.id,
+        billingType,
+        value:             body.amount,
+        dueDate:           body.dueDate,
+        description:       body.description,
+        externalReference: contract.legacyId ?? contract.id,
+      })
+
+      // createCharge({billingType:'PIX'}) does NOT return pixCode — fetch the QR code.
+      if (billingType === 'PIX') {
+        const pix = await getPixQrCode(asaasCharge.id).catch(() => null)
+        pixCode   = pix?.payload ?? asaasCharge.pixCode ?? null
+        pixQrCode = pix?.encodedImage ? `data:image/png;base64,${pix.encodedImage}` : null
+      } else {
+        pixCode = asaasCharge.pixCode ?? null
+      }
+    } catch (err: any) {
+      app.log.error({ err }, `[finance/charges] Asaas error: ${err?.message}`)
+      return reply.status(502).send({
+        error:   'ASAAS_ERROR',
+        message: err?.message ?? 'Falha ao gerar cobrança no Asaas.',
+      })
+    }
+
+    const boletoUrl = asaasCharge.bankSlipUrl ?? asaasCharge.invoiceUrl ?? null
 
     // Persist invoice record in DB with asaasId for tracking
     const invoice = await app.prisma.invoice.create({
@@ -1484,8 +1507,8 @@ export default async function financeRoutes(app: FastifyInstance) {
         mensagem:        body.description,
         asaasId:         asaasCharge.id,
         asaasStatus:     asaasCharge.status ?? 'PENDING',
-        asaasBankSlipUrl: asaasCharge.bankSlipUrl ?? null,
-        asaasPixCode:    asaasCharge.pixCode ?? null,
+        asaasBankSlipUrl: boletoUrl,
+        asaasPixCode:    pixCode,
       },
     })
 
@@ -1495,9 +1518,7 @@ export default async function financeRoutes(app: FastifyInstance) {
         const tenant = contract.tenant!
         const fmt = (v: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v)
         const fmtDate = (d: string) => { const [y, m, day] = d.split('-'); return `${day}/${m}/${y}` }
-        const billingLabel = (body.billingType ?? 'PIX') === 'BOLETO' ? 'Boleto Bancário' : 'PIX'
-        const pixCode = (asaasCharge as any).pixCode ?? null
-        const boletoUrl = (asaasCharge as any).bankSlipUrl ?? null
+        const billingLabel = billingType === 'BOLETO' ? 'Boleto Bancário' : 'PIX'
 
         const waMsgLines = [
           `💳 *Cobrança Gerada — Imobiliária Lemos*`,
@@ -1549,7 +1570,15 @@ export default async function financeRoutes(app: FastifyInstance) {
       }
     })
 
-    return reply.status(201).send({ invoice, asaasCharge })
+    // Return shape matches what the LemosBank cobranças front reads at the TOP level:
+    // result.boletoUrl / result.pixCode / result.pixQrCode (plus invoice + raw charge).
+    return reply.status(201).send({
+      boletoUrl,
+      pixCode,
+      pixQrCode,
+      invoice,
+      asaasCharge,
+    })
   })
 
   // PATCH /api/v1/finance/rentals/:id/estorno — Estornar pagamento (PAID → PENDING)
