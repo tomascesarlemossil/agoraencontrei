@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { MapPin, Home, Search, MessageCircle, Building, TrendingUp } from 'lucide-react'
 import { UNIQUE_CITIES, PROPERTY_TYPES } from '@/data/seo-cities'
+import { canonicalFromCityUf } from '@/lib/seo-canonical'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 const WEB_URL = 'https://www.agoraencontrei.com.br'
@@ -19,7 +20,9 @@ export async function generateMetadata(props: { params: Promise<{ cidade: string
     description: `Encontre imóveis em leilão em ${city.name}/${city.state}. Casas, apartamentos, terrenos e leilões com até 50% de desconto. Marketplace imobiliário #1 do Brasil.`,
     keywords: [`imóveis em leilão ${city.name.toLowerCase()}`, `casas em leilão ${city.name.toLowerCase()} ${city.state.toLowerCase()}`, `apartamentos ${city.name.toLowerCase()}`, `terrenos ${city.name.toLowerCase()}`, `leilão imóvel ${city.name.toLowerCase()}`],
     openGraph: { title: `Imóveis em Leilão em ${city.name}/${city.state} | AgoraEncontrei`, description: `Casas, apartamentos e terrenos em leilão em ${city.name}.`, type: 'website', locale: 'pt_BR', siteName: 'AgoraEncontrei' },
-    alternates: { canonical: `${WEB_URL}/imoveis-leilao-imoveis-em/${params.cidade}` },
+    // Consolida com /{estado}/{cidade}/leilao-de-imoveis quando a cidade existe
+    // no IBGE; senão auto-canonical (corrigindo o path malformado anterior).
+    alternates: { canonical: canonicalFromCityUf(params.cidade, 'leilao-de-imoveis') ?? `${WEB_URL}/leilao-imoveis-em/${params.cidade}` },
   }
 }
 
