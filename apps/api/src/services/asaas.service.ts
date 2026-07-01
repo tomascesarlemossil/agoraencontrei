@@ -375,6 +375,27 @@ export async function getSubscription(subscriptionId: string): Promise<AsaasSubs
   return asaasFetch<AsaasSubscription>(`/subscriptions/${subscriptionId}`)
 }
 
+/** Lista os pagamentos (cobranças) gerados por uma assinatura. */
+export async function getSubscriptionPayments(subscriptionId: string): Promise<{ data: AsaasCharge[] }> {
+  return asaasFetch<{ data: AsaasCharge[] }>(`/subscriptions/${subscriptionId}/payments`)
+}
+
+/**
+ * Retorna o link de fatura pagável (invoiceUrl) do 1º pagamento de uma
+ * assinatura. A assinatura em si NÃO tem um link pagável — quem tem é a
+ * cobrança gerada por ela. Sem isso, montávamos uma URL /c/{id} inválida e o
+ * Asaas mostrava "Link de pagamento não encontrado".
+ */
+export async function getSubscriptionInvoiceUrl(subscriptionId: string): Promise<string | null> {
+  try {
+    const res = await getSubscriptionPayments(subscriptionId)
+    const first = res?.data?.[0]
+    return first?.invoiceUrl ?? null
+  } catch {
+    return null
+  }
+}
+
 export async function cancelSubscription(subscriptionId: string): Promise<{ deleted: boolean }> {
   return asaasFetch(`/subscriptions/${subscriptionId}`, { method: 'DELETE' })
 }
