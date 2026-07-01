@@ -10,22 +10,31 @@ import { recordEvent } from '../../services/system-event.service.js'
 const toUpper = (v: unknown) => typeof v === 'string' ? v.toUpperCase() : v
 
 const PropertyFilters = z.object({
-  page:         z.coerce.number().int().min(1).default(1),
-  limit:        z.coerce.number().int().min(1).max(200).default(50),
-  search:       z.string().optional(),
-  type:         z.string().transform(v => v.toUpperCase()).optional(),
-  purpose:      z.preprocess(toUpper, z.enum(['SALE', 'RENT', 'BOTH', 'SEASON'])).optional(),
-  status:       z.string().transform(v => v.toUpperCase()).optional(),
-  city:         z.string().optional(),
-  neighborhood: z.string().optional(),
-  state:        z.string().optional(),
-  minPrice:     z.coerce.number().optional(),
-  maxPrice:     z.coerce.number().optional(),
-  bedrooms:     z.coerce.number().int().optional(),
-  minArea:      z.coerce.number().optional(),
-  maxArea:      z.coerce.number().optional(),
-  sortBy:       z.enum(['createdAt', 'price', 'priceRent', 'updatedAt', 'views']).default('createdAt'),
-  sortOrder:    z.enum(['asc', 'desc']).default('desc'),
+  page:              z.coerce.number().int().min(1).default(1),
+  limit:             z.coerce.number().int().min(1).max(200).default(50),
+  search:            z.string().optional(),
+  type:              z.string().transform(v => v.toUpperCase()).optional(),
+  purpose:           z.preprocess(toUpper, z.enum(['SALE', 'RENT', 'BOTH', 'SEASON'])).optional(),
+  status:            z.string().transform(v => v.toUpperCase()).optional(),
+  city:              z.string().optional(),
+  neighborhood:      z.string().optional(),
+  state:             z.string().optional(),
+  minPrice:          z.coerce.number().optional(),
+  maxPrice:          z.coerce.number().optional(),
+  bedrooms:          z.coerce.number().int().optional(),
+  minArea:           z.coerce.number().optional(),
+  maxArea:           z.coerce.number().optional(),
+  sortBy:            z.enum(['createdAt', 'price', 'priceRent', 'updatedAt', 'views']).default('createdAt'),
+  sortOrder:         z.enum(['asc', 'desc']).default('desc'),
+  // Filtros avancados — preserva o cadastro interno, apenas controla visibilidade
+  reference:         z.string().optional(),
+  captorName:        z.string().optional(),
+  hasImages:         z.preprocess(v => v === 'true' ? true : v === 'false' ? false : v, z.boolean()).optional(),
+  authorizedPublish: z.preprocess(v => v === 'true' ? true : v === 'false' ? false : v, z.boolean()).optional(),
+  dateFrom:          z.string().optional(),
+  dateTo:            z.string().optional(),
+  updatedFrom:       z.string().optional(),
+  updatedTo:         z.string().optional(),
 })
 
 // Coerce strings/nulls to numbers for monetary and numeric fields
@@ -207,6 +216,16 @@ export default async function propertiesRoutes(app: FastifyInstance) {
       ...(q.bedrooms    && { bedrooms: { gte: q.bedrooms } }),
       ...(q.minArea     && { totalArea: { gte: q.minArea } }),
       ...(q.maxArea     && { totalArea: { lte: q.maxArea } }),
+      // Filtros avancados — cadastro sempre preservado no banco
+      ...(q.reference        && { reference: { contains: q.reference, mode: 'insensitive' } }),
+      ...(q.captorName       && { captorName: { contains: q.captorName, mode: 'insensitive' } }),
+      ...(q.authorizedPublish !== undefined && isAuth && !showMarketplace && { authorizedPublish: q.authorizedPublish }),
+      ...(q.hasImages === true  && { OR: [{ coverImage: { not: null } }, { images: { isEmpty: false } }] }),
+      ...(q.hasImages === false && { coverImage: null, images: { equals: [] } }),
+      ...(q.dateFrom    && { createdAt: { gte: new Date(q.dateFrom) } }),
+      ...(q.dateTo      && { createdAt: { lte: new Date(q.dateTo + 'T23:59:59Z') } }),
+      ...(q.updatedFrom && { updatedAt: { gte: new Date(q.updatedFrom) } }),
+      ...(q.updatedTo   && { updatedAt: { lte: new Date(q.updatedTo + 'T23:59:59Z') } }),
     }
 
     // Price filter based on purpose
@@ -243,7 +262,8 @@ export default async function propertiesRoutes(app: FastifyInstance) {
           coverImage: true, images: true,
           isFeatured: true, isPremium: true,
           views: true, favorites: true,
-          createdAt: true,
+          createdAt: true, updatedAt: true,
+          authorizedPublish: true,
           latitude: true, longitude: true,
           // Cross-reference data
           contracts: {

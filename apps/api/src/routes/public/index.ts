@@ -10,10 +10,8 @@ const PublicFilters = z.object({
   limit:        z.coerce.number().int().min(1).max(50).default(12),
   search:       z.string().optional(),
   ids:          z.string().optional(),  // CSV de IDs para favoritos/comparação
-  // Tenant scoping: restrict results to a single partner's properties.
-  // companyId filters directly; tenantSlug resolves the tenant's companyId first.
-  companyId:    z.string().optional(),
-  tenantSlug:   z.string().optional(),
+  companyId:    z.string().optional(),  // Filtro por empresa/tenant específico
+  tenantSlug:   z.string().optional(),  // Filtro por subdomain do tenant (alternativa ao companyId)
   // type and purpose: coerce to uppercase then validate against enum — invalid values return 400
   type:         z.preprocess(
     v => typeof v === 'string' ? v.toUpperCase() : v,
@@ -220,17 +218,6 @@ async function cacheSet(redis: FastifyInstance['redis'], key: string, value: unk
   memCacheSet(key, value, ttl)
 }
 
-/**
- * Invalida o cache do /site-settings de uma empresa (Redis + memória).
- * Deve ser chamado pelo admin sempre que salvar a config do site, para a
- * mudança (ex.: imagem do hero) refletir na hora em vez de esperar o TTL.
- */
-export async function invalidateSiteSettingsCache(redis: FastifyInstance['redis'], companyId: string): Promise<void> {
-  const key = `pub:site-settings:v1:${companyId}`
-  _memCache.delete(key)
-  if (redis) { try { await redis.del(key) } catch { /* ignore */ } }
-}
-
 export default async function publicRoutes(app: FastifyInstance) {
   // No auth required — public endpoints
 
@@ -245,24 +232,25 @@ export default async function publicRoutes(app: FastifyInstance) {
     }
     const filters = _parsed.data
 
-    // Tenant scoping: when companyId or tenantSlug is provided, restrict the
-    // listing to that single partner (used by tenant clone sites). Otherwise the
-    // endpoint behaves as a marketplace and shows properties from all companies.
-    let scopedCompanyId: string | undefined = filters.companyId
-    if (!scopedCompanyId && filters.tenantSlug) {
-      const tenant = await (app.prisma as any).tenant?.findUnique?.({
-        where: { subdomain: filters.tenantSlug },
-        select: { companyId: true },
-      }).catch(() => null)
-      // tenantSlug given but not found → scope to nothing instead of leaking the
-      // whole marketplace under a partner's domain.
-      scopedCompanyId = tenant?.companyId ?? '__no_such_tenant__'
+    // Resolve companyId for tenant filtering
+    // If tenantSlug is provided, look up the tenant to get its companyId
+    let tenantCompanyId: string | undefined = filters.companyId
+    if (!tenantCompanyId && filters.tenantSlug) {
+      try {
+        const tenant = await (app.prisma as any).tenant?.findUnique?.({
+          where: { subdomain: filters.tenantSlug },
+          select: { companyId: true },
+        }).catch(() => null)
+        if (tenant?.companyId) tenantCompanyId = tenant.companyId
+      } catch { /* ignore */ }
     }
 
+    // Show properties from ALL companies (marketplace) or filter by tenant company
     const where: any = {
       status: 'ACTIVE',
       authorizedPublish: true,
-      ...(scopedCompanyId && { companyId: scopedCompanyId }),
+      // When tenantCompanyId is set, show only that company's properties
+      ...(tenantCompanyId && { companyId: tenantCompanyId }),
       ...(filters.ids && { id: { in: filters.ids.split(',').map(s => s.trim()).filter(Boolean) } }),
       ...(filters.search && {
         OR: [
@@ -328,9 +316,7 @@ export default async function publicRoutes(app: FastifyInstance) {
       app.prisma.property.findMany({
         where,
         select: PUBLIC_PROPERTY_SELECT,
-        // Super Destaque (isPremium) first, then Destaque (isFeatured), then the
-        // requested sort order.
-        orderBy: [{ isPremium: 'desc' }, { isFeatured: 'desc' }, orderBy],
+        orderBy: [{ isFeatured: 'desc' }, orderBy],
         skip,
         take: limit,
       }),
@@ -348,12 +334,10 @@ export default async function publicRoutes(app: FastifyInstance) {
         })
       : items
 
-    // Fallback: when no results found, relax filters progressively to show similar properties.
-    // Skipped for tenant-scoped requests — a partner site must never fall back to
-    // another company's (default marketplace) inventory.
+    // Fallback: when no results found, relax filters progressively to show similar properties
     let fallbackItems: any[] = []
     let isFallback = false
-    if (total === 0 && page === 1 && !scopedCompanyId) {
+    if (total === 0 && page === 1) {
       isFallback = true
       const baseWhere = { companyId: company.id, status: 'ACTIVE' as const, authorizedPublish: true }
 
@@ -996,8 +980,6 @@ export default async function publicRoutes(app: FastifyInstance) {
 
     const siteSettingsResult = {
       // ── Legado (compatibilidade) ──────────────────────────────────────
-      // O painel "Configurações do site" (users/site-settings) grava estes
-      // campos no topo de settings; por isso o topo tem precedência.
       heroVideoUrl:  settings.heroVideoUrl  ?? siteConfig.heroVideoUrl  ?? null,
       heroVideoType: settings.heroVideoType ?? siteConfig.heroVideoType ?? 'youtube',
       logoUrl:       settings.logoUrl       ?? company.logoUrl          ?? null,
@@ -1093,7 +1075,7 @@ export default async function publicRoutes(app: FastifyInstance) {
       presentationTitle:      siteConfig.presentationTitle      ?? null,
       presentationSubtitle:   siteConfig.presentationSubtitle   ?? null,
     };
-    await cacheSet(app.redis, cacheKey, siteSettingsResult, 60); // 60s — config é editável no admin, cache curto + invalidação no save
+    await cacheSet(app.redis, cacheKey, siteSettingsResult, 600); // 10 min cache
     return reply.send(siteSettingsResult);
   })
 

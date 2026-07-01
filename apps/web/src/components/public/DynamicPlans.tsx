@@ -665,9 +665,10 @@ export function DynamicPlans() {
 
               {/* Layout — galeria visual de temas prontos */}
               <div>
-                <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-2">
+                <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">
                   Escolha o visual do seu site
                 </label>
+                <p className="text-[10px] text-gray-500 mb-3">Clique em qualquer tema para ver uma prévia completa do seu site antes de confirmar.</p>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
                   {ALL_THEMES.map((t) => {
                     const selected = checkoutForm.layoutType === t.key
@@ -677,29 +678,60 @@ export function DynamicPlans() {
                         key={t.key}
                         type="button"
                         onClick={() => setPreviewKey(t.key)}
-                        className={`text-left rounded-xl border-2 overflow-hidden transition-all ${
-                          selected ? 'border-amber-400 ring-2 ring-amber-400/30' : 'border-gray-700 hover:border-gray-500'
-                        }`}
+                        className="text-left rounded-xl overflow-hidden transition-all duration-200 group hover:scale-[1.02]"
+                        style={{
+                          border: `2px solid ${selected ? t.accentHex : '#374151'}`,
+                          boxShadow: selected ? `0 0 16px ${t.accentHex}44` : undefined,
+                        }}
                       >
-                        {/* Mini mockup do tema */}
-                        <div className="p-2.5" style={{ backgroundColor: dark ? '#0b0f1a' : '#ffffff' }}>
-                          <div className="flex items-center gap-1 mb-1.5">
-                            <div className="h-1.5 flex-1 rounded-full" style={{ backgroundColor: t.accentHex }} />
-                            <div className="h-1.5 w-3 rounded-full" style={{ backgroundColor: dark ? '#374151' : '#e5e7eb' }} />
+                        {/* Mini mockup estilo browser */}
+                        <div style={{ backgroundColor: dark ? '#0b0f1a' : '#f8fafc' }}>
+                          {/* Barra do browser */}
+                          <div className="flex items-center gap-1 px-2 py-1.5" style={{ backgroundColor: dark ? '#111827' : '#e2e8f0' }}>
+                            <span className="h-1.5 w-1.5 rounded-full bg-red-400" />
+                            <span className="h-1.5 w-1.5 rounded-full bg-yellow-400" />
+                            <span className="h-1.5 w-1.5 rounded-full bg-green-400" />
+                            <div className="flex-1 mx-1.5 h-2 rounded-full" style={{ backgroundColor: dark ? '#1e293b' : '#cbd5e1' }} />
                           </div>
-                          <div className="h-1 w-3/4 rounded-full mb-1" style={{ backgroundColor: dark ? '#4b5563' : '#d1d5db' }} />
-                          <div className="h-1 w-1/2 rounded-full mb-2" style={{ backgroundColor: dark ? '#374151' : '#e5e7eb' }} />
-                          <div className="h-3.5 w-12 rounded-md" style={{ backgroundColor: t.accentHex }} />
+                          {/* Conteúdo simulado */}
+                          <div className="p-2">
+                            {/* Header */}
+                            <div className="flex items-center justify-between mb-1.5">
+                              <div className="h-1.5 w-8 rounded-full" style={{ backgroundColor: t.accentHex }} />
+                              <div className="flex gap-1">
+                                <div className="h-1 w-3 rounded-full" style={{ backgroundColor: dark ? '#374151' : '#cbd5e1' }} />
+                                <div className="h-1 w-3 rounded-full" style={{ backgroundColor: dark ? '#374151' : '#cbd5e1' }} />
+                              </div>
+                            </div>
+                            {/* Hero */}
+                            <div className="rounded mb-1.5 p-1.5" style={{ background: `linear-gradient(135deg, ${t.accentHex}22, ${t.accentHex}08)` }}>
+                              <div className="h-1 w-2/3 rounded-full mb-1" style={{ backgroundColor: dark ? '#e5e7eb' : '#1f2937' }} />
+                              <div className="h-0.5 w-1/2 rounded-full mb-1.5" style={{ backgroundColor: dark ? '#6b7280' : '#9ca3af' }} />
+                              <div className="h-2.5 w-10 rounded" style={{ backgroundColor: t.accentHex }} />
+                            </div>
+                            {/* Cards de imóveis */}
+                            <div className="grid grid-cols-3 gap-1">
+                              {[0, 1, 2].map(i => (
+                                <div key={i} className="rounded overflow-hidden" style={{ backgroundColor: dark ? '#1e293b' : '#ffffff', border: `1px solid ${dark ? '#374151' : '#e2e8f0'}` }}>
+                                  <div className="h-3" style={{ background: `linear-gradient(135deg, ${t.accentHex}33, ${t.accentHex}11)` }} />
+                                  <div className="p-0.5">
+                                    <div className="h-0.5 w-full rounded-full mb-0.5" style={{ backgroundColor: dark ? '#374151' : '#e2e8f0' }} />
+                                    <div className="h-0.5 w-2/3 rounded-full" style={{ backgroundColor: t.accentHex }} />
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
                         </div>
                         {/* Rótulo */}
-                        <div className="px-2.5 py-1.5 bg-gray-800/80">
+                        <div className="px-2.5 py-2" style={{ backgroundColor: dark ? '#0f172a' : '#1e293b' }}>
                           <div className="flex items-center gap-1.5">
                             <span className="inline-block w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: t.accentHex }} />
                             <p className="text-[11px] font-semibold text-white truncate">{t.name}</p>
-                            {selected && <CheckCircle className="w-3 h-3 text-amber-400 ml-auto flex-shrink-0" />}
+                            {selected && <CheckCircle className="w-3 h-3 ml-auto flex-shrink-0" style={{ color: t.accentHex }} />}
                           </div>
                           <p className="text-[9px] text-gray-400 truncate mt-0.5">{t.tagline}</p>
-                          <p className="text-[9px] font-semibold mt-0.5" style={{ color: t.accentHex }}>👁 Ver prévia</p>
+                          <p className="text-[9px] font-semibold mt-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150" style={{ color: t.accentHex }}>👁 Ver prévia completa</p>
                         </div>
                       </button>
                     )

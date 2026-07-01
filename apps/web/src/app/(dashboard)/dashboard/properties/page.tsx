@@ -11,9 +11,9 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { formatCurrency } from '@/lib/utils'
 import {
-  Plus, Search, Building2, MapPin, BedDouble, Bath, Car, Eye,
+  Plus, Search, Building2, MapPin, BedDouble, Bath, Car, Eye, EyeOff,
   ChevronLeft, ChevronRight, SlidersHorizontal, X, Filter, Instagram, Loader2, CheckSquare, Square, User,
-  LayoutList, Map, Star,
+  LayoutList, Map, Star, Calendar, ImageOff, Hash, RefreshCw, AlertCircle,
 } from 'lucide-react'
 
 const AdminPropertyMap = dynamic(() => import('./AdminPropertyMap'), {
@@ -90,6 +90,14 @@ interface Filters {
   sortBy: string
   sortOrder: string
   captorName: string
+  // Filtros avancados
+  reference: string
+  hasImages: string
+  authorizedPublish: string
+  dateFrom: string
+  dateTo: string
+  updatedFrom: string
+  updatedTo: string
 }
 
 const DEFAULT_FILTERS: Filters = {
@@ -98,6 +106,9 @@ const DEFAULT_FILTERS: Filters = {
   bedrooms: '', minArea: '', maxArea: '',
   sortBy: 'createdAt', sortOrder: 'desc',
   captorName: '',
+  // Filtros avancados
+  reference: '', hasImages: '', authorizedPublish: '',
+  dateFrom: '', dateTo: '', updatedFrom: '', updatedTo: '',
 }
 
 function filtersToApi(f: Filters) {
@@ -116,13 +127,22 @@ function filtersToApi(f: Filters) {
     sortBy: f.sortBy || 'createdAt',
     sortOrder: (f.sortOrder || 'desc') as 'asc' | 'desc',
     captorName: f.captorName || undefined,
+    // Filtros avancados
+    reference: f.reference || undefined,
+    hasImages: f.hasImages !== '' ? (f.hasImages === 'true') : undefined,
+    authorizedPublish: f.authorizedPublish !== '' ? (f.authorizedPublish === 'true') : undefined,
+    dateFrom: f.dateFrom || undefined,
+    dateTo: f.dateTo || undefined,
+    updatedFrom: f.updatedFrom || undefined,
+    updatedTo: f.updatedTo || undefined,
   }
 }
 
 function activeFilterCount(f: Filters) {
   const check = [
-    f.search, f.status, f.purpose, f.type, f.city, f.neighborhood,
+    f.search, f.status !== 'ACTIVE' ? f.status : '', f.purpose, f.type, f.city, f.neighborhood,
     f.minPrice, f.maxPrice, f.bedrooms, f.minArea, f.maxArea, f.captorName,
+    f.reference, f.hasImages, f.authorizedPublish, f.dateFrom, f.dateTo, f.updatedFrom, f.updatedTo,
   ]
   return check.filter(Boolean).length
 }
@@ -310,6 +330,119 @@ export default function PropertiesPage() {
       )}
 
       {/* Filter Panel */}
+      {/* === ABAS DE STATUS COM CONTADORES === */}
+      <div className="flex items-center gap-1 overflow-x-auto pb-1 scrollbar-hide">
+        {[
+          { value: 'ACTIVE',   label: 'Ativos',    color: 'text-green-600 dark:text-green-400',  bg: 'bg-green-50 dark:bg-green-950/40',  border: 'border-green-200 dark:border-green-800' },
+          { value: 'INACTIVE', label: 'Inativos',  color: 'text-gray-600 dark:text-gray-400',   bg: 'bg-gray-50 dark:bg-gray-900/40',    border: 'border-gray-200 dark:border-gray-700' },
+          { value: 'SOLD',     label: 'Vendidos',  color: 'text-red-600 dark:text-red-400',     bg: 'bg-red-50 dark:bg-red-950/40',      border: 'border-red-200 dark:border-red-800' },
+          { value: 'RENTED',   label: 'Alugados',  color: 'text-yellow-600 dark:text-yellow-400', bg: 'bg-yellow-50 dark:bg-yellow-950/40', border: 'border-yellow-200 dark:border-yellow-800' },
+          { value: 'DRAFT',    label: 'Rascunhos', color: 'text-purple-600 dark:text-purple-400', bg: 'bg-purple-50 dark:bg-purple-950/40', border: 'border-purple-200 dark:border-purple-800' },
+          { value: 'PENDING',  label: 'Pendentes', color: 'text-blue-600 dark:text-blue-400',   bg: 'bg-blue-50 dark:bg-blue-950/40',    border: 'border-blue-200 dark:border-blue-800' },
+          { value: '',         label: 'Todos',     color: 'text-foreground',                    bg: 'bg-muted/40',                       border: 'border-border' },
+        ].map(tab => {
+          const isActive = appliedFilters.status === tab.value
+          return (
+            <button
+              key={tab.value}
+              type="button"
+              onClick={() => {
+                const f = { ...filters, status: tab.value }
+                setFilters(f)
+                applyFilters(f)
+              }}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap border transition-all ${
+                isActive
+                  ? `${tab.bg} ${tab.color} ${tab.border} shadow-sm`
+                  : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/50'
+              }`}
+            >
+              {tab.label}
+              {isActive && data?.meta?.total !== undefined && (
+                <span className={`px-1.5 py-0.5 rounded-full text-xs font-bold ${tab.bg} ${tab.color}`}>
+                  {data.meta.total}
+                </span>
+              )}
+            </button>
+          )
+        })}
+        <div className="flex-1" />
+        {/* Atalho rapido: sem imagens */}
+        <button
+          type="button"
+          onClick={() => {
+            const f = { ...filters, hasImages: filters.hasImages === 'false' ? '' : 'false', status: '' }
+            setFilters(f)
+            applyFilters(f)
+          }}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
+            filters.hasImages === 'false'
+              ? 'bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400 border-orange-200 dark:border-orange-800 shadow-sm'
+              : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/50'
+          }`}
+          title="Mostrar apenas imóveis sem foto cadastrada"
+        >
+          <ImageOff className="h-3.5 w-3.5" />
+          Sem foto
+        </button>
+      </div>
+
+      {/* === ABAS DE STATUS COM CONTADORES === */}
+      <div className="flex items-center gap-1 overflow-x-auto pb-1">
+        {([
+          { value: 'ACTIVE',   label: 'Ativos',    color: 'text-green-600 dark:text-green-400',  bg: 'bg-green-50 dark:bg-green-950/40',  border: 'border-green-200 dark:border-green-800' },
+          { value: 'INACTIVE', label: 'Inativos',  color: 'text-gray-600 dark:text-gray-400',   bg: 'bg-gray-50 dark:bg-gray-900/40',    border: 'border-gray-200 dark:border-gray-700' },
+          { value: 'SOLD',     label: 'Vendidos',  color: 'text-red-600 dark:text-red-400',     bg: 'bg-red-50 dark:bg-red-950/40',      border: 'border-red-200 dark:border-red-800' },
+          { value: 'RENTED',   label: 'Alugados',  color: 'text-yellow-600 dark:text-yellow-400', bg: 'bg-yellow-50 dark:bg-yellow-950/40', border: 'border-yellow-200 dark:border-yellow-800' },
+          { value: 'DRAFT',    label: 'Rascunhos', color: 'text-purple-600 dark:text-purple-400', bg: 'bg-purple-50 dark:bg-purple-950/40', border: 'border-purple-200 dark:border-purple-800' },
+          { value: 'PENDING',  label: 'Pendentes', color: 'text-blue-600 dark:text-blue-400',   bg: 'bg-blue-50 dark:bg-blue-950/40',    border: 'border-blue-200 dark:border-blue-800' },
+          { value: '',         label: 'Todos',     color: 'text-foreground',                    bg: 'bg-muted/40',                       border: 'border-border' },
+        ] as const).map((tab: { value: string; label: string; color: string; bg: string; border: string }) => {
+          const isActive = appliedFilters.status === tab.value
+          return (
+            <button
+              key={tab.value}
+              type="button"
+              onClick={() => {
+                const f = { ...filters, status: tab.value }
+                setFilters(f)
+                applyFilters(f)
+              }}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap border transition-all ${
+                isActive
+                  ? `${tab.bg} ${tab.color} ${tab.border} shadow-sm`
+                  : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/50'
+              }`}
+            >
+              {tab.label}
+              {isActive && data?.meta?.total !== undefined && (
+                <span className={`px-1.5 py-0.5 rounded-full text-xs font-bold ${tab.bg} ${tab.color}`}>
+                  {data.meta.total}
+                </span>
+              )}
+            </button>
+          )
+        })}
+        <div className="flex-1" />
+        <button
+          type="button"
+          onClick={() => {
+            const f = { ...filters, hasImages: filters.hasImages === 'false' ? '' : 'false', status: '' }
+            setFilters(f)
+            applyFilters(f)
+          }}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
+            filters.hasImages === 'false'
+              ? 'bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400 border-orange-200 dark:border-orange-800 shadow-sm'
+              : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/50'
+          }`}
+          title="Mostrar apenas imóveis sem foto cadastrada"
+        >
+          <span className="text-xs">📷</span>
+          Sem foto
+        </button>
+      </div>
+
       <form onSubmit={handleSubmit} className="rounded-2xl border bg-card p-4 space-y-3">
         {/* Row 1: Search + quick filters */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2">
@@ -504,6 +637,73 @@ export default function PropertiesPage() {
                 onChange={e => handleFieldChange('maxArea', e.target.value)}
               />
             </div>
+
+            {/* === FILTROS DE IDENTIFICAÇÃO E DATAS === */}
+            <div>
+              <label className="block text-xs font-medium text-muted-foreground mb-1.5">Referência / Código</label>
+              <Input
+                placeholder="Ex: AP001, ST00044"
+                value={filters.reference}
+                onChange={e => handleFieldChange('reference', e.target.value)}
+                className="font-mono"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-muted-foreground mb-1.5">Fotos cadastradas</label>
+              <select
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                value={filters.hasImages}
+                onChange={e => handleFieldChange('hasImages', e.target.value)}
+              >
+                <option value="">Todos</option>
+                <option value="true">Com foto</option>
+                <option value="false">Sem foto (ocultos do site)</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-muted-foreground mb-1.5">Publicação no site</label>
+              <select
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                value={filters.authorizedPublish}
+                onChange={e => handleFieldChange('authorizedPublish', e.target.value)}
+              >
+                <option value="">Todos</option>
+                <option value="true">Publicado</option>
+                <option value="false">Não publicado</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-muted-foreground mb-1.5">Cadastrado de</label>
+              <Input
+                type="date"
+                value={filters.dateFrom}
+                onChange={e => handleFieldChange('dateFrom', e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-muted-foreground mb-1.5">Cadastrado até</label>
+              <Input
+                type="date"
+                value={filters.dateTo}
+                onChange={e => handleFieldChange('dateTo', e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-muted-foreground mb-1.5">Atualizado de</label>
+              <Input
+                type="date"
+                value={filters.updatedFrom}
+                onChange={e => handleFieldChange('updatedFrom', e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-muted-foreground mb-1.5">Atualizado até</label>
+              <Input
+                type="date"
+                value={filters.updatedTo}
+                onChange={e => handleFieldChange('updatedTo', e.target.value)}
+              />
+            </div>
           </div>
         )}
 
@@ -539,6 +739,33 @@ export default function PropertiesPage() {
             )}
             {appliedFilters.captorName && (
               <FilterChip label={`Corretor: ${appliedFilters.captorName}`} onRemove={() => { const f = { ...filters, captorName: '' }; setFilters(f); applyFilters(f) }} />
+            )}
+            {appliedFilters.reference && (
+              <FilterChip label={`Ref: ${appliedFilters.reference}`} onRemove={() => { const f = { ...filters, reference: '' }; setFilters(f); applyFilters(f) }} />
+            )}
+            {appliedFilters.hasImages === 'true' && (
+              <FilterChip label="Com foto" onRemove={() => { const f = { ...filters, hasImages: '' }; setFilters(f); applyFilters(f) }} />
+            )}
+            {appliedFilters.hasImages === 'false' && (
+              <FilterChip label="Sem foto" onRemove={() => { const f = { ...filters, hasImages: '' }; setFilters(f); applyFilters(f) }} />
+            )}
+            {appliedFilters.authorizedPublish === 'true' && (
+              <FilterChip label="Publicado" onRemove={() => { const f = { ...filters, authorizedPublish: '' }; setFilters(f); applyFilters(f) }} />
+            )}
+            {appliedFilters.authorizedPublish === 'false' && (
+              <FilterChip label="Não publicado" onRemove={() => { const f = { ...filters, authorizedPublish: '' }; setFilters(f); applyFilters(f) }} />
+            )}
+            {appliedFilters.dateFrom && (
+              <FilterChip label={`Cadastrado de: ${appliedFilters.dateFrom}`} onRemove={() => { const f = { ...filters, dateFrom: '' }; setFilters(f); applyFilters(f) }} />
+            )}
+            {appliedFilters.dateTo && (
+              <FilterChip label={`Cadastrado até: ${appliedFilters.dateTo}`} onRemove={() => { const f = { ...filters, dateTo: '' }; setFilters(f); applyFilters(f) }} />
+            )}
+            {appliedFilters.updatedFrom && (
+              <FilterChip label={`Atualizado de: ${appliedFilters.updatedFrom}`} onRemove={() => { const f = { ...filters, updatedFrom: '' }; setFilters(f); applyFilters(f) }} />
+            )}
+            {appliedFilters.updatedTo && (
+              <FilterChip label={`Atualizado até: ${appliedFilters.updatedTo}`} onRemove={() => { const f = { ...filters, updatedTo: '' }; setFilters(f); applyFilters(f) }} />
             )}
           </div>
         )}

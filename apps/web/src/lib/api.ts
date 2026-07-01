@@ -409,6 +409,15 @@ export interface PropertyFilters {
   maxArea?: number
   sortBy?: string
   sortOrder?: string
+  // Filtros avançados
+  reference?: string
+  captorName?: string
+  hasImages?: boolean
+  authorizedPublish?: boolean
+  dateFrom?: string
+  dateTo?: string
+  updatedFrom?: string
+  updatedTo?: string
 }
 
 export interface Lead {

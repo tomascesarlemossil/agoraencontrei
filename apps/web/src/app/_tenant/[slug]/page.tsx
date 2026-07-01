@@ -3,8 +3,9 @@
  *
  * Accessed via middleware rewrite: parceiro.agoraencontrei.com.br → /_tenant/parceiro
  * Fetches tenant config from API and renders appropriate layout.
+ * 
+ * v2: Carrega imóveis REAIS do banco de dados (com destaque e super destaque por região)
  */
-
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import { resolveTheme, type ThemeConfig } from '@/lib/site-factory/theme-registry'
@@ -26,29 +27,27 @@ interface TenantData {
   companyId: string
 }
 
-interface TenantProperty {
+interface Property {
   id: string
-  slug: string | null
   title: string
+  slug: string
   type: string
   purpose: string
   price: number | null
   priceRent: number | null
-  valueUnderConsultation: boolean | null
   city: string | null
+  state: string | null
   neighborhood: string | null
   bedrooms: number | null
   bathrooms: number | null
   parkingSpaces: number | null
+  totalArea: number | null
   coverImage: string | null
-  images: string[] | null
+  images: string[]
   isFeatured: boolean
   isPremium: boolean
+  company?: { name: string; phone: string | null; logoUrl: string | null }
 }
-
-// Canonical main-site URL — tenant subdomains don't serve property detail pages,
-// so cards link back to the main domain where /imovel/[slug] is rendered.
-const MAIN_SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.agoraencontrei.com.br'
 
 async function getTenantBySubdomain(slug: string): Promise<TenantData | null> {
   try {
@@ -63,29 +62,42 @@ async function getTenantBySubdomain(slug: string): Promise<TenantData | null> {
   }
 }
 
-// Fetch the tenant's real properties, scoped by companyId. Results come back
-// ordered Super Destaque (isPremium) → Destaque (isFeatured) → rest from the API.
-async function getTenantProperties(companyId: string): Promise<TenantProperty[]> {
+async function getTenantProperties(tenantSlug: string, limit = 9): Promise<Property[]> {
   try {
-    const res = await fetch(
-      `${API_URL}/api/v1/public/properties?companyId=${encodeURIComponent(companyId)}&limit=12`,
-      { next: { revalidate: 60 } },
-    )
+    const url = `${API_URL}/api/v1/public/properties?tenantSlug=${encodeURIComponent(tenantSlug)}&limit=${limit}&sortBy=createdAt&sortOrder=desc`
+    const res = await fetch(url, { next: { revalidate: 120 } })
     if (!res.ok) return []
-    const json = await res.json()
-    return Array.isArray(json.data) ? json.data : []
+    const data = await res.json()
+    return data.data?.items || data.items || []
   } catch {
     return []
   }
 }
 
-function formatTenantPrice(p: TenantProperty): string {
-  if (p.valueUnderConsultation) return 'Sob consulta'
-  const isRent = p.purpose === 'RENT'
-  const value = isRent ? p.priceRent ?? p.price : p.price ?? p.priceRent
-  if (!value) return 'Sob consulta'
-  const formatted = `R$ ${value.toLocaleString('pt-BR')}`
-  return isRent ? `${formatted}/mês` : formatted
+function formatPrice(price: number | null, priceRent: number | null, purpose: string): string {
+  const p = purpose === 'RENT' ? priceRent : price
+  if (!p) return 'Consultar'
+  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(p)
+}
+
+function PropertyBadge({ property, theme, accentColor }: { property: Property; theme: ThemeConfig; accentColor: string }) {
+  if (property.isPremium) {
+    return (
+      <span className="absolute top-2 left-2 rounded-full px-2 py-0.5 text-[10px] font-bold text-white shadow-sm"
+        style={{ backgroundColor: '#e11d48' }}>
+        🌟 Super Destaque
+      </span>
+    )
+  }
+  if (property.isFeatured) {
+    return (
+      <span className="absolute top-2 left-2 rounded-full px-2 py-0.5 text-[10px] font-bold text-white shadow-sm"
+        style={{ backgroundColor: accentColor }}>
+        ⭐ Destaque
+      </span>
+    )
+  }
+  return null
 }
 
 export async function generateMetadata({
@@ -95,11 +107,9 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params
   const tenant = await getTenantBySubdomain(slug)
-
   if (!tenant) {
     return { title: 'Não encontrado' }
   }
-
   return {
     title: `${tenant.name} — Imóveis`,
     description: `Encontre os melhores imóveis em ${tenant.name}. Casas, apartamentos, terrenos e mais.`,
@@ -112,14 +122,16 @@ export async function generateMetadata({
 }
 
 // Resolve theme from registry (supports both old and new layout keys)
-
 export default async function TenantPage({
   params,
 }: {
   params: Promise<{ slug: string }>
 }) {
   const { slug } = await params
-  const tenant = await getTenantBySubdomain(slug)
+  const [tenant, properties] = await Promise.all([
+    getTenantBySubdomain(slug),
+    getTenantProperties(slug, 9),
+  ])
 
   if (!tenant || !tenant.isActive) {
     notFound()
@@ -140,7 +152,17 @@ export default async function TenantPage({
 
   const theme = resolveTheme(tenant.layoutType)
   const accentColor = tenant.primaryColor || theme.accentHex
-  const properties = await getTenantProperties(tenant.companyId)
+
+  // Ordenar imóveis: super destaque (isPremium) primeiro, depois destaque (isFeatured), depois os demais
+  const sortedProperties = [...properties].sort((a, b) => {
+    if (a.isPremium && !b.isPremium) return -1
+    if (!a.isPremium && b.isPremium) return 1
+    if (a.isFeatured && !b.isFeatured) return -1
+    if (!a.isFeatured && b.isFeatured) return 1
+    return 0
+  })
+
+  const hasProperties = sortedProperties.length > 0
 
   return (
     <div className={`min-h-screen ${theme.bg} ${theme.text}`}>
@@ -172,6 +194,15 @@ export default async function TenantPage({
             <a href="#sobre" className="hover:opacity-80 transition">Sobre</a>
             <a href="#contato" className="hover:opacity-80 transition">Contato</a>
           </nav>
+          {/* Botão Tomás IA */}
+          <a
+            href={`https://wa.me/?text=Olá! Quero saber mais sobre os imóveis de ${tenant.name}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold ${theme.buttonPrimary}`}
+          >
+            💬 Tomás IA
+          </a>
         </div>
       </header>
 
@@ -191,7 +222,6 @@ export default async function TenantPage({
               ? 'As melhores oportunidades do mercado. Encontre rápido, negocie direto.'
               : 'Navegue por nossa seleção de imóveis. Casas, apartamentos, terrenos e mais.'}
           </p>
-
           {/* Search Bar */}
           <div className="max-w-xl mx-auto">
             <div className="flex gap-2">
@@ -208,8 +238,7 @@ export default async function TenantPage({
               </button>
             </div>
           </div>
-
-          {/* Quick filter chips for urban_tech/fast_sales_pro */}
+          {/* Quick filter chips */}
           {(theme.key === 'urban_tech' || theme.key === 'fast_sales_pro') && (
             <div className="flex flex-wrap justify-center gap-2 mt-4">
               {['Pronto para morar', 'Aceita financiamento', 'Com piscina', 'Pet friendly'].map(chip => (
@@ -219,76 +248,147 @@ export default async function TenantPage({
               ))}
             </div>
           )}
+          {/* Stats */}
+          {hasProperties && (
+            <div className="flex items-center justify-center gap-6 mt-8 text-xs">
+              <div className="text-center">
+                <p className={`text-lg font-bold`} style={{ color: accentColor }}>{sortedProperties.length}+</p>
+                <p className={`text-[10px] ${theme.textMuted}`}>Imóveis</p>
+              </div>
+              <div className="text-center">
+                <p className={`text-lg font-bold`} style={{ color: accentColor }}>
+                  {sortedProperties.filter(p => p.isFeatured || p.isPremium).length}
+                </p>
+                <p className={`text-[10px] ${theme.textMuted}`}>Destaques</p>
+              </div>
+              <div className="text-center">
+                <p className={`text-lg font-bold`} style={{ color: accentColor }}>24/7</p>
+                <p className={`text-[10px] ${theme.textMuted}`}>Atendimento</p>
+              </div>
+            </div>
+          )}
         </div>
       </section>
 
       {/* Properties Section */}
       <section id="imoveis" className="py-16 px-4">
         <div className="max-w-7xl mx-auto">
-          <h3 className={`text-2xl ${theme.fontHeading} font-bold mb-8 text-center`}>
-            {theme.key === 'luxury_gold' ? 'Oportunidades Selecionadas' :
-             theme.key === 'fast_sales_pro' ? 'Destaques da Semana' :
-             theme.key === 'landscape_living' ? 'Terrenos e Loteamentos' :
-             'Imóveis em Destaque'}
-          </h3>
-          {properties.length === 0 ? (
-            <div className={`text-center py-16 ${theme.textMuted}`}>
-              <p className="text-lg font-medium">Novos imóveis em breve.</p>
-              <p className="text-sm mt-2">
-                Estamos preparando as melhores oportunidades. Fale conosco para
-                receber as novidades em primeira mão.
-              </p>
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h3 className={`text-2xl ${theme.fontHeading} font-bold`}>
+                {theme.key === 'luxury_gold' ? 'Oportunidades Selecionadas' :
+                 theme.key === 'fast_sales_pro' ? '🔥 Destaques da Semana' :
+                 theme.key === 'landscape_living' ? 'Terrenos e Loteamentos' :
+                 'Imóveis em Destaque'}
+              </h3>
+              {hasProperties && (
+                <p className={`text-sm ${theme.textMuted} mt-1`}>
+                  {sortedProperties.length} imóve{sortedProperties.length === 1 ? 'l' : 'is'} disponíve{sortedProperties.length === 1 ? 'l' : 'is'}
+                  {sortedProperties.filter(p => p.isPremium).length > 0 && (
+                    <span> · <span className="text-rose-400 font-medium">{sortedProperties.filter(p => p.isPremium).length} super destaque{sortedProperties.filter(p => p.isPremium).length > 1 ? 's' : ''}</span></span>
+                  )}
+                  {sortedProperties.filter(p => p.isFeatured && !p.isPremium).length > 0 && (
+                    <span> · <span style={{ color: accentColor }} className="font-medium">{sortedProperties.filter(p => p.isFeatured && !p.isPremium).length} destaque{sortedProperties.filter(p => p.isFeatured && !p.isPremium).length > 1 ? 's' : ''}</span></span>
+                  )}
+                </p>
+              )}
+            </div>
+            {hasProperties && (
+              <a href="#contato" className={`hidden sm:inline-flex items-center gap-1 text-sm font-semibold`} style={{ color: accentColor }}>
+                Ver todos →
+              </a>
+            )}
+          </div>
+
+          {hasProperties ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {sortedProperties.map(property => (
+                <div
+                  key={property.id}
+                  className={`${theme.card} ${theme.cardHover} border rounded-xl overflow-hidden transition-all duration-300 ${
+                    property.isPremium ? 'ring-2 ring-rose-500/40 shadow-lg shadow-rose-500/10' :
+                    property.isFeatured ? 'ring-1 shadow-md' : ''
+                  }`}
+                  style={property.isFeatured && !property.isPremium ? { '--tw-ring-color': `${accentColor}40` } as React.CSSProperties : {}}
+                >
+                  {/* Imagem */}
+                  <div className="h-48 relative overflow-hidden">
+                    {property.coverImage || (property.images && property.images.length > 0) ? (
+                      <img
+                        src={property.coverImage || property.images[0]}
+                        alt={property.title}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div
+                        className="w-full h-full flex items-center justify-center"
+                        style={{ background: `linear-gradient(135deg, ${accentColor}33, ${accentColor}11)` }}
+                      >
+                        <span className="text-4xl opacity-20">🏠</span>
+                      </div>
+                    )}
+                    {/* Badge de destaque */}
+                    <PropertyBadge property={property} theme={theme} accentColor={accentColor} />
+                    {/* Badge de tipo */}
+                    <span
+                      className="absolute top-2 right-2 rounded-full px-2 py-0.5 text-[10px] font-semibold"
+                      style={{ backgroundColor: `${accentColor}22`, color: accentColor, backdropFilter: 'blur(4px)' }}
+                    >
+                      {property.purpose === 'RENT' ? 'Aluguel' : property.purpose === 'BOTH' ? 'Venda/Aluguel' : 'Venda'}
+                    </span>
+                  </div>
+
+                  {/* Conteúdo */}
+                  <div className="p-4">
+                    <p className={`text-sm font-semibold ${theme.text} leading-tight mb-1`}>{property.title}</p>
+                    <p className={`text-xs ${theme.textMuted} mb-2`}>
+                      {[property.neighborhood, property.city, property.state].filter(Boolean).join(' • ')}
+                    </p>
+                    <p className="mt-1 text-lg font-bold" style={{ color: accentColor }}>
+                      {formatPrice(property.price, property.priceRent, property.purpose)}
+                    </p>
+                    {/* Características */}
+                    <div className={`mt-2 flex items-center gap-3 text-[11px] ${theme.textMuted}`}>
+                      {property.bedrooms != null && property.bedrooms > 0 && (
+                        <span>🛏 {property.bedrooms} qts</span>
+                      )}
+                      {property.bathrooms != null && property.bathrooms > 0 && (
+                        <span>🚿 {property.bathrooms} bnh</span>
+                      )}
+                      {property.totalArea != null && property.totalArea > 0 && (
+                        <span>📐 {property.totalArea}m²</span>
+                      )}
+                      {property.parkingSpaces != null && property.parkingSpaces > 0 && (
+                        <span>🚗 {property.parkingSpaces} vg</span>
+                      )}
+                    </div>
+                    {/* CTA */}
+                    <a
+                      href={`https://wa.me/?text=Olá! Tenho interesse no imóvel "${property.title}" anunciado em ${tenant.name}.`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`mt-3 block w-full text-center py-2 rounded-lg text-xs font-bold transition-all ${theme.buttonPrimary}`}
+                    >
+                      Ver detalhes
+                    </a>
+                  </div>
+                </div>
+              ))}
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {properties.map(prop => {
-                const image = prop.coverImage || prop.images?.[0] || null
-                const details = [
-                  prop.bedrooms ? `${prop.bedrooms} quartos` : null,
-                  prop.bathrooms ? `${prop.bathrooms} banheiros` : null,
-                  prop.parkingSpaces ? `${prop.parkingSpaces} vagas` : null,
-                ].filter(Boolean).join(' • ')
-                const location = [prop.neighborhood, prop.city].filter(Boolean).join(', ')
-                return (
-                  <a
-                    key={prop.id}
-                    href={`${MAIN_SITE_URL}/imovel/${prop.slug ?? prop.id}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={`${theme.card} ${theme.cardHover} border rounded-lg overflow-hidden transition-all block`}
-                  >
-                    <div className="h-48 bg-gradient-to-br from-gray-200 to-gray-300 relative">
-                      {image && (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={image}
-                          alt={prop.title}
-                          className="absolute inset-0 w-full h-full object-cover"
-                          loading="lazy"
-                        />
-                      )}
-                      {prop.isPremium ? (
-                        <span className="absolute top-2 left-2 bg-amber-500 text-gray-950 text-[10px] font-bold px-2 py-0.5 rounded-full z-10">
-                          Super Destaque
-                        </span>
-                      ) : prop.isFeatured ? (
-                        <span className="absolute top-2 left-2 bg-rose-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full z-10">
-                          Destaque
-                        </span>
-                      ) : null}
-                    </div>
-                    <div className="p-4">
-                      <p className={`text-sm font-semibold ${theme.text} line-clamp-1`}>{prop.title}</p>
-                      <p className={`text-xs ${theme.textMuted} mt-1 line-clamp-1`}>
-                        {[location, details].filter(Boolean).join(' • ')}
-                      </p>
-                      <p className="mt-2 font-bold" style={{ color: accentColor }}>
-                        {formatTenantPrice(prop)}
-                      </p>
-                    </div>
-                  </a>
-                )
-              })}
+            /* Estado vazio — sem imóveis cadastrados ainda */
+            <div className="text-center py-16">
+              <div className="text-6xl mb-4 opacity-30">🏠</div>
+              <h4 className={`text-xl font-bold mb-2 ${theme.text}`}>Imóveis em breve</h4>
+              <p className={`${theme.textMuted} max-w-md mx-auto`}>
+                Estamos preparando nossa seleção de imóveis. Entre em contato para saber das próximas oportunidades.
+              </p>
+              <a
+                href="#contato"
+                className={`inline-flex items-center gap-2 mt-6 px-6 py-3 rounded-lg font-medium ${theme.buttonPrimary}`}
+              >
+                Falar com a equipe
+              </a>
             </div>
           )}
         </div>
@@ -313,10 +413,10 @@ export default async function TenantPage({
               className="inline-flex items-center gap-2 px-6 py-3 rounded-lg text-white font-medium"
               style={{ backgroundColor: '#25D366' }}
             >
-              Falar no WhatsApp
+              💬 Falar no WhatsApp
             </a>
             <button className={`${theme.buttonSecondary} px-6 py-3 rounded-lg`}>
-              Falar com Tomás
+              🤖 Falar com Tomás
             </button>
           </div>
         </div>
