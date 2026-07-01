@@ -23,7 +23,11 @@ export default async function CheckoutSuccessPage({ searchParams }: PageProps) {
   const params = await searchParams
   const subdomain = (params.ref || '').replace(/[^a-z0-9-]/g, '')
   const siteUrl = subdomain ? `https://${subdomain}.agoraencontrei.com.br` : null
-  const paymentUrl = params.payment ? `https://www.asaas.com/c/${params.payment}` : null
+  // `payment` deve ser a URL de fatura REAL do Asaas (invoiceUrl), passada já
+  // pronta. Não montar https://asaas.com/c/{id} — /c/ é payment link, não
+  // cobrança/assinatura, e o Asaas mostra "link não encontrado".
+  const rawPayment = params.payment ? decodeURIComponent(params.payment) : ''
+  const paymentUrl = /^https:\/\/(www\.)?asaas\.com\//.test(rawPayment) ? rawPayment : null
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#143A1F] to-[#0f1c3a] py-12 px-4">

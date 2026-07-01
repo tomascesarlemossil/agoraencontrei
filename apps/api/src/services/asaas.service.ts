@@ -386,14 +386,23 @@ export async function getSubscriptionPayments(subscriptionId: string): Promise<{
  * cobrança gerada por ela. Sem isso, montávamos uma URL /c/{id} inválida e o
  * Asaas mostrava "Link de pagamento não encontrado".
  */
-export async function getSubscriptionInvoiceUrl(subscriptionId: string): Promise<string | null> {
-  try {
-    const res = await getSubscriptionPayments(subscriptionId)
-    const first = res?.data?.[0]
-    return first?.invoiceUrl ?? null
-  } catch {
-    return null
+export async function getSubscriptionInvoiceUrl(
+  subscriptionId: string,
+  retries = 5,
+  delayMs = 800,
+): Promise<string | null> {
+  // Logo após criar a assinatura, o Asaas pode levar um instante para gerar a
+  // 1ª cobrança — o GET /payments volta vazio e o link vinha nulo ("link não
+  // encontrado"). Poll curto até a cobrança existir.
+  for (let i = 0; i < retries; i++) {
+    try {
+      const res = await getSubscriptionPayments(subscriptionId)
+      const first = res?.data?.[0]
+      if (first?.invoiceUrl) return first.invoiceUrl
+    } catch { /* tenta de novo */ }
+    if (i < retries - 1) await new Promise((r) => setTimeout(r, delayMs))
   }
+  return null
 }
 
 export async function cancelSubscription(subscriptionId: string): Promise<{ deleted: boolean }> {
