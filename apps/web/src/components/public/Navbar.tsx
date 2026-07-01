@@ -141,14 +141,11 @@ export function Navbar({ logoUrl, companyName, hasCustomLogo }: NavbarProps = {}
             />
             <div className="flex flex-col leading-none">
               <span className="text-base tracking-tight" style={{ fontFamily: 'Arial, Helvetica, sans-serif', letterSpacing: '-0.01em' }}>
-                {brandName ? (
-                  <span style={{ color: '#d1d5db', fontWeight: 700 }}>{brandName}</span>
-                ) : (
-                  <>
-                    <span style={{ color: '#1a5c2a', fontWeight: 700 }}>Agora</span>
-                    <span style={{ color: '#d1d5db', fontWeight: 700 }}>Encontrei</span>
-                  </>
-                )}
+                {/* Nome fixo "AgoraEncontrei" (identidade do marketplace). O LOGO
+                    é editável pelo admin; o NOME só mudaria via campo dedicado,
+                    p/ não virar o nome legal da empresa (ex.: "Imobiliária Lemos"). */}
+                <span style={{ color: '#1a5c2a', fontWeight: 700 }}>Agora</span>
+                <span style={{ color: '#d1d5db', fontWeight: 700 }}>Encontrei</span>
               </span>
               <span className="text-[9px] font-medium" style={{ color: '#9ca3af', letterSpacing: '0.04em' }}>
                 Marketplace
