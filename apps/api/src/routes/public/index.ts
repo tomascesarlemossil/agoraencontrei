@@ -218,6 +218,21 @@ async function cacheSet(redis: FastifyInstance['redis'], key: string, value: unk
   memCacheSet(key, value, ttl)
 }
 
+/**
+ * Invalida o cache do /site-settings de uma empresa (Redis + memória).
+ * Deve ser chamado pelo admin sempre que salvar a config do site, para a
+ * mudança (ex.: imagem do hero) refletir na hora em vez de esperar o TTL.
+ *
+ * IMPORTANTE: esta função é importada por routes/users e routes/system-config.
+ * Removê-la faz o boot da API inteiro falhar com um SyntaxError de ESM
+ * ("does not provide an export named ..."), derrubando o servidor (502).
+ */
+export async function invalidateSiteSettingsCache(redis: FastifyInstance['redis'], companyId: string): Promise<void> {
+  const key = `pub:site-settings:v1:${companyId}`
+  _memCache.delete(key)
+  if (redis) { try { await redis.del(key) } catch { /* ignore */ } }
+}
+
 export default async function publicRoutes(app: FastifyInstance) {
   // No auth required — public endpoints
 
