@@ -232,25 +232,26 @@ export default async function publicRoutes(app: FastifyInstance) {
     }
     const filters = _parsed.data
 
-    // Resolve companyId for tenant filtering
-    // If tenantSlug is provided, look up the tenant to get its companyId
-    let tenantCompanyId: string | undefined = filters.companyId
-    if (!tenantCompanyId && filters.tenantSlug) {
-      try {
-        const tenant = await (app.prisma as any).tenant?.findUnique?.({
-          where: { subdomain: filters.tenantSlug },
-          select: { companyId: true },
-        }).catch(() => null)
-        if (tenant?.companyId) tenantCompanyId = tenant.companyId
-      } catch { /* ignore */ }
+    // Tenant scoping: quando companyId ou tenantSlug é informado, restringe a
+    // listagem àquele parceiro (sites clone de tenant). Caso contrário o
+    // endpoint é marketplace e mostra imóveis de todas as empresas.
+    let scopedCompanyId: string | undefined = filters.companyId
+    if (!scopedCompanyId && filters.tenantSlug) {
+      const tenant = await (app.prisma as any).tenant?.findUnique?.({
+        where: { subdomain: filters.tenantSlug },
+        select: { companyId: true },
+      }).catch(() => null)
+      // tenantSlug informado mas inexistente → escopa para NADA em vez de vazar
+      // o marketplace inteiro sob o domínio de um parceiro.
+      scopedCompanyId = tenant?.companyId ?? '__no_such_tenant__'
     }
 
     // Show properties from ALL companies (marketplace) or filter by tenant company
     const where: any = {
       status: 'ACTIVE',
       authorizedPublish: true,
-      // When tenantCompanyId is set, show only that company's properties
-      ...(tenantCompanyId && { companyId: tenantCompanyId }),
+      // When scopedCompanyId is set, show only that company's properties
+      ...(scopedCompanyId && { companyId: scopedCompanyId }),
       ...(filters.ids && { id: { in: filters.ids.split(',').map(s => s.trim()).filter(Boolean) } }),
       ...(filters.search && {
         OR: [
@@ -334,10 +335,12 @@ export default async function publicRoutes(app: FastifyInstance) {
         })
       : items
 
-    // Fallback: when no results found, relax filters progressively to show similar properties
+    // Fallback: when no results found, relax filters progressively to show
+    // similar properties. Pulado para requisições com escopo de tenant — um
+    // site de parceiro nunca pode cair no inventário de outra empresa.
     let fallbackItems: any[] = []
     let isFallback = false
-    if (total === 0 && page === 1) {
+    if (total === 0 && page === 1 && !scopedCompanyId) {
       isFallback = true
       const baseWhere = { companyId: company.id, status: 'ACTIVE' as const, authorizedPublish: true }
 
