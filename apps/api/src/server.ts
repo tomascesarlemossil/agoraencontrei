@@ -689,6 +689,40 @@ async function runMigrations(prisma: any) {
     )`,
     `CREATE INDEX IF NOT EXISTS tenant_addons_tenant_status_idx ON tenant_addons("tenantId", status)`,
     `CREATE INDEX IF NOT EXISTS tenant_addons_asaas_charge_idx ON tenant_addons("asaasChargeId")`,
+
+    // Agendamento de visitas (público). A tabela existe em produção mas foi
+    // criada por um `db push` antigo, sem as colunas adicionadas depois (mode,
+    // status, updatedAt...), então o INSERT falhava (500 "Erro ao agendar").
+    // CREATE é no-op se já existe; os ADD COLUMN IF NOT EXISTS corrigem o drift.
+    `CREATE TABLE IF NOT EXISTS property_visits (
+      id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+      "companyId" TEXT NOT NULL,
+      "propertyId" TEXT NOT NULL,
+      "brokerId" TEXT,
+      "visitorName" TEXT NOT NULL,
+      "visitorEmail" TEXT,
+      "visitorPhone" TEXT NOT NULL,
+      "scheduledAt" TIMESTAMPTZ NOT NULL,
+      mode TEXT NOT NULL DEFAULT 'in_person',
+      status TEXT NOT NULL DEFAULT 'pending',
+      notes TEXT,
+      rating INTEGER,
+      feedback TEXT,
+      "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )`,
+    `ALTER TABLE property_visits ADD COLUMN IF NOT EXISTS "brokerId" TEXT`,
+    `ALTER TABLE property_visits ADD COLUMN IF NOT EXISTS "visitorEmail" TEXT`,
+    `ALTER TABLE property_visits ADD COLUMN IF NOT EXISTS mode TEXT NOT NULL DEFAULT 'in_person'`,
+    `ALTER TABLE property_visits ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'pending'`,
+    `ALTER TABLE property_visits ADD COLUMN IF NOT EXISTS notes TEXT`,
+    `ALTER TABLE property_visits ADD COLUMN IF NOT EXISTS rating INTEGER`,
+    `ALTER TABLE property_visits ADD COLUMN IF NOT EXISTS feedback TEXT`,
+    `ALTER TABLE property_visits ADD COLUMN IF NOT EXISTS "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()`,
+    `ALTER TABLE property_visits ADD COLUMN IF NOT EXISTS "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()`,
+    `CREATE INDEX IF NOT EXISTS property_visits_company_scheduled_idx ON property_visits("companyId", "scheduledAt")`,
+    `CREATE INDEX IF NOT EXISTS property_visits_property_idx ON property_visits("propertyId")`,
+    `CREATE INDEX IF NOT EXISTS property_visits_status_idx ON property_visits(status)`,
   ]
   for (const sql of saasMigrations) {
     try { await prisma.$executeRawUnsafe(sql) } catch { /* already exists */ }

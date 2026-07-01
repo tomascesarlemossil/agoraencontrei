@@ -117,6 +117,32 @@ async function createAporteCharge(payload: {
   })
 }
 
+// Retorna a 1ª cobrança gerada por uma assinatura. Logo após criar a assinatura,
+// o Asaas pode levar um instante para gerar a cobrança — por isso o retry. Sem
+// isso o link de pagamento vinha vazio/errado ("link não encontrado").
+async function getSubscriptionFirstPayment(subscriptionId: string, retries = 5, delayMs = 800) {
+  for (let i = 0; i < retries; i++) {
+    try {
+      const res = await asaasFetch<{ data?: Array<{ id: string; invoiceUrl?: string; bankSlipUrl?: string }> }>(
+        `/subscriptions/${subscriptionId}/payments`,
+      )
+      const first = res?.data?.[0]
+      if (first?.id) return first
+    } catch { /* tenta de novo */ }
+    if (i < retries - 1) await new Promise((r) => setTimeout(r, delayMs))
+  }
+  return null
+}
+
+// QR Code / copia-e-cola do PIX de uma cobrança.
+async function getPixQrCode(paymentId: string) {
+  try {
+    return await asaasFetch<{ encodedImage?: string; payload?: string }>(`/payments/${paymentId}/pixQrCode`)
+  } catch {
+    return null
+  }
+}
+
 export async function specialistPaymentRoutes(app: FastifyInstance) {
   // ── POST /checkout — Inicia assinatura para um especialista ──────────────
   app.post('/checkout', async (req, reply) => {
@@ -210,17 +236,37 @@ export async function specialistPaymentRoutes(app: FastifyInstance) {
         },
       })
 
+      // Link PAGÁVEL real = invoiceUrl da 1ª cobrança da assinatura (a assinatura
+      // em si não tem link pagável). A URL /c/{subscriptionId} usada antes é
+      // formato de payment link — o Asaas mostrava "link não encontrado".
+      const firstPayment = await getSubscriptionFirstPayment(subscription.id)
+      const invoiceUrl: string | null = firstPayment?.invoiceUrl ?? null
+      const bankSlipUrl: string | null = firstPayment?.bankSlipUrl ?? null
+      let pixQrCode: string | null = null
+      let pixCopiaECola: string | null = null
+      if (billingType === 'PIX' && firstPayment?.id) {
+        const pix = await getPixQrCode(firstPayment.id)
+        pixQrCode = pix?.encodedImage ?? null
+        pixCopiaECola = pix?.payload ?? null
+      }
+
       return reply.send({
         success: true,
         subscriptionId: subscription.id,
         status: subscription.status,
         nextDueDate: subscription.nextDueDate,
         message: 'Assinatura e aporte criados. Aguardando confirmação de pagamento.',
-        paymentUrl: `https://www.asaas.com/c/${subscription.id}`,
+        // Campos que o frontend do checkout renderiza (PIX/boleto/fatura).
+        invoiceUrl,
+        bankSlipUrl,
+        pixQrCode,
+        pixCopiaECola,
+        // paymentUrl = fatura pagável real (não mais /c/{id}). Fallback: fatura do aporte.
+        paymentUrl: invoiceUrl ?? aporte?.invoiceUrl ?? null,
         aporte: aporte ? {
           id: aporte.id,
           value: aporte.value,
-          invoiceUrl: aporte.invoiceUrl ?? `https://www.asaas.com/i/${aporte.id}`,
+          invoiceUrl: aporte.invoiceUrl ?? null,
           bankSlipUrl: aporte.bankSlipUrl ?? null,
         } : null,
       })

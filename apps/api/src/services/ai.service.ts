@@ -13,6 +13,27 @@ const getClient = () => {
 /** Normalize image mediaType to values accepted by the Claude API */
 const ALLOWED_MEDIA_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'] as const
 type AllowedMediaType = typeof ALLOWED_MEDIA_TYPES[number]
+function isPdfMediaType(mt: string): boolean {
+  const lower = (mt ?? '').toLowerCase().trim()
+  return lower === 'application/pdf' || lower.includes('pdf')
+}
+
+/**
+ * Monta o bloco de conteúdo Anthropic correto para um anexo:
+ * - PDF → bloco `document` (o bloco `image` NÃO aceita PDF → "Could not
+ *   process image", que era o erro do Agente IA de Documentos).
+ * - Imagem → bloco `image` com media_type normalizado (jpeg/png/gif/webp).
+ * Retorna null quando o tipo não é suportado.
+ */
+function buildAttachmentBlock(img: { base64: string; mediaType: string }): any | null {
+  if (isPdfMediaType(img.mediaType)) {
+    return { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: img.base64 } }
+  }
+  const mt = normalizeMediaType(img.mediaType)
+  if (!mt) return null
+  return { type: 'image', source: { type: 'base64', media_type: mt, data: img.base64 } }
+}
+
 function normalizeMediaType(mt: string): AllowedMediaType | null {
   const lower = (mt ?? '').toLowerCase().trim()
   if (lower === 'image/jpg') return 'image/jpeg'
@@ -490,16 +511,13 @@ Retorne o HTML completo começando com <!DOCTYPE html>`
 
   const userContent: any[] = []
 
-  // Add images if provided
+  // Add images/PDFs if provided
   if (input.images?.length) {
     for (const img of input.images) {
-      const mediaType = normalizeMediaType(img.mediaType)
-      if (!mediaType) continue // skip unsupported types
-      userContent.push({
-        type: 'image',
-        source: { type: 'base64', media_type: mediaType, data: img.base64 },
-      })
-      userContent.push({ type: 'text', text: `Imagem acima: ${img.description}` })
+      const block = buildAttachmentBlock(img)
+      if (!block) continue // tipo não suportado
+      userContent.push(block)
+      userContent.push({ type: 'text', text: `Anexo acima: ${img.description}` })
     }
   }
 
@@ -629,12 +647,9 @@ ADMINISTRATIVO (protocolo-documentos, regulamento-condominio, folha-rosto):
   if (input.images?.length) {
     let addedImages = 0
     for (const img of input.images) {
-      const mediaType = normalizeMediaType(img.mediaType)
-      if (!mediaType) continue // skip unsupported types
-      userContent.push({
-        type: 'image',
-        source: { type: 'base64', media_type: mediaType, data: img.base64 },
-      })
+      const block = buildAttachmentBlock(img)
+      if (!block) continue // tipo não suportado
+      userContent.push(block)
       addedImages++
     }
     if (addedImages > 0) {
