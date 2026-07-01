@@ -258,35 +258,20 @@ async function handleTenantEvent(
 
         if (customerPhone) {
           try {
-            const cleanPhone = customerPhone.replace(/\D/g, '')
-            const formattedPhone = cleanPhone.startsWith('55') ? cleanPhone : `55${cleanPhone}`
-            const WHATSAPP_TOKEN = process.env.WHATSAPP_TOKEN || process.env.WHATSAPP_ACCESS_TOKEN
-            const WHATSAPP_PHONE_ID = process.env.WHATSAPP_PHONE_ID || process.env.WHATSAPP_PHONE_NUMBER_ID
-            if (WHATSAPP_TOKEN && WHATSAPP_PHONE_ID) {
-              const siteUrl = `https://${subdomain}.agoraencontrei.com.br`
-              const msg =
-                `🎉 *AgoraEncontrei — Pagamento confirmado!*\n\n` +
-                `Seu site está no ar:\n${siteUrl}\n\n` +
-                `*Acesso ao painel:*\nhttps://agoraencontrei.com.br/login\n\n` +
-                `*E-mail:* ${customerEmail}\n\n` +
-                `*Defina sua senha de acesso:*\n${setupLink}\n\n` +
-                `(o link expira em 7 dias)`
-              await fetch(`https://graph.facebook.com/v19.0/${WHATSAPP_PHONE_ID}/messages`, {
-                method: 'POST',
-                headers: {
-                  Authorization: `Bearer ${WHATSAPP_TOKEN}`,
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                  messaging_product: 'whatsapp',
-                  to: formattedPhone,
-                  type: 'text',
-                  text: { body: msg, preview_url: false },
-                }),
-              })
-              app.log.info(`[saas-webhook] Welcome WhatsApp enviado para ${formattedPhone}`)
+            const { sendWhatsappText } = await import('../../services/whatsapp-notify.service.js')
+            const siteUrl = `https://${subdomain}.agoraencontrei.com.br`
+            const msg =
+              `🎉 *AgoraEncontrei — Pagamento confirmado!*\n\n` +
+              `Seu site está no ar:\n${siteUrl}\n\n` +
+              `*Acesso ao painel:*\nhttps://agoraencontrei.com.br/login\n\n` +
+              `*E-mail:* ${customerEmail}\n\n` +
+              `*Defina sua senha de acesso:*\n${setupLink}\n\n` +
+              `(o link expira em 7 dias)`
+            const sent = await sendWhatsappText(customerPhone, msg)
+            if (sent) {
+              app.log.info(`[saas-webhook] Welcome WhatsApp enviado para ${customerPhone}`)
             } else {
-              app.log.warn('[saas-webhook] WhatsApp não configurado — credenciais não enviadas por WhatsApp')
+              app.log.warn('[saas-webhook] WhatsApp não enviado (não configurado ou erro)')
             }
           } catch (e: any) {
             app.log.error({ err: e }, '[saas-webhook] welcome whatsapp failed')
