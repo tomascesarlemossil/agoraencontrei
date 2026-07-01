@@ -70,7 +70,17 @@ const ACCESS_AREAS = [
   },
 ]
 
-export function Navbar() {
+const DEFAULT_NAV_LOGO = '/logo-ae-v2.png'
+
+interface NavbarProps {
+  logoUrl?: string
+  companyName?: string | null
+  hasCustomLogo?: boolean
+}
+
+export function Navbar({ logoUrl, companyName, hasCustomLogo }: NavbarProps = {}) {
+  const brandLogo = logoUrl || DEFAULT_NAV_LOGO
+  const brandName = companyName?.trim() || null
   const [scrolled, setScrolled] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const [accessOpen, setAccessOpen] = useState(false)
@@ -118,20 +128,27 @@ export function Navbar() {
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2.5 group flex-shrink-0" aria-label="AgoraEncontrei — Marketplace Imobiliário">
+          <Link href="/" className="flex items-center gap-2.5 group flex-shrink-0" aria-label={`${brandName ?? 'AgoraEncontrei'} — Marketplace Imobiliário`}>
             <Image
-              src="/logo-ae-v2.png"
-              alt="AgoraEncontrei Marketplace"
+              src={brandLogo}
+              alt={brandName ? `${brandName} Marketplace` : 'AgoraEncontrei Marketplace'}
               width={44}
               height={44}
               className="flex-shrink-0"
               style={{ borderRadius: '50%' }}
               priority
+              unoptimized={hasCustomLogo}
             />
             <div className="flex flex-col leading-none">
               <span className="text-base tracking-tight" style={{ fontFamily: 'Arial, Helvetica, sans-serif', letterSpacing: '-0.01em' }}>
-                <span style={{ color: '#1a5c2a', fontWeight: 700 }}>Agora</span>
-                <span style={{ color: '#d1d5db', fontWeight: 700 }}>Encontrei</span>
+                {brandName ? (
+                  <span style={{ color: '#d1d5db', fontWeight: 700 }}>{brandName}</span>
+                ) : (
+                  <>
+                    <span style={{ color: '#1a5c2a', fontWeight: 700 }}>Agora</span>
+                    <span style={{ color: '#d1d5db', fontWeight: 700 }}>Encontrei</span>
+                  </>
+                )}
               </span>
               <span className="text-[9px] font-medium" style={{ color: '#9ca3af', letterSpacing: '0.04em' }}>
                 Marketplace
@@ -313,15 +330,16 @@ export function Navbar() {
         >
           <div className="flex items-center gap-2.5">
             <Image
-              src="/logo-ae-v2.png"
-              alt="AgoraEncontrei"
+              src={brandLogo}
+              alt={brandName ?? 'AgoraEncontrei'}
               width={36}
               height={36}
               style={{ borderRadius: '50%' }}
+              unoptimized={hasCustomLogo}
             />
             <div className="flex flex-col leading-none">
               <span className="text-sm font-bold" style={{ color: '#d1d5db' }}>
-                <span style={{ color: '#1a5c2a' }}>Agora</span>Encontrei
+                {brandName ? brandName : (<><span style={{ color: '#1a5c2a' }}>Agora</span>Encontrei</>)}
               </span>
               <span className="text-[9px]" style={{ color: '#9ca3af' }}>Marketplace</span>
             </div>

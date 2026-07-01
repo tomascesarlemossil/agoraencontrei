@@ -389,9 +389,9 @@ export default async function HomePage() {
             className="text-5xl sm:text-6xl lg:text-7xl font-bold text-white mb-3 sm:mb-4 leading-[1.05] tracking-[-0.02em]"
             style={{ fontFamily: theme.typography.heroFont, textShadow: '0 2px 12px rgba(0,0,0,0.4)' }}
           >
-            Encontre o imóvel
+            {siteSettings.heroTitle || 'Encontre o imóvel'}
             <br />
-            <span style={{ color: 'var(--site-accent-color, #C9A84C)' }}>dos seus sonhos</span>
+            <span style={{ color: 'var(--site-accent-color, #C9A84C)' }}>{siteSettings.heroTitleHighlight || 'dos seus sonhos'}</span>
           </h1>
 
           <HeroSearchForm />

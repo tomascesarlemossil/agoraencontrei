@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { resolveSiteColors } from '@/lib/site-settings'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 
@@ -28,8 +29,11 @@ export function SystemThemeInjector() {
 
         const vars: Record<string, string> = {}
 
-        if (data.primaryColor)       vars['--site-primary-color']        = data.primaryColor
-        if (data.accentColor)        vars['--site-accent-color']         = data.accentColor
+        // As cores primária/destaque do site vêm da config editada pelo admin
+        // (design.primaryColor / accentColor + tema), com fallback seguro.
+        const { primary, accent } = resolveSiteColors(data)
+        vars['--site-primary-color'] = primary
+        vars['--site-accent-color']  = accent
         if (data.backgroundColor)    vars['--site-background-color']     = data.backgroundColor
         if (data.textColor)          vars['--site-text-color']           = data.textColor
         if (data.buttonPrimaryColor) vars['--site-button-primary-color'] = data.buttonPrimaryColor
@@ -46,7 +50,7 @@ export function SystemThemeInjector() {
 
         // Inject dynamic <style> to override Tailwind arbitrary-value classes
         // that reference the default hardcoded colors.
-        injectDynamicOverrides(data)
+        injectDynamicOverrides({ primaryColor: primary, accentColor: accent })
       })
       .catch(() => {
         // Silently fail — fallback colors in inline styles remain
