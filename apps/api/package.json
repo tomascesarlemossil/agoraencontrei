@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "build": "tsc --project tsconfig.build.json || true",
+    "verify:boot": "node scripts/verify-route-imports.mjs",
     "start": "node dist/server.js",
     "typecheck": "tsc --noEmit",
     "test": "tsx --test test/*.test.ts",

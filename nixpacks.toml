@@ -15,7 +15,10 @@ cmds = [
 cmds = [
   "pnpm --filter @agoraencontrei/database generate",
   "pnpm --filter @agoraencontrei/tomas-knowledge build",
-  "pnpm --filter @agoraencontrei/api build"
+  "pnpm --filter @agoraencontrei/api build",
+  # Guarda de boot: aborta o build se algum módulo de rota tiver import quebrado
+  # (foi a causa do 502 de 01/07). Assim o Railway não sobe uma versão que não liga.
+  "node apps/api/scripts/verify-route-imports.mjs"
 ]
 
 [start]
