@@ -332,7 +332,9 @@ export default async function publicRoutes(app: FastifyInstance) {
       app.prisma.property.findMany({
         where,
         select: PUBLIC_PROPERTY_SELECT,
-        orderBy: [{ isFeatured: 'desc' }, orderBy],
+        // Hierarquia: Super Destaque (isPremium) > Destaque (isFeatured) > ordem
+        // pedida. beac077 removeu o isPremium daqui, tirando os Premium do topo.
+        orderBy: [{ isPremium: 'desc' }, { isFeatured: 'desc' }, orderBy],
         skip,
         take: limit,
       }),
@@ -1093,7 +1095,10 @@ export default async function publicRoutes(app: FastifyInstance) {
       presentationTitle:      siteConfig.presentationTitle      ?? null,
       presentationSubtitle:   siteConfig.presentationSubtitle   ?? null,
     };
-    await cacheSet(app.redis, cacheKey, siteSettingsResult, 600); // 10 min cache
+    // Config editável pelo admin: cache curto (60s) + invalidação no save.
+    // beac077 reverteu isto para 600s; se a invalidação falhar (Redis fora),
+    // 10 min é tempo demais para a home refletir a mudança.
+    await cacheSet(app.redis, cacheKey, siteSettingsResult, 60);
     return reply.send(siteSettingsResult);
   })
 

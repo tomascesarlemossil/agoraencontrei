@@ -237,14 +237,21 @@ export default async function propertiesRoutes(app: FastifyInstance) {
       }
     }
 
-    // Full-text search
+    // Full-text search — vai em where.AND para NÃO sobrescrever o where.OR do
+    // filtro hasImages (antes, search + hasImages juntos descartavam o filtro
+    // de fotos, retornando imóveis sem imagem).
     if (q.search) {
-      where.OR = [
-        { title:        { contains: q.search, mode: 'insensitive' } },
-        { description:  { contains: q.search, mode: 'insensitive' } },
-        { neighborhood: { contains: q.search, mode: 'insensitive' } },
-        { city:         { contains: q.search, mode: 'insensitive' } },
-        { reference:    { contains: q.search, mode: 'insensitive' } },
+      where.AND = [
+        ...(Array.isArray(where.AND) ? where.AND : []),
+        {
+          OR: [
+            { title:        { contains: q.search, mode: 'insensitive' } },
+            { description:  { contains: q.search, mode: 'insensitive' } },
+            { neighborhood: { contains: q.search, mode: 'insensitive' } },
+            { city:         { contains: q.search, mode: 'insensitive' } },
+            { reference:    { contains: q.search, mode: 'insensitive' } },
+          ],
+        },
       ]
     }
 
