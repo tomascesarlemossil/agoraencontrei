@@ -566,9 +566,19 @@ export default async function systemConfigRoutes(app: FastifyInstance) {
     const currentConfig   = currentSettings.systemConfig ?? {}
     const newConfig       = deepMerge(currentConfig, updates)
 
+    // Espelha os campos de mídia da seção "site" para o topo LEGADO de
+    // settings. A home lê o legado com precedência; sem esse espelho, uma
+    // imagem trocada aqui (systemConfig.site) não aparecia porque um valor
+    // antigo no topo a mascarava. Mantém as duas fontes sempre sincronizadas.
+    const newSite = (newConfig as any).site ?? {}
+    const heroMirror: Record<string, any> = {}
+    for (const field of ['heroVideoUrl', 'heroVideoType', 'heroImageUrl', 'logoUrl'] as const) {
+      if (newSite[field] !== undefined) heroMirror[field] = newSite[field]
+    }
+
     await app.prisma.company.update({
       where: { id: req.user.cid },
-      data:  { settings: { ...currentSettings, systemConfig: newConfig } },
+      data:  { settings: { ...currentSettings, ...heroMirror, systemConfig: newConfig } },
     })
 
     // Invalida o cache público do /site-settings para a mudança (ex.: imagem
