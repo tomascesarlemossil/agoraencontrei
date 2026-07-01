@@ -43,8 +43,10 @@ RUN pnpm --filter @agoraencontrei/api build
 
 EXPOSE 3100
 
-# Aplica migrations pendentes (DATABASE_URL vem do ambiente do Railway) antes
-# de subir a API. Não-fatal: se o migrate falhar (ex.: drift do
-# _prisma_migrations) a API ainda inicializa, coerente com o fail-open do
-# projeto; a migration pode então ser aplicada manualmente.
-CMD ["sh", "-c", "pnpm --filter @agoraencontrei/database migrate:deploy || echo '[deploy] prisma migrate deploy falhou — subindo a API mesmo assim'; node apps/api/dist/server.js"]
+# Sobe a API IMEDIATAMENTE e roda o migrate em BACKGROUND. Se o migrate
+# travar (ex.: advisory lock preso de um container anterior, conexão lenta ao
+# Neon), ele NÃO pode mais impedir o boot — o servidor precisa responder ao
+# healthcheck do Railway. Migrations pendentes são aplicadas em paralelo
+# (em produção normalmente é no-op, pois já estão aplicadas). Um timeout de
+# 120s evita processo zumbi.
+CMD ["sh", "-c", "(timeout 120 pnpm --filter @agoraencontrei/database migrate:deploy || echo '[deploy] migrate pulado/falhou/timeout') & node apps/api/dist/server.js"]
