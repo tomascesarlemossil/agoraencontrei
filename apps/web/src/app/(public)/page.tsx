@@ -371,7 +371,7 @@ export default async function HomePage() {
         className="relative flex items-center justify-center overflow-hidden"
         style={{ background: theme.colors.primary, minHeight: 'max(85vh, 600px)' }}
       >
-        <HeroBackground videoUrl={siteSettings.heroVideoUrl} videoType={siteSettings.heroVideoType} />
+        <HeroBackground videoUrl={siteSettings.heroVideoUrl} videoType={siteSettings.heroVideoType} imageUrl={siteSettings.heroImageUrl} />
 
         <div className="relative z-10 w-full max-w-4xl mx-auto px-4 sm:px-6 text-center pt-8 pb-24 sm:pt-10 sm:pb-16">
           {/* Badge */}

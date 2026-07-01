@@ -13,9 +13,10 @@ function extractYouTubeId(url: string): string {
 interface Props {
   videoUrl?: string | null
   videoType?: string | null
+  imageUrl?: string | null
 }
 
-export function HeroBackground({ videoUrl, videoType }: Props) {
+export function HeroBackground({ videoUrl, videoType, imageUrl }: Props) {
   const isUpload = videoType === 'upload'
   const isImage = videoType === 'image'
   const [isMobile, setIsMobile] = useState(false)
@@ -43,7 +44,8 @@ export function HeroBackground({ videoUrl, videoType }: Props) {
   }, [])
 
   // ── Modo imagem (padrão quando não há vídeo configurado) ──────────────────
-  const heroBannerSrc = (isImage && videoUrl) ? videoUrl : '/hero-banner.jpg'
+  // Prioridade: videoUrl (quando tipo=image) > imageUrl (fallback do admin) > hero-banner.jpg (local)
+  const heroBannerSrc = (isImage && videoUrl) ? videoUrl : (imageUrl || '/hero-banner.jpg')
   const useImageBg = isImage || (!videoUrl && !isUpload)
 
   if (useImageBg) {

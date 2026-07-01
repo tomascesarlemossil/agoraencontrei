@@ -288,6 +288,7 @@ export default function SettingsPage() {
   // ── Site Settings ──────────────────────────────────────────────────────────
   const [videoType, setVideoType] = useState<'youtube' | 'upload'>('youtube')
   const [videoUrl, setVideoUrl] = useState('')
+  const [heroImageUrl, setHeroImageUrl] = useState('')
   const [siteSaved, setSiteSaved] = useState(false)
   const [siteSettings, setSiteSettings] = useState({
     whatsapp: '',
@@ -319,6 +320,7 @@ export default function SettingsPage() {
     if (savedSiteSettings) {
       if (savedSiteSettings.heroVideoUrl) setVideoUrl(savedSiteSettings.heroVideoUrl)
       if (savedSiteSettings.heroVideoType) setVideoType(savedSiteSettings.heroVideoType)
+      if (savedSiteSettings.heroImageUrl) setHeroImageUrl(savedSiteSettings.heroImageUrl)
       setSiteSettings(prev => ({ ...prev, ...savedSiteSettings }))
       setIntegrations(prev => ({
         ...prev,
@@ -338,7 +340,7 @@ export default function SettingsPage() {
       const res = await fetch(`${API_URL}/api/v1/users/site-settings`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ heroVideoUrl: videoUrl, heroVideoType: videoType, ...siteSettings }),
+        body: JSON.stringify({ heroVideoUrl: videoUrl, heroVideoType: videoType, heroImageUrl, ...siteSettings }),
       })
       if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.message ?? 'Erro ao salvar configurações do site') }
       return res.json()
@@ -1292,6 +1294,60 @@ export default function SettingsPage() {
                   <p className="text-xs text-emerald-400 mt-1 flex items-center gap-1">
                     <CheckCircle2 className="w-3.5 h-3.5" /> Vídeo configurado
                   </p>
+                )}
+              </div>
+            </Section>
+
+            <Section title="Imagem de Fundo — Página Inicial">
+              <p className="text-xs text-white/50 mb-3">Imagem exibida quando não há vídeo configurado. Cole a URL ou envie um arquivo de imagem.</p>
+              <DarkInput
+                label="URL da imagem de fundo"
+                value={heroImageUrl}
+                onChange={e => setHeroImageUrl(e.target.value)}
+                placeholder="https://cdn.../imagem-fundo.jpg"
+              />
+              <div className="mt-2">
+                <label className="text-xs font-semibold text-white/70 mb-1.5 block">Ou envie a imagem diretamente</label>
+                <label
+                  htmlFor="hero-image-upload"
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-white/20 text-sm text-white/70 hover:text-white hover:border-white/40 cursor-pointer transition-colors w-fit"
+                >
+                  <Upload className="w-4 h-4" />
+                  Selecionar imagem de fundo
+                </label>
+                <input
+                  id="hero-image-upload"
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0]
+                    if (!file) return
+                    try {
+                      const token = await getValidToken()
+                      const fd = new FormData()
+                      fd.append('file', file)
+                      fd.append('folder', 'banners')
+                      const res = await fetch(`${API_URL}/api/v1/upload`, {
+                        method: 'POST',
+                        headers: { Authorization: `Bearer ${token}` },
+                        body: fd,
+                      })
+                      if (res.ok) {
+                        const data = await res.json()
+                        setHeroImageUrl(data.url)
+                      }
+                    } catch {}
+                  }}
+                />
+                {heroImageUrl && (
+                  <div className="mt-2">
+                    <p className="text-xs text-emerald-400 flex items-center gap-1 mb-2">
+                      <CheckCircle2 className="w-3.5 h-3.5" /> Imagem configurada
+                    </p>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={heroImageUrl} alt="Preview" className="w-full max-w-xs h-24 object-cover rounded-xl border border-white/10" />
+                  </div>
                 )}
               </div>
             </Section>

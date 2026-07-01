@@ -63,7 +63,7 @@ export function ThemedHomePage({ theme, siteSettings, featured, stats, config }:
         className={`relative ${l.heroMinHeight} flex items-center justify-center overflow-hidden`}
         style={{ background: c.primary }}
       >
-        <HeroBackground videoUrl={siteSettings?.heroVideoUrl} videoType={siteSettings?.heroVideoType} />
+        <HeroBackground videoUrl={siteSettings?.heroVideoUrl} videoType={siteSettings?.heroVideoType} imageUrl={siteSettings?.heroImageUrl} />
 
         {/* Overlay */}
         <div className="absolute inset-0 z-[1]" style={{ background: l.heroOverlay }} />
