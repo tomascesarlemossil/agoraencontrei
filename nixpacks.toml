@@ -1,5 +1,9 @@
 [phases.setup]
-nixPkgs = ["nodejs_22"]
+# ffmpeg é obrigatório para o Editor de Vídeo IA (render/probe). Sem ele o
+# worker de render falha e /video-editor/diagnostics reporta ffmpeg=NOT_AVAILABLE.
+# O Dockerfile já instala via apt; aqui garantimos o mesmo quando o Railway
+# builda por Nixpacks a partir da raiz do repo.
+nixPkgs = ["nodejs_22", "ffmpeg"]
 cmds = ["npm install -g pnpm@10"]
 
 [phases.install]

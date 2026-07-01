@@ -1,5 +1,7 @@
 [phases.setup]
-nixPkgs = ["nodejs_22"]
+# ffmpeg é obrigatório para o Editor de Vídeo IA (render/probe). Mantém paridade
+# com o Dockerfile, que instala ffmpeg via apt.
+nixPkgs = ["nodejs_22", "ffmpeg"]
 
 [phases.install]
 cmds = [
