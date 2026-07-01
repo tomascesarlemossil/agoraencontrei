@@ -738,19 +738,24 @@ export function DynamicPlans() {
                   })}
                 </div>
 
-                {previewKey && (
-                  <ThemePreviewModal
-                    themes={ALL_THEMES}
-                    index={Math.max(0, ALL_THEMES.findIndex(t => t.key === previewKey))}
-                    onIndexChange={(i) => setPreviewKey(ALL_THEMES[i].key)}
-                    selectedKey={checkoutForm.layoutType}
-                    onChoose={(th) => {
-                      setCheckoutForm(f => ({ ...f, layoutType: th.key, primaryColor: th.accentHex }))
-                      setPreviewKey(null)
-                    }}
-                    onClose={() => setPreviewKey(null)}
-                  />
-                )}
+                {previewKey && (() => {
+                  // O ThemePreviewModal foi reescrito e espera { theme, selected,
+                  // onChoose, onClose }. O caller passava a assinatura antiga
+                  // (themes/index/onIndexChange/selectedKey) → theme = undefined →
+                  // TypeError ao abrir o modal. Alinhado ao contrato atual.
+                  const previewTheme = ALL_THEMES.find(t => t.key === previewKey) ?? ALL_THEMES[0]
+                  return (
+                    <ThemePreviewModal
+                      theme={previewTheme}
+                      selected={checkoutForm.layoutType === previewTheme.key}
+                      onChoose={() => {
+                        setCheckoutForm(f => ({ ...f, layoutType: previewTheme.key, primaryColor: previewTheme.accentHex }))
+                        setPreviewKey(null)
+                      }}
+                      onClose={() => setPreviewKey(null)}
+                    />
+                  )
+                })()}
 
                 {/* Cor principal — ajuste fino */}
                 <div className="mt-3 flex items-center gap-2">

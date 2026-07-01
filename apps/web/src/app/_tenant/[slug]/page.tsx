@@ -68,7 +68,10 @@ async function getTenantProperties(tenantSlug: string, limit = 9): Promise<Prope
     const res = await fetch(url, { next: { revalidate: 120 } })
     if (!res.ok) return []
     const data = await res.json()
-    return data.data?.items || data.items || []
+    // A rota /api/v1/public/properties responde { data: [...], meta }.
+    // `data.data` JÁ é o array — o acesso anterior (data.data?.items) dava
+    // sempre undefined, fazendo TODO site de parceiro renderizar vazio.
+    return Array.isArray(data?.data) ? data.data : (Array.isArray(data?.items) ? data.items : [])
   } catch {
     return []
   }
