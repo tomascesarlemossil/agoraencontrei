@@ -7,7 +7,10 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       {
         userAgent: '*',
-        allow: '/',
+        // Allow '/api/sitemap/' explicitly so crawlers can read the paginated
+        // sub-sitemaps (cidades, bairros, leilões, comparações) referenced by
+        // /sitemap-index.xml — longest-match wins over the '/api/' disallow.
+        allow: ['/', '/api/sitemap/'],
         disallow: [
           '/dashboard/',
           '/api/',
@@ -21,12 +24,12 @@ export default function robots(): MetadataRoute.Robots {
       },
       {
         userAgent: 'Googlebot',
-        allow: '/',
+        allow: ['/', '/api/sitemap/'],
         disallow: ['/dashboard/', '/api/', '/login', '/register', '/portal/', '/admin/', '/meu-painel'],
       },
       {
         userAgent: 'Bingbot',
-        allow: '/',
+        allow: ['/', '/api/sitemap/'],
         disallow: ['/dashboard/', '/api/', '/login', '/register', '/portal/', '/admin/', '/meu-painel'],
       },
       // Block known bad bots / scrapers
@@ -43,6 +46,12 @@ export default function robots(): MetadataRoute.Robots {
       { userAgent: 'Bytespider', disallow: '/' },
     ],
     sitemap: [
+      // Índice-mestre: aponta para todos os sub-sitemaps paginados
+      // (cidades, bairros, comparações, leilões) — descoberta completa.
+      `${WEB_URL}/sitemap-index.xml`,
+      // Sitemap dedicado de Franca (máxima prioridade)
+      `${WEB_URL}/sitemap-franca.xml`,
+      // Sitemap core (páginas estáticas + landings + imóveis/blog dinâmicos)
       `${WEB_URL}/sitemap.xml`,
       `${WEB_URL}/api/sitemap/blog`,
     ],
