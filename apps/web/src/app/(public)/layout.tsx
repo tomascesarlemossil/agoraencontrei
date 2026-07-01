@@ -174,14 +174,9 @@ export default async function PublicLayout({ children }: { children: React.React
                 />
                 <div className="flex flex-col leading-none">
                   <span className="font-bold text-base" style={{ fontFamily: 'Arial, Helvetica, sans-serif' }}>
-                    {brand.companyName ? (
-                      <span style={{ color: '#d1d5db', fontWeight: 700 }}>{brand.companyName}</span>
-                    ) : (
-                      <>
-                        <span style={{ color: '#1a5c2a', fontWeight: 700 }}>Agora</span>
-                        <span style={{ color: '#d1d5db', fontWeight: 700 }}>Encontrei</span>
-                      </>
-                    )}
+                    {/* Nome fixo "AgoraEncontrei" (marca do marketplace); logo é dinâmico. */}
+                    <span style={{ color: '#1a5c2a', fontWeight: 700 }}>Agora</span>
+                    <span style={{ color: '#d1d5db', fontWeight: 700 }}>Encontrei</span>
                   </span>
                   <span className="text-[10px] font-medium" style={{ color: '#9ca3af', letterSpacing: '0.04em' }}>Marketplace</span>
                 </div>
