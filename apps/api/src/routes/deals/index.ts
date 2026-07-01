@@ -376,7 +376,7 @@ export default async function dealsRoutes(app: FastifyInstance) {
       return reply.status(400).send({ error: 'NO_CONTACT', message: 'A negociação precisa de um contato (comprador).' })
     }
 
-    const cpfCnpj = (body.cpfCnpj || (deal.contact as any).cpf || '').replace(/\D/g, '')
+    const cpfCnpj = (body.cpfCnpj || (deal.contact as any).cpf || (deal.contact as any).cnpj || '').replace(/\D/g, '')
     if (cpfCnpj.length !== 11 && cpfCnpj.length !== 14) {
       return reply.status(400).send({ error: 'INVALID_CPF', message: 'Informe um CPF/CNPJ válido do comprador.' })
     }

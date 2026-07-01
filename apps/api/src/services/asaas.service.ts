@@ -261,6 +261,7 @@ export interface AsaasWebhookEvent {
 // ── NFS-e (Nota Fiscal de Serviço) ──────────────────────────────────────────
 
 export interface AsaasInvoicePayload {
+  customer?: string             // ID do customer Asaas (exigido pelo /invoices)
   payment?: string              // ID do pagamento vinculado (opcional)
   serviceDescription: string    // descrição do serviço
   observations?: string

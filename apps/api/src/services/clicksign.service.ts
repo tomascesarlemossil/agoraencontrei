@@ -57,8 +57,14 @@ export interface SignatureStatus {
 
 // ── Constants ───────────────────────────────────────────────────────────────
 
-const CLICKSIGN_TOKEN = (env as any).CLICKSIGN_ACCESS_TOKEN || '60edac7d-32b3-4bb7-9190-0fd39f6e129c'
+// Sem fallback hardcoded: usar apenas a env. Se ausente, as operações de
+// assinatura falham de forma controlada (o boot NÃO é interrompido).
+const CLICKSIGN_TOKEN = (env as any).CLICKSIGN_ACCESS_TOKEN || ''
 const CLICKSIGN_BASE_URL = (env as any).CLICKSIGN_BASE_URL || 'https://app.clicksign.com/api/v1'
+
+function isClicksignConfigured(): boolean {
+  return CLICKSIGN_TOKEN.length > 0
+}
 
 const AUTH_MAP: Record<string, string> = {
   email: 'email',
@@ -225,6 +231,11 @@ export async function createEnvelope(
   prisma: PrismaClient,
   input: CreateEnvelopeInput,
 ): Promise<EnvelopeResult> {
+  if (!isClicksignConfigured()) {
+    console.warn('[clicksign] CLICKSIGN_ACCESS_TOKEN não configurado — operação de assinatura abortada.')
+    return { success: false, error: 'Clicksign não configurado (CLICKSIGN_ACCESS_TOKEN ausente).' }
+  }
+
   // 1. Create document in Clicksign
   const doc = await createDocument(
     input.fileName,

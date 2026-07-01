@@ -140,17 +140,35 @@ export default async function fiscalRoutes(app: FastifyInstance) {
 
     const competencia = `${note.rentalYear}-${String(note.rentalMonth).padStart(2, '0')}-01`
 
-    const asaasInvoice = await createAsaasInvoice({
-      serviceDescription: note.serviceDescription ?? 'Prestação de serviços de administração e intermediação imobiliária',
-      observations: `Contrato de locação — ${note.propertyAddress ?? 'Imóvel'}\nProprietário: ${note.landlordName}\nCPF: ${note.landlordCpf}\nReferência: ${String(note.rentalMonth).padStart(2, '0')}/${note.rentalYear}`,
-      value: nfValue,
-      effectiveDate: competencia,
-      externalReference: note.id,
-      taxes: {
-        retainIss: false,
-        iss: 5,       // ISS 5% padrão para serviços imobiliários
-      },
-    })
+    // Asaas /invoices exige um customer — resolver/criar o proprietário como customer.
+    let asaasInvoice: Awaited<ReturnType<typeof createAsaasInvoice>>
+    try {
+      const customer = await findOrCreateCustomer({
+        name:    note.landlordName,
+        cpfCnpj: note.landlordCpf,
+        email:   note.landlordEmail ?? undefined,
+        phone:   note.landlordPhone ?? undefined,
+      })
+
+      asaasInvoice = await createAsaasInvoice({
+        customer: customer.id,
+        serviceDescription: note.serviceDescription ?? 'Prestação de serviços de administração e intermediação imobiliária',
+        observations: `Contrato de locação — ${note.propertyAddress ?? 'Imóvel'}\nProprietário: ${note.landlordName}\nCPF: ${note.landlordCpf}\nReferência: ${String(note.rentalMonth).padStart(2, '0')}/${note.rentalYear}`,
+        value: nfValue,
+        effectiveDate: competencia,
+        externalReference: note.id,
+        taxes: {
+          retainIss: false,
+          iss: 5,       // ISS 5% padrão para serviços imobiliários
+        },
+      })
+    } catch (err: any) {
+      app.log.error({ err }, `[fiscal/emitir-asaas] Asaas error: ${err?.message}`)
+      return reply.status(502).send({
+        error:   'ASAAS_ERROR',
+        message: err?.message ?? 'Falha ao emitir NFS-e no Asaas.',
+      })
+    }
 
     // Atualizar nota no banco com dados do Asaas
     const updated = await app.prisma.fiscalNote.update({
@@ -192,7 +210,24 @@ export default async function fiscalRoutes(app: FastifyInstance) {
     schema: { tags: ['fiscal'], summary: 'Emitir NFS-e em lote via Asaas' },
   }, async (req, reply) => {
     const cid = req.user.cid
-    const body = req.body as { month: number; year: number; noteIds?: string[] }
+
+    // Validação: exige noteIds não-vazio OU (month E year) — evita emitir TODAS as DRAFT.
+    const parsed = z.object({
+      month:   z.number().int().min(1).max(12).optional(),
+      year:    z.number().int().min(2000).max(2100).optional(),
+      noteIds: z.array(z.string()).optional(),
+    }).refine(
+      b => (b.noteIds && b.noteIds.length > 0) || (b.month != null && b.year != null),
+      { message: 'Informe noteIds (não-vazio) ou month e year.' },
+    ).safeParse(req.body)
+
+    if (!parsed.success) {
+      return reply.status(400).send({
+        error:   'INVALID_BODY',
+        message: parsed.error.issues[0]?.message ?? 'Parâmetros inválidos.',
+      })
+    }
+    const body = parsed.data
 
     const where: any = {
       companyId: cid,
@@ -217,7 +252,15 @@ export default async function fiscalRoutes(app: FastifyInstance) {
 
         const competencia = `${note.rentalYear}-${String(note.rentalMonth).padStart(2, '0')}-01`
 
+        const customer = await findOrCreateCustomer({
+          name:    note.landlordName,
+          cpfCnpj: note.landlordCpf,
+          email:   note.landlordEmail ?? undefined,
+          phone:   note.landlordPhone ?? undefined,
+        })
+
         const asaasInvoice = await createAsaasInvoice({
+          customer: customer.id,
           serviceDescription: note.serviceDescription ?? 'Prestação de serviços de administração e intermediação imobiliária',
           observations: `Proprietário: ${note.landlordName} | CPF: ${note.landlordCpf} | Ref: ${String(note.rentalMonth).padStart(2, '0')}/${note.rentalYear}`,
           value: nfValue,

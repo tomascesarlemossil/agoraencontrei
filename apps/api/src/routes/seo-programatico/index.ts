@@ -327,7 +327,7 @@ export default async function seoProgramaticoRoutes(app: FastifyInstance) {
         const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
         generateContent = async (keyword, cidade, uf, ctx) => {
           const msg = await client.messages.create({
-            model: 'claude-sonnet-4-20250514',
+            model: 'claude-sonnet-5',
             max_tokens: 2048,
             messages: [{ role: 'user', content: buildSeoPrompt(keyword, cidade, uf, ctx) }],
           })
