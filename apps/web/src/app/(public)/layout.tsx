@@ -3,8 +3,15 @@ import Link from 'next/link'
 import { Phone, MapPin, Instagram, Facebook, Youtube } from 'lucide-react'
 import { Navbar } from '@/components/public/Navbar'
 import { BrandBackdrop } from '@/components/public/BrandBackdrop'
+import { SystemThemeInjector } from '@/components/public/SystemThemeInjector'
 import TomasWidget from '@/components/tomas/TomasWidget'
 import { SkipNav } from '@/components/SkipNav'
+import {
+  fetchSiteSettings,
+  resolveSiteColors,
+  resolveSiteBrand,
+  DEFAULT_FOOTER_LOGO_URL,
+} from '@/lib/site-settings'
 
 export const metadata: Metadata = {
   title: {
@@ -46,12 +53,61 @@ const FOOTER_SERVICOS = [
 // wrapper before first paint. Scoped to the public layout only.
 const AE_THEME_SCRIPT = `(function(){try{var m=document.cookie.match(/(?:^|; )ae-theme=([^;]+)/);var t=m?m[1]:null;if(!t){try{t=localStorage.getItem('ae-theme')}catch(e){}}if(!t){t=(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light'}var el=document.currentScript.parentElement;el.classList.remove('ae-light','ae-dark');el.classList.add(t==='dark'?'ae-dark':'ae-light')}catch(e){}})();`
 
-export default function PublicLayout({ children }: { children: React.ReactNode }) {
+// Fallbacks hardcoded atuais — mantidos para que o site nunca fique sem
+// contato/redes caso a config do admin venha vazia.
+const FB = {
+  logo: DEFAULT_FOOTER_LOGO_URL,
+  tagline: 'O Marketplace Imobiliário de Franca e Região.',
+  phoneFixed: '(16) 3723-0045',
+  phoneMobile: '(16) 98101-0004',
+  whatsapp: '5516981010004',
+  whatsappDisplay: '(16) 98101-0004',
+  instagram: 'https://www.instagram.com/imobiliarialemos',
+  instagramTomas: 'https://www.instagram.com/tomaslemosbr',
+  youtube: 'https://www.youtube.com/@imobiliarialemos',
+  facebook: 'https://facebook.com/imobiliarialemos',
+  cnpj: '10.962.301/0001-50',
+  website: 'https://www.imobiliarialemos.com.br',
+}
+
+const telHref = (v: string) => 'tel:' + v.replace(/\D/g, '')
+const waHref = (v: string) => {
+  const d = v.replace(/\D/g, '')
+  return `https://wa.me/${d.startsWith('55') ? d : '55' + d}`
+}
+
+export default async function PublicLayout({ children }: { children: React.ReactNode }) {
+  const settings = await fetchSiteSettings()
+  const { primary, accent } = resolveSiteColors(settings)
+  const brand = resolveSiteBrand(settings, FB.logo)
+
+  // Contato / redes — config com fallback para os valores atuais.
+  const phoneFixed = (settings.phoneFixed || settings.companyPhone || FB.phoneFixed) as string
+  const phoneMobile = (settings.phoneMobile || FB.phoneMobile) as string
+  const whatsappRaw = (settings.whatsappNumber || FB.whatsapp) as string
+  const whatsappDisplay = (settings.whatsappNumber || FB.whatsappDisplay) as string
+  const instagram = (settings.instagramUrl || FB.instagram) as string
+  const instagramTomas = (settings.instagramUrlTomas || FB.instagramTomas) as string
+  const youtube = (settings.youtubeUrl || FB.youtube) as string
+  const facebook = (settings.facebookUrl || FB.facebook) as string
+  const tagline = (settings.footerTagline || FB.tagline) as string
+  const cnpj = (settings.companyCnpj || FB.cnpj) as string
+  const website = (settings.companyWebsite || FB.website) as string
+  const websiteLabel = website.replace(/^https?:\/\//, '').replace(/\/$/, '')
+  const hasCustomAddress = typeof settings.companyAddress === 'string' && settings.companyAddress.trim() !== ''
+
+  // No-FOUC: injeta as CSS vars de cor server-side (o SystemThemeInjector,
+  // client-side, reaplica os mesmos valores + overrides de classes utilitárias).
+  const themeVarsCss = `:root{--site-primary-color:${primary};--site-accent-color:${accent};}`
+
   return (
     <>
       {/* Papel de parede institucional: verde escuro militar + monograma AE
           em cada lateral (aparece nas telas largas, atrás do conteúdo). */}
       <BrandBackdrop />
+      {/* Cores do site vindas da config do admin (com fallback). */}
+      <style dangerouslySetInnerHTML={{ __html: themeVarsCss }} />
+      <SystemThemeInjector />
       {/* Em telas largas (2xl+) o conteúdo vira um painel centralizado, revelando
           o verde militar e os logos nas laterais. Abaixo disso ocupa a largura
           toda — layout e leitura idênticos ao anterior (zero regressão). */}
@@ -67,11 +123,11 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
       <div style={{ backgroundColor: '#143A1F' }} className="hidden lg:block">
         <div className="max-w-7xl mx-auto px-6 h-9 flex items-center justify-between text-xs text-white/70">
           <div className="flex items-center gap-6">
-            <a href="tel:1637230045" className="flex items-center gap-1.5 hover:text-white transition-colors">
-              <Phone className="w-3 h-3" /> (16) 3723-0045
+            <a href={telHref(phoneFixed)} className="flex items-center gap-1.5 hover:text-white transition-colors">
+              <Phone className="w-3 h-3" /> {phoneFixed}
             </a>
-            <a href="tel:16981010004" className="flex items-center gap-1.5 hover:text-white transition-colors">
-              <Phone className="w-3 h-3" /> (16) 98101-0004
+            <a href={telHref(phoneMobile)} className="flex items-center gap-1.5 hover:text-white transition-colors">
+              <Phone className="w-3 h-3" /> {phoneMobile}
             </a>
             <span className="flex items-center gap-1.5">
               <MapPin className="w-3 h-3" /> Franca — SP
@@ -79,16 +135,16 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
           </div>
           <div className="flex items-center gap-4">
             <span className="text-white/70">Marketplace Imobiliário · Franca/SP</span>
-            <a href="https://www.instagram.com/imobiliarialemos" target="_blank" rel="noreferrer" className="flex items-center gap-1 hover:text-white transition-colors" aria-label="Instagram da Imobiliária Lemos (@imobiliarialemos)">
+            <a href={instagram} target="_blank" rel="noreferrer" className="flex items-center gap-1 hover:text-white transition-colors" aria-label="Instagram da Imobiliária Lemos (@imobiliarialemos)">
               <Instagram className="w-3.5 h-3.5" aria-hidden="true" />
             </a>
-            <a href="https://www.instagram.com/tomaslemosbr" target="_blank" rel="noreferrer" className="flex items-center gap-1 hover:text-white transition-colors" aria-label="Instagram de Tomás Lemos (@tomaslemosbr)">
+            <a href={instagramTomas} target="_blank" rel="noreferrer" className="flex items-center gap-1 hover:text-white transition-colors" aria-label="Instagram de Tomás Lemos (@tomaslemosbr)">
               <Instagram className="w-3.5 h-3.5" aria-hidden="true" />
             </a>
-            <a href="https://facebook.com/imobiliarialemos" target="_blank" rel="noreferrer" className="hover:text-white transition-colors" aria-label="Facebook da Imobiliária Lemos">
+            <a href={facebook} target="_blank" rel="noreferrer" className="hover:text-white transition-colors" aria-label="Facebook da Imobiliária Lemos">
               <Facebook className="w-3.5 h-3.5" aria-hidden="true" />
             </a>
-            <a href="https://www.youtube.com/@imobiliarialemos" target="_blank" rel="noreferrer" className="hover:text-white transition-colors" aria-label="Canal YouTube da Imobiliária Lemos">
+            <a href={youtube} target="_blank" rel="noreferrer" className="hover:text-white transition-colors" aria-label="Canal YouTube da Imobiliária Lemos">
               <Youtube className="w-3.5 h-3.5" aria-hidden="true" />
             </a>
           </div>
@@ -96,7 +152,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
       </div>
 
       <SkipNav />
-      <Navbar />
+      <Navbar logoUrl={brand.logoUrl} companyName={brand.companyName} hasCustomLogo={brand.hasCustomLogo} />
 
       <main id="main-content" tabIndex={-1}>{children}</main>
       <TomasWidget />
@@ -109,8 +165,8 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
             <div>
               <div className="flex items-center gap-3 mb-4">
                 <img
-                  src="/logo.png"
-                  alt="AgoraEncontrei Marketplace"
+                  src={brand.logoUrl}
+                  alt={brand.companyName ?? 'AgoraEncontrei Marketplace'}
                   width={44}
                   height={44}
                   className="rounded-full flex-shrink-0 object-cover"
@@ -118,14 +174,20 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
                 />
                 <div className="flex flex-col leading-none">
                   <span className="font-bold text-base" style={{ fontFamily: 'Arial, Helvetica, sans-serif' }}>
-                    <span style={{ color: '#1a5c2a', fontWeight: 700 }}>Agora</span>
-                    <span style={{ color: '#d1d5db', fontWeight: 700 }}>Encontrei</span>
+                    {brand.companyName ? (
+                      <span style={{ color: '#d1d5db', fontWeight: 700 }}>{brand.companyName}</span>
+                    ) : (
+                      <>
+                        <span style={{ color: '#1a5c2a', fontWeight: 700 }}>Agora</span>
+                        <span style={{ color: '#d1d5db', fontWeight: 700 }}>Encontrei</span>
+                      </>
+                    )}
                   </span>
                   <span className="text-[10px] font-medium" style={{ color: '#9ca3af', letterSpacing: '0.04em' }}>Marketplace</span>
                 </div>
               </div>
               <p className="text-white/70 text-xs leading-relaxed">
-                O Marketplace Imobiliário de Franca e Região.
+                {tagline}
               </p>
               <p className="text-white/60 text-xs mt-1">
                 Criado pela <span className="text-white/60 font-medium">Imobiliária Lemos</span>, referência desde 2002.
@@ -136,7 +198,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
                 <p className="text-white/55 text-xs uppercase tracking-wider mb-3">Redes Sociais</p>
                 <div className="flex flex-col gap-2">
                   <a
-                    href="https://www.instagram.com/imobiliarialemos"
+                    href={instagram}
                     target="_blank"
                     rel="noreferrer"
                     className="flex items-center gap-2.5 group"
@@ -148,7 +210,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
                     <span className="text-white/70 text-xs group-hover:text-white transition-colors">@imobiliarialemos</span>
                   </a>
                   <a
-                    href="https://www.instagram.com/tomaslemosbr"
+                    href={instagramTomas}
                     target="_blank"
                     rel="noreferrer"
                     className="flex items-center gap-2.5 group"
@@ -160,7 +222,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
                     <span className="text-white/70 text-xs group-hover:text-white transition-colors">@tomaslemosbr</span>
                   </a>
                   <a
-                    href="https://www.youtube.com/@imobiliarialemos"
+                    href={youtube}
                     target="_blank"
                     rel="noreferrer"
                     className="flex items-center gap-2.5 group"
@@ -172,7 +234,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
                     <span className="text-white/70 text-xs group-hover:text-white transition-colors">Imobiliária Lemos</span>
                   </a>
                   <a
-                    href="https://facebook.com/imobiliarialemos"
+                    href={facebook}
                     target="_blank"
                     rel="noreferrer"
                     className="flex items-center gap-2.5 group"
@@ -239,35 +301,47 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
               <ul className="space-y-3 text-sm">
                 <li>
                   <p className="text-white/60 text-xs uppercase tracking-wider mb-0.5">Fixo</p>
-                  <a href="tel:1637230045" className="text-white/70 hover:text-white transition-colors">(16) 3723-0045</a>
+                  <a href={telHref(phoneFixed)} className="text-white/70 hover:text-white transition-colors">{phoneFixed}</a>
                 </li>
                 <li>
                   <p className="text-white/60 text-xs uppercase tracking-wider mb-0.5">Vendas / Locação</p>
-                  <a href="tel:16981010004" className="text-white/70 hover:text-white transition-colors">(16) 98101-0004</a>
+                  <a href={telHref(phoneMobile)} className="text-white/70 hover:text-white transition-colors">{phoneMobile}</a>
                 </li>
                 <li>
                   <p className="text-white/60 text-xs uppercase tracking-wider mb-0.5">WhatsApp</p>
-                  <a href="https://wa.me/5516981010004" target="_blank" rel="noreferrer"
-                    className="hover:opacity-80 transition-opacity" style={{ color: '#C9A84C' }}>
-                    (16) 98101-0004
+                  <a href={waHref(whatsappRaw)} target="_blank" rel="noreferrer"
+                    className="hover:opacity-80 transition-opacity" style={{ color: 'var(--site-accent-color, #C9A84C)' }}>
+                    {whatsappDisplay}
                   </a>
                 </li>
                 <li className="pt-1">
                   <p className="text-white/60 text-xs uppercase tracking-wider mb-0.5">Endereço</p>
-                  <p className="text-white/60 text-sm leading-relaxed">
-                    Rua Simão Caleiro, 2383<br />
-                    Vila Industrial — Franca/SP<br />
-                    CEP 14400-340
-                  </p>
-                  <p className="text-white/60 text-xs mt-1">CNPJ: 10.962.301/0001-50</p>
+                  {hasCustomAddress ? (
+                    <p className="text-white/60 text-sm leading-relaxed">
+                      {settings.companyAddress as string}
+                      {(settings.companyCity || settings.companyState) && (
+                        <>
+                          <br />
+                          {[settings.companyCity, settings.companyState].filter(Boolean).join(' — ')}
+                        </>
+                      )}
+                    </p>
+                  ) : (
+                    <p className="text-white/60 text-sm leading-relaxed">
+                      Rua Simão Caleiro, 2383<br />
+                      Vila Industrial — Franca/SP<br />
+                      CEP 14400-340
+                    </p>
+                  )}
+                  <p className="text-white/60 text-xs mt-1">CNPJ: {cnpj}</p>
                   <a
-                    href="https://www.imobiliarialemos.com.br"
+                    href={website}
                     target="_blank"
                     rel="noreferrer"
                     className="text-xs mt-1 inline-block hover:opacity-80 transition-opacity"
-                    style={{ color: '#C9A84C' }}
+                    style={{ color: 'var(--site-accent-color, #C9A84C)' }}
                   >
-                    www.imobiliarialemos.com.br
+                    {websiteLabel}
                   </a>
                 </li>
               </ul>
