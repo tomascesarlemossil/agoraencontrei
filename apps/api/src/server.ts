@@ -665,6 +665,30 @@ async function runMigrations(prisma: any) {
     )`,
     `CREATE INDEX IF NOT EXISTS auction_ai_auction_idx ON auction_ai_analyses("auctionId")`,
     `CREATE INDEX IF NOT EXISTS auction_ai_risk_idx ON auction_ai_analyses("riskLevel")`,
+
+    // Add-ons de tenant (checkout de módulos avulsos / quota stacking).
+    // Antes só existia via `prisma migrate deploy`, que travava o boot; criada
+    // aqui de forma idempotente para o schema ficar completo sem migrate.
+    `CREATE TABLE IF NOT EXISTS tenant_addons (
+      id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+      "tenantId" TEXT NOT NULL,
+      kind TEXT NOT NULL,
+      "packageSlug" TEXT NOT NULL,
+      label TEXT NOT NULL,
+      quantity INTEGER NOT NULL,
+      price DECIMAL(10,2) NOT NULL,
+      "billingType" TEXT NOT NULL DEFAULT 'recurring',
+      status TEXT NOT NULL DEFAULT 'pending_payment',
+      "asaasChargeId" TEXT,
+      "activatedAt" TIMESTAMPTZ,
+      "expiresAt" TIMESTAMPTZ,
+      "cancelledAt" TIMESTAMPTZ,
+      metadata JSONB NOT NULL DEFAULT '{}',
+      "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )`,
+    `CREATE INDEX IF NOT EXISTS tenant_addons_tenant_status_idx ON tenant_addons("tenantId", status)`,
+    `CREATE INDEX IF NOT EXISTS tenant_addons_asaas_charge_idx ON tenant_addons("asaasChargeId")`,
   ]
   for (const sql of saasMigrations) {
     try { await prisma.$executeRawUnsafe(sql) } catch { /* already exists */ }

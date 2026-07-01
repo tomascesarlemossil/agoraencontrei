@@ -43,8 +43,12 @@ RUN pnpm --filter @agoraencontrei/api build
 
 EXPOSE 3100
 
-# Aplica migrations pendentes (DATABASE_URL vem do ambiente do Railway) antes
-# de subir a API. Não-fatal: se o migrate falhar (ex.: drift do
-# _prisma_migrations) a API ainda inicializa, coerente com o fail-open do
-# projeto; a migration pode então ser aplicada manualmente.
-CMD ["sh", "-c", "pnpm --filter @agoraencontrei/database migrate:deploy || echo '[deploy] prisma migrate deploy falhou — subindo a API mesmo assim'; node apps/api/dist/server.js"]
+# Sobe a API direto. NÃO rodar `prisma migrate deploy` aqui: o banco de
+# produção nunca teve histórico de migrations (schema mantido por `db push` +
+# runMigrations() idempotente em runtime), então `migrate deploy` fica preso no
+# advisory lock / erro de drift ANTES do node iniciar — a API nunca liga na
+# porta e o Railway responde 502 ("Application failed to respond"). O schema é
+# garantido pelo runMigrations() dentro do bootstrap (CREATE TABLE IF NOT
+# EXISTS ...), idempotente e time-boxed. Migrations Prisma, quando necessárias,
+# devem ser aplicadas num passo controlado — nunca bloqueando o boot.
+CMD ["node", "apps/api/dist/server.js"]
