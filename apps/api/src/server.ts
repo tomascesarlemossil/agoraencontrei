@@ -728,6 +728,529 @@ async function runMigrations(prisma: any) {
     try { await prisma.$executeRawUnsafe(sql) } catch { /* already exists */ }
   }
 
+  // ── Recent migrations not yet in runMigrations (20260519* + 20260630*) ──────
+  const recentMigrations = [
+    // ── Enums (guarded; plain CREATE TYPE is not idempotent) ──────────────────
+    // origin: 20260519000005_loteadora_module
+    `DO $$ BEGIN
+       IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'LoteStatus') THEN
+         CREATE TYPE "LoteStatus" AS ENUM ('AVAILABLE','RESERVED','NEGOTIATING','SOLD','BLOCKED');
+       END IF;
+     END $$`,
+    // origin: 20260612230000_add_imobiliaria_loteadora_specialist_category
+    `ALTER TYPE "SpecialistCategory" ADD VALUE IF NOT EXISTS 'IMOBILIARIA'`,
+    `ALTER TYPE "SpecialistCategory" ADD VALUE IF NOT EXISTS 'LOTEADORA'`,
+
+    // ── notifications ── origin: 20260519000000_add_notifications ─────────────
+    `CREATE TABLE IF NOT EXISTS "notifications" (
+       "id" TEXT PRIMARY KEY,
+       "companyId" TEXT NOT NULL,
+       "userId" TEXT,
+       "type" TEXT NOT NULL,
+       "title" TEXT NOT NULL,
+       "body" TEXT NOT NULL,
+       "payload" JSONB NOT NULL DEFAULT '{}',
+       "read" BOOLEAN NOT NULL DEFAULT false,
+       "readAt" TIMESTAMPTZ,
+       "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+     )`,
+    `CREATE INDEX IF NOT EXISTS "notifications_companyId_read_createdAt_idx" ON "notifications"("companyId","read","createdAt")`,
+    `CREATE INDEX IF NOT EXISTS "notifications_userId_read_idx" ON "notifications"("userId","read")`,
+
+    // ── property_alerts (ALTER) ── origin: 20260519000001_property_alert_match ─
+    `ALTER TABLE "property_alerts" ADD COLUMN IF NOT EXISTS "name" TEXT`,
+    `ALTER TABLE "property_alerts" ADD COLUMN IF NOT EXISTS "phone" TEXT`,
+    `ALTER TABLE "property_alerts" ADD COLUMN IF NOT EXISTS "companyId" TEXT`,
+    `ALTER TABLE "property_alerts" ADD COLUMN IF NOT EXISTS "neighborhood" TEXT`,
+    `ALTER TABLE "property_alerts" ADD COLUMN IF NOT EXISTS "lastMatchedAt" TIMESTAMPTZ`,
+    `CREATE INDEX IF NOT EXISTS "property_alerts_companyId_idx" ON "property_alerts"("companyId")`,
+
+    // ── integration_credentials ── origin: 20260519000002 ─────────────────────
+    `CREATE TABLE IF NOT EXISTS "integration_credentials" (
+       "id" TEXT PRIMARY KEY,
+       "companyId" TEXT NOT NULL,
+       "provider" TEXT NOT NULL,
+       "credentials" JSONB NOT NULL DEFAULT '{}',
+       "isActive" BOOLEAN NOT NULL DEFAULT true,
+       "testStatus" TEXT,
+       "lastTestedAt" TIMESTAMPTZ,
+       "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+       "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+     )`,
+    `CREATE UNIQUE INDEX IF NOT EXISTS "integration_credentials_companyId_provider_key" ON "integration_credentials"("companyId","provider")`,
+    `CREATE INDEX IF NOT EXISTS "integration_credentials_companyId_idx" ON "integration_credentials"("companyId")`,
+
+    // ── deals (ALTER) ── origin: 20260519000003_deal_esteira_metadata ─────────
+    `ALTER TABLE "deals" ADD COLUMN IF NOT EXISTS "metadata" JSONB NOT NULL DEFAULT '{}'`,
+
+    // ── exchange_offers ── origin: 20260519000004_exchange_offers ─────────────
+    `CREATE TABLE IF NOT EXISTS "exchange_offers" (
+       "id" TEXT PRIMARY KEY,
+       "companyId" TEXT,
+       "name" TEXT NOT NULL,
+       "email" TEXT NOT NULL,
+       "phone" TEXT,
+       "offerType" TEXT NOT NULL,
+       "offerDescription" TEXT NOT NULL,
+       "offerValue" DECIMAL(12,2),
+       "wantedType" TEXT,
+       "wantedCity" TEXT,
+       "wantedMaxValue" DECIMAL(12,2),
+       "status" TEXT NOT NULL DEFAULT 'active',
+       "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+       "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+     )`,
+    `CREATE INDEX IF NOT EXISTS "exchange_offers_status_idx" ON "exchange_offers"("status")`,
+    `CREATE INDEX IF NOT EXISTS "exchange_offers_companyId_idx" ON "exchange_offers"("companyId")`,
+
+    // ── loteamentos / lotes / lote_reservas ── origin: 20260519000005 ─────────
+    `CREATE TABLE IF NOT EXISTS "loteamentos" (
+       "id" TEXT PRIMARY KEY,
+       "companyId" TEXT NOT NULL,
+       "name" TEXT NOT NULL,
+       "slug" TEXT NOT NULL,
+       "description" TEXT,
+       "city" TEXT,
+       "state" TEXT,
+       "coverImage" TEXT,
+       "status" TEXT NOT NULL DEFAULT 'selling',
+       "infrastructure" TEXT[] DEFAULT ARRAY[]::TEXT[],
+       "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+       "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+     )`,
+    `CREATE TABLE IF NOT EXISTS "lotes" (
+       "id" TEXT PRIMARY KEY,
+       "loteamentoId" TEXT NOT NULL,
+       "quadra" TEXT,
+       "numero" TEXT NOT NULL,
+       "area" DOUBLE PRECISION,
+       "frente" DOUBLE PRECISION,
+       "fundo" DOUBLE PRECISION,
+       "price" DECIMAL(12,2),
+       "status" "LoteStatus" NOT NULL DEFAULT 'AVAILABLE',
+       "mapColumn" INTEGER,
+       "mapRow" INTEGER,
+       "description" TEXT,
+       "sunPosition" TEXT,
+       "notes" TEXT,
+       "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+       "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+     )`,
+    `CREATE TABLE IF NOT EXISTS "lote_reservas" (
+       "id" TEXT PRIMARY KEY,
+       "loteId" TEXT NOT NULL,
+       "name" TEXT NOT NULL,
+       "email" TEXT NOT NULL,
+       "phone" TEXT,
+       "status" TEXT NOT NULL DEFAULT 'pending',
+       "expiresAt" TIMESTAMPTZ NOT NULL,
+       "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+       "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+     )`,
+    `CREATE UNIQUE INDEX IF NOT EXISTS "loteamentos_companyId_slug_key" ON "loteamentos"("companyId","slug")`,
+    `CREATE INDEX IF NOT EXISTS "loteamentos_companyId_idx" ON "loteamentos"("companyId")`,
+    `CREATE INDEX IF NOT EXISTS "lotes_loteamentoId_idx" ON "lotes"("loteamentoId")`,
+    `CREATE INDEX IF NOT EXISTS "lotes_loteamentoId_status_idx" ON "lotes"("loteamentoId","status")`,
+    `CREATE INDEX IF NOT EXISTS "lote_reservas_loteId_idx" ON "lote_reservas"("loteId")`,
+    `CREATE INDEX IF NOT EXISTS "lote_reservas_status_expiresAt_idx" ON "lote_reservas"("status","expiresAt")`,
+    `DO $$ BEGIN
+       IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'lotes_loteamentoId_fkey') THEN
+         ALTER TABLE "lotes" ADD CONSTRAINT "lotes_loteamentoId_fkey"
+           FOREIGN KEY ("loteamentoId") REFERENCES "loteamentos"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+       END IF;
+     END $$`,
+    `DO $$ BEGIN
+       IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'lote_reservas_loteId_fkey') THEN
+         ALTER TABLE "lote_reservas" ADD CONSTRAINT "lote_reservas_loteId_fkey"
+           FOREIGN KEY ("loteId") REFERENCES "lotes"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+       END IF;
+     END $$`,
+
+    // ── deal_payments ── origin: 20260519000006_deal_payments ─────────────────
+    `CREATE TABLE IF NOT EXISTS "deal_payments" (
+       "id" TEXT PRIMARY KEY,
+       "dealId" TEXT NOT NULL,
+       "companyId" TEXT NOT NULL,
+       "type" TEXT NOT NULL DEFAULT 'signal',
+       "amount" DECIMAL(14,2) NOT NULL,
+       "billingType" TEXT NOT NULL DEFAULT 'UNDEFINED',
+       "status" TEXT NOT NULL DEFAULT 'pending',
+       "asaasChargeId" TEXT,
+       "invoiceUrl" TEXT,
+       "pixPayload" TEXT,
+       "dueDate" TIMESTAMPTZ,
+       "paidAt" TIMESTAMPTZ,
+       "metadata" JSONB NOT NULL DEFAULT '{}',
+       "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+       "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+     )`,
+    `CREATE UNIQUE INDEX IF NOT EXISTS "deal_payments_asaasChargeId_key" ON "deal_payments"("asaasChargeId")`,
+    `CREATE INDEX IF NOT EXISTS "deal_payments_dealId_idx" ON "deal_payments"("dealId")`,
+
+    // ── notarial_processes ── origin: 20260519000007_notarial_process ─────────
+    `CREATE TABLE IF NOT EXISTS "notarial_processes" (
+       "id" TEXT PRIMARY KEY,
+       "dealId" TEXT NOT NULL,
+       "companyId" TEXT NOT NULL,
+       "actType" TEXT NOT NULL DEFAULT 'ESCRITURA_COMPRA_VENDA',
+       "notaryOffice" TEXT,
+       "registryOffice" TEXT,
+       "status" TEXT NOT NULL DEFAULT 'preparing',
+       "deedFileUrl" TEXT,
+       "registryProtocol" TEXT,
+       "checklist" JSONB NOT NULL DEFAULT '{}',
+       "notes" TEXT,
+       "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+       "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+     )`,
+    `CREATE UNIQUE INDEX IF NOT EXISTS "notarial_processes_dealId_key" ON "notarial_processes"("dealId")`,
+    `CREATE INDEX IF NOT EXISTS "notarial_processes_companyId_idx" ON "notarial_processes"("companyId")`,
+
+    // ── property_dossiers ── origin: 20260519000008_property_dossier ──────────
+    `CREATE TABLE IF NOT EXISTS "property_dossiers" (
+       "id" TEXT PRIMARY KEY,
+       "propertyId" TEXT NOT NULL,
+       "companyId" TEXT NOT NULL,
+       "riskLevel" TEXT NOT NULL DEFAULT 'gray',
+       "checklist" JSONB NOT NULL DEFAULT '{}',
+       "notes" TEXT,
+       "aiSummary" TEXT,
+       "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+       "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+     )`,
+    `CREATE UNIQUE INDEX IF NOT EXISTS "property_dossiers_propertyId_key" ON "property_dossiers"("propertyId")`,
+    `CREATE INDEX IF NOT EXISTS "property_dossiers_companyId_idx" ON "property_dossiers"("companyId")`,
+
+    // ── kyc_checks ── origin: 20260519000009_kyc_checks ───────────────────────
+    `CREATE TABLE IF NOT EXISTS "kyc_checks" (
+       "id" TEXT PRIMARY KEY,
+       "dealId" TEXT NOT NULL,
+       "companyId" TEXT NOT NULL,
+       "subjectName" TEXT NOT NULL,
+       "subjectRole" TEXT NOT NULL DEFAULT 'buyer',
+       "cpfCnpj" TEXT,
+       "status" TEXT NOT NULL DEFAULT 'pending',
+       "riskLevel" TEXT NOT NULL DEFAULT 'medium',
+       "checklist" JSONB NOT NULL DEFAULT '{}',
+       "notes" TEXT,
+       "provider" TEXT,
+       "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+       "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+     )`,
+    `CREATE INDEX IF NOT EXISTS "kyc_checks_dealId_idx" ON "kyc_checks"("dealId")`,
+    `CREATE INDEX IF NOT EXISTS "kyc_checks_companyId_idx" ON "kyc_checks"("companyId")`,
+
+    // ── outgoing_webhooks ── origin: 20260519000010_outgoing_webhooks ─────────
+    `CREATE TABLE IF NOT EXISTS "outgoing_webhooks" (
+       "id" TEXT PRIMARY KEY,
+       "companyId" TEXT NOT NULL,
+       "url" TEXT NOT NULL,
+       "secret" TEXT NOT NULL,
+       "events" TEXT[] DEFAULT ARRAY[]::TEXT[],
+       "isActive" BOOLEAN NOT NULL DEFAULT true,
+       "lastFiredAt" TIMESTAMPTZ,
+       "failCount" INTEGER NOT NULL DEFAULT 0,
+       "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+       "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+     )`,
+    `CREATE INDEX IF NOT EXISTS "outgoing_webhooks_companyId_idx" ON "outgoing_webhooks"("companyId")`,
+
+    // ── system_events ── origin: 20260519000011_system_events ─────────────────
+    `CREATE TABLE IF NOT EXISTS "system_events" (
+       "id" TEXT PRIMARY KEY,
+       "companyId" TEXT,
+       "eventType" TEXT NOT NULL,
+       "source" TEXT,
+       "entityType" TEXT,
+       "entityId" TEXT,
+       "payload" JSONB NOT NULL DEFAULT '{}',
+       "processed" BOOLEAN NOT NULL DEFAULT false,
+       "errorMessage" TEXT,
+       "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+     )`,
+    `CREATE INDEX IF NOT EXISTS "system_events_companyId_eventType_idx" ON "system_events"("companyId","eventType")`,
+    `CREATE INDEX IF NOT EXISTS "system_events_createdAt_idx" ON "system_events"("createdAt")`,
+    `CREATE INDEX IF NOT EXISTS "system_events_processed_idx" ON "system_events"("processed")`,
+
+    // ── repasse_beneficiaries ── origin: 20260630000000 ───────────────────────
+    `CREATE TABLE IF NOT EXISTS "repasse_beneficiaries" (
+       "id" TEXT PRIMARY KEY,
+       "companyId" TEXT NOT NULL,
+       "contractId" TEXT NOT NULL,
+       "clientId" TEXT,
+       "name" TEXT NOT NULL,
+       "percentage" DECIMAL(5,2) NOT NULL,
+       "role" TEXT NOT NULL DEFAULT 'OWNER',
+       "bankName" TEXT,
+       "bankAgency" TEXT,
+       "bankAccount" TEXT,
+       "pixKey" TEXT,
+       "isActive" BOOLEAN NOT NULL DEFAULT true,
+       "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+       "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+     )`,
+    `CREATE INDEX IF NOT EXISTS "repasse_beneficiaries_companyId_idx" ON "repasse_beneficiaries"("companyId")`,
+    `CREATE INDEX IF NOT EXISTS "repasse_beneficiaries_contractId_idx" ON "repasse_beneficiaries"("contractId")`,
+    `DO $$ BEGIN
+       IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'repasse_beneficiaries_contractId_fkey') THEN
+         ALTER TABLE "repasse_beneficiaries" ADD CONSTRAINT "repasse_beneficiaries_contractId_fkey"
+           FOREIGN KEY ("contractId") REFERENCES "contracts"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+       END IF;
+     END $$`,
+
+    // ── accounts_payable + bank_checks ── origin: 20260630000001 ──────────────
+    `CREATE TABLE IF NOT EXISTS "accounts_payable" (
+       "id" TEXT PRIMARY KEY,
+       "companyId" TEXT NOT NULL,
+       "legacyId" TEXT,
+       "description" TEXT NOT NULL,
+       "payeeName" TEXT NOT NULL,
+       "payeeId" TEXT,
+       "category" TEXT,
+       "documentNumber" TEXT,
+       "amount" DECIMAL(12,2) NOT NULL,
+       "dueDate" TIMESTAMPTZ NOT NULL,
+       "status" TEXT NOT NULL DEFAULT 'PENDING',
+       "paidAt" TIMESTAMPTZ,
+       "paymentDoc" TEXT,
+       "paymentMethod" TEXT,
+       "contractId" TEXT,
+       "propertyId" TEXT,
+       "notes" TEXT,
+       "createdBy" TEXT,
+       "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+       "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+     )`,
+    `CREATE INDEX IF NOT EXISTS "accounts_payable_companyId_idx" ON "accounts_payable"("companyId")`,
+    `CREATE INDEX IF NOT EXISTS "accounts_payable_status_idx" ON "accounts_payable"("status")`,
+    `CREATE INDEX IF NOT EXISTS "accounts_payable_dueDate_idx" ON "accounts_payable"("dueDate")`,
+    `CREATE TABLE IF NOT EXISTS "bank_checks" (
+       "id" TEXT PRIMARY KEY,
+       "companyId" TEXT NOT NULL,
+       "legacyId" TEXT,
+       "checkNumber" TEXT NOT NULL,
+       "amount" DECIMAL(12,2) NOT NULL,
+       "bankCode" TEXT,
+       "payeeName" TEXT,
+       "category" TEXT,
+       "issueDate" TIMESTAMPTZ,
+       "dueDate" TIMESTAMPTZ,
+       "status" TEXT NOT NULL DEFAULT 'PENDING',
+       "clearedAt" TIMESTAMPTZ,
+       "accountPayableId" TEXT,
+       "notes" TEXT,
+       "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+       "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+     )`,
+    `CREATE INDEX IF NOT EXISTS "bank_checks_companyId_idx" ON "bank_checks"("companyId")`,
+    `CREATE INDEX IF NOT EXISTS "bank_checks_status_idx" ON "bank_checks"("status")`,
+    `CREATE INDEX IF NOT EXISTS "bank_checks_dueDate_idx" ON "bank_checks"("dueDate")`,
+    `CREATE INDEX IF NOT EXISTS "bank_checks_accountPayableId_idx" ON "bank_checks"("accountPayableId")`,
+    `DO $$ BEGIN
+       IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'bank_checks_accountPayableId_fkey') THEN
+         ALTER TABLE "bank_checks" ADD CONSTRAINT "bank_checks_accountPayableId_fkey"
+           FOREIGN KEY ("accountPayableId") REFERENCES "accounts_payable"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+       END IF;
+     END $$`,
+
+    // ── rescissions ── origin: 20260630000002_add_rescissions ─────────────────
+    `CREATE TABLE IF NOT EXISTS "rescissions" (
+       "id" TEXT PRIMARY KEY,
+       "companyId" TEXT NOT NULL,
+       "contractId" TEXT NOT NULL,
+       "legacyId" TEXT,
+       "exitDate" TIMESTAMPTZ NOT NULL,
+       "proRataRent" DECIMAL(12,2) NOT NULL DEFAULT 0,
+       "proRataIptu" DECIMAL(12,2) NOT NULL DEFAULT 0,
+       "penaltyValue" DECIMAL(12,2) NOT NULL DEFAULT 0,
+       "outstandingValue" DECIMAL(12,2) NOT NULL DEFAULT 0,
+       "bonusValue" DECIMAL(12,2) NOT NULL DEFAULT 0,
+       "depositRefund" DECIMAL(12,2) NOT NULL DEFAULT 0,
+       "totalDebits" DECIMAL(12,2) NOT NULL DEFAULT 0,
+       "totalCredits" DECIMAL(12,2) NOT NULL DEFAULT 0,
+       "netResult" DECIMAL(12,2) NOT NULL DEFAULT 0,
+       "settlement" TEXT NOT NULL DEFAULT 'SETTLED',
+       "status" TEXT NOT NULL DEFAULT 'DRAFT',
+       "items" JSONB NOT NULL DEFAULT '[]',
+       "notes" TEXT,
+       "createdBy" TEXT,
+       "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+       "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+     )`,
+    `CREATE INDEX IF NOT EXISTS "rescissions_companyId_idx" ON "rescissions"("companyId")`,
+    `CREATE INDEX IF NOT EXISTS "rescissions_contractId_idx" ON "rescissions"("contractId")`,
+    `CREATE INDEX IF NOT EXISTS "rescissions_status_idx" ON "rescissions"("status")`,
+
+    // ── agreements + agreement_installments ── origin: 20260630000003 ─────────
+    `CREATE TABLE IF NOT EXISTS "agreements" (
+       "id" TEXT PRIMARY KEY,
+       "companyId" TEXT NOT NULL,
+       "contractId" TEXT,
+       "legacyId" TEXT,
+       "tenantName" TEXT,
+       "originalDebt" DECIMAL(12,2) NOT NULL,
+       "discountValue" DECIMAL(12,2) NOT NULL DEFAULT 0,
+       "agreedValue" DECIMAL(12,2) NOT NULL,
+       "installments" INTEGER NOT NULL,
+       "firstDueDate" TIMESTAMPTZ NOT NULL,
+       "status" TEXT NOT NULL DEFAULT 'ACTIVE',
+       "notes" TEXT,
+       "createdBy" TEXT,
+       "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+       "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+     )`,
+    `CREATE INDEX IF NOT EXISTS "agreements_companyId_idx" ON "agreements"("companyId")`,
+    `CREATE INDEX IF NOT EXISTS "agreements_contractId_idx" ON "agreements"("contractId")`,
+    `CREATE INDEX IF NOT EXISTS "agreements_status_idx" ON "agreements"("status")`,
+    `CREATE TABLE IF NOT EXISTS "agreement_installments" (
+       "id" TEXT PRIMARY KEY,
+       "agreementId" TEXT NOT NULL,
+       "number" INTEGER NOT NULL,
+       "dueDate" TIMESTAMPTZ NOT NULL,
+       "amount" DECIMAL(12,2) NOT NULL,
+       "status" TEXT NOT NULL DEFAULT 'PENDING',
+       "paidAt" TIMESTAMPTZ,
+       "paidAmount" DECIMAL(12,2),
+       "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+       "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+     )`,
+    `CREATE UNIQUE INDEX IF NOT EXISTS "agreement_installments_agreementId_number_key" ON "agreement_installments"("agreementId","number")`,
+    `CREATE INDEX IF NOT EXISTS "agreement_installments_agreementId_idx" ON "agreement_installments"("agreementId")`,
+    `CREATE INDEX IF NOT EXISTS "agreement_installments_status_idx" ON "agreement_installments"("status")`,
+    `DO $$ BEGIN
+       IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'agreement_installments_agreementId_fkey') THEN
+         ALTER TABLE "agreement_installments" ADD CONSTRAINT "agreement_installments_agreementId_fkey"
+           FOREIGN KEY ("agreementId") REFERENCES "agreements"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+       END IF;
+     END $$`,
+
+    // ── formal_notices / bank_reconciliations / bank_statement_entries / user_module_permissions ──
+    // origin: 20260630000004_add_notices_reconciliation_permissions
+    `CREATE TABLE IF NOT EXISTS "formal_notices" (
+       "id" TEXT PRIMARY KEY,
+       "companyId" TEXT NOT NULL,
+       "contractId" TEXT,
+       "legacyId" TEXT,
+       "recipient" TEXT NOT NULL DEFAULT 'TENANT',
+       "recipientName" TEXT,
+       "type" TEXT NOT NULL,
+       "subject" TEXT NOT NULL,
+       "body" TEXT,
+       "status" TEXT NOT NULL DEFAULT 'OPEN',
+       "noticeDate" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+       "resolvedAt" TIMESTAMPTZ,
+       "operator" TEXT,
+       "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+       "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+     )`,
+    `CREATE INDEX IF NOT EXISTS "formal_notices_companyId_idx" ON "formal_notices"("companyId")`,
+    `CREATE INDEX IF NOT EXISTS "formal_notices_contractId_idx" ON "formal_notices"("contractId")`,
+    `CREATE INDEX IF NOT EXISTS "formal_notices_status_idx" ON "formal_notices"("status")`,
+    `CREATE TABLE IF NOT EXISTS "bank_reconciliations" (
+       "id" TEXT PRIMARY KEY,
+       "companyId" TEXT NOT NULL,
+       "source" TEXT NOT NULL DEFAULT 'CSV',
+       "reference" TEXT,
+       "bankCode" TEXT,
+       "importedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+       "totalEntries" INTEGER NOT NULL DEFAULT 0,
+       "matchedCount" INTEGER NOT NULL DEFAULT 0,
+       "unmatchedCount" INTEGER NOT NULL DEFAULT 0,
+       "status" TEXT NOT NULL DEFAULT 'IMPORTED',
+       "createdBy" TEXT,
+       "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+       "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+     )`,
+    `CREATE INDEX IF NOT EXISTS "bank_reconciliations_companyId_idx" ON "bank_reconciliations"("companyId")`,
+    `CREATE INDEX IF NOT EXISTS "bank_reconciliations_status_idx" ON "bank_reconciliations"("status")`,
+    `CREATE TABLE IF NOT EXISTS "bank_statement_entries" (
+       "id" TEXT PRIMARY KEY,
+       "reconciliationId" TEXT NOT NULL,
+       "companyId" TEXT NOT NULL,
+       "entryDate" TIMESTAMPTZ NOT NULL,
+       "amount" DECIMAL(12,2) NOT NULL,
+       "direction" TEXT NOT NULL DEFAULT 'CREDIT',
+       "description" TEXT,
+       "nossoNumero" TEXT,
+       "documentNumber" TEXT,
+       "occurrenceCode" TEXT,
+       "matchStatus" TEXT NOT NULL DEFAULT 'UNMATCHED',
+       "matchedRentalId" TEXT,
+       "matchedInvoiceId" TEXT,
+       "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+     )`,
+    `CREATE INDEX IF NOT EXISTS "bank_statement_entries_reconciliationId_idx" ON "bank_statement_entries"("reconciliationId")`,
+    `CREATE INDEX IF NOT EXISTS "bank_statement_entries_companyId_idx" ON "bank_statement_entries"("companyId")`,
+    `CREATE INDEX IF NOT EXISTS "bank_statement_entries_matchStatus_idx" ON "bank_statement_entries"("matchStatus")`,
+    `CREATE INDEX IF NOT EXISTS "bank_statement_entries_nossoNumero_idx" ON "bank_statement_entries"("nossoNumero")`,
+    `DO $$ BEGIN
+       IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'bank_statement_entries_reconciliationId_fkey') THEN
+         ALTER TABLE "bank_statement_entries" ADD CONSTRAINT "bank_statement_entries_reconciliationId_fkey"
+           FOREIGN KEY ("reconciliationId") REFERENCES "bank_reconciliations"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+       END IF;
+     END $$`,
+    `CREATE TABLE IF NOT EXISTS "user_module_permissions" (
+       "id" TEXT PRIMARY KEY,
+       "companyId" TEXT NOT NULL,
+       "userId" TEXT NOT NULL,
+       "module" TEXT NOT NULL,
+       "canView" BOOLEAN NOT NULL DEFAULT true,
+       "canEdit" BOOLEAN NOT NULL DEFAULT false,
+       "canDelete" BOOLEAN NOT NULL DEFAULT false,
+       "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+       "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+     )`,
+    `CREATE UNIQUE INDEX IF NOT EXISTS "user_module_permissions_userId_module_key" ON "user_module_permissions"("userId","module")`,
+    `CREATE INDEX IF NOT EXISTS "user_module_permissions_companyId_idx" ON "user_module_permissions"("companyId")`,
+    `CREATE INDEX IF NOT EXISTS "user_module_permissions_userId_idx" ON "user_module_permissions"("userId")`,
+
+    // ── iptu_carnes + iptu_installments ── origin: 20260630000005 ─────────────
+    `CREATE TABLE IF NOT EXISTS "iptu_carnes" (
+       "id" TEXT PRIMARY KEY,
+       "companyId" TEXT NOT NULL,
+       "propertyId" TEXT,
+       "contractId" TEXT,
+       "legacyId" TEXT,
+       "year" INTEGER NOT NULL,
+       "iptuCode" TEXT,
+       "totalAmount" DECIMAL(12,2) NOT NULL,
+       "installments" INTEGER NOT NULL,
+       "chargeToTenant" BOOLEAN NOT NULL DEFAULT true,
+       "status" TEXT NOT NULL DEFAULT 'OPEN',
+       "notes" TEXT,
+       "createdBy" TEXT,
+       "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+       "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+     )`,
+    `CREATE INDEX IF NOT EXISTS "iptu_carnes_companyId_idx" ON "iptu_carnes"("companyId")`,
+    `CREATE INDEX IF NOT EXISTS "iptu_carnes_propertyId_idx" ON "iptu_carnes"("propertyId")`,
+    `CREATE INDEX IF NOT EXISTS "iptu_carnes_year_idx" ON "iptu_carnes"("year")`,
+    `CREATE TABLE IF NOT EXISTS "iptu_installments" (
+       "id" TEXT PRIMARY KEY,
+       "carneId" TEXT NOT NULL,
+       "number" INTEGER NOT NULL,
+       "dueDate" TIMESTAMPTZ NOT NULL,
+       "amount" DECIMAL(12,2) NOT NULL,
+       "status" TEXT NOT NULL DEFAULT 'PENDING',
+       "paidAt" TIMESTAMPTZ,
+       "rentalId" TEXT,
+       "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+       "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+     )`,
+    `CREATE UNIQUE INDEX IF NOT EXISTS "iptu_installments_carneId_number_key" ON "iptu_installments"("carneId","number")`,
+    `CREATE INDEX IF NOT EXISTS "iptu_installments_carneId_idx" ON "iptu_installments"("carneId")`,
+    `CREATE INDEX IF NOT EXISTS "iptu_installments_status_idx" ON "iptu_installments"("status")`,
+    `DO $$ BEGIN
+       IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'iptu_installments_carneId_fkey') THEN
+         ALTER TABLE "iptu_installments" ADD CONSTRAINT "iptu_installments_carneId_fkey"
+           FOREIGN KEY ("carneId") REFERENCES "iptu_carnes"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+       END IF;
+     END $$`,
+  ]
+  for (const sql of recentMigrations) {
+    try { await prisma.$executeRawUnsafe(sql) } catch { /* already exists */ }
+  }
+
   for (const [col, type] of columns) {
     try {
       await prisma.$executeRawUnsafe(
