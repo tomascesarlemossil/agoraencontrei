@@ -36,8 +36,12 @@ async function request<T>(
 ): Promise<T> {
   const { token, timeoutMs = DEFAULT_REQUEST_TIMEOUT_MS, ...fetchOptions } = options
 
+  // Só declara Content-Type: application/json quando REALMENTE há corpo.
+  // Um DELETE (ou GET) sem body com esse header faz o Fastify rejeitar com
+  // "Body cannot be empty when content-type is set to 'application/json'".
+  const hasBody = fetchOptions.body != null
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
+    ...(hasBody && { 'Content-Type': 'application/json' }),
     ...(token && { Authorization: `Bearer ${token}` }),
     ...(fetchOptions.headers as Record<string, string>),
   }
