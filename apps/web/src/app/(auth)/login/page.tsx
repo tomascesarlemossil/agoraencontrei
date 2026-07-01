@@ -203,6 +203,11 @@ export default function LoginPage() {
               Entrar
             </Button>
             <p className="text-sm text-muted-foreground text-center">
+              <Link href="/esqueci-senha" className="text-primary hover:underline font-medium">
+                Esqueci minha senha
+              </Link>
+            </p>
+            <p className="text-sm text-muted-foreground text-center">
               Não tem conta?{' '}
               <Link href="/register" className="text-primary hover:underline font-medium">
                 Criar conta

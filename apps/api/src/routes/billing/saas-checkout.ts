@@ -310,6 +310,53 @@ export default async function saasBillingRoutes(app: FastifyInstance) {
       // Link pagável real = invoiceUrl da 1ª cobrança da assinatura.
       const invoiceUrl = await getSubscriptionInvoiceUrl(subscription.id)
 
+      // Confirmação imediata do cadastro (best-effort, não-fatal). O link para
+      // definir a senha só sai depois do pagamento confirmado (via webhook),
+      // aqui apenas avisamos que recebemos o cadastro e incluímos o link de
+      // pagamento se houver.
+      try {
+        const paymentLine = invoiceUrl
+          ? `\n\n*Link para pagamento:*\n${invoiceUrl}`
+          : ''
+        const confirmMsg =
+          `Recebemos seu cadastro do plano ${plan.name}. ` +
+          `Assim que o pagamento for confirmado você recebe o link para definir sua senha e acessar.`
+
+        // E-mail
+        try {
+          const { sendEmail, isEmailConfigured } = await import('../../services/email.service.js')
+          if (isEmailConfigured()) {
+            const html = `
+              <div style="font-family:system-ui,-apple-system,sans-serif;max-width:560px;margin:0 auto;padding:32px;background:#f8f6f1;color:#1B2B5B">
+                <h1 style="color:#1B2B5B;margin:0 0 8px">Cadastro recebido!</h1>
+                <p style="margin:0 0 16px;color:#475569">${confirmMsg}</p>
+                ${invoiceUrl ? `<div style="text-align:center;margin:24px 0"><a href="${invoiceUrl}" style="display:inline-block;background:#C9A84C;color:#1B2B5B;font-weight:700;padding:12px 24px;border-radius:10px;text-decoration:none">Concluir pagamento →</a></div><p style="margin:0 0 16px;word-break:break-all;color:#475569">${invoiceUrl}</p>` : ''}
+                <p style="margin:24px 0 0;font-size:13px;color:#64748b">Qualquer dúvida, responda este e-mail.</p>
+              </div>`
+            await sendEmail({
+              to: body.customer.email,
+              subject: `Recebemos seu cadastro — Plano ${plan.name}`,
+              html,
+            })
+          }
+        } catch (e: any) {
+          app.log.error({ err: e }, '[saas-billing] confirmation email failed')
+        }
+
+        // WhatsApp
+        const notifyPhone = body.customer.mobilePhone || body.customer.phone
+        if (notifyPhone) {
+          try {
+            const { sendWhatsappText } = await import('../../services/whatsapp-notify.service.js')
+            await sendWhatsappText(notifyPhone, `✅ *AgoraEncontrei*\n\n${confirmMsg}${paymentLine}`)
+          } catch (e: any) {
+            app.log.error({ err: e }, '[saas-billing] confirmation whatsapp failed')
+          }
+        }
+      } catch (e: any) {
+        app.log.error({ err: e }, '[saas-billing] checkout confirmation notify failed')
+      }
+
       return reply.status(201).send({
         success: true,
         data: {
