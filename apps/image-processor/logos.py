@@ -16,6 +16,7 @@ O logo e sempre armazenado internamente como `logo.png` (RGBA). Isso:
 from __future__ import annotations
 import io
 import json
+import os
 import uuid
 from datetime import datetime
 from pathlib import Path
@@ -24,8 +25,12 @@ from typing import Dict, List, Optional
 from PIL import Image
 
 
-LOGOS_DIR = Path(__file__).parent / "logos_store"
-LOGOS_DIR.mkdir(exist_ok=True)
+# Diretorio de armazenamento dos logos. Configuravel via LOGOS_STORE_DIR para
+# apontar para um volume PERSISTENTE (ex.: no Railway, monte um volume e
+# defina LOGOS_STORE_DIR=/data/logos). Sem isso, o padrao fica no filesystem
+# do container — que e efemero e perde os logos a cada redeploy.
+LOGOS_DIR = Path(os.environ.get("LOGOS_STORE_DIR") or (Path(__file__).parent / "logos_store"))
+LOGOS_DIR.mkdir(parents=True, exist_ok=True)
 INDEX_PATH = LOGOS_DIR / "index.json"
 
 
