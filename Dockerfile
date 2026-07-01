@@ -41,6 +41,12 @@ RUN pnpm --filter @agoraencontrei/tomas-knowledge build
 # Build API
 RUN pnpm --filter @agoraencontrei/api build
 
+# Guarda de boot: falha o build se algum módulo de rota tiver import quebrado
+# (export removido, caminho errado). Sem isto, um erro assim só aparece como
+# crash-loop 502 em runtime — foi a causa do incidente de 01/07. Falhando aqui,
+# o Railway mantém o último deploy saudável em vez de subir algo que não liga.
+RUN node apps/api/scripts/verify-route-imports.mjs
+
 EXPOSE 3100
 
 # Sobe a API direto. NÃO rodar `prisma migrate deploy` aqui: o banco de
