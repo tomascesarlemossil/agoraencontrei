@@ -19,6 +19,7 @@ import {
   findOrCreateCustomer,
   createSubscription,
   createCharge,
+  getSubscriptionInvoiceUrl,
   type AsaasBillingType,
 } from '../../services/asaas.service.js'
 import { isSubdomainAvailable } from '../../services/tenant.service.js'
@@ -306,6 +307,9 @@ export default async function saasBillingRoutes(app: FastifyInstance) {
         },
       }).catch(() => {})
 
+      // Link pagável real = invoiceUrl da 1ª cobrança da assinatura.
+      const invoiceUrl = await getSubscriptionInvoiceUrl(subscription.id)
+
       return reply.status(201).send({
         success: true,
         data: {
@@ -317,7 +321,7 @@ export default async function saasBillingRoutes(app: FastifyInstance) {
           asaasSubscriptionId: subscription.id,
           // Client deve redirecionar para a página de sucesso (que mostra
           // próximos passos) e em paralelo abrir o link do Asaas.
-          paymentUrl: `https://www.asaas.com/c/${subscription.id}`,
+          paymentUrl: invoiceUrl,
           successUrl: `/checkout/sucesso?ref=${encodeURIComponent(body.subdomain)}`,
           loginUrl: '/login',
           // Não devolvemos a senha — ela vai pelo e-mail/WhatsApp do
@@ -445,6 +449,7 @@ export default async function saasBillingRoutes(app: FastifyInstance) {
       const dueDate = nextDue.toISOString().split('T')[0]
 
       let chargeId: string
+      let paymentUrl: string | null = null
 
       if (mod.billingType === 'recurring') {
         // Create recurring subscription for the module
@@ -458,6 +463,7 @@ export default async function saasBillingRoutes(app: FastifyInstance) {
           externalReference: `module:${tenant.id}:${mod.slug}`,
         })
         chargeId = sub.id
+        paymentUrl = await getSubscriptionInvoiceUrl(sub.id)
       } else {
         // Create one-time charge
         const charge = await createCharge({
@@ -469,6 +475,7 @@ export default async function saasBillingRoutes(app: FastifyInstance) {
           externalReference: `module:${tenant.id}:${mod.slug}`,
         })
         chargeId = charge.id
+        paymentUrl = charge.invoiceUrl ?? null
       }
 
       // 6. Create activation record in pending_payment status
@@ -509,7 +516,7 @@ export default async function saasBillingRoutes(app: FastifyInstance) {
           price,
           billingType: mod.billingType,
           asaasChargeId: chargeId,
-          paymentUrl: `https://www.asaas.com/c/${chargeId}`,
+          paymentUrl,
           message: 'Cobrança gerada! O módulo será ativado após confirmação do pagamento.',
         },
       })
@@ -582,6 +589,7 @@ export default async function saasBillingRoutes(app: FastifyInstance) {
       const dueDate = nextDue.toISOString().split('T')[0]
 
       let chargeId: string
+      let paymentUrl: string | null = null
       if (pkg.billingType === 'recurring') {
         const sub = await createSubscription({
           customer: asaasCustomerId,
@@ -593,6 +601,7 @@ export default async function saasBillingRoutes(app: FastifyInstance) {
           externalReference: `addon:${addon.id}`,
         })
         chargeId = sub.id
+        paymentUrl = await getSubscriptionInvoiceUrl(sub.id)
       } else {
         const charge = await createCharge({
           customer: asaasCustomerId,
@@ -603,6 +612,7 @@ export default async function saasBillingRoutes(app: FastifyInstance) {
           externalReference: `addon:${addon.id}`,
         })
         chargeId = charge.id
+        paymentUrl = charge.invoiceUrl ?? null
       }
 
       // 3. Vincula a cobrança ao add-on.
@@ -633,7 +643,7 @@ export default async function saasBillingRoutes(app: FastifyInstance) {
           price: pkg.price,
           billingType: pkg.billingType,
           asaasChargeId: chargeId,
-          paymentUrl: `https://www.asaas.com/c/${chargeId}`,
+          paymentUrl,
           message: 'Cobrança gerada! O pacote será ativado após a confirmação do pagamento.',
         },
       })
