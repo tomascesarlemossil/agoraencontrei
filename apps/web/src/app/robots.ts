@@ -46,13 +46,12 @@ export default function robots(): MetadataRoute.Robots {
       { userAgent: 'Bytespider', disallow: '/' },
     ],
     sitemap: [
-      // Índice-mestre: aponta para todos os sub-sitemaps paginados
-      // (cidades, bairros, comparações, leilões) — descoberta completa.
+      // Índice-mestre: aponta para todos os sub-sitemaps
+      // (core fatiado em /sitemap/{id}.xml + cidades, bairros, comparações,
+      // leilões paginados) — descoberta completa.
       `${WEB_URL}/sitemap-index.xml`,
       // Sitemap dedicado de Franca (máxima prioridade)
       `${WEB_URL}/sitemap-franca.xml`,
-      // Sitemap core (páginas estáticas + landings + imóveis/blog dinâmicos)
-      `${WEB_URL}/sitemap.xml`,
       `${WEB_URL}/api/sitemap/blog`,
     ],
     host: WEB_URL,

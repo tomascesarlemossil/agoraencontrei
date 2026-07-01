@@ -1,5 +1,8 @@
 User-agent: *
 Allow: /
+# Sitemaps vivem em /api/sitemap/* — liberados explicitamente (o Disallow
+# /api/ abaixo não deve bloquear a leitura dos sub-sitemaps pelo crawler).
+Allow: /api/sitemap/
 
 # Disallow admin/private areas
 Disallow: /dashboard/
@@ -10,12 +13,11 @@ Disallow: /_next/
 # Specific Googlebot rules
 User-agent: Googlebot
 Allow: /
+Allow: /api/sitemap/
 Disallow: /dashboard/
 Disallow: /api/
 
-# Crawl delay
-Crawl-delay: 1
-
-# Host & Sitemap
+# Host & Sitemaps
 Host: https://www.agoraencontrei.com.br
-Sitemap: https://www.agoraencontrei.com.br/sitemap.xml
+Sitemap: https://www.agoraencontrei.com.br/sitemap-index.xml
+Sitemap: https://www.agoraencontrei.com.br/sitemap-franca.xml
