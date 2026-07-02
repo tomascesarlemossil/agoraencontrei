@@ -76,7 +76,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
 async function fetchAuctions(bairro: string, cidade: string) {
   // Try API
   try {
-    const res = await fetch(`${API_URL}/api/v1/auctions?city=${encodeURIComponent(cidade)}&search=${encodeURIComponent(bairro)}&limit=20`, { next: { revalidate: 3600 } })
+    const res = await fetch(`${API_URL}/api/v1/auctions?city=${encodeURIComponent(cidade)}&search=${encodeURIComponent(bairro)}&limit=20`, { next: { revalidate: 3600 }, signal: AbortSignal.timeout(5000) })
     if (res.ok) { const d = await res.json(); if (d.data?.length > 0) return d.data }
   } catch {}
   // Try Supabase
@@ -84,7 +84,7 @@ async function fetchAuctions(bairro: string, cidade: string) {
     try {
       const res = await fetch(
         `${SUPABASE_URL}/rest/v1/auctions?select=*&or=(neighborhood.ilike.*${encodeURIComponent(bairro)}*,city.ilike.*${encodeURIComponent(cidade)}*)&status=not.in.(CANCELLED,CLOSED)&limit=20`,
-        { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }, next: { revalidate: 3600 } }
+        { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }, next: { revalidate: 3600 }, signal: AbortSignal.timeout(5000) }
       )
       if (res.ok) return res.json()
     } catch {}

@@ -29,7 +29,7 @@ export async function generateMetadata(props: { params: Promise<{ cidade: string
 
 async function fetchProps(cityName: string) {
   try {
-    const r = await fetch(`${API_URL}/api/v1/public/properties?city=${encodeURIComponent(cityName)}&purpose=SALE&limit=12`, { next: { revalidate: 3600 } })
+    const r = await fetch(`${API_URL}/api/v1/public/properties?city=${encodeURIComponent(cityName)}&purpose=SALE&limit=12`, { next: { revalidate: 3600 }, signal: AbortSignal.timeout(5000) })
     if (r.ok) { const d = await r.json(); return d.data || [] }
   } catch {} return []
 }

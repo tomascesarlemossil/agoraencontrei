@@ -77,7 +77,7 @@ async function fetchProperties(cityName: string, cat: SeoCategoria) {
     const qs = new URLSearchParams({ city: cityName, limit: '9' })
     if (cat.apiFilter.purpose) qs.set('purpose', cat.apiFilter.purpose)
     if (cat.apiFilter.type) qs.set('type', cat.apiFilter.type)
-    const r = await fetch(`${API_URL}/api/v1/public/properties?${qs}`, { next: { revalidate: 3600 } })
+    const r = await fetch(`${API_URL}/api/v1/public/properties?${qs}`, { next: { revalidate: 3600 }, signal: AbortSignal.timeout(5000) })
     if (r.ok) { const d = await r.json(); return d.data || [] }
   } catch {}
   return []

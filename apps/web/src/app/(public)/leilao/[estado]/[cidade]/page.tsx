@@ -65,7 +65,7 @@ async function fetchData(
   try {
     const res = await fetch(
       `${API_URL}/api/v1/public/property-intelligence?city=${cidade}&state=${estado}`,
-      { next: { revalidate: 3600 } },
+      { next: { revalidate: 3600 }, signal: AbortSignal.timeout(5000) },
     )
     if (!res.ok) throw new Error(`API ${res.status}`)
     return (await res.json()) as PropertyIntel

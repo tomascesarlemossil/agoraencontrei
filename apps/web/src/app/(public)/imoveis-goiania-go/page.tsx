@@ -26,7 +26,7 @@ const BAIRROS = ['Setor', 'Bueno', 'Setor', 'Marista', 'Jardim', 'Goiás', 'Seto
 
 async function fetchProperties() {
   try {
-    const res = await fetch(`${API_URL}/api/v1/public/properties?city=Goiânia&limit=12`, { next: { revalidate: 3600 } })
+    const res = await fetch(`${API_URL}/api/v1/public/properties?city=Goiânia&limit=12`, { next: { revalidate: 3600 }, signal: AbortSignal.timeout(5000) })
     if (!res.ok) return []
     const data = await res.json()
     return data.data || []
@@ -35,7 +35,7 @@ async function fetchProperties() {
 
 async function fetchAuctions() {
   try {
-    const res = await fetch(`${API_URL}/api/v1/auctions?city=Goiânia&limit=6`, { next: { revalidate: 3600 } })
+    const res = await fetch(`${API_URL}/api/v1/auctions?city=Goiânia&limit=6`, { next: { revalidate: 3600 }, signal: AbortSignal.timeout(5000) })
     if (!res.ok) return []
     const data = await res.json()
     return data.data || []
