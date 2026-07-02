@@ -82,23 +82,30 @@ export default async function whatsappRoutes(app: FastifyInstance) {
 
     await whatsappService.sendText(to, text)
 
-    // Save outbound message
+    // Save outbound message — SEGURANÇA (multi-tenant): só grava se a conversa
+    // for da empresa do usuário (antes: qualquer usuário escrevia/atualizava a
+    // conversa de outra empresa via conversationId do body).
     if (conversationId) {
-      await app.prisma.message.create({
-        data: {
-          conversationId,
-          direction: 'outbound',
-          type: 'text',
-          content: text,
-          sentBy: req.user.sub,
-          status: 'sent',
-        },
+      const conv = await app.prisma.conversation.findFirst({
+        where: { id: conversationId, companyId: req.user.cid }, select: { id: true },
       })
+      if (conv) {
+        await app.prisma.message.create({
+          data: {
+            conversationId,
+            direction: 'outbound',
+            type: 'text',
+            content: text,
+            sentBy: req.user.sub,
+            status: 'sent',
+          },
+        })
 
-      await app.prisma.conversation.update({
-        where: { id: conversationId },
-        data: { lastMessage: text, lastMessageAt: new Date() },
-      })
+        await app.prisma.conversation.update({
+          where: { id: conversationId },
+          data: { lastMessage: text, lastMessageAt: new Date() },
+        })
+      }
     }
 
     return reply.send({ success: true })

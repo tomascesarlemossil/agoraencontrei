@@ -444,6 +444,16 @@ export default async function saasBillingRoutes(app: FastifyInstance) {
       moduleSlug: z.string(),
     }).parse(req.body)
 
+    // SEGURANÇA (multi-tenant): só o dono do tenant (ou SUPER_ADMIN) compra
+    // add-on para ele (antes: qualquer usuário gerava cobrança/ativação contra
+    // o tenant de outra empresa informando o tenantId no corpo).
+    const ownerTenant = await prisma.tenant.findUnique({
+      where: { id: body.tenantId }, select: { ownerId: true },
+    }).catch(() => null)
+    if (!ownerTenant || ((ownerTenant as any).ownerId !== req.user.sub && req.user.role !== 'SUPER_ADMIN')) {
+      return reply.status(404).send({ error: 'TENANT_NOT_FOUND' })
+    }
+
     // 1. Get module definition — price from DB
     const mod = await prisma.moduleDefinition.findUnique({
       where: { slug: body.moduleSlug },
@@ -720,6 +730,13 @@ export default async function saasBillingRoutes(app: FastifyInstance) {
     }).catch(() => null)
 
     if (!tenant) {
+      return reply.status(404).send({ error: 'TENANT_NOT_FOUND' })
+    }
+
+    // SEGURANÇA (multi-tenant): só o dono do tenant (ou SUPER_ADMIN) vê o billing
+    // (antes: qualquer usuário autenticado lia plano/módulos/pedidos de qualquer
+    // tenant informando o tenantId).
+    if ((tenant as any).ownerId !== req.user.sub && req.user.role !== 'SUPER_ADMIN') {
       return reply.status(404).send({ error: 'TENANT_NOT_FOUND' })
     }
 

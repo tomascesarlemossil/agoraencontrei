@@ -486,6 +486,9 @@ export default async function auctionsRoutes(app: FastifyInstance) {
   // and Fastify's AJV in strict mode refused to parse. The schema below
   // declares the body as an empty object so an empty `{}` succeeds.
   app.post('/force-scrape', {
+    // SEGURANÇA: exige autenticação — antes era pública, permitindo mutação de
+    // leilões + disparo do scraper (vetor de DoS) por qualquer um.
+    preHandler: [app.authenticate],
     schema: {
       body: {
         type: 'object',

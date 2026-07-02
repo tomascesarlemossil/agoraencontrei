@@ -114,7 +114,12 @@ export default async function alertsRoutes(app: FastifyInstance) {
     } else {
       try {
         await app.authenticate(req, reply)
-        authorized = true
+        // SEGURANÇA (multi-tenant): usuário autenticado só apaga alerta da
+        // PRÓPRIA empresa (antes: qualquer usuário apagava alerta de qualquer
+        // empresa). SUPER_ADMIN e alertas globais (companyId null) liberados.
+        if (req.user.role === 'SUPER_ADMIN' || alert.companyId == null || alert.companyId === req.user.cid) {
+          authorized = true
+        }
       } catch {
         // not authenticated
       }
