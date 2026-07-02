@@ -183,11 +183,15 @@ export default async function leadsRoutes(app: FastifyInstance) {
       },
     })
 
-    // Link to property if provided
+    // Link to property if provided — SEGURANÇA (multi-tenant): só vincula se o
+    // imóvel for da própria empresa (antes: aceitava propertyId de outra empresa).
     if (body.propertyId) {
-      await app.prisma.leadProperty.create({
-        data: { leadId: lead.id, propertyId: body.propertyId },
-      }).catch(() => {})
+      const owned = await app.prisma.property.count({ where: { id: body.propertyId, companyId: req.user.cid } })
+      if (owned > 0) {
+        await app.prisma.leadProperty.create({
+          data: { leadId: lead.id, propertyId: body.propertyId },
+        }).catch(() => {})
+      }
     }
 
     await app.prisma.activity.create({
