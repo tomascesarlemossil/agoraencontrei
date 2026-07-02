@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { LoadMoreProperties } from '../../LoadMoreProperties'
 import { canonicalFromCitySlug, canonicalFromCityUf } from '@/lib/seo-canonical'
+import { isBuildPhase } from '@/lib/ssg-runtime'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 
@@ -368,6 +369,10 @@ function cityToSlug(city: string): string {
 async function fetchCityData(citySlug: string) {
   const cidade = CIDADES[citySlug]
   const cityName = cidade?.nome ?? slugToCity(citySlug)
+
+  // Não bloqueia o build na API — ISR preenche os imóveis/bairros na 1ª
+  // revalidação. (Estes fetches nem tinham timeout, então travavam o build.)
+  if (isBuildPhase()) return { properties: [], total: 0, neighborhoods: [], cityName, citySlug }
 
   try {
     const [propertiesRes, neighborhoodsRes] = await Promise.all([

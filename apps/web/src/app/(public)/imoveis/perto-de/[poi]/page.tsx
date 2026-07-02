@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { MapPin, Home, School, Hospital, ShoppingBag, Building, MessageCircle, ArrowRight, Navigation } from 'lucide-react'
+import { isBuildPhase } from '@/lib/ssg-runtime'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 const WEB_URL = 'https://www.agoraencontrei.com.br'
@@ -80,6 +81,7 @@ export function generateStaticParams() {
 }
 
 async function fetchNearbyProperties(city: string, neighborhood?: string) {
+  if (isBuildPhase()) return []  // não bloqueia o build na API; ISR preenche depois
   try {
     const params = new URLSearchParams({ city, limit: '12', sortBy: 'createdAt', sortOrder: 'desc' })
     if (neighborhood) params.set('neighborhood', neighborhood)

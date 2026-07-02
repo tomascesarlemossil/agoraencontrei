@@ -7,6 +7,7 @@ import { Metadata } from 'next'
 import Link from 'next/link'
 import { generateAllBlocks } from '@/lib/seo-content-blocks'
 import { SEOFooterLinks } from '@/components/SEOFooterLinks'
+import { isBuildPhase } from '@/lib/ssg-runtime'
 
 const API_URL =
   process.env.NEXT_PUBLIC_API_URL ?? 'https://api-production-669c.up.railway.app'
@@ -62,6 +63,22 @@ async function fetchData(
   cidade: string,
   estado: string,
 ): Promise<PropertyIntel> {
+  // Não bloqueia o build na API — usa o fallback estático; ISR busca os dados
+  // reais na 1ª revalidação.
+  if (isBuildPhase()) {
+    return {
+      cityName: slugToName(cidade),
+      stateName: estado.toUpperCase(),
+      avgDiscount: 35,
+      avgPriceMarket: 4500,
+      avgPriceAuction: 2925,
+      avgRent: 1800,
+      totalListings: 12,
+      population: 0,
+      idhm: 0,
+      listings: [],
+    }
+  }
   try {
     const res = await fetch(
       `${API_URL}/api/v1/public/property-intelligence?city=${cidade}&state=${estado}`,

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { MapPin, Home, Building, TrendingUp, MessageCircle, ArrowRight, Search } from 'lucide-react'
+import { isBuildPhase } from '@/lib/ssg-runtime'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 const WEB_URL = 'https://www.agoraencontrei.com.br'
@@ -74,6 +75,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
 }
 
 async function fetchAuctions(bairro: string, cidade: string) {
+  if (isBuildPhase()) return []  // não bloqueia o build na API; ISR preenche depois
   // Try API
   try {
     const res = await fetch(`${API_URL}/api/v1/auctions?city=${encodeURIComponent(cidade)}&search=${encodeURIComponent(bairro)}&limit=20`, { next: { revalidate: 3600 }, signal: AbortSignal.timeout(5000) })
