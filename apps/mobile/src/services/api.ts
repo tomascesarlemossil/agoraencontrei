@@ -66,25 +66,117 @@ export const Catalog = {
   get: () => api('/api/v1/public/catalog'),
 }
 
+/**
+ * Normaliza um imóvel da API pública para os campos que a UI do app usa.
+ * A API devolve `coverImage`/`images` (URLs) e `totalArea`; o card e a tela de
+ * detalhe leem `imageUrl` e `area`. Mapeamos aqui para não espalhar isso na UI.
+ */
+function normalizeProperty(p: any) {
+  if (!p || typeof p !== 'object') return p
+  return {
+    ...p,
+    imageUrl: p.imageUrl || p.coverImage || (Array.isArray(p.images) ? p.images[0] : undefined),
+    images: Array.isArray(p.images) ? p.images : (p.coverImage ? [p.coverImage] : []),
+    area: p.area ?? p.totalArea ?? p.builtArea ?? p.landArea ?? undefined,
+  }
+}
+
 export const Properties = {
-  list: (params: Record<string, string | number> = {}) => {
-    const qs = new URLSearchParams(Object.entries(params).map(([k, v]) => [k, String(v)])).toString()
-    return api(`/api/v1/public/free-listing${qs ? `?${qs}` : ''}`)
+  // Marketplace público (mesma rota da web). Aceita `q`/`search`, `city`,
+  // `limit` (máx. 50), `page`, `ids` (CSV). Resposta: { data, meta }.
+  list: async (params: Record<string, string | number> = {}) => {
+    const mapped: Record<string, string> = {}
+    for (const [k, v] of Object.entries(params)) {
+      if (v === undefined || v === null || v === '') continue
+      mapped[k === 'q' ? 'search' : k] = String(v)
+    }
+    const qs = new URLSearchParams(mapped).toString()
+    const res: any = await api(`/api/v1/public/properties${qs ? `?${qs}` : ''}`)
+    const list = Array.isArray(res?.data) ? res.data : (Array.isArray(res) ? res : [])
+    return { data: list.map(normalizeProperty), meta: res?.meta }
   },
-  get: (id: string | number) => api(`/api/v1/public/free-listing/${id}`),
+  // Busca 1 imóvel por ID (usado nos favoritos) via filtro `ids` da lista —
+  // a rota de detalhe é por slug, mas os favoritos guardam o ID.
+  get: async (id: string | number) => {
+    const res: any = await api(`/api/v1/public/properties?ids=${encodeURIComponent(String(id))}&limit=1`)
+    const item = Array.isArray(res?.data) ? res.data[0] : null
+    return item ? normalizeProperty(item) : null
+  },
+  // Detalhe por slug (objeto único), quando houver slug em vez do objeto completo.
+  bySlug: async (slug: string) => normalizeProperty(await api(`/api/v1/public/properties/${encodeURIComponent(slug)}`)),
+}
+
+// "12/05/2026 - 11:53" (formato do leilão) → ISO, para o contador de dias.
+function parseBrDateTime(s: any): string | undefined {
+  if (typeof s !== 'string') return undefined
+  const m = s.match(/(\d{2})\/(\d{2})\/(\d{4})(?:\s*-\s*(\d{2}):(\d{2}))?/)
+  if (!m) return undefined
+  const [, d, mo, y, hh = '00', mi = '00'] = m
+  const dt = new Date(Number(y), Number(mo) - 1, Number(d), Number(hh), Number(mi))
+  return isNaN(dt.getTime()) ? undefined : dt.toISOString()
+}
+
+// A API de leilões devolve coverImageUrl/price/link/auctionDate; a tela usa
+// imageUrl/minBid/url/endsAt/title. Mapeamos aqui.
+function normalizeAuction(a: any) {
+  if (!a || typeof a !== 'object') return a
+  return {
+    ...a,
+    title: a.title || a.description || a.propertyType || 'Imóvel em leilão',
+    imageUrl: a.imageUrl || a.coverImageUrl || (Array.isArray(a.images) ? a.images[0] : undefined),
+    minBid: a.minBid ?? a.price ?? undefined,
+    url: a.url || a.link,
+    endsAt: a.endsAt || parseBrDateTime(a.auctionDate),
+  }
 }
 
 export const Auctions = {
-  list: (params: Record<string, string | number> = {}) => {
+  list: async (params: Record<string, string | number> = {}) => {
     const qs = new URLSearchParams(Object.entries(params).map(([k, v]) => [k, String(v)])).toString()
-    return api(`/api/v1/public/auctions${qs ? `?${qs}` : ''}`)
+    const res: any = await api(`/api/v1/public/auctions${qs ? `?${qs}` : ''}`)
+    const list = Array.isArray(res?.items) ? res.items : (Array.isArray(res?.data) ? res.data : (Array.isArray(res) ? res : []))
+    return { data: list.map(normalizeAuction), meta: { total: res?.total, updatedAt: res?.updatedAt } }
   },
 }
 
+function median(nums: number[]): number {
+  if (!nums.length) return 0
+  const s = [...nums].sort((a, b) => a - b)
+  const mid = Math.floor(s.length / 2)
+  return s.length % 2 ? s[mid] : (s[mid - 1] + s[mid]) / 2
+}
+
 export const Valuation = {
-  // Avaliação imediata (1ª grátis por CPF) — mesma rota pública da web.
-  create: (payload: Record<string, unknown>) =>
-    api('/api/v1/public/valuation', { method: 'POST', body: payload }),
+  /**
+   * Avaliação imediata pelo MÉTODO COMPARATIVO usando imóveis reais à venda na
+   * cidade (mesma base da web). Não existe endpoint que devolva um valor pronto
+   * — a web calcula no cliente —, então buscamos comparáveis e estimamos por
+   * mediana de R$/m² × área. Retorna { estimatedValue }.
+   */
+  create: async (payload: Record<string, any>) => {
+    const area = Number(payload.area)
+    if (!area || area <= 0) throw new ApiError('Informe a área (m²) para estimar o valor.', 400)
+
+    const fetchComps = async (withPurpose: boolean) => {
+      const q: Record<string, string> = { limit: '50' }
+      if (payload.city) q.city = String(payload.city)
+      if (withPurpose) q.purpose = 'SALE'
+      const res: any = await api(`/api/v1/public/properties?${new URLSearchParams(q).toString()}`)
+      return (Array.isArray(res?.data) ? res.data : [])
+        .map((p: any) => ({ price: Number(p.price), a: Number(p.totalArea || p.builtArea || p.landArea) }))
+        .filter((x: any) => x.price > 0 && x.a > 0)
+    }
+
+    let comps = await fetchComps(true)
+    if (comps.length < 3) comps = await fetchComps(false) // amplia a amostra
+    if (comps.length < 1) {
+      throw new ApiError('Ainda não temos imóveis comparáveis nessa cidade para estimar. Fale com um corretor.', 404)
+    }
+
+    const ppm = median(comps.map((x: any) => x.price / x.a))
+    const estimatedValue = Math.round((ppm * area) / 1000) * 1000 // arredonda ao milhar
+    return { estimatedValue, comparables: comps.length, pricePerM2: Math.round(ppm) }
+  },
 }
 
 export const Auth = {
