@@ -64,9 +64,28 @@ pnpm --filter @agoraencontrei/desktop dist   # gera dist/Sistema Administrador A
 e o mesmo código** da versão nuvem rodam offline — sem reescrever nada.
 Motivo: o schema usa arrays/`Decimal`/enums nativos do Postgres, incompatíveis com SQLite no Prisma.
 
+## Schema do banco: derivado do schema.prisma (não das migrations)
+
+O `bundle-server.mjs` gera `server/prisma/all-migrations.sql` com
+`prisma migrate diff --from-empty --to-schema-datamodel schema.prisma --script`,
+ou seja, o **DDL completo derivado do schema** (fonte da verdade, o mesmo da
+nuvem). **Não** concatenamos os `migration.sql`: a base do projeto foi criada
+com `prisma db push`, então os arquivos de migration só cobrem mudanças
+incrementais — faltariam ~33 tabelas (incl. `owner_repasses`,
+`scheduled_repasses`, `financings`, `proposals`, `documents`, `tenants`…), o que
+deixaria o banco offline **quebrado**. Com o diff, o 1º boot cria 115/115 tabelas.
+
+## Ícone e artes do instalador
+
+`installer-assets/` contém o ícone do app/instalador (`icon.ico`, gerado do logo
+oficial `apps/web/public/logo-agoraencontrei.png`) e as artes do assistente NSIS
+(`installerSidebar.bmp` com marca + site + contato, `installerHeader.bmp`). As
+telas `renderer/*.html` trazem o logo (`renderer/logo.png`) e os dados de
+contato (site, telefone, e-mail) para atendimento/propaganda durante a instalação.
+
 ## Roadmap para 100% offline
 
-1. ✅ **Banco:** Postgres embarcado + migrations (`db.js`).
+1. ✅ **Banco:** Postgres embarcado + schema completo via migrate diff (`db.js`).
 2. **Servidor embarcado:** buildar os apps (`pnpm build`), rodar `pnpm --filter @agoraencontrei/desktop bundle`
    (monta `./server`) e ativar o `spawn` do servidor em `startEmbeddedServer()`.
 3. **Importador local:** embutir o leitor DBF/Paradox (`scripts/imobili-migrator/`) na tela de importação.

@@ -17,11 +17,12 @@
     "appId": "com.agoraencontrei.software",
     "productName": "Sistema Administrador AgoraEncontrei",
     "artifactName": "AgoraEncontrei-Software-Setup.${ext}",
+    "copyright": "© Imobiliária Lemos — AgoraEncontrei",
     "npmRebuild": false,
-    "directories": { "output": "dist" },
+    "directories": { "output": "dist", "buildResources": "installer-assets" },
     "asar": false,
     "files": [
-      "main.js", "preload.js", "license.js", "db.js", "renderer/**", "node_modules/**",
+      "main.js", "preload.js", "license.js", "db.js", "renderer/**", "installer-assets/icon.ico", "node_modules/**",
       "!**/*.map", "!**/*.d.ts", "!**/*.md", "!**/*.markdown",
       "!**/__tests__/**", "!**/.github/**"
     ],
@@ -39,13 +40,22 @@
       ]
     }],
     "win": {
-      "target": ["nsis"]
+      "target": ["nsis"],
+      "icon": "installer-assets/icon.ico"
     },
     "nsis": {
       "oneClick": false,
+      "perMachine": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
-      "shortcutName": "Sistema Administrador AgoraEncontrei"
+      "createStartMenuShortcut": true,
+      "shortcutName": "Sistema Administrador AgoraEncontrei",
+      "installerIcon": "installer-assets/icon.ico",
+      "uninstallerIcon": "installer-assets/icon.ico",
+      "installerHeaderIcon": "installer-assets/icon.ico",
+      "installerHeader": "installer-assets/installerHeader.bmp",
+      "installerSidebar": "installer-assets/installerSidebar.bmp",
+      "uninstallerSidebar": "installer-assets/installerSidebar.bmp"
     }
   },
   "devDependencies": {
