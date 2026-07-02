@@ -169,6 +169,15 @@ export default async function dealsRoutes(app: FastifyInstance) {
     const body = CreateDealBody.parse(req.body)
     const { propertyIds, ...dealData } = body
 
+    // SEGURANÇA (multi-tenant): todos os imóveis do negócio devem ser da própria
+    // empresa (antes: propertyIds do corpo eram vinculados sem verificação).
+    if (propertyIds.length > 0) {
+      const owned = await app.prisma.property.count({ where: { id: { in: propertyIds }, companyId: req.user.cid } })
+      if (owned !== propertyIds.length) {
+        return reply.status(400).send({ error: 'INVALID_PROPERTY', message: 'Um ou mais imóveis não pertencem à sua empresa.' })
+      }
+    }
+
     const deal = await app.prisma.deal.create({
       data: {
         ...dealData,

@@ -203,6 +203,10 @@ export default async function financialAnalysisRoutes(app: FastifyInstance) {
     const where: any = {
       city: { contains: q.city, mode: 'insensitive' },
       status: { in: ['ACTIVE', 'RENTED', 'SOLD'] },
+      // SEGURANÇA (multi-tenant): comparáveis de mercado usam apenas anúncios
+      // que o dono autorizou a exibir publicamente — não expõe preços de
+      // imóveis privados/rascunho de outras empresas.
+      authorizedPublish: true,
     }
     if (q.type) where.type = q.type
     if (q.area) where.totalArea = { gte: q.area - 30, lte: q.area + 30 }

@@ -811,7 +811,12 @@ export async function getOrCreateChat(
   },
 ): Promise<string> {
   if (params.chatId) {
-    const existing = await prisma.tomasChat.findUnique({ where: { id: params.chatId } })
+    // SEGURANÇA (multi-tenant): só retoma um chat do MESMO contexto de empresa
+    // (antes: retomava qualquer chatId → anexava mensagens / handoff no chat de
+    // outra empresa). Chats anônimos têm companyId null.
+    const existing = await prisma.tomasChat.findFirst({
+      where: { id: params.chatId, companyId: params.companyId ?? null },
+    })
     if (existing) return existing.id
   }
 

@@ -183,11 +183,15 @@ export default async function leadsRoutes(app: FastifyInstance) {
       },
     })
 
-    // Link to property if provided
+    // Link to property if provided — SEGURANÇA (multi-tenant): só vincula se o
+    // imóvel for da própria empresa (antes: aceitava propertyId de outra empresa).
     if (body.propertyId) {
-      await app.prisma.leadProperty.create({
-        data: { leadId: lead.id, propertyId: body.propertyId },
-      }).catch(() => {})
+      const owned = await app.prisma.property.count({ where: { id: body.propertyId, companyId: req.user.cid } })
+      if (owned > 0) {
+        await app.prisma.leadProperty.create({
+          data: { leadId: lead.id, propertyId: body.propertyId },
+        }).catch(() => {})
+      }
     }
 
     await app.prisma.activity.create({
@@ -436,6 +440,12 @@ export default async function leadsRoutes(app: FastifyInstance) {
       description: z.string().optional(),
       scheduledAt: z.string().datetime().optional(),
     }).parse(req.body)
+
+    // SEGURANÇA (multi-tenant): confirma que o lead é da empresa do usuário
+    // antes de escrever na sua timeline / mexer no lastContactAt. Sem isto,
+    // qualquer usuário conseguia gravar atividade no lead de outra empresa.
+    const lead = await app.prisma.lead.findFirst({ where: { id, companyId: req.user.cid }, select: { id: true } })
+    if (!lead) return reply.status(404).send({ error: 'NOT_FOUND' })
 
     const activity = await app.prisma.activity.create({
       data: {

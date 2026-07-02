@@ -415,7 +415,14 @@ export async function specialistPaymentRoutes(app: FastifyInstance) {
   })
 
   // ── DELETE /cancel — Cancela assinatura ──────────────────────────────────
-  app.delete('/cancel/:specialistId', async (req, reply) => {
+  // SEGURANÇA (interino): a rota era PÚBLICA — qualquer um cancelava a
+  // assinatura de qualquer especialista pelo id. Até existir o login por
+  // magic-link do especialista (token por e-mail/WhatsApp), o cancelamento
+  // exige um admin autenticado. TODO: trocar por token do especialista.
+  app.delete('/cancel/:specialistId', { preHandler: [app.authenticate] }, async (req, reply) => {
+    if (!['SUPER_ADMIN', 'ADMIN', 'MANAGER'].includes((req as any).user?.role)) {
+      return reply.status(403).send({ error: 'FORBIDDEN' })
+    }
     const { specialistId } = req.params as { specialistId: string }
 
     if (!ASAAS_API_KEY) {

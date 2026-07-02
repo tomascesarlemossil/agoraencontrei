@@ -188,6 +188,17 @@ export default async function repasseRoutes(app: FastifyInstance) {
   }, async (req, reply) => {
     const { id } = req.params as { id: string }
 
+    // SEGURANÇA (multi-tenant): confirma que o repasse é da empresa do usuário
+    // antes de reagendar (é uma transferência de dinheiro). Sem isto, qualquer
+    // usuário reagendava o repasse de outra empresa. SUPER_ADMIN mantém acesso
+    // de plataforma.
+    if (req.user.role !== 'SUPER_ADMIN') {
+      const owned = await (app.prisma as any).scheduledRepasse.findFirst({
+        where: { id, companyId: req.user.cid }, select: { id: true },
+      })
+      if (!owned) return reply.status(404).send({ error: 'NOT_FOUND' })
+    }
+
     const repasse = await retryRepasse(app.prisma as any, id)
     return reply.send({ success: true, data: repasse })
   })

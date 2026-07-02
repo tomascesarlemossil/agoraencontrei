@@ -772,6 +772,37 @@ export default async function propertiesRoutes(app: FastifyInstance) {
     return reply.send({ success: true })
   })
 
+  // ── Bulk status change (inativar/ativar vários de uma vez) ───────────────
+  // Atalho para inativar (ou reativar) múltiplos imóveis sem abrir cada um.
+  // Escopo obrigatório por companyId — nunca toca imóvel de outra empresa.
+  app.patch('/bulk-status', {
+    preHandler: [app.authenticate],
+    schema: { tags: ['properties'] },
+  }, async (req, reply) => {
+    if (!['SUPER_ADMIN', 'ADMIN', 'MANAGER'].includes(req.user.role)) {
+      return reply.status(403).send({ error: 'FORBIDDEN' })
+    }
+    const body = z.object({
+      ids: z.array(z.string().min(1)).min(1).max(200),
+      status: z.enum(['ACTIVE', 'INACTIVE', 'SOLD', 'RENTED', 'PENDING', 'DRAFT']),
+    }).parse(req.body)
+
+    const result = await app.prisma.property.updateMany({
+      where: { id: { in: body.ids }, companyId: req.user.cid },
+      data: { status: body.status },
+    })
+
+    await createAuditLog({
+      prisma: app.prisma as any, req,
+      action: 'property.update',
+      resource: 'property',
+      resourceId: body.ids[0],
+      after: { status: body.status, count: result.count, ids: body.ids } as any,
+    })
+
+    return reply.send({ success: true, count: result.count, status: body.status })
+  })
+
   // GET /api/v1/properties/by-id/:id/leads — lead history for a property
   app.get('/by-id/:id/leads', {
     preHandler: [app.authenticate],

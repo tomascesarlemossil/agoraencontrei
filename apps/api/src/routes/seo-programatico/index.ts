@@ -587,8 +587,8 @@ ${sitemaps
   })
 
   // ── GET /admin/start-generation ─────────────────────────────────────────
-  // Trigger de geração em batch com logs de progresso — sem autenticação (admin only)
-  app.get('/admin/start-generation', async (req, reply) => {
+  // Trigger de geração em batch com logs de progresso — admin only
+  app.get('/admin/start-generation', { preHandler: [app.authenticate] }, async (req, reply) => {
     const q = req.query as Record<string, string>
     const batchSize = Math.min(parseInt(q.batch || '50', 10), 200)
     const maxBatches = parseInt(q.max_batches || '10', 10)
@@ -734,7 +734,7 @@ ${sitemaps
 
   // ── PATCH /cities/:id/ibge ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
   // Atualiza dados IBGE de uma cidade específica (usado pelo script de importação)
-  app.patch('/cities/:id/ibge', async (req, reply) => {
+  app.patch('/cities/:id/ibge', { preHandler: [app.authenticate] }, async (req, reply) => {
     const { id } = req.params as { id: string }
     const body = req.body as {
       populacao_estimada?: number | null

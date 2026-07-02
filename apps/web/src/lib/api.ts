@@ -150,6 +150,12 @@ export const propertiesApi = {
   delete: (token: string, id: string) =>
     request(`/api/v1/properties/${id}`, { method: 'DELETE', token }),
 
+  bulkUpdateStatus: (token: string, ids: string[], status: string) =>
+    request<{ success: boolean; count: number; status: string }>(
+      '/api/v1/properties/bulk-status',
+      { method: 'PATCH', token, body: JSON.stringify({ ids, status }) },
+    ),
+
   stats: (token: string) =>
     request<PropertyStats>('/api/v1/properties/stats/summary', { token }),
 }
