@@ -1,17 +1,18 @@
 /**
  * Sitemap Index dinâmico — suporta 1M+ URLs
- * Aponta para sub-sitemaps paginados por família:
+ * Aponta para sub-sitemaps por família:
  *   - sitemap-franca.xml (bairros + leilões locais) — prioridade máxima
- *   - sitemap-cidades-[page].xml (5.570 cidades × clusters)
- *   - sitemap-comparacoes-[page].xml (matriz de comparação)
+ *   - sitemap/{id}.xml   (core + landings + cidades×termos + rotas IBGE, fatiado)
+ *   - api/sitemap/cidades|comparacoes|leiloes|bairros?page=N (paginados)
  *
  * GET /sitemap-index.xml
  */
 import { NextResponse } from 'next/server'
+import { buildSitemapEntries, SITEMAP_CHUNK_SIZE } from '@/lib/sitemap-entries'
 
 const WEB_URL = 'https://www.agoraencontrei.com.br'
 
-// Estimativas de URLs por família
+// Estimativas de URLs por família servida via /api/sitemap/*
 const CIDADES_TOTAL = 5570 * 22 // 5.570 cidades × 22 clusters
 const COMPARACOES_TOTAL = 499500 // 1.000 cidades top × combinações
 const LEILAO_PAGES_TOTAL = 5570 * 27 // 5.570 cidades × 27 estados
@@ -25,8 +26,18 @@ export async function GET() {
   // 1. Sitemap dedicado de Franca (máxima prioridade)
   sitemaps.push(`<sitemap><loc>${WEB_URL}/sitemap-franca.xml</loc><lastmod>${now}</lastmod></sitemap>`)
 
-  // 2. Sitemap core (páginas estáticas, blog, etc.)
-  sitemaps.push(`<sitemap><loc>${WEB_URL}/sitemap.xml</loc><lastmod>${now}</lastmod></sitemap>`)
+  // 2. Sitemap core, fatiado pelo Next (generateSitemaps → /sitemap/{id}.xml).
+  //    Contamos os chunks a partir do mesmo builder usado em app/sitemap.ts.
+  let coreChunks = 1
+  try {
+    const entries = await buildSitemapEntries()
+    coreChunks = Math.max(1, Math.ceil(entries.length / SITEMAP_CHUNK_SIZE))
+  } catch {
+    coreChunks = 2 // fallback conservador (~66k URLs ⇒ 2 chunks de 40k)
+  }
+  for (let i = 0; i < coreChunks; i++) {
+    sitemaps.push(`<sitemap><loc>${WEB_URL}/sitemap/${i}.xml</loc><lastmod>${now}</lastmod></sitemap>`)
+  }
 
   // 3. Sitemaps de cidades (paginados)
   const cidadePages = Math.ceil(CIDADES_TOTAL / URLS_PER_SITEMAP)
@@ -51,6 +62,9 @@ export async function GET() {
   for (let i = 0; i < bairroPages; i++) {
     sitemaps.push(`<sitemap><loc>${WEB_URL}/api/sitemap/bairros?page=${i}</loc><lastmod>${now}</lastmod></sitemap>`)
   }
+
+  // 7. Blog
+  sitemaps.push(`<sitemap><loc>${WEB_URL}/api/sitemap/blog</loc><lastmod>${now}</lastmod></sitemap>`)
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">

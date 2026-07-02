@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { MapPin, Home, Search, MessageCircle, Building, TrendingUp } from 'lucide-react'
 import { UNIQUE_CITIES, PROPERTY_TYPES } from '@/data/seo-cities'
+import { canonicalFromCityUf } from '@/lib/seo-canonical'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 const WEB_URL = 'https://www.agoraencontrei.com.br'
@@ -20,7 +21,9 @@ export async function generateMetadata(props: { params: Promise<{ cidade: string
     description: `Encontre imóveis à venda em ${city.name}/${city.state}. Casas, apartamentos, terrenos e leilões com até 50% de desconto. Marketplace imobiliário #1 do Brasil.`,
     keywords: [`imóveis à venda ${city.name.toLowerCase()}`, `casas à venda ${city.name.toLowerCase()} ${city.state.toLowerCase()}`, `apartamentos ${city.name.toLowerCase()}`, `terrenos ${city.name.toLowerCase()}`, `comprar imóvel ${city.name.toLowerCase()}`],
     openGraph: { title: `Imóveis à Venda em ${city.name}/${city.state} | AgoraEncontrei`, description: `Casas, apartamentos e terrenos à venda em ${city.name}.`, type: 'website', locale: 'pt_BR', siteName: 'AgoraEncontrei' },
-    alternates: { canonical: `${WEB_URL}/imoveis-a-venda/${params.cidade}` },
+    // Consolida com a rota canônica /{estado}/{cidade}/imoveis-a-venda quando
+    // a cidade existe no IBGE; senão mantém o auto-canonical.
+    alternates: { canonical: canonicalFromCityUf(params.cidade, 'imoveis-a-venda') ?? `${WEB_URL}/imoveis-a-venda/${params.cidade}` },
   }
 }
 

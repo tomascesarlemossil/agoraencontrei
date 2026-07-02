@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { LoadMoreProperties } from '../../LoadMoreProperties'
+import { canonicalFromCitySlug, canonicalFromCityUf } from '@/lib/seo-canonical'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 
@@ -434,7 +435,12 @@ export async function generateMetadata(props: { params: Promise<{ cidade: string
       images: [{ url: '/og-image.jpg', width: 1200, height: 630 }],
     },
     alternates: {
-      canonical: `/imoveis/em/${params.cidade}`,
+      // Listagem geral da cidade → consolida no hub /{estado}/{cidade} quando
+      // a cidade existe no IBGE; senão mantém o auto-canonical.
+      canonical:
+        canonicalFromCitySlug(params.cidade)
+        ?? canonicalFromCityUf(params.cidade)
+        ?? `/imoveis/em/${params.cidade}`,
     },
   }
 }
