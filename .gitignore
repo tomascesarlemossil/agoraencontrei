@@ -23,3 +23,4 @@ apps/image-processor/logos_store/
 
 # Scrape caches (regenerable, may contain stale/contaminated data)
 scripts/.gallery-cache.json
+scripts/lemos-backup.json

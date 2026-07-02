@@ -1,30 +1,66 @@
 #!/usr/bin/env python3
 """
-Scraper for www.imobiliarialemos.com.br
-Fetches all ~976 active property listings across ~82 pages.
-Listing pages give: ref, type, price, purpose, bedrooms, bathrooms, parking, neighborhood.
-Detail pages give: suites, area (útil/construída/total), full title.
+Scraper for the CURRENT www.imobiliarialemos.com.br site (rebuilt platform).
+
+Produces a complete, clean backup of every active listing so the data can be
+re-imported correctly — fixing wrong info and mixed-up photos.
+
+Two phases:
+  1. Listing pages  (/imoveis/pagina-N/)  → one card per property with:
+       siteId, url, purpose, type, uf/city/neighborhood, price, bedrooms,
+       bathrooms, parking spaces, reference code.
+  2. Detail pages   (the card's own URL)  → title, description, suites,
+       areas (útil→builtArea, construída→totalArea) and the ISOLATED photo
+       gallery (only the property's own photos — never the "Imóveis
+       semelhantes" section, which belongs to OTHER properties and was the
+       root cause of the mixed-photo bug).
+
+Cards are returned newest-first (highest siteId first), preserving the site's
+publication order so the importer can keep the latest listings on top.
+
+Output: JSON array written to --out (default scripts/lemos-backup.json).
+Usage:  python3 scripts/scrape-imobiliarialemos.py [--out FILE] [--limit N]
 """
 
+import argparse
 import json
+import math
+import os
 import re
 import time
-import math
 import urllib.request
-import urllib.error
-from urllib.parse import urljoin
 
 BASE_URL = "https://www.imobiliarialemos.com.br"
-OUTPUT_FILE = "/Users/tomaslemos/Downloads/squads/agoraencontrei/scripts/imobiliarialemos-scrape.json"
+DEFAULT_OUT = os.path.join(os.path.dirname(__file__), "lemos-backup.json")
 
 HEADERS = {
-    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
     "Accept-Language": "pt-BR,pt;q=0.9,en;q=0.8",
 }
 
-DELAY_BETWEEN_PAGES = 0.3  # seconds
-DETAIL_DELAY = 0.5
+DELAY_LISTING = 0.3
+DELAY_DETAIL = 0.4
+PER_PAGE = 12
+
+# Everything after this heading belongs to OTHER properties (recommendations).
+SIMILAR_MARKERS = ["imóveis semelhantes", "imoveis semelhantes",
+                   "imóveis relacionados", "imoveis relacionados"]
+
+# Non-photo chrome that can appear on the same CDNs.
+FAKE_PATTERNS = ["fundosite", "favicon", "painel_2023", "autoatendimento",
+                 "logo", "banner", "whatsapp", "placeholder", "sem-foto",
+                 "foto_vazio", "noimage"]
+
+TYPE_MAP = {
+    "apartamento": "APARTMENT", "casa": "HOUSE", "terreno": "LAND",
+    "chacara": "FARM", "chácara": "FARM", "sitio": "FARM", "sítio": "FARM",
+    "fazenda": "FARM", "rancho": "RANCH", "galpao": "WAREHOUSE",
+    "galpão": "WAREHOUSE", "barracao": "WAREHOUSE", "escritorio": "OFFICE",
+    "sala": "OFFICE", "loja": "STORE", "studio": "STUDIO",
+    "cobertura": "PENTHOUSE", "kitnet": "KITNET", "flat": "APARTMENT",
+    "predio": "CONDO", "prédio": "CONDO", "sobrado": "HOUSE",
+}
 
 
 def fetch_url(url, retries=3):
@@ -33,330 +69,260 @@ def fetch_url(url, retries=3):
             req = urllib.request.Request(url, headers=HEADERS)
             with urllib.request.urlopen(req, timeout=30) as resp:
                 return resp.read().decode("utf-8", errors="replace")
-        except Exception as e:
-            print(f"  [attempt {attempt+1}] Error fetching {url}: {e}")
+        except Exception as e:  # noqa: BLE001
+            print(f"  [attempt {attempt+1}] error {url}: {e}")
             if attempt < retries - 1:
                 time.sleep(2 ** attempt)
     return None
 
 
-def parse_price(price_str):
-    """Convert 'R$ 1.250.000,00' to int (cents-free)."""
-    if not price_str:
+def parse_price(text):
+    """'R$ 1.100.000,00' → 1100000 (int). None for 'sob consulta'."""
+    if not text:
         return None
-    price_str = price_str.strip()
-    if "consulta" in price_str.lower() or "negoci" in price_str.lower():
+    if re.search(r"consulta|negoci", text, re.I):
         return None
-    cleaned = re.sub(r"[R$\s]", "", price_str)
-    cleaned = cleaned.replace(".", "").replace(",", ".")
+    cleaned = re.sub(r"[R$\s]", "", text).replace(".", "").replace(",", ".")
     try:
         return int(float(cleaned))
     except ValueError:
         return None
 
 
-def parse_area(area_str):
-    """Convert '76,00 m²' or '76 m²' to float."""
-    if not area_str:
+def parse_area(text):
+    if not text:
         return None
-    m = re.search(r"([\d]+(?:[.,]\d+)?)", area_str)
-    if m:
-        try:
-            return float(m.group(1).replace(",", "."))
-        except ValueError:
-            return None
-    return None
-
-
-def extract_detalhe_value(chunk, icon_class):
-    """
-    From a chunk like:
-    <div class="detalhe_novo"><div class="icone_numero"><i class="ph ph-bed"></i><span>3</span></div><span> quartos</span></div>
-    Extract the number for the given icon class.
-    """
-    pattern = re.compile(
-        r'class="[^"]*' + re.escape(icon_class) + r'[^"]*"[^>]*></i><span>(\d+)</span>',
-        re.IGNORECASE
-    )
-    m = pattern.search(chunk)
-    return int(m.group(1)) if m else None
-
-
-def parse_listing_card(card_html):
-    """Parse a single property card from listing page HTML."""
-    prop = {}
-
-    # URL and purpose from the href
-    url_m = re.search(r'href="(/(?:comprar|alugar)/[^"]+)"', card_html)
-    if url_m:
-        path = url_m.group(1)
-        prop["url"] = BASE_URL + path
-        prop["purpose"] = "SALE" if "/comprar/" in path else "RENT"
-    else:
-        prop["url"] = None
-        prop["purpose"] = None
-
-    # Reference code: Ref.AP00922 or Ref.CA01623
-    ref_m = re.search(r'Ref\.([A-Z]{2}\d+)', card_html)
-    if not ref_m:
+    m = re.search(r"([\d]+(?:[.,]\d+)?)", text)
+    if not m:
         return None
-    prop["reference"] = ref_m.group(1)
+    try:
+        return float(m.group(1).replace(".", "").replace(",", ".")) if "," in m.group(1) \
+            else float(m.group(1))
+    except ValueError:
+        return None
 
-    # Property type (from h3 title_novo)
-    type_m = re.search(r'class="titulo_novo[^"]*">([^<]+)</h3>', card_html)
-    prop["propertyType"] = type_m.group(1).strip() if type_m else None
 
-    # Price - look for valor_novo section
-    # <small>VENDA</small><h5>R$ 850.000,00</h5> or <small>LOCAÇÃO</small><h5>R$ 3.500,00</h5>
-    price_section_m = re.search(
-        r'<small>(VENDA|LOCA[ÇC][ÃA]O|ALUGUEL|TEMPORADA)</small><h5>(R\$\s*[\d.,]+|Valor sob consulta)</h5>',
-        card_html, re.IGNORECASE
+def title_case(slug):
+    if not slug:
+        return None
+    return " ".join(w.capitalize() for w in slug.replace("-", " ").split())
+
+
+def isolate_photos(html):
+    """Return the property's own gallery photos, in order, deduped by hash."""
+    low = html.lower()
+    cut = len(html)
+    for marker in SIMILAR_MARKERS:
+        idx = low.find(marker)
+        if idx != -1 and idx < cut:
+            cut = idx
+    scoped = html[:cut]
+
+    regex = re.compile(
+        r"https?://(?:cdnuso\.com|cdn[0-9]*\.uso\.com\.br)/\d+/\d{4}/\d{2}/([a-z0-9_]+)\.(?:jpg|jpeg|png|webp)",
+        re.I,
     )
-    if price_section_m:
-        purpose_label = price_section_m.group(1).upper()
-        price_raw = price_section_m.group(2)
-        price_val = parse_price(price_raw)
+    by_hash = {}
+    for m in regex.finditer(scoped):
+        url = m.group(0)
+        if any(p in url.lower() for p in FAKE_PATTERNS):
+            continue
+        h = re.sub(r"^(mini_|thumb_|small_|medio_|media_|p_)", "", m.group(1))
+        if h in by_hash:
+            continue
+        canonical = re.sub(r"https?://cdn[0-9]*\.uso\.com\.br", "https://cdnuso.com", url)
+        canonical = re.sub(r"/(mini_|thumb_|small_|medio_|media_|p_)", "/", canonical)
+        by_hash[h] = canonical
+    return list(by_hash.values())
 
-        if "LOCA" in purpose_label or "ALUGUEL" in purpose_label or "TEMPORADA" in purpose_label:
-            prop["purpose"] = "RENT"
-            prop["price"] = None
-            prop["priceRent"] = price_val
-        else:
-            prop["purpose"] = "SALE"
-            prop["price"] = price_val
-            prop["priceRent"] = None
+
+def parse_listing_card(seg):
+    """Parse one card segment beginning at its anchor href."""
+    href_m = re.search(r'href="(/(?:comprar|alugar)/([a-z]{2})/([a-z0-9-]+)/([a-z0-9-]+)/([a-z0-9-]+)/(\d+))"', seg, re.I)
+    if not href_m:
+        return None
+    path, uf, city_slug, neigh_slug, type_slug, site_id = href_m.groups()
+
+    prop = {
+        "siteId": site_id,
+        "url": BASE_URL + path,
+        "purpose": "SALE" if "/comprar/" in path else "RENT",
+        "state": uf.upper(),
+        "city": title_case(city_slug),
+        "neighborhood": title_case(neigh_slug),
+        "type": TYPE_MAP.get(type_slug.lower(), "HOUSE"),
+        "typeSlug": type_slug,
+    }
+
+    # The split already bounds `seg` to a single card, so scan the whole thing.
+    card = seg
+
+    # Purpose label overrides comprar/alugar when explicit.
+    if re.search(r"LOCA[ÇC][ÃA]O|ALUGUEL|TEMPORADA", card, re.I):
+        prop["purpose"] = "RENT"
+
+    price_m = re.search(r"R\$\s*[\d.]+(?:,\d{2})?", card)
+    price_val = parse_price(price_m.group(0)) if price_m else None
+    if prop["purpose"] == "RENT":
+        prop["price"], prop["priceRent"] = None, price_val
     else:
-        # Try generic price
-        price_m = re.search(r'R\$\s*([\d.,]+)', card_html)
-        if price_m:
-            price_val = parse_price("R$ " + price_m.group(1))
-            # Heuristic: very low values likely rentals
-            if price_val is not None and price_val < 30000:
-                prop["purpose"] = prop.get("purpose") or "RENT"
-                prop["price"] = None
-                prop["priceRent"] = price_val
-            else:
-                prop["price"] = price_val
-                prop["priceRent"] = None
-        else:
-            prop["price"] = None
-            prop["priceRent"] = None
+        prop["price"], prop["priceRent"] = price_val, None
 
-    # Characteristics from icones_caracteristicas section
-    chars_m = re.search(r'icones_caracteristicas">(.*?)</div></div></div>', card_html, re.DOTALL)
-    chars_html = chars_m.group(1) if chars_m else card_html
+    # Characteristics use icon markup: <i class="ph ph-bed"></i><span>3</span>.
+    def icon_num(icon):
+        m = re.search(icon + r'[^>]*></i><span>(\d+)</span>', card, re.I)
+        return int(m.group(1)) if m else None
 
-    # Bedrooms: ph-bed icon
-    bed_m = re.search(r'ph-bed[^>]*></i><span>(\d+)</span>', chars_html)
-    prop["bedrooms"] = int(bed_m.group(1)) if bed_m else None
+    prop["bedrooms"] = icon_num(r"ph-bed")
+    prop["bathrooms"] = icon_num(r"ph-shower")
+    prop["parkingSpaces"] = icon_num(r"ph-car")
 
-    # Bathrooms: ph-shower icon
-    bath_m = re.search(r'ph-shower[^>]*></i><span>(\d+)</span>', chars_html)
-    prop["bathrooms"] = int(bath_m.group(1)) if bath_m else None
+    ref_m = re.search(r"Ref\.?\s*([A-Z]{2,3}\d{3,7})", card)
+    prop["reference"] = ref_m.group(1) if ref_m else None
 
-    # Parking: ph-car-simple icon
-    park_m = re.search(r'ph-car-simple[^>]*></i><span>(\d+)</span>', chars_html)
-    prop["parkingSpaces"] = int(park_m.group(1)) if park_m else None
+    # Display location "BAIRRO - CIDADE/UF" from the final_card span.
+    loc_m = re.search(r'final_card"><span>([^<]+)</span>', card)
+    if loc_m:
+        loc = loc_m.group(1).strip()
+        parts = re.match(r"(.+?)\s*-\s*(.+?)/([A-Za-z]{2})\s*$", loc)
+        if parts:
+            prop["neighborhood"] = parts.group(1).strip().title()
+            prop["city"] = parts.group(2).strip().title()
+            prop["state"] = parts.group(3).upper()
 
-    # Neighborhood: final_card section
-    neigh_m = re.search(r'class="final_card"><span>([^<]+)</span>', card_html)
-    prop["neighborhood"] = neigh_m.group(1).strip() if neigh_m else None
-
-    # Title: not on listing cards directly, will get from detail
-    prop["title"] = None
-    prop["suites"] = None
-    prop["totalArea"] = None
-    prop["builtArea"] = None
-
+    # Placeholders filled from the detail page.
+    prop.update({"title": None, "description": None, "suites": None,
+                 "totalArea": None, "builtArea": None,
+                 "images": [], "coverImage": None})
     return prop
 
 
 def scrape_listing_page(page_num):
-    """Scrape one listing page, return list of property dicts and total count."""
-    if page_num == 1:
-        url = f"{BASE_URL}/imoveis/"
-    else:
-        url = f"{BASE_URL}/imoveis/pagina-{page_num}/"
-
+    url = f"{BASE_URL}/imoveis/" if page_num == 1 else f"{BASE_URL}/imoveis/pagina-{page_num}/"
     html = fetch_url(url)
     if not html:
         return [], None
-
-    # Get total count
-    total_count = None
-    count_m = re.search(r"(\d+)\s+Im[oó]veis?\s+encontrados?", html, re.IGNORECASE)
-    if count_m:
-        total_count = int(count_m.group(1))
-
-    # Split into cards
-    cards_raw = re.split(
-        r'(?=<a[^>]+href="/(?:comprar|alugar)/[^"]+"\s+class="link_resultado")',
-        html
-    )
-
-    properties = []
-    for card_html in cards_raw[1:]:  # Skip preamble
-        # Take reasonable chunk of the card
-        card_chunk = card_html[:4000]
-        prop = parse_listing_card(card_chunk)
-        if prop:
-            properties.append(prop)
-
-    return properties, total_count
+    total = None
+    m = re.search(r"(\d+)\s+Im[oó]ve", html, re.I)
+    if m:
+        total = int(m.group(1))
+    segments = re.split(r'(?=href="/(?:comprar|alugar)/)', html)
+    cards = []
+    for seg in segments[1:]:
+        card = parse_listing_card(seg)
+        if card:
+            cards.append(card)
+    return cards, total
 
 
-def scrape_detail_page(url):
-    """Fetch detail page and extract suites, areas, title."""
-    html = fetch_url(url)
+def scrape_detail(prop):
+    html = fetch_url(prop["url"])
     if not html:
-        return {}
+        return
 
-    extra = {}
+    m = re.search(r"<h1[^>]*>(.*?)</h1>", html, re.S | re.I)
+    if m:
+        prop["title"] = re.sub(r"\s+", " ", re.sub(r"<[^>]+>", "", m.group(1))).strip()
+    if not prop["title"]:
+        og = re.search(r'og:title"\s+content="([^"]+)"', html)
+        if og:
+            prop["title"] = og.group(1).strip()
 
-    # Title from h1
-    title_m = re.search(r'<h1[^>]*class="titulo"[^>]*>([^<]+)</h1>', html, re.IGNORECASE)
-    if title_m:
-        extra["title"] = title_m.group(1).strip()
-    else:
-        # Fallback: og:title
-        og_m = re.search(r'property="og:title"\s+content="([^"]+)"', html)
-        if og_m:
-            extra["title"] = og_m.group(1).strip()
+    # Full description: between "Descrição do imóvel" and "Ver mais"/"Características".
+    dm = re.search(r"Descri[çc][ãa]o do im[óo]vel(.*?)(?:Ver mais|Ver menos|Caracter[íi]sticas)", html, re.S | re.I)
+    if dm:
+        desc = re.sub(r"<[^>]+>", " ", dm.group(1))
+        desc = re.sub(r"\s+", " ", desc).strip()
+        if desc:
+            prop["description"] = desc
+    if not prop["description"]:
+        og = re.search(r'og:description"\s+content="([^"]+)"', html)
+        if og:
+            prop["description"] = og.group(1).strip()
 
-    # Detail section with suites, areas (different structure than listing cards)
-    # <div class="detalhe"><i class="icon bath"></i><span>sendo 1<span> suíte</span></span></div>
-    suite_m = re.search(r'(\d+)\s*<span>\s*su[ií]te', html, re.IGNORECASE)
-    if not suite_m:
-        # Alternative: "sendo 1 suíte" in span text
-        suite_m = re.search(r'sendo\s+(\d+)\s*(?:<[^>]+>)?\s*su[ií]te', html, re.IGNORECASE)
-    if not suite_m:
-        suite_m = re.search(r'(\d+)\s*su[ií]te', html, re.IGNORECASE)
-    if suite_m:
-        extra["suites"] = int(suite_m.group(1))
+    txt = re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", html))
+    sm = re.search(r"sendo\s+(\d+)\s*su[ií]te", txt, re.I) or re.search(r"(\d+)\s*su[ií]tes?", txt, re.I)
+    if sm:
+        prop["suites"] = int(sm.group(1))
+    bm = re.search(r"(\d+)\s*dormit[óo]rios?", txt, re.I)
+    if bm and not prop.get("bedrooms"):
+        prop["bedrooms"] = int(bm.group(1))
+    if not prop.get("bathrooms"):
+        m2 = re.search(r"(\d+)\s*banheiros?", txt, re.I)
+        if m2:
+            prop["bathrooms"] = int(m2.group(1))
+    if not prop.get("parkingSpaces"):
+        m2 = re.search(r"(\d+)\s*vagas?", txt, re.I)
+        if m2:
+            prop["parkingSpaces"] = int(m2.group(1))
 
-    # Area - look for m² útil / construída / total
-    # <span>76,00 m² útil</span>
-    util_m = re.search(r'([\d]+(?:[.,]\d+)?)\s*m[²2]\s*[úu]til', html, re.IGNORECASE)
-    construida_m = re.search(r'([\d]+(?:[.,]\d+)?)\s*m[²2]\s*constru[ií]da', html, re.IGNORECASE)
-    total_m = re.search(r'([\d]+(?:[.,]\d+)?)\s*m[²2]\s*total', html, re.IGNORECASE)
+    util = re.search(r"([\d.,]+)\s*m[²2]\s*[úu]til", txt, re.I)
+    constr = re.search(r"([\d.,]+)\s*m[²2]\s*constru[ií]da", txt, re.I)
+    total = re.search(r"([\d.,]+)\s*m[²2]\s*total", txt, re.I)
+    if util:
+        prop["builtArea"] = parse_area(util.group(1))
+    if constr:
+        prop["totalArea"] = parse_area(constr.group(1))
+    elif total:
+        prop["totalArea"] = parse_area(total.group(1))
+    elif util and not prop.get("totalArea"):
+        prop["totalArea"] = parse_area(util.group(1))
 
-    if util_m:
-        extra["builtArea"] = parse_area(util_m.group(0))
-    if construida_m:
-        extra["builtArea"] = parse_area(construida_m.group(0))
-    if total_m:
-        extra["totalArea"] = parse_area(total_m.group(0))
-    elif util_m and "totalArea" not in extra:
-        # If no explicit total, use útil as totalArea when there's only one area
-        extra["totalArea"] = parse_area(util_m.group(0))
-
-    return extra
+    photos = isolate_photos(html)
+    if photos:
+        prop["images"] = photos
+        prop["coverImage"] = photos[0]
 
 
 def main():
-    all_properties = []
-    seen_refs = set()
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--out", default=DEFAULT_OUT)
+    ap.add_argument("--limit", type=int, default=0, help="stop after N properties (0 = all)")
+    args = ap.parse_args()
 
-    print("Phase 1: Scraping all listing pages...")
-    print("=" * 60)
+    all_props, seen = [], set()
 
-    # Get page 1 and determine total pages
-    print("Fetching page 1...")
-    props, total_count = scrape_listing_page(1)
-    print(f"  Total properties on site: {total_count}")
+    print("Phase 1: listing pages...")
+    cards, total = scrape_listing_page(1)
+    print(f"  site reports {total} properties")
+    for c in cards:
+        if c["siteId"] not in seen:
+            all_props.append(c); seen.add(c["siteId"])
 
-    for p in props:
-        if p["reference"] not in seen_refs:
-            all_properties.append(p)
-            seen_refs.add(p["reference"])
+    total_pages = math.ceil(total / PER_PAGE) if total else 90
+    for page in range(2, total_pages + 1):
+        cards, _ = scrape_listing_page(page)
+        new = 0
+        for c in cards:
+            if c["siteId"] not in seen:
+                all_props.append(c); seen.add(c["siteId"]); new += 1
+        print(f"  page {page}/{total_pages}: +{new} ({len(all_props)} total)")
+        if args.limit and len(all_props) >= args.limit:
+            all_props = all_props[:args.limit]; break
+        time.sleep(DELAY_LISTING)
 
-    if total_count:
-        total_pages = math.ceil(total_count / 12)
-    else:
-        total_pages = 82
+    print(f"\nPhase 1 done: {len(all_props)} unique properties")
+    with open(args.out, "w", encoding="utf-8") as f:
+        json.dump(all_props, f, ensure_ascii=False, indent=2)
 
-    print(f"  Total pages to scrape: {total_pages}")
-    print(f"  Found {len(props)} on page 1")
-
-    # Scrape pages 2 through total_pages
-    for page_num in range(2, total_pages + 1):
-        print(f"Fetching page {page_num}/{total_pages}...", end=" ", flush=True)
-        props, _ = scrape_listing_page(page_num)
-        new_count = 0
-        for p in props:
-            if p["reference"] not in seen_refs:
-                all_properties.append(p)
-                seen_refs.add(p["reference"])
-                new_count += 1
-        print(f"{new_count} new ({len(all_properties)} total)")
-        time.sleep(DELAY_BETWEEN_PAGES)
-
-    print()
-    print(f"Phase 1 complete: {len(all_properties)} unique properties from listing pages")
-    print()
-
-    # Save intermediate results
-    print("Saving intermediate results...")
-    with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
-        json.dump(all_properties, f, ensure_ascii=False, indent=2)
-
-    print()
-    print("Phase 2: Fetching detail pages for additional data...")
-    print("=" * 60)
-
-    # For each property, fetch detail page to get suites, area, title
-    for i, prop in enumerate(all_properties):
-        if not prop.get("url"):
-            continue
-
-        print(f"  [{i+1}/{len(all_properties)}] {prop['reference']}...", end=" ", flush=True)
-        extra = scrape_detail_page(prop["url"])
-
-        if extra.get("title"):
-            prop["title"] = extra["title"]
-        if extra.get("suites") is not None:
-            prop["suites"] = extra["suites"]
-        if extra.get("totalArea") is not None:
-            prop["totalArea"] = extra["totalArea"]
-        if extra.get("builtArea") is not None:
-            prop["builtArea"] = extra["builtArea"]
-
-        print(f"title={'OK' if prop.get('title') else '-'} suites={prop.get('suites','-')} area={prop.get('totalArea','-')}")
-        time.sleep(DETAIL_DELAY)
-
-        # Save every 50 properties
+    print("\nPhase 2: detail pages (info + isolated photos)...")
+    for i, prop in enumerate(all_props):
+        scrape_detail(prop)
+        print(f"  [{i+1}/{len(all_props)}] {prop['siteId']} "
+              f"title={'ok' if prop['title'] else '-'} "
+              f"photos={len(prop['images'])} suites={prop.get('suites','-')}")
+        time.sleep(DELAY_DETAIL)
         if (i + 1) % 50 == 0:
-            print(f"  [Checkpoint] Saving {len(all_properties)} properties...")
-            with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
-                json.dump(all_properties, f, ensure_ascii=False, indent=2)
+            with open(args.out, "w", encoding="utf-8") as f:
+                json.dump(all_props, f, ensure_ascii=False, indent=2)
 
-    print()
-    print("=" * 60)
+    with open(args.out, "w", encoding="utf-8") as f:
+        json.dump(all_props, f, ensure_ascii=False, indent=2)
 
-    # Final cleanup: ensure all fields exist
-    required_fields = ["reference", "title", "bedrooms", "suites", "bathrooms",
-                       "parkingSpaces", "totalArea", "builtArea", "price",
-                       "priceRent", "purpose", "url", "neighborhood", "propertyType"]
-    for prop in all_properties:
-        for field in required_fields:
-            prop.setdefault(field, None)
-
-    # Final save
-    with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
-        json.dump(all_properties, f, ensure_ascii=False, indent=2)
-
-    print(f"Total unique properties scraped: {len(all_properties)}")
-    sale_count = sum(1 for p in all_properties if p.get("purpose") == "SALE")
-    rent_count = sum(1 for p in all_properties if p.get("purpose") == "RENT")
-    no_purpose = sum(1 for p in all_properties if not p.get("purpose"))
-    with_title = sum(1 for p in all_properties if p.get("title"))
-    with_area = sum(1 for p in all_properties if p.get("totalArea"))
-    with_suites = sum(1 for p in all_properties if p.get("suites") is not None)
-    print(f"  SALE: {sale_count}, RENT: {rent_count}, Unknown: {no_purpose}")
-    print(f"  With title: {with_title}, With area: {with_area}, With suites: {with_suites}")
-    print(f"Written to: {OUTPUT_FILE}")
-
-    return all_properties
+    with_photos = sum(1 for p in all_props if p["images"])
+    with_title = sum(1 for p in all_props if p["title"])
+    print(f"\nDone. {len(all_props)} properties → {args.out}")
+    print(f"  with title: {with_title} | with photos: {with_photos}")
 
 
 if __name__ == "__main__":
