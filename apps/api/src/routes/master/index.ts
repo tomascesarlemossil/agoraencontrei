@@ -240,6 +240,134 @@ export default async function masterRoutes(app: FastifyInstance) {
     return reply.send({ success: true, data: tenant })
   })
 
+  // POST /tenant/:id/reset-access — Trocar e-mail do parceiro e/ou gerar novo
+  // link de definição de senha (1º acesso). O setupLink volta NA RESPOSTA para
+  // o admin copiar e enviar manualmente — funciona mesmo sem SMTP/WhatsApp.
+  app.post('/tenant/:id/reset-access', {
+    schema: { tags: ['master'], summary: 'Trocar e-mail do parceiro e reenviar link de acesso' },
+  }, async (req, reply) => {
+    const { id } = req.params as { id: string }
+    const body = z.object({
+      newEmail: z.string().email('E-mail inválido').optional(),
+    }).parse(req.body ?? {})
+
+    // 1. Tenant
+    const tenant = await (app.prisma as any).tenant.findUnique({ where: { id } }).catch(() => null)
+    if (!tenant) {
+      return reply.status(404).send({ error: 'TENANT_NOT_FOUND', message: 'Tenant não encontrado.' })
+    }
+
+    // 2. User dono — por ownerId, senão por settings.customerEmail
+    const settings = (tenant.settings && typeof tenant.settings === 'object') ? tenant.settings : {}
+    const customerEmail: string | undefined = settings.customerEmail
+    let user: any = null
+    if (tenant.ownerId) {
+      user = await app.prisma.user.findUnique({ where: { id: tenant.ownerId } }).catch(() => null)
+    }
+    if (!user && customerEmail) {
+      user = await app.prisma.user.findFirst({
+        where: { email: { equals: String(customerEmail).toLowerCase(), mode: 'insensitive' } },
+      }).catch(() => null)
+    }
+    if (!user) {
+      return reply.status(404).send({
+        error: 'OWNER_NOT_FOUND',
+        message: 'Não foi possível localizar o usuário dono deste tenant (sem ownerId e sem customerEmail correspondente).',
+      })
+    }
+
+    // 3. Trocar e-mail (se veio e é diferente)
+    const desiredEmail = body.newEmail?.toLowerCase().trim()
+    if (desiredEmail && desiredEmail !== String(user.email).toLowerCase()) {
+      const inUse = await app.prisma.user.findUnique({ where: { email: desiredEmail } }).catch(() => null)
+      if (inUse && inUse.id !== user.id) {
+        return reply.status(409).send({
+          error: 'EMAIL_IN_USE',
+          message: 'Este e-mail já está em uso por outro usuário.',
+        })
+      }
+      user = await app.prisma.user.update({
+        where: { id: user.id },
+        data: { email: desiredEmail },
+      })
+      // Merge no JSON settings sem apagar o resto
+      await (app.prisma as any).tenant.update({
+        where: { id },
+        data: { settings: { ...settings, customerEmail: desiredEmail } },
+      }).catch(() => {})
+    }
+
+    // 4. Token de definição de senha
+    const { createPasswordSetupToken } = await import('../auth/first-access.js')
+    const token = await createPasswordSetupToken(app.prisma, user.email)
+
+    // 5. Link
+    const base = process.env.WEB_URL || 'https://agoraencontrei.com.br'
+    const setupLink = `${base}/definir-senha?token=${token}`
+
+    // 6. Best-effort — e-mail e WhatsApp
+    let emailSent = false
+    let whatsappSent = false
+    try {
+      const { sendEmail, isEmailConfigured } = await import('../../services/email.service.js')
+      if (isEmailConfigured()) {
+        const html = `
+          <div style="font-family:system-ui,-apple-system,sans-serif;max-width:560px;margin:0 auto;padding:32px;background:#f8f6f1;color:#1B2B5B">
+            <h1 style="color:#1B2B5B;margin:0 0 8px">Seu acesso ao AgoraEncontrei</h1>
+            <p style="margin:0 0 16px;color:#475569">Use o botão abaixo para definir a senha e acessar sua conta.</p>
+            <div style="text-align:center;margin:24px 0">
+              <a href="${setupLink}" style="display:inline-block;background:#C9A84C;color:#1B2B5B;font-weight:700;padding:12px 24px;border-radius:10px;text-decoration:none">Definir minha senha →</a>
+            </div>
+            <p style="margin:16px 0;color:#475569">Ou copie e cole este link no navegador:</p>
+            <p style="margin:0 0 16px;word-break:break-all"><a href="${setupLink}" style="color:#C9A84C">${setupLink}</a></p>
+            <p style="margin:16px 0;color:#475569">O link expira em 7 dias.</p>
+          </div>`
+        await sendEmail({
+          to: user.email,
+          subject: 'Seu acesso ao AgoraEncontrei',
+          html,
+        })
+        emailSent = true
+      }
+    } catch (e: any) {
+      app.log.error({ err: e }, '[reset-access] email failed')
+    }
+
+    if (user.phone) {
+      try {
+        const { sendWhatsappText } = await import('../../services/whatsapp-notify.service.js')
+        const msg =
+          `🔑 *AgoraEncontrei — Seu acesso*\n\n` +
+          `Use o link abaixo para definir sua senha e acessar sua conta:\n${setupLink}\n\n` +
+          `(o link expira em 7 dias)`
+        whatsappSent = await sendWhatsappText(user.phone, msg)
+      } catch (e: any) {
+        app.log.error({ err: e }, '[reset-access] whatsapp failed')
+      }
+    }
+
+    // 7. Auditoria (best-effort)
+    await app.prisma.auditLog.create({
+      data: {
+        companyId: 'platform',
+        action: 'master.tenant.reset_access' as any,
+        resource: 'tenant',
+        resourceId: id,
+        userId: (req.user as any)?.sub ?? 'unknown',
+        payload: { email: user.email, emailChanged: !!desiredEmail, emailSent, whatsappSent } as any,
+      },
+    }).catch(() => {})
+
+    // 8. Resposta — setupLink é o ponto central
+    return reply.send({
+      success: true,
+      email: user.email,
+      setupLink,
+      emailSent,
+      whatsappSent,
+    })
+  })
+
   // GET /health — Platform health check
   app.get('/health', {
     schema: { tags: ['master'], summary: 'Platform health check' },
