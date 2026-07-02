@@ -258,11 +258,12 @@ export default async function saasBillingRoutes(app: FastifyInstance) {
               nicheSlug: body.nicheSlug || 'imobiliaria',
               customerEmail: body.customer.email,
               customerPhone: body.customer.phone || null,
-              // Marcamos a senha como temporária para o webhook saber que
-              // ele deve incluí-la no e-mail/WhatsApp de boas-vindas. Após
-              // o primeiro login bem-sucedido a flag deve sair.
+              // A senha nasce aleatória e só o hash argon2 fica no User; o
+              // parceiro define a própria senha pelo link de 1º acesso que o
+              // webhook envia (createPasswordSetupToken). NUNCA guardamos a
+              // senha em texto puro no banco. A flag abaixo só sinaliza que o
+              // onboarding ainda não teve o primeiro login.
               tempPasswordIssued: true,
-              tempPasswordPlain: tempPassword,
             },
           },
         })

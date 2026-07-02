@@ -170,7 +170,6 @@ async function handleTenantEvent(
       }
 
       const settings = (tenant.settings as any) || {}
-      const tempPasswordPlain: string | undefined = settings.tempPasswordPlain
       const customerEmail: string | undefined = settings.customerEmail
       const customerPhone: string | undefined = settings.customerPhone
 
