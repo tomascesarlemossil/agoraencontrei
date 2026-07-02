@@ -624,6 +624,74 @@ export default async function publicRoutes(app: FastifyInstance) {
     })))
   })
 
+  // GET /api/v1/public/bairro-stats?city=Franca&neighborhood=Centro
+  // Estatísticas AO VIVO por bairro. Usadas para fundir dados reais de mercado
+  // com o conteúdo de SEO programático (mecanismo anti-duplicidade / "dados
+  // vivos"): total de imóveis ativos, mediana do preço/m² e 3 mais recentes.
+  app.get('/bairro-stats', async (req, reply) => {
+    const parsed = z.object({
+      city: z.string().default('Franca'),
+      neighborhood: z.string().min(1),
+    }).safeParse(req.query)
+    if (!parsed.success) return reply.status(400).send({ error: 'INVALID_QUERY' })
+    const { city, neighborhood } = parsed.data
+
+    const company = await resolveCompany(app)
+    if (!company) return reply.status(503).send({ error: 'SERVICE_UNAVAILABLE' })
+
+    const cacheKey = `bairro-stats:${company.id}:${city}:${neighborhood}`.toLowerCase()
+    const cached = memCacheGet(cacheKey)
+    if (cached) return reply.send(cached)
+
+    const where: any = {
+      companyId: company.id,
+      status: 'ACTIVE',
+      authorizedPublish: true,
+      city: { equals: city, mode: 'insensitive' },
+      neighborhood: { equals: neighborhood, mode: 'insensitive' },
+    }
+
+    const [total, priceRows, recent] = await Promise.all([
+      app.prisma.property.count({ where }),
+      app.prisma.property.findMany({
+        where: { ...where, purpose: { in: ['SALE', 'BOTH'] }, price: { gt: 0 } },
+        select: { price: true, builtArea: true, totalArea: true, landArea: true },
+        take: 500,
+      }),
+      app.prisma.property.findMany({
+        where,
+        select: PUBLIC_PROPERTY_SELECT,
+        orderBy: [{ isFeatured: 'desc' }, { createdAt: 'desc' }],
+        take: 3,
+      }),
+    ])
+
+    // Mediana do preço/m² (robusta a outliers) — usa área construída, senão
+    // área total, senão terreno.
+    const perM2: number[] = []
+    for (const p of priceRows) {
+      const price = Number(p.price ?? 0)
+      const area = Number(p.builtArea ?? 0) || Number(p.totalArea ?? 0) || Number(p.landArea ?? 0)
+      if (price > 0 && area > 0) perM2.push(price / area)
+    }
+    perM2.sort((a, b) => a - b)
+    const precoMedioM2 = perM2.length
+      ? Math.round(perM2[Math.floor(perM2.length / 2)])
+      : null
+
+    const payload = {
+      city,
+      neighborhood,
+      totalAtivos: total,
+      precoMedioM2,
+      amostraPreco: perM2.length,
+      recentes: recent.map(applyLocationPrivacy),
+      atualizadoEm: new Date().toISOString(),
+    }
+    memCacheSet(cacheKey, payload, 600) // cache 10 min
+    return reply.send(payload)
+  })
+
   // POST /api/v1/public/leads — capture lead from public portal
   app.post('/leads', async (req, reply) => {
     const company = await resolveCompany(app)

@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import { PostCard } from '../BlogFeed'
 import type { BlogPost } from '../BlogFeed'
+import BairroLiveData from './BairroLiveData'
 import { BlogPostFaqAccordion, BlogShareButtons } from './PostClientComponents'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
@@ -358,6 +359,11 @@ export default async function BlogPostPage(props: { params: Promise<{ slug: stri
               .blog-content strong { color: #1f2937; }
             `}} />
           </article>
+
+          {/* Dados vivos por bairro (anti-duplicidade do SEO programático) */}
+          {post.bairro && (
+            <BairroLiveData bairro={post.bairro} cidade={post.cidade} />
+          )}
 
           {/* Tags */}
           {post.tags && (
