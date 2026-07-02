@@ -20,30 +20,45 @@ export const revalidate = 86400
 const ALL_CITIES_SORTED = IBGE_CITIES_152
   .sort((a, b) => b.populacao - a.populacao)
 
+// A pasta declara DOIS params no mesmo segmento (`[cidadeA]-vs-[cidadeB]`),
+// então o Next entrega `params.cidadeA` e `params.cidadeB` — não uma única
+// chave. Gerar/ler com a chave errada deixava `params[...]` undefined e o
+// `.split` estourava 500. Este tipo cobre as duas formas por segurança.
+type CompareParams = { cidadeA?: string; cidadeB?: string; 'cidadeA-vs-cidadeB'?: string }
+
 export function generateStaticParams() {
   if (process.env.MINIMAL_SSG === '1') return []  // build offline (.exe) nao precisa das paginas SEO publicas
-  const params: { 'cidadeA-vs-cidadeB': string }[] = []
+  const params: { cidadeA: string; cidadeB: string }[] = []
   for (let i = 0; i < ALL_CITIES_SORTED.length; i++) {
     for (let j = i + 1; j < ALL_CITIES_SORTED.length; j++) {
       params.push({
-        'cidadeA-vs-cidadeB': `${ALL_CITIES_SORTED[i].slug}-vs-${ALL_CITIES_SORTED[j].slug}`,
+        cidadeA: ALL_CITIES_SORTED[i].slug,
+        cidadeB: ALL_CITIES_SORTED[j].slug,
       })
     }
   }
   return params
 }
 
-function parseSlugs(param: string): { slugA: string; slugB: string } | null {
-  const parts = param.split('-vs-')
-  if (parts.length !== 2) return null
-  return { slugA: parts[0], slugB: parts[1] }
+// Resolve os dois slugs qualquer que seja o formato de params entregue.
+function resolveSlugs(params: CompareParams): { slugA: string; slugB: string } | null {
+  if (params.cidadeA && params.cidadeB) {
+    return { slugA: params.cidadeA, slugB: params.cidadeB }
+  }
+  const combo = params['cidadeA-vs-cidadeB']
+    ?? Object.values(params).find((v) => typeof v === 'string' && v.includes('-vs-'))
+  if (typeof combo === 'string') {
+    const parts = combo.split('-vs-')
+    if (parts.length === 2 && parts[0] && parts[1]) return { slugA: parts[0], slugB: parts[1] }
+  }
+  return null
 }
 
 export async function generateMetadata(
-  props: { params: Promise<{ 'cidadeA-vs-cidadeB': string }> }
+  props: { params: Promise<CompareParams> }
 ): Promise<Metadata> {
   const params = await props.params
-  const parsed = parseSlugs(params['cidadeA-vs-cidadeB'])
+  const parsed = resolveSlugs(params)
   if (!parsed) return {}
   const cityA = IBGE_CITY_BY_SLUG[parsed.slugA]
   const cityB = IBGE_CITY_BY_SLUG[parsed.slugB]
@@ -60,7 +75,7 @@ export async function generateMetadata(
       siteName: 'AgoraEncontrei',
     },
     alternates: {
-      canonical: `https://agoraencontrei.com.br/comparar/${params['cidadeA-vs-cidadeB']}`,
+      canonical: `https://agoraencontrei.com.br/comparar/${cityA.slug}-vs-${cityB.slug}`,
     },
   }
 }
@@ -113,10 +128,10 @@ function CompareBar({ label, valueA, valueB, nameA, nameB, format = 'number' }: 
 }
 
 export default async function CompareCidadesPage(
-  props: { params: Promise<{ 'cidadeA-vs-cidadeB': string }> }
+  props: { params: Promise<CompareParams> }
 ) {
   const params = await props.params
-  const parsed = parseSlugs(params['cidadeA-vs-cidadeB'])
+  const parsed = resolveSlugs(params)
   if (!parsed) notFound()
 
   const cityA = IBGE_CITY_BY_SLUG[parsed.slugA]
@@ -128,7 +143,7 @@ export default async function CompareCidadesPage(
     '@type': 'Article',
     name: `${cityA.name} vs ${cityB.name} — Comparação`,
     description: `Comparação de custo de vida e mercado imobiliário entre ${cityA.name}/${cityA.state} e ${cityB.name}/${cityB.state}`,
-    url: `https://agoraencontrei.com.br/comparar/${params['cidadeA-vs-cidadeB']}`,
+    url: `https://agoraencontrei.com.br/comparar/${cityA.slug}-vs-${cityB.slug}`,
   }
 
   return (
