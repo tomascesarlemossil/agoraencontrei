@@ -7,9 +7,10 @@
   body{font-family:'Segoe UI',system-ui,sans-serif;background:#0a1410;color:#eef2ff;
     min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
   .wrap{max-width:760px;text-align:center}
+  .brand-logo{width:96px;height:96px;object-fit:contain;margin:0 auto 10px;display:block}
   .logo{font-weight:800;font-size:24px;margin-bottom:8px}
   .logo span{color:#C9A84C}
-  p.sub{color:#9aa7c7;margin-bottom:36px}
+  p.sub{color:#9aa7c7;margin-bottom:32px}
   .cards{display:grid;grid-template-columns:1fr 1fr;gap:20px}
   @media(max-width:640px){.cards{grid-template-columns:1fr}}
   .card{background:#122017;border:1px solid #2e4231;border-radius:18px;padding:30px;cursor:pointer;
@@ -19,8 +20,12 @@
   .card h3{font-size:19px;margin-bottom:8px}
   .card p{color:#9aa7c7;font-size:14px;line-height:1.5}
   .msg{margin-top:22px;color:#C9A84C;font-size:14px;min-height:20px}
+  .foot{margin-top:24px;font-size:12px;color:#9aa7c7;line-height:1.7}
+  .foot b{color:#eef2ff}
+  .foot a{color:#7bbe7b;text-decoration:none}
 </style></head><body>
   <div class="wrap">
+    <img class="brand-logo" src="logo.png" alt="AgoraEncontrei" />
     <div class="logo">Sistema Administrador Agora<span>Encontrei</span></div>
     <p class="sub">Bem-vindo! Como você quer começar?</p>
     <div class="cards">
@@ -38,6 +43,11 @@
       </div>
     </div>
     <div class="msg" id="msg"></div>
+    <div class="foot">
+      🌐 <a href="https://agoraencontrei.com.br" target="_blank" rel="noopener">agoraencontrei.com.br</a>
+      &nbsp;·&nbsp; 📞 <b>(16) 3723-0045</b>
+      &nbsp;·&nbsp; ✉️ <b>contato@agoraencontrei.com.br</b>
+    </div>
   </div>
 <script>
   const msg = document.getElementById('msg')

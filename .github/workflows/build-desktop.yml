@@ -9,9 +9,12 @@ on:
   workflow_dispatch:
   push:
     branches:
+      - main
       - claude/agoraencontrei-system-sales-8uth7f
+      - claude/offline-system-installer-setup-4vd7tz
     paths:
       - 'apps/desktop/**'
+      - 'packages/database/prisma/**'
       - '.github/workflows/build-desktop.yml'
 
 permissions:
@@ -58,6 +61,10 @@ jobs:
         continue-on-error: true
         env:
           NEXT_TELEMETRY_DISABLED: '1'
+          # CRÍTICO: o client Next inlina NEXT_PUBLIC_* no BUILD. O app offline
+          # sobe a API local em 127.0.0.1:31764 (AGORA_API_PORT em main.js); sem
+          # isto o bundle chamaria o fallback localhost:3100 e NADA funcionaria.
+          NEXT_PUBLIC_API_URL: 'http://127.0.0.1:31764'
           # O instalador offline não embute as ~13 mil páginas SEO públicas
           # (comparar de cidades = 11.476, etc.). Sem o cache de build do Vercel,
           # gerá-las a frio no runner Windows estourava o timeout. MINIMAL_SSG=1

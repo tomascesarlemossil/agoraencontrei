@@ -77,6 +77,11 @@ export class AuthService {
       companyId = company.id
     }
 
+    // Na edição OFFLINE (desktop) não há SMTP: o e-mail de verificação nunca
+    // chegaria e o login travaria em PENDING_VERIFICATION. Então já criamos o
+    // 1º admin ATIVO e verificado — o sistema é local e o dono é o operador.
+    const offline = env.AGORA_OFFLINE
+
     const user = await this.prisma.user.create({
       data: {
         companyId,
@@ -85,13 +90,16 @@ export class AuthService {
         phone: input.phone,
         passwordHash,
         role: 'ADMIN',
-        status: 'PENDING_VERIFICATION',
+        status: offline ? 'ACTIVE' : 'PENDING_VERIFICATION',
+        ...(offline ? { emailVerifiedAt: new Date() } : {}),
       },
       select: this.userSelect,
     })
 
-    // Send verification email
-    await this.sendVerificationEmail(user.email, user.id)
+    // Send verification email (offline: pulamos — sem SMTP e conta já ativa)
+    if (!offline) {
+      await this.sendVerificationEmail(user.email, user.id)
+    }
 
     await this.prisma.auditLog.create({
       data: {
@@ -102,6 +110,12 @@ export class AuthService {
         resourceId: user.id,
       },
     })
+
+    // Offline: conta já ativa → devolve tokens e o usuário entra direto.
+    if (offline) {
+      const tokens = await this.generateTokens(user as unknown as User, companyId)
+      return { user, pendingVerification: false, ...tokens }
+    }
 
     // Return user WITHOUT tokens — user must verify email first
     return { user, pendingVerification: true }

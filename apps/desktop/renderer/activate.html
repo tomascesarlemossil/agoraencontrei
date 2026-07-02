@@ -7,34 +7,45 @@
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
   body{font-family:'Segoe UI',system-ui,sans-serif;background:#0a1410;color:#eef2ff;
-    height:100vh;display:flex;align-items:center;justify-content:center}
-  .card{width:440px;background:#122017;border:1px solid #2e4231;border-radius:18px;padding:36px;text-align:center}
+    min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+  .card{width:460px;background:#122017;border:1px solid #2e4231;border-radius:18px;padding:34px 36px;text-align:center}
+  .brand-logo{width:96px;height:96px;object-fit:contain;margin:0 auto 12px;display:block}
   .logo{font-weight:800;font-size:22px;margin-bottom:6px}
   .logo span{color:#C9A84C}
   p.sub{color:#9aa7c7;font-size:14px;margin-bottom:24px}
   label{display:block;text-align:left;font-size:13px;color:#9aa7c7;margin-bottom:6px}
   input{width:100%;padding:13px 14px;border-radius:10px;border:1px solid #2e4231;background:#0a1410;
-    color:#eef2ff;font-size:15px;margin-bottom:16px}
+    color:#eef2ff;font-size:16px;margin-bottom:16px}
   button{width:100%;padding:13px;border:none;border-radius:999px;font-weight:700;font-size:15px;cursor:pointer;
     background:linear-gradient(135deg,#1f6b3a,#C9A84C);color:#fff}
   .msg{margin-top:16px;font-size:14px;min-height:20px}
   .msg.err{color:#ff8a8a}
   .msg.ok{color:#C9A84C}
+  .foot{margin-top:26px;padding-top:18px;border-top:1px solid #2e4231;font-size:12px;color:#9aa7c7;line-height:1.7}
+  .foot b{color:#eef2ff}
+  .foot a{color:#7bbe7b;text-decoration:none}
 </style>
 </head>
 <body>
   <div class="card">
+    <img class="brand-logo" src="logo.png" alt="AgoraEncontrei" />
     <div class="logo">Sistema Administrador Agora<span>Encontrei</span></div>
     <p class="sub">Cole a sua chave de licença para ativar o programa.</p>
     <label>Chave de licença</label>
     <input id="key" placeholder="payload.assinatura" autofocus />
     <button id="btn">Ativar</button>
     <div id="msg" class="msg"></div>
+    <div class="foot">
+      <div>Precisa de ajuda com a sua licença?</div>
+      <div>🌐 <a href="https://agoraencontrei.com.br" target="_blank" rel="noopener">agoraencontrei.com.br</a>
+        &nbsp;·&nbsp; ✉️ <b>contato@agoraencontrei.com.br</b></div>
+      <div>📞 <b>(16) 3723-0045</b> &nbsp;·&nbsp; Imobiliária Lemos — Franca/SP</div>
+    </div>
   </div>
 <script>
   const btn = document.getElementById('btn')
   const msg = document.getElementById('msg')
-  btn.addEventListener('click', async () => {
+  async function ativar() {
     const key = document.getElementById('key').value.trim()
     if (!key) { msg.className = 'msg err'; msg.textContent = 'Informe a chave.'; return }
     btn.disabled = true; msg.className = 'msg'; msg.textContent = 'Validando...'
@@ -50,7 +61,9 @@
     } catch (e) {
       msg.className = 'msg err'; msg.textContent = 'Erro: ' + e.message; btn.disabled = false
     }
-  })
+  }
+  btn.addEventListener('click', ativar)
+  document.getElementById('key').addEventListener('keydown', (e) => { if (e.key === 'Enter') ativar() })
 </script>
 </body>
 </html>

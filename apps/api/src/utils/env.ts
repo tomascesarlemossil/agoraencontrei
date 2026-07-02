@@ -7,6 +7,9 @@ const envSchema = z.object({
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
   APP_URL: z.string().url().default('http://localhost:3100'),
   WEB_URL: z.string().url().default('http://localhost:3000'),
+  // Edição OFFLINE (app desktop): sem SMTP/serviços externos. Auto-ativa o 1º
+  // admin no cadastro (sem verificação por e-mail, que nunca chegaria offline).
+  AGORA_OFFLINE: z.string().optional().transform((v) => v === '1' || v === 'true'),
 
   // Database
   DATABASE_URL: z.string().min(1),

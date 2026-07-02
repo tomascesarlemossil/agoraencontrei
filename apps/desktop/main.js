@@ -163,6 +163,9 @@ async function startEmbeddedServer() {
       COOKIE_SECRET: 'agora-offline-local-cookie-secret-0001',
       APP_URL: `http://127.0.0.1:${API_PORT}`,
       WEB_URL: `http://127.0.0.1:${WEB_PORT}`,
+      // Modo offline: sem SMTP/serviços externos. A API auto-ativa o 1º admin
+      // no cadastro (sem verificação por e-mail, que nunca chegaria offline).
+      AGORA_OFFLINE: '1',
     }, 'API')
     // Bootstrap da API é pesado (rotas, plugins, 1ªs queries) — damos 60s.
     await waitForPort(API_PORT, 60000).catch((e) => friendlyError('API local demorou a responder', e))

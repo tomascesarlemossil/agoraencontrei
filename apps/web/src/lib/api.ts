@@ -84,7 +84,12 @@ export const authApi = {
   register: (body: {
     name: string; email: string; password: string
     companyName?: string; phone?: string
-  }) => request<{ user: User; accessToken: string; expiresIn: number }>(
+  }) => request<{
+    user: User; pendingVerification?: boolean
+    // Presentes só na edição OFFLINE, quando a conta já sai ativa e o cadastro
+    // devolve tokens para entrar direto (sem verificação por e-mail).
+    accessToken?: string; refreshToken?: string; expiresIn?: number
+  }>(
     '/api/v1/auth/register', { method: 'POST', body: JSON.stringify(body) }
   ),
 

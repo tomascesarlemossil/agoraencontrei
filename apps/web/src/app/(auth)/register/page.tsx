@@ -1,11 +1,13 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import Link from 'next/link'
 import { authApi, ApiError } from '@/lib/api'
+import { useAuthStore } from '@/stores/auth.store'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -27,6 +29,8 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>
 
 export default function RegisterPage() {
+  const router = useRouter()
+  const setAuth = useAuthStore((s) => s.setAuth)
   const [error, setError] = useState('')
   const [registered, setRegistered] = useState(false)
   const [registeredEmail, setRegisteredEmail] = useState('')
@@ -42,7 +46,14 @@ export default function RegisterPage() {
   async function onSubmit(data: FormData) {
     setError('')
     try {
-      await authApi.register(data)
+      const res = await authApi.register(data)
+      // Edição OFFLINE: a conta já sai ativa e o cadastro devolve tokens —
+      // entramos direto no painel, sem a tela de "verifique seu e-mail".
+      if (res.accessToken) {
+        setAuth(res.user as any, res.accessToken, res.expiresIn ?? 900, res.refreshToken)
+        router.push('/dashboard')
+        return
+      }
       setRegistered(true)
       setRegisteredEmail(data.email)
     } catch (err) {

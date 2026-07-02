@@ -92,10 +92,13 @@ async function startDatabase(userDataDir) {
 }
 
 /**
- * Cria o schema no banco local aplicando o SQL das migrations diretamente, via
- * o cliente `pg` do Postgres embarcado — SEM depender do CLI/engine do Prisma
- * em runtime (que seria frágil dentro de um instalador). O bundle concatena
- * todas as migrations em ./server/prisma/all-migrations.sql, em ordem.
+ * Cria o schema no banco local aplicando o SQL diretamente, via o cliente `pg`
+ * do Postgres embarcado — SEM depender do CLI/engine do Prisma em runtime (que
+ * seria frágil dentro de um instalador). O bundle (bundle-server.mjs) gera
+ * ./server/prisma/all-migrations.sql derivando o schema COMPLETO do schema.prisma
+ * (prisma migrate diff --from-empty). NÃO é concatenação de migrations: a base do
+ * projeto foi criada com `db push`, então os migration.sql são incrementais e
+ * incompletos (faltariam ~33 tabelas, incl. repasses/financeiro).
  *
  * Idempotente o suficiente para a edição offline: só roda no firstRun (banco
  * recém-criado e vazio). Em execuções seguintes o pgdata já existe e pulamos.
