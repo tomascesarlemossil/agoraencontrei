@@ -32,9 +32,10 @@ export function useAuth() {
     return refreshPromise
   }, [accessToken, refreshToken, isTokenExpired, setAuth, clearAuth])
 
+  // `identifier` = e-mail, telefone ou CPF (login white-label).
   const login = useCallback(
-    async (email: string, password: string) => {
-      const data = await authApi.login(email, password)
+    async (identifier: string, password: string) => {
+      const data = await authApi.login(identifier, password)
       setAuth(data.user as any, data.accessToken, data.expiresIn, data.refreshToken)
       router.push('/dashboard')
     },

@@ -170,6 +170,13 @@ export default async function saasBillingRoutes(app: FastifyInstance) {
       })
     }
 
+    // CPF é único por usuário. Se este CPF já pertence a outra conta (ex.: dono
+    // de mais de uma imobiliária), NÃO gravamos no novo usuário — evita abortar
+    // a transação por violação de unicidade. O login por CPF resolve a 1ª conta.
+    const cpfTaken = cpfClean.length === 11
+      ? await app.prisma.user.findUnique({ where: { cpf: cpfClean } }).then((u: any) => !!u).catch(() => false)
+      : false
+
     // 3. Price from DB — never trust frontend
     const cycle = body.billingCycle || 'MONTHLY'
     const price = cycle === 'YEARLY' && plan.priceYearly
@@ -232,6 +239,10 @@ export default async function saasBillingRoutes(app: FastifyInstance) {
             name: body.customer.name,
             email: body.customer.email.toLowerCase().trim(),
             phone: body.customer.phone || null,
+            // Guarda o CPF (11 dígitos) para permitir login white-label por
+            // documento. CNPJ (14 dígitos) não é credencial de pessoa e CPF já
+            // usado por outra conta fica de fora (ver cpfTaken acima).
+            cpf: cpfClean.length === 11 && !cpfTaken ? cpfClean : null,
             passwordHash,
             role: 'ADMIN' as any,
             status: 'ACTIVE' as any,

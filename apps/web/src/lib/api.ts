@@ -93,9 +93,16 @@ export const authApi = {
     '/api/v1/auth/register', { method: 'POST', body: JSON.stringify(body) }
   ),
 
-  login: (email: string, password: string) =>
+  // `identifier` pode ser e-mail, telefone ou CPF (login white-label).
+  login: (identifier: string, password: string) =>
     request<{ user: User; accessToken: string; refreshToken: string; expiresIn: number }>(
-      '/api/v1/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) }
+      '/api/v1/auth/login', { method: 'POST', body: JSON.stringify({ identifier, password }) }
+    ),
+
+  // Etapa 1 do login white-label: resolve a marca da empresa do parceiro.
+  resolveCompany: (identifier: string) =>
+    request<{ company: { name: string; logoUrl: string | null; primaryColor: string | null } | null }>(
+      '/api/v1/auth/resolve-company', { method: 'POST', body: JSON.stringify({ identifier }) }
     ),
 
   logout: () => request('/api/v1/auth/logout', { method: 'POST' }),

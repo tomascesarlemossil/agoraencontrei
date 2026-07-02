@@ -1250,6 +1250,12 @@ async function runMigrations(prisma: any) {
            FOREIGN KEY ("carneId") REFERENCES "iptu_carnes"("id") ON DELETE CASCADE ON UPDATE CASCADE;
        END IF;
      END $$`,
+
+    // ── users.cpf ── login white-label por telefone/CPF/e-mail ────────────────
+    // CPF permite ao parceiro logar pelo documento; único (NULLs coexistem no
+    // Postgres). Índice único idempotente.
+    `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "cpf" TEXT`,
+    `CREATE UNIQUE INDEX IF NOT EXISTS "users_cpf_key" ON "users"("cpf")`,
   ]
   for (const sql of recentMigrations) {
     try { await prisma.$executeRawUnsafe(sql) } catch { /* already exists */ }
