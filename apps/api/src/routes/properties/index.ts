@@ -649,6 +649,9 @@ export default async function propertiesRoutes(app: FastifyInstance) {
   }, async (req, reply) => {
     const { id } = req.params as { id: string }
     const body = CreatePropertyBody.partial().parse(req.body)
+    // `notifyOwner` é um flag de fora do schema do imóvel (o Zod o descarta),
+    // então lemos do corpo cru: quando marcado, avisamos os proprietários.
+    const notifyOwner = (req.body as any)?.notifyOwner === true
 
     const existing = await app.prisma.property.findFirst({
       where: { id, companyId: req.user.cid },
@@ -703,6 +706,29 @@ export default async function propertiesRoutes(app: FastifyInstance) {
       after:  updated  as any,
     })
 
+    // Notificação automática ao proprietário (apenas quando selecionado na
+    // edição). Best-effort: não bloqueia nem falha a atualização.
+    let ownerNotify: { notified: number; channels: number; owners: number } | null = null
+    if (notifyOwner) {
+      const changedFields = Object.keys(body).filter(
+        (k) => JSON.stringify((body as any)[k]) !== JSON.stringify((existing as any)[k]),
+      )
+      try {
+        const company = await app.prisma.company.findUnique({
+          where: { id: req.user.cid },
+          select: { name: true, tradeName: true },
+        })
+        const { notifyPropertyOwnersOfUpdate } = await import('../../services/property-owner-notify.service.js')
+        ownerNotify = await notifyPropertyOwnersOfUpdate(app.prisma, {
+          propertyId: id,
+          changedFields,
+          companyName: company?.tradeName || company?.name || undefined,
+        })
+      } catch (err: any) {
+        app.log.warn({ err }, '[owner-notify] failed to notify property owners')
+      }
+    }
+
     // Match the listing against client alerts when it transitions to ACTIVE
     // (draft properties only fire match when first activated).
     if (body.status === 'ACTIVE' && existing.status !== 'ACTIVE') {
@@ -736,7 +762,7 @@ export default async function propertiesRoutes(app: FastifyInstance) {
       }
     }
 
-    return reply.send({ ...updated, _autoPost: autoPostStatus })
+    return reply.send({ ...updated, _autoPost: autoPostStatus, _ownerNotify: ownerNotify })
   })
 
   // DELETE /api/v1/properties/:id (soft — set INACTIVE)

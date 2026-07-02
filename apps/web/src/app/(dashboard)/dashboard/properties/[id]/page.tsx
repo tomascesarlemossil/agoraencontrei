@@ -16,7 +16,7 @@ import {
   ArrowLeft, Edit, Save, X, MapPin, BedDouble, Bath, Car, Ruler, Eye,
   Calendar, ImagePlus, Trash2, Star, Upload, Phone, Mail, User as UserIcon, ZoomIn,
   Home, Globe, Settings, Shield, Briefcase, Building2, Search, MessageSquare, Clock, Wand2, Film, Download,
-  AlertCircle, Power,
+  AlertCircle, Power, CheckCircle,
 } from 'lucide-react'
 import Link from 'next/link'
 import { useState, useRef, useEffect, useCallback } from 'react'
@@ -213,6 +213,9 @@ export default function PropertyDetailPage() {
   const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN'
   const [editing, setEditing] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
+  // Avisar o proprietário sobre a atualização (apenas no salvamento manual).
+  const [notifyOwner, setNotifyOwner] = useState(false)
+  const [ownerNotifyMsg, setOwnerNotifyMsg] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState('cadastro')
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
 
@@ -342,7 +345,9 @@ export default function PropertyDetailPage() {
   const updateMutation = useMutation({
     mutationFn: async (data: any) => {
       const token = await getValidToken()
-      const { publishOlx, publishZap, publishVivaReal, publishFacebook, metaKeywords, ...rest } = data
+      // `__notifyOwner` é um flag de controle (não é campo do imóvel): quando
+      // true, o backend avisa o proprietário sobre a atualização.
+      const { publishOlx, publishZap, publishVivaReal, publishFacebook, metaKeywords, __notifyOwner, ...rest } = data
       const clean: Record<string, unknown> = {}
       for (const [k, v] of Object.entries(rest)) {
         if (v !== '' && v !== undefined && v !== null) clean[k] = v
@@ -356,13 +361,27 @@ export default function PropertyDetailPage() {
       if (metaKeywords) {
         clean.metaKeywords = metaKeywords.split(',').map((k: string) => k.trim()).filter(Boolean)
       }
+      if (__notifyOwner) clean.notifyOwner = true
       return propertiesApi.update(token!, id, clean)
     },
-    onSuccess: () => {
+    onSuccess: (result: any) => {
       qc.invalidateQueries({ queryKey: ['property', id] })
       qc.invalidateQueries({ queryKey: ['properties'] })
       setEditing(false)
       setSaveError(null)
+      setNotifyOwner(false)
+      // Feedback do envio ao proprietário, quando solicitado.
+      const on = result?._ownerNotify
+      if (on && typeof on.notified === 'number') {
+        setOwnerNotifyMsg(
+          on.notified > 0
+            ? `Proprietário${on.notified > 1 ? 's' : ''} avisado${on.notified > 1 ? 's' : ''} da atualização (${on.notified}).`
+            : on.owners > 0
+              ? 'Não foi possível avisar o proprietário (sem WhatsApp/e-mail válido).'
+              : 'Nenhum proprietário vinculado a este imóvel.',
+        )
+        setTimeout(() => setOwnerNotifyMsg(null), 6000)
+      }
       // Revalidar páginas públicas imediatamente
       revalidatePublicPages([`/imoveis/${property?.slug || id}`, ...PAGES.properties])
     },
@@ -549,9 +568,20 @@ export default function PropertyDetailPage() {
             <>
               {autoSaveStatus === 'saving' && <span className="text-xs text-yellow-400 animate-pulse">Salvando...</span>}
               {autoSaveStatus === 'saved' && <span className="text-xs text-green-400">Salvo automaticamente</span>}
-              <Button variant="ghost" size="sm" onClick={() => { setEditing(false); setAutoSaveStatus('idle'); setSaveError(null); reset() }}
+              {p?.owners && p.owners.length > 0 && (
+                <label className="flex items-center gap-1.5 text-xs text-white/70 cursor-pointer select-none" title="Envia WhatsApp/e-mail ao proprietário informando o que mudou">
+                  <input
+                    type="checkbox"
+                    checked={notifyOwner}
+                    onChange={(e) => setNotifyOwner(e.target.checked)}
+                    className="h-3.5 w-3.5 accent-[#C9A84C]"
+                  />
+                  Avisar proprietário
+                </label>
+              )}
+              <Button variant="ghost" size="sm" onClick={() => { setEditing(false); setAutoSaveStatus('idle'); setSaveError(null); setNotifyOwner(false); reset() }}
                 className="text-white/60 h-8">Cancelar</Button>
-              <Button size="sm" onClick={handleSubmit((d) => updateMutation.mutate(d))}
+              <Button size="sm" onClick={handleSubmit((d) => updateMutation.mutate({ ...d, __notifyOwner: notifyOwner }))}
                 disabled={updateMutation.isPending} className="gap-2 h-8">
                 <Save className="h-3.5 w-3.5" />
                 {updateMutation.isPending ? 'Salvando...' : 'Salvar'}
@@ -560,6 +590,17 @@ export default function PropertyDetailPage() {
           )}
         </div>
       </div>
+
+      {/* Owner-notify feedback */}
+      {ownerNotifyMsg && (
+        <div className="flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 rounded-xl px-4 py-3">
+          <CheckCircle className="h-4 w-4 text-emerald-400 flex-shrink-0" />
+          <p className="text-emerald-300/90 text-sm flex-1">{ownerNotifyMsg}</p>
+          <button onClick={() => setOwnerNotifyMsg(null)} className="text-emerald-400/60 hover:text-emerald-400 ml-2">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
 
       {/* Error banner */}
       {saveError && (
@@ -1312,9 +1353,20 @@ export default function PropertyDetailPage() {
                 <p className="text-red-400/90 text-sm flex-1">{saveError}</p>
               </div>
             )}
-            <div className="flex justify-end gap-3">
-              <Button variant="ghost" onClick={() => { setEditing(false); setSaveError(null); reset() }} className="text-white/60">Cancelar</Button>
-              <Button onClick={handleSubmit((d) => updateMutation.mutate(d))}
+            <div className="flex justify-end items-center gap-3 flex-wrap">
+              {p?.owners && p.owners.length > 0 && (
+                <label className="flex items-center gap-1.5 text-xs text-white/70 cursor-pointer select-none mr-auto" title="Envia WhatsApp/e-mail ao proprietário informando o que mudou">
+                  <input
+                    type="checkbox"
+                    checked={notifyOwner}
+                    onChange={(e) => setNotifyOwner(e.target.checked)}
+                    className="h-3.5 w-3.5 accent-[#C9A84C]"
+                  />
+                  Avisar proprietário da atualização
+                </label>
+              )}
+              <Button variant="ghost" onClick={() => { setEditing(false); setSaveError(null); setNotifyOwner(false); reset() }} className="text-white/60">Cancelar</Button>
+              <Button onClick={handleSubmit((d) => updateMutation.mutate({ ...d, __notifyOwner: notifyOwner }))}
                 disabled={updateMutation.isPending} className="gap-2 min-w-[120px]">
                 <Save className="h-3.5 w-3.5" />
                 {updateMutation.isPending ? 'Salvando...' : 'Salvar Alterações'}
