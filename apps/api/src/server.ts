@@ -319,6 +319,10 @@ async function runMigrations(prisma: any) {
     `ALTER TABLE specialists ADD COLUMN IF NOT EXISTS "planExpiresAt" TIMESTAMP`,
     `ALTER TABLE specialists ADD COLUMN IF NOT EXISTS "asaasCustomerId" TEXT`,
     `ALTER TABLE specialists ADD COLUMN IF NOT EXISTS "asaasSubscriptionId" TEXT`,
+    // Magic-link de acesso ao painel do especialista (login sem senha).
+    `ALTER TABLE specialists ADD COLUMN IF NOT EXISTS "accessToken" TEXT`,
+    `ALTER TABLE specialists ADD COLUMN IF NOT EXISTS "accessTokenSentAt" TIMESTAMP`,
+    `CREATE UNIQUE INDEX IF NOT EXISTS specialists_access_token_key ON specialists("accessToken")`,
     `CREATE INDEX IF NOT EXISTS specialists_plan_idx ON specialists(plan)`,
     `CREATE INDEX IF NOT EXISTS specialists_category_idx ON specialists(category)`,
     `CREATE INDEX IF NOT EXISTS buildings_city_idx ON buildings(city, state)`,

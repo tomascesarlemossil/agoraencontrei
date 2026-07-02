@@ -10,6 +10,7 @@ import { prisma } from '../../lib/prisma.js'
 import { env } from '../../utils/env.js'
 import { findOrCreateCustomer } from '../../services/asaas.service.js'
 import { safeStringEqual } from '../../utils/crypto-safe.js'
+import { specialistTokenOrAdmin } from './auth.js'
 
 const ASAAS_BASE_URL = env.ASAAS_BASE_URL ?? 'https://www.asaas.com/api/v3'
 const ASAAS_API_KEY  = env.ASAAS_API_KEY  ?? ''
@@ -415,14 +416,9 @@ export async function specialistPaymentRoutes(app: FastifyInstance) {
   })
 
   // ── DELETE /cancel — Cancela assinatura ──────────────────────────────────
-  // SEGURANÇA (interino): a rota era PÚBLICA — qualquer um cancelava a
-  // assinatura de qualquer especialista pelo id. Até existir o login por
-  // magic-link do especialista (token por e-mail/WhatsApp), o cancelamento
-  // exige um admin autenticado. TODO: trocar por token do especialista.
-  app.delete('/cancel/:specialistId', { preHandler: [app.authenticate] }, async (req, reply) => {
-    if (!['SUPER_ADMIN', 'ADMIN', 'MANAGER'].includes((req as any).user?.role)) {
-      return reply.status(403).send({ error: 'FORBIDDEN' })
-    }
+  // SEGURANÇA: o próprio especialista cancela via magic-link (?token=) OU um
+  // admin autenticado. Antes a rota era pública (qualquer um cancelava pelo id).
+  app.delete('/cancel/:specialistId', async (req, reply) => {
     const { specialistId } = req.params as { specialistId: string }
 
     if (!ASAAS_API_KEY) {
@@ -432,10 +428,14 @@ export async function specialistPaymentRoutes(app: FastifyInstance) {
     try {
       const specialist = await prisma.specialist.findUnique({
         where: { id: specialistId },
-        select: { asaasSubscriptionId: true, plan: true },
+        select: { asaasSubscriptionId: true, plan: true, accessToken: true },
       })
 
       if (!specialist) return reply.status(404).send({ error: 'Especialista não encontrado' })
+
+      const ok = await specialistTokenOrAdmin(req, reply, specialist.accessToken)
+      if (!ok) return // 401/403 já enviado
+
       if (!specialist.asaasSubscriptionId) return reply.status(400).send({ error: 'Nenhuma assinatura ativa' })
 
       await cancelSubscription(specialist.asaasSubscriptionId)
@@ -458,15 +458,20 @@ export async function specialistPaymentRoutes(app: FastifyInstance) {
   })
 
   // ── GET /status/:specialistId — Verifica status da assinatura ────────────
+  // SEGURANÇA: dados de plano/assinatura são privados — exige magic-link do
+  // próprio especialista (?token=) OU admin autenticado.
   app.get('/status/:specialistId', async (req, reply) => {
     const { specialistId } = req.params as { specialistId: string }
 
     const specialist = await prisma.specialist.findUnique({
       where: { id: specialistId },
-      select: { plan: true, planStatus: true, planActivatedAt: true, planExpiresAt: true, asaasSubscriptionId: true },
+      select: { plan: true, planStatus: true, planActivatedAt: true, planExpiresAt: true, asaasSubscriptionId: true, accessToken: true },
     })
 
     if (!specialist) return reply.status(404).send({ error: 'Especialista não encontrado' })
+
+    const ok = await specialistTokenOrAdmin(req, reply, specialist.accessToken)
+    if (!ok) return // 401/403 já enviado
 
     return reply.send({
       plan: specialist.plan,

@@ -77,35 +77,39 @@ const PORTFOLIO_STEPS = [
 export default function MeuPainelPage() {
   const [specialist, setSpecialist] = useState<Specialist | null>(null)
   const [loading, setLoading] = useState(true)
-  const [email, setEmail] = useState('')
+  const [token, setToken] = useState<string | null>(null)
   const [emailInput, setEmailInput] = useState('')
   const [error, setError] = useState('')
+  const [requestSent, setRequestSent] = useState(false)
+  const [requesting, setRequesting] = useState(false)
   const [upgrading, setUpgrading] = useState(false)
   const [upgradeSuccess, setUpgradeSuccess] = useState(false)
   const [analytics, setAnalytics] = useState<any>(null)
   const [territories, setTerritories] = useState<any[]>([])
   const [loadingAnalytics, setLoadingAnalytics] = useState(false)
 
-  // Buscar especialista pelo email (autenticação simples por email)
-  const handleEmailSearch = async () => {
+  // Login sem senha: o especialista pede um link por e-mail/WhatsApp. O
+  // servidor rotaciona o accessToken e envia o magic-link; nada de senha e
+  // nada de enumeração (resposta idêntica exista ou não o e-mail).
+  const handleRequestAccess = async () => {
     if (!emailInput.trim()) return
-    setLoading(true)
+    setRequesting(true)
     setError('')
     try {
-      const res = await fetch(`${API_URL}/api/v1/specialists/by-email/${encodeURIComponent(emailInput.trim())}`)
-      if (!res.ok) {
-        setError('Nenhum perfil encontrado com este e-mail. Verifique ou cadastre-se.')
-        setSpecialist(null)
+      const res = await fetch(`${API_URL}/api/v1/specialists/request-access`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: emailInput.trim() }),
+      })
+      if (!res.ok && res.status !== 200) {
+        setError('Não foi possível enviar o link agora. Tente novamente.')
       } else {
-        const data = await res.json()
-        setSpecialist(data)
-        setEmail(emailInput.trim())
-        localStorage.setItem('specialist_email', emailInput.trim())
+        setRequestSent(true)
       }
     } catch {
-      setError('Erro ao buscar perfil. Tente novamente.')
+      setError('Erro de conexão. Tente novamente.')
     } finally {
-      setLoading(false)
+      setRequesting(false)
     }
   }
 
@@ -113,31 +117,54 @@ export default function MeuPainelPage() {
   useEffect(() => {
     if (!specialist?.id) return
     setLoadingAnalytics(true)
+    const qs = token ? `?token=${encodeURIComponent(token)}` : ''
     Promise.all([
-      fetch(`${API_URL}/api/v1/public/partner-stats/${specialist.id}`).then(r => r.ok ? r.json() : null).catch(() => null),
+      fetch(`${API_URL}/api/v1/public/partner-stats/${specialist.id}${qs}`).then(r => r.ok ? r.json() : null).catch(() => null),
       fetch(`${API_URL}/api/v1/public/territory/my/${specialist.id}`).then(r => r.ok ? r.json() : null).catch(() => null),
     ]).then(([analyticsData, territoryData]) => {
       if (analyticsData) setAnalytics(analyticsData)
       if (territoryData?.territories) setTerritories(territoryData.territories)
     }).finally(() => setLoadingAnalytics(false))
-  }, [specialist?.id])
+  }, [specialist?.id, token])
 
-  // Verificar email salvo no localStorage
+  // Resolver a sessão pelo magic-link (?token=) ou por um token já salvo.
   useEffect(() => {
-    const saved = localStorage.getItem('specialist_email')
-    if (saved) {
-      setEmailInput(saved)
-      setEmail(saved)
-      fetch(`${API_URL}/api/v1/specialists/by-email/${encodeURIComponent(saved)}`)
-        .then(r => r.ok ? r.json() : null)
-        .then(data => {
-          if (data) setSpecialist(data)
-          setLoading(false)
-        })
-        .catch(() => setLoading(false))
-    } else {
-      setLoading(false)
+    let activeToken: string | null = null
+    try {
+      const url = new URL(window.location.href)
+      const urlToken = url.searchParams.get('token')
+      if (urlToken) {
+        activeToken = urlToken
+        localStorage.setItem('specialist_token', urlToken)
+        // Limpa o token da barra de endereço (evita vazar em histórico/print).
+        url.searchParams.delete('token')
+        window.history.replaceState({}, '', url.pathname + url.search)
+      } else {
+        activeToken = localStorage.getItem('specialist_token')
+      }
+    } catch {
+      activeToken = null
     }
+
+    if (!activeToken) {
+      setLoading(false)
+      return
+    }
+
+    setToken(activeToken)
+    fetch(`${API_URL}/api/v1/specialists/session?token=${encodeURIComponent(activeToken)}`)
+      .then(r => (r.ok ? r.json() : null))
+      .then(data => {
+        if (data && data.id) {
+          setSpecialist(data)
+        } else {
+          // Token inválido/expirado — limpa para cair na tela de pedir link.
+          localStorage.removeItem('specialist_token')
+          setToken(null)
+        }
+        setLoading(false)
+      })
+      .catch(() => setLoading(false))
   }, [])
 
   const handleUpgrade = async (plan: 'PRIME' | 'VIP') => {
@@ -180,43 +207,66 @@ export default function MeuPainelPage() {
     return false
   }
 
-  // Estado: não logado
+  // Estado: não logado → pedir magic-link (login sem senha)
   if (!loading && !specialist) {
     return (
       <div className="min-h-screen bg-[#f8f6f1] flex items-center justify-center px-4">
         <div className="bg-white rounded-2xl border shadow-sm p-8 max-w-md w-full text-center">
-          <User className="w-12 h-12 text-[#143A1F] mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-[#143A1F] mb-2" style={{ fontFamily: 'Georgia, serif' }}>
-            Meu Painel de Parceiro
-          </h1>
-          <p className="text-gray-500 mb-6 text-sm">
-            Digite o e-mail cadastrado para acessar seu painel
-          </p>
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-600 rounded-xl p-3 mb-4 text-sm flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 flex-shrink-0" /> {error}
-            </div>
+          {requestSent ? (
+            <>
+              <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-4" />
+              <h1 className="text-2xl font-bold text-[#143A1F] mb-2" style={{ fontFamily: 'Georgia, serif' }}>
+                Link enviado!
+              </h1>
+              <p className="text-gray-500 mb-6 text-sm">
+                Se houver um cadastro com <strong>{emailInput.trim()}</strong>, você vai receber um
+                link de acesso por e-mail e WhatsApp. Abra o link para entrar no seu painel — sem senha.
+              </p>
+              <button
+                onClick={() => { setRequestSent(false); setError('') }}
+                className="text-[#C9A84C] text-sm font-medium hover:underline"
+              >
+                Usar outro e-mail
+              </button>
+            </>
+          ) : (
+            <>
+              <Lock className="w-12 h-12 text-[#143A1F] mx-auto mb-4" />
+              <h1 className="text-2xl font-bold text-[#143A1F] mb-2" style={{ fontFamily: 'Georgia, serif' }}>
+                Meu Painel de Parceiro
+              </h1>
+              <p className="text-gray-500 mb-6 text-sm">
+                Informe o e-mail cadastrado e enviamos um link de acesso seguro
+                (sem senha) por e-mail e WhatsApp.
+              </p>
+              {error && (
+                <div className="bg-red-50 border border-red-200 text-red-600 rounded-xl p-3 mb-4 text-sm flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0" /> {error}
+                </div>
+              )}
+              <input
+                type="email"
+                value={emailInput}
+                onChange={e => setEmailInput(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleRequestAccess()}
+                placeholder="seu@email.com"
+                className="w-full border rounded-xl px-4 py-3 text-sm mb-3 focus:outline-none focus:ring-2 focus:ring-[#143A1F]"
+              />
+              <button
+                onClick={handleRequestAccess}
+                disabled={requesting}
+                className="w-full bg-[#143A1F] text-white rounded-xl py-3 font-bold text-sm hover:bg-[#0E2A15] transition-colors disabled:opacity-60"
+              >
+                {requesting ? 'Enviando...' : 'Enviar link de acesso'}
+              </button>
+              <p className="text-gray-400 text-xs mt-4">
+                Ainda não tem perfil?{' '}
+                <Link href="/parceiros/cadastro" className="text-[#C9A84C] font-medium hover:underline">
+                  Cadastre-se grátis
+                </Link>
+              </p>
+            </>
           )}
-          <input
-            type="email"
-            value={emailInput}
-            onChange={e => setEmailInput(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && handleEmailSearch()}
-            placeholder="seu@email.com"
-            className="w-full border rounded-xl px-4 py-3 text-sm mb-3 focus:outline-none focus:ring-2 focus:ring-[#143A1F]"
-          />
-          <button
-            onClick={handleEmailSearch}
-            className="w-full bg-[#143A1F] text-white rounded-xl py-3 font-bold text-sm hover:bg-[#0E2A15] transition-colors"
-          >
-            Acessar meu painel
-          </button>
-          <p className="text-gray-400 text-xs mt-4">
-            Ainda não tem perfil?{' '}
-            <Link href="/parceiros/cadastro" className="text-[#C9A84C] font-medium hover:underline">
-              Cadastre-se grátis
-            </Link>
-          </p>
         </div>
       </div>
     )
