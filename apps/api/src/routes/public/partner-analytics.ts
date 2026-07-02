@@ -89,6 +89,18 @@ export async function partnerAnalyticsRoute(app: FastifyInstance) {
   app.get('/partner-stats/:partnerId', { preHandler: [app.authenticate] }, async (req, reply) => {
     const { partnerId } = req.params as { partnerId: string }
 
+    // SEGURANÇA (BOLA): só o próprio parceiro (match pelo e-mail do login) ou
+    // SUPER_ADMIN vê as estatísticas. Antes, qualquer usuário autenticado lia as
+    // stats/PII de qualquer parceiro informando o partnerId.
+    if ((req.user as any).role !== 'SUPER_ADMIN') {
+      const me = await app.prisma.user.findUnique({ where: { id: (req.user as any).sub }, select: { email: true } })
+      const owns = await app.prisma.$queryRawUnsafe<any[]>(
+        `SELECT id FROM partners WHERE id = $1 AND lower(email) = lower($2) LIMIT 1`,
+        partnerId, me?.email ?? '',
+      )
+      if (!owns.length) return reply.status(403).send({ error: 'FORBIDDEN' })
+    }
+
     try {
       // Stats do mês atual
       const now = new Date()

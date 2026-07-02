@@ -2036,7 +2036,10 @@ export default async function publicRoutes(app: FastifyInstance) {
       return reply.status(404).send({ error: 'TENANT_NOT_FOUND' })
     }
 
-    return reply.send({ success: true, data: tenant })
+    // SEGURANÇA: NUNCA expor `settings` cru — continha `tempPasswordPlain`
+    // (senha do dono em texto puro), e-mail/telefone do cliente e dados internos
+    // do Asaas. Allowlist só o que é público; branding vem das colunas de topo.
+    return reply.send({ success: true, data: { ...tenant, settings: tenant.settings ? { nicheSlug: (tenant.settings as any).nicheSlug ?? null } : null } })
   })
 
   // GET /api/v1/public/tenant/by-domain/:domain — Lookup tenant by custom domain
@@ -2056,6 +2059,9 @@ export default async function publicRoutes(app: FastifyInstance) {
       return reply.status(404).send({ error: 'TENANT_NOT_FOUND' })
     }
 
-    return reply.send({ success: true, data: tenant })
+    // SEGURANÇA: NUNCA expor `settings` cru — continha `tempPasswordPlain`
+    // (senha do dono em texto puro), e-mail/telefone do cliente e dados internos
+    // do Asaas. Allowlist só o que é público; branding vem das colunas de topo.
+    return reply.send({ success: true, data: { ...tenant, settings: tenant.settings ? { nicheSlug: (tenant.settings as any).nicheSlug ?? null } : null } })
   })
 }
