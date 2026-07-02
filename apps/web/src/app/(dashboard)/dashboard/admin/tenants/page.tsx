@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
   Building2, Loader2, Search, Power, PauseCircle, XCircle,
-  CheckCircle2, ExternalLink, RefreshCw,
+  CheckCircle2, ExternalLink, RefreshCw, KeyRound, Copy, Check, X,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -21,6 +21,14 @@ interface Tenant {
   propertyCount?: number;
   totalCommission?: number;
   createdAt: string;
+  settings?: { customerEmail?: string } | null;
+}
+
+interface ResetResult {
+  email: string;
+  setupLink: string;
+  emailSent: boolean;
+  whatsappSent: boolean;
 }
 
 const STATUS_STYLES: Record<string, string> = {
@@ -40,6 +48,14 @@ export default function AdminTenantsPage() {
   const [search, setSearch] = useState('');
   const [busyId, setBusyId] = useState<string | null>(null);
   const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
+
+  // Modal "Reenviar acesso"
+  const [resetTenant, setResetTenant] = useState<Tenant | null>(null);
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetLoading, setResetLoading] = useState(false);
+  const [resetResult, setResetResult] = useState<ResetResult | null>(null);
+  const [resetError, setResetError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
   const notify = useCallback((msg: string, ok: boolean) => {
     setToast({ msg, ok });
@@ -122,6 +138,62 @@ export default function AdminTenantsPage() {
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ plan }),
       }));
+  };
+
+  const openReset = (t: Tenant) => {
+    setResetTenant(t);
+    setResetEmail('');
+    setResetResult(null);
+    setResetError(null);
+    setCopied(false);
+  };
+
+  const closeReset = () => {
+    setResetTenant(null);
+    setResetLoading(false);
+  };
+
+  const submitReset = async () => {
+    if (!resetTenant) return;
+    setResetLoading(true);
+    setResetError(null);
+    setResetResult(null);
+    try {
+      const token = await getValidToken();
+      if (!token) throw new Error('Sessão expirada. Faça login novamente.');
+      const newEmail = resetEmail.trim();
+      const res = await fetch(`${API_URL}/api/v1/master/tenant/${resetTenant.id}/reset-access`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(newEmail ? { newEmail } : {}),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(body.message || body.error || 'Falha ao gerar link de acesso');
+      }
+      setResetResult({
+        email: body.email,
+        setupLink: body.setupLink,
+        emailSent: !!body.emailSent,
+        whatsappSent: !!body.whatsappSent,
+      });
+      await load();
+    } catch (e) {
+      setResetError((e as Error).message);
+    } finally {
+      setResetLoading(false);
+    }
+  };
+
+  const copyLink = async () => {
+    if (!resetResult) return;
+    try {
+      await navigator.clipboard.writeText(resetResult.setupLink);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
+    } catch {
+      notify('Não foi possível copiar automaticamente. Selecione o link manualmente.', false);
+    }
   };
 
   const filtered = tenants.filter((t) => {
@@ -230,6 +302,14 @@ export default function AdminTenantsPage() {
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-end gap-1.5">
                           {busy && <Loader2 size={14} className="animate-spin text-amber-400" />}
+                          <button
+                            onClick={() => openReset(t)}
+                            disabled={busy}
+                            title="Reenviar acesso (trocar e-mail / gerar link de senha)"
+                            className="flex items-center gap-1 rounded-md border border-amber-500/30 bg-amber-500/10 px-2 py-1 text-xs text-amber-300 hover:bg-amber-500/20 disabled:opacity-50"
+                          >
+                            <KeyRound size={13} /> Reenviar acesso
+                          </button>
                           {t.planStatus !== 'ACTIVE' && !cancelled && (
                             <button
                               onClick={() => activate(t)}
@@ -284,6 +364,128 @@ export default function AdminTenantsPage() {
           cancelar desativa de forma permanente preservando os dados.
         </p>
       </div>
+
+      {/* Modal — Reenviar acesso */}
+      {resetTenant && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
+          onClick={closeReset}
+        >
+          <div
+            className="w-full max-w-md rounded-2xl border border-gray-800 bg-gray-900 p-5 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-4 flex items-start justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <KeyRound size={20} className="text-amber-400 flex-shrink-0" />
+                <div>
+                  <h2 className="text-base font-bold text-white">Reenviar acesso</h2>
+                  <p className="text-xs text-gray-400">{resetTenant.name}</p>
+                </div>
+              </div>
+              <button
+                onClick={closeReset}
+                className="rounded-md p-1 text-gray-500 hover:bg-gray-800 hover:text-white"
+                title="Fechar"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {!resetResult ? (
+              <>
+                <div className="mb-4 rounded-lg border border-gray-800 bg-gray-950 px-3 py-2">
+                  <p className="text-xs text-gray-500">E-mail atual do parceiro</p>
+                  <p className="text-sm text-gray-200 break-all">
+                    {resetTenant.settings?.customerEmail || '(não definido)'}
+                  </p>
+                </div>
+
+                <label className="mb-1 block text-xs font-medium text-gray-400">
+                  Novo e-mail (deixe vazio para manter)
+                </label>
+                <input
+                  type="email"
+                  value={resetEmail}
+                  onChange={(e) => setResetEmail(e.target.value)}
+                  placeholder="novo@email.com"
+                  autoComplete="off"
+                  className="mb-3 w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-white placeholder-gray-600 focus:border-amber-500 focus:outline-none"
+                  style={{ fontSize: '16px' }}
+                />
+
+                {resetError && (
+                  <p className="mb-3 rounded-lg border border-red-500/40 bg-red-900/30 px-3 py-2 text-xs text-red-200">
+                    {resetError}
+                  </p>
+                )}
+
+                <button
+                  onClick={submitReset}
+                  disabled={resetLoading}
+                  className="flex w-full items-center justify-center gap-2 rounded-lg bg-amber-500 px-4 py-2.5 text-sm font-semibold text-gray-950 hover:bg-amber-400 disabled:opacity-60"
+                >
+                  {resetLoading
+                    ? <><Loader2 size={16} className="animate-spin" /> Gerando...</>
+                    : <><KeyRound size={16} /> Gerar link de acesso</>}
+                </button>
+                <p className="mt-2 text-[11px] leading-relaxed text-gray-600">
+                  O link permite ao parceiro definir a senha e acessar a conta.
+                  Ele aparece aqui para você copiar e enviar — funciona mesmo sem e-mail/WhatsApp configurados.
+                </p>
+              </>
+            ) : (
+              <>
+                <div className="mb-3 rounded-lg border border-emerald-500/30 bg-emerald-900/20 px-3 py-2">
+                  <p className="text-xs text-emerald-200">
+                    Link gerado para <span className="font-semibold break-all">{resetResult.email}</span>
+                  </p>
+                  <p className="mt-1 text-[11px] text-emerald-300/80">
+                    {resetResult.emailSent && resetResult.whatsappSent
+                      ? 'Enviado por e-mail e WhatsApp.'
+                      : resetResult.emailSent
+                        ? 'Enviado por e-mail.'
+                        : resetResult.whatsappSent
+                          ? 'Enviado por WhatsApp.'
+                          : 'Não enviado automaticamente — copie o link e envie manualmente.'}
+                  </p>
+                </div>
+
+                <label className="mb-1 block text-xs font-medium text-gray-400">
+                  Link de definição de senha
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    readOnly
+                    value={resetResult.setupLink}
+                    onFocus={(e) => e.currentTarget.select()}
+                    className="min-w-0 flex-1 rounded-lg border border-gray-700 bg-gray-950 px-3 py-2 text-gray-200 focus:border-amber-500 focus:outline-none"
+                    style={{ fontSize: '16px' }}
+                  />
+                  <button
+                    onClick={copyLink}
+                    title="Copiar link"
+                    className={`flex items-center gap-1 rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
+                      copied
+                        ? 'border-emerald-500/40 bg-emerald-500/15 text-emerald-300'
+                        : 'border-gray-700 bg-gray-800 text-gray-200 hover:bg-gray-700'
+                    }`}
+                  >
+                    {copied ? <><Check size={15} /> Copiado</> : <><Copy size={15} /> Copiar</>}
+                  </button>
+                </div>
+
+                <button
+                  onClick={closeReset}
+                  className="mt-4 w-full rounded-lg border border-gray-700 px-4 py-2 text-sm text-gray-300 hover:bg-gray-800"
+                >
+                  Fechar
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
