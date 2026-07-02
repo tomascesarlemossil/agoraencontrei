@@ -12,6 +12,7 @@ import { notFound } from 'next/navigation'
 import { MapPin, Search, ChevronRight, Home, ArrowRight } from 'lucide-react'
 import { SEO_CATEGORIAS_MAP, type SeoCategoria } from '@/data/seo-categorias'
 import { UNIQUE_CITIES } from '@/data/seo-cities'
+import { CitySeoContent } from '@/components/public/CitySeoContent'
 
 const WEB_URL = process.env.NEXT_PUBLIC_WEB_URL || 'https://www.agoraencontrei.com.br'
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api-production-669c.up.railway.app'
@@ -368,6 +369,14 @@ export default async function SeoCidadePage(
             </a>
           </div>
         </section>
+
+        <CitySeoContent
+          cityName={city.name}
+          stateUf={city.state}
+          context={cat.titulo.toLowerCase()}
+          hasResults={properties.length > 0}
+          relatedLinks={related.map(r => ({ href: `/${r.slug}/${params.cidade}`, label: r.titulo }))}
+        />
       </div>
     </>
   )

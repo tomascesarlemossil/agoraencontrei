@@ -9,6 +9,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { MapPin, Home, Search, ChevronRight } from 'lucide-react'
 import { IBGE_CITY_BY_SLUG, IBGE_CITIES_152, getIbgeCitySnippet } from '@/data/seo-ibge-cities-expanded'
+import { CitySeoContent } from '@/components/public/CitySeoContent'
 
 const WEB_URL = process.env.NEXT_PUBLIC_WEB_URL || 'https://agoraencontrei.com.br'
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api-production-669c.up.railway.app'
@@ -338,6 +339,14 @@ export default async function ClusterPage(props: { params: Promise<{ estado: str
             ))}
           </div>
         </section>
+
+        <CitySeoContent
+          cityName={city.name}
+          stateUf={city.state}
+          context={meta.title.toLowerCase()}
+          hasResults={properties.length > 0}
+          relatedLinks={related.map(([k, v]) => ({ href: `/${params.estado}/${params.cidade}/${k}`, label: v.title }))}
+        />
       </div>
 
       {/* Floating CTA */}

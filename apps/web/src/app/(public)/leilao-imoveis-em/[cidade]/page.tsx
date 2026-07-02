@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { MapPin, Home, Search, MessageCircle, Building, TrendingUp } from 'lucide-react'
 import { UNIQUE_CITIES, PROPERTY_TYPES } from '@/data/seo-cities'
 import { canonicalFromCityUf } from '@/lib/seo-canonical'
+import { CitySeoContent } from '@/components/public/CitySeoContent'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 const WEB_URL = 'https://www.agoraencontrei.com.br'
@@ -111,6 +112,18 @@ export default async function LeilaoCidadePage(props: { params: Promise<{ cidade
           <Link href="/avaliacao" className="text-center p-3 bg-white rounded-xl border hover:border-[#C9A84C] transition text-sm">📊 Avaliar Imóvel</Link>
           <Link href="/anunciar-imovel" className="text-center p-3 bg-white rounded-xl border hover:border-[#C9A84C] transition text-sm">📢 Anunciar</Link>
         </div>
+
+        <CitySeoContent
+          cityName={city.name}
+          stateUf={city.state}
+          context="imóveis em leilão"
+          hasResults={properties.length > 0}
+          relatedLinks={[
+            { href: `/imoveis-a-venda/${params.cidade}`, label: `Comprar em ${city.name}` },
+            { href: `/imoveis-para-alugar/${params.cidade}`, label: `Alugar em ${city.name}` },
+            ...nearby.slice(0, 6).map(c => ({ href: `/leilao-imoveis-em/${c.slug}`, label: `${c.name}/${c.state}` })),
+          ]}
+        />
       </div>
     </>
   )
