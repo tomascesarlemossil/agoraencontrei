@@ -105,7 +105,9 @@ async function fetchProperties(cityName: string, cluster: string) {
     const purpose = purposeMap[cluster] || 'SALE'
     const type = typeMap[cluster] || ''
     const url = `${API_URL}/api/v1/public/properties?city=${encodeURIComponent(cityName)}&purpose=${purpose}${type ? `&type=${type}` : ''}&limit=9`
-    const r = await fetch(url, { next: { revalidate: 3600 } })
+    // Timeout de 5s: se a API estiver lenta/fria, cai no fallback [] em vez de
+    // travar o render por 60s (causava timeout no build e erro sob rastreamento).
+    const r = await fetch(url, { next: { revalidate: 3600 }, signal: AbortSignal.timeout(5000) })
     if (r.ok) { const d = await r.json(); return d.data || [] }
   } catch {}
   return []
