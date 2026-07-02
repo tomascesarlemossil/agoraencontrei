@@ -12,7 +12,7 @@
  *  - Concurrency: 4 parallel requests, 300ms delay between batches
  */
 
-const { PrismaClient } = require('@agoraencontrei/database');
+const { PrismaClient } = require('../packages/database/generated/client');
 const fs = require('fs');
 const path = require('path');
 
