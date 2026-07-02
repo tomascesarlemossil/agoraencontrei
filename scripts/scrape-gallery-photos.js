@@ -12,23 +12,35 @@
  *  - Concurrency: 4 parallel requests, 300ms delay between batches
  */
 
-const { PrismaClient } = require('/Users/tomaslemos/Downloads/squads/agoraencontrei/packages/database/node_modules/@prisma/client');
+const { PrismaClient } = require('@agoraencontrei/database');
 const fs = require('fs');
 const path = require('path');
 
-const prisma = new PrismaClient({
-  datasources: { db: { url: 'postgresql://neondb_owner:npg_KAver0xR2jiU@ep-holy-band-andfuwo5.c-6.us-east-1.aws.neon.tech/neondb' } }
-});
-const COMPANY_ID = 'cmnhzieqf0000mx1cqcqgfv4n';
+// Credentials come from the environment — never hardcode production creds here.
+//   DATABASE_URL   → Postgres connection string (required)
+//   COMPANY_ID     → Imobiliária Lemos company id (required)
+//   DRY_RUN=1      → scrape + report only, do NOT write to the database
+if (!process.env.DATABASE_URL) { console.error('❌ Set DATABASE_URL'); process.exit(1); }
+if (!process.env.COMPANY_ID)   { console.error('❌ Set COMPANY_ID');   process.exit(1); }
+
+const prisma = new PrismaClient();
+const COMPANY_ID = process.env.COMPANY_ID;
+const DRY_RUN = process.env.DRY_RUN === '1' || process.env.DRY_RUN === 'true';
 const CACHE_FILE = path.join(__dirname, '.gallery-cache.json');
 const CONCURRENCY = 10;
 const DELAY_MS = 150;
+
+// Marker that starts the "Imóveis semelhantes" (recommended) section. Everything
+// AFTER it belongs to OTHER properties — grabbing those was the bug that mixed
+// photos of one house into another. We cut the HTML here before extracting.
+const SIMILAR_MARKERS = ['imóveis semelhantes', 'imoveis semelhantes', 'imóveis relacionados', 'imoveis relacionados'];
 
 const FAKE_PATTERNS = [
   'send.png', 'telefone.png', 'logotopo.png', 'foto_vazio.png',
   'foto-corretor.png', 'logo_uso.png', 'logo_rodape.png',
   '/images/logo', '/images/banner', 'whatsapp', '/noimage',
-  'placeholder', 'default.jpg', 'sem-foto',
+  'placeholder', 'default.jpg', 'sem-foto', 'fundosite', 'favicon',
+  'painel_2023', 'autoatendimento',
 ];
 function isRealImage(url) {
   if (!url) return false;
@@ -63,15 +75,37 @@ async function fetchPage(url) {
 
 function extractPhotos(html) {
   if (!html) return [];
-  // Find all cdnuso.com image URLs
-  const regex = /https:\/\/cdnuso\.com\/[^"'\s>)]+\.(jpg|jpeg|png|webp)/gi;
-  const found = new Set();
-  let m;
-  while ((m = regex.exec(html)) !== null) {
-    const url = m[0];
-    if (isRealImage(url)) found.add(url);
+
+  // 1) Cut off the "Imóveis semelhantes" section so we never pick up photos that
+  //    belong to OTHER properties (the root cause of the mixed-photo bug).
+  const low = html.toLowerCase();
+  let cut = html.length;
+  for (const marker of SIMILAR_MARKERS) {
+    const idx = low.indexOf(marker);
+    if (idx !== -1 && idx < cut) cut = idx;
   }
-  return Array.from(found);
+  const scoped = html.slice(0, cut);
+
+  // 2) Only accept real property photos: agency-scoped CDN paths shaped like
+  //    /<agencyId>/<yyyy>/<mm>/<hash>.<ext> on the uso/cdnuso CDNs. Site chrome
+  //    (FUNDOSITE, favicon, logos, banners) never matches this shape.
+  const regex = /https?:\/\/(?:cdnuso\.com|cdn[0-9]*\.uso\.com\.br)\/\d+\/\d{4}\/\d{2}\/([a-z0-9_]+)\.(jpg|jpeg|png|webp)/gi;
+
+  // 3) Dedupe by the image hash (same photo can appear as mini_/thumb_ and on
+  //    several CDN hosts). Keep one canonical full-res URL per hash, in order.
+  const byHash = new Map();
+  let m;
+  while ((m = regex.exec(scoped)) !== null) {
+    const url = m[0];
+    if (!isRealImage(url)) continue;
+    const hash = m[1].replace(/^(mini_|thumb_|small_|medio_|media_|p_)/, '');
+    if (byHash.has(hash)) continue;
+    const canonical = url
+      .replace(/https?:\/\/cdn[0-9]*\.uso\.com\.br/i, 'https://cdnuso.com')
+      .replace(/\/(mini_|thumb_|small_|medio_|media_|p_)/, '/');
+    byHash.set(hash, canonical);
+  }
+  return Array.from(byHash.values());
 }
 
 async function sleep(ms) {
@@ -128,13 +162,15 @@ async function main() {
 
       try {
         const cover = result.photos[0];
-        await prisma.property.update({
-          where: { id: result.id },
-          data: {
-            coverImage: cover,
-            images: result.photos,
-          },
-        });
+        if (!DRY_RUN) {
+          await prisma.property.update({
+            where: { id: result.id },
+            data: {
+              coverImage: cover,
+              images: result.photos,
+            },
+          });
+        }
         updated++;
       } catch {
         errors++;

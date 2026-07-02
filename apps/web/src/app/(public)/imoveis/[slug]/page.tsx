@@ -780,7 +780,11 @@ export default async function PropertyDetailPage(props: { params: Promise<{ slug
             )}
 
             {/* ── Map ───────────────────────────────────────── */}
-            {(p.city || p.neighborhood) && (
+            {/* Só exibe o mapa quando o cadastrante autorizou publicar a
+                localização EXATA (showExactLocation) e há coordenadas válidas.
+                Sem isso, não renderizamos o quadro — evita o "quadro em branco"
+                sem localização que aparecia em todos os anúncios sem geo. */}
+            {p.showExactLocation && p.latitude != null && p.longitude != null && (
               <div className="bg-white rounded-2xl border shadow-sm overflow-hidden" style={{ borderColor: '#ddd9d0' }}>
                 <div className="flex items-center gap-2 px-6 py-4 border-b" style={{ borderColor: '#ede9df' }}>
                   <h2 className="text-lg font-bold" style={{ color: '#143A1F', fontFamily: 'Georgia, serif' }}>
@@ -792,13 +796,8 @@ export default async function PropertyDetailPage(props: { params: Promise<{ slug
                     latitude={p.latitude} longitude={p.longitude}
                     city={p.city} neighborhood={p.neighborhood} state={p.state}
                     label={[TYPE_LABEL[p.type] ?? p.type, p.neighborhood, p.city].filter(Boolean).join(' / ')}
-                    showExactLocation={p.showExactLocation ?? false}
+                    showExactLocation
                   />
-                  {!(p.showExactLocation) && (
-                    <p className="text-xs text-gray-500 mt-3 text-center">
-                      * Localização aproximada para preservar a privacidade do imóvel.
-                    </p>
-                  )}
                 </div>
               </div>
             )}

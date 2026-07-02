@@ -20,3 +20,6 @@ screenshots/
 __pycache__/
 *.pyc
 apps/image-processor/logos_store/
+
+# Scrape caches (regenerable, may contain stale/contaminated data)
+scripts/.gallery-cache.json
