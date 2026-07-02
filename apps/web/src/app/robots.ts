@@ -52,7 +52,7 @@ export default function robots(): MetadataRoute.Robots {
       `${WEB_URL}/sitemap-index.xml`,
       // Sitemap dedicado de Franca (máxima prioridade)
       `${WEB_URL}/sitemap-franca.xml`,
-      `${WEB_URL}/api/sitemap/blog`,
+      `${WEB_URL}/sitemaps/blog`,
     ],
     host: WEB_URL,
   }

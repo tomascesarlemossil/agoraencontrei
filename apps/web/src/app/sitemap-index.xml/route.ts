@@ -42,29 +42,29 @@ export async function GET() {
   // 3. Sitemaps de cidades (paginados)
   const cidadePages = Math.ceil(CIDADES_TOTAL / URLS_PER_SITEMAP)
   for (let i = 0; i < cidadePages; i++) {
-    sitemaps.push(`<sitemap><loc>${WEB_URL}/api/sitemap/cidades?page=${i}</loc><lastmod>${now}</lastmod></sitemap>`)
+    sitemaps.push(`<sitemap><loc>${WEB_URL}/sitemaps/cidades?page=${i}</loc><lastmod>${now}</lastmod></sitemap>`)
   }
 
   // 4. Sitemaps de comparações (paginados)
   const compPages = Math.ceil(COMPARACOES_TOTAL / URLS_PER_SITEMAP)
   for (let i = 0; i < compPages; i++) {
-    sitemaps.push(`<sitemap><loc>${WEB_URL}/api/sitemap/comparacoes?page=${i}</loc><lastmod>${now}</lastmod></sitemap>`)
+    sitemaps.push(`<sitemap><loc>${WEB_URL}/sitemaps/comparacoes?page=${i}</loc><lastmod>${now}</lastmod></sitemap>`)
   }
 
   // 5. Sitemaps de leilões por cidade (paginados) — /leilao/[estado]/[cidade]
   const leilaoPages = Math.ceil(LEILAO_PAGES_TOTAL / URLS_PER_SITEMAP)
   for (let i = 0; i < leilaoPages; i++) {
-    sitemaps.push(`<sitemap><loc>${WEB_URL}/api/sitemap/leiloes?page=${i}</loc><lastmod>${now}</lastmod></sitemap>`)
+    sitemaps.push(`<sitemap><loc>${WEB_URL}/sitemaps/leiloes?page=${i}</loc><lastmod>${now}</lastmod></sitemap>`)
   }
 
   // 6. Sitemaps de bairros (paginados) — /[estado]/[cidade]/bairro/[bairro]
   const bairroPages = Math.ceil(BAIRROS_TOTAL / URLS_PER_SITEMAP)
   for (let i = 0; i < bairroPages; i++) {
-    sitemaps.push(`<sitemap><loc>${WEB_URL}/api/sitemap/bairros?page=${i}</loc><lastmod>${now}</lastmod></sitemap>`)
+    sitemaps.push(`<sitemap><loc>${WEB_URL}/sitemaps/bairros?page=${i}</loc><lastmod>${now}</lastmod></sitemap>`)
   }
 
   // 7. Blog
-  sitemaps.push(`<sitemap><loc>${WEB_URL}/api/sitemap/blog</loc><lastmod>${now}</lastmod></sitemap>`)
+  sitemaps.push(`<sitemap><loc>${WEB_URL}/sitemaps/blog</loc><lastmod>${now}</lastmod></sitemap>`)
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
