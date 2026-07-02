@@ -361,7 +361,15 @@ export default async function usersRoutes(app: FastifyInstance) {
       }
     }
 
-    const existingUser = await app.prisma.user.findUnique({ where: { id }, select: { id: true, name: true, role: true, phone: true, bio: true, creciNumber: true, settings: true } })
+    const existingUser = await app.prisma.user.findUnique({ where: { id }, select: { id: true, name: true, role: true, phone: true, bio: true, creciNumber: true, settings: true, companyId: true } })
+    if (!existingUser) return reply.status(404).send({ error: 'NOT_FOUND' })
+    // SEGURANÇA (multi-tenant): ADMIN só pode editar usuários da PRÓPRIA empresa.
+    // Sem isto, um ADMIN da empresa A podia editar/promover/mover/deslogar
+    // qualquer usuário de outra empresa (takeover entre tenants). SUPER_ADMIN
+    // (admin da plataforma) mantém acesso cross-company.
+    if (req.user.role !== 'SUPER_ADMIN' && existingUser.companyId !== req.user.cid) {
+      return reply.status(404).send({ error: 'NOT_FOUND' })
+    }
 
     // Extract permission/preference fields that go into settings JSON
     const { accessLevel, moduleAccess, hasDataAccess, welcomeMessage, welcomeDuration, notifyEmail, notifyWhatsapp, dailyDigest, ...directFields } = body

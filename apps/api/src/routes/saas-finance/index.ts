@@ -12,6 +12,17 @@ import type { FastifyInstance } from 'fastify'
 export default async function saasFinanceRoutes(app: FastifyInstance) {
   const prisma = app.prisma as any
 
+  // SEGURANÇA: este módulo expõe o FINANCEIRO DA PLATAFORMA (MRR, receita,
+  // comissões de afiliados). Estava 100% SEM autenticação — vazava tudo e o
+  // /sync-payment permitia inflar ganhos de afiliado (fraude). Passa a exigir
+  // autenticação + SUPER_ADMIN em TODAS as rotas.
+  app.addHook('preHandler', app.authenticate)
+  app.addHook('preHandler', async (req, reply) => {
+    if ((req as any).user?.role !== 'SUPER_ADMIN') {
+      return reply.status(403).send({ error: 'FORBIDDEN' })
+    }
+  })
+
   // ── GET /transactions — Lista transações ────────────────────────────────────
   app.get('/transactions', async (req, reply) => {
     const query = req.query as {

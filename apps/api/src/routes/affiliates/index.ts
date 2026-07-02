@@ -75,7 +75,7 @@ export default async function affiliateRoutes(app: FastifyInstance) {
   })
 
   // ── GET / — Listar afiliados (admin) ───────────────────────────────────────���
-  app.get('/', async (req, reply) => {
+  app.get('/', { preHandler: [app.authenticate] }, async (req, reply) => {
     const query = req.query as { limit?: string; offset?: string; isActive?: string }
     const limit = Math.min(parseInt(query.limit || '50'), 100)
     const offset = parseInt(query.offset || '0')
@@ -112,7 +112,7 @@ export default async function affiliateRoutes(app: FastifyInstance) {
   })
 
   // ── GET /:id — Detalhe do afiliado ──────────────────────────────────────────
-  app.get('/:id', async (req, reply) => {
+  app.get('/:id', { preHandler: [app.authenticate] }, async (req, reply) => {
     const { id } = req.params as { id: string }
     const affiliate = await prisma.affiliate.findUnique({ where: { id } })
     if (!affiliate) return reply.status(404).send({ error: 'Afiliado não encontrado' })
@@ -120,7 +120,7 @@ export default async function affiliateRoutes(app: FastifyInstance) {
   })
 
   // ── GET /:id/earnings — Ganhos do afiliado ──────────────────────────────────
-  app.get('/:id/earnings', async (req, reply) => {
+  app.get('/:id/earnings', { preHandler: [app.authenticate] }, async (req, reply) => {
     const { id } = req.params as { id: string }
     const query = req.query as { limit?: string; status?: string }
     const limit = Math.min(parseInt(query.limit || '50'), 100)
@@ -138,7 +138,7 @@ export default async function affiliateRoutes(app: FastifyInstance) {
   })
 
   // ── GET /:id/stats — Estatísticas do afiliado ──────────────────────────────
-  app.get('/:id/stats', async (req, reply) => {
+  app.get('/:id/stats', { preHandler: [app.authenticate] }, async (req, reply) => {
     const { id } = req.params as { id: string }
 
     const affiliate = await prisma.affiliate.findUnique({ where: { id } })
@@ -174,7 +174,7 @@ export default async function affiliateRoutes(app: FastifyInstance) {
   })
 
   // ── PUT /:id — Atualizar afiliado ──────────────────────────────────────────
-  app.put('/:id', async (req, reply) => {
+  app.put('/:id', { preHandler: [app.authenticate] }, async (req, reply) => {
     const { id } = req.params as { id: string }
     const body = req.body as { name?: string; phone?: string; level?: string; isActive?: boolean }
 
@@ -235,7 +235,7 @@ export default async function affiliateRoutes(app: FastifyInstance) {
   })
 
   // ── GET /:id/referrals — Lista de indicações do afiliado ─────────────────��─
-  app.get('/:id/referrals', async (req, reply) => {
+  app.get('/:id/referrals', { preHandler: [app.authenticate] }, async (req, reply) => {
     const { id } = req.params as { id: string }
     const query = req.query as { limit?: string; status?: string }
     const limit = Math.min(parseInt(query.limit || '50'), 100)
@@ -253,7 +253,7 @@ export default async function affiliateRoutes(app: FastifyInstance) {
   })
 
   // ── POST /:id/recalculate-level — Recalcular nível ────────────────────────
-  app.post('/:id/recalculate-level', async (req, reply) => {
+  app.post('/:id/recalculate-level', { preHandler: [app.authenticate] }, async (req, reply) => {
     const { id } = req.params as { id: string }
 
     const result = await recalculateAffiliateLevel(prisma, id)

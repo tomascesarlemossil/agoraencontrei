@@ -96,8 +96,11 @@ export default async function aiMarketingRoutes(app: FastifyInstance) {
 
     // If propertyId is provided, update the property with generated content
     if (body.propertyId) {
-      await app.prisma.property.update({
-        where: { id: body.propertyId },
+      // SEGURANÇA (multi-tenant): updateMany + companyId garante que só o imóvel
+      // da PRÓPRIA empresa é alterado (antes: update por id puro → escrita
+      // cross-tenant nos metadados de qualquer imóvel).
+      await app.prisma.property.updateMany({
+        where: { id: body.propertyId, companyId: req.user.cid },
         data: {
           metaTitle: content.seoTitle,
           metaDescription: content.seoDescription,
@@ -156,20 +159,25 @@ export default async function aiMarketingRoutes(app: FastifyInstance) {
       scheduledAt,
     })
 
-    // Update property publication status
-    await app.prisma.property.update({
-      where: { id: body.propertyId },
-      data: {
-        portalDescriptions: {
-          ...((await app.prisma.property.findUnique({
-            where: { id: body.propertyId },
-            select: { portalDescriptions: true },
-          }))?.portalDescriptions as any || {}),
-          socialPostResults: results,
-          lastSocialPostAt: new Date().toISOString(),
+    // Update property publication status — SEGURANÇA (multi-tenant): confirma
+    // que o imóvel é da empresa do usuário antes de ler/escrever (antes: read+
+    // write por id puro → vazava/alterava portalDescriptions de outra empresa).
+    const prop = await app.prisma.property.findFirst({
+      where: { id: body.propertyId, companyId: req.user.cid },
+      select: { portalDescriptions: true },
+    })
+    if (prop) {
+      await app.prisma.property.updateMany({
+        where: { id: body.propertyId, companyId: req.user.cid },
+        data: {
+          portalDescriptions: {
+            ...((prop.portalDescriptions as any) || {}),
+            socialPostResults: results,
+            lastSocialPostAt: new Date().toISOString(),
+          },
         },
-      },
-    }).catch(() => {})
+      }).catch(() => {})
+    }
 
     await createAuditLog({
       prisma: app.prisma as any, req,

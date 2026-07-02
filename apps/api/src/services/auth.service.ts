@@ -68,14 +68,15 @@ export class AuthService {
       timeCost: 3,
     })
 
-    // Create or use existing company
-    let companyId = input.companyId
-    if (!companyId) {
-      const company = await this.prisma.company.create({
-        data: { name: input.companyName ?? input.name + ' Imobiliária' },
-      })
-      companyId = company.id
-    }
+    // SEGURANÇA (multi-tenant): registro público SEMPRE cria uma empresa nova.
+    // NUNCA confiar em `companyId` vindo do cliente — isso permitia cadastrar um
+    // ADMIN dentro de qualquer empresa existente (escalonamento de privilégio).
+    // Adicionar um usuário a uma empresa existente é feito apenas pela rota
+    // AUTENTICADA de usuários (POST /users), com companyId derivado do JWT.
+    const company = await this.prisma.company.create({
+      data: { name: input.companyName ?? input.name + ' Imobiliária' },
+    })
+    const companyId = company.id
 
     const user = await this.prisma.user.create({
       data: {

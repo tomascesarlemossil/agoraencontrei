@@ -73,7 +73,7 @@ export default async function hunterRoutes(app: FastifyInstance) {
   })
 
   // ─�� GET /leads — Listar HunterLeads ──────────────────────────────────���──────
-  app.get('/leads', async (req, reply) => {
+  app.get('/leads', { preHandler: [app.authenticate] }, async (req, reply) => {
     const query = req.query as { status?: string; limit?: string; offset?: string }
     const limit = Math.min(parseInt(query.limit || '50'), 100)
     const offset = parseInt(query.offset || '0')
@@ -97,7 +97,7 @@ export default async function hunterRoutes(app: FastifyInstance) {
   })
 
   // ── PUT /leads/:id — Atualizar status ───────────────────────────────────────
-  app.put('/leads/:id', async (req, reply) => {
+  app.put('/leads/:id', { preHandler: [app.authenticate] }, async (req, reply) => {
     const { id } = req.params as { id: string }
     const body = req.body as { status?: string; notes?: string }
 
@@ -132,7 +132,7 @@ export default async function hunterRoutes(app: FastifyInstance) {
   })
 
   // ��─ GET /stats — Estatísticas ───────────────────────────────────────────────
-  app.get('/stats', async (_req, reply) => {
+  app.get('/stats', { preHandler: [app.authenticate] }, async (_req, reply) => {
     const [total, active, fulfilled, expired, contacted] = await Promise.all([
       prisma.hunterLead.count(),
       prisma.hunterLead.count({ where: { status: 'active' } }),
