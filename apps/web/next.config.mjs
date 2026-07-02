@@ -102,6 +102,12 @@ const nextConfig = {
         source: '/api/v1/:path*',
         destination: `${apiUrl}/api/v1/:path*`,
       },
+      // ── Sub-sitemaps servidos FORA de /api/ ──────────────────────────────
+      // Os sitemaps paginados vivem em /api/sitemap/*, mas /api/ é Disallow no
+      // robots.txt. O Googlebot então falhava ("Não foi possível buscar o
+      // sitemap"). Expomos os mesmos handlers em /sitemaps/* (caminho liberado)
+      // e o sitemap-index aponta para cá — sem depender do Allow /api/sitemap/.
+      { source: '/sitemaps/:path*', destination: '/api/sitemap/:path*' },
       // /health is handled directly by app/health/route.ts — no proxy needed
       // ── SEO Programático: /{categoria}/{cidade} → /seo/{categoria}/{cidade} ──
       // Property types

@@ -9,6 +9,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { MapPin, Home, Search, ChevronRight } from 'lucide-react'
 import { IBGE_CITY_BY_SLUG, IBGE_CITIES_152, getIbgeCitySnippet } from '@/data/seo-ibge-cities-expanded'
+import { CitySeoContent } from '@/components/public/CitySeoContent'
 
 const WEB_URL = process.env.NEXT_PUBLIC_WEB_URL || 'https://agoraencontrei.com.br'
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api-production-669c.up.railway.app'
@@ -105,7 +106,9 @@ async function fetchProperties(cityName: string, cluster: string) {
     const purpose = purposeMap[cluster] || 'SALE'
     const type = typeMap[cluster] || ''
     const url = `${API_URL}/api/v1/public/properties?city=${encodeURIComponent(cityName)}&purpose=${purpose}${type ? `&type=${type}` : ''}&limit=9`
-    const r = await fetch(url, { next: { revalidate: 3600 } })
+    // Timeout de 5s: se a API estiver lenta/fria, cai no fallback [] em vez de
+    // travar o render por 60s (causava timeout no build e erro sob rastreamento).
+    const r = await fetch(url, { next: { revalidate: 3600 }, signal: AbortSignal.timeout(5000) })
     if (r.ok) { const d = await r.json(); return d.data || [] }
   } catch {}
   return []
@@ -336,6 +339,14 @@ export default async function ClusterPage(props: { params: Promise<{ estado: str
             ))}
           </div>
         </section>
+
+        <CitySeoContent
+          cityName={city.name}
+          stateUf={city.state}
+          context={meta.title.toLowerCase()}
+          hasResults={properties.length > 0}
+          relatedLinks={related.map(([k, v]) => ({ href: `/${params.estado}/${params.cidade}/${k}`, label: v.title }))}
+        />
       </div>
 
       {/* Floating CTA */}

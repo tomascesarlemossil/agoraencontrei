@@ -83,7 +83,7 @@ async function fetchNearbyProperties(city: string, neighborhood?: string) {
   try {
     const params = new URLSearchParams({ city, limit: '12', sortBy: 'createdAt', sortOrder: 'desc' })
     if (neighborhood) params.set('neighborhood', neighborhood)
-    const res = await fetch(`${API_URL}/api/v1/public/properties?${params}`, { next: { revalidate: 3600 } })
+    const res = await fetch(`${API_URL}/api/v1/public/properties?${params}`, { next: { revalidate: 3600 }, signal: AbortSignal.timeout(5000) })
     if (!res.ok) return []
     const data = await res.json()
     return data.data || []

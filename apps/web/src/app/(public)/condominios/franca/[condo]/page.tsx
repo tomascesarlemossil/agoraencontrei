@@ -68,7 +68,7 @@ async function fetchSpecialists(buildingSlug: string) {
   try {
     const res = await fetch(
       `${API_URL}/api/v1/specialists/by-building/${buildingSlug}?limit=6`,
-      { next: { revalidate: 3600 } }
+      { next: { revalidate: 3600 }, signal: AbortSignal.timeout(5000) }
     )
     if (!res.ok) return []
     const data = await res.json()

@@ -3,12 +3,15 @@ import type { MetadataRoute } from 'next'
 /**
  * Fonte única de verdade das URLs do sitemap principal.
  *
- * Extraído de app/sitemap.ts para ser reutilizado por:
+ * Usado por:
  *   - app/sitemap.ts            → chunking via generateSitemaps() (<50k por arquivo)
  *   - app/sitemap-index.xml     → contagem de chunks para montar o <sitemapindex>
  *
- * O Google rejeita sitemaps com mais de 50.000 URLs. Como este builder gera
- * ~66k URLs, o arquivo é fatiado em pedaços de SITEMAP_CHUNK_SIZE.
+ * IMPORTANTE (perf): o índice e o generateSitemaps só precisam da CONTAGEM de
+ * chunks — que é calculada por sitemapChunkCount() a partir das URLs ESTÁTICAS
+ * (sem nenhum fetch). Só o conteúdo real de cada /sitemap/{id}.xml chama
+ * buildSitemapEntries() (que inclui os fetches dinâmicos, com timeout). Assim o
+ * /sitemap-index.xml responde instantâneo e nunca estoura o tempo do Googlebot.
  */
 
 const WEB_URL = process.env.NEXT_PUBLIC_WEB_URL ?? 'https://www.agoraencontrei.com.br'
@@ -16,6 +19,9 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 
 /** Máximo de URLs por arquivo de sitemap (limite do Google é 50.000). */
 export const SITEMAP_CHUNK_SIZE = 40000
+
+/** Timeout dos fetches dinâmicos — em cache frio a API não pode travar o build. */
+const FETCH_TIMEOUT_MS = 8000
 
 // ── Landing pages ───────────────────────────────────────────────────────────
 const LANDING_PAGES = [
@@ -201,13 +207,12 @@ const SEO_CITIES = [
 ]
 
 /**
- * Constrói TODAS as URLs do sitemap principal (estáticas + dinâmicas da API).
- * Chamado por app/sitemap.ts (fatiado) e app/sitemap-index.xml (contagem).
+ * Todas as URLs ESTÁTICAS (determinísticas, sem nenhum fetch de rede).
+ * É o grosso do sitemap (~60k URLs) e é barato de construir.
  */
-export async function buildSitemapEntries(): Promise<MetadataRoute.Sitemap> {
+export function buildStaticEntries(): MetadataRoute.Sitemap {
   const now = new Date()
 
-  // ── Core pages ──────────────────────────────────────────────────────────
   const core: MetadataRoute.Sitemap = [
     { url: WEB_URL, lastModified: now, changeFrequency: 'daily', priority: 1.0 },
     { url: `${WEB_URL}/imoveis`, lastModified: now, changeFrequency: 'hourly', priority: 0.95 },
@@ -234,68 +239,51 @@ export async function buildSitemapEntries(): Promise<MetadataRoute.Sitemap> {
     { url: `${WEB_URL}/contato`, lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
   ]
 
-  // ── Landing pages (alta prioridade SEO) ──────────────────────────────────
   const landings = LANDING_PAGES.map(p => ({
     url: `${WEB_URL}${p}`, lastModified: now, changeFrequency: 'daily' as const, priority: 0.95,
   }))
 
-  // ── Serviços ──────────────────────────────────────────────────────────────
   const servicos = SERVICOS.map(p => ({
     url: `${WEB_URL}${p}`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.75,
   }))
 
-  // ── Cidades regionais ────────────────────────────────────────────────────
   const cidades = CIDADES_REGIONAIS.map(c => ({
     url: `${WEB_URL}/imoveis-${c}-sp`, lastModified: now, changeFrequency: 'daily' as const, priority: 0.85,
   }))
-  // Hub regional
   cidades.push({ url: `${WEB_URL}/imoveis-regiao-franca-sp`, lastModified: now, changeFrequency: 'daily' as const, priority: 0.9 })
 
   const vendaPages = SEO_CITIES.map(c => ({ url: `${WEB_URL}/imoveis-a-venda/${c}`, lastModified: now, changeFrequency: 'daily' as const, priority: 0.85 }))
   const aluguelPages = SEO_CITIES.map(c => ({ url: `${WEB_URL}/imoveis-para-alugar/${c}`, lastModified: now, changeFrequency: 'daily' as const, priority: 0.85 }))
   const leilaoCidadePages = SEO_CITIES.map(c => ({ url: `${WEB_URL}/leilao-imoveis-em/${c}`, lastModified: now, changeFrequency: 'daily' as const, priority: 0.85 }))
 
-  // ── Capitais (alta prioridade) ────────────────────────────────────────────
   const capitais = [
     'sao-paulo-sp', 'belo-horizonte-mg', 'curitiba-pr', 'goiania-go', 'brasilia-df',
   ].map(c => ({
     url: `${WEB_URL}/imoveis-${c}`, lastModified: now, changeFrequency: 'daily' as const, priority: 0.95,
   }))
 
-  // ── Bairros de Franca ────────────────────────────────────────────────────
   const bairros = BAIRROS_FRANCA.map(b => ({
     url: `${WEB_URL}/bairros/franca/${b}`, lastModified: now, changeFrequency: 'weekly' as const, priority: 0.8,
   }))
 
-  // ── Condomínios ──────────────────────────────────────────────────────────
   const condominios = CONDOMINIOS.map(c => ({
     url: `${WEB_URL}/condominios/franca/${c}`, lastModified: now, changeFrequency: 'weekly' as const, priority: 0.85,
   }))
 
-  // ── Leilão em TODOS os bairros de Franca ─────────────────────────────────
   const leilaoBairrosFranca = BAIRROS_FRANCA.map(b => ({
     url: `${WEB_URL}/leilao-imoveis/${b}-franca-sp`,
-    lastModified: now,
-    changeFrequency: 'weekly' as const,
-    priority: 0.8,
+    lastModified: now, changeFrequency: 'weekly' as const, priority: 0.8,
   }))
-  // Venda por bairro — usa a rota indexável /imoveis/em/franca/{bairro}
   const vendaBairrosFranca = BAIRROS_FRANCA.map(b => ({
     url: `${WEB_URL}/imoveis/em/franca/${b}`,
-    lastModified: now,
-    changeFrequency: 'weekly' as const,
-    priority: 0.75,
+    lastModified: now, changeFrequency: 'weekly' as const, priority: 0.75,
   }))
   const aluguelBairrosFranca: MetadataRoute.Sitemap = []
-  // Leilão em todos os condomínios
   const leilaoCondominios = CONDOMINIOS.map(c => ({
     url: `${WEB_URL}/leilao-imoveis/${c.replace('condominio-', '')}-franca-sp`,
-    lastModified: now,
-    changeFrequency: 'weekly' as const,
-    priority: 0.8,
+    lastModified: now, changeFrequency: 'weekly' as const, priority: 0.8,
   }))
 
-  // ── Leilão por Bairro (SEO programático) ────────────────────────────────
   const leilaoBairroSlugs = [
     'centro-franca-sp', 'jardim-petraglia-franca-sp', 'city-petropolis-franca-sp',
     'vila-santa-cruz-franca-sp', 'jardim-paulista-franca-sp', 'jardim-california-franca-sp',
@@ -310,12 +298,9 @@ export async function buildSitemapEntries(): Promise<MetadataRoute.Sitemap> {
   ]
   const leilaoBairros = leilaoBairroSlugs.map(slug => ({
     url: `${WEB_URL}/leilao-imoveis/${slug}`,
-    lastModified: now,
-    changeFrequency: 'daily' as const,
-    priority: 0.9,
+    lastModified: now, changeFrequency: 'daily' as const, priority: 0.9,
   }))
 
-  // ── POIs (Pontos de Interesse) ──────────────────────────────────────────
   const poiSlugs = [
     'uni-franca', 'unesp-franca', 'shopping-franca', 'shopping-boulevard',
     'santa-casa-franca', 'hospital-regional', 'sesi-franca', 'senai-franca',
@@ -326,96 +311,102 @@ export async function buildSitemapEntries(): Promise<MetadataRoute.Sitemap> {
   ]
   const pois = poiSlugs.map(slug => ({
     url: `${WEB_URL}/imoveis/perto-de/${slug}`,
-    lastModified: now,
-    changeFrequency: 'weekly' as const,
-    priority: 0.8,
+    lastModified: now, changeFrequency: 'weekly' as const, priority: 0.8,
   }))
 
-  // ── Landing pages de leilão por bairro (Manus) ────────────────────────────
   const leilaoBairrosManus = LEILAO_BAIRROS.map(slug => ({
     url: `${WEB_URL}/leiloes/${slug}`,
-    lastModified: now,
-    changeFrequency: 'daily' as const,
-    priority: 0.92,
+    lastModified: now, changeFrequency: 'daily' as const, priority: 0.92,
   }))
 
-  // ── Leilões (dinâmicos da API) ────────────────────────────────────────────
-  let leiloes: MetadataRoute.Sitemap = []
-  try {
-    const res = await fetch(`${API_URL}/api/v1/auctions?limit=500&sortBy=createdAt&sortOrder=desc`, { next: { revalidate: 3600 } })
-    if (res.ok) {
-      const data = await res.json()
-      leiloes = (data.data ?? []).map((a: any) => ({
-        url: `${WEB_URL}/leiloes/${a.slug}`,
-        lastModified: new Date(a.updatedAt ?? now),
-        changeFrequency: 'daily' as const,
-        priority: 0.85,
-      }))
-    }
-  } catch {}
+  // ── 152 cidades IBGE: rotas /{estado}/{cidade} ─────────────────────────
+  const ibge: MetadataRoute.Sitemap = (() => {
+    try {
+      const { IBGE_CITIES_152 } = require('@/data/seo-ibge-cities-expanded')
+      const CLUSTER_SLUGS = [
+        'imoveis-a-venda', 'imoveis-para-alugar', 'casas-a-venda', 'apartamentos-a-venda',
+        'terrenos-a-venda', 'condominios-fechados', 'lancamentos-imobiliarios', 'imoveis-comerciais',
+        'leilao-de-imoveis', 'imoveis-para-investir', 'imoveis-caixa',
+        'chacaras-a-venda', 'sitios-a-venda', 'loteamentos', 'imoveis-rurais',
+      ]
+      const GUIA_SLUGS = [
+        'melhores-bairros-para-morar', 'custo-de-vida', 'como-comprar-imovel',
+        'como-alugar-imovel', 'financiamento-imobiliario', 'melhores-construtoras',
+        'bairros-mais-valorizados', 'onde-morar-em', 'precos-de-imoveis', 'mercado-imobiliario',
+      ]
+      const SERVICO_SLUGS = [
+        'arquiteto', 'engenheiro-civil', 'pedreiro', 'empreiteira', 'construtora',
+        'avaliacao-de-imovel', 'vistoria-de-imovel', 'topografia',
+        'regularizacao-de-imovel', 'fotografia-de-imovel', 'drone', 'decoracao-de-interiores',
+        'avaliacao-online-de-imovel', 'quanto-vale-meu-imovel', 'preco-do-metro-quadrado',
+        'fotos-de-imovel-com-ia', 'tour-virtual-360', 'home-staging-virtual',
+        'video-com-drone', 'planta-humanizada',
+        'anuncio-de-imovel-com-ia', 'divulgar-imovel-nos-portais', 'anunciar-imovel-gratis',
+        'captacao-de-imoveis',
+        'crm-imobiliario', 'automacao-de-leads', 'atendimento-com-ia', 'whatsapp-imobiliario',
+        'funil-de-vendas-imobiliario', 'lead-scoring',
+        'software-para-imobiliaria', 'gestao-de-aluguel', 'gestao-de-locacao',
+        'repasse-ao-proprietario', 'cobranca-de-aluguel', 'contrato-digital',
+        'administracao-de-imoveis',
+        'plano-para-corretor', 'assinatura-corretor', 'plano-para-imobiliaria',
+        'site-para-corretor', 'programa-de-afiliados', 'seja-um-parceiro',
+      ]
+      const INVEST_SLUGS = [
+        'leilao-de-imoveis', 'leilao-judicial-de-imoveis', 'imoveis-caixa',
+        'imoveis-retomados', 'investimento-imobiliario', 'imoveis-para-investir',
+        'fundos-imobiliarios', 'arrematacao-de-imoveis',
+      ]
+      const MOD_SLUGS = [
+        'para-investidor', 'para-proprietario', 'alto-padrao', 'popular',
+        'minha-casa-minha-vida', 'para-empresa', 'residencial', 'comercial',
+        'alto-retorno', 'baixo-risco', 'para-familia', 'perto-de-escola',
+        'com-home-office', 'para-airbnb',
+      ]
+      const TOP_CLUSTERS_FOR_MODS = [
+        'imoveis-a-venda', 'imoveis-para-alugar', 'casas-a-venda',
+        'apartamentos-a-venda', 'leilao-de-imoveis',
+      ]
+      const cities = IBGE_CITIES_152 as any[]
 
-  // ── Imóveis individuais (dinâmicos da API) ────────────────────────────────
-  let imoveis: MetadataRoute.Sitemap = []
-  try {
-    const res = await fetch(`${API_URL}/api/v1/public/properties?limit=2000`, { next: { revalidate: 3600 } })
-    if (res.ok) {
-      const data = await res.json()
-      imoveis = (data.data ?? []).map((p: any) => ({
-        url: `${WEB_URL}/imoveis/${p.slug}`,
-        lastModified: new Date(p.updatedAt ?? now),
-        changeFrequency: 'weekly' as const,
-        priority: 0.75,
+      const cityHubs = cities.map((c: any) => ({
+        url: `${WEB_URL}/${c.stateSlug}/${c.slug}`,
+        lastModified: now, changeFrequency: 'weekly' as const, priority: 0.85,
       }))
-    }
-  } catch {}
-
-  // ── Blog (posts + categories + clusters) ────────────────────────────────────
-  let blog: MetadataRoute.Sitemap = []
-  try {
-    const [postsRes, catsRes, clustersRes] = await Promise.all([
-      fetch(`${API_URL}/api/v1/blog?limit=500`, { next: { revalidate: 3600 } }),
-      fetch(`${API_URL}/api/v1/blog/categories`, { next: { revalidate: 3600 } }),
-      fetch(`${API_URL}/api/v1/blog/clusters`, { next: { revalidate: 3600 } }),
-    ])
-    if (postsRes.ok) {
-      const data = await postsRes.json()
-      blog = (data.data ?? []).map((p: any) => ({
-        url: `${WEB_URL}/blog/${p.slug}`,
-        lastModified: new Date(p.publishedAt ?? now),
-        changeFrequency: 'monthly' as const,
-        priority: p.featured ? 0.85 : 0.65,
-      }))
-    }
-    if (catsRes.ok) {
-      const data = await catsRes.json()
-      for (const cat of (data.data ?? [])) {
-        blog.push({ url: `${WEB_URL}/blog/categoria/${cat.slug}`, lastModified: now, changeFrequency: 'weekly', priority: 0.75 })
-      }
-    }
-    if (clustersRes.ok) {
-      const data = await clustersRes.json()
-      for (const cl of (data.data ?? [])) {
-        blog.push({ url: `${WEB_URL}/blog/cluster/${cl.slug}`, lastModified: now, changeFrequency: 'weekly', priority: 0.75 })
-      }
-    }
-  } catch {}
-
-  // ── SEO Programático (páginas dinâmicas do banco) ─────────────────────────
-  let seoProgramatico: MetadataRoute.Sitemap = []
-  try {
-    const res = await fetch(`${API_URL}/api/v1/seo/pages?limit=200&status=publicado`, { next: { revalidate: 3600 } })
-    if (res.ok) {
-      const data = await res.json()
-      seoProgramatico = (data.data ?? [])
-        .filter((p: any) => p.status === 'publicado')
-        .map((p: any) => ({
-          url: `${WEB_URL}/s/${p.slug}`,
-          lastModified: new Date(p.published_at ?? now),
-          changeFrequency: 'weekly' as const,
-          priority: 0.7,
+      const clusterPages = cities.flatMap((c: any) =>
+        CLUSTER_SLUGS.map(cluster => ({
+          url: `${WEB_URL}/${c.stateSlug}/${c.slug}/${cluster}`,
+          lastModified: now, changeFrequency: 'weekly' as const, priority: 0.8,
         }))
-    }
-  } catch {}
+      )
+      const guiaPages = cities.flatMap((c: any) =>
+        GUIA_SLUGS.map(g => ({
+          url: `${WEB_URL}/${c.stateSlug}/${c.slug}/guia/${g}`,
+          lastModified: now, changeFrequency: 'monthly' as const, priority: 0.75,
+        }))
+      )
+      const servicoPages = cities.flatMap((c: any) =>
+        SERVICO_SLUGS.map(s => ({
+          url: `${WEB_URL}/${c.stateSlug}/${c.slug}/servicos/${s}`,
+          lastModified: now, changeFrequency: 'monthly' as const, priority: 0.7,
+        }))
+      )
+      const investPages = cities.flatMap((c: any) =>
+        INVEST_SLUGS.map(i => ({
+          url: `${WEB_URL}/${c.stateSlug}/${c.slug}/investimentos/${i}`,
+          lastModified: now, changeFrequency: 'weekly' as const, priority: 0.8,
+        }))
+      )
+      const modPages = cities.flatMap((c: any) =>
+        TOP_CLUSTERS_FOR_MODS.flatMap(cluster =>
+          MOD_SLUGS.map(mod => ({
+            url: `${WEB_URL}/${c.stateSlug}/${c.slug}/${cluster}/${mod}`,
+            lastModified: now, changeFrequency: 'monthly' as const, priority: 0.65,
+          }))
+        )
+      )
+      return [...cityHubs, ...clusterPages, ...guiaPages, ...servicoPages, ...investPages, ...modPages]
+    } catch { return [] }
+  })()
 
   return [
     ...core,
@@ -435,7 +426,6 @@ export async function buildSitemapEntries(): Promise<MetadataRoute.Sitemap> {
     ...leilaoCondominios,
     // ── TERMOS RELACIONADOS A IMÓVEIS × CIDADES (explosão de URLs) ──────
     ...SEO_CITIES.flatMap(c => [
-      // Tipos de imóvel
       { url: `${WEB_URL}/casas-a-venda/${c}`, lastModified: now, changeFrequency: 'daily' as const, priority: 0.85 },
       { url: `${WEB_URL}/apartamentos-a-venda/${c}`, lastModified: now, changeFrequency: 'daily' as const, priority: 0.85 },
       { url: `${WEB_URL}/terrenos-a-venda/${c}`, lastModified: now, changeFrequency: 'daily' as const, priority: 0.8 },
@@ -445,13 +435,11 @@ export async function buildSitemapEntries(): Promise<MetadataRoute.Sitemap> {
       { url: `${WEB_URL}/cobertura-duplex/${c}`, lastModified: now, changeFrequency: 'weekly' as const, priority: 0.7 },
       { url: `${WEB_URL}/kitnet/${c}`, lastModified: now, changeFrequency: 'weekly' as const, priority: 0.7 },
       { url: `${WEB_URL}/condominio-fechado/${c}`, lastModified: now, changeFrequency: 'weekly' as const, priority: 0.75 },
-      // Rural
       { url: `${WEB_URL}/chacaras-a-venda/${c}`, lastModified: now, changeFrequency: 'weekly' as const, priority: 0.8 },
       { url: `${WEB_URL}/sitios-a-venda/${c}`, lastModified: now, changeFrequency: 'weekly' as const, priority: 0.8 },
       { url: `${WEB_URL}/fazendas-a-venda/${c}`, lastModified: now, changeFrequency: 'weekly' as const, priority: 0.8 },
       { url: `${WEB_URL}/leilao-rural/${c}`, lastModified: now, changeFrequency: 'weekly' as const, priority: 0.8 },
       { url: `${WEB_URL}/imoveis-rurais/${c}`, lastModified: now, changeFrequency: 'weekly' as const, priority: 0.8 },
-      // Leilões específicos
       { url: `${WEB_URL}/leilao-casas/${c}`, lastModified: now, changeFrequency: 'daily' as const, priority: 0.85 },
       { url: `${WEB_URL}/leilao-apartamentos/${c}`, lastModified: now, changeFrequency: 'daily' as const, priority: 0.85 },
       { url: `${WEB_URL}/leilao-terrenos/${c}`, lastModified: now, changeFrequency: 'daily' as const, priority: 0.8 },
@@ -462,7 +450,6 @@ export async function buildSitemapEntries(): Promise<MetadataRoute.Sitemap> {
       { url: `${WEB_URL}/leilao-bradesco/${c}`, lastModified: now, changeFrequency: 'weekly' as const, priority: 0.8 },
       { url: `${WEB_URL}/leilao-itau/${c}`, lastModified: now, changeFrequency: 'weekly' as const, priority: 0.8 },
       { url: `${WEB_URL}/leilao-santander/${c}`, lastModified: now, changeFrequency: 'weekly' as const, priority: 0.8 },
-      // Serviços e Profissionais
       { url: `${WEB_URL}/avaliacao-imoveis/${c}`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.75 },
       { url: `${WEB_URL}/financiamento-imovel/${c}`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.75 },
       { url: `${WEB_URL}/materiais-de-construcao/${c}`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.65 },
@@ -478,56 +465,44 @@ export async function buildSitemapEntries(): Promise<MetadataRoute.Sitemap> {
       { url: `${WEB_URL}/despachante-imobiliario/${c}`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.6 },
       { url: `${WEB_URL}/fotografo-imoveis/${c}`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.6 },
       { url: `${WEB_URL}/home-staging/${c}`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.6 },
-      // Custo de vida e comparação
       { url: `${WEB_URL}/custo-de-vida/${c}`, lastModified: now, changeFrequency: 'weekly' as const, priority: 0.75 },
       { url: `${WEB_URL}/valor-metro-quadrado/${c}`, lastModified: now, changeFrequency: 'weekly' as const, priority: 0.8 },
-      // Por quartos
       { url: `${WEB_URL}/imoveis-1-quarto/${c}`, lastModified: now, changeFrequency: 'weekly' as const, priority: 0.7 },
       { url: `${WEB_URL}/imoveis-2-quartos/${c}`, lastModified: now, changeFrequency: 'weekly' as const, priority: 0.75 },
       { url: `${WEB_URL}/imoveis-3-quartos/${c}`, lastModified: now, changeFrequency: 'weekly' as const, priority: 0.75 },
       { url: `${WEB_URL}/imoveis-4-quartos/${c}`, lastModified: now, changeFrequency: 'weekly' as const, priority: 0.7 },
-      // Por preço
       { url: `${WEB_URL}/imoveis-ate-200mil/${c}`, lastModified: now, changeFrequency: 'weekly' as const, priority: 0.75 },
       { url: `${WEB_URL}/imoveis-200-500mil/${c}`, lastModified: now, changeFrequency: 'weekly' as const, priority: 0.75 },
       { url: `${WEB_URL}/imoveis-500mil-1milhao/${c}`, lastModified: now, changeFrequency: 'weekly' as const, priority: 0.7 },
       { url: `${WEB_URL}/imoveis-acima-1milhao/${c}`, lastModified: now, changeFrequency: 'weekly' as const, priority: 0.7 },
-      // Aluguel por faixa
       { url: `${WEB_URL}/aluguel-ate-1000/${c}`, lastModified: now, changeFrequency: 'weekly' as const, priority: 0.7 },
       { url: `${WEB_URL}/aluguel-1000-2000/${c}`, lastModified: now, changeFrequency: 'weekly' as const, priority: 0.7 },
       { url: `${WEB_URL}/aluguel-2000-3000/${c}`, lastModified: now, changeFrequency: 'weekly' as const, priority: 0.7 },
       { url: `${WEB_URL}/aluguel-acima-3000/${c}`, lastModified: now, changeFrequency: 'weekly' as const, priority: 0.65 },
-      // Lançamentos e novos
       { url: `${WEB_URL}/lancamentos/${c}`, lastModified: now, changeFrequency: 'weekly' as const, priority: 0.75 },
       { url: `${WEB_URL}/imoveis-novos/${c}`, lastModified: now, changeFrequency: 'weekly' as const, priority: 0.7 },
       { url: `${WEB_URL}/imoveis-usados/${c}`, lastModified: now, changeFrequency: 'weekly' as const, priority: 0.7 },
-      // Perto de
       { url: `${WEB_URL}/imoveis-perto-metro/${c}`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.65 },
       { url: `${WEB_URL}/imoveis-perto-escola/${c}`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.65 },
       { url: `${WEB_URL}/imoveis-perto-hospital/${c}`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.65 },
       { url: `${WEB_URL}/imoveis-perto-shopping/${c}`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.65 },
-      // Específicos
       { url: `${WEB_URL}/imoveis-com-piscina/${c}`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.65 },
       { url: `${WEB_URL}/imoveis-com-churrasqueira/${c}`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.6 },
       { url: `${WEB_URL}/imoveis-aceita-pets/${c}`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.6 },
       { url: `${WEB_URL}/imoveis-mobiliados/${c}`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.65 },
       { url: `${WEB_URL}/imoveis-com-varanda/${c}`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.6 },
-      // Tipo + Finalidade cruzados
       { url: `${WEB_URL}/casas-para-alugar/${c}`, lastModified: now, changeFrequency: 'daily' as const, priority: 0.85 },
       { url: `${WEB_URL}/apartamentos-para-alugar/${c}`, lastModified: now, changeFrequency: 'daily' as const, priority: 0.85 },
       { url: `${WEB_URL}/kitnets-para-alugar/${c}`, lastModified: now, changeFrequency: 'weekly' as const, priority: 0.7 },
       { url: `${WEB_URL}/salas-para-alugar/${c}`, lastModified: now, changeFrequency: 'weekly' as const, priority: 0.65 },
       { url: `${WEB_URL}/galpoes-para-alugar/${c}`, lastModified: now, changeFrequency: 'weekly' as const, priority: 0.65 },
       { url: `${WEB_URL}/casas-em-condominio/${c}`, lastModified: now, changeFrequency: 'weekly' as const, priority: 0.75 },
-      // Temporada
       { url: `${WEB_URL}/aluguel-temporada/${c}`, lastModified: now, changeFrequency: 'weekly' as const, priority: 0.7 },
-      // Permuta
       { url: `${WEB_URL}/imoveis-permuta/${c}`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.6 },
-      // Documentação
       { url: `${WEB_URL}/regularizacao-imovel/${c}`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.6 },
       { url: `${WEB_URL}/escritura-imovel/${c}`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.6 },
       { url: `${WEB_URL}/usucapiao/${c}`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.55 },
       { url: `${WEB_URL}/inventario-imovel/${c}`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.55 },
-      // Construção
       { url: `${WEB_URL}/construtoras/${c}`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.6 },
       { url: `${WEB_URL}/empreiteiros/${c}`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.6 },
       { url: `${WEB_URL}/pedreiros/${c}`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.55 },
@@ -537,112 +512,84 @@ export async function buildSitemapEntries(): Promise<MetadataRoute.Sitemap> {
       { url: `${WEB_URL}/marceneiros/${c}`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.55 },
       { url: `${WEB_URL}/vidraceiros/${c}`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.5 },
       { url: `${WEB_URL}/serralheiros/${c}`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.5 },
-      // Seguros
       { url: `${WEB_URL}/seguro-residencial/${c}`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.55 },
       { url: `${WEB_URL}/seguro-incendio/${c}`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.5 },
-      // Mudança
       { url: `${WEB_URL}/empresas-mudanca/${c}`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.55 },
       { url: `${WEB_URL}/guarda-moveis/${c}`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.5 },
-      // Limpeza e manutenção
       { url: `${WEB_URL}/limpeza-pos-obra/${c}`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.5 },
       { url: `${WEB_URL}/dedetizacao/${c}`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.5 },
       { url: `${WEB_URL}/jardinagem-paisagismo/${c}`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.5 },
       { url: `${WEB_URL}/impermeabilizacao/${c}`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.5 },
     ]),
-    ...leilaoBairros,
     ...leilaoBairrosManus,
     ...pois,
-    ...leiloes,
-    ...imoveis,
-    ...blog,
-    ...seoProgramatico,
-    // ── 152 cidades IBGE: rotas /{estado}/{cidade} ─────────────────────
-    ...(() => {
-      try {
-        const { IBGE_CITIES_152 } = require('@/data/seo-ibge-cities-expanded')
-        const CLUSTER_SLUGS = [
-          'imoveis-a-venda', 'imoveis-para-alugar', 'casas-a-venda', 'apartamentos-a-venda',
-          'terrenos-a-venda', 'condominios-fechados', 'lancamentos-imobiliarios', 'imoveis-comerciais',
-          'leilao-de-imoveis', 'imoveis-para-investir', 'imoveis-caixa',
-          'chacaras-a-venda', 'sitios-a-venda', 'loteamentos', 'imoveis-rurais',
-        ]
-        const GUIA_SLUGS = [
-          'melhores-bairros-para-morar', 'custo-de-vida', 'como-comprar-imovel',
-          'como-alugar-imovel', 'financiamento-imobiliario', 'melhores-construtoras',
-          'bairros-mais-valorizados', 'onde-morar-em', 'precos-de-imoveis', 'mercado-imobiliario',
-        ]
-        const SERVICO_SLUGS = [
-          'arquiteto', 'engenheiro-civil', 'pedreiro', 'empreiteira', 'construtora',
-          'avaliacao-de-imovel', 'vistoria-de-imovel', 'topografia',
-          'regularizacao-de-imovel', 'fotografia-de-imovel', 'drone', 'decoracao-de-interiores',
-          'avaliacao-online-de-imovel', 'quanto-vale-meu-imovel', 'preco-do-metro-quadrado',
-          'fotos-de-imovel-com-ia', 'tour-virtual-360', 'home-staging-virtual',
-          'video-com-drone', 'planta-humanizada',
-          'anuncio-de-imovel-com-ia', 'divulgar-imovel-nos-portais', 'anunciar-imovel-gratis',
-          'captacao-de-imoveis',
-          'crm-imobiliario', 'automacao-de-leads', 'atendimento-com-ia', 'whatsapp-imobiliario',
-          'funil-de-vendas-imobiliario', 'lead-scoring',
-          'software-para-imobiliaria', 'gestao-de-aluguel', 'gestao-de-locacao',
-          'repasse-ao-proprietario', 'cobranca-de-aluguel', 'contrato-digital',
-          'administracao-de-imoveis',
-          'plano-para-corretor', 'assinatura-corretor', 'plano-para-imobiliaria',
-          'site-para-corretor', 'programa-de-afiliados', 'seja-um-parceiro',
-        ]
-        const INVEST_SLUGS = [
-          'leilao-de-imoveis', 'leilao-judicial-de-imoveis', 'imoveis-caixa',
-          'imoveis-retomados', 'investimento-imobiliario', 'imoveis-para-investir',
-          'fundos-imobiliarios', 'arrematacao-de-imoveis',
-        ]
-        const MOD_SLUGS = [
-          'para-investidor', 'para-proprietario', 'alto-padrao', 'popular',
-          'minha-casa-minha-vida', 'para-empresa', 'residencial', 'comercial',
-          'alto-retorno', 'baixo-risco', 'para-familia', 'perto-de-escola',
-          'com-home-office', 'para-airbnb',
-        ]
-        const TOP_CLUSTERS_FOR_MODS = [
-          'imoveis-a-venda', 'imoveis-para-alugar', 'casas-a-venda',
-          'apartamentos-a-venda', 'leilao-de-imoveis',
-        ]
-        const cities = IBGE_CITIES_152 as any[]
-
-        const cityHubs = cities.map((c: any) => ({
-          url: `${WEB_URL}/${c.stateSlug}/${c.slug}`,
-          lastModified: now, changeFrequency: 'weekly' as const, priority: 0.85,
-        }))
-        const clusterPages = cities.flatMap((c: any) =>
-          CLUSTER_SLUGS.map(cluster => ({
-            url: `${WEB_URL}/${c.stateSlug}/${c.slug}/${cluster}`,
-            lastModified: now, changeFrequency: 'weekly' as const, priority: 0.8,
-          }))
-        )
-        const guiaPages = cities.flatMap((c: any) =>
-          GUIA_SLUGS.map(g => ({
-            url: `${WEB_URL}/${c.stateSlug}/${c.slug}/guia/${g}`,
-            lastModified: now, changeFrequency: 'monthly' as const, priority: 0.75,
-          }))
-        )
-        const servicoPages = cities.flatMap((c: any) =>
-          SERVICO_SLUGS.map(s => ({
-            url: `${WEB_URL}/${c.stateSlug}/${c.slug}/servicos/${s}`,
-            lastModified: now, changeFrequency: 'monthly' as const, priority: 0.7,
-          }))
-        )
-        const investPages = cities.flatMap((c: any) =>
-          INVEST_SLUGS.map(i => ({
-            url: `${WEB_URL}/${c.stateSlug}/${c.slug}/investimentos/${i}`,
-            lastModified: now, changeFrequency: 'weekly' as const, priority: 0.8,
-          }))
-        )
-        const modPages = cities.flatMap((c: any) =>
-          TOP_CLUSTERS_FOR_MODS.flatMap(cluster =>
-            MOD_SLUGS.map(mod => ({
-              url: `${WEB_URL}/${c.stateSlug}/${c.slug}/${cluster}/${mod}`,
-              lastModified: now, changeFrequency: 'monthly' as const, priority: 0.65,
-            }))
-          )
-        )
-        return [...cityHubs, ...clusterPages, ...guiaPages, ...servicoPages, ...investPages, ...modPages]
-      } catch { return [] }
-    })(),
+    ...ibge,
   ]
+}
+
+/** Fetch com timeout — nunca deixa a API travar a geração do sitemap. */
+async function safeFetch(url: string): Promise<any | null> {
+  try {
+    const res = await fetch(url, { next: { revalidate: 3600 }, signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) })
+    if (!res.ok) return null
+    return await res.json()
+  } catch { return null }
+}
+
+/** URLs DINÂMICAS (imóveis, leilões, blog, SEO programático) — via API, com timeout. */
+export async function fetchDynamicEntries(): Promise<MetadataRoute.Sitemap> {
+  const now = new Date()
+  const out: MetadataRoute.Sitemap = []
+
+  const auctions = await safeFetch(`${API_URL}/api/v1/auctions?limit=500&sortBy=createdAt&sortOrder=desc`)
+  for (const a of (auctions?.data ?? [])) {
+    out.push({ url: `${WEB_URL}/leiloes/${a.slug}`, lastModified: new Date(a.updatedAt ?? now), changeFrequency: 'daily', priority: 0.85 })
+  }
+
+  const props = await safeFetch(`${API_URL}/api/v1/public/properties?limit=2000`)
+  for (const p of (props?.data ?? [])) {
+    out.push({ url: `${WEB_URL}/imoveis/${p.slug}`, lastModified: new Date(p.updatedAt ?? now), changeFrequency: 'weekly', priority: 0.75 })
+  }
+
+  const [posts, cats, clusters] = await Promise.all([
+    safeFetch(`${API_URL}/api/v1/blog?limit=500`),
+    safeFetch(`${API_URL}/api/v1/blog/categories`),
+    safeFetch(`${API_URL}/api/v1/blog/clusters`),
+  ])
+  for (const p of (posts?.data ?? [])) {
+    out.push({ url: `${WEB_URL}/blog/${p.slug}`, lastModified: new Date(p.publishedAt ?? now), changeFrequency: 'monthly', priority: p.featured ? 0.85 : 0.65 })
+  }
+  for (const cat of (cats?.data ?? [])) {
+    out.push({ url: `${WEB_URL}/blog/categoria/${cat.slug}`, lastModified: now, changeFrequency: 'weekly', priority: 0.75 })
+  }
+  for (const cl of (clusters?.data ?? [])) {
+    out.push({ url: `${WEB_URL}/blog/cluster/${cl.slug}`, lastModified: now, changeFrequency: 'weekly', priority: 0.75 })
+  }
+
+  const seo = await safeFetch(`${API_URL}/api/v1/seo/pages?limit=200&status=publicado`)
+  for (const p of (seo?.data ?? [])) {
+    if (p.status !== 'publicado') continue
+    out.push({ url: `${WEB_URL}/s/${p.slug}`, lastModified: new Date(p.published_at ?? now), changeFrequency: 'weekly', priority: 0.7 })
+  }
+
+  return out
+}
+
+/**
+ * Todas as URLs (estáticas + dinâmicas). Usado só pelo conteúdo real de
+ * /sitemap/{id}.xml — NÃO pelo índice (que usa sitemapChunkCount()).
+ */
+export async function buildSitemapEntries(): Promise<MetadataRoute.Sitemap> {
+  return [...buildStaticEntries(), ...(await fetchDynamicEntries())]
+}
+
+/**
+ * Número de chunks do sitemap, calculado de forma BARATA (só as URLs estáticas,
+ * sem fetch) + uma folga para as dinâmicas. O índice e o generateSitemaps usam
+ * esta função para se manterem em sincronia sem nunca travar.
+ */
+export function sitemapChunkCount(): number {
+  const DYNAMIC_RESERVE = 10000 // imóveis (2000) + leilões (500) + blog + SEO, com folga
+  const total = buildStaticEntries().length + DYNAMIC_RESERVE
+  return Math.max(1, Math.ceil(total / SITEMAP_CHUNK_SIZE))
 }

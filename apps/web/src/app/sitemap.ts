@@ -1,5 +1,5 @@
 import type { MetadataRoute } from 'next'
-import { buildSitemapEntries, SITEMAP_CHUNK_SIZE } from '@/lib/sitemap-entries'
+import { buildSitemapEntries, sitemapChunkCount, SITEMAP_CHUNK_SIZE } from '@/lib/sitemap-entries'
 
 /**
  * Sitemap principal — fatiado para respeitar o limite de 50.000 URLs do Google.
@@ -12,8 +12,8 @@ import { buildSitemapEntries, SITEMAP_CHUNK_SIZE } from '@/lib/sitemap-entries'
  */
 
 export async function generateSitemaps(): Promise<{ id: number }[]> {
-  const entries = await buildSitemapEntries()
-  const count = Math.max(1, Math.ceil(entries.length / SITEMAP_CHUNK_SIZE))
+  // Contagem barata (sem fetch) — precisa bater com o sitemap-index.xml.
+  const count = sitemapChunkCount()
   return Array.from({ length: count }, (_, id) => ({ id }))
 }
 

@@ -12,6 +12,7 @@ import { notFound } from 'next/navigation'
 import { MapPin, Search, ChevronRight, Home, ArrowRight } from 'lucide-react'
 import { SEO_CATEGORIAS_MAP, type SeoCategoria } from '@/data/seo-categorias'
 import { UNIQUE_CITIES } from '@/data/seo-cities'
+import { CitySeoContent } from '@/components/public/CitySeoContent'
 
 const WEB_URL = process.env.NEXT_PUBLIC_WEB_URL || 'https://www.agoraencontrei.com.br'
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api-production-669c.up.railway.app'
@@ -77,7 +78,7 @@ async function fetchProperties(cityName: string, cat: SeoCategoria) {
     const qs = new URLSearchParams({ city: cityName, limit: '9' })
     if (cat.apiFilter.purpose) qs.set('purpose', cat.apiFilter.purpose)
     if (cat.apiFilter.type) qs.set('type', cat.apiFilter.type)
-    const r = await fetch(`${API_URL}/api/v1/public/properties?${qs}`, { next: { revalidate: 3600 } })
+    const r = await fetch(`${API_URL}/api/v1/public/properties?${qs}`, { next: { revalidate: 3600 }, signal: AbortSignal.timeout(5000) })
     if (r.ok) { const d = await r.json(); return d.data || [] }
   } catch {}
   return []
@@ -368,6 +369,14 @@ export default async function SeoCidadePage(
             </a>
           </div>
         </section>
+
+        <CitySeoContent
+          cityName={city.name}
+          stateUf={city.state}
+          context={cat.titulo.toLowerCase()}
+          hasResults={properties.length > 0}
+          relatedLinks={related.map(r => ({ href: `/${r.slug}/${params.cidade}`, label: r.titulo }))}
+        />
       </div>
     </>
   )
