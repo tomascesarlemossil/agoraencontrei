@@ -154,9 +154,12 @@ export default function PropertiesPage() {
   const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS)
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list')
   const [togglingId, setTogglingId] = useState<string | null>(null)
+  const [togglingStatusId, setTogglingStatusId] = useState<string | null>(null)
 
   // Somente ADMIN e SUPER_ADMIN podem marcar imóveis como destaque da página inicial
   const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN'
+  // ADMIN/MANAGER/SUPER_ADMIN podem ativar/inativar imóveis (bate com o backend)
+  const canManageStatus = ['SUPER_ADMIN', 'ADMIN', 'MANAGER'].includes(user?.role ?? '')
 
   const toggleFeatured = useCallback(async (id: string, current: boolean) => {
     if (!accessToken || !isAdmin) return
@@ -169,6 +172,19 @@ export default function PropertiesPage() {
     }
   }, [accessToken, queryClient, isAdmin])
 
+  // Clicar no selo de status alterna Ativo ↔ Inativo direto no card (sem abrir o cadastro)
+  const toggleStatus = useCallback(async (id: string, current?: string) => {
+    if (!accessToken || !canManageStatus) return
+    const next = (current ?? '').toUpperCase() === 'INACTIVE' ? 'ACTIVE' : 'INACTIVE'
+    setTogglingStatusId(id)
+    try {
+      await propertiesApi.update(accessToken, id, { status: next } as any)
+      queryClient.invalidateQueries({ queryKey: ['properties'] })
+    } catch { /* ignore */ } finally {
+      setTogglingStatusId(null)
+    }
+  }, [accessToken, queryClient, canManageStatus])
+
   // Load company users for captador filter
   const { data: usersData } = useQuery({
     queryKey: ['users-list-props'],
@@ -178,9 +194,10 @@ export default function PropertiesPage() {
   const [showAdvanced, setShowAdvanced] = useState(false)
   // Debounced filters applied to query
   const [appliedFilters, setAppliedFilters] = useState<Filters>(DEFAULT_FILTERS)
-  // Bulk Instagram post
+  // Seleção múltipla (Instagram + inativar em massa)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [bulkPosting, setBulkPosting] = useState(false)
+  const [bulkInactivating, setBulkInactivating] = useState(false)
   const [bulkResult, setBulkResult] = useState<string | null>(null)
   const [selectMode, setSelectMode] = useState(false)
 
@@ -242,6 +259,23 @@ export default function PropertiesPage() {
     }
   }
 
+  async function bulkInactivate() {
+    if (selectedIds.size === 0 || !accessToken) return
+    setBulkInactivating(true)
+    setBulkResult(null)
+    try {
+      const r = await propertiesApi.bulkUpdateStatus(accessToken, Array.from(selectedIds), 'INACTIVE')
+      setBulkResult(`${r.count} imóvel(is) inativado(s).`)
+      setSelectedIds(new Set())
+      setSelectMode(false)
+      queryClient.invalidateQueries({ queryKey: ['properties'] })
+    } catch {
+      setBulkResult('Erro ao inativar imóveis.')
+    } finally {
+      setBulkInactivating(false)
+    }
+  }
+
   const { data, isLoading } = useQuery({
     queryKey: ['properties', page, appliedFilters],
     queryFn: () =>
@@ -289,14 +323,14 @@ export default function PropertiesPage() {
               <span className="ml-1.5 hidden sm:inline">Mapa</span>
             </Button>
           </div>
-          {/* Bulk Instagram post toggle */}
+          {/* Modo seleção múltipla (Instagram + inativar em massa) */}
           <Button
             variant="outline"
             size="sm"
             onClick={() => { setSelectMode(v => !v); setSelectedIds(new Set()); setBulkResult(null) }}
           >
-            <Instagram className="h-4 w-4" />
-            {selectMode ? 'Cancelar' : 'Publicar no Instagram'}
+            <CheckSquare className="h-4 w-4" />
+            {selectMode ? 'Cancelar seleção' : 'Selecionar'}
           </Button>
           <Link href="/dashboard/properties/new">
             <Button>
@@ -307,25 +341,38 @@ export default function PropertiesPage() {
         </div>
       </div>
 
-      {/* Bulk Instagram action bar */}
+      {/* Barra de ações em massa */}
       {selectMode && (
-        <div className="flex items-center gap-3 p-3 rounded-xl border border-pink-500/30 bg-pink-500/5">
-          <Instagram className="h-4 w-4 text-pink-400 flex-shrink-0" />
-          <p className="text-sm text-pink-300 flex-1">
+        <div className="flex flex-wrap items-center gap-3 p-3 rounded-xl border border-primary/30 bg-primary/5">
+          <CheckSquare className="h-4 w-4 text-primary flex-shrink-0" />
+          <p className="text-sm flex-1 min-w-[160px]">
             {selectedIds.size === 0
               ? 'Clique nos imóveis para selecionar'
-              : `${selectedIds.size} imóvel(is) selecionado(s) — serão publicados com 30s de intervalo`}
+              : `${selectedIds.size} imóvel(is) selecionado(s)`}
           </p>
-          {bulkResult && <p className="text-xs text-green-400">{bulkResult}</p>}
+          {bulkResult && <p className="text-xs text-green-500">{bulkResult}</p>}
           <Button
             size="sm"
-            disabled={selectedIds.size === 0 || bulkPosting}
+            variant="outline"
+            disabled={selectedIds.size === 0 || bulkPosting || bulkInactivating}
             onClick={bulkPostToInstagram}
-            style={{ background: 'linear-gradient(135deg, #E1306C, #833AB4)', color: 'white', border: 'none' }}
+            title="Publicar selecionados no Instagram (30s de intervalo)"
           >
             {bulkPosting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Instagram className="h-4 w-4" />}
             Publicar {selectedIds.size > 0 ? `(${selectedIds.size})` : ''}
           </Button>
+          {canManageStatus && (
+            <Button
+              size="sm"
+              variant="destructive"
+              disabled={selectedIds.size === 0 || bulkInactivating || bulkPosting}
+              onClick={bulkInactivate}
+              title="Inativar todos os imóveis selecionados"
+            >
+              {bulkInactivating ? <Loader2 className="h-4 w-4 animate-spin" /> : <EyeOff className="h-4 w-4" />}
+              Inativar {selectedIds.size > 0 ? `(${selectedIds.size})` : ''}
+            </Button>
+          )}
         </div>
       )}
 
@@ -816,6 +863,8 @@ export default function PropertiesPage() {
                   onSelect={() => toggleSelect(p.id)}
                   onToggleFeatured={isAdmin ? () => toggleFeatured(p.id, p.isFeatured) : undefined}
                   isTogglingFeatured={togglingId === p.id}
+                  onToggleStatus={canManageStatus ? () => toggleStatus(p.id, p.status) : undefined}
+                  isTogglingStatus={togglingStatusId === p.id}
                 />
               ))}
             </div>
@@ -861,6 +910,8 @@ function PropertyCard({
   onSelect,
   onToggleFeatured,
   isTogglingFeatured = false,
+  onToggleStatus,
+  isTogglingStatus = false,
 }: {
   property: PropertySummary
   selectMode?: boolean
@@ -868,6 +919,8 @@ function PropertyCard({
   onSelect?: () => void
   onToggleFeatured?: () => void
   isTogglingFeatured?: boolean
+  onToggleStatus?: () => void
+  isTogglingStatus?: boolean
 }) {
   const rawImage = p.coverImage ?? p.images?.[0]
   const coverImage = isRealImage(rawImage) ? rawImage : null
@@ -924,11 +977,24 @@ function PropertyCard({
               <Building2 className="h-12 w-12 text-muted-foreground/30" />
             </div>
           )}
-          {/* Status badge */}
+          {/* Status badge — clicável para ativar/inativar sem abrir o cadastro */}
           <div className="absolute top-2 left-2 flex gap-1">
-            <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_COLORS[p.status?.toUpperCase()] ?? STATUS_COLORS.INACTIVE}`}>
-              {STATUS_LABELS[p.status?.toUpperCase()] ?? p.status}
-            </span>
+            {onToggleStatus ? (
+              <button
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); onToggleStatus() }}
+                disabled={isTogglingStatus}
+                title={p.status?.toUpperCase() === 'INACTIVE' ? 'Clique para ativar' : 'Clique para inativar'}
+                className={`text-xs px-2 py-0.5 rounded-full font-medium shadow-sm transition-opacity hover:opacity-80 disabled:opacity-50 ${STATUS_COLORS[p.status?.toUpperCase()] ?? STATUS_COLORS.INACTIVE}`}
+              >
+                {isTogglingStatus
+                  ? <Loader2 className="h-3 w-3 animate-spin" />
+                  : (STATUS_LABELS[p.status?.toUpperCase()] ?? p.status)}
+              </button>
+            ) : (
+              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_COLORS[p.status?.toUpperCase()] ?? STATUS_COLORS.INACTIVE}`}>
+                {STATUS_LABELS[p.status?.toUpperCase()] ?? p.status}
+              </span>
+            )}
             {p.isFeatured && (
               <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-yellow-100 text-yellow-700">
                 Destaque
