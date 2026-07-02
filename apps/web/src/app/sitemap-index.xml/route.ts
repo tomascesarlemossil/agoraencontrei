@@ -8,7 +8,7 @@
  * GET /sitemap-index.xml
  */
 import { NextResponse } from 'next/server'
-import { buildSitemapEntries, SITEMAP_CHUNK_SIZE } from '@/lib/sitemap-entries'
+import { sitemapChunkCount } from '@/lib/sitemap-entries'
 
 const WEB_URL = 'https://www.agoraencontrei.com.br'
 
@@ -27,14 +27,9 @@ export async function GET() {
   sitemaps.push(`<sitemap><loc>${WEB_URL}/sitemap-franca.xml</loc><lastmod>${now}</lastmod></sitemap>`)
 
   // 2. Sitemap core, fatiado pelo Next (generateSitemaps → /sitemap/{id}.xml).
-  //    Contamos os chunks a partir do mesmo builder usado em app/sitemap.ts.
-  let coreChunks = 1
-  try {
-    const entries = await buildSitemapEntries()
-    coreChunks = Math.max(1, Math.ceil(entries.length / SITEMAP_CHUNK_SIZE))
-  } catch {
-    coreChunks = 2 // fallback conservador (~66k URLs ⇒ 2 chunks de 40k)
-  }
+  //    Contagem BARATA (sem fetch) — idêntica à usada por generateSitemaps,
+  //    então o índice responde instantâneo e nunca estoura o tempo do Googlebot.
+  const coreChunks = sitemapChunkCount()
   for (let i = 0; i < coreChunks; i++) {
     sitemaps.push(`<sitemap><loc>${WEB_URL}/sitemap/${i}.xml</loc><lastmod>${now}</lastmod></sitemap>`)
   }
