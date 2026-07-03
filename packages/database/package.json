@@ -13,7 +13,8 @@
     "import:seo": "tsx prisma/import-seo-programmatic.ts",
     "publish:seo": "tsx prisma/publish-seo-wave.ts",
     "studio": "prisma studio",
-    "reset": "prisma migrate reset --force"
+    "reset": "prisma migrate reset --force",
+    "test": "tsx --test test/*.test.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0"
