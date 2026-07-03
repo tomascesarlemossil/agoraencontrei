@@ -23,7 +23,16 @@ interface TenantData {
   plan: string
   planStatus: string
   isActive: boolean
-  settings: Record<string, any>
+  // Marca do cabeçalho — configurável pelo dono em dashboard/meu-site,
+  // mesmo padrão do site principal (ver apps/web/src/lib/site-settings.ts).
+  settings: {
+    nicheSlug?: string | null
+    logoWordmarkUrl?: string | null
+    logoVisible?: boolean
+    logoShowText?: boolean
+    logoPosition?: 'left' | 'center'
+    [key: string]: any
+  }
   companyId: string
 }
 
@@ -155,6 +164,9 @@ export default async function TenantPage({
 
   const theme = resolveTheme(tenant.layoutType)
   const accentColor = tenant.primaryColor || theme.accentHex
+  const logoVisible = tenant.settings?.logoVisible !== false
+  const logoShowText = tenant.settings?.logoShowText !== false
+  const logoPosition = tenant.settings?.logoPosition === 'center' ? 'center' : 'left'
 
   // Ordenar imóveis: super destaque (isPremium) primeiro, depois destaque (isFeatured), depois os demais
   const sortedProperties = [...properties].sort((a, b) => {
@@ -179,19 +191,27 @@ export default async function TenantPage({
 
       {/* Header */}
       <header className={`${theme.headerBg} sticky top-0 z-50`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            {tenant.logoUrl && (
-              <img
-                src={tenant.logoUrl}
-                alt={tenant.name}
-                className="h-10 w-auto object-contain"
-              />
-            )}
-            <h1 className={`text-xl ${theme.fontHeading} font-bold`} style={{ color: accentColor }}>
-              {tenant.name}
-            </h1>
-          </div>
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
+          {logoVisible ? (
+            <div className={`flex items-center gap-3 ${logoPosition === 'center' ? 'md:absolute md:left-1/2 md:-translate-x-1/2' : ''}`}>
+              {tenant.logoUrl && (
+                <img
+                  src={tenant.logoUrl}
+                  alt={tenant.name}
+                  className="h-10 w-auto object-contain"
+                />
+              )}
+              {logoShowText && (
+                tenant.settings?.logoWordmarkUrl ? (
+                  <img src={tenant.settings.logoWordmarkUrl} alt={tenant.name} className="h-8 w-auto object-contain" />
+                ) : (
+                  <h1 className={`text-xl ${theme.fontHeading} font-bold`} style={{ color: accentColor }}>
+                    {tenant.name}
+                  </h1>
+                )
+              )}
+            </div>
+          ) : <div />}
           <nav className={`hidden md:flex items-center gap-6 text-sm ${theme.textMuted}`}>
             <a href="#imoveis" className="hover:opacity-80 transition">Imóveis</a>
             <a href="#sobre" className="hover:opacity-80 transition">Sobre</a>

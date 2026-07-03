@@ -215,6 +215,14 @@ export default async function usersRoutes(app: FastifyInstance) {
       where: { id: req.user.cid },
       data: body,
     })
+
+    // Invalida o cache público do /site-settings — sem isso, um logo trocado
+    // aqui (aba "Empresa") só refletia na home depois do TTL do cache (até
+    // 60s), o que fazia a troca parecer "não ter funcionado".
+    if (body.logoUrl !== undefined) {
+      await invalidateSiteSettingsCache(app.redis, req.user.cid).catch(() => {})
+    }
+
     return reply.send(updated)
   })
 
@@ -331,6 +339,9 @@ export default async function usersRoutes(app: FastifyInstance) {
         zipCode: z.string().optional(),
       }).parse(req.body)
       const updated = await app.prisma.company.update({ where: { id: req.user.cid }, data: companyBody })
+      if (companyBody.logoUrl !== undefined) {
+        await invalidateSiteSettingsCache(app.redis, req.user.cid).catch(() => {})
+      }
       return reply.send(updated)
     }
 

@@ -15,7 +15,11 @@ export interface CreateTenantInput {
   subdomain: string
   customDomain?: string
   domainType?: 'subdomain' | 'new' | 'own'
-  layoutType?: 'luxury' | 'clean' | 'social' | 'marketplace'
+  // String livre no DB (Tenant.layoutType não é um enum Prisma) — aceita os
+  // 4 valores legados e as 9 chaves ricas do theme-registry (ver ThemeKey em
+  // apps/web/src/lib/site-factory/theme-registry.ts; resolveTheme() mapeia
+  // ambos os formatos).
+  layoutType?: string
   plan?: 'LITE' | 'PRO' | 'ENTERPRISE'
   primaryColor?: string
   logoUrl?: string

@@ -10,8 +10,9 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 
 // Valores hardcoded ATUAIS do site principal — usados como fallback final para
 // nunca deixar o site sem logo/cor caso a config venha vazia.
-export const DEFAULT_LOGO_URL = '/logo-ae-v2.png'
-export const DEFAULT_FOOTER_LOGO_URL = '/logo.png'
+export const DEFAULT_LOGO_URL = '/brand/ae-icon-round.png'
+export const DEFAULT_FOOTER_LOGO_URL = '/brand/ae-icon-round.png'
+export const DEFAULT_WORDMARK_URL = '/brand/ae-wordmark.png'
 export const DEFAULT_PRIMARY_COLOR = '#143A1F'
 export const DEFAULT_ACCENT_COLOR = '#C9A84C'
 
@@ -23,6 +24,11 @@ const STALE_PRIMARY_DEFAULT = '#1b2b5b'
 
 export interface SiteSettings {
   logoUrl?: string | null
+  logoIconUrl?: string | null
+  logoWordmarkUrl?: string | null
+  logoVisible?: boolean | null
+  logoShowText?: boolean | null
+  logoPosition?: string | null
   companyName?: string | null
   companyPhone?: string | null
   companyEmail?: string | null
@@ -99,20 +105,43 @@ export function resolveSiteColors(s: SiteSettings | null | undefined): { primary
 }
 
 /**
- * Resolve logo + nome da empresa com fallback para os valores atuais do site.
+ * Resolve logo (ícone + marca escrita) + nome da empresa com fallback para
+ * os valores atuais do site. Cobre a configurabilidade completa do logo no
+ * admin: ícone customizado, imagem da marca escrita (wordmark), ocultar o
+ * logo inteiro, ocultar só a marca escrita, e posição no cabeçalho.
  */
 export function resolveSiteBrand(
   s: SiteSettings | null | undefined,
   fallbackLogo: string = DEFAULT_LOGO_URL,
-): { logoUrl: string; companyName: string | null; hasCustomLogo: boolean } {
+): {
+  logoUrl: string
+  wordmarkUrl: string | null
+  companyName: string | null
+  hasCustomLogo: boolean
+  hasCustomWordmark: boolean
+  visible: boolean
+  showText: boolean
+  position: 'left' | 'center'
+} {
   const settings = s ?? {}
-  const custom = typeof settings.logoUrl === 'string' && settings.logoUrl.trim() !== ''
+  // Prioridade do ícone: logoIconUrl (campo dedicado) > logoUrl (legado) > fallback.
+  const iconCandidate =
+    [settings.logoIconUrl, settings.logoUrl].find(v => typeof v === 'string' && v.trim() !== '')
+  const custom = typeof iconCandidate === 'string'
+  const wordmarkCandidate = typeof settings.logoWordmarkUrl === 'string' && settings.logoWordmarkUrl.trim() !== ''
+    ? settings.logoWordmarkUrl.trim()
+    : null
   const name = typeof settings.companyName === 'string' && settings.companyName.trim() !== ''
     ? settings.companyName.trim()
     : null
   return {
-    logoUrl: custom ? (settings.logoUrl as string).trim() : fallbackLogo,
+    logoUrl: custom ? (iconCandidate as string).trim() : fallbackLogo,
+    wordmarkUrl: wordmarkCandidate,
     companyName: name,
     hasCustomLogo: custom,
+    hasCustomWordmark: !!wordmarkCandidate,
+    visible: settings.logoVisible !== false,
+    showText: settings.logoShowText !== false,
+    position: settings.logoPosition === 'center' ? 'center' : 'left',
   }
 }

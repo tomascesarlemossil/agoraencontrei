@@ -115,7 +115,7 @@ export default async function EspecialistaPage(props: { params: Promise<{ slug: 
         <header className="bg-[#143A1F] py-4 px-6">
           <div className="max-w-5xl mx-auto flex items-center justify-between">
             <Link href="/">
-              <Image src="/logo-ae-v2.png" alt="AgoraEncontrei" width={140} height={40} className="h-8 w-auto" />
+              <Image src="/brand/ae-lockup-full.png" alt="Agora Encontrei Marketplace" width={168} height={61} className="h-8 w-auto" />
             </Link>
             <Link href="/parceiros" className="text-white/70 hover:text-white text-sm transition-colors flex items-center gap-1">
               <ArrowLeft className="w-4 h-4" /> Parceiros

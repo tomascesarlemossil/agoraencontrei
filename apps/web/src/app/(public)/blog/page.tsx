@@ -93,7 +93,7 @@ export default async function BlogPage() {
     publisher: {
       '@type': 'Organization',
       name: 'AgoraEncontrei — Imobiliaria Lemos',
-      logo: { '@type': 'ImageObject', url: `${WEB_URL}/logo.png` },
+      logo: { '@type': 'ImageObject', url: `${WEB_URL}/brand/ae-icon-round.png` },
     },
   }
 

@@ -25,6 +25,18 @@ import {
 } from '../../services/tenant.service.js'
 import { createAuditLog } from '../../services/audit.service.js'
 
+// Aceita tanto os 4 valores legados quanto as 9 chaves do catálogo de temas
+// ricos (apps/web/src/lib/site-factory/theme-registry.ts, ThemeKey) — o
+// front não pode importar esse arquivo (pacote/build diferente), então a
+// lista é replicada aqui. `resolveTheme()` no site do tenant já suporta
+// ambos os formatos via LAYOUT_TO_THEME.
+const TENANT_LAYOUT_TYPES = z.enum([
+  'luxury', 'clean', 'social', 'marketplace',
+  'luxury_gold', 'urban_tech', 'landscape_living', 'classic_trust',
+  'fast_sales_pro', 'signature_estate', 'minimal_studio', 'bold_agency',
+  'editorial_journal',
+])
+
 export default async function tenantRoutes(app: FastifyInstance) {
   app.addHook('preHandler', app.authenticate)
 
@@ -37,7 +49,7 @@ export default async function tenantRoutes(app: FastifyInstance) {
       subdomain: z.string().min(3).max(50).regex(/^[a-z0-9-]+$/),
       customDomain: z.string().optional(),
       domainType: z.enum(['subdomain', 'new', 'own']).default('subdomain'),
-      layoutType: z.enum(['luxury', 'clean', 'social', 'marketplace']).default('clean'),
+      layoutType: TENANT_LAYOUT_TYPES.default('clean'),
       plan: z.enum(['LITE', 'PRO', 'ENTERPRISE']).default('LITE'),
       primaryColor: z.string().optional(),
       logoUrl: z.string().optional(),
@@ -105,6 +117,20 @@ export default async function tenantRoutes(app: FastifyInstance) {
     return reply.send({ success: true, data: result })
   })
 
+  // GET /mine — Retorna o tenant do usuário logado (self-service "Meu Site").
+  // Não existia forma do dono descobrir o id do próprio tenant no client —
+  // o JWT não carrega tenantId, então essa rota resolve por ownerId.
+  app.get('/mine', {
+    schema: { tags: ['tenants'], summary: 'Get the tenant owned by the logged-in user' },
+  }, async (req, reply) => {
+    const tenant = await (app.prisma as any).tenant.findFirst({
+      where: { ownerId: req.user.sub },
+      orderBy: { createdAt: 'desc' },
+    })
+    if (!tenant) return reply.status(404).send({ error: 'NO_TENANT_FOR_USER' })
+    return reply.send({ success: true, data: tenant })
+  })
+
   // GET /mrr — Métricas MRR (apenas SUPER_ADMIN)
   app.get('/mrr', {
     schema: { tags: ['tenants'], summary: 'SaaS MRR metrics (master only)' },
@@ -146,12 +172,20 @@ export default async function tenantRoutes(app: FastifyInstance) {
     const { id } = req.params as { id: string }
     const body = z.object({
       name: z.string().optional(),
-      layoutType: z.enum(['luxury', 'clean', 'social', 'marketplace']).optional(),
+      layoutType: TENANT_LAYOUT_TYPES.optional(),
       primaryColor: z.string().optional(),
       logoUrl: z.string().optional(),
       splitPercent: z.number().min(0).max(50).optional(),
       repasseDelayDays: z.number().min(1).max(30).optional(),
       repasseFixedDay: z.number().min(1).max(31).optional(),
+      // Marca do cabeçalho do site do parceiro — mesmo padrão de
+      // configurabilidade do site principal (ícone/texto/ocultar/posição).
+      // Guardados dentro de `settings` (JSON) para não exigir migração —
+      // idêntico ao mixin com `body.settings` logo abaixo.
+      logoWordmarkUrl: z.string().optional(),
+      logoVisible: z.boolean().optional(),
+      logoShowText: z.boolean().optional(),
+      logoPosition: z.enum(['left', 'center']).optional(),
       settings: z.record(z.any()).optional(),
     }).parse(req.body)
 
@@ -162,11 +196,20 @@ export default async function tenantRoutes(app: FastifyInstance) {
       return reply.status(403).send({ error: 'FORBIDDEN' })
     }
 
+    const { logoWordmarkUrl, logoVisible, logoShowText, logoPosition, settings, ...columns } = body
+    const brandingSettings: Record<string, any> = {}
+    if (logoWordmarkUrl !== undefined) brandingSettings.logoWordmarkUrl = logoWordmarkUrl
+    if (logoVisible !== undefined) brandingSettings.logoVisible = logoVisible
+    if (logoShowText !== undefined) brandingSettings.logoShowText = logoShowText
+    if (logoPosition !== undefined) brandingSettings.logoPosition = logoPosition
+
     const updated = await (app.prisma as any).tenant.update({
       where: { id },
       data: {
-        ...body,
-        ...(body.settings && { settings: { ...(tenant.settings || {}), ...body.settings } }),
+        ...columns,
+        ...((settings || Object.keys(brandingSettings).length > 0) && {
+          settings: { ...(tenant.settings || {}), ...settings, ...brandingSettings },
+        }),
       },
     })
 

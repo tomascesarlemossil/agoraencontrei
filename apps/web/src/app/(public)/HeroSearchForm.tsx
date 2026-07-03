@@ -201,8 +201,15 @@ export function HeroSearchForm() {
       <div className="rounded-3xl bg-white shadow-2xl overflow-visible">
 
         {/* ── AI SEARCH (main, prominent) ─────────────────────── */}
+        {/* Backgrounds/borders use CSS vars (--ae-card/--ae-border) instead of
+            literal hex so dark mode tracks correctly even after a re-render.
+            Browsers normalize inline hex colors to rgb() once React
+            re-applies the style (e.g. on every keystroke here), which broke
+            the old `[style*="#fffdf8"]` dark-mode override — the box would
+            silently snap back to white mid-session. var() is read live from
+            the cascade, so it has no such failure mode. */}
         {aiMode && (
-          <div className="p-5" style={{ background: 'linear-gradient(135deg, #fffdf8, #fff)', borderRadius: '24px 24px 0 0', borderBottom: '1px solid #f0ece4' }}>
+          <div className="p-5" style={{ background: 'var(--ae-card)', borderRadius: '24px 24px 0 0', borderBottom: '1px solid var(--ae-border)' }}>
             <div className="flex items-center gap-2 mb-2">
               <Sparkles className="w-4 h-4 flex-shrink-0" style={{ color: '#C9A84C' }} />
               <p className="text-xs font-bold uppercase tracking-wide" style={{ color: '#C9A84C' }}>Busca Inteligente com IA</p>
@@ -216,7 +223,7 @@ export function HeroSearchForm() {
                 onKeyDown={e => e.key === 'Enter' && handleAiSearch()}
                 placeholder="Descreva o imóvel ideal..."
                 className="flex-1 text-sm text-gray-800 placeholder-gray-400 focus:outline-none bg-transparent font-medium border-b-2 pb-1.5 transition-colors"
-                style={{ borderColor: aiQuery ? '#143A1F' : '#e5e7eb' }}
+                style={{ borderColor: aiQuery ? 'var(--site-primary-color, #143A1F)' : 'var(--ae-border)' }}
                 autoFocus
               />
               <VoiceInputButton
@@ -243,17 +250,17 @@ export function HeroSearchForm() {
 
         {/* ── DIVIDER ─────────────────────────────────────────── */}
         {aiMode && (
-          <div className="flex items-center gap-3 px-5 py-2.5" style={{ backgroundColor: '#fafafa' }}>
-            <div className="flex-1 h-px" style={{ backgroundColor: '#e5e7eb' }} />
+          <div className="flex items-center gap-3 px-5 py-2.5" style={{ backgroundColor: 'var(--ae-surface)' }}>
+            <div className="flex-1 h-px" style={{ backgroundColor: 'var(--ae-border)' }} />
             <span className="text-xs text-gray-500 font-medium">ou filtre manualmente</span>
-            <div className="flex-1 h-px" style={{ backgroundColor: '#e5e7eb' }} />
+            <div className="flex-1 h-px" style={{ backgroundColor: 'var(--ae-border)' }} />
           </div>
         )}
 
         {/* ── MANUAL SEARCH ──────────────────────────────────── */}
         <form onSubmit={handleManualSearch}>
           {/* City */}
-          <label className="flex items-start gap-4 px-5 py-4 border-b cursor-pointer hover:bg-gray-50 transition-colors" style={{ borderColor: '#f0ece4' }}>
+          <label className="flex items-start gap-4 px-5 py-4 border-b cursor-pointer hover:bg-gray-50 transition-colors" style={{ borderColor: 'var(--ae-border)' }}>
             <MapPin className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: '#143A1F' }} />
             <div className="flex-1 min-w-0">
               <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-0.5">Cidade</p>
@@ -268,7 +275,7 @@ export function HeroSearchForm() {
 
           {/* Neighborhood */}
           <div className="relative" ref={neighborhoodRef}>
-            <label className="flex items-start gap-4 px-5 py-4 border-b cursor-pointer hover:bg-gray-50 transition-colors" style={{ borderColor: '#f0ece4' }}>
+            <label className="flex items-start gap-4 px-5 py-4 border-b cursor-pointer hover:bg-gray-50 transition-colors" style={{ borderColor: 'var(--ae-border)' }}>
               <Home className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: '#143A1F' }} />
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-0.5">Bairro</p>
@@ -307,7 +314,7 @@ export function HeroSearchForm() {
 
           {/* Price + Bedrooms row */}
           <div className="grid grid-cols-2">
-            <label className="flex items-start gap-3 px-5 py-4 border-r cursor-pointer hover:bg-gray-50 transition-colors relative" style={{ borderColor: '#f0ece4' }}>
+            <label className="flex items-start gap-3 px-5 py-4 border-r cursor-pointer hover:bg-gray-50 transition-colors relative" style={{ borderColor: 'var(--ae-border)' }}>
               <DollarSign className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: '#143A1F' }} />
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-0.5">

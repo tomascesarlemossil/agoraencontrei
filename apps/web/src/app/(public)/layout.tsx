@@ -11,6 +11,7 @@ import {
   resolveSiteColors,
   resolveSiteBrand,
   DEFAULT_FOOTER_LOGO_URL,
+  DEFAULT_WORDMARK_URL as DEFAULT_FOOTER_WORDMARK_URL,
 } from '@/lib/site-settings'
 
 export const metadata: Metadata = {
@@ -152,7 +153,15 @@ export default async function PublicLayout({ children }: { children: React.React
       </div>
 
       <SkipNav />
-      <Navbar logoUrl={brand.logoUrl} companyName={brand.companyName} hasCustomLogo={brand.hasCustomLogo} />
+      <Navbar
+        logoUrl={brand.logoUrl}
+        wordmarkUrl={brand.wordmarkUrl}
+        companyName={brand.companyName}
+        hasCustomLogo={brand.hasCustomLogo}
+        visible={brand.visible}
+        showText={brand.showText}
+        position={brand.position}
+      />
 
       <main id="main-content" tabIndex={-1}>{children}</main>
       <TomasWidget />
@@ -163,24 +172,38 @@ export default async function PublicLayout({ children }: { children: React.React
           <div className="grid grid-cols-1 md:grid-cols-4 gap-10 mb-10">
             {/* Brand */}
             <div>
-              <div className="flex items-center gap-3 mb-4">
-                <img
-                  src={brand.logoUrl}
-                  alt={brand.companyName ?? 'AgoraEncontrei Marketplace'}
-                  width={44}
-                  height={44}
-                  className="rounded-full flex-shrink-0 object-cover"
-                  loading="lazy"
-                />
-                <div className="flex flex-col leading-none">
-                  <span className="font-bold text-base" style={{ fontFamily: 'Arial, Helvetica, sans-serif' }}>
-                    {/* Nome fixo "AgoraEncontrei" (marca do marketplace); logo é dinâmico. */}
-                    <span style={{ color: '#1a5c2a', fontWeight: 700 }}>Agora</span>
-                    <span style={{ color: '#d1d5db', fontWeight: 700 }}>Encontrei</span>
-                  </span>
-                  <span className="text-[10px] font-medium" style={{ color: '#9ca3af', letterSpacing: '0.04em' }}>Marketplace</span>
+              {brand.visible && (
+                <div className="flex items-center gap-3 mb-4">
+                  <img
+                    src={brand.logoUrl}
+                    alt={brand.companyName ?? 'AgoraEncontrei Marketplace'}
+                    width={44}
+                    height={44}
+                    className="rounded-full flex-shrink-0 object-cover"
+                    loading="lazy"
+                  />
+                  {brand.showText && (
+                    brand.companyName ? (
+                      <div className="flex flex-col leading-none">
+                        <span className="font-bold text-base" style={{ fontFamily: 'Arial, Helvetica, sans-serif', color: '#d1d5db' }}>
+                          {brand.companyName}
+                        </span>
+                        <span className="text-[10px] font-medium" style={{ color: '#9ca3af', letterSpacing: '0.04em' }}>Marketplace</span>
+                      </div>
+                    ) : (
+                      // Marca escrita padrão (imagem), editável pelo admin.
+                      <img
+                        src={brand.wordmarkUrl ?? DEFAULT_FOOTER_WORDMARK_URL}
+                        alt="Agora Encontrei Marketplace"
+                        width={148}
+                        height={40}
+                        className="h-9 w-auto"
+                        loading="lazy"
+                      />
+                    )
+                  )}
                 </div>
-              </div>
+              )}
               <p className="text-white/70 text-xs leading-relaxed">
                 {tagline}
               </p>
