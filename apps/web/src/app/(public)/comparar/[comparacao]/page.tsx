@@ -1,10 +1,12 @@
 /**
- * Rota: /comparar/[cidadeA]-vs-[cidadeB]
- * Comparação de custo de vida, PIB, população entre duas cidades
+ * Rota: /comparar/[comparacao]  (slug único no formato `cidadeA-vs-cidadeB`)
+ * Comparação de custo de vida, PIB, população entre duas cidades.
  * ISR: revalidate 86400 (24h)
  *
- * Potencial: 500 cidades × 500 = 499.500 páginas únicas
- * Cada página resolve dados via city-resolver (static → API fallback)
+ * IMPORTANTE: o Next NÃO suporta dois params dinâmicos no mesmo segmento
+ * (`[cidadeA]-vs-[cidadeB]`) — ele gerava caminhos quebrados como
+ * `orlandia-vs-[cidadeB]` e o build (prerender) estourava. Por isso o segmento
+ * é UM único param (`comparacao`) e nós separamos os dois slugs manualmente.
  */
 import { Metadata } from 'next'
 import Link from 'next/link'
@@ -14,43 +16,33 @@ import { IBGE_CITIES_152, IBGE_CITY_BY_SLUG, type IbgeCityData } from '@/data/se
 
 export const revalidate = 86400
 
-// Todas as 152 cidades para generateStaticParams
-// 152 × 151 / 2 = 11.476 páginas pré-geradas no build
-// Demais combinações via ISR (fallback blocking)
 const ALL_CITIES_SORTED = IBGE_CITIES_152
   .sort((a, b) => b.populacao - a.populacao)
 
-// A pasta declara DOIS params no mesmo segmento (`[cidadeA]-vs-[cidadeB]`),
-// então o Next entrega `params.cidadeA` e `params.cidadeB` — não uma única
-// chave. Gerar/ler com a chave errada deixava `params[...]` undefined e o
-// `.split` estourava 500. Este tipo cobre as duas formas por segurança.
-type CompareParams = { cidadeA?: string; cidadeB?: string; 'cidadeA-vs-cidadeB'?: string }
+type CompareParams = { comparacao: string }
 
 export function generateStaticParams() {
   if (process.env.MINIMAL_SSG === '1') return []  // build offline (.exe) nao precisa das paginas SEO publicas
-  const params: { cidadeA: string; cidadeB: string }[] = []
-  for (let i = 0; i < ALL_CITIES_SORTED.length; i++) {
-    for (let j = i + 1; j < ALL_CITIES_SORTED.length; j++) {
-      params.push({
-        cidadeA: ALL_CITIES_SORTED[i].slug,
-        cidadeB: ALL_CITIES_SORTED[j].slug,
-      })
+  // Pré-gera as combinações entre as ~40 maiores cidades (40×39/2 = 780
+  // páginas). As demais combinações são geradas sob demanda via ISR
+  // (dynamicParams = true por padrão) — mantém o build rápido sem perder
+  // cobertura de SEO.
+  const TOP = ALL_CITIES_SORTED.slice(0, 40)
+  const params: { comparacao: string }[] = []
+  for (let i = 0; i < TOP.length; i++) {
+    for (let j = i + 1; j < TOP.length; j++) {
+      params.push({ comparacao: `${TOP[i].slug}-vs-${TOP[j].slug}` })
     }
   }
   return params
 }
 
-// Resolve os dois slugs qualquer que seja o formato de params entregue.
+// Segmento único → separamos os dois slugs no `-vs-`.
 function resolveSlugs(params: CompareParams): { slugA: string; slugB: string } | null {
-  if (params.cidadeA && params.cidadeB) {
-    return { slugA: params.cidadeA, slugB: params.cidadeB }
-  }
-  const combo = params['cidadeA-vs-cidadeB']
-    ?? Object.values(params).find((v) => typeof v === 'string' && v.includes('-vs-'))
-  if (typeof combo === 'string') {
-    const parts = combo.split('-vs-')
-    if (parts.length === 2 && parts[0] && parts[1]) return { slugA: parts[0], slugB: parts[1] }
-  }
+  const combo = params?.comparacao
+  if (typeof combo !== 'string') return null
+  const parts = combo.split('-vs-')
+  if (parts.length === 2 && parts[0] && parts[1]) return { slugA: parts[0], slugB: parts[1] }
   return null
 }
 
