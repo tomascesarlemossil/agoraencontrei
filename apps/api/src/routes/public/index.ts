@@ -2097,6 +2097,20 @@ export default async function publicRoutes(app: FastifyInstance) {
 
   // ── Tenant Public Routes (for subdomain/domain resolution) ──────────────
 
+  // SEGURANÇA: NUNCA expor `tenant.settings` cru — continha `tempPasswordPlain`
+  // (senha do dono em texto puro), e-mail/telefone do cliente e dados internos
+  // do Asaas. Allowlist explícita dos campos de marca/config que são públicos.
+  function publicTenantSettings(settings: unknown) {
+    const s = (settings as Record<string, any>) ?? {}
+    return {
+      nicheSlug: s.nicheSlug ?? null,
+      logoWordmarkUrl: s.logoWordmarkUrl ?? null,
+      logoVisible: s.logoVisible ?? true,
+      logoShowText: s.logoShowText ?? true,
+      logoPosition: s.logoPosition ?? 'left',
+    }
+  }
+
   // GET /api/v1/public/tenant/:slug — Lookup tenant by subdomain
   app.get('/tenant/:slug', async (req, reply) => {
     const { slug } = req.params as { slug: string }
@@ -2114,10 +2128,7 @@ export default async function publicRoutes(app: FastifyInstance) {
       return reply.status(404).send({ error: 'TENANT_NOT_FOUND' })
     }
 
-    // SEGURANÇA: NUNCA expor `settings` cru — continha `tempPasswordPlain`
-    // (senha do dono em texto puro), e-mail/telefone do cliente e dados internos
-    // do Asaas. Allowlist só o que é público; branding vem das colunas de topo.
-    return reply.send({ success: true, data: { ...tenant, settings: tenant.settings ? { nicheSlug: (tenant.settings as any).nicheSlug ?? null } : null } })
+    return reply.send({ success: true, data: { ...tenant, settings: publicTenantSettings(tenant.settings) } })
   })
 
   // GET /api/v1/public/tenant/by-domain/:domain — Lookup tenant by custom domain
@@ -2137,9 +2148,6 @@ export default async function publicRoutes(app: FastifyInstance) {
       return reply.status(404).send({ error: 'TENANT_NOT_FOUND' })
     }
 
-    // SEGURANÇA: NUNCA expor `settings` cru — continha `tempPasswordPlain`
-    // (senha do dono em texto puro), e-mail/telefone do cliente e dados internos
-    // do Asaas. Allowlist só o que é público; branding vem das colunas de topo.
-    return reply.send({ success: true, data: { ...tenant, settings: tenant.settings ? { nicheSlug: (tenant.settings as any).nicheSlug ?? null } : null } })
+    return reply.send({ success: true, data: { ...tenant, settings: publicTenantSettings(tenant.settings) } })
   })
 }

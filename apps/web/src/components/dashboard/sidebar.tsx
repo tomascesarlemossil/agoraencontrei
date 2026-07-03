@@ -57,6 +57,7 @@ import {
   Brain,
   Clapperboard,
   Calendar,
+  Store,
 } from 'lucide-react'
 import { useNotifications } from '@/stores/notifications.store'
 import { UserAvatar } from '@/components/ui/UserAvatar'
@@ -107,6 +108,10 @@ const midNavItems = [
 const corretorNavItem = { href: '/dashboard/corretor', icon: BriefcaseBusiness, label: 'Meu Painel', highlight: false }
 const corretorHojeItem = { href: '/dashboard/corretor/hoje', icon: Calendar, label: 'Meu Dia', highlight: false }
 const editarSiteItem = { href: '/dashboard/settings?tab=sistema&panel=cores', icon: Palette, label: 'Editar meu site', highlight: true }
+// Site do parceiro/tenant (subdomínio próprio) — distinto do "Editar meu
+// site" acima, que edita o site PRINCIPAL agoraencontrei.com.br. Sempre
+// visível (a própria página trata o caso de o usuário não ter um tenant).
+const meuSiteParceiroItem = { href: '/dashboard/meu-site', icon: Store, label: 'Meu Site (Parceiro)', highlight: true }
 
 const lemosbankSubItems = [
   { href: '/dashboard/lemosbank',              icon: Banknote,   label: 'Visão Geral' },
@@ -355,6 +360,28 @@ function NavContent({ onClose }: { onClose?: () => void }) {
         {(() => {
           const { href, icon: Icon, label } = editarSiteItem
           const active = pathname.startsWith('/dashboard/settings')
+          return (
+            <Link
+              href={href}
+              onClick={onClose}
+              className={cn(
+                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors border',
+                active
+                  ? 'text-white border-yellow-400/40'
+                  : 'text-yellow-400/80 hover:text-yellow-300 hover:bg-yellow-400/5 border-yellow-400/20',
+              )}
+              style={active ? { background: 'linear-gradient(135deg, rgba(201,168,76,0.2), rgba(232,198,106,0.1))' } : undefined}
+            >
+              <Icon className="h-4 w-4 flex-shrink-0 text-yellow-400/70" />
+              <span className="truncate">{label}</span>
+            </Link>
+          )
+        })()}
+
+        {/* ── Meu Site (Parceiro/tenant) — atalho destacado ─── */}
+        {(() => {
+          const { href, icon: Icon, label } = meuSiteParceiroItem
+          const active = pathname.startsWith('/dashboard/meu-site')
           return (
             <Link
               href={href}
