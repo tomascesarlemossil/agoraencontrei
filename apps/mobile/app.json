@@ -3,7 +3,9 @@
     "name": "AgoraEncontrei",
     "slug": "agoraencontrei",
     "scheme": "agoraencontrei",
-    "version": "0.1.0",
+    "version": "1.0.0",
+    "description": "AgoraEncontrei — marketplace imobiliário: compre, alugue e avalie imóveis, acompanhe leilões e fale direto com a imobiliária. Da Imobiliária Lemos (Franca/SP).",
+    "primaryColor": "#0a1410",
     "orientation": "portrait",
     "icon": "./src/assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -16,11 +18,15 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.agoraencontrei.app",
-      "buildNumber": "1"
+      "buildNumber": "1",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "package": "com.agoraencontrei.app",
       "versionCode": 1,
+      "permissions": [],
       "adaptiveIcon": {
         "foregroundImage": "./src/assets/adaptive-icon.png",
         "backgroundColor": "#FFFFFF"
