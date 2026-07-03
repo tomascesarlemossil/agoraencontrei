@@ -198,7 +198,10 @@ export default function AdminTenantsPage() {
 
   const filtered = tenants.filter((t) => {
     const q = search.toLowerCase().trim();
-    return !q || t.name.toLowerCase().includes(q) || t.subdomain.toLowerCase().includes(q);
+    // Guarda contra name/subdomain nulos — um único tenant sem esses campos
+    // fazia o .toLowerCase() estourar em render e derrubava a página inteira
+    // ("Erro no Dashboard").
+    return !q || (t.name ?? '').toLowerCase().includes(q) || (t.subdomain ?? '').toLowerCase().includes(q);
   });
 
   return (
