@@ -70,17 +70,35 @@ const ACCESS_AREAS = [
   },
 ]
 
-const DEFAULT_NAV_LOGO = '/logo-ae-v2.png'
+const DEFAULT_NAV_LOGO = '/brand/ae-icon-round.png'
+const DEFAULT_NAV_WORDMARK = '/brand/ae-wordmark.png'
 
 interface NavbarProps {
   logoUrl?: string
+  wordmarkUrl?: string | null
   companyName?: string | null
   hasCustomLogo?: boolean
+  visible?: boolean
+  showText?: boolean
+  position?: 'left' | 'center'
 }
 
-export function Navbar({ logoUrl, companyName, hasCustomLogo }: NavbarProps = {}) {
+export function Navbar({
+  logoUrl,
+  wordmarkUrl,
+  companyName,
+  hasCustomLogo,
+  visible = true,
+  showText = true,
+  position = 'left',
+}: NavbarProps = {}) {
   const brandLogo = logoUrl || DEFAULT_NAV_LOGO
+  const brandWordmark = wordmarkUrl || DEFAULT_NAV_WORDMARK
   const brandName = companyName?.trim() || null
+  // Um logo remoto (S3/URL externa) precisa de `unoptimized` só se vier como
+  // data: URL (base64); os assets locais e URLs remotas normais passam pelo
+  // pipeline de otimização do Next normalmente (menor peso, AVIF/WebP).
+  const brandLogoUnoptimized = hasCustomLogo && brandLogo.startsWith('data:')
   const [scrolled, setScrolled] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const [accessOpen, setAccessOpen] = useState(false)
@@ -126,32 +144,49 @@ export function Navbar({ logoUrl, companyName, hasCustomLogo }: NavbarProps = {}
           boxShadow: scrolled ? '0 2px 24px rgba(20,58,31,0.3)' : 'none',
         }}
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-2.5 group flex-shrink-0" aria-label={`${brandName ?? 'AgoraEncontrei'} — Marketplace Imobiliário`}>
-            <Image
-              src={brandLogo}
-              alt={brandName ? `${brandName} Marketplace` : 'AgoraEncontrei Marketplace'}
-              width={44}
-              height={44}
-              className="flex-shrink-0"
-              style={{ borderRadius: '50%' }}
-              priority
-              unoptimized={hasCustomLogo}
-            />
-            <div className="flex flex-col leading-none">
-              <span className="text-base tracking-tight" style={{ fontFamily: 'Arial, Helvetica, sans-serif', letterSpacing: '-0.01em' }}>
-                {/* Nome fixo "AgoraEncontrei" (identidade do marketplace). O LOGO
-                    é editável pelo admin; o NOME só mudaria via campo dedicado,
-                    p/ não virar o nome legal da empresa (ex.: "Imobiliária Lemos"). */}
-                <span style={{ color: '#1a5c2a', fontWeight: 700 }}>Agora</span>
-                <span style={{ color: '#d1d5db', fontWeight: 700 }}>Encontrei</span>
-              </span>
-              <span className="text-[9px] font-medium" style={{ color: '#9ca3af', letterSpacing: '0.04em' }}>
-                Marketplace
-              </span>
-            </div>
-          </Link>
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+          {/* Logo — ocultável e posicionável (esquerda/centro) via config do admin */}
+          {visible ? (
+            <Link
+              href="/"
+              className={`flex items-center gap-2.5 group flex-shrink-0 ${position === 'center' ? 'md:absolute md:left-1/2 md:-translate-x-1/2' : ''}`}
+              aria-label={`${brandName ?? 'AgoraEncontrei'} — Marketplace Imobiliário`}
+            >
+              <Image
+                src={brandLogo}
+                alt={brandName ? `${brandName} Marketplace` : 'AgoraEncontrei Marketplace'}
+                width={44}
+                height={44}
+                className="flex-shrink-0"
+                style={{ borderRadius: '50%' }}
+                priority
+                unoptimized={brandLogoUnoptimized}
+              />
+              {showText && (
+                brandName ? (
+                  <div className="flex flex-col leading-none">
+                    <span className="text-base tracking-tight" style={{ fontFamily: 'Arial, Helvetica, sans-serif', letterSpacing: '-0.01em', color: '#d1d5db', fontWeight: 700 }}>
+                      {brandName}
+                    </span>
+                    <span className="text-[9px] font-medium" style={{ color: '#9ca3af', letterSpacing: '0.04em' }}>
+                      Marketplace
+                    </span>
+                  </div>
+                ) : (
+                  // Marca escrita padrão "Agora Encontrei Marketplace" (imagem),
+                  // editável pelo admin (systemConfig.company.logoWordmarkUrl).
+                  <Image
+                    src={brandWordmark}
+                    alt="Agora Encontrei Marketplace"
+                    width={148}
+                    height={40}
+                    className="flex-shrink-0 h-9 w-auto"
+                    priority
+                  />
+                )
+              )}
+            </Link>
+          ) : <div />}
 
           {/* Desktop nav */}
           <nav className="hidden md:flex items-center gap-1" role="navigation" aria-label="Menu principal">
@@ -326,20 +361,26 @@ export function Navbar({ logoUrl, companyName, hasCustomLogo }: NavbarProps = {}
           style={{ borderColor: 'rgba(255,255,255,0.08)', backgroundColor: '#143A1F' }}
         >
           <div className="flex items-center gap-2.5">
-            <Image
-              src={brandLogo}
-              alt={brandName ?? 'AgoraEncontrei'}
-              width={36}
-              height={36}
-              style={{ borderRadius: '50%' }}
-              unoptimized={hasCustomLogo}
-            />
-            <div className="flex flex-col leading-none">
-              <span className="text-sm font-bold" style={{ color: '#d1d5db' }}>
-                {brandName ? brandName : (<><span style={{ color: '#1a5c2a' }}>Agora</span>Encontrei</>)}
-              </span>
-              <span className="text-[9px]" style={{ color: '#9ca3af' }}>Marketplace</span>
-            </div>
+            {visible && (
+              <Image
+                src={brandLogo}
+                alt={brandName ?? 'AgoraEncontrei'}
+                width={36}
+                height={36}
+                style={{ borderRadius: '50%' }}
+                unoptimized={brandLogoUnoptimized}
+              />
+            )}
+            {visible && showText && (
+              brandName ? (
+                <div className="flex flex-col leading-none">
+                  <span className="text-sm font-bold" style={{ color: '#d1d5db' }}>{brandName}</span>
+                  <span className="text-[9px]" style={{ color: '#9ca3af' }}>Marketplace</span>
+                </div>
+              ) : (
+                <Image src={brandWordmark} alt="Agora Encontrei Marketplace" width={120} height={32} className="h-7 w-auto" />
+              )
+            )}
           </div>
           <button
             onClick={closeMenu}

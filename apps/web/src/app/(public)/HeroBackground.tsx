@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type CSSProperties } from 'react'
 
 const DEFAULT_VIDEO_ID = 'tET8AYkIxgw'
 
@@ -49,25 +49,34 @@ export function HeroBackground({ videoUrl, videoType, imageUrl }: Props) {
   const useImageBg = isImage || (!videoUrl && !isUpload)
 
   if (useImageBg) {
+    // Imagem padrão local: serve uma versão bem mais leve (~12KB vs ~60KB) em
+    // telas pequenas via <picture>/<source> — puramente CSS/HTML, sem depender
+    // do pipeline de otimização do Next (que exigiria liberar qualquer host
+    // externo que o admin configure para heroImageUrl). Uploads customizados
+    // do admin continuam servidos como estão, sem essa otimização adicional.
+    const isDefaultHero = heroBannerSrc === '/hero-banner.jpg'
+    const imgStyle: CSSProperties = {
+      position: 'absolute',
+      inset: 0,
+      width: '100%',
+      height: '100%',
+      objectFit: 'cover',
+      // No mobile: foca no lado direito (onde a mulher está posicionada na imagem)
+      objectPosition: isMobile ? '80% center' : 'center center',
+    }
     return (
       <div className="absolute inset-0 overflow-hidden">
         {/* Imagem de fundo — object-position otimizado para mobile */}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={heroBannerSrc}
-          alt="AgoraEncontrei Marketplace Imobiliário"
-          style={{
-            position: 'absolute',
-            inset: 0,
-            width: '100%',
-            height: '100%',
-            objectFit: 'cover',
-            // No mobile: foca no lado direito (onde a mulher está posicionada na imagem)
-            objectPosition: isMobile ? '80% center' : 'center center',
-          }}
-          loading="eager"
-          fetchPriority="high"
-        />
+        {isDefaultHero ? (
+          <picture>
+            <source media="(max-width: 767px)" srcSet="/hero-banner-mobile.jpg" />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/hero-banner.jpg" alt="AgoraEncontrei Marketplace Imobiliário" style={imgStyle} loading="eager" fetchPriority="high" />
+          </picture>
+        ) : (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={heroBannerSrc} alt="AgoraEncontrei Marketplace Imobiliário" style={imgStyle} loading="eager" fetchPriority="high" />
+        )}
         {/* Overlay gradiente — mais escuro no mobile para legibilidade */}
         <div
           style={{

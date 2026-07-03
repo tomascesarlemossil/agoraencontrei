@@ -223,6 +223,22 @@ const nextConfig = {
           { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
         ],
       },
+      {
+        // Fontes auto-hospedadas (Inter/Playfair Display) — nunca mudam de
+        // conteúdo sob a mesma URL, cache máximo.
+        source: '/fonts/(.*)',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
+        ],
+      },
+      {
+        // Assets de marca (logo/wordmark) — trocam raramente; cache longo com
+        // revalidação ajuda sem travar uma futura atualização do design.
+        source: '/brand/(.*)',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=604800, stale-while-revalidate=2592000' },
+        ],
+      },
       // ── Block indexing of admin/dashboard routes ───────────────────────────
       {
         source: '/dashboard/:path*',

@@ -392,6 +392,17 @@ export const DEFAULT_SYSTEM_CONFIG = {
     website:           'https://www.agoraencontrei.com.br',
     logoUrl:           '',
     logoWhiteUrl:      '',
+    // ── Marca do cabeçalho (site público) ─────────────────────────────────
+    // logoIconUrl: ícone redondo exibido no topo do site (fallback: monograma
+    // padrão AE). logoWordmarkUrl: imagem da marca escrita "Agora Encontrei
+    // Marketplace" (fallback: wordmark padrão). logoVisible/logoShowText
+    // controlam ocultar o logo inteiro ou só a parte escrita. logoPosition
+    // controla o alinhamento do bloco de marca no cabeçalho.
+    logoIconUrl:       '',
+    logoWordmarkUrl:   '',
+    logoVisible:       true,
+    logoShowText:      true,
+    logoPosition:      'left',
     foundedYear:       2003,
     description:       'Há mais de 20 anos conectando pessoas aos melhores imóveis de Franca e região.',
     openingHours:      'Seg-Sex: 8h-18h | Sáb: 8h-12h',
@@ -566,14 +577,26 @@ export default async function systemConfigRoutes(app: FastifyInstance) {
     const currentConfig   = currentSettings.systemConfig ?? {}
     const newConfig       = deepMerge(currentConfig, updates)
 
-    // Espelha os campos de mídia da seção "site" para o topo LEGADO de
-    // settings. A home lê o legado com precedência; sem esse espelho, uma
-    // imagem trocada aqui (systemConfig.site) não aparecia porque um valor
-    // antigo no topo a mascarava. Mantém as duas fontes sempre sincronizadas.
-    const newSite = (newConfig as any).site ?? {}
+    // Espelha os campos de mídia das seções "site" e "company" para o topo
+    // LEGADO de settings. A home lê o legado com precedência; sem esse
+    // espelho, uma imagem trocada aqui (systemConfig.site/company) não
+    // aparecia porque um valor antigo no topo a mascarava. Mantém as fontes
+    // sempre sincronizadas.
+    //
+    // BUG HISTÓRICO (corrigido): este loop só lia `newSite.logoUrl`, mas o
+    // campo que o admin de fato edita ("Logotipos" no painel) é
+    // `company.logoUrl` (dentro de systemConfig.company) — um caminho JSON
+    // diferente. Como `site.logoUrl` nunca existiu, o espelho nunca rodava
+    // e a home público continuava servindo o logo antigo (ou o fallback
+    // hardcoded) mesmo após salvar um novo logo no admin.
+    const newSite    = (newConfig as any).site    ?? {}
+    const newCompany = (newConfig as any).company ?? {}
     const heroMirror: Record<string, any> = {}
-    for (const field of ['heroVideoUrl', 'heroVideoType', 'heroImageUrl', 'logoUrl'] as const) {
+    for (const field of ['heroVideoUrl', 'heroVideoType', 'heroImageUrl'] as const) {
       if (newSite[field] !== undefined) heroMirror[field] = newSite[field]
+    }
+    for (const field of ['logoUrl', 'logoIconUrl', 'logoWordmarkUrl', 'logoVisible', 'logoShowText', 'logoPosition'] as const) {
+      if (newCompany[field] !== undefined) heroMirror[field] = newCompany[field]
     }
 
     await app.prisma.company.update({

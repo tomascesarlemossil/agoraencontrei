@@ -1236,11 +1236,47 @@ export function SystemConfigPanel() {
             </Section>
             <Section title="Logotipos" icon={ImageIcon}>
               <div className="space-y-4">
-                {/* Legacy URL fields — kept for public site header / emails etc.
-                    (they populate Company.logoUrl in the database). The
-                    watermark-on-photos pipeline now uses the library below. */}
+                {/* Marca do cabeçalho do site público — ícone redondo + marca
+                    escrita, ambos editáveis e independentes. Ficam salvos em
+                    Company.settings.systemConfig.company.* e são espelhados
+                    para o topo legado das settings, de onde a home pública lê
+                    (ver GET /api/v1/public/site-settings). */}
                 <div className="space-y-3">
-                  <DarkInput label="URL do Logo (uso geral — site público, e-mails)" value={cfg.company?.logoUrl ?? ''} onChange={e => updateCfg('company','logoUrl',e.target.value)} placeholder="https://..." />
+                  <DarkInput label="URL do Ícone (logo redondo — cabeçalho do site público)" value={cfg.company?.logoIconUrl ?? ''} onChange={e => updateCfg('company','logoIconUrl',e.target.value)} placeholder="https://..." hint="Ícone circular exibido no topo do site. Deixe em branco para usar o ícone padrão." />
+                  <DarkInput label="URL da Marca Escrita (imagem 'Agora Encontrei Marketplace')" value={cfg.company?.logoWordmarkUrl ?? ''} onChange={e => updateCfg('company','logoWordmarkUrl',e.target.value)} placeholder="https://..." hint="Substitui o texto padrão ao lado do ícone por uma imagem da marca escrita." />
+                </div>
+
+                <div className="border-t border-white/10 pt-4 space-y-3">
+                  <h4 className="text-sm font-semibold text-white">Exibição no cabeçalho do site público</h4>
+                  <Toggle
+                    label="Mostrar logo no cabeçalho"
+                    hint="Desative para ocultar completamente o ícone e a marca escrita no topo do site"
+                    checked={cfg.company?.logoVisible ?? true}
+                    onChange={v => updateCfg('company','logoVisible', v)}
+                  />
+                  <Toggle
+                    label="Mostrar marca escrita ao lado do ícone"
+                    hint="Desative para exibir só o ícone, sem texto/imagem ao lado"
+                    checked={cfg.company?.logoShowText ?? true}
+                    onChange={v => updateCfg('company','logoShowText', v)}
+                  />
+                  <div>
+                    <label className="text-xs font-semibold text-white/70 mb-1.5 block">Posição do logo no cabeçalho</label>
+                    <select
+                      value={cfg.company?.logoPosition ?? 'left'}
+                      onChange={e => updateCfg('company','logoPosition', e.target.value)}
+                      className="bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white outline-none focus:border-yellow-400/50 w-full"
+                    >
+                      <option value="left">Esquerda (padrão)</option>
+                      <option value="center">Centralizado</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Campos legados — uso geral (e-mails, fallback quando o
+                    ícone acima não estiver definido). */}
+                <div className="border-t border-white/10 pt-4 space-y-3">
+                  <DarkInput label="URL do Logo (uso geral — e-mails, fallback)" value={cfg.company?.logoUrl ?? ''} onChange={e => updateCfg('company','logoUrl',e.target.value)} placeholder="https://..." />
                   <DarkInput label="URL do Logo Branco (fundo escuro)" value={cfg.company?.logoWhiteUrl ?? ''} onChange={e => updateCfg('company','logoWhiteUrl',e.target.value)} placeholder="https://..." />
                 </div>
 
