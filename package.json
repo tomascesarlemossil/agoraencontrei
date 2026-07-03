@@ -20,7 +20,8 @@
     "scrape:caixa": "npx tsx scripts/scrape-caixa.ts",
     "scrape:all": "npx tsx scripts/scrape-caixa.ts",
     "test:e2e": "playwright test",
-    "test:e2e:smoke": "playwright test tests/public-pages-smoke.spec.ts"
+    "test:e2e:smoke": "playwright test tests/public-pages-smoke.spec.ts",
+    "seo:smoke": "tsx scripts/seo-import/smoke-test.ts"
   },
   "engines": {
     "node": "22.x",

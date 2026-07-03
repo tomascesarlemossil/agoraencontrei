@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 import { env } from '../../utils/env.js'
+import { medianPricePerM2 } from './bairro-stats.util.js'
 
 const PROPERTY_TYPES  = ['HOUSE','APARTMENT','LAND','FARM','RANCH','WAREHOUSE','OFFICE','STORE','STUDIO','PENTHOUSE','CONDO','KITNET'] as const
 const PROPERTY_PURPOSES = ['SALE','RENT','BOTH','SEASON'] as const
@@ -666,25 +667,15 @@ export default async function publicRoutes(app: FastifyInstance) {
       }),
     ])
 
-    // Mediana do preço/m² (robusta a outliers) — usa área construída, senão
-    // área total, senão terreno.
-    const perM2: number[] = []
-    for (const p of priceRows) {
-      const price = Number(p.price ?? 0)
-      const area = Number(p.builtArea ?? 0) || Number(p.totalArea ?? 0) || Number(p.landArea ?? 0)
-      if (price > 0 && area > 0) perM2.push(price / area)
-    }
-    perM2.sort((a, b) => a - b)
-    const precoMedioM2 = perM2.length
-      ? Math.round(perM2[Math.floor(perM2.length / 2)])
-      : null
+    // Mediana do preço/m² (robusta a outliers) — ver bairro-stats.util.ts
+    const { precoMedioM2, amostra } = medianPricePerM2(priceRows)
 
     const payload = {
       city,
       neighborhood,
       totalAtivos: total,
       precoMedioM2,
-      amostraPreco: perM2.length,
+      amostraPreco: amostra,
       recentes: recent.map(applyLocationPrivacy),
       atualizadoEm: new Date().toISOString(),
     }

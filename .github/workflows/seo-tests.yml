@@ -1,0 +1,53 @@
+name: SEO Pipeline Tests
+
+# Roda a suíte de testes do pipeline de SEO programático:
+#  - packages/database: transform puro + varredura do dataset inteiro
+#  - apps/api: lógica do endpoint /bairro-stats
+# Nenhum teste precisa de banco (lógica pura + dataset versionado).
+
+on:
+  push:
+    branches:
+      - main
+      - claude/seo-programmatic-analysis-1ym5tq
+    paths:
+      - 'packages/database/**'
+      - 'apps/api/src/routes/public/**'
+      - 'scripts/seo-import/**'
+      - '.github/workflows/seo-tests.yml'
+  pull_request:
+    paths:
+      - 'packages/database/**'
+      - 'apps/api/src/routes/public/**'
+      - 'scripts/seo-import/**'
+      - '.github/workflows/seo-tests.yml'
+  workflow_dispatch:
+
+# Least-privilege: o job só lê o conteúdo do repo.
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.0.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Database — transform + dataset sweep
+        run: pnpm --filter @agoraencontrei/database test
+
+      - name: API — bairro-stats + suíte existente
+        run: pnpm --filter @agoraencontrei/api test
