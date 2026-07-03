@@ -145,7 +145,7 @@ function CadastroParceirosContent() {
   }, [])
 
   const filteredBuildings = buildings.filter(b =>
-    b.name.toLowerCase().includes(buildingSearch.toLowerCase()) ||
+    (b.name || '').toLowerCase().includes(buildingSearch.toLowerCase()) ||
     (b.neighborhood || '').toLowerCase().includes(buildingSearch.toLowerCase())
   )
 
