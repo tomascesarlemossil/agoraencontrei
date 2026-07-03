@@ -231,6 +231,14 @@ export async function invalidateSiteSettingsCache(redis: FastifyInstance['redis'
   const key = `pub:site-settings:v1:${companyId}`
   _memCache.delete(key)
   if (redis) { try { await redis.del(key) } catch { /* ignore */ } }
+  // `resolveCompany()` mantém seu PRÓPRIO cache em memória da linha inteira
+  // da Company (até 60s, `_companyCached`/COMPANY_CACHE_TTL abaixo) — sem
+  // isso, o /site-settings recalculava a partir de um `company.settings`
+  // (logo/cores/tema) desatualizado mesmo já com o cache derivado invalidado
+  // acima. Confirmado via teste end-to-end: sem esta linha, uma troca de
+  // logo no admin podia continuar não aparecendo por até 60s adicionais.
+  _companyCached = null
+  _companyCachedAt = 0
 }
 
 export default async function publicRoutes(app: FastifyInstance) {
@@ -2108,6 +2116,8 @@ export default async function publicRoutes(app: FastifyInstance) {
       logoVisible: s.logoVisible ?? true,
       logoShowText: s.logoShowText ?? true,
       logoPosition: s.logoPosition ?? 'left',
+      whatsappNumber: s.whatsappNumber ?? null,
+      seoDescription: s.seoDescription ?? null,
     }
   }
 

@@ -83,6 +83,31 @@ interface NavbarProps {
   position?: 'left' | 'center'
 }
 
+// Hosts liberados em next.config.mjs (images.remotePatterns) — precisa ficar
+// em sincronia com aquele arquivo. Qualquer URL de logo/wordmark configurada
+// pelo admin que NÃO bata com um destes hosts precisa de `unoptimized`,
+// senão o next/image lança um erro fatal em runtime ("hostname not
+// configured") que derruba a página inteira — confirmado via teste
+// end-to-end: colar uma URL de um host qualquer quebrava a home com 500.
+const OPTIMIZABLE_IMAGE_HOSTS = [
+  /^cdnuso\.com$/,
+  /^cdn2\.uso\.com\.br$/,
+  /\.s3\.amazonaws\.com$/,
+  /\.cloudfront\.net$/,
+  /^agoraencontrei-media\.s3\.us-east-1\.amazonaws\.com$/,
+  /^lh3\.googleusercontent\.com$/,
+]
+
+function isOptimizableImageSrc(src: string): boolean {
+  if (!src || src.startsWith('/')) return true // asset local do bundle
+  try {
+    const { hostname } = new URL(src)
+    return OPTIMIZABLE_IMAGE_HOSTS.some(re => re.test(hostname))
+  } catch {
+    return false // URL inválida/relativa inesperada — não arrisca
+  }
+}
+
 export function Navbar({
   logoUrl,
   wordmarkUrl,
@@ -95,10 +120,8 @@ export function Navbar({
   const brandLogo = logoUrl || DEFAULT_NAV_LOGO
   const brandWordmark = wordmarkUrl || DEFAULT_NAV_WORDMARK
   const brandName = companyName?.trim() || null
-  // Um logo remoto (S3/URL externa) precisa de `unoptimized` só se vier como
-  // data: URL (base64); os assets locais e URLs remotas normais passam pelo
-  // pipeline de otimização do Next normalmente (menor peso, AVIF/WebP).
-  const brandLogoUnoptimized = hasCustomLogo && brandLogo.startsWith('data:')
+  const brandLogoUnoptimized = !isOptimizableImageSrc(brandLogo)
+  const brandWordmarkUnoptimized = !isOptimizableImageSrc(brandWordmark)
   const [scrolled, setScrolled] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const [accessOpen, setAccessOpen] = useState(false)
@@ -182,6 +205,7 @@ export function Navbar({
                     height={40}
                     className="flex-shrink-0 h-9 w-auto"
                     priority
+                    unoptimized={brandWordmarkUnoptimized}
                   />
                 )
               )}
@@ -378,7 +402,7 @@ export function Navbar({
                   <span className="text-[9px]" style={{ color: '#9ca3af' }}>Marketplace</span>
                 </div>
               ) : (
-                <Image src={brandWordmark} alt="Agora Encontrei Marketplace" width={120} height={32} className="h-7 w-auto" />
+                <Image src={brandWordmark} alt="Agora Encontrei Marketplace" width={120} height={32} className="h-7 w-auto" unoptimized={brandWordmarkUnoptimized} />
               )
             )}
           </div>

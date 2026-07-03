@@ -17,7 +17,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { cn } from '@/lib/utils'
 import { MediaUploadInput } from '@/components/dashboard/MediaUploadInput'
 import { ALL_THEMES, resolveTheme, type ThemeKey } from '@/lib/site-factory/theme-registry'
-import { Store, ExternalLink, Loader2, CheckCircle2, Globe, Palette as PaletteIcon } from 'lucide-react'
+import { Store, ExternalLink, Loader2, CheckCircle2, Globe, Palette as PaletteIcon, MessageCircle, Link as LinkIcon } from 'lucide-react'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 const SITE_ROOT = process.env.NEXT_PUBLIC_SITE_ROOT ?? 'agoraencontrei.com.br'
@@ -37,8 +37,16 @@ interface Tenant {
     logoVisible?: boolean
     logoShowText?: boolean
     logoPosition?: 'left' | 'center'
+    whatsappNumber?: string | null
+    seoDescription?: string | null
     [key: string]: any
   } | null
+}
+
+interface DomainResult {
+  success: boolean
+  data?: { domain: string; dnsInstructions?: { aRecord: { type: string; name: string; value: string }; cnameRecord: { type: string; name: string; value: string } } }
+  error?: string
 }
 
 function DarkInput({ label, hint, ...props }: React.InputHTMLAttributes<HTMLInputElement> & { label?: string; hint?: string }) {
@@ -174,6 +182,7 @@ export default function MeuSitePage() {
     name: '', primaryColor: '#143A1F', layoutType: 'urban_tech' as ThemeKey,
     logoUrl: '', logoWordmarkUrl: '', logoVisible: true, logoShowText: true,
     logoPosition: 'left' as 'left' | 'center',
+    whatsappNumber: '', seoDescription: '',
   })
   const [saved, setSaved] = useState(false)
 
@@ -188,9 +197,34 @@ export default function MeuSitePage() {
         logoVisible: tenant.settings?.logoVisible !== false,
         logoShowText: tenant.settings?.logoShowText !== false,
         logoPosition: tenant.settings?.logoPosition === 'center' ? 'center' : 'left',
+        whatsappNumber: tenant.settings?.whatsappNumber ?? '',
+        seoDescription: tenant.settings?.seoDescription ?? '',
       })
     }
   }, [tenant])
+
+  // ── Domínio próprio ─────────────────────────────────────────────────────
+  const [domainInput, setDomainInput] = useState('')
+  const [domainResult, setDomainResult] = useState<DomainResult | null>(null)
+  const connectDomainMutation = useMutation({
+    mutationFn: async () => {
+      if (!tenant || !domainInput.trim()) return
+      const token = await getValidToken()
+      const res = await fetch(`${API_URL}/api/v1/tenants/${tenant.id}/domain`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ domain: domainInput.trim() }),
+      })
+      const json: DomainResult = await res.json()
+      if (!res.ok || !json.success) throw new Error(json.error ?? 'Erro ao conectar domínio')
+      return json
+    },
+    onSuccess: (json) => {
+      setDomainResult(json ?? null)
+      qc.invalidateQueries({ queryKey: ['tenant-mine'] })
+    },
+    onError: (e: Error) => alert('Erro ao conectar domínio: ' + e.message),
+  })
 
   const saveMutation = useMutation({
     mutationFn: async () => {
@@ -370,6 +404,31 @@ export default function MeuSitePage() {
             </div>
           </div>
 
+          <div className="bg-white/5 border border-white/10 rounded-2xl p-5 space-y-4">
+            <h2 className="text-sm font-semibold text-white/90 uppercase tracking-wide flex items-center gap-1.5">
+              <MessageCircle className="w-3.5 h-3.5" /> Contato & SEO
+            </h2>
+            <DarkInput
+              label="WhatsApp para receber leads"
+              hint="Sem isso, os botões de WhatsApp do seu site abrem sem nenhum destinatário — você não recebe os contatos gerados pelo site."
+              value={form.whatsappNumber}
+              onChange={e => setForm(p => ({ ...p, whatsappNumber: e.target.value }))}
+              placeholder="(16) 98101-0004"
+            />
+            <div>
+              <label className="text-xs font-semibold text-white/70 mb-1.5 block">Descrição do site (SEO)</label>
+              <textarea
+                value={form.seoDescription}
+                onChange={e => setForm(p => ({ ...p, seoDescription: e.target.value }))}
+                maxLength={300}
+                rows={3}
+                placeholder="Como seu site aparece no Google e ao compartilhar no WhatsApp/redes sociais."
+                className="bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-white/40 outline-none focus:border-yellow-400/50 w-full transition-colors resize-none"
+              />
+              <p className="text-[11px] text-white/40 mt-1">{form.seoDescription.length}/300</p>
+            </div>
+          </div>
+
           <button
             onClick={() => saveMutation.mutate()}
             disabled={saveMutation.isPending}
@@ -379,6 +438,42 @@ export default function MeuSitePage() {
             {saveMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : saved ? <CheckCircle2 className="w-4 h-4" /> : null}
             {saved ? 'Salvo!' : 'Salvar alterações'}
           </button>
+
+          <div className="bg-white/5 border border-white/10 rounded-2xl p-5 space-y-4">
+            <h2 className="text-sm font-semibold text-white/90 uppercase tracking-wide flex items-center gap-1.5">
+              <LinkIcon className="w-3.5 h-3.5" /> Domínio próprio
+            </h2>
+            {tenant.customDomain ? (
+              <p className="text-sm text-white/70">
+                Domínio conectado: <span className="font-semibold text-white">{tenant.customDomain}</span>
+              </p>
+            ) : (
+              <>
+                <DarkInput
+                  label="Conectar um domínio que você já possui"
+                  hint="Ex.: www.suaimobiliaria.com.br — depois de conectar, configure o DNS conforme as instruções abaixo."
+                  value={domainInput}
+                  onChange={e => setDomainInput(e.target.value)}
+                  placeholder="www.suaimobiliaria.com.br"
+                />
+                <button
+                  onClick={() => connectDomainMutation.mutate()}
+                  disabled={connectDomainMutation.isPending || !domainInput.trim()}
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white/80 border border-white/15 hover:bg-white/5 transition-colors disabled:opacity-50"
+                >
+                  {connectDomainMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <LinkIcon className="w-4 h-4" />}
+                  Conectar domínio
+                </button>
+              </>
+            )}
+            {domainResult?.data?.dnsInstructions && (
+              <div className="bg-black/20 border border-white/10 rounded-xl p-4 text-xs text-white/70 space-y-1.5 font-mono">
+                <p className="text-white/50 uppercase tracking-wide text-[10px] mb-2 font-sans">Configure estes registros DNS no seu provedor:</p>
+                <p>{domainResult.data.dnsInstructions.aRecord.type} · {domainResult.data.dnsInstructions.aRecord.name} → {domainResult.data.dnsInstructions.aRecord.value}</p>
+                <p>{domainResult.data.dnsInstructions.cnameRecord.type} · {domainResult.data.dnsInstructions.cnameRecord.name} → {domainResult.data.dnsInstructions.cnameRecord.value}</p>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* ── Preview ─────────────────────────────────────────────────── */}

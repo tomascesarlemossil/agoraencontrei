@@ -31,9 +31,20 @@ interface TenantData {
     logoVisible?: boolean
     logoShowText?: boolean
     logoPosition?: 'left' | 'center'
+    whatsappNumber?: string | null
+    seoDescription?: string | null
     [key: string]: any
   }
   companyId: string
+}
+
+// Monta um link wa.me com destinatário real quando o parceiro configurou um
+// número (dashboard/meu-site). Sem isso, os CTAs abriam `wa.me/?text=...`
+// sem NENHUM destinatário — o parceiro nunca recebia os leads do próprio site.
+function tenantWaHref(whatsappNumber: string | null | undefined, text: string): string {
+  const digits = (whatsappNumber ?? '').replace(/\D/g, '')
+  const to = digits ? (digits.startsWith('55') ? digits : `55${digits}`) : ''
+  return `https://wa.me/${to}?text=${encodeURIComponent(text)}`
 }
 
 interface Property {
@@ -122,12 +133,14 @@ export async function generateMetadata({
   if (!tenant) {
     return { title: 'Não encontrado' }
   }
+  const description = tenant.settings?.seoDescription?.trim()
+    || `Encontre os melhores imóveis em ${tenant.name}. Casas, apartamentos, terrenos e mais.`
   return {
     title: `${tenant.name} — Imóveis`,
-    description: `Encontre os melhores imóveis em ${tenant.name}. Casas, apartamentos, terrenos e mais.`,
+    description,
     openGraph: {
       title: `${tenant.name} — Imóveis`,
-      description: `Plataforma imobiliária ${tenant.name}`,
+      description,
       ...(tenant.logoUrl && { images: [tenant.logoUrl] }),
     },
   }
@@ -219,7 +232,7 @@ export default async function TenantPage({
           </nav>
           {/* Botão Tomás IA */}
           <a
-            href={`https://wa.me/?text=Olá! Quero saber mais sobre os imóveis de ${tenant.name}`}
+            href={tenantWaHref(tenant.settings?.whatsappNumber, `Olá! Quero saber mais sobre os imóveis de ${tenant.name}`)}
             target="_blank"
             rel="noopener noreferrer"
             className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold ${theme.buttonPrimary}`}
@@ -387,7 +400,7 @@ export default async function TenantPage({
                     </div>
                     {/* CTA */}
                     <a
-                      href={`https://wa.me/?text=Olá! Tenho interesse no imóvel "${property.title}" anunciado em ${tenant.name}.`}
+                      href={tenantWaHref(tenant.settings?.whatsappNumber, `Olá! Tenho interesse no imóvel "${property.title}" anunciado em ${tenant.name}.`)}
                       target="_blank"
                       rel="noopener noreferrer"
                       className={`mt-3 block w-full text-center py-2 rounded-lg text-xs font-bold transition-all ${theme.buttonPrimary}`}
@@ -430,7 +443,7 @@ export default async function TenantPage({
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <a
-              href={`https://wa.me/?text=Olá, vi um imóvel no site ${tenant.name} e gostaria de mais informações.`}
+              href={tenantWaHref(tenant.settings?.whatsappNumber, `Olá, vi um imóvel no site ${tenant.name} e gostaria de mais informações.`)}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-6 py-3 rounded-lg text-white font-medium"

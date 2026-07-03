@@ -186,6 +186,12 @@ export default async function tenantRoutes(app: FastifyInstance) {
       logoVisible: z.boolean().optional(),
       logoShowText: z.boolean().optional(),
       logoPosition: z.enum(['left', 'center']).optional(),
+      // Contato do site do parceiro — sem isso, os botões de WhatsApp do
+      // site público abriam sem nenhum destinatário (wa.me/?text=...), ou
+      // seja, o parceiro nunca recebia os leads gerados pelo próprio site.
+      whatsappNumber: z.string().optional(),
+      // SEO básico do site do parceiro (usado em generateMetadata).
+      seoDescription: z.string().max(300).optional(),
       settings: z.record(z.any()).optional(),
     }).parse(req.body)
 
@@ -196,12 +202,14 @@ export default async function tenantRoutes(app: FastifyInstance) {
       return reply.status(403).send({ error: 'FORBIDDEN' })
     }
 
-    const { logoWordmarkUrl, logoVisible, logoShowText, logoPosition, settings, ...columns } = body
+    const { logoWordmarkUrl, logoVisible, logoShowText, logoPosition, whatsappNumber, seoDescription, settings, ...columns } = body
     const brandingSettings: Record<string, any> = {}
     if (logoWordmarkUrl !== undefined) brandingSettings.logoWordmarkUrl = logoWordmarkUrl
     if (logoVisible !== undefined) brandingSettings.logoVisible = logoVisible
     if (logoShowText !== undefined) brandingSettings.logoShowText = logoShowText
     if (logoPosition !== undefined) brandingSettings.logoPosition = logoPosition
+    if (whatsappNumber !== undefined) brandingSettings.whatsappNumber = whatsappNumber
+    if (seoDescription !== undefined) brandingSettings.seoDescription = seoDescription
 
     const updated = await (app.prisma as any).tenant.update({
       where: { id },
