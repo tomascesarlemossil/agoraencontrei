@@ -219,9 +219,24 @@ export default function HistoricoAlteracoesPage() {
   const [page, setPage]         = useState(1)
   const [resource, setResource] = useState('')
   const [action, setAction]     = useState('')
+  const [userId, setUserId]     = useState('')
   const [from, setFrom]         = useState('')
   const [to, setTo]             = useState('')
   const [showFilters, setShowFilters] = useState(false)
+  const [companyUsers, setCompanyUsers] = useState<{ id: string; name: string }[]>([])
+
+  // Lista de usuários da empresa para o filtro "por usuário". Sem isso o
+  // gestor não conseguia isolar o histórico de um colaborador específico.
+  useEffect(() => {
+    if (!token) return
+    fetch(`${API_URL}/api/v1/users`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => (r.ok ? r.json() : []))
+      .then((data) => {
+        const arr = Array.isArray(data) ? data : (data?.data ?? [])
+        setCompanyUsers(arr.map((u: any) => ({ id: u.id, name: u.name })))
+      })
+      .catch(() => {})
+  }, [token])
 
   const fetchLogs = useCallback(async () => {
     if (!token) return
@@ -230,6 +245,7 @@ export default function HistoricoAlteracoesPage() {
       const params = new URLSearchParams({ page: String(page), limit: '30' })
       if (resource) params.set('resource', resource)
       if (action)   params.set('action', action)
+      if (userId)   params.set('userId', userId)
       if (from)     params.set('from', from)
       if (to)       params.set('to', to)
 
@@ -242,15 +258,15 @@ export default function HistoricoAlteracoesPage() {
       setMeta(data.meta ?? null)
     } catch {}
     finally { setLoading(false) }
-  }, [token, page, resource, action, from, to, router])
+  }, [token, page, resource, action, userId, from, to, router])
 
   useEffect(() => { fetchLogs() }, [fetchLogs])
 
   function clearFilters() {
-    setResource(''); setAction(''); setFrom(''); setTo(''); setPage(1)
+    setResource(''); setAction(''); setUserId(''); setFrom(''); setTo(''); setPage(1)
   }
 
-  const hasFilters = resource || action || from || to
+  const hasFilters = resource || action || userId || from || to
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
@@ -292,6 +308,21 @@ export default function HistoricoAlteracoesPage() {
           style={{ backgroundColor: '#f8f7f5', border: '1px solid #ddd9d0' }}
         >
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Usuário</label>
+              <select
+                value={userId}
+                onChange={e => { setUserId(e.target.value); setPage(1) }}
+                className="w-full text-sm border rounded-xl px-3 py-2 bg-white focus:outline-none"
+                style={{ borderColor: '#ddd9d0' }}
+              >
+                <option value="">Todos</option>
+                {companyUsers.map(u => (
+                  <option key={u.id} value={u.id}>{u.name}</option>
+                ))}
+              </select>
+            </div>
+
             <div>
               <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Recurso</label>
               <select

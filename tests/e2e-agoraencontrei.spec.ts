@@ -5,14 +5,30 @@ const DASHBOARD_URL = 'https://agoraencontrei.com.br/dashboard';
 const EMAIL = process.env.E2E_EMAIL || 'tomas@agoraencontrei.com.br';
 const PASSWORD = process.env.E2E_PASSWORD || 'Lemos2026@';
 
+// Login white-label em 2 etapas: 1) identificador (e-mail/telefone/CPF) →
+// "Continuar"; 2) senha → "Entrar". Mantém fallback para o fluxo antigo de
+// um passo caso a página ainda não tenha o novo layout.
+async function doLogin(page: Page) {
+  // Etapa 1 — identificador
+  const identifier = page.locator('#identifier, input[name="email"], input[type="email"]').first();
+  await identifier.fill(EMAIL);
+  const continuar = page.locator('button:has-text("Continuar")');
+  if (await continuar.isVisible({ timeout: 2000 }).catch(() => false)) {
+    await continuar.click();
+    // Etapa 2 — senha aparece após resolver a empresa
+    await page.locator('#password, input[type="password"]').first().waitFor({ timeout: 10000 });
+  }
+  // Etapa 2 (ou fluxo antigo) — senha
+  await page.locator('#password, input[type="password"]').first().fill(PASSWORD);
+  await page.click('button[type="submit"], button:has-text("Entrar"), button:has-text("Acessar")');
+  await page.waitForLoadState('networkidle');
+}
+
 async function loginIfNeeded(page: Page) {
   await page.goto(DASHBOARD_URL);
   await page.waitForLoadState('networkidle');
   if (page.url().includes('login') || page.url().includes('auth')) {
-    await page.fill('input[type="email"], input[name="email"]', EMAIL);
-    await page.fill('input[type="password"], input[name="password"]', PASSWORD);
-    await page.click('button[type="submit"], button:has-text("Entrar"), button:has-text("Login"), button:has-text("Acessar")');
-    await page.waitForLoadState('networkidle');
+    await doLogin(page);
   }
 }
 
@@ -64,15 +80,11 @@ test.describe('AgoraEncontrei — Testes E2E Completos', () => {
     expect(count).toBeGreaterThan(2);
   });
 
-  test('6. Login no dashboard', async ({ page }) => {
+  test('6. Login no dashboard (fluxo white-label em 2 etapas)', async ({ page }) => {
     await page.goto(`${BASE_URL}/login`);
     await page.waitForLoadState('networkidle');
     await page.screenshot({ path: 'screenshots/06-pre-login.png' });
-    await page.fill('input[type="email"], input[name="email"]', EMAIL);
-    await page.fill('input[type="password"], input[name="password"]', PASSWORD);
-    await page.screenshot({ path: 'screenshots/06-login-preenchido.png' });
-    await page.click('button[type="submit"], button:has-text("Entrar"), button:has-text("Acessar")');
-    await page.waitForLoadState('networkidle');
+    await doLogin(page);
     await page.screenshot({ path: 'screenshots/06-pos-login.png', fullPage: false });
     console.log('URL pos-login:', page.url());
   });

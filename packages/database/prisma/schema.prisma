@@ -178,6 +178,7 @@ model User {
   name              String
   email             String      @unique
   phone             String?
+  cpf               String?     @unique
   passwordHash      String?
   avatarUrl         String?
   role              UserRole    @default(BROKER)
@@ -2544,6 +2545,12 @@ model Specialist {
   tags               String[]
   buildings          SpecialistBuilding[]
   welcomeEmailSentAt DateTime?
+
+  // Magic-link de acesso ao painel do especialista. O especialista não usa
+  // JWT/senha da plataforma — pede um link por e-mail/WhatsApp e esse token
+  // (rotacionável) autentica o acesso aos próprios dados privados.
+  accessToken        String?            @unique
+  accessTokenSentAt  DateTime?
 
   // Pagamentos Asaas
   cpfCnpj            String?

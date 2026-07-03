@@ -17,8 +17,18 @@ const RegisterBody = z.object({
 })
 
 const LoginBody = z.object({
-  email: z.string().email(),
+  // Aceita e-mail, telefone ou CPF via `identifier`; mantém `email` por
+  // compatibilidade com clientes antigos. Pelo menos um é obrigatório.
+  identifier: z.string().min(3).max(128).optional(),
+  email: z.string().email().optional(),
   password: z.string().min(6).max(128),
+}).refine((d) => !!(d.identifier || d.email), {
+  message: 'Informe e-mail, telefone ou CPF',
+  path: ['identifier'],
+})
+
+const ResolveCompanyBody = z.object({
+  identifier: z.string().min(3).max(128),
 })
 
 const RefreshBody = z.object({
@@ -72,6 +82,21 @@ export default async function authRoutes(app: FastifyInstance) {
     const { email } = req.body as { email?: string }
     if (!email) return reply.status(400).send({ error: 'MISSING_EMAIL', message: 'E-mail obrigatório' })
     const result = await svc.resendVerification(email)
+    return reply.send(result)
+  })
+
+  // POST /api/v1/auth/resolve-company — etapa 1 do login white-label.
+  // Recebe e-mail/telefone/CPF e devolve só a MARCA da empresa (nome + logo +
+  // cor) para montar a tela de senha com a identidade do parceiro. Não
+  // confirma senha nem devolve dados sensíveis. Rate-limit apertado para
+  // desestimular varredura.
+  app.post('/resolve-company', {
+    config: { rateLimit: { max: 20, timeWindow: '15 minutes' } },
+    schema: { tags: ['auth'], summary: 'Resolve company branding for white-label login' },
+  }, async (req, reply) => {
+    const parsed = ResolveCompanyBody.safeParse(req.body)
+    if (!parsed.success) return reply.status(400).send({ error: 'VALIDATION_ERROR', message: parsed.error.message })
+    const result = await svc.resolveCompanyBranding(parsed.data.identifier)
     return reply.send(result)
   })
 

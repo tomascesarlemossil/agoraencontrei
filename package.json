@@ -18,7 +18,9 @@
     "lint": "pnpm --parallel --filter './apps/*' lint",
     "typecheck": "pnpm --parallel --filter './apps/*' typecheck",
     "scrape:caixa": "npx tsx scripts/scrape-caixa.ts",
-    "scrape:all": "npx tsx scripts/scrape-caixa.ts"
+    "scrape:all": "npx tsx scripts/scrape-caixa.ts",
+    "test:e2e": "playwright test",
+    "test:e2e:smoke": "playwright test tests/public-pages-smoke.spec.ts"
   },
   "engines": {
     "node": "22.x",

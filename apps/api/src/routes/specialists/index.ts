@@ -9,6 +9,7 @@
 import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 import { slugify } from '../../utils/slugify.js'
+import { specialistTokenOrAdmin, generateSpecialistAccessToken } from './auth.js'
 
 const categoryLabels: Record<string, string> = {
   ARQUITETO: 'Arquiteto(a)',
@@ -370,12 +371,120 @@ export default async function specialistsRoute(app: FastifyInstance) {
     }
   })
 
-  // ─── GET /by-email/:email — busca por email (para o painel do parceiro) ──
+  // ─── POST /request-access — envia magic-link do painel por e-mail/WhatsApp ─
+  // Login sem senha do especialista. Recebe o e-mail, rotaciona o accessToken
+  // e entrega o link por e-mail + WhatsApp. Responde SEMPRE 200 (mesmo quando
+  // o e-mail não existe) para não permitir enumeração de cadastro.
+  app.post('/request-access', async (request, reply) => {
+    const parsed = z.object({ email: z.string().email() }).safeParse(request.body)
+    if (!parsed.success) {
+      return reply.status(400).send({ error: 'E-mail inválido' })
+    }
+    const email = parsed.data.email.toLowerCase().trim()
+    const genericOk = {
+      success: true,
+      message: 'Se houver um cadastro com este e-mail, enviamos um link de acesso.',
+    }
+
+    try {
+      const specialist = await prisma.specialist.findUnique({
+        where: { email },
+        select: { id: true, name: true, email: true, phone: true, whatsapp: true },
+      })
+      // Resposta idêntica quando não existe — evita enumeração.
+      if (!specialist) return reply.send(genericOk)
+
+      const token = generateSpecialistAccessToken()
+      await prisma.specialist.update({
+        where: { id: specialist.id },
+        data: { accessToken: token, accessTokenSentAt: new Date() },
+      })
+
+      const panelUrl = `https://www.agoraencontrei.com.br/meu-painel?token=${token}`
+
+      // E-mail (best-effort)
+      try {
+        const { sendEmail, isEmailConfigured } = await import('../../services/email.service.js')
+        if (isEmailConfigured()) {
+          await sendEmail({
+            to: specialist.email,
+            subject: 'Seu link de acesso ao painel — AgoraEncontrei',
+            html: `
+              <div style="font-family:system-ui,-apple-system,sans-serif;max-width:560px;margin:0 auto;padding:32px;background:#f8f6f1;color:#1B2B5B">
+                <h1 style="color:#1B2B5B;margin:0 0 8px">Acesso ao seu painel</h1>
+                <p style="margin:0 0 16px;color:#475569">Olá${specialist.name ? `, ${specialist.name}` : ''}! Clique no botão para acessar o painel do seu perfil no AgoraEncontrei.</p>
+                <div style="text-align:center;margin:24px 0">
+                  <a href="${panelUrl}" style="display:inline-block;background:#C9A84C;color:#1B2B5B;font-weight:700;padding:12px 24px;border-radius:10px;text-decoration:none">Acessar meu painel →</a>
+                </div>
+                <p style="margin:16px 0;color:#475569;font-size:13px">Se você não pediu este link, ignore este e-mail. Não compartilhe este link — ele dá acesso ao seu perfil.</p>
+                <p style="margin:24px 0 0;font-size:12px;color:#94a3b8">AgoraEncontrei — Marketplace Imobiliário de Franca e Região</p>
+              </div>`,
+            text: `Acesse seu painel no AgoraEncontrei: ${panelUrl}`,
+          })
+        }
+      } catch (e) {
+        request.log.error({ err: e }, '[specialists] request-access email failed')
+      }
+
+      // WhatsApp (best-effort)
+      const notifyPhone = specialist.whatsapp || specialist.phone
+      if (notifyPhone) {
+        try {
+          const { sendWhatsappText } = await import('../../services/whatsapp-notify.service.js')
+          await sendWhatsappText(
+            notifyPhone,
+            `🔑 *AgoraEncontrei*\n\nSeu link de acesso ao painel:\n${panelUrl}\n\nNão compartilhe — ele dá acesso ao seu perfil.`,
+          )
+        } catch (e) {
+          request.log.error({ err: e }, '[specialists] request-access whatsapp failed')
+        }
+      }
+
+      return reply.send(genericOk)
+    } catch (err: any) {
+      request.log.error({ err }, '[specialists] request-access failed')
+      // Mesmo em erro devolvemos a mensagem genérica para não vazar estado.
+      return reply.send(genericOk)
+    }
+  })
+
+  // ─── GET /session — resolve o painel a partir do magic-link (?token=) ─────
+  // Resolvedor primário do login sem senha: o especialista chega pelo link
+  // recebido por e-mail/WhatsApp e o token opaco (256 bits, coluna única)
+  // identifica o próprio cadastro. Não expõe campos sensíveis nem o token.
+  app.get('/session', async (request, reply) => {
+    const token = (request.query as any)?.token as string | undefined
+    if (!token || typeof token !== 'string') {
+      return reply.status(401).send({ error: 'MISSING_TOKEN', message: 'Link de acesso ausente.' })
+    }
+    try {
+      const specialist = await prisma.specialist.findUnique({
+        where: { accessToken: token },
+        include: {
+          buildings: {
+            include: { building: { select: { name: true, slug: true } } },
+          },
+        },
+      })
+      if (!specialist) {
+        return reply.status(401).send({ error: 'INVALID_TOKEN', message: 'Link inválido ou expirado. Solicite um novo.' })
+      }
+      const { asaasCustomerId, asaasSubscriptionId, cpfCnpj, accessToken, ...safe } = specialist as any
+      return reply.send(safe)
+    } catch (err: any) {
+      return reply.status(500).send({ error: 'Erro ao carregar painel', details: err.message })
+    }
+  })
+
+  // ─── GET /by-email/:email — dados privados do painel do parceiro ──────────
+  // SEGURANÇA: rota antes era pública — qualquer um lia telefone/plano/status
+  // de qualquer especialista informando o e-mail. Agora exige o magic-link
+  // (?token=) do próprio especialista OU um admin autenticado.
   app.get('/by-email/:email', async (request, reply) => {
     const { email } = request.params as { email: string }
     try {
       const specialist = await prisma.specialist.findUnique({
-        where: { email: decodeURIComponent(email) },
+        where: { email: decodeURIComponent(email).toLowerCase().trim() },
         include: {
           buildings: {
             include: { building: { select: { name: true, slug: true } } },
@@ -383,8 +492,12 @@ export default async function specialistsRoute(app: FastifyInstance) {
         },
       })
       if (!specialist) return reply.status(404).send({ error: 'Especialista não encontrado' })
-      // Não retornar campos sensíveis
-      const { asaasCustomerId, asaasSubscriptionId, cpfCnpj, ...safe } = specialist as any
+
+      const ok = await specialistTokenOrAdmin(request, reply, (specialist as any).accessToken)
+      if (!ok) return // resposta 401/403 já enviada
+
+      // Não retornar campos sensíveis (inclui o próprio accessToken).
+      const { asaasCustomerId, asaasSubscriptionId, cpfCnpj, accessToken, ...safe } = specialist as any
       return reply.send(safe)
     } catch (err: any) {
       return reply.status(500).send({ error: 'Erro ao buscar especialista', details: err.message })

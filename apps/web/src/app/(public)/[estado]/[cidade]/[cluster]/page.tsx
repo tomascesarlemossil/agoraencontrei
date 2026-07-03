@@ -10,6 +10,7 @@ import { notFound } from 'next/navigation'
 import { MapPin, Home, Search, ChevronRight } from 'lucide-react'
 import { IBGE_CITY_BY_SLUG, IBGE_CITIES_152, getIbgeCitySnippet } from '@/data/seo-ibge-cities-expanded'
 import { CitySeoContent } from '@/components/public/CitySeoContent'
+import { isBuildPhase } from '@/lib/ssg-runtime'
 
 const WEB_URL = process.env.NEXT_PUBLIC_WEB_URL || 'https://agoraencontrei.com.br'
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api-production-669c.up.railway.app'
@@ -89,9 +90,14 @@ export async function generateMetadata(props: { params: Promise<{ estado: string
   }
 }
 
-export const revalidate = 86400
+// 1h: como os imóveis não são buscados no build (ISR preenche depois), um
+// revalidate curto faz o conteúdo real aparecer logo após o deploy em vez de
+// só em 24h.
+export const revalidate = 3600
 
 async function fetchProperties(cityName: string, cluster: string) {
+  // Nunca bloqueia o build na API — ISR preenche na 1ª requisição real.
+  if (isBuildPhase()) return []
   try {
     const purposeMap: Record<string, string> = {
       'imoveis-a-venda': 'SALE', 'casas-a-venda': 'SALE', 'apartamentos-a-venda': 'SALE',

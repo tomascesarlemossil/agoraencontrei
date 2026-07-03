@@ -24,7 +24,10 @@ export interface RegisterInput {
 }
 
 export interface LoginInput {
-  email: string
+  // `identifier` = e-mail, telefone OU CPF (login white-label). `email` fica
+  // por compatibilidade com clientes antigos que ainda mandam só o e-mail.
+  identifier?: string
+  email?: string
   password: string
 }
 
@@ -33,6 +36,66 @@ export class AuthService {
     private readonly prisma: PrismaClient,
     private readonly app: FastifyInstance,
   ) {}
+
+  /**
+   * Resolve um usuário a partir de um identificador que pode ser e-mail,
+   * telefone ou CPF. E-mail e CPF são colunas únicas (lookup direto). Telefone
+   * pode estar formatado no banco, então comparamos só os dígitos via SQL.
+   * Um valor de 11 dígitos é ambíguo (CPF ou celular com DDD) — tentamos CPF
+   * primeiro e caímos para telefone.
+   */
+  private async findUserByIdentifier(raw: string): Promise<User | null> {
+    const trimmed = (raw ?? '').trim()
+    if (!trimmed) return null
+
+    if (trimmed.includes('@')) {
+      return this.prisma.user.findUnique({ where: { email: trimmed.toLowerCase() } })
+    }
+
+    const digits = trimmed.replace(/\D/g, '')
+    if (digits.length === 11) {
+      const byCpf = await this.prisma.user.findUnique({ where: { cpf: digits } })
+      if (byCpf) return byCpf
+    }
+
+    if (digits.length >= 8) {
+      const rows = await this.prisma.$queryRawUnsafe<{ id: string }[]>(
+        `SELECT id FROM users WHERE regexp_replace(coalesce(phone,''), '\\D', '', 'g') = $1 LIMIT 1`,
+        digits,
+      )
+      if (rows.length) {
+        return this.prisma.user.findUnique({ where: { id: rows[0].id } })
+      }
+    }
+
+    return null
+  }
+
+  /**
+   * Retorna apenas a marca da empresa do usuário (nome + logo + cor) para
+   * montar a tela de senha white-label. Não confirma senha nem devolve dados
+   * sensíveis; quando não encontra, devolve `company: null` e o front usa a
+   * marca padrão AgoraEncontrei.
+   */
+  async resolveCompanyBranding(identifier: string) {
+    const user = await this.findUserByIdentifier(identifier)
+    if (!user) return { company: null }
+
+    const company = await this.prisma.company.findUnique({
+      where: { id: user.companyId },
+      select: { name: true, tradeName: true, logoUrl: true, settings: true },
+    })
+    if (!company) return { company: null }
+
+    const settings = (company.settings as any) || {}
+    return {
+      company: {
+        name: company.tradeName || company.name,
+        logoUrl: company.logoUrl || settings.logoUrl || null,
+        primaryColor: settings.primaryColor || settings.primary_color || null,
+      },
+    }
+  }
 
   private async verifyPassword(passwordHash: string, plainPassword: string): Promise<boolean> {
     if (!passwordHash) return false
@@ -125,9 +188,11 @@ export class AuthService {
   // ── Login ────────────────────────────────────────────────────────────────
 
   async login(input: LoginInput, ipAddress?: string, userAgent?: string) {
-    const user = await this.prisma.user.findUnique({
-      where: { email: input.email.toLowerCase().trim() },
-    })
+    const identifier = input.identifier || input.email
+    if (!identifier) {
+      throw Object.assign(new Error('Credenciais inválidas'), { statusCode: 401, code: 'INVALID_CREDENTIALS' })
+    }
+    const user = await this.findUserByIdentifier(identifier)
 
     if (!user || !user.passwordHash) {
       throw Object.assign(new Error('Credenciais inválidas'), { statusCode: 401, code: 'INVALID_CREDENTIALS' })
