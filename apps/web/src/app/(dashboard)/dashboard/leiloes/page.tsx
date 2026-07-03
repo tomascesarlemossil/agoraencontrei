@@ -186,7 +186,7 @@ export default function LeiloesAdminPage() {
 
   // Filtrar leilões
   const filteredAuctions = (stats?.latestAuctions || []).filter(a => {
-    const matchSearch = !searchFilter || a.title.toLowerCase().includes(searchFilter.toLowerCase()) ||
+    const matchSearch = !searchFilter || (a.title || '').toLowerCase().includes(searchFilter.toLowerCase()) ||
       (a.city || '').toLowerCase().includes(searchFilter.toLowerCase())
     const matchSource = sourceFilter === 'ALL' || a.source === sourceFilter
     return matchSearch && matchSource
