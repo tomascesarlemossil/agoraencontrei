@@ -91,6 +91,7 @@ function cleaned(p) {
     parkingSpaces: p.parkingSpaces != null ? p.parkingSpaces : undefined,
     totalArea: p.totalArea > 0 ? p.totalArea : undefined,
     builtArea: p.builtArea > 0 ? p.builtArea : undefined,
+    landArea: p.landArea > 0 ? p.landArea : undefined,
     price: p.price > 0 ? p.price : undefined,
     priceRent: p.priceRent > 0 ? p.priceRent : undefined,
     description: (p.description && p.description.length > 20) ? p.description : buildDescription(p),
@@ -186,4 +187,8 @@ async function main() {
   await prisma.$disconnect();
 }
 
-main().catch((e) => { console.error(e); process.exit(1); });
+module.exports = { buildDescription, makeSlug, cleaned };
+
+if (require.main === module) {
+  main().catch((e) => { console.error(e); process.exit(1); });
+}

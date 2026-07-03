@@ -90,14 +90,15 @@ def parse_price(text):
 
 
 def parse_area(text):
+    """'1.000,00 m²' → 1000.0. pt-BR: '.' is thousands, ',' is decimal."""
     if not text:
         return None
-    m = re.search(r"([\d]+(?:[.,]\d+)?)", text)
+    m = re.search(r"[\d.]+(?:,\d+)?", text)
     if not m:
         return None
+    cleaned = m.group(0).replace(".", "").replace(",", ".")
     try:
-        return float(m.group(1).replace(".", "").replace(",", ".")) if "," in m.group(1) \
-            else float(m.group(1))
+        return float(cleaned)
     except ValueError:
         return None
 
@@ -157,16 +158,21 @@ def parse_listing_card(seg):
     # The split already bounds `seg` to a single card, so scan the whole thing.
     card = seg
 
-    # Purpose label overrides comprar/alugar when explicit.
-    if re.search(r"LOCA[ÇC][ÃA]O|ALUGUEL|TEMPORADA", card, re.I):
-        prop["purpose"] = "RENT"
-
-    price_m = re.search(r"R\$\s*[\d.]+(?:,\d{2})?", card)
-    price_val = parse_price(price_m.group(0)) if price_m else None
-    if prop["purpose"] == "RENT":
-        prop["price"], prop["priceRent"] = None, price_val
-    else:
-        prop["price"], prop["priceRent"] = price_val, None
+    # Price lives in a dedicated block: <div class="valor_novo"><small>VENDA
+    # </small><h5>R$ 1.100.000,00</h5></div>. Reading it here (instead of the
+    # first "R$" anywhere) avoids stray artifacts like financing widgets.
+    prop["price"], prop["priceRent"] = None, None
+    vb = re.search(r'valor_novo"[^>]*>\s*<small>([^<]*)</small>\s*<h5>([^<]*)</h5>', card, re.I)
+    if vb:
+        label = vb.group(1).upper()
+        val = parse_price(vb.group(2))
+        if re.search(r"LOCA|ALUGUEL|TEMPORADA", label):
+            prop["purpose"] = "RENT"
+            # Rent below R$50 is a placeholder for "sob consulta", not a price.
+            prop["priceRent"] = val if (val and val >= 50) else None
+        else:
+            # Sale below R$1.000 is a placeholder (e.g. "R$ 1,11"), not a price.
+            prop["price"] = val if (val and val >= 1000) else None
 
     # Characteristics use icon markup: <i class="ph ph-bed"></i><span>3</span>.
     def icon_num(icon):
@@ -192,7 +198,7 @@ def parse_listing_card(seg):
 
     # Placeholders filled from the detail page.
     prop.update({"title": None, "description": None, "suites": None,
-                 "totalArea": None, "builtArea": None,
+                 "totalArea": None, "builtArea": None, "landArea": None,
                  "images": [], "coverImage": None})
     return prop
 
@@ -202,10 +208,16 @@ def scrape_listing_page(page_num):
     html = fetch_url(url)
     if not html:
         return [], None
+    # The results count is "942 Imóveis encontrados". Match that phrase
+    # specifically — a plain "N Imóveis" also matches the per-page selector
+    # options (12/24/48), and picking the first would truncate to one page.
     total = None
-    m = re.search(r"(\d+)\s+Im[oó]ve", html, re.I)
+    m = re.search(r"(\d+)\s+Im[oó]ve[íi]?s?\s+encontrad", html, re.I)
     if m:
         total = int(m.group(1))
+    else:
+        nums = [int(x) for x in re.findall(r"(\d+)\s+Im[oó]ve", html, re.I)]
+        total = max(nums) if nums else None
     segments = re.split(r'(?=href="/(?:comprar|alugar)/)', html)
     cards = []
     for seg in segments[1:]:
@@ -259,14 +271,17 @@ def scrape_detail(prop):
     util = re.search(r"([\d.,]+)\s*m[²2]\s*[úu]til", txt, re.I)
     constr = re.search(r"([\d.,]+)\s*m[²2]\s*constru[ií]da", txt, re.I)
     total = re.search(r"([\d.,]+)\s*m[²2]\s*total", txt, re.I)
+    terreno = re.search(r"([\d.,]+)\s*m[²2]\s*terreno", txt, re.I)
     if util:
         prop["builtArea"] = parse_area(util.group(1))
-    if constr:
-        prop["totalArea"] = parse_area(constr.group(1))
-    elif total:
+    elif constr:
+        prop["builtArea"] = parse_area(constr.group(1))
+    if total:
         prop["totalArea"] = parse_area(total.group(1))
-    elif util and not prop.get("totalArea"):
+    elif util:
         prop["totalArea"] = parse_area(util.group(1))
+    if terreno:
+        prop["landArea"] = parse_area(terreno.group(1))
 
     photos = isolate_photos(html)
     if photos:
