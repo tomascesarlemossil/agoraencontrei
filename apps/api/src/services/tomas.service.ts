@@ -16,6 +16,8 @@ import {
   buildPartnerSystemPrompt,
   type PartnerContext,
 } from '@agoraencontrei/tomas-knowledge'
+import { evaluateToolPolicy, roleRank, type TomasBrain } from './tomas-policy.js'
+import { hasValidConsent } from './lead-transfer-consent.service.js'
 import { env } from '../utils/env.js'
 import { notify } from './notification.service.js'
 import { checkAIQuota } from './plan-gating.service.js'
@@ -73,6 +75,10 @@ export interface TomasChatParams {
   visitorId?: string
   companyId?: string
   userId?: string
+  /** Papel do usuário autenticado (BROKER/ADMIN/SUPER_ADMIN…) — gate de permissão. */
+  role?: string
+  /** Confirmação explícita do usuário para ações de escrita (Fase 4). */
+  confirmed?: boolean
   tenantTheme?: string
   nicheSlug?: string        // Dynamic niche from NicheTemplate table
   propertyContext?: {
@@ -344,18 +350,83 @@ const TOMAS_TOOLS: Anthropic.Tool[] = [
 
 // ── Tool Executor ───────────────────────────────────────────────────────────
 
-async function executeTool(
+interface ToolPolicyContext {
+  brain: TomasBrain
+  roleRank: number
+  confirmed?: boolean
+  visitorId?: string
+  chatId?: string
+  userId?: string
+}
+
+export async function executeTool(
   prisma: PrismaClient,
   toolName: string,
   toolInput: Record<string, unknown>,
   companyId?: string,
   channel: 'site' | 'dashboard' = 'site',
+  policyCtx: ToolPolicyContext = { brain: 'marketplace', roleRank: 0 },
 ): Promise<string> {
+  // ── Fase 4: política por ferramenta (fail-closed) ────────────────────────
+  // Antes de QUALQUER ferramenta rodar: valida cérebro, escopo (companyId),
+  // papel do usuário e confirmação de escrita. Nega por padrão o desconhecido.
+  const decision = evaluateToolPolicy(toolName, {
+    brain: policyCtx.brain,
+    companyId,
+    roleRank: policyCtx.roleRank,
+    confirmed: policyCtx.confirmed,
+  })
+  if (decision.decision === 'deny') {
+    return JSON.stringify({ error: 'not_allowed', reason: decision.reason })
+  }
+  if (decision.decision === 'needs_confirmation') {
+    // Nunca executa escrita silenciosamente: pede confirmação com um resumo.
+    return JSON.stringify({
+      needs_confirmation: true,
+      action: toolName,
+      summary: decision.reason,
+      input: toolInput,
+    })
+  }
+  // Auditoria de toda ação de ESCRITA autorizada.
+  if (decision.policy.audit && decision.policy.access === 'write') {
+    try {
+      await prisma.auditLog.create({
+        data: {
+          companyId: companyId ?? null,
+          userId: policyCtx.userId ?? null,
+          action: `tomas.tool.${toolName}`,
+          resource: 'tomas_tool',
+          payload: { brain: policyCtx.brain, roleRank: policyCtx.roleRank } as Prisma.InputJsonValue,
+        },
+      })
+    } catch { /* auditoria nunca quebra o fluxo */ }
+  }
+
   // Public (site) chats must never expose drafts or cross-tenant inventory.
   // Dashboard (authenticated corretor/admin) queries already carry companyId
   // and legitimately need to see the full catalogue.
   const isPublic = channel === 'site'
   switch (toolName) {
+    // ── Transferência de lead marketplace → parceiro (SÓ com consentimento) ──
+    case 'transferir_lead': {
+      const toCompanyId = typeof toolInput.toCompanyId === 'string' ? toolInput.toCompanyId : ''
+      if (!toCompanyId) {
+        return JSON.stringify({ error: 'missing_partner', reason: 'Informe o parceiro de destino (toCompanyId).' })
+      }
+      const ok = await hasValidConsent(prisma, {
+        toCompanyId,
+        visitorId: policyCtx.visitorId,
+        chatId: policyCtx.chatId,
+      })
+      if (!ok) {
+        return JSON.stringify({
+          error: 'consent_required',
+          reason: 'Transferência bloqueada: falta consentimento explícito do usuário para enviar os dados ao parceiro.',
+        })
+      }
+      return JSON.stringify({ ok: true, transferred: true, toCompanyId })
+    }
     case 'buscar_imoveis': {
       const where: Record<string, unknown> = { status: 'ACTIVE' }
       if (companyId) where.companyId = companyId
@@ -659,6 +730,10 @@ export async function runTomasChat(
     systemPrompt = MARKETPLACE_SYSTEM_PROMPT
   }
 
+  // Contexto de política (Fase 4): cérebro efetivo + rank do papel do usuário.
+  const effectiveBrain: TomasBrain = (!params.companyId || isPlatformOperator) ? 'marketplace' : 'partner'
+  const userRoleRank = roleRank(params.role)
+
   if (params.channel === 'dashboard') {
     systemPrompt += DASHBOARD_ADDENDUM
 
@@ -787,6 +862,14 @@ export async function runTomasChat(
           tb.input as Record<string, unknown>,
           params.companyId,
           params.channel,
+          {
+            brain: effectiveBrain,
+            roleRank: userRoleRank,
+            confirmed: params.confirmed,
+            visitorId: params.visitorId,
+            chatId: params.chatId,
+            userId: params.userId,
+          },
         )
 
         // Track consecutive zero results from buscar_imoveis
