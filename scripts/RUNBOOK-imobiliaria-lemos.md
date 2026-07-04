@@ -23,8 +23,12 @@ Este runbook descreve a implantação segura da mudança que:
 | `noemialemos3@gmail.com` | `ADMIN` | Imobiliária Lemos |
 | `lorensesso@gmail.com` + 4 corretores | `BROKER` | Imobiliária Lemos |
 
-Senha provisória padrão: **`lemos2026`** (flag `mustChangePassword` marcada — cada pessoa
-troca no primeiro acesso e completa foto/telefone/dados).
+Senhas: **individuais e aleatórias** por usuário (sem senha coletiva). O script imprime
+cada senha **uma única vez** ao final da execução real — entregue a cada pessoa por canal
+seguro. Todos têm `mustChangePassword` marcado (trocam no primeiro acesso e completam
+foto/telefone/dados). Usuário que já existe **não** tem a senha sobrescrita (a menos de
+`RESET_EXISTING_PASSWORDS=true`). Para forçar uma senha comum (não recomendado), use
+`FORCE_PASSWORD`.
 
 ---
 
@@ -82,7 +86,9 @@ dela ainda promoveria `tomascesarlemossilva@gmail.com` a `SUPER_ADMIN` (reverten
 | `SKIP_PROPERTIES` | `false` | só provisiona estrutura, não mexe em imóveis |
 | `MAX_MOVE` | `100000` | aborta se a seleção exceder (guarda anti-erro) |
 | `BATCH_SIZE` | `200` | tamanho do lote de update de imóveis |
-| `RESET_EXISTING_PASSWORDS` | `false` | redefine senha de usuários já existentes p/ a padrão |
+| `EXPECTED_PROPERTY_COUNT` | — | se definido, ABORTA se a seleção divergir |
+| `RESET_EXISTING_PASSWORDS` | `false` | redefine senha de usuários já existentes (senha individual) |
+| `FORCE_PASSWORD` | — | força uma senha comum (não recomendado; padrão = aleatória individual) |
 | `SUBDOMAIN` | `lemos` | subdomínio do tenant Lemos |
 
 ---
@@ -115,7 +121,7 @@ em lotes, e valide antes numa cópia do banco.
 - [ ] Nenhum contato-proprietário órfão entre empresas.
 
 **Operação**
-- [ ] Os 9 usuários conseguem logar com `lemos2026` e são forçados a trocar a senha.
+- [ ] Os 9 usuários conseguem logar com a senha individual entregue e são forçados a trocá-la.
 - [ ] Cada corretor (`BROKER`) enxerga só o próprio escopo.
 - [ ] O site continua publicando os imóveis; formulários criam leads na company Lemos.
 - [ ] Lemos não gera cobrança (nenhuma assinatura/subscription Asaas criada).

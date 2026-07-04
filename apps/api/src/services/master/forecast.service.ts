@@ -69,9 +69,9 @@ export async function buildForecast(prisma: any): Promise<ForecastMetrics> {
     tendencia = 'estavel'
   }
 
-  // MRR next month: current MRR + growth trend
+  // MRR next month (exclui parceiros internos/isentos, ex.: fundadora Lemos)
   const activeTenants = await prisma.tenant.findMany({
-    where: { planStatus: 'ACTIVE' },
+    where: { planStatus: 'ACTIVE', plan: { not: 'fundador' }, NOT: { settings: { path: ['billingExempt'], equals: true } } },
     select: { planPrice: true },
   }).catch(() => [])
   const currentMrr = activeTenants.reduce((sum: number, t: any) => sum + Number(t.planPrice || 0), 0)

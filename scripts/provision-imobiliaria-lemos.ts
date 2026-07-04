@@ -58,6 +58,7 @@
 
 import { PrismaClient } from '@prisma/client'
 import * as argon2 from 'argon2'
+import { randomBytes } from 'node:crypto'
 import { writeFileSync, mkdirSync } from 'node:fs'
 import { join } from 'node:path'
 
@@ -74,8 +75,20 @@ const SKIP_PROPERTIES = process.env.SKIP_PROPERTIES === 'true'
 const MAX_MOVE = Number(process.env.MAX_MOVE || 100000)
 const BATCH_SIZE = Math.max(1, Number(process.env.BATCH_SIZE || 200))
 const RESET_EXISTING_PASSWORDS = process.env.RESET_EXISTING_PASSWORDS === 'true'
-const DEFAULT_PASSWORD = process.env.DEFAULT_PASSWORD || 'lemos2026'
+// Contagem esperada de imóveis: se definida, o script ABORTA caso a seleção
+// divirja (guarda anti-erro de filtro). Deixe vazio p/ não checar.
+const EXPECTED_PROPERTY_COUNT = process.env.EXPECTED_PROPERTY_COUNT
+  ? Number(process.env.EXPECTED_PROPERTY_COUNT) : null
+// Senha: por padrão, cada usuário NOVO recebe uma senha ALEATÓRIA INDIVIDUAL
+// (impressa uma única vez ao final). NÃO há mais senha coletiva. Um valor
+// explícito em FORCE_PASSWORD só é usado se você quiser forçar uma senha comum.
+const FORCE_PASSWORD = process.env.FORCE_PASSWORD || process.env.DEFAULT_PASSWORD || ''
 const SUBDOMAIN = (process.env.SUBDOMAIN || 'lemos').toLowerCase().trim()
+
+// Gera uma senha forte, aleatória e individual (impressa uma vez; nunca no snapshot).
+function genPassword(): string {
+  return 'Lm-' + randomBytes(12).toString('base64url')
+}
 
 const CANONICAL = 'imobiliaria-lemos'
 const MAIN_ADMIN_EMAIL = 'imobiliarialemosfranca@gmail.com'
@@ -200,39 +213,50 @@ async function ensureCompany() {
 }
 
 // Cria/atualiza um usuário de forma idempotente por email (normalizado).
-async function upsertUser(u: { email: string; name: string }, role: 'ADMIN' | 'BROKER', companyId: string | null) {
+// `creds` acumula {email, password} das senhas geradas, p/ impressão única.
+async function upsertUser(
+  u: { email: string; name: string },
+  role: 'ADMIN' | 'BROKER',
+  companyId: string | null,
+  creds: { email: string; password: string }[],
+) {
   const email = norm(u.email)
   const existing = await prisma.user.findUnique({ where: { email } })
   const settingsPatch: Record<string, unknown> = { mustChangePassword: true }
   if (role === 'ADMIN') { settingsPatch.accessLevel = 'full' }
 
   if (existing) {
-    const report = {
-      email, action: 'update', wasCompanyId: existing.companyId, wasRole: existing.role,
-    }
+    const report = { email, action: 'update', wasCompanyId: existing.companyId, wasRole: existing.role }
     if (!DRY_RUN && companyId) {
       const data: any = {
         companyId, role, status: 'ACTIVE',
         emailVerifiedAt: existing.emailVerifiedAt ?? new Date(),
         settings: mergeSettings(existing.settings, settingsPatch) as any,
       }
+      // Usuário EXISTENTE: NÃO sobrescreve a senha (a menos de RESET_EXISTING_PASSWORDS
+      // ou se ele não tem senha alguma — ex.: só login social).
       if (RESET_EXISTING_PASSWORDS || !existing.passwordHash) {
-        data.passwordHash = await argon2.hash(DEFAULT_PASSWORD, { type: argon2.argon2id })
+        const pw = FORCE_PASSWORD || genPassword()
+        data.passwordHash = await argon2.hash(pw, { type: argon2.argon2id })
+        creds.push({ email, password: pw })
       }
       await prisma.user.update({ where: { id: existing.id }, data })
     }
     return { ...report, id: existing.id }
   }
 
-  if (DRY_RUN || !companyId) { log(`• [dry] criaria user ${email} (${role})`); return { email, action: 'create', id: null } }
+  // Usuário NOVO: senha ALEATÓRIA INDIVIDUAL (ou FORCE_PASSWORD se explicitado).
+  const pw = FORCE_PASSWORD || genPassword()
+  if (DRY_RUN || !companyId) { log(`• [dry] criaria user ${email} (${role})`); return { email, action: 'create', id: null, wasCompanyId: null, wasRole: null } }
   const created = await prisma.user.create({
     data: {
       companyId, email, name: u.name, role, status: 'ACTIVE',
       emailVerifiedAt: new Date(),
-      passwordHash: await argon2.hash(DEFAULT_PASSWORD, { type: argon2.argon2id }),
+      passwordHash: await argon2.hash(pw, { type: argon2.argon2id }),
       settings: settingsPatch as any,
     },
   })
+  creds.push({ email, password: pw })
   return { email, action: 'create', id: created.id, wasCompanyId: null, wasRole: null }
 }
 
@@ -267,10 +291,14 @@ async function ensureTenant(companyId: string | null, ownerId: string | null) {
 
 // ── Migração de imóveis (em lotes, com rollback) ────────────────────────────
 async function migrateProperties(where: any, targetCompanyId: string | null, targetUserId: string | null) {
-  const ids = await prisma.property.findMany({ where, select: { id: true, companyId: true, userId: true, reference: true, title: true } })
+  const ids = await prisma.property.findMany({ where, select: { id: true, companyId: true, userId: true, reference: true, slug: true, title: true } })
   log(`\n📦 Imóveis selecionados para mover: ${ids.length}`)
-  if (ids.length === 0) { log('   (nenhum imóvel corresponde ao filtro — nada a mover)'); return { moved: [], ownersMoved: 0 } }
+  if (ids.length === 0) { log('   (nenhum imóvel corresponde ao filtro — nada a mover)'); return { moved: [], movedOwners: [], sharedOwners: [] } }
   if (ids.length > MAX_MOVE) abort(`Seleção (${ids.length}) excede MAX_MOVE (${MAX_MOVE}). Confira o filtro antes de prosseguir.`)
+  // Guarda anti-erro: se a contagem esperada foi informada e diverge, aborta.
+  if (EXPECTED_PROPERTY_COUNT != null && ids.length !== EXPECTED_PROPERTY_COUNT) {
+    abort(`Contagem (${ids.length}) diverge de EXPECTED_PROPERTY_COUNT (${EXPECTED_PROPERTY_COUNT}). Revise o filtro.`)
+  }
 
   // Amostra para conferência
   log('   Amostra (até 5):')
@@ -278,17 +306,48 @@ async function migrateProperties(where: any, targetCompanyId: string | null, tar
   const fromCompanies = [...new Set(ids.map(p => p.companyId))]
   log(`   Empresas de origem distintas: ${fromCompanies.length} → ${fromCompanies.join(', ')}`)
 
-  // Contatos-proprietários vinculados (via PropertyOwner) — movem junto.
+  // ── Detecção de colisão de slug/reference no destino ─────────────────────
+  // Property tem @@unique([companyId, slug]) e @@unique([companyId, reference]).
+  // (a) duplicados dentro da própria seleção (só ocorre se a origem for multi-empresa)
+  const dupSlugs = firstDuplicates(ids.map(p => p.slug))
+  const dupRefs = firstDuplicates(ids.map(p => p.reference).filter(Boolean) as string[])
+  if (dupSlugs.length) abort(`Colisão de slug dentro da seleção: ${dupSlugs.slice(0, 10).join(', ')}. Origem multi-empresa? Restrinja o filtro.`)
+  if (dupRefs.length) abort(`Colisão de reference dentro da seleção: ${dupRefs.slice(0, 10).join(', ')}.`)
+  // (b) colisão com imóveis já existentes na company de destino
+  if (targetCompanyId) {
+    const clashSlug = await prisma.property.count({ where: { companyId: targetCompanyId, slug: { in: ids.map(p => p.slug) }, id: { notIn: ids.map(p => p.id) } } })
+    const refs = ids.map(p => p.reference).filter(Boolean) as string[]
+    const clashRef = refs.length ? await prisma.property.count({ where: { companyId: targetCompanyId, reference: { in: refs }, id: { notIn: ids.map(p => p.id) } } }) : 0
+    if (clashSlug > 0 || clashRef > 0) abort(`Destino já possui imóveis com slug/reference em conflito (slug=${clashSlug}, ref=${clashRef}).`)
+  }
+
+  // ── Contatos-proprietários (via PropertyOwner) ───────────────────────────
+  const movedSet = new Set(ids.map(p => p.id))
   const owners = await prisma.propertyOwner.findMany({
     where: { propertyId: { in: ids.map(p => p.id) } },
     select: { contactId: true },
   })
   const ownerContactIds = [...new Set(owners.map(o => o.contactId))]
-  log(`   Contatos-proprietários vinculados: ${ownerContactIds.length}`)
+  // Proprietário COMPARTILHADO: possui também imóvel FORA da seleção → NÃO mover
+  // (senão o imóvel não-migrado passaria a referenciar contato de outra empresa).
+  const sharedOwners: string[] = []
+  const movableOwnerIds: string[] = []
+  for (const cid of ownerContactIds) {
+    const otherLinks = await prisma.propertyOwner.findMany({ where: { contactId: cid }, select: { propertyId: true } })
+    const ownsOutside = otherLinks.some(l => !movedSet.has(l.propertyId))
+    if (ownsOutside) sharedOwners.push(cid); else movableOwnerIds.push(cid)
+  }
+  log(`   Contatos-proprietários vinculados: ${ownerContactIds.length} (movíveis: ${movableOwnerIds.length}, compartilhados/mantidos: ${sharedOwners.length})`)
+  if (sharedOwners.length) log(`   ⚠️  ${sharedOwners.length} proprietário(s) também possuem imóveis fora da seleção — NÃO serão movidos (evita ref cross-tenant).`)
+
+  // Snapshot dos contatos movíveis (para rollback) ANTES de alterar.
+  const movableOwners = movableOwnerIds.length
+    ? await prisma.contact.findMany({ where: { id: { in: movableOwnerIds } }, select: { id: true, companyId: true } })
+    : []
 
   if (DRY_RUN || !targetCompanyId || !targetUserId) {
     log('   [dry] NÃO gravou (dry-run ou destino ainda não materializado). Rode com DRY_RUN=false para aplicar.')
-    return { moved: ids, ownersMoved: ownerContactIds.length }
+    return { moved: ids, movedOwners: movableOwners, sharedOwners }
   }
 
   // Aplica em lotes (evita transação gigante/locks longos).
@@ -302,14 +361,18 @@ async function migrateProperties(where: any, targetCompanyId: string | null, tar
     done += batch.length
     log(`   ...movidos ${done}/${ids.length}`)
   }
-  // Move os contatos-proprietários para a company Lemos (evita ref cross-tenant).
-  if (ownerContactIds.length > 0) {
-    await prisma.contact.updateMany({
-      where: { id: { in: ownerContactIds } },
-      data: { companyId: targetCompanyId },
-    })
+  // Move os contatos-proprietários (só os NÃO compartilhados) para a company Lemos.
+  if (movableOwnerIds.length > 0) {
+    await prisma.contact.updateMany({ where: { id: { in: movableOwnerIds } }, data: { companyId: targetCompanyId } })
   }
-  return { moved: ids, ownersMoved: ownerContactIds.length }
+  return { moved: ids, movedOwners: movableOwners, sharedOwners }
+}
+
+// Retorna os valores que aparecem mais de uma vez em `arr`.
+function firstDuplicates(arr: string[]): string[] {
+  const seen = new Set<string>(); const dup = new Set<string>()
+  for (const v of arr) { if (seen.has(v)) dup.add(v); else seen.add(v) }
+  return [...dup]
 }
 
 // Reporta (sem mover) dados operacionais que referenciam os imóveis movidos.
@@ -362,9 +425,12 @@ async function main() {
   const companyId = company?.id ?? null
   if (!DRY_RUN && !companyId) abort('Falha ao garantir Company Lemos.')
 
+  // creds acumula as senhas geradas (individuais) — impressas UMA vez ao final.
+  const creds: { email: string; password: string }[] = []
+
   // 3) Proprietário principal PRIMEIRO (resolve dependência circular do tenant)
   const mainAdmin = ADMINS.find(a => norm(a.email) === MAIN_ADMIN_EMAIL)!
-  const mainRep = await upsertUser(mainAdmin, 'ADMIN', companyId)
+  const mainRep = await upsertUser(mainAdmin, 'ADMIN', companyId, creds)
   const mainUserId = mainRep.id
 
   // 4) Tenant (ownerId = proprietário principal)
@@ -374,13 +440,13 @@ async function main() {
   const userReports: any[] = [mainRep]
   for (const a of ADMINS) {
     if (norm(a.email) === MAIN_ADMIN_EMAIL) continue
-    userReports.push(await upsertUser(a, 'ADMIN', companyId))
+    userReports.push(await upsertUser(a, 'ADMIN', companyId, creds))
   }
-  for (const b of BROKERS) userReports.push(await upsertUser(b, 'BROKER', companyId))
+  for (const b of BROKERS) userReports.push(await upsertUser(b, 'BROKER', companyId, creds))
   log(`\n👥 Usuários provisionados: ${userReports.length} (${ADMINS.length} admins + ${BROKERS.length} corretores)`)
 
   // 6/7) Imóveis + proprietários vinculados
-  let propReport: { moved: any[]; ownersMoved: number } = { moved: [], ownersMoved: 0 }
+  let propReport: { moved: any[]; movedOwners: { id: string; companyId: string }[]; sharedOwners: string[] } = { moved: [], movedOwners: [], sharedOwners: [] }
   const where = await buildPropertyWhere()
   if (where) {
     // Seleciona e reporta sempre (mesmo em dry-run, quando a company ainda não existe);
@@ -391,29 +457,49 @@ async function main() {
     log('\nℹ️  SOURCE_MODE não definido — imóveis NÃO foram tocados. Defina SOURCE_MODE para reatribuir.')
   }
 
-  // 8) Revogar sessões dos usuários provisionados
+  // 8) Revogar sessões dos usuários provisionados (inclui o gmail que perde SUPER_ADMIN)
   const provisionedIds = userReports.map(r => r.id).filter(Boolean) as string[]
   await revokeSessions(provisionedIds)
 
-  // 9) Rollback file (antes→depois)
+  // 9) Rollback file (antes→depois) — NÃO contém senhas.
   const rollback = {
     dryRun: DRY_RUN,
     sourceMode: SOURCE_MODE, sourceCompanyId: SOURCE_COMPANY_ID || null, sourceUserEmail: SOURCE_USER_EMAIL || null,
     targetCompanyId: companyId,
+    // usuários movidos/criados: email, ação, empresa e papel ANTERIORES
     users: userReports,
+    // imóveis: id + empresa/usuário ANTERIORES
     properties: propReport.moved.map((p: any) => ({ id: p.id, oldCompanyId: p.companyId, oldUserId: p.userId })),
-    ownersMoved: propReport.ownersMoved,
+    // contatos-proprietários alterados: id + empresa ANTERIOR
+    contactsMoved: propReport.movedOwners.map(c => ({ id: c.id, oldCompanyId: c.companyId })),
+    sharedOwnersKept: propReport.sharedOwners,
   }
-  try {
-    const dir = join(process.cwd(), '.migration-runs')
-    mkdirSync(dir, { recursive: true })
-    // timestamp injetado por env p/ evitar Date.now() não-determinístico em alguns runners
-    const stamp = process.env.RUN_STAMP || String(process.hrtime.bigint())
-    const file = join(dir, `lemos-provision-${DRY_RUN ? 'dryrun-' : ''}${stamp}.json`)
-    writeFileSync(file, JSON.stringify(rollback, null, 2))
-    log(`\n🗂️  Rollback/snapshot salvo em: ${file}`)
-  } catch (e) {
-    log('⚠️  Não foi possível gravar o arquivo de rollback:', (e as Error).message)
+  // DRY_RUN não grava NADA — nem o snapshot. Só a execução real gera o arquivo.
+  if (DRY_RUN) {
+    log('\n• [dry] snapshot/rollback NÃO gravado (dry-run não escreve nada em disco).')
+  } else {
+    try {
+      const dir = join(process.cwd(), '.migration-runs')
+      mkdirSync(dir, { recursive: true })
+      // timestamp injetado por env p/ evitar Date.now() não-determinístico em alguns runners
+      const stamp = process.env.RUN_STAMP || String(process.hrtime.bigint())
+      const file = join(dir, `lemos-provision-${stamp}.json`)
+      writeFileSync(file, JSON.stringify(rollback, null, 2))
+      log(`\n🗂️  Rollback/snapshot salvo em: ${file}`)
+    } catch (e) {
+      log('⚠️  Não foi possível gravar o arquivo de rollback:', (e as Error).message)
+    }
+  }
+
+  // Credenciais individuais — impressas UMA ÚNICA VEZ aqui (nunca no snapshot).
+  if (!DRY_RUN && creds.length > 0) {
+    log('\n' + '═'.repeat(70))
+    log('🔑 SENHAS PROVISÓRIAS INDIVIDUAIS (copie AGORA — não serão exibidas de novo)')
+    log('   Entregue cada uma ao respectivo usuário por canal seguro. Todos terão de')
+    log('   trocar a senha no primeiro acesso (mustChangePassword).')
+    log('─'.repeat(70))
+    for (const c of creds) log(`   ${c.email.padEnd(38)} ${c.password}`)
+    log('═'.repeat(70))
   }
 
   log(`\n${DRY_RUN ? '🔍 DRY-RUN concluído (nada foi gravado).' : '✅ Provisionamento concluído.'}`)

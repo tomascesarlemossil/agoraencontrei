@@ -8,6 +8,17 @@
 import type { PrismaClient } from '@prisma/client'
 import { env } from '../utils/env.js'
 
+/**
+ * Filtro Prisma para EXCLUIR parceiros internos/isentos (ex.: a fundadora
+ * Imobiliária Lemos, plano "fundador") das métricas COMERCIAIS — MRR, churn,
+ * inadimplência, retenção, forecast. Eles não são clientes pagantes.
+ * Reutilizado em tenant.service, retention.service, forecast.service, intelligence.
+ */
+export const EXCLUDE_INTERNAL_TENANT = {
+  plan: { not: 'fundador' },
+  NOT: { settings: { path: ['billingExempt'], equals: true } },
+} as const
+
 // ── Types ───────────────────────────────────────────────────────────────────
 
 export interface CreateTenantInput {
@@ -225,9 +236,15 @@ export async function calculateMRR(
   arr: number
   churnRate: number
 }> {
-  const allTenants = await (prisma as any).tenant.findMany({
-    select: { planStatus: true, planPrice: true, suspendedAt: true, createdAt: true },
+  const rawTenants = await (prisma as any).tenant.findMany({
+    select: { planStatus: true, planPrice: true, suspendedAt: true, createdAt: true, plan: true, settings: true },
   })
+
+  // Exclui parceiros INTERNOS/isentos (ex.: fundadora Imobiliária Lemos) das
+  // métricas comerciais — não são clientes pagantes e poluiriam MRR/churn/ativos.
+  const allTenants = rawTenants.filter((t: any) =>
+    t.plan !== 'fundador' && (t.settings as any)?.billingExempt !== true,
+  )
 
   const active = allTenants.filter((t: any) => t.planStatus === 'ACTIVE')
   const suspended = allTenants.filter((t: any) => t.planStatus === 'SUSPENDED')
