@@ -2947,6 +2947,36 @@ model TomasChatMessage {
   @@map("tomas_chat_messages")
 }
 
+/// Consentimento explícito para transferir um lead do MARKETPLACE para um
+/// parceiro. Nenhuma transferência acontece silenciosamente — cada registro
+/// guarda o que foi mostrado ao usuário, o que foi enviado, a finalidade, o
+/// canal, a versão do texto, a origem e uma eventual revogação (trilha LGPD).
+model LeadTransferConsent {
+  id             String    @id @default(cuid())
+  chatId         String?
+  visitorId      String?
+  leadId         String?
+  fromBrain      String    @default("marketplace")
+  toCompanyId    String    // parceiro de destino
+  toCompanyName  String?
+  purpose        String    // finalidade do contato
+  channel        String    // canal autorizado (whatsapp | email | phone)
+  dataShared     Json      @default("{}")  // dados MÍNIMOS transferidos
+  consentText    String    @db.Text         // texto exato exibido ao usuário
+  consentVersion String                     // versão do texto de consentimento
+  source         String?                    // origem (ex.: "tomas_widget")
+  granted        Boolean   @default(true)
+  grantedAt      DateTime  @default(now())
+  revokedAt      DateTime?
+  createdAt      DateTime  @default(now())
+
+  @@index([toCompanyId])
+  @@index([visitorId])
+  @@index([chatId])
+  @@index([leadId])
+  @@map("lead_transfer_consents")
+}
+
 // =============================================================================
 // TOUR VIRTUAL
 // =============================================================================

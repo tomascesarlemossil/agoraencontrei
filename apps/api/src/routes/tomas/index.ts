@@ -47,6 +47,8 @@ export default async function tomasRoutes(app: FastifyInstance) {
           // SERVER-SIDE para o companyId — nunca confiamos num companyId vindo
           // do cliente. Faz o visitante público falar com o cérebro do parceiro.
           tenantSlug: { type: 'string' },
+          // Confirmação explícita do usuário para ações de escrita (Fase 4).
+          confirm: { type: 'boolean' },
           propertyContext: {
             type: 'object',
             properties: {
@@ -71,17 +73,20 @@ export default async function tomasRoutes(app: FastifyInstance) {
       nicheSlug?: string
       tenantTheme?: string
       tenantSlug?: string
+      confirm?: boolean
       propertyContext?: TomasChatParams['propertyContext']
     }
 
     // Try to authenticate, but don't require it
     let userId: string | undefined
     let companyId: string | undefined
+    let role: string | undefined
     try {
       await request.jwtVerify()
-      const user = request.user as { sub?: string; cid?: string }
+      const user = request.user as { sub?: string; cid?: string; role?: string }
       userId = user.sub
       companyId = user.cid
+      role = user.role
     } catch {
       // Anonymous visitor — that's fine for site mode
     }
@@ -135,6 +140,8 @@ export default async function tomasRoutes(app: FastifyInstance) {
       visitorId: body.visitorId,
       companyId,
       userId,
+      role,
+      confirmed: body.confirm === true,
       nicheSlug: body.nicheSlug,
       tenantTheme: body.tenantTheme,
       propertyContext: body.propertyContext,

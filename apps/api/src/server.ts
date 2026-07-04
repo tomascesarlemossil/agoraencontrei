@@ -343,6 +343,30 @@ async function runMigrations(prisma: any) {
   const tomasMigrations = [
     `ALTER TABLE tomas_chats ADD COLUMN IF NOT EXISTS "brain" TEXT`,
     `CREATE INDEX IF NOT EXISTS tomas_chats_brain_idx ON tomas_chats(brain)`,
+    // Consentimento de transferência de lead marketplace → parceiro (Fase 4).
+    `CREATE TABLE IF NOT EXISTS lead_transfer_consents (
+      id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+      "chatId" TEXT,
+      "visitorId" TEXT,
+      "leadId" TEXT,
+      "fromBrain" TEXT NOT NULL DEFAULT 'marketplace',
+      "toCompanyId" TEXT NOT NULL,
+      "toCompanyName" TEXT,
+      purpose TEXT NOT NULL,
+      channel TEXT NOT NULL,
+      "dataShared" JSONB NOT NULL DEFAULT '{}',
+      "consentText" TEXT NOT NULL,
+      "consentVersion" TEXT NOT NULL,
+      source TEXT,
+      granted BOOLEAN NOT NULL DEFAULT true,
+      "grantedAt" TIMESTAMP NOT NULL DEFAULT NOW(),
+      "revokedAt" TIMESTAMP,
+      "createdAt" TIMESTAMP NOT NULL DEFAULT NOW()
+    )`,
+    `CREATE INDEX IF NOT EXISTS lead_transfer_consents_company_idx ON lead_transfer_consents("toCompanyId")`,
+    `CREATE INDEX IF NOT EXISTS lead_transfer_consents_visitor_idx ON lead_transfer_consents("visitorId")`,
+    `CREATE INDEX IF NOT EXISTS lead_transfer_consents_chat_idx ON lead_transfer_consents("chatId")`,
+    `CREATE INDEX IF NOT EXISTS lead_transfer_consents_lead_idx ON lead_transfer_consents("leadId")`,
   ]
   for (const sql of tomasMigrations) {
     try { await prisma.$executeRawUnsafe(sql) } catch { /* already exists */ }
