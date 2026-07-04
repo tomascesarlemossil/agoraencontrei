@@ -176,6 +176,10 @@ export default function MeuSitePage() {
     logoPosition: 'left' as 'left' | 'center',
   })
   const [saved, setSaved] = useState(false)
+  // Domínio próprio — fluxo à parte (POST /:id/domain com integração Vercel).
+  const [domainInput, setDomainInput] = useState('')
+  const [dnsInfo, setDnsInfo] = useState<{ aRecord?: any; cnameRecord?: any } | null>(null)
+  const [domainError, setDomainError] = useState('')
 
   useEffect(() => {
     if (tenant) {
@@ -210,6 +214,29 @@ export default function MeuSitePage() {
       qc.invalidateQueries({ queryKey: ['tenant-mine'] })
     },
     onError: (e: Error) => alert('Erro ao salvar: ' + e.message),
+  })
+
+  const domainMutation = useMutation({
+    mutationFn: async () => {
+      if (!tenant) return
+      const domain = domainInput.trim().toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '')
+      if (domain.length < 4 || !domain.includes('.')) throw new Error('Informe um domínio válido (ex.: www.suaimobiliaria.com.br)')
+      const token = await getValidToken()
+      const res = await fetch(`${API_URL}/api/v1/tenants/${tenant.id}/domain`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ domain }),
+      })
+      const json = await res.json().catch(() => ({}))
+      if (!res.ok || json?.success === false) throw new Error(json?.error ?? json?.message ?? 'Não foi possível conectar o domínio')
+      return json
+    },
+    onSuccess: (json: any) => {
+      setDomainError('')
+      setDnsInfo(json?.data?.dnsInstructions ?? null)
+      qc.invalidateQueries({ queryKey: ['tenant-mine'] })
+    },
+    onError: (e: Error) => { setDomainError(e.message); setDnsInfo(null) },
   })
 
   if (isLoading) {
@@ -270,6 +297,60 @@ export default function MeuSitePage() {
         >
           <Globe className="w-4 h-4" /> {siteUrl.replace(/^https?:\/\//, '')} <ExternalLink className="w-3.5 h-3.5" />
         </a>
+      </div>
+
+      {/* Domínio próprio (opcional) — conecta um domínio do parceiro via Vercel */}
+      <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
+        <h2 className="text-sm font-bold text-white flex items-center gap-2 mb-1">
+          <Globe className="w-4 h-4 text-yellow-400/80" /> Domínio próprio
+        </h2>
+        <p className="text-white/50 text-xs mb-3">
+          Use seu próprio domínio (ex.: <span className="text-white/70">www.suaimobiliaria.com.br</span>) no lugar de
+          {' '}<span className="text-white/70">{tenant.subdomain}.{SITE_ROOT}</span>. Grátis — você aponta o DNS conforme as instruções.
+        </p>
+
+        {tenant.customDomain && (
+          <p className="text-xs text-green-400/90 mb-3">
+            ✓ Domínio conectado: <span className="font-semibold">{tenant.customDomain}</span>
+          </p>
+        )}
+
+        <div className="flex flex-wrap gap-2">
+          <input
+            type="text"
+            value={domainInput}
+            onChange={e => setDomainInput(e.target.value)}
+            placeholder={tenant.customDomain || 'www.suaimobiliaria.com.br'}
+            className="flex-1 min-w-[220px] bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white outline-none focus:border-yellow-400/50"
+          />
+          <button
+            type="button"
+            onClick={() => domainMutation.mutate()}
+            disabled={domainMutation.isPending}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold disabled:opacity-60"
+            style={{ backgroundColor: '#C9A84C', color: '#143A1F' }}
+          >
+            {domainMutation.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
+            Conectar domínio
+          </button>
+        </div>
+
+        {domainError && <p className="text-xs text-red-400 mt-2">{domainError}</p>}
+
+        {dnsInfo && (
+          <div className="mt-4 bg-black/20 border border-white/10 rounded-xl p-4">
+            <p className="text-xs text-white/70 mb-2 font-semibold">Configure estes registros no seu provedor de DNS:</p>
+            <div className="space-y-1.5 text-[11px] font-mono text-white/80">
+              {dnsInfo.aRecord && (
+                <div className="flex flex-wrap gap-x-3"><span className="text-yellow-400/80">A</span><span>{dnsInfo.aRecord.name}</span><span>→</span><span>{dnsInfo.aRecord.value}</span></div>
+              )}
+              {dnsInfo.cnameRecord && (
+                <div className="flex flex-wrap gap-x-3"><span className="text-yellow-400/80">CNAME</span><span>{dnsInfo.cnameRecord.name}</span><span>→</span><span>{dnsInfo.cnameRecord.value}</span></div>
+              )}
+            </div>
+            <p className="text-[11px] text-white/40 mt-2">A propagação do DNS pode levar de alguns minutos a algumas horas.</p>
+          </div>
+        )}
       </div>
 
       {tenant.planStatus === 'SUSPENDED' && (
