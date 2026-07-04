@@ -40,8 +40,8 @@ foto/telefone/dados). Usuário que já existe **não** tem a senha sobrescrita (
 `RESET_EXISTING_PASSWORDS=true`). Para forçar uma senha comum (não recomendado), use
 `FORCE_PASSWORD`.
 
-> Modo excepcional (debug): `PRINT_TEMP_PASSWORDS=true` imprime as senhas em claro no
-> console. **NÃO** use em CI nem onde os logs sejam retidos/compartilhados.
+> As senhas em claro **nunca** são impressas no console — existem apenas no arquivo restrito
+> acima. Não há variável de ambiente que habilite impressão de senha.
 
 ---
 
@@ -106,7 +106,6 @@ dela ainda promoveria `tomascesarlemossilva@gmail.com` a `SUPER_ADMIN` (reverten
 | `EXPECTED_PROPERTY_COUNT` | — | se definido, ABORTA se a seleção divergir |
 | `RESET_EXISTING_PASSWORDS` | `false` | redefine senha de usuários já existentes (senha individual) |
 | `FORCE_PASSWORD` | — | força uma senha comum (não recomendado; padrão = aleatória individual) |
-| `PRINT_TEMP_PASSWORDS` | `false` | imprime senhas em claro no console (debug; NÃO usar em CI/logs) |
 | `SUBDOMAIN` | `lemos` | subdomínio do tenant Lemos |
 
 ---

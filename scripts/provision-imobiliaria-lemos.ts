@@ -84,11 +84,6 @@ const RESET_EXISTING_PASSWORDS = process.env.RESET_EXISTING_PASSWORDS === 'true'
 // Senha comum só se FORÇADA explicitamente. NÃO há fallback legado de senha coletiva.
 const FORCE_PASSWORD = process.env.FORCE_PASSWORD || ''
 const SUBDOMAIN = (process.env.SUBDOMAIN || 'lemos').toLowerCase().trim()
-// Por PADRÃO as senhas provisórias NÃO são impressas no console (evita vazamento
-// em stdout/CI/logs) — vão para um arquivo local restrito. Só imprime em claro
-// se PRINT_TEMP_PASSWORDS=true (modo excepcional; NÃO usar em CI/onde há retenção
-// de logs).
-const PRINT_TEMP_PASSWORDS = process.env.PRINT_TEMP_PASSWORDS === 'true'
 
 const CANONICAL = 'imobiliaria-lemos'
 const MAIN_ADMIN_EMAIL = 'imobiliarialemosfranca@gmail.com'
@@ -564,20 +559,15 @@ async function main() {
       log('⚠️  Falha ao gravar o arquivo de credenciais:', (e as Error).message)
     }
 
+    // As senhas em claro NUNCA são impressas — existem apenas no arquivo restrito
+    // acima (nenhum caminho de código as envia a log/console).
     log('\n' + '═'.repeat(70))
     log(`🔑 ${creds.length} credencial(is) provisória(s) gerada(s).`)
     if (credWritten) log(`   Arquivo (permissões 600): ${credFile}`)
-    log('   Entregue cada uma ao respectivo usuário por CANAL SEGURO.')
+    else log('   ⚠️  Não foi possível gravar o arquivo de credenciais — verifique o diretório .migration-runs/.')
+    log('   Entregue cada uma ao respectivo usuário por CANAL SEGURO e apague o arquivo depois.')
     log('   Todos têm mustChangePassword = true (trocam a senha no 1º acesso).')
     log('═'.repeat(70))
-
-    if (PRINT_TEMP_PASSWORDS) {
-      log('\n⚠️  PRINT_TEMP_PASSWORDS=true — imprimindo senhas em CLARO no console.')
-      log('   NÃO use este modo em CI nem onde os logs sejam retidos/compartilhados.')
-      log('─'.repeat(70))
-      for (const c of creds) log(`   ${c.email.padEnd(38)} ${c.password}`)
-      log('═'.repeat(70))
-    }
   }
 
   log(`\n✅ Provisionamento concluído. Snapshot (status=completed): ${SNAP_FILE}`)
