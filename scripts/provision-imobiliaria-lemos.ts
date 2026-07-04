@@ -58,6 +58,13 @@
  *   RESET_EXISTING_PASSWORDS     "true" — redefine senha (aleatória individual) de já existentes
  *   FORCE_PASSWORD               força uma senha comum p/ NOVOS (NÃO recomendado)
  *   SUBDOMAIN                    subdomínio do tenant (default "lemos")
+ *   MOVE_CRM                     default "true" — migra o CRM/operacional (leads,
+ *                                contatos, deals, contratos, locações, repasses…)
+ *                                da empresa de origem junto. "false" pula.
+ *   SKIP_CRM_MODELS              lista separada por vírgula p/ excluir modelos do
+ *                                CRM (ex.: "transaction,contract").
+ *   ALLOW_NO_PLATFORM_SUPERADMIN "true" — libera rebaixar super-admin mesmo sem
+ *                                sobrar super-admin de plataforma (NÃO recomendado).
  */
 
 import { PrismaClient } from '@prisma/client'
@@ -88,6 +95,86 @@ const SUBDOMAIN = (process.env.SUBDOMAIN || 'lemos').toLowerCase().trim()
 const CANONICAL = 'imobiliaria-lemos'
 const MAIN_ADMIN_EMAIL = 'imobiliarialemosfranca@gmail.com'
 const PLATFORM_SUPERADMIN_EMAIL = 'tomas@agoraencontrei.com.br'
+
+// ── Migração do CRM/operacional junto com a carteira (Fase CRM) ─────────────
+// Move os dados company-scoped OPERACIONAIS (leads, contatos, deals, contratos,
+// locações, repasses, etc.) da empresa de origem para a Lemos — para o CRM
+// seguir os imóveis e não sobrar vínculo cruzando empresas. Default: ligado.
+// MOVE_CRM=false pula. SKIP_CRM_MODELS=lead,contact... exclui modelos específicos.
+const MOVE_CRM = process.env.MOVE_CRM !== 'false'
+const SKIP_CRM_MODELS = new Set(
+  (process.env.SKIP_CRM_MODELS || '').split(',').map(s => s.trim()).filter(Boolean),
+)
+// Trava: NÃO deixa a plataforma sem super-admin ao rebaixar o gmail. Só
+// ALLOW_NO_PLATFORM_SUPERADMIN=true libera (não recomendado).
+const ALLOW_NO_PLATFORM_SUPERADMIN = process.env.ALLOW_NO_PLATFORM_SUPERADMIN === 'true'
+
+// Modelos company-scoped OPERACIONAIS/CRM que MIGRAM junto (updateMany por
+// companyId). Property e PropertyOwner são tratados à parte; joins como
+// LeadProperty/DealProperty seguem os pais (não têm companyId próprio).
+const CRM_MOVE_MODELS: { key: string; label: string }[] = [
+  { key: 'contact', label: 'Contatos' },
+  { key: 'lead', label: 'Leads' },
+  { key: 'deal', label: 'Deals' },
+  { key: 'activity', label: 'Atividades' },
+  { key: 'conversation', label: 'Conversas' },
+  { key: 'proposal', label: 'Propostas' },
+  { key: 'exchangeOffer', label: 'Ofertas de permuta' },
+  { key: 'client', label: 'Clientes' },
+  { key: 'contract', label: 'Contratos' },
+  { key: 'contractHistory', label: 'Histórico de contrato' },
+  { key: 'rental', label: 'Locações' },
+  { key: 'rescission', label: 'Rescisões' },
+  { key: 'agreement', label: 'Acordos' },
+  { key: 'transaction', label: 'Transações' },
+  { key: 'dealPayment', label: 'Pagamentos de deal' },
+  { key: 'commission', label: 'Comissões' },
+  { key: 'financing', label: 'Financiamentos' },
+  { key: 'ownerRepasse', label: 'Repasses ao proprietário' },
+  { key: 'scheduledRepasse', label: 'Repasses agendados' },
+  { key: 'repasseBeneficiary', label: 'Beneficiários de repasse' },
+  { key: 'invoice', label: 'Faturas' },
+  { key: 'fiscalNote', label: 'Notas fiscais' },
+  { key: 'billingRule', label: 'Regras de cobrança' },
+  { key: 'billingNotification', label: 'Notificações de cobrança' },
+  { key: 'iptuCarne', label: 'Carnês de IPTU' },
+  { key: 'accountPayable', label: 'Contas a pagar' },
+  { key: 'financialForecast', label: 'Previsões financeiras' },
+  { key: 'bankStatementEntry', label: 'Extratos bancários' },
+  { key: 'bankReconciliation', label: 'Conciliações bancárias' },
+  { key: 'bankCheck', label: 'Cheques' },
+  { key: 'formalNotice', label: 'Notificações formais' },
+  { key: 'legalCase', label: 'Casos jurídicos' },
+  { key: 'legalCaseUpdate', label: 'Atualizações jurídicas' },
+  { key: 'notarialProcess', label: 'Processos notariais' },
+  { key: 'digitalSignature', label: 'Assinaturas digitais' },
+  { key: 'kycCheck', label: 'Verificações KYC' },
+  { key: 'propertyAlert', label: 'Alertas de imóvel' },
+  { key: 'propertyTour', label: 'Tours de imóvel' },
+  { key: 'propertyVisit', label: 'Visitas' },
+  { key: 'propertyDossier', label: 'Dossiês de imóvel' },
+  { key: 'document', label: 'Documentos' },
+  { key: 'loteamento', label: 'Loteamentos' },
+  { key: 'portalConfig', label: 'Configs de portal' },
+  { key: 'marketingCampaign', label: 'Campanhas de marketing' },
+  { key: 'socialPost', label: 'Posts sociais' },
+  { key: 'notification', label: 'Notificações' },
+]
+
+// Modelos SENSÍVEIS/estruturais — apenas REPORTADOS no dry-run (NÃO movidos
+// automaticamente). Migrar isto é decisão separada (segredos, auditoria, config
+// do site, chats, conteúdo). User/Property/Tenant já são tratados à parte.
+const SENSITIVE_REPORT_MODELS: { key: string; label: string }[] = [
+  { key: 'user', label: 'Usuários na empresa de origem (total)' },
+  { key: 'systemConfig', label: 'Config do site (SystemConfig)' },
+  { key: 'apiKey', label: 'API Keys' },
+  { key: 'integrationCredential', label: 'Credenciais de integração' },
+  { key: 'outgoingWebhook', label: 'Webhooks' },
+  { key: 'auditLog', label: 'Logs de auditoria' },
+  { key: 'tomasChat', label: 'Chats do Tomás' },
+  { key: 'blogPost', label: 'Posts de blog' },
+  { key: 'auction', label: 'Leilões' },
+]
 
 const ADMINS = [
   { email: 'imobiliarialemosfranca@gmail.com', name: 'Imobiliária Lemos (Admin)' },
@@ -292,7 +379,61 @@ async function reportRelatedData(propertyIds: string[], sourceCompanyId: string 
     await safeCount('Contacts na company de origem (total)', () => prisma.contact.count({ where: { companyId: sourceCompanyId } }))
     await safeCount('Leads na company de origem (total)', () => prisma.lead.count({ where: { companyId: sourceCompanyId } }))
   }
-  log('   → Migração relacional destes dados deve ser um passo revisado à parte (ver runbook).')
+  log('   → LeadProperty/DealProperty são JOINs (seguem os pais). Contatos/Leads/Deals migram na etapa do CRM abaixo.')
+}
+
+// Conta, por modelo, quantos registros company-scoped existem na empresa de
+// origem — usado no dry-run para o usuário revisar EXATAMENTE o que migra.
+async function countByCompany(models: { key: string; label: string }[], sourceCompanyId: string) {
+  let total = 0
+  for (const m of models) {
+    try {
+      const n = await (prisma as any)[m.key].count({ where: { companyId: sourceCompanyId } })
+      if (n > 0) { total += n; log(`   • ${m.label}: ${n}`) }
+    } catch {
+      log(`   • ${m.label}: (modelo indisponível)`)
+    }
+  }
+  return total
+}
+
+// Dry-run: mostra o que MIGRARÁ (CRM/operacional) e o que fica de fora (sensível).
+async function reportCrmMove(sourceCompanyId: string | null) {
+  if (!sourceCompanyId) return
+  if (MOVE_CRM) {
+    log('\n📦 CRM/operacional que MIGRA junto (updateMany por companyId → Lemos):')
+    const total = await countByCompany(CRM_MOVE_MODELS.filter(m => !SKIP_CRM_MODELS.has(m.key)), sourceCompanyId)
+    if (SKIP_CRM_MODELS.size) log(`   (excluídos via SKIP_CRM_MODELS: ${[...SKIP_CRM_MODELS].join(', ')})`)
+    log(`   → TOTAL de registros a migrar (fora imóveis/usuários): ${total}`)
+  } else {
+    log('\n📦 MOVE_CRM=false → o CRM/operacional NÃO será migrado (só imóveis + estrutura).')
+  }
+  log('\n🔒 Sensível/estrutural — NÃO migra automaticamente (decisão à parte):')
+  await countByCompany(SENSITIVE_REPORT_MODELS, sourceCompanyId)
+}
+
+// Execução real: move os modelos do CRM_MOVE_MODELS por companyId, em uma
+// transação por modelo (updateMany é atômico). Defensivo: modelo/campo ausente
+// é ignorado sem abortar. Retorna o total movido.
+async function moveCompanyScopedData(sourceCompanyId: string, targetCompanyId: string, snap: Snapshot): Promise<number> {
+  let total = 0
+  for (const m of CRM_MOVE_MODELS) {
+    if (SKIP_CRM_MODELS.has(m.key)) { log(`   • ${m.label}: pulado (SKIP_CRM_MODELS)`); continue }
+    try {
+      const res = await (prisma as any)[m.key].updateMany({
+        where: { companyId: sourceCompanyId },
+        data: { companyId: targetCompanyId },
+      })
+      if (res.count > 0) {
+        total += res.count
+        snap.progress.crmMoved = total; writeSnapshot(snap, true)
+        log(`   • ${m.label}: ${res.count} migrados`)
+      }
+    } catch (e) {
+      log(`   • ${m.label}: (ignorado — ${(e as Error).message.slice(0, 70)})`)
+    }
+  }
+  return total
 }
 
 // ── Snapshot (pré-escrita, progresso, conclusão) ────────────────────────────
@@ -310,7 +451,7 @@ interface Snapshot {
     contacts: { id: string; oldCompanyId: string }[]
     sharedOwnersKept: string[]
   }
-  progress: { propertiesTotal: number; propertiesDone: number; lastBatchIndex: number; contactsMoved: number; sessionsRevoked: number }
+  progress: { propertiesTotal: number; propertiesDone: number; lastBatchIndex: number; contactsMoved: number; crmMoved: number; sessionsRevoked: number }
   targetCompanyId?: string | null
 }
 let SNAP_FILE = ''
@@ -327,7 +468,7 @@ function initSnapshot(plan: Plan): Snapshot {
       contacts: plan.movableOwners.map(c => ({ id: c.id, oldCompanyId: c.oldCompanyId })),
       sharedOwnersKept: plan.sharedOwners,
     },
-    progress: { propertiesTotal: plan.properties.length, propertiesDone: 0, lastBatchIndex: -1, contactsMoved: 0, sessionsRevoked: 0 },
+    progress: { propertiesTotal: plan.properties.length, propertiesDone: 0, lastBatchIndex: -1, contactsMoved: 0, crmMoved: 0, sessionsRevoked: 0 },
   }
 }
 // `required=true` → falha ao gravar ABORTA (impede modificar o banco sem um
@@ -478,11 +619,23 @@ async function executePlan(plan: Plan, snap: Snapshot, creds: { email: string; p
     writeSnapshot(snap, true)
     log(`   ...imóveis movidos ${snap.progress.propertiesDone}/${propIds.length}`)
   }
-  // 7) Contatos-proprietários movíveis (não compartilhados)
+  // 7) Contatos-proprietários movíveis (não compartilhados).
+  //    Quando MOVE_CRM está ligado, a migração em massa do CRM (passo 7.5)
+  //    move TODOS os contatos por companyId — então aqui só roda no modo
+  //    parcial (MOVE_CRM=false), para não conflitar.
   const movableIds = plan.movableOwners.map(c => c.id)
-  if (movableIds.length) {
+  if (movableIds.length && !MOVE_CRM) {
     await prisma.contact.updateMany({ where: { id: { in: movableIds } }, data: { companyId } })
     snap.progress.contactsMoved = movableIds.length; writeSnapshot(snap, true)
+  }
+
+  // 7.5) CRM/operacional em massa (leads, contatos, deals, contratos, locações,
+  //      repasses, etc.) da empresa de origem → Lemos. Assim o CRM segue os
+  //      imóveis e não sobra vínculo cruzando empresas.
+  if (MOVE_CRM && SOURCE_COMPANY_ID) {
+    log('📦 Migrando CRM/operacional (por companyId)…')
+    const moved = await moveCompanyScopedData(SOURCE_COMPANY_ID, companyId, snap)
+    log(`📦 CRM/operacional migrado: ${moved} registros`)
   }
   // 8) Revogar sessões dos usuários provisionados (inclui o gmail que perde SUPER_ADMIN)
   const provisionedIds = plan.users.map(u => u.id).filter(Boolean) as string[]
@@ -499,17 +652,39 @@ async function executePlan(plan: Plan, snap: Snapshot, creds: { email: string; p
 async function main() {
   preflight()
 
-  const superAdmin = await prisma.user.findUnique({ where: { email: PLATFORM_SUPERADMIN_EMAIL }, select: { role: true } })
+  const superAdmin = await prisma.user.findUnique({ where: { email: PLATFORM_SUPERADMIN_EMAIL }, select: { id: true, role: true } })
   if (!superAdmin) log(`⚠️  Aviso: super-admin da plataforma (${PLATFORM_SUPERADMIN_EMAIL}) não encontrado.`)
   else if (superAdmin.role !== 'SUPER_ADMIN') log(`⚠️  Aviso: ${PLATFORM_SUPERADMIN_EMAIL} existe mas não é SUPER_ADMIN (corrigido no boot da API).`)
 
   // PASS 1 — plano (somente leituras)
   const plan = await buildPlan()
 
+  // ── TRAVA: não deixar a plataforma sem super-admin ────────────────────────
+  // O provisionamento rebaixa qualquer SUPER_ADMIN da lista (ex.: o gmail) para
+  // ADMIN da Lemos. Antes da execução real, garante que sobra um super-admin de
+  // plataforma: `tomas@agoraencontrei.com.br` existe (o boot da API o promove)
+  // OU há outro SUPER_ADMIN fora da lista provisionada.
+  const demotedSuperAdmins = plan.users.filter(u => u.oldRole === 'SUPER_ADMIN').map(u => u.email)
+  if (!DRY_RUN && demotedSuperAdmins.length > 0) {
+    const provisionedEmails = plan.users.map(u => u.email)
+    const otherSuperAdmins = await prisma.user.count({
+      where: { role: 'SUPER_ADMIN', email: { notIn: provisionedEmails } },
+    })
+    const platformOk = !!superAdmin || otherSuperAdmins > 0
+    if (!platformOk && !ALLOW_NO_PLATFORM_SUPERADMIN) {
+      abort(
+        `Rebaixaria super-admin(s) (${demotedSuperAdmins.join(', ')}) sem deixar nenhum super-admin de plataforma. ` +
+        `Crie/garanta ${PLATFORM_SUPERADMIN_EMAIL} antes, ou rode com ALLOW_NO_PLATFORM_SUPERADMIN=true (não recomendado).`,
+      )
+    }
+    log(`🛡️  Super-admin de plataforma preservado (${superAdmin ? PLATFORM_SUPERADMIN_EMAIL : `${otherSuperAdmins} outro(s)`}).`)
+  }
+
   // DRY-RUN: reporta e SAI. Não grava NADA (nem snapshot).
   if (DRY_RUN) {
     reportPlan(plan)
     await reportRelatedData(plan.properties.map(p => p.id), SOURCE_COMPANY_ID || null)
+    await reportCrmMove(SOURCE_COMPANY_ID || null)
     log('\n🔍 DRY-RUN concluído (nada foi gravado — nem snapshot).')
     log('   Revise os números e rode com DRY_RUN=false CONFIRM_PRODUCTION_MIGRATION=IMOBILIARIA_LEMOS.')
     return
