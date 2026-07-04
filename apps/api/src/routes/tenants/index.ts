@@ -130,13 +130,22 @@ export default async function tenantRoutes(app: FastifyInstance) {
   app.get('/mine', {
     schema: { tags: ['tenants'], summary: 'Get the tenant owned by the logged-in user' },
   }, async (req, reply) => {
-    // Resolve o tenant do usuário: por ownerId OU pela empresa dele — assim
-    // qualquer membro da empresa (ex.: os 4 admins da Lemos) acha o site da empresa.
+    // O objeto tenant carrega settings/dados financeiros/assinatura/repasses —
+    // portanto NÃO é para corretor. Só quem GERE o site pode recebê-lo:
+    // owner, ADMIN/MANAGER da mesma empresa, ou SUPER_ADMIN.
+    const isManagerRole = ['ADMIN', 'MANAGER', 'SUPER_ADMIN'].includes(req.user.role)
+    // Owner pode ser resolvido por ownerId; gestores da empresa, por companyId.
+    const or: any[] = [{ ownerId: req.user.sub }]
+    if (isManagerRole) or.push({ companyId: req.user.cid })
     const tenant = await (app.prisma as any).tenant.findFirst({
-      where: { OR: [{ ownerId: req.user.sub }, { companyId: req.user.cid }] },
+      where: { OR: or },
       orderBy: { createdAt: 'desc' },
     })
     if (!tenant) return reply.status(404).send({ error: 'NO_TENANT_FOR_USER' })
+    // Defesa extra: se casou por empresa, exige papel de gestão (nunca BROKER).
+    const canManage = tenant.ownerId === req.user.sub
+      || (tenant.companyId === req.user.cid && isManagerRole)
+    if (!canManage) return reply.status(403).send({ error: 'FORBIDDEN' })
     return reply.send({ success: true, data: tenant })
   })
 

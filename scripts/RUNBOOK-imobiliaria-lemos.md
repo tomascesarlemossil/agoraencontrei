@@ -63,8 +63,11 @@ dela ainda promoveria `tomascesarlemossilva@gmail.com` a `SUPER_ADMIN` (reverten
    CONFIRM_PRODUCTION_MIGRATION=IMOBILIARIA_LEMOS \
    npx tsx scripts/provision-imobiliaria-lemos.ts
    ```
-   O script grava um arquivo de rollback em `./.migration-runs/` (mapa antes→depois de
-   usuários e imóveis) e revoga as sessões dos usuários provisionados.
+   O script grava um snapshot em `./.migration-runs/` **ANTES da primeira escrita**
+   (`status: "started"` com o estado ANTERIOR completo — plano/empresa/tenant/usuários/
+   imóveis/contatos), atualiza o progresso por lote, e finaliza como `"completed"`
+   (ou `"failed"` com o último lote concluído, em caso de erro). Ao final imprime as
+   **senhas individuais UMA única vez** (nunca no snapshot) e revoga as sessões dos usuários.
 6. **Reinicie a API** e confirme que o gmail permanece `ADMIN` (não volta a `SUPER_ADMIN`):
    `SELECT email, role FROM users WHERE email IN ('tomas@agoraencontrei.com.br','tomascesarlemossilva@gmail.com');`
 7. **Invalidação de sessões antigas** — o script já apaga `sessions` + `refresh_tokens`
@@ -131,7 +134,17 @@ em lotes, e valide antes numa cópia do banco.
 
 ## Rollback
 
-Cada execução real grava `./.migration-runs/lemos-provision-<stamp>.json` com o mapa
-antes→depois (usuários: `wasCompanyId`/`wasRole`; imóveis: `oldCompanyId`/`oldUserId`).
-Para reverter, restaure o backup do banco (opção mais segura) ou use o arquivo para
-reescrever `companyId`/`userId`/`role` aos valores originais.
+Cada execução real grava `./.migration-runs/lemos-provision-<stamp>.json`. O snapshot é
+escrito **antes da primeira escrita** (`status: "started"`) e contém o estado ANTERIOR:
+- `before.planExisted`, `before.company` (existed/id), `before.tenant` (existed/id/before)
+- `before.users[]` — `{ email, existed, id, oldCompanyId, oldRole }`
+- `before.properties[]` — `{ id, oldCompanyId, oldUserId }`
+- `before.contacts[]` — `{ id, oldCompanyId }` (proprietários movidos)
+- `before.sharedOwnersKept[]` — proprietários compartilhados que **não** foram movidos
+- `progress` — `{ propertiesTotal, propertiesDone, lastBatchIndex, contactsMoved, sessionsRevoked }`
+- `status` final: `completed` (sucesso) ou `failed` (com o último lote concluído)
+
+Para reverter, a opção mais segura é **restaurar o backup do Neon**. Alternativamente,
+use o snapshot para reescrever `companyId`/`userId`/`role` aos valores originais.
+> Observação: hoje existe **snapshot pré-escrita** (obrigatório), não um rollback
+> executável automático. Um modo `--rollback <arquivo>` pode ser adicionado se desejado.
