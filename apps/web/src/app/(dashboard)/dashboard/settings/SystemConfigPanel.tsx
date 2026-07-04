@@ -1242,8 +1242,24 @@ export function SystemConfigPanel() {
                     para o topo legado das settings, de onde a home pública lê
                     (ver GET /api/v1/public/site-settings). */}
                 <div className="space-y-3">
-                  <DarkInput label="URL do Ícone (logo redondo — cabeçalho do site público)" value={cfg.company?.logoIconUrl ?? ''} onChange={e => updateCfg('company','logoIconUrl',e.target.value)} placeholder="https://..." hint="Ícone circular exibido no topo do site. Deixe em branco para usar o ícone padrão." />
-                  <DarkInput label="URL da Marca Escrita (imagem 'Agora Encontrei Marketplace')" value={cfg.company?.logoWordmarkUrl ?? ''} onChange={e => updateCfg('company','logoWordmarkUrl',e.target.value)} placeholder="https://..." hint="Substitui o texto padrão ao lado do ícone por uma imagem da marca escrita." />
+                  <MediaUploadInput
+                    label="Ícone (logo redondo — cabeçalho do site público)"
+                    hint="Ícone circular exibido no topo do site. Envie uma imagem ou cole uma URL. Deixe em branco para usar o ícone padrão."
+                    value={cfg.company?.logoIconUrl ?? ''}
+                    onChange={v => updateCfg('company','logoIconUrl', v)}
+                    kind="image"
+                    token={apiToken}
+                    placeholder="Cole uma URL ou envie uma imagem"
+                  />
+                  <MediaUploadInput
+                    label="Marca Escrita (imagem 'Agora Encontrei Marketplace')"
+                    hint="Substitui o texto padrão ao lado do ícone por uma imagem da marca escrita. Envie uma imagem ou cole uma URL."
+                    value={cfg.company?.logoWordmarkUrl ?? ''}
+                    onChange={v => updateCfg('company','logoWordmarkUrl', v)}
+                    kind="image"
+                    token={apiToken}
+                    placeholder="Cole uma URL ou envie uma imagem"
+                  />
                 </div>
 
                 <div className="border-t border-white/10 pt-4 space-y-3">
@@ -1276,8 +1292,22 @@ export function SystemConfigPanel() {
                 {/* Campos legados — uso geral (e-mails, fallback quando o
                     ícone acima não estiver definido). */}
                 <div className="border-t border-white/10 pt-4 space-y-3">
-                  <DarkInput label="URL do Logo (uso geral — e-mails, fallback)" value={cfg.company?.logoUrl ?? ''} onChange={e => updateCfg('company','logoUrl',e.target.value)} placeholder="https://..." />
-                  <DarkInput label="URL do Logo Branco (fundo escuro)" value={cfg.company?.logoWhiteUrl ?? ''} onChange={e => updateCfg('company','logoWhiteUrl',e.target.value)} placeholder="https://..." />
+                  <MediaUploadInput
+                    label="Logo (uso geral — e-mails, fallback)"
+                    value={cfg.company?.logoUrl ?? ''}
+                    onChange={v => updateCfg('company','logoUrl', v)}
+                    kind="image"
+                    token={apiToken}
+                    placeholder="Cole uma URL ou envie uma imagem"
+                  />
+                  <MediaUploadInput
+                    label="Logo Branco (fundo escuro)"
+                    value={cfg.company?.logoWhiteUrl ?? ''}
+                    onChange={v => updateCfg('company','logoWhiteUrl', v)}
+                    kind="image"
+                    token={apiToken}
+                    placeholder="Cole uma URL ou envie uma imagem"
+                  />
                 </div>
 
                 <div className="border-t border-white/10 pt-4">
