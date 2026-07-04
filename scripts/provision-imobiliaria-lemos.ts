@@ -63,7 +63,7 @@
 import { PrismaClient } from '@prisma/client'
 import * as argon2 from 'argon2'
 import { randomBytes } from 'node:crypto'
-import { writeFileSync, mkdirSync } from 'node:fs'
+import { writeFileSync, mkdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 
 // ── Config / env (parsing estrito e seguro) ───────────────────────────────
@@ -330,7 +330,10 @@ function initSnapshot(plan: Plan): Snapshot {
     progress: { propertiesTotal: plan.properties.length, propertiesDone: 0, lastBatchIndex: -1, contactsMoved: 0, sessionsRevoked: 0 },
   }
 }
-function writeSnapshot(snap: Snapshot) {
+// `required=true` → falha ao gravar ABORTA (impede modificar o banco sem um
+// snapshot válido de rastreabilidade). `required=false` só loga (best-effort,
+// usado apenas na gravação de status "failed" dentro do catch).
+function writeSnapshot(snap: Snapshot, required = false) {
   try {
     if (!SNAP_FILE) {
       const dir = join(process.cwd(), '.migration-runs')
@@ -340,7 +343,23 @@ function writeSnapshot(snap: Snapshot) {
     }
     writeFileSync(SNAP_FILE, JSON.stringify(snap, null, 2))
   } catch (e) {
+    if (required) throw new Error(`Não foi possível gravar o snapshot obrigatório: ${(e as Error).message}`)
     log('⚠️  Falha ao gravar snapshot:', (e as Error).message)
+  }
+}
+
+// Confirma que o snapshot inicial existe e tem conteúdo JSON válido antes de
+// permitir QUALQUER escrita no banco. Aborta se não conseguir reler/parsear.
+function assertSnapshotPersisted() {
+  if (!SNAP_FILE) abort('Snapshot obrigatório não foi materializado (SNAP_FILE vazio).')
+  try {
+    const raw = readFileSync(SNAP_FILE, 'utf8')
+    const parsed = JSON.parse(raw)
+    if (!parsed || parsed.status !== 'started' || !parsed.before) {
+      abort(`Snapshot inicial inválido em ${SNAP_FILE} (conteúdo inesperado).`)
+    }
+  } catch (e) {
+    abort(`Não foi possível reler/validar o snapshot obrigatório (${SNAP_FILE}): ${(e as Error).message}`)
   }
 }
 
@@ -439,7 +458,7 @@ async function executePlan(plan: Plan, snap: Snapshot, creds: { email: string; p
   await ensureFundadorPlanUpsert()
   // 2) Company
   const companyId = await ensureCompany(plan)
-  snap.targetCompanyId = companyId; writeSnapshot(snap)
+  snap.targetCompanyId = companyId; writeSnapshot(snap, true)
   // 3) Proprietário principal PRIMEIRO (resolve dependência circular do tenant)
   const mainPlan = plan.users.find(u => u.email === MAIN_ADMIN_EMAIL)!
   const mainUserId = await upsertUser(mainPlan, companyId, creds)
@@ -456,14 +475,14 @@ async function executePlan(plan: Plan, snap: Snapshot, creds: { email: string; p
     await prisma.property.updateMany({ where: { id: { in: batch } }, data: { companyId, userId: mainUserId } })
     snap.progress.propertiesDone += batch.length
     snap.progress.lastBatchIndex = Math.floor(i / BATCH_SIZE)
-    writeSnapshot(snap)
+    writeSnapshot(snap, true)
     log(`   ...imóveis movidos ${snap.progress.propertiesDone}/${propIds.length}`)
   }
   // 7) Contatos-proprietários movíveis (não compartilhados)
   const movableIds = plan.movableOwners.map(c => c.id)
   if (movableIds.length) {
     await prisma.contact.updateMany({ where: { id: { in: movableIds } }, data: { companyId } })
-    snap.progress.contactsMoved = movableIds.length; writeSnapshot(snap)
+    snap.progress.contactsMoved = movableIds.length; writeSnapshot(snap, true)
   }
   // 8) Revogar sessões dos usuários provisionados (inclui o gmail que perde SUPER_ADMIN)
   const provisionedIds = plan.users.map(u => u.id).filter(Boolean) as string[]
@@ -472,7 +491,7 @@ async function executePlan(plan: Plan, snap: Snapshot, creds: { email: string; p
   const ids = [...new Set([...provisionedIds, ...allIds])]
   const s = await prisma.session.deleteMany({ where: { userId: { in: ids } } }).catch(() => ({ count: 0 }))
   const r = await prisma.refreshToken.deleteMany({ where: { userId: { in: ids } } }).catch(() => ({ count: 0 }))
-  snap.progress.sessionsRevoked = s.count; writeSnapshot(snap)
+  snap.progress.sessionsRevoked = s.count; writeSnapshot(snap, true)
   log(`🔒 Sessões revogadas: ${s.count} | refresh tokens: ${r.count}`)
 }
 
@@ -497,14 +516,17 @@ async function main() {
   }
 
   // PASS 2 — execução real. Snapshot "started" ANTES da primeira escrita.
+  // OBRIGATÓRIO: se não conseguir gravar/validar o snapshot, aborta SEM tocar o banco.
   const snap = initSnapshot(plan)
-  writeSnapshot(snap)
-  log(`\n🗂️  Snapshot pré-escrita gravado (status=started): ${SNAP_FILE}`)
+  writeSnapshot(snap, true)
+  assertSnapshotPersisted()
+  log(`\n🗂️  Snapshot pré-escrita gravado e validado (status=started): ${SNAP_FILE}`)
   const creds: { email: string; password: string }[] = []
   try {
     await executePlan(plan, snap, creds)
-    snap.status = 'completed'; writeSnapshot(snap)
+    snap.status = 'completed'; writeSnapshot(snap, true)
   } catch (e) {
+    // best-effort: não mascara o erro original se a gravação de "failed" falhar.
     snap.status = 'failed'; snap.error = (e as Error).message; writeSnapshot(snap)
     log(`\n❌ Falha na execução — snapshot marcado como "failed" (último lote: ${snap.progress.lastBatchIndex}, imóveis movidos: ${snap.progress.propertiesDone}/${snap.progress.propertiesTotal}).`)
     throw e
