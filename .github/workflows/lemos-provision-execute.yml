@@ -1,0 +1,90 @@
+name: Lemos Provisioning — EXECUÇÃO REAL (irreversível)
+
+# ⚠️ ESTE WORKFLOW GRAVA NO BANCO DE PRODUÇÃO. É a Etapa 4 (execução real).
+# Só rode depois de:
+#   1. Mergear o PR do CRM (#275) na main — senão roda o script SEM o CRM.
+#   2. Revisar os números do dry-run.
+# Travas: exige digitar IMOBILIARIA_LEMOS + cria um SNAPSHOT do Neon (backup)
+# ANTES de qualquer escrita; se o backup falhar, ABORTA sem tocar o banco.
+#
+# Aprovação manual (opcional, recomendado): crie um Environment chamado
+# "lemos-provision" em Settings → Environments com "Required reviewers" = você.
+# Aí cada run pausa esperando sua aprovação antes de executar.
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmar:
+        description: 'Digite exatamente: IMOBILIARIA_LEMOS'
+        required: true
+        default: ''
+      neon_project_id:
+        description: 'Neon project id (p/ o snapshot de backup — Console Neon → Settings)'
+        required: true
+        default: ''
+      source_company_id:
+        description: 'SOURCE_COMPANY_ID (empresa de origem)'
+        required: true
+        default: 'cmnhzieqf0000mx1cqcqgfv4n'
+
+permissions:
+  contents: read
+
+jobs:
+  execucao-real:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: lemos-provision
+    env:
+      DATABASE_URL: ${{ secrets.LEMOS_PROVISION_DATABASE_URL }}
+      DIRECT_DATABASE_URL: ${{ secrets.LEMOS_PROVISION_DIRECT_URL || secrets.LEMOS_PROVISION_DATABASE_URL }}
+      NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
+    steps:
+      - name: Trava — confirmação e segredos
+        run: |
+          if [ "${{ inputs.confirmar }}" != "IMOBILIARIA_LEMOS" ]; then
+            echo "::error::Confirmação incorreta. Digite exatamente IMOBILIARIA_LEMOS."; exit 1
+          fi
+          if [ -z "$DATABASE_URL" ]; then echo "::error::Falta o segredo LEMOS_PROVISION_DATABASE_URL (aba Actions)."; exit 1; fi
+          if [ -z "$NEON_API_KEY" ]; then echo "::error::Falta o segredo NEON_API_KEY (obrigatório para o backup)."; exit 1; fi
+          if [ -z "${{ inputs.neon_project_id }}" ]; then echo "::error::Informe o neon_project_id para o snapshot de backup."; exit 1; fi
+
+      - name: Backup — snapshot do Neon (rollback) ANTES de qualquer escrita
+        run: |
+          STAMP=$(date +%Y%m%d-%H%M%S)
+          NAME="pre-lemos-provision-$STAMP"
+          echo "Criando snapshot (branch) do Neon: $NAME"
+          CODE=$(curl -sS -o /tmp/neon.json -w '%{http_code}' -X POST \
+            "https://console.neon.tech/api/v2/projects/${{ inputs.neon_project_id }}/branches" \
+            -H "Authorization: Bearer $NEON_API_KEY" \
+            -H "Content-Type: application/json" \
+            -d "{\"branch\":{\"name\":\"$NAME\"}}")
+          if [ "$CODE" != "200" ] && [ "$CODE" != "201" ]; then
+            echo "::error::Falha ao criar o snapshot do Neon (HTTP $CODE). NÃO vou tocar o banco."
+            cat /tmp/neon.json | sed 's/[a-zA-Z0-9_-]\{20,\}/***/g'
+            exit 1
+          fi
+          echo "✅ Snapshot de backup criado: $NAME (ponto de rollback)"
+
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.0.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Install
+        run: pnpm install --no-frozen-lockfile
+      - name: Prisma generate
+        run: pnpm db:generate
+
+      - name: EXECUÇÃO REAL (DRY_RUN=false + CONFIRM)
+        env:
+          DRY_RUN: 'false'
+          CONFIRM_PRODUCTION_MIGRATION: 'IMOBILIARIA_LEMOS'
+          SOURCE_MODE: company
+          SOURCE_COMPANY_ID: ${{ inputs.source_company_id }}
+          MOVE_CRM: 'true'
+          RUN_STAMP: ${{ github.run_id }}
+        run: npx tsx scripts/provision-imobiliaria-lemos.ts
