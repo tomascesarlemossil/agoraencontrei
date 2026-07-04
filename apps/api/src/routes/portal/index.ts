@@ -5,17 +5,9 @@ import type { FastifyInstance } from 'fastify'
  * Token has type='portal' and sub=clientId
  */
 export default async function portalRoutes(app: FastifyInstance) {
-  // Auth guard for portal tokens
-  const portalAuth = async (req: any, reply: any) => {
-    try {
-      await req.jwtVerify()
-      if (req.user?.type !== 'portal') {
-        return reply.status(401).send({ error: 'INVALID_TOKEN' })
-      }
-    } catch {
-      return reply.status(401).send({ error: 'UNAUTHORIZED' })
-    }
-  }
+  // Guard centralizado (plugins/jwt.ts): exige type:'portal' e confirma que o
+  // Client ainda existe; anexa req.portalClient { id, companyId }.
+  const portalAuth = app.authenticatePortal
 
   // GET /api/v1/portal/dashboard — summary for the logged-in client
   app.get('/dashboard', { preHandler: [portalAuth] }, async (req: any, reply) => {

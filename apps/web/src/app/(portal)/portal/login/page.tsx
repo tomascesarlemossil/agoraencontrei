@@ -32,11 +32,24 @@ export default function PortalLoginPage() {
 
     const rawCpf = cpf.replace(/\D/g, '')
 
+    // O portal é servido no subdomínio da imobiliária (ex.: lemos.agoraencontrei.com.br).
+    // Enviamos o subdomínio para o backend escopar o login por empresa e evitar
+    // colisão de CPF entre imobiliárias. Custom domains / localhost → sem escopo.
+    let subdomain: string | undefined
+    if (typeof window !== 'undefined') {
+      const host = window.location.hostname
+      const reserved = new Set(['www', 'app', 'api', 'admin', 'localhost'])
+      if (host.endsWith('.agoraencontrei.com.br')) {
+        const label = host.split('.')[0]
+        if (label && !reserved.has(label)) subdomain = label
+      }
+    }
+
     try {
       const res = await fetch(`${API_URL}/api/v1/auth/portal-login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cpf: rawCpf, birthDate }),
+        body: JSON.stringify({ cpf: rawCpf, birthDate, ...(subdomain ? { subdomain } : {}) }),
       })
 
       if (res.status === 404) {

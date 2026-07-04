@@ -281,6 +281,13 @@ export class AuthService {
       throw Object.assign(new Error('Refresh token expirado'), { statusCode: 401, code: 'REFRESH_TOKEN_EXPIRED' })
     }
 
+    // Recheca o estado do usuário: suspenso/inativo não renova (antes um usuário
+    // suspenso mantinha acesso renovando o refresh por até 30 dias).
+    if (stored.user.status !== 'ACTIVE') {
+      await this.prisma.refreshToken.deleteMany({ where: { family: stored.family } })
+      throw Object.assign(new Error('Conta inativa'), { statusCode: 403, code: 'ACCOUNT_INACTIVE' })
+    }
+
     // Mark as used
     await this.prisma.refreshToken.update({ where: { id: stored.id }, data: { usedAt: new Date() } })
 
@@ -333,6 +340,11 @@ export class AuthService {
     if (!payload?.sub || !payload?.email) {
       throw Object.assign(new Error('Token Google inválido'), { statusCode: 401, code: 'INVALID_GOOGLE_TOKEN' })
     }
+    // Exige e-mail verificado pelo Google — o vínculo por e-mail (abaixo) a uma
+    // conta existente seria account-takeover se o e-mail não fosse verificado.
+    if (payload.email_verified === false) {
+      throw Object.assign(new Error('E-mail Google não verificado'), { statusCode: 401, code: 'GOOGLE_EMAIL_NOT_VERIFIED' })
+    }
 
     const { sub: googleId, email, name, picture } = payload
 
@@ -353,9 +365,14 @@ export class AuthService {
           update: {},
         })
       } else {
-        // Create new user + company
-        const company = await this.prisma.company.findFirst({ where: { isActive: true } })
-          ?? await this.prisma.company.create({ data: { name: (name ?? email) + ' Imobiliária' } })
+        // SEGURANÇA (multi-tenant): usuário novo via Google SEMPRE ganha uma
+        // empresa NOVA — mesma invariante do register(). Antes usava
+        // `company.findFirst({ isActive:true })` (sem orderBy), que prendia o
+        // novo usuário na PRIMEIRA empresa ativa do banco e o criava como ADMIN
+        // dela (escalonamento de privilégio cross-tenant).
+        const company = await this.prisma.company.create({
+          data: { name: (name ?? email) + ' Imobiliária' },
+        })
 
         user = await this.prisma.user.create({
           data: {
@@ -417,7 +434,12 @@ export class AuthService {
     }
 
     const newHash = await argon2.hash(newPassword, { type: argon2.argon2id })
-    await this.prisma.user.update({ where: { id: userId }, data: { passwordHash: newHash } })
+    // Incrementa tokenVersion → invalida IMEDIATAMENTE todos os access tokens
+    // antigos (não só os refresh). Sem isso, um token roubado seguia válido 15min.
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { passwordHash: newHash, tokenVersion: { increment: 1 } },
+    })
 
     // Revoke all refresh tokens
     await this.prisma.refreshToken.deleteMany({ where: { userId } })
@@ -430,6 +452,7 @@ export class AuthService {
       sub: user.id,
       cid: companyId,
       role: user.role,
+      tv: (user as any).tokenVersion ?? 0,
     }
 
     const accessToken = this.app.jwt.sign(payload, { expiresIn: env.JWT_ACCESS_EXPIRES })
