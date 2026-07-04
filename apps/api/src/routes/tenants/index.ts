@@ -44,6 +44,13 @@ export default async function tenantRoutes(app: FastifyInstance) {
   app.post('/', {
     schema: { tags: ['tenants'], summary: 'Create a new tenant (clone site)' },
   }, async (req, reply) => {
+    // Criação direta de tenant é ação de PLATAFORMA (SUPER_ADMIN). Parceiros que
+    // contratam um site passam pelo checkout (/api/v1/billing/saas/checkout),
+    // que aplica plano/pagamento. Sem este guard, qualquer usuário autenticado
+    // poderia auto-provisionar um tenant sem regra de plano/permissão.
+    if (req.user.role !== 'SUPER_ADMIN') {
+      return reply.status(403).send({ error: 'FORBIDDEN', message: 'SUPER_ADMIN access required' })
+    }
     const body = z.object({
       name: z.string().min(2),
       subdomain: z.string().min(3).max(50).regex(/^[a-z0-9-]+$/),
@@ -123,11 +130,22 @@ export default async function tenantRoutes(app: FastifyInstance) {
   app.get('/mine', {
     schema: { tags: ['tenants'], summary: 'Get the tenant owned by the logged-in user' },
   }, async (req, reply) => {
+    // O objeto tenant carrega settings/dados financeiros/assinatura/repasses —
+    // portanto NÃO é para corretor. Só quem GERE o site pode recebê-lo:
+    // owner, ADMIN/MANAGER da mesma empresa, ou SUPER_ADMIN.
+    const isManagerRole = ['ADMIN', 'MANAGER', 'SUPER_ADMIN'].includes(req.user.role)
+    // Owner pode ser resolvido por ownerId; gestores da empresa, por companyId.
+    const or: any[] = [{ ownerId: req.user.sub }]
+    if (isManagerRole) or.push({ companyId: req.user.cid })
     const tenant = await (app.prisma as any).tenant.findFirst({
-      where: { ownerId: req.user.sub },
+      where: { OR: or },
       orderBy: { createdAt: 'desc' },
     })
     if (!tenant) return reply.status(404).send({ error: 'NO_TENANT_FOR_USER' })
+    // Defesa extra: se casou por empresa, exige papel de gestão (nunca BROKER).
+    const canManage = tenant.ownerId === req.user.sub
+      || (tenant.companyId === req.user.cid && isManagerRole)
+    if (!canManage) return reply.status(403).send({ error: 'FORBIDDEN' })
     return reply.send({ success: true, data: tenant })
   })
 
@@ -157,8 +175,11 @@ export default async function tenantRoutes(app: FastifyInstance) {
       return reply.status(404).send({ error: 'TENANT_NOT_FOUND' })
     }
 
-    // Allow access for tenant owner or SUPER_ADMIN
-    if (tenant.ownerId !== req.user.sub && req.user.role !== 'SUPER_ADMIN') {
+    // Owner, ADMIN/MANAGER da mesma empresa, ou SUPER_ADMIN.
+    const canManage = tenant.ownerId === req.user.sub
+      || (tenant.companyId === req.user.cid && ['ADMIN', 'MANAGER'].includes(req.user.role))
+      || req.user.role === 'SUPER_ADMIN'
+    if (!canManage) {
       return reply.status(403).send({ error: 'FORBIDDEN' })
     }
 
@@ -192,11 +213,23 @@ export default async function tenantRoutes(app: FastifyInstance) {
     const tenant = await (app.prisma as any).tenant.findUnique({ where: { id } })
     if (!tenant) return reply.status(404).send({ error: 'TENANT_NOT_FOUND' })
 
-    if (tenant.ownerId !== req.user.sub && req.user.role !== 'SUPER_ADMIN') {
+    // Owner, ADMIN/MANAGER da mesma empresa, ou SUPER_ADMIN podem editar o site.
+    const isSuperAdmin = req.user.role === 'SUPER_ADMIN'
+    const canManage = tenant.ownerId === req.user.sub
+      || (tenant.companyId === req.user.cid && ['ADMIN', 'MANAGER'].includes(req.user.role))
+      || isSuperAdmin
+    if (!canManage) {
       return reply.status(403).send({ error: 'FORBIDDEN' })
     }
 
     const { logoWordmarkUrl, logoVisible, logoShowText, logoPosition, settings, ...columns } = body
+    // Campos financeiros/comerciais (split e regras de repasse) só o SUPER_ADMIN
+    // altera — um parceiro NÃO pode reduzir o próprio split da plataforma.
+    if (!isSuperAdmin) {
+      delete (columns as any).splitPercent
+      delete (columns as any).repasseDelayDays
+      delete (columns as any).repasseFixedDay
+    }
     const brandingSettings: Record<string, any> = {}
     if (logoWordmarkUrl !== undefined) brandingSettings.logoWordmarkUrl = logoWordmarkUrl
     if (logoVisible !== undefined) brandingSettings.logoVisible = logoVisible

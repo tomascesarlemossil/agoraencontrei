@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/hooks/useAuth'
+import { isPlatformOnly, isPlatformAdmin } from '@/lib/platform-routes'
 import { useState, useEffect } from 'react'
 import {
   Handshake, Split, FileWarning, ShieldCheck, Wallet,
@@ -181,6 +182,14 @@ function NavContent({ onClose }: { onClose?: () => void }) {
     if (!mod) return true // items without module mapping are always visible
     return moduleAccess.includes(mod)
   }
+  // Ferramentas exclusivas da plataforma (Admin Master, Tenants, Afiliados,
+  // Repasses, Master Intel, Site Factory, etc.) só aparecem para o super-admin
+  // da plataforma. Um parceiro (mesmo ADMIN com full access) nunca as vê.
+  const canSeePlatform = isPlatformAdmin(user)
+  function isVisible(href: string): boolean {
+    if (isPlatformOnly(href) && !canSeePlatform) return false
+    return hasModuleAccess(href)
+  }
   const lemosbankActive = pathname.startsWith('/dashboard/lemosbank') ||
     pathname.startsWith('/dashboard/contratos') ||
     pathname.startsWith('/dashboard/clientes')
@@ -329,8 +338,8 @@ function NavContent({ onClose }: { onClose?: () => void }) {
           )}
         </div>}
 
-        {/* ── Mid items: Imóveis → Blog (filtered by module access) ── */}
-        {midNavItems.filter(item => hasModuleAccess(item.href)).map(({ href, icon: Icon, label, highlight }) => {
+        {/* ── Mid items: Imóveis → Blog (filtered by module + platform access) ── */}
+        {midNavItems.filter(item => isVisible(item.href)).map(({ href, icon: Icon, label, highlight }) => {
           const active = pathname === href || (href !== '/dashboard' && pathname.startsWith(href))
           return (
             <Link

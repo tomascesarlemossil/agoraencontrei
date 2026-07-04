@@ -21,6 +21,39 @@ const FIELD: Record<PermAction, 'canView' | 'canEdit' | 'canDelete'> = {
   delete: 'canDelete',
 }
 
+/**
+ * preHandler que exige SUPER_ADMIN (super-admin da PLATAFORMA AgoraEncontrei).
+ * Use nas rotas exclusivas de plataforma (master, tenants, afiliados, repasses,
+ * saas-finance, system-events, outgoing-webhooks, outbound). Espelha o padrão
+ * de `routes/master/index.ts` (403 + auditLog `admin.access_denied`).
+ *
+ * IMPORTANTE: assume que `app.authenticate` já rodou antes (req.user populado).
+ */
+export function requireSuperAdmin() {
+  return async function superAdminGuard(req: FastifyRequest, reply: FastifyReply) {
+    const user = (req as any).user
+    if (!user) return reply.status(401).send({ error: 'UNAUTHORIZED' })
+    if (user.role !== 'SUPER_ADMIN') {
+      const prisma = (req.server as any).prisma
+      await prisma?.auditLog
+        ?.create({
+          data: {
+            companyId: 'platform',
+            userId: user.sub ?? 'unknown',
+            action: 'admin.access_denied' as any,
+            resource: 'platform',
+            resourceId: req.url,
+            payload: { role: user.role, method: req.method, url: req.url, ip: req.ip } as any,
+          },
+        })
+        .catch(() => {})
+      return reply
+        .status(403)
+        .send({ error: 'FORBIDDEN', message: 'SUPER_ADMIN access required' })
+    }
+  }
+}
+
 export function requirePermission(module: string, action: PermAction) {
   return async function permissionGuard(req: FastifyRequest, reply: FastifyReply) {
     const user = (req as any).user

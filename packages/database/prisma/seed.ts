@@ -26,7 +26,11 @@ async function main() {
 
   console.log('✅ Company:', company.name)
 
-  // Create admin user
+  // Create the PLATFORM super-admin (AgoraEncontrei).
+  // tomas@agoraencontrei.com.br é o único super-admin da plataforma — o mesmo
+  // e-mail é promovido a SUPER_ADMIN no boot da API (apps/api/src/server.ts).
+  // Os usuários/dados da Imobiliária Lemos (parceira) são provisionados à parte
+  // por scripts/provision-imobiliaria-lemos.ts, e NÃO por este seed.
   const passwordHash = await argon2.hash('Lemos2024', { type: argon2.argon2id })
 
   const admin = await prisma.user.upsert({
@@ -38,7 +42,7 @@ async function main() {
       email: 'tomas@agoraencontrei.com.br',
       phone: '(16) 98101-0004',
       passwordHash,
-      role: 'ADMIN',
+      role: 'SUPER_ADMIN',
       status: 'ACTIVE',
       emailVerifiedAt: new Date(),
     },

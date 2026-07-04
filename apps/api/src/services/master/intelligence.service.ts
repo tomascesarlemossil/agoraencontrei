@@ -30,9 +30,9 @@ async function buildRevenue(prisma: any): Promise<RevenueMetrics> {
   const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate())
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
 
-  // Active tenants for MRR
+  // Active tenants for MRR (exclui parceiros internos/isentos, ex.: fundadora Lemos)
   const activeTenants = await prisma.tenant.findMany({
-    where: { planStatus: 'ACTIVE' },
+    where: { planStatus: 'ACTIVE', plan: { not: 'fundador' }, NOT: { settings: { path: ['billingExempt'], equals: true } } },
     select: { plan: true, planPrice: true },
   }).catch(() => [])
 

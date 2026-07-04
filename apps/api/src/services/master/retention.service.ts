@@ -12,17 +12,19 @@ export async function buildRetention(prisma: any): Promise<RetentionMetrics> {
   const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
 
+  // Exclui parceiros internos/isentos (ex.: fundadora Lemos) das métricas de churn.
+  const notInternal = { plan: { not: 'fundador' }, NOT: { settings: { path: ['billingExempt'], equals: true } } }
   // Tenant counts by status
   const [active, trial, pastDue, suspended] = await Promise.all([
-    prisma.tenant.count({ where: { planStatus: 'ACTIVE' } }).catch(() => 0),
-    prisma.tenant.count({ where: { planStatus: 'TRIAL' } }).catch(() => 0),
-    prisma.tenant.count({ where: { planStatus: 'PAST_DUE' } }).catch(() => 0),
-    prisma.tenant.count({ where: { planStatus: 'SUSPENDED' } }).catch(() => 0),
+    prisma.tenant.count({ where: { planStatus: 'ACTIVE', ...notInternal } }).catch(() => 0),
+    prisma.tenant.count({ where: { planStatus: 'TRIAL', ...notInternal } }).catch(() => 0),
+    prisma.tenant.count({ where: { planStatus: 'PAST_DUE', ...notInternal } }).catch(() => 0),
+    prisma.tenant.count({ where: { planStatus: 'SUSPENDED', ...notInternal } }).catch(() => 0),
   ])
 
   // Tenants without recent activity (updatedAt as proxy for activity)
   const allActiveTenants = await prisma.tenant.findMany({
-    where: { planStatus: { in: ['ACTIVE', 'TRIAL'] } },
+    where: { planStatus: { in: ['ACTIVE', 'TRIAL'] }, ...notInternal },
     select: {
       id: true,
       name: true,

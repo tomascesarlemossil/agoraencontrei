@@ -18,6 +18,7 @@
 
 import type { FastifyInstance } from 'fastify'
 import { env } from '../../utils/env.js'
+import { isBillingExempt } from '../../services/billing-exempt.js'
 import type { AsaasWebhookEvent } from '../../services/asaas.service.js'
 import { safeStringEqual } from '../../utils/crypto-safe.js'
 import { createPasswordSetupToken } from '../auth/first-access.js'
@@ -355,6 +356,11 @@ async function handleTenantEvent(
     }
 
     case 'PAYMENT_OVERDUE': {
+      // Parceira isenta (ex.: fundadora Imobiliária Lemos) nunca é rebaixada.
+      if (isBillingExempt({ tenant })) {
+        app.log.info(`[saas-webhook] Tenant ${subdomain} é isento de cobrança — ignorando PAYMENT_OVERDUE`)
+        return
+      }
       if (tenant.planStatus === 'PAST_DUE') return // Already marked
 
       await prisma.tenant.update({
@@ -386,6 +392,11 @@ async function handleTenantEvent(
 
     case 'PAYMENT_DELETED':
     case 'PAYMENT_REFUNDED': {
+      // Parceira isenta (ex.: fundadora Imobiliária Lemos) nunca é suspensa.
+      if (isBillingExempt({ tenant })) {
+        app.log.info(`[saas-webhook] Tenant ${subdomain} é isento de cobrança — ignorando ${event}`)
+        return
+      }
       // Suspend tenant on refund/cancellation
       await prisma.tenant.update({
         where: { id: tenant.id },

@@ -29,9 +29,48 @@ interface PlanSeed {
   features: string[]
   highlighted: boolean
   sortOrder: number
+  /** Metadados opcionais. `internal:true` esconde do catálogo público. */
+  metadata?: Record<string, unknown>
 }
 
+// Todos os temas e módulos reais do sistema — usados pelo plano interno
+// "Fundador" para liberar tudo explicitamente (sem depender só do wildcard 'all').
+const ALL_THEME_SLUGS = [
+  'urban_tech', 'classic_trust', 'luxury_gold', 'fast_sales_pro',
+  'landscape_living', 'signature_estate', 'minimal_studio', 'bold_agency',
+  'editorial_journal',
+]
+const ALL_MODULE_SLUGS = [
+  'site_basico', 'crm_basico', 'crm_avancado', 'ia_tomas', 'whatsapp',
+  'leiloes', 'dominio_proprio', 'split_pagamentos', 'video_editor',
+]
+
 const DEFAULT_PLANS: PlanSeed[] = [
+  {
+    // Plano INTERNO da parceira fundadora (Imobiliária Lemos). R$0, tudo
+    // ilimitado, todos os módulos e temas, e NUNCA gera cobrança (billingExempt).
+    // metadata.internal esconde este plano do catálogo comercial público.
+    slug: 'fundador',
+    name: 'Fundador',
+    description: 'Plano interno da parceira fundadora — acesso total, sem cobrança.',
+    priceMonthly: 0,
+    priceYearly: 0,
+    maxProperties: -1,
+    maxLeadViews: -1,
+    maxUsers: -1,
+    maxAIRequests: -1,
+    themes: ['all', ...ALL_THEME_SLUGS],
+    modules: [...ALL_MODULE_SLUGS],
+    features: [
+      'Acesso completo e ilimitado a todos os módulos',
+      'Usuários, imóveis, leads e IA ilimitados',
+      'Todos os temas de site liberados',
+      'Isento de cobrança (parceira fundadora)',
+    ],
+    highlighted: false,
+    sortOrder: 0,
+    metadata: { internal: true, billingExempt: true, allModules: true, allThemes: true },
+  },
   {
     slug: 'lite',
     name: 'Simples',
@@ -216,6 +255,7 @@ export async function bootstrapDefaultPlans(prisma: PrismaClient): Promise<void>
         highlighted: plan.highlighted,
         sortOrder: plan.sortOrder,
         isActive: true,
+        ...(plan.metadata ? { metadata: plan.metadata as any } : {}),
       },
     }).catch(() => null)
     createdPlans++
