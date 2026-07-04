@@ -9,6 +9,7 @@
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import { resolveTheme, type ThemeConfig } from '@/lib/site-factory/theme-registry'
+import TomasWidget from '@/components/tomas/TomasWidget'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 
@@ -457,6 +458,10 @@ export default async function TenantPage({
           </p>
         </div>
       </footer>
+
+      {/* Tomás IA do PARCEIRO: conversa com o cérebro daquele parceiro (modo
+          público). O companyId é resolvido server-side a partir do slug. */}
+      <TomasWidget tenantSlug={slug} partnerName={tenant.name} />
     </div>
   )
 }

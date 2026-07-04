@@ -14,6 +14,7 @@ import {
   type TomasMessage,
   type TomasChatParams,
 } from '../../services/tomas.service.js'
+import { findTenantByHost } from '../../services/tenant.service.js'
 
 export default async function tomasRoutes(app: FastifyInstance) {
   // ── POST /chat — Conversa com o Tomás ──────────────────────────────────
@@ -41,6 +42,10 @@ export default async function tomasRoutes(app: FastifyInstance) {
           visitorId: { type: 'string' },
           nicheSlug: { type: 'string' },
           tenantTheme: { type: 'string' },
+          // Slug/subdomínio do parceiro (site white-label). Resolvido
+          // SERVER-SIDE para o companyId — nunca confiamos num companyId vindo
+          // do cliente. Faz o visitante público falar com o cérebro do parceiro.
+          tenantSlug: { type: 'string' },
           propertyContext: {
             type: 'object',
             properties: {
@@ -64,6 +69,7 @@ export default async function tomasRoutes(app: FastifyInstance) {
       visitorId?: string
       nicheSlug?: string
       tenantTheme?: string
+      tenantSlug?: string
       propertyContext?: TomasChatParams['propertyContext']
     }
 
@@ -80,6 +86,25 @@ export default async function tomasRoutes(app: FastifyInstance) {
     }
 
     const channel = (body.channel || 'site') as 'site' | 'dashboard'
+
+    // Ingress do site público do parceiro: um visitante ANÔNIMO no site
+    // white-label de um parceiro (subdomínio) conversa com o cérebro DAQUELE
+    // parceiro (modo público). O companyId vem de um lookup SERVER-SIDE do slug
+    // — nunca aceitamos um companyId do cliente. Se o visitante já está
+    // autenticado, o companyId do JWT prevalece (não deixa o cliente trocar).
+    if (!companyId && channel === 'site' && typeof body.tenantSlug === 'string') {
+      const slug = body.tenantSlug.trim().toLowerCase().replace(/[^a-z0-9-]/g, '')
+      if (slug) {
+        try {
+          const tenant = await findTenantByHost(app.prisma, slug)
+          if (tenant?.companyId && tenant.isActive !== false && tenant.planStatus !== 'SUSPENDED') {
+            companyId = tenant.companyId as string
+          }
+        } catch {
+          // Slug inválido/indisponível — segue como marketplace público.
+        }
+      }
+    }
 
     // Dashboard mode requires authentication
     if (channel === 'dashboard' && !userId) {
