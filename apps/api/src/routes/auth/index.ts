@@ -242,7 +242,7 @@ export default async function authRoutes(app: FastifyInstance) {
   app.post('/portal-login', {
     config: { rateLimit: { max: 10, timeWindow: '15 minutes' } },
   }, async (req, reply) => {
-    const { cpf, birthDate } = req.body as { cpf?: string; birthDate?: string }
+    const { cpf, birthDate, subdomain } = req.body as { cpf?: string; birthDate?: string; subdomain?: string }
 
     if (!cpf || !birthDate) {
       return reply.status(400).send({ error: 'MISSING_FIELDS', message: 'CPF e data de nascimento são obrigatórios' })
@@ -256,41 +256,71 @@ export default async function authRoutes(app: FastifyInstance) {
       return reply.status(400).send({ error: 'INVALID_CPF', message: 'CPF deve ter 11 dígitos' })
     }
 
-    // Look up client by CPF (document field) — using parameterized query
-    const client = await app.prisma.$queryRaw<any[]>`
-      SELECT c.id, c.name, c.document, c."birthDate", c.email, c.phone, c.roles,
-              co."landlordName", co."tenantName", co.id as "contractId", co.status as "contractStatus",
-              co."rentValue", co."propertyAddress", co."startDate"
-       FROM clients c
-       LEFT JOIN contracts co ON (co."tenantId" = c.id OR co."landlordId" = c.id) AND co."isActive" = true
-       WHERE c.document = ${cpfNorm}
-       LIMIT 1`
+    // Normaliza a data informada (aceita YYYY-MM-DD ou DD/MM/YYYY).
+    const inputDate = birthDate.trim()
+    const normalizedInput = inputDate.includes('/') ? inputDate.split('/').reverse().join('-') : inputDate
 
-    if (!client.length) {
-      // Generic error message to prevent CPF enumeration
+    // Escopo por empresa: o portal é servido no subdomínio do parceiro. Quando o
+    // front envia `subdomain`, resolvemos a company e filtramos por ela — isto
+    // FECHA a colisão de CPF cross-tenant (Client.document é único só por empresa,
+    // então o mesmo CPF pode existir em várias imobiliárias).
+    let scopedCompanyId: string | null = null
+    if (subdomain && /^[a-z0-9-]{2,}$/i.test(subdomain)) {
+      const tenant = await app.prisma.tenant.findUnique({
+        where: { subdomain: subdomain.toLowerCase() }, select: { companyId: true },
+      }).catch(() => null)
+      scopedCompanyId = tenant?.companyId ?? null
+    }
+
+    // Candidatos por CPF (+ empresa, se conhecida). NUNCA LIMIT 1 sem escopo.
+    const candidates = await app.prisma.client.findMany({
+      where: { document: cpfNorm, ...(scopedCompanyId ? { companyId: scopedCompanyId } : {}) },
+      select: { id: true, name: true, companyId: true, birthDate: true, email: true, phone: true, roles: true },
+    })
+
+    // Exige birthDate cadastrada E igual à informada — registros sem data de
+    // nascimento NÃO logam (antes o check era pulado se birthDate fosse null).
+    const matches = candidates.filter(c =>
+      c.birthDate && new Date(c.birthDate).toISOString().split('T')[0] === normalizedInput,
+    )
+
+    if (matches.length === 0) {
+      // Mensagem genérica p/ não permitir enumeração de CPF.
       return reply.status(401).send({ error: 'INVALID_CREDENTIALS', message: 'CPF ou data de nascimento incorretos' })
     }
-
-    const cl = client[0]
-
-    // Verify birthdate
-    if (cl.birthDate) {
-      const dbDate = new Date(cl.birthDate).toISOString().split('T')[0]
-      const inputDate = birthDate.trim()
-      // Accept YYYY-MM-DD or DD/MM/YYYY
-      const normalizedInput = inputDate.includes('/')
-        ? inputDate.split('/').reverse().join('-')
-        : inputDate
-      if (dbDate !== normalizedInput) {
-        return reply.status(401).send({ error: 'INVALID_CREDENTIALS', message: 'CPF ou data de nascimento incorretos' })
-      }
+    // Ambiguidade cross-tenant: o mesmo CPF+nascimento existe em >1 empresa e o
+    // front não informou o subdomínio. NÃO escolhemos arbitrariamente — pedimos
+    // para acessar pelo site da imobiliária (que envia o subdomínio).
+    const distinctCompanies = [...new Set(matches.map(m => m.companyId))]
+    if (distinctCompanies.length > 1) {
+      return reply.status(409).send({
+        error: 'AMBIGUOUS_CLIENT',
+        message: 'Encontramos seu cadastro em mais de uma imobiliária. Acesse pelo site da sua imobiliária.',
+      })
     }
 
-    // Return portal token (simple JWT)
+    const cl = matches[0]
+
+    // Contrato ativo do cliente (para o resumo do portal).
+    const contract = await app.prisma.contract.findFirst({
+      where: { isActive: true, OR: [{ tenantId: cl.id }, { landlordId: cl.id }] },
+      select: { id: true, status: true, rentValue: true, propertyAddress: true, startDate: true },
+    }).catch(() => null)
+
+    // Token de portal — agora carrega `cid` (companyId) para escopo tenant a jusante.
     const token = app.jwt.sign(
-      { sub: cl.id, name: cl.name, type: 'portal', roles: cl.roles || [] } as any,
+      { sub: cl.id, cid: cl.companyId, name: cl.name, type: 'portal', roles: cl.roles || [] } as any,
       { expiresIn: '24h' }
     )
+
+    // Auditoria (antes o portal-login não deixava rastro de acesso).
+    await app.prisma.auditLog.create({
+      data: {
+        companyId: cl.companyId, userId: cl.id, action: 'portal.login',
+        resource: 'client', resourceId: cl.id,
+        ipAddress: req.ip, payload: { cpf: cpfNorm, scoped: !!scopedCompanyId } as any,
+      },
+    }).catch(() => {})
 
     return reply.send({
       accessToken: token,
@@ -302,12 +332,12 @@ export default async function authRoutes(app: FastifyInstance) {
         email: cl.email,
         phone: cl.phone,
         roles: cl.roles,
-        contract: cl.contractId ? {
-          id: cl.contractId,
-          status: cl.contractStatus,
-          rentValue: cl.rentValue,
-          propertyAddress: cl.propertyAddress,
-          startDate: cl.startDate,
+        contract: contract ? {
+          id: contract.id,
+          status: contract.status,
+          rentValue: contract.rentValue,
+          propertyAddress: contract.propertyAddress,
+          startDate: contract.startDate,
         } : null,
       },
     })
