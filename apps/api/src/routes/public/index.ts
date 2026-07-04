@@ -177,6 +177,27 @@ async function resolveCompany(app: FastifyInstance) {
   return company
 }
 
+// Resolve o companyId de um endpoint público de DETALHE. Se a query trouxer
+// `tenantSlug` (site de parceiro em subdomínio/domínio próprio), escopa àquele
+// tenant; caso contrário usa a empresa pública padrão (resolveCompany /
+// PUBLIC_COMPANY_ID). Se o tenantSlug for informado mas não existir, retorna
+// null — NÃO cai na empresa padrão (evita servir o imóvel de outro parceiro sob
+// o domínio errado). Assim o detalhe passa a funcionar no site do parceiro em
+// vez de dar 404 por resolver sempre a empresa principal.
+async function resolveScopedCompanyId(app: FastifyInstance, query: unknown): Promise<string | null> {
+  const q = (query ?? {}) as Record<string, unknown>
+  const tenantSlug = typeof q.tenantSlug === 'string' ? q.tenantSlug.trim() : ''
+  if (tenantSlug) {
+    const tenant = await (app.prisma as any).tenant?.findUnique?.({
+      where: { subdomain: tenantSlug },
+      select: { companyId: true },
+    }).catch(() => null)
+    return tenant?.companyId ?? null
+  }
+  const company = await resolveCompany(app)
+  return company?.id ?? null
+}
+
 // ── In-memory fallback cache (when Redis is unavailable) ──────────────────────
 const _memCache = new Map<string, { value: unknown; expiresAt: number }>()
 
@@ -510,11 +531,11 @@ export default async function publicRoutes(app: FastifyInstance) {
   // GET /api/v1/public/properties/:slug — single property detail
   app.get('/properties/:slug', async (req, reply) => {
     const { slug } = req.params as { slug: string }
-    const company  = await resolveCompany(app)
-    if (!company) return reply.status(503).send({ error: 'SERVICE_UNAVAILABLE' })
+    const companyId = await resolveScopedCompanyId(app, req.query)
+    if (!companyId) return reply.status(503).send({ error: 'SERVICE_UNAVAILABLE' })
 
     const property = await app.prisma.property.findFirst({
-      where:  { slug, companyId: company.id, status: 'ACTIVE', authorizedPublish: true },
+      where:  { slug, companyId, status: 'ACTIVE', authorizedPublish: true },
       select: PUBLIC_PROPERTY_SELECT,
     })
 
@@ -532,18 +553,18 @@ export default async function publicRoutes(app: FastifyInstance) {
   // GET /api/v1/public/properties/:slug/similar — similar properties (same type + city)
   app.get('/properties/:slug/similar', async (req, reply) => {
     const { slug } = req.params as { slug: string }
-    const company  = await resolveCompany(app)
-    if (!company) return reply.status(503).send({ error: 'SERVICE_UNAVAILABLE' })
+    const companyId = await resolveScopedCompanyId(app, req.query)
+    if (!companyId) return reply.status(503).send({ error: 'SERVICE_UNAVAILABLE' })
 
     const base = await app.prisma.property.findFirst({
-      where:  { slug, companyId: company.id, status: 'ACTIVE', authorizedPublish: true },
+      where:  { slug, companyId, status: 'ACTIVE', authorizedPublish: true },
       select: { id: true, type: true, purpose: true, city: true, price: true, priceRent: true },
     })
 
     if (!base) return reply.status(404).send({ error: 'NOT_FOUND' })
 
     const baseWhere = {
-      companyId: company.id,
+      companyId,
       status: 'ACTIVE' as const,
       authorizedPublish: true,
       id: { not: base.id },
