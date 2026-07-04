@@ -11,7 +11,11 @@
 
 import Anthropic from '@anthropic-ai/sdk'
 import type { PrismaClient, Prisma } from '@prisma/client'
-import { buildTomasSystemPrompt } from '@agoraencontrei/tomas-knowledge'
+import {
+  buildMarketplaceSystemPrompt,
+  buildPartnerSystemPrompt,
+  type PartnerContext,
+} from '@agoraencontrei/tomas-knowledge'
 import { env } from '../utils/env.js'
 import { notify } from './notification.service.js'
 import { checkAIQuota } from './plan-gating.service.js'
@@ -84,11 +88,13 @@ export interface TomasChatParams {
 // ── System Prompt — built from @agoraencontrei/tomas-knowledge ─────────────
 
 /**
- * Prompt base do Tomás — vem de @agoraencontrei/tomas-knowledge (constantes TS).
- * Esta é a ÚNICA source-of-truth; o Fastify só adiciona a camada operacional
- * (tool-use, Hunter Mode, formato JSON) abaixo.
+ * Prompt base do cérebro MARKETPLACE (público/nacional/imparcial) — vem de
+ * @agoraencontrei/tomas-knowledge. É computado uma vez; o cérebro PARTNER
+ * (privado, por empresa) é montado por request em `buildPartnerSystemPromptFull`
+ * porque depende dos dados do parceiro. O Fastify só adiciona a camada
+ * operacional (tool-use, Hunter Mode, formato JSON) abaixo — comum aos dois.
  */
-const TOMAS_KNOWLEDGE_BASE = buildTomasSystemPrompt()
+const TOMAS_KNOWLEDGE_BASE = buildMarketplaceSystemPrompt()
 
 const TOMAS_OPERATIONAL_ADDENDUM = `
 ═══════════════════════════════════════════════════════
@@ -147,7 +153,42 @@ REGRAS DURAS PARA SHORTLIST E ACTIONS (NÃO QUEBRE):
 - Se shortlist vazia, use []. Se não houver ações, use []. Se não houver atualização de lead, omita leadUpdate.
 `
 
-const TOMAS_SYSTEM_PROMPT = `${TOMAS_KNOWLEDGE_BASE}\n${TOMAS_OPERATIONAL_ADDENDUM}`
+// Cérebro MARKETPLACE completo (base pública + camada operacional).
+const MARKETPLACE_SYSTEM_PROMPT = `${TOMAS_KNOWLEDGE_BASE}\n${TOMAS_OPERATIONAL_ADDENDUM}`
+
+// Cérebro PARTNER completo — a base depende da empresa, então é montada por
+// request; a camada operacional (Hunter Mode, formato JSON) é a mesma.
+function buildPartnerSystemPromptFull(partner: PartnerContext): string {
+  return `${buildPartnerSystemPrompt(partner)}\n${TOMAS_OPERATIONAL_ADDENDUM}`
+}
+
+/**
+ * Resolve o contexto do parceiro (para o prompt do cérebro PARTNER) e detecta
+ * se a empresa é a PLATAFORMA AgoraEncontrei — nesse caso o operador usa o
+ * cérebro marketplace/plataforma (com Master Intelligence global), enquanto um
+ * parceiro comum (ex.: Lemos) NUNCA recebe dados globais da plataforma.
+ */
+async function resolveCompanyBrain(
+  prisma: PrismaClient,
+  companyId: string,
+): Promise<{ partner: PartnerContext; isPlatform: boolean }> {
+  try {
+    const c = await prisma.company.findUnique({
+      where: { id: companyId },
+      select: { name: true, settings: true },
+    })
+    const name = c?.name?.trim() || 'a imobiliária'
+    const settings = (c?.settings ?? {}) as Record<string, unknown>
+    const canonical = typeof settings.canonical === 'string' ? settings.canonical.toLowerCase() : ''
+    const isPlatform = canonical === 'agoraencontrei-platform' || /^agora\s*encontrei$/i.test(name)
+    const isLemos = canonical === 'imobiliaria-lemos' || /lemos/i.test(name)
+    const city = (typeof settings.city === 'string' && settings.city) || (isLemos ? 'Franca/SP' : undefined)
+    const since = (typeof settings.since === 'string' && settings.since) || (isLemos ? '2002' : undefined)
+    return { partner: { name, city, since, isLemos }, isPlatform }
+  } catch {
+    return { partner: { name: 'a imobiliária' }, isPlatform: false }
+  }
+}
 
 const DASHBOARD_ADDENDUM = `
 MODO DASHBOARD (Copilot Interno):
@@ -586,13 +627,28 @@ export async function runTomasChat(
 
   const client = new Anthropic({ apiKey })
 
-  // Build system prompt
-  let systemPrompt = TOMAS_SYSTEM_PROMPT
+  // ── Seleção do CÉREBRO ──────────────────────────────────────────────────
+  // Sem companyId → cérebro MARKETPLACE (público/nacional/imparcial).
+  // Com companyId → cérebro PARTNER (privado, marca e dados do parceiro),
+  // exceto quando a empresa é a própria PLATAFORMA AgoraEncontrei — aí o
+  // operador usa o cérebro marketplace/plataforma.
+  let systemPrompt: string
+  let isPlatformOperator = false
+  if (params.companyId) {
+    const { partner, isPlatform } = await resolveCompanyBrain(prisma, params.companyId)
+    isPlatformOperator = isPlatform
+    systemPrompt = isPlatform ? MARKETPLACE_SYSTEM_PROMPT : buildPartnerSystemPromptFull(partner)
+  } else {
+    systemPrompt = MARKETPLACE_SYSTEM_PROMPT
+  }
+
   if (params.channel === 'dashboard') {
     systemPrompt += DASHBOARD_ADDENDUM
 
-    // Inject Master Intelligence for Advisor Mode
-    try {
+    // Master Intelligence é GLOBAL da plataforma (receita/MRR/churn de TODAS as
+    // empresas). Só o operador da plataforma pode vê-lo — um parceiro (ex.:
+    // Lemos) NUNCA recebe dados agregados da plataforma no seu cérebro.
+    if (isPlatformOperator) try {
       const { buildMasterIntelligence } = await import('./master/intelligence.service.js')
       const intelligence = await buildMasterIntelligence(prisma)
       systemPrompt += ADVISOR_ADDENDUM
