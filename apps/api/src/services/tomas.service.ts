@@ -190,6 +190,23 @@ async function resolveCompanyBrain(
   }
 }
 
+/** Rótulo do cérebro que atende o chat — usado para separar a memória. */
+export type TomasBrainLabel = 'marketplace' | 'partner'
+
+/**
+ * Decide qual cérebro atende, para gravar na memória (TomasChat.brain). Sem
+ * companyId → marketplace. Com companyId → partner, exceto a própria plataforma
+ * AgoraEncontrei (que opera o cérebro marketplace/plataforma).
+ */
+export async function resolveBrainLabel(
+  prisma: PrismaClient,
+  companyId?: string,
+): Promise<TomasBrainLabel> {
+  if (!companyId) return 'marketplace'
+  const { isPlatform } = await resolveCompanyBrain(prisma, companyId)
+  return isPlatform ? 'marketplace' : 'partner'
+}
+
 const DASHBOARD_ADDENDUM = `
 MODO DASHBOARD (Copilot Interno):
 - Priorize produtividade, execução e objetividade
@@ -864,14 +881,22 @@ export async function getOrCreateChat(
     companyId?: string
     userId?: string
     propertyId?: string
+    /** Cérebro que atende este chat — separa a memória (marketplace × parceiro). */
+    brain?: TomasBrainLabel
   },
 ): Promise<string> {
   if (params.chatId) {
     // SEGURANÇA (multi-tenant): só retoma um chat do MESMO contexto de empresa
     // (antes: retomava qualquer chatId → anexava mensagens / handoff no chat de
-    // outra empresa). Chats anônimos têm companyId null.
+    // outra empresa). Chats anônimos têm companyId null. Além disso, um chat só
+    // é retomado dentro do MESMO cérebro — memória do marketplace nunca se
+    // mistura com a de um parceiro.
     const existing = await prisma.tomasChat.findFirst({
-      where: { id: params.chatId, companyId: params.companyId ?? null },
+      where: {
+        id: params.chatId,
+        companyId: params.companyId ?? null,
+        ...(params.brain ? { brain: params.brain } : {}),
+      },
     })
     if (existing) return existing.id
   }
@@ -883,7 +908,8 @@ export async function getOrCreateChat(
       companyId: params.companyId,
       userId: params.userId,
       propertyId: params.propertyId,
-    },
+      ...(params.brain ? { brain: params.brain } : {}),
+    } as Prisma.TomasChatUncheckedCreateInput,
   })
 
   return chat.id

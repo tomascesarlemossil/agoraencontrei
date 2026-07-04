@@ -338,6 +338,16 @@ async function runMigrations(prisma: any) {
     try { await prisma.$executeRawUnsafe(sql) } catch { /* already exists */ }
   }
 
+  // ── Tomás: coluna do cérebro na memória (separa marketplace × parceiro) ──
+  // Aditiva e idempotente — segura em produção (não reescreve dados).
+  const tomasMigrations = [
+    `ALTER TABLE tomas_chats ADD COLUMN IF NOT EXISTS "brain" TEXT`,
+    `CREATE INDEX IF NOT EXISTS tomas_chats_brain_idx ON tomas_chats(brain)`,
+  ]
+  for (const sql of tomasMigrations) {
+    try { await prisma.$executeRawUnsafe(sql) } catch { /* already exists */ }
+  }
+
   for (const sql of auctionMigrations) {
     try {
       await prisma.$executeRawUnsafe(sql)
