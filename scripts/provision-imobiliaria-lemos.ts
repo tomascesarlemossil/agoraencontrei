@@ -63,7 +63,7 @@
 import { PrismaClient } from '@prisma/client'
 import * as argon2 from 'argon2'
 import { randomBytes } from 'node:crypto'
-import { writeFileSync, mkdirSync, readFileSync } from 'node:fs'
+import { writeFileSync, mkdirSync, readFileSync, chmodSync } from 'node:fs'
 import { join } from 'node:path'
 
 // ── Config / env (parsing estrito e seguro) ───────────────────────────────
@@ -84,6 +84,11 @@ const RESET_EXISTING_PASSWORDS = process.env.RESET_EXISTING_PASSWORDS === 'true'
 // Senha comum só se FORÇADA explicitamente. NÃO há fallback legado de senha coletiva.
 const FORCE_PASSWORD = process.env.FORCE_PASSWORD || ''
 const SUBDOMAIN = (process.env.SUBDOMAIN || 'lemos').toLowerCase().trim()
+// Por PADRÃO as senhas provisórias NÃO são impressas no console (evita vazamento
+// em stdout/CI/logs) — vão para um arquivo local restrito. Só imprime em claro
+// se PRINT_TEMP_PASSWORDS=true (modo excepcional; NÃO usar em CI/onde há retenção
+// de logs).
+const PRINT_TEMP_PASSWORDS = process.env.PRINT_TEMP_PASSWORDS === 'true'
 
 const CANONICAL = 'imobiliaria-lemos'
 const MAIN_ADMIN_EMAIL = 'imobiliarialemosfranca@gmail.com'
@@ -537,13 +542,42 @@ async function main() {
   if (plan.sharedOwners.length) log(`\n⚠️  ${plan.sharedOwners.length} proprietário(s) compartilhado(s) NÃO movidos (também possuem imóveis fora da seleção).`)
 
   if (creds.length > 0) {
+    // Segurança: as senhas provisórias NÃO são logadas em claro por padrão
+    // (CodeQL: clear-text logging). Vão para um arquivo LOCAL restrito (modo
+    // 600) dentro de .migration-runs/ (git-ignorado) — nunca no snapshot JSON.
+    // Correlacionamos o nome com o stamp do snapshot para rastreabilidade.
+    const credFile = SNAP_FILE
+      ? SNAP_FILE.replace(/lemos-provision-(.*)\.json$/, 'lemos-credentials-$1.txt')
+      : join(process.cwd(), '.migration-runs', 'lemos-credentials.txt')
+    const fileBody =
+      '# Credenciais provisórias — Imobiliária Lemos\n' +
+      '# Entregue cada uma ao respectivo usuário por canal seguro e APAGUE este arquivo depois.\n' +
+      '# Todos os usuários têm mustChangePassword = true (trocam a senha no 1º acesso).\n' +
+      '# Este arquivo NÃO é versionado (.migration-runs/ está no .gitignore).\n\n' +
+      creds.map(c => `${c.email}\t${c.password}`).join('\n') + '\n'
+    let credWritten = false
+    try {
+      writeFileSync(credFile, fileBody, { mode: 0o600 })
+      try { chmodSync(credFile, 0o600) } catch { /* fs sem suporte a permissões POSIX */ }
+      credWritten = true
+    } catch (e) {
+      log('⚠️  Falha ao gravar o arquivo de credenciais:', (e as Error).message)
+    }
+
     log('\n' + '═'.repeat(70))
-    log('🔑 SENHAS PROVISÓRIAS INDIVIDUAIS (copie AGORA — não serão exibidas de novo)')
-    log('   Entregue cada uma ao respectivo usuário por canal seguro. Todos terão de')
-    log('   trocar a senha no primeiro acesso (mustChangePassword).')
-    log('─'.repeat(70))
-    for (const c of creds) log(`   ${c.email.padEnd(38)} ${c.password}`)
+    log(`🔑 ${creds.length} credencial(is) provisória(s) gerada(s).`)
+    if (credWritten) log(`   Arquivo (permissões 600): ${credFile}`)
+    log('   Entregue cada uma ao respectivo usuário por CANAL SEGURO.')
+    log('   Todos têm mustChangePassword = true (trocam a senha no 1º acesso).')
     log('═'.repeat(70))
+
+    if (PRINT_TEMP_PASSWORDS) {
+      log('\n⚠️  PRINT_TEMP_PASSWORDS=true — imprimindo senhas em CLARO no console.')
+      log('   NÃO use este modo em CI nem onde os logs sejam retidos/compartilhados.')
+      log('─'.repeat(70))
+      for (const c of creds) log(`   ${c.email.padEnd(38)} ${c.password}`)
+      log('═'.repeat(70))
+    }
   }
 
   log(`\n✅ Provisionamento concluído. Snapshot (status=completed): ${SNAP_FILE}`)

@@ -23,12 +23,25 @@ Este runbook descreve a implantação segura da mudança que:
 | `noemialemos3@gmail.com` | `ADMIN` | Imobiliária Lemos |
 | `lorensesso@gmail.com` + 4 corretores | `BROKER` | Imobiliária Lemos |
 
-Senhas: **individuais e aleatórias** por usuário (sem senha coletiva). O script imprime
-cada senha **uma única vez** ao final da execução real — entregue a cada pessoa por canal
-seguro. Todos têm `mustChangePassword` marcado (trocam no primeiro acesso e completam
+Senhas: **individuais e aleatórias** por usuário (sem senha coletiva). Por **segurança, as
+senhas NÃO são impressas no console** (evita vazamento em stdout/CI/logs). Na execução real,
+elas são gravadas num **arquivo local restrito** (permissões `600`):
+
+```
+.migration-runs/lemos-credentials-<stamp>.txt
+```
+
+O arquivo é criado **apenas na execução real** (nunca no `DRY_RUN`), **não** é versionado
+(`.migration-runs/` está no `.gitignore`) e **nunca** entra no snapshot JSON de rollback.
+Entregue cada credencial ao respectivo usuário por **canal seguro** e **apague o arquivo**
+depois. No console aparecem só: a quantidade de credenciais, o caminho do arquivo e os
+avisos. Todos têm `mustChangePassword` marcado (trocam no primeiro acesso e completam
 foto/telefone/dados). Usuário que já existe **não** tem a senha sobrescrita (a menos de
 `RESET_EXISTING_PASSWORDS=true`). Para forçar uma senha comum (não recomendado), use
 `FORCE_PASSWORD`.
+
+> Modo excepcional (debug): `PRINT_TEMP_PASSWORDS=true` imprime as senhas em claro no
+> console. **NÃO** use em CI nem onde os logs sejam retidos/compartilhados.
 
 ---
 
@@ -66,8 +79,9 @@ dela ainda promoveria `tomascesarlemossilva@gmail.com` a `SUPER_ADMIN` (reverten
    O script grava um snapshot em `./.migration-runs/` **ANTES da primeira escrita**
    (`status: "started"` com o estado ANTERIOR completo — plano/empresa/tenant/usuários/
    imóveis/contatos), atualiza o progresso por lote, e finaliza como `"completed"`
-   (ou `"failed"` com o último lote concluído, em caso de erro). Ao final imprime as
-   **senhas individuais UMA única vez** (nunca no snapshot) e revoga as sessões dos usuários.
+   (ou `"failed"` com o último lote concluído, em caso de erro). Grava as **senhas
+   individuais em `.migration-runs/lemos-credentials-<stamp>.txt`** (permissões 600, nunca
+   no console/snapshot) e revoga as sessões dos usuários.
 6. **Reinicie a API** e confirme que o gmail permanece `ADMIN` (não volta a `SUPER_ADMIN`):
    `SELECT email, role FROM users WHERE email IN ('tomas@agoraencontrei.com.br','tomascesarlemossilva@gmail.com');`
 7. **Invalidação de sessões antigas** — o script já apaga `sessions` + `refresh_tokens`
@@ -92,6 +106,7 @@ dela ainda promoveria `tomascesarlemossilva@gmail.com` a `SUPER_ADMIN` (reverten
 | `EXPECTED_PROPERTY_COUNT` | — | se definido, ABORTA se a seleção divergir |
 | `RESET_EXISTING_PASSWORDS` | `false` | redefine senha de usuários já existentes (senha individual) |
 | `FORCE_PASSWORD` | — | força uma senha comum (não recomendado; padrão = aleatória individual) |
+| `PRINT_TEMP_PASSWORDS` | `false` | imprime senhas em claro no console (debug; NÃO usar em CI/logs) |
 | `SUBDOMAIN` | `lemos` | subdomínio do tenant Lemos |
 
 ---
@@ -124,7 +139,7 @@ em lotes, e valide antes numa cópia do banco.
 - [ ] Nenhum contato-proprietário órfão entre empresas.
 
 **Operação**
-- [ ] Os 9 usuários conseguem logar com a senha individual entregue e são forçados a trocá-la.
+- [ ] Os 9 usuários conseguem logar com a senha individual (do arquivo `.migration-runs/lemos-credentials-*.txt`) e são forçados a trocá-la; o arquivo foi entregue por canal seguro e apagado.
 - [ ] Cada corretor (`BROKER`) enxerga só o próprio escopo.
 - [ ] O site continua publicando os imóveis; formulários criam leads na company Lemos.
 - [ ] Lemos não gera cobrança (nenhuma assinatura/subscription Asaas criada).
