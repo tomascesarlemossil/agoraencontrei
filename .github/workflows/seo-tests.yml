@@ -46,6 +46,12 @@ jobs:
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile
 
+      # Os testes da API importam @agoraencontrei/tomas-knowledge pelo dist/
+      # (gitignored), então o pacote precisa ser BUILDADO antes — senão os testes
+      # do Tomás quebram com ERR_MODULE_NOT_FOUND.
+      - name: Build workspace packages (tomas-knowledge)
+        run: pnpm --filter @agoraencontrei/tomas-knowledge build
+
       - name: Database — transform + dataset sweep
         run: pnpm --filter @agoraencontrei/database test
 
