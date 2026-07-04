@@ -318,7 +318,7 @@ export default async function TenantPage({
               )}
             </div>
             {hasProperties && (
-              <a href="#contato" className={`hidden sm:inline-flex items-center gap-1 text-sm font-semibold`} style={{ color: accentColor }}>
+              <a href="/imoveis" className={`hidden sm:inline-flex items-center gap-1 text-sm font-semibold`} style={{ color: accentColor }}>
                 Ver todos →
               </a>
             )}
@@ -386,11 +386,9 @@ export default async function TenantPage({
                         <span>🚗 {property.parkingSpaces} vg</span>
                       )}
                     </div>
-                    {/* CTA */}
+                    {/* CTA → página de detalhe do imóvel no site do parceiro */}
                     <a
-                      href={`https://wa.me/?text=Olá! Tenho interesse no imóvel "${property.title}" anunciado em ${tenant.name}.`}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                      href={`/imoveis/${property.slug}`}
                       className={`mt-3 block w-full text-center py-2 rounded-lg text-xs font-bold transition-all ${theme.buttonPrimary}`}
                     >
                       Ver detalhes
