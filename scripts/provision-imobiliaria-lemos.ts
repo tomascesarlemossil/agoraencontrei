@@ -27,9 +27,14 @@
  *   lote e finaliza como "completed" (ou "failed" com o último lote concluído em
  *   caso de erro). O backup do banco (Neon) continua OBRIGATÓRIO.
  *
+ * Com MOVE_CRM=true (padrão) TAMBÉM migra o CRM/operacional (leads, deals,
+ * contratos, locações, transações, contatos…) por companyId e REMAPEIA os
+ * responsáveis das contas @agoraencontrei.com.br antigas para as contas @gmail
+ * novas (ver CRM_USER_REMAP), desativando quem saiu (DEACTIVATE_SOURCE_USERS).
+ *
  * O que este script NÃO faz automaticamente (ver runbook):
- *   • NÃO move em massa dados operacionais só por companyId (leads, deals,
- *     contratos, locações, transações, contatos genéricos) — apenas REPORTA.
+ *   • NÃO move dados sensíveis/estruturais (SystemConfig, chaves, webhooks,
+ *     auditoria, chats, blog, leilões) — apenas REPORTA (SENSITIVE_REPORT_MODELS).
  *   • NÃO cancela cobranças/assinaturas Asaas existentes.
  *
  * ──────────────────────────────────────────────────────────────────
@@ -176,11 +181,64 @@ const SENSITIVE_REPORT_MODELS: { key: string; label: string }[] = [
   { key: 'auction', label: 'Leilões' },
 ]
 
+// ── Remapeamento de responsáveis do CRM (contas @agoraencontrei → contas @gmail) ─
+// A equipe que operava a carteira usava contas @agoraencontrei.com.br; os
+// registros de CRM movidos referenciam esses userIds. Depois de mover o CRM por
+// companyId, remapeamos cada campo de "responsável" da conta @agora antiga para
+// a conta @gmail correspondente (a nova identidade Lemos), para não sobrar
+// vínculo apontando para usuários que ficam na empresa de origem (plataforma).
+//   • tomas@agoraencontrei.com.br continua SUPER_ADMIN da PLATAFORMA (não migra);
+//     só os registros OPERACIONAIS dele passam para tomascesarlemossilva@gmail.com.
+//   • gabriel@ saiu da imobiliária → registros caem no admin principal e a conta
+//     dele é DESATIVADA (ver DEACTIVATE_SOURCE_USERS).
+const CRM_USER_REMAP: { from: string; to: string }[] = [
+  { from: 'noemia@agoraencontrei.com.br',  to: 'noemialemos3@gmail.com' },
+  { from: 'naira@agoraencontrei.com.br',   to: 'blognairalemos@gmail.com' },
+  { from: 'miriam@agoraencontrei.com.br',  to: 'miriamimobiliarialemos@gmail.com' },
+  { from: 'lucas@agoraencontrei.com.br',   to: 'lucasimobiliarialemos@gmail.com' },
+  { from: 'lorena@agoraencontrei.com.br',  to: 'lorensesso@gmail.com' },
+  { from: 'tomas@agoraencontrei.com.br',   to: 'tomascesarlemossilva@gmail.com' },
+  { from: 'nadia@agoraencontrei.com.br',   to: 'nadiaimobiliarialemos@gmail.com' },
+  { from: 'gabriel@agoraencontrei.com.br', to: 'imobiliarialemosfranca@gmail.com' }, // gabriel saiu → admin principal
+]
+
+// Campos escalares que referenciam User (FK, com e sem @relation Prisma) em cada
+// modelo do CRM_MOVE_MODELS. Extraído do schema — cobre brokerId/assignedToId/
+// userId/captorId/createdBy(Id)/uploadedBy/received-reversed-emittedBy, etc.
+const USER_FK_FIELDS: { key: string; fields: string[] }[] = [
+  { key: 'lead',               fields: ['brokerId', 'assignedToId'] },
+  { key: 'deal',               fields: ['brokerId'] },
+  { key: 'activity',           fields: ['userId'] },
+  { key: 'conversation',       fields: ['assignedToId'] },
+  { key: 'client',             fields: ['captorId'] },
+  { key: 'contractHistory',    fields: ['userId'] },
+  { key: 'rental',             fields: ['receivedBy', 'reversedBy'] },
+  { key: 'rescission',         fields: ['createdBy'] },
+  { key: 'agreement',          fields: ['createdBy'] },
+  { key: 'commission',         fields: ['brokerId'] },
+  { key: 'financing',          fields: ['brokerId'] },
+  { key: 'invoice',            fields: ['reversedBy', 'emittedBy'] },
+  { key: 'fiscalNote',         fields: ['createdById'] },
+  { key: 'iptuCarne',          fields: ['createdBy'] },
+  { key: 'accountPayable',     fields: ['createdBy'] },
+  { key: 'bankReconciliation', fields: ['createdBy'] },
+  { key: 'legalCaseUpdate',    fields: ['userId'] },
+  { key: 'propertyVisit',      fields: ['brokerId'] },
+  { key: 'document',           fields: ['uploadedBy'] },
+  { key: 'notification',       fields: ['userId'] },
+]
+
+// Contas de origem (@agoraencontrei.com.br) a DESATIVAR após o remapeamento
+// (pessoas que não operam mais a Lemos). Status → INACTIVE + sessões revogadas.
+// Não são apagadas (hard delete) para preservar histórico/auditoria e rollback.
+const DEACTIVATE_SOURCE_USERS = ['gabriel@agoraencontrei.com.br']
+
 const ADMINS = [
   { email: 'imobiliarialemosfranca@gmail.com', name: 'Imobiliária Lemos (Admin)' },
   { email: 'tomascesarlemossilva@gmail.com', name: 'Tomás César Lemos Silva' },
   { email: 'blognairalemos@gmail.com', name: 'Naira Lemos' },
   { email: 'noemialemos3@gmail.com', name: 'Noêmia Lemos' },
+  { email: 'nadiaimobiliarialemos@gmail.com', name: 'Nádia Lemos' },
 ]
 const BROKERS = [
   { email: 'lorensesso@gmail.com', name: 'Loren Sesso' },
@@ -436,6 +494,100 @@ async function moveCompanyScopedData(sourceCompanyId: string, targetCompanyId: s
   return total
 }
 
+// Resolve os pares do CRM_USER_REMAP (email → userId real). Pula pares cujo
+// usuário de ORIGEM não existe (nada a remapear) ou cujo DESTINO ainda não foi
+// provisionado (avisa). Ignora pares que resolvem para o mesmo id.
+async function resolveRemapPairs(): Promise<{ from: string; to: string; fromEmail: string; toEmail: string }[]> {
+  const emails = [...new Set(CRM_USER_REMAP.flatMap(r => [norm(r.from), norm(r.to)]))]
+  const rows = await prisma.user.findMany({ where: { email: { in: emails } }, select: { id: true, email: true } })
+  const idByEmail = new Map(rows.map(u => [u.email, u.id]))
+  const pairs: { from: string; to: string; fromEmail: string; toEmail: string }[] = []
+  for (const r of CRM_USER_REMAP) {
+    const fromEmail = norm(r.from), toEmail = norm(r.to)
+    const fromId = idByEmail.get(fromEmail), toId = idByEmail.get(toEmail)
+    if (!fromId) continue // origem não existe → não há registros dela para remapear
+    if (!toId) { log(`   ⚠️  remap: destino ausente (${toEmail}) — par ${fromEmail} NÃO remapeado.`); continue }
+    if (fromId === toId) continue
+    pairs.push({ from: fromId, to: toId, fromEmail, toEmail })
+  }
+  return pairs
+}
+
+// Execução real: remapeia os campos de responsável dos registros já movidos
+// (scope = company de DESTINO) das contas @agora antigas para as @gmail novas.
+// updateMany por (modelo, campo, par) — atômico e idempotente. Retorna o total.
+async function remapUserRefs(scopeCompanyId: string, snap: Snapshot): Promise<number> {
+  const pairs = await resolveRemapPairs()
+  if (!pairs.length) { log('   • remap: nada a fazer (sem pares resolvidos).'); return 0 }
+  let total = 0
+  for (const m of USER_FK_FIELDS) {
+    if (SKIP_CRM_MODELS.has(m.key)) continue
+    for (const field of m.fields) {
+      for (const p of pairs) {
+        try {
+          const res = await (prisma as any)[m.key].updateMany({
+            where: { companyId: scopeCompanyId, [field]: p.from },
+            data: { [field]: p.to },
+          })
+          if (res.count > 0) {
+            total += res.count
+            log(`   • ${m.key}.${field}: ${res.count} (${p.fromEmail} → ${p.toEmail})`)
+          }
+        } catch (e) {
+          log(`   • ${m.key}.${field}: (ignorado — ${(e as Error).message.slice(0, 60)})`)
+        }
+      }
+    }
+  }
+  snap.progress.crmRemapped = total; writeSnapshot(snap, true)
+  return total
+}
+
+// Desativa contas de origem que não operam mais (status INACTIVE + revoga
+// sessões/refresh tokens). NÃO faz hard delete — preserva histórico/rollback.
+async function deactivateSourceUsers(snap: Snapshot): Promise<number> {
+  if (!DEACTIVATE_SOURCE_USERS.length) return 0
+  const emails = DEACTIVATE_SOURCE_USERS.map(norm)
+  const rows = await prisma.user.findMany({ where: { email: { in: emails } }, select: { id: true, email: true } })
+  if (!rows.length) return 0
+  const ids = rows.map(r => r.id)
+  await prisma.user.updateMany({ where: { id: { in: ids } }, data: { status: 'INACTIVE' } })
+  await prisma.session.deleteMany({ where: { userId: { in: ids } } }).catch(() => ({ count: 0 }))
+  await prisma.refreshToken.deleteMany({ where: { userId: { in: ids } } }).catch(() => ({ count: 0 }))
+  rows.forEach(r => log(`   • conta desativada: ${r.email}`))
+  snap.progress.usersDeactivated = rows.length; writeSnapshot(snap, true)
+  return rows.length
+}
+
+// Dry-run: conta quantos vínculos seriam remapeados. No dry-run nada foi movido,
+// então o scope de contagem é a company de ORIGEM.
+async function reportUserRemap(sourceCompanyId: string | null) {
+  if (!sourceCompanyId || !MOVE_CRM) return
+  log('\n🔗 Remapeamento de responsáveis do CRM (contas @agora → @gmail):')
+  const pairs = await resolveRemapPairs()
+  if (!pairs.length) {
+    log('   (nenhum par resolvido — confira se as contas de origem/destino existem)')
+    return
+  }
+  for (const p of pairs) log(`   • ${p.fromEmail.padEnd(34)} → ${p.toEmail}`)
+  let total = 0
+  const lines: string[] = []
+  for (const m of USER_FK_FIELDS) {
+    if (SKIP_CRM_MODELS.has(m.key)) continue
+    for (const field of m.fields) {
+      for (const p of pairs) {
+        try {
+          const n = await (prisma as any)[m.key].count({ where: { companyId: sourceCompanyId, [field]: p.from } })
+          if (n > 0) { total += n; lines.push(`   • ${m.key}.${field}: ${n} (${p.fromEmail} → ${p.toEmail})`) }
+        } catch { /* modelo/campo ausente — ignora */ }
+      }
+    }
+  }
+  lines.forEach(l => log(l))
+  log(`   → TOTAL de vínculos a remapear: ${total}`)
+  if (DEACTIVATE_SOURCE_USERS.length) log(`   • Contas a DESATIVAR (saíram da imobiliária): ${DEACTIVATE_SOURCE_USERS.join(', ')}`)
+}
+
 // ── Snapshot (pré-escrita, progresso, conclusão) ────────────────────────────
 type SnapStatus = 'started' | 'completed' | 'failed'
 interface Snapshot {
@@ -451,7 +603,7 @@ interface Snapshot {
     contacts: { id: string; oldCompanyId: string }[]
     sharedOwnersKept: string[]
   }
-  progress: { propertiesTotal: number; propertiesDone: number; lastBatchIndex: number; contactsMoved: number; crmMoved: number; sessionsRevoked: number }
+  progress: { propertiesTotal: number; propertiesDone: number; lastBatchIndex: number; contactsMoved: number; crmMoved: number; crmRemapped: number; usersDeactivated: number; sessionsRevoked: number }
   targetCompanyId?: string | null
 }
 let SNAP_FILE = ''
@@ -468,7 +620,7 @@ function initSnapshot(plan: Plan): Snapshot {
       contacts: plan.movableOwners.map(c => ({ id: c.id, oldCompanyId: c.oldCompanyId })),
       sharedOwnersKept: plan.sharedOwners,
     },
-    progress: { propertiesTotal: plan.properties.length, propertiesDone: 0, lastBatchIndex: -1, contactsMoved: 0, crmMoved: 0, sessionsRevoked: 0 },
+    progress: { propertiesTotal: plan.properties.length, propertiesDone: 0, lastBatchIndex: -1, contactsMoved: 0, crmMoved: 0, crmRemapped: 0, usersDeactivated: 0, sessionsRevoked: 0 },
   }
 }
 // `required=true` → falha ao gravar ABORTA (impede modificar o banco sem um
@@ -636,6 +788,16 @@ async function executePlan(plan: Plan, snap: Snapshot, creds: { email: string; p
     log('📦 Migrando CRM/operacional (por companyId)…')
     const moved = await moveCompanyScopedData(SOURCE_COMPANY_ID, companyId, snap)
     log(`📦 CRM/operacional migrado: ${moved} registros`)
+
+    // 7.6) Remapear responsáveis: contas @agora antigas → contas @gmail novas.
+    //      Roda DEPOIS do move (scope = company de destino).
+    log('🔗 Remapeando responsáveis do CRM (contas @agora → @gmail)…')
+    const remapped = await remapUserRefs(companyId, snap)
+    log(`🔗 Vínculos remapeados: ${remapped}`)
+
+    // 7.7) Desativar contas de origem que saíram da imobiliária (ex.: gabriel@).
+    const deact = await deactivateSourceUsers(snap)
+    if (deact > 0) log(`🚫 Contas desativadas: ${deact}`)
   }
   // 8) Revogar sessões dos usuários provisionados (inclui o gmail que perde SUPER_ADMIN)
   const provisionedIds = plan.users.map(u => u.id).filter(Boolean) as string[]
@@ -685,6 +847,7 @@ async function main() {
     reportPlan(plan)
     await reportRelatedData(plan.properties.map(p => p.id), SOURCE_COMPANY_ID || null)
     await reportCrmMove(SOURCE_COMPANY_ID || null)
+    await reportUserRemap(SOURCE_COMPANY_ID || null)
     log('\n🔍 DRY-RUN concluído (nada foi gravado — nem snapshot).')
     log('   Revise os números e rode com DRY_RUN=false CONFIRM_PRODUCTION_MIGRATION=IMOBILIARIA_LEMOS.')
     return
