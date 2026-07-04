@@ -400,6 +400,10 @@ export const DEFAULT_SYSTEM_CONFIG = {
     // controla o alinhamento do bloco de marca no cabeçalho.
     logoIconUrl:       '',
     logoWordmarkUrl:   '',
+    // logoFullUrl: imagem única (emblema + escrita, como no login) exibida no
+    // canto esquerdo do cabeçalho da home. Quando definida, substitui o par
+    // ícone + marca escrita. Vazio → usa o logo completo padrão do AE.
+    logoFullUrl:       '',
     logoVisible:       true,
     logoShowText:      true,
     logoPosition:      'left',
@@ -595,7 +599,7 @@ export default async function systemConfigRoutes(app: FastifyInstance) {
     for (const field of ['heroVideoUrl', 'heroVideoType', 'heroImageUrl'] as const) {
       if (newSite[field] !== undefined) heroMirror[field] = newSite[field]
     }
-    for (const field of ['logoUrl', 'logoIconUrl', 'logoWordmarkUrl', 'logoVisible', 'logoShowText', 'logoPosition'] as const) {
+    for (const field of ['logoUrl', 'logoIconUrl', 'logoWordmarkUrl', 'logoFullUrl', 'logoVisible', 'logoShowText', 'logoPosition'] as const) {
       if (newCompany[field] !== undefined) heroMirror[field] = newCompany[field]
     }
 

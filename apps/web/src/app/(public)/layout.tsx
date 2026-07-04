@@ -155,6 +155,7 @@ export default async function PublicLayout({ children }: { children: React.React
       <Navbar
         logoUrl={brand.logoUrl}
         wordmarkUrl={brand.wordmarkUrl}
+        fullLogoUrl={brand.fullLogoUrl}
         companyName={brand.companyName}
         hasCustomLogo={brand.hasCustomLogo}
         visible={brand.visible}

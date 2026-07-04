@@ -1070,6 +1070,7 @@ export default async function publicRoutes(app: FastifyInstance) {
       // ── Marca do cabeçalho (ícone + escrita, editável no admin) ────────
       logoIconUrl:     settings.logoIconUrl     ?? companyConfig.logoIconUrl     ?? null,
       logoWordmarkUrl: settings.logoWordmarkUrl ?? companyConfig.logoWordmarkUrl ?? null,
+      logoFullUrl:     settings.logoFullUrl     ?? companyConfig.logoFullUrl     ?? null,
       logoVisible:     settings.logoVisible     ?? companyConfig.logoVisible     ?? true,
       logoShowText:    settings.logoShowText    ?? companyConfig.logoShowText    ?? true,
       logoPosition:    settings.logoPosition    ?? companyConfig.logoPosition    ?? 'left',
