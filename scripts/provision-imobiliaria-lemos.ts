@@ -217,11 +217,12 @@ const USER_FK_FIELDS: { key: string; fields: string[] }[] = [
   { key: 'agreement',          fields: ['createdBy'] },
   { key: 'commission',         fields: ['brokerId'] },
   { key: 'financing',          fields: ['brokerId'] },
-  { key: 'invoice',            fields: ['reversedBy', 'emittedBy'] },
+  { key: 'invoice',            fields: ['paidBy', 'reversedBy', 'emittedBy'] },
   { key: 'fiscalNote',         fields: ['createdById'] },
   { key: 'iptuCarne',          fields: ['createdBy'] },
   { key: 'accountPayable',     fields: ['createdBy'] },
   { key: 'bankReconciliation', fields: ['createdBy'] },
+  { key: 'formalNotice',       fields: ['operator'] },
   { key: 'legalCaseUpdate',    fields: ['userId'] },
   { key: 'propertyVisit',      fields: ['brokerId'] },
   { key: 'document',           fields: ['uploadedBy'] },
@@ -534,7 +535,12 @@ async function remapUserRefs(scopeCompanyId: string, snap: Snapshot): Promise<nu
             log(`   • ${m.key}.${field}: ${res.count} (${p.fromEmail} → ${p.toEmail})`)
           }
         } catch (e) {
-          log(`   • ${m.key}.${field}: (ignorado — ${(e as Error).message.slice(0, 60)})`)
+          // Extrai a linha mais útil do erro do Prisma (ex.: coluna inexistente
+          // por drift do schema) em vez do prefixo genérico "Invalid invocation".
+          const msg = (e as Error).message
+          const detail = msg.split('\n').map(l => l.trim())
+            .find(l => /column|does not exist|Unknown|Argument|constraint/i.test(l)) || msg.replace(/\s+/g, ' ').slice(0, 120)
+          log(`   • ${m.key}.${field}: (ignorado — ${detail})`)
         }
       }
     }
