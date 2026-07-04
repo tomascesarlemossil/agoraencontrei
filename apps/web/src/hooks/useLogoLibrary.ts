@@ -71,16 +71,36 @@ function humanizeProcessorError(status: number, payload: { error?: string; detai
   if (detail.includes('Token invalido') || detail.includes('Token inválido') || detail.includes('HTTP 401')) {
     return 'Os tokens do microserviço de imagens estão diferentes entre api e image-processor. Configure IMAGE_PROCESSOR_TOKEN com o MESMO valor nos dois serviços do Railway.'
   }
-  if (detail.includes('ECONNREFUSED') || detail.includes('fetch failed') || detail.includes('localhost:3200')) {
+  // DNS não resolve o host privado do Railway (getaddrinfo ENOTFOUND
+  // image-processor.railway.internal) — o serviço image-processor não está no
+  // ar ou não está na mesma rede privada do projeto. É o sintoma clássico de
+  // "logo/marca d'água caiu em produção".
+  if (detail.includes('ENOTFOUND') || detail.includes('getaddrinfo') || detail.includes('EAI_AGAIN') || detail.includes('railway.internal')) {
+    return 'O microserviço de imagens está fora do ar (host não resolve na rede do Railway). Verifique se o serviço image-processor está deployado e na mesma rede privada, e confira IMAGE_PROCESSOR_URL.'
+  }
+  if (detail.includes('ECONNREFUSED') || detail.includes('fetch failed') || detail.includes('ETIMEDOUT') || detail.includes('ECONNRESET') || detail.includes('localhost:3200')) {
     return 'A api não consegue alcançar o microserviço de imagens. Configure IMAGE_PROCESSOR_URL no Railway (ex: http://image-processor.railway.internal:3200).'
   }
   if (status === 401 || status === 403) {
     return 'Sessão expirada. Faça login novamente.'
   }
-  if (error === 'IMAGE_PROCESSOR_UNAVAILABLE') {
-    return `Microserviço de imagens indisponível: ${detail || 'causa desconhecida'}.`
+  if (status === 503 || error === 'IMAGE_PROCESSOR_UNAVAILABLE') {
+    return `Microserviço de imagens indisponível no momento: ${detail || 'tente novamente em instantes'}.`
   }
   return detail || error || `HTTP ${status}`
+}
+
+/**
+ * Browser-level fetch rejections (API totalmente inalcançável, offline, CORS)
+ * chegam como TypeError "Failed to fetch". Traduz para algo acionável em vez
+ * de vazar a mensagem crua do runtime.
+ */
+function humanizeNetworkError(e: unknown): string {
+  const msg = (e as { message?: string })?.message || ''
+  if (/Failed to fetch|NetworkError|Load failed|ERR_NETWORK/i.test(msg)) {
+    return 'Não foi possível conectar ao servidor de imagens. Verifique sua conexão ou tente novamente em instantes.'
+  }
+  return msg || 'Erro ao carregar logos'
 }
 
 export function useLogoLibrary(token: string | null | undefined): UseLogoLibrary {
@@ -112,9 +132,11 @@ export function useLogoLibrary(token: string | null | undefined): UseLogoLibrary
       const data = await res.json() as { logos: LogoRecord[] }
       setLogos(Array.isArray(data?.logos) ? data.logos : [])
     } catch (e: any) {
-      // Network failures come through here as TypeError. Any Error we threw
-      // above already has a user-friendly message — just propagate it.
-      setError(e?.message || 'Erro ao carregar logos')
+      // Network failures come through here as TypeError ("Failed to fetch").
+      // humanizeNetworkError translates those; Errors we threw above already
+      // carry a friendly message and pass through unchanged. Either way the
+      // list degrades to empty so the UI shows the message, not a crash.
+      setError(humanizeNetworkError(e))
       setLogos([])
     } finally {
       setLoading(false)

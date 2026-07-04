@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { ArrowRight, Building2, Calculator, Home, MapPin, ShieldCheck, TrendingUp } from 'lucide-react'
+import { ArrowRight, Building2, Calculator, MapPin, ShieldCheck, TrendingUp } from 'lucide-react'
 import LeilaoDetailClient from './LeilaoDetailClient'
 
 type Props = { params: Promise<{ slug: string }> }
@@ -265,7 +265,7 @@ function LandingPage({ config, auctions }: { config: LandingConfig; auctions: an
             <div className="grid gap-5 md:grid-cols-3">
               {auctions.slice(0, 9).map((a: any) => (
                 <Link key={a.id ?? a.slug} href={`/leiloes/${a.slug}`} className="overflow-hidden rounded-2xl border bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg">
-                  {a.coverImage ? <img src={a.coverImage} alt={a.title} className="h-40 w-full object-cover" /> : <div className="flex h-40 items-center justify-center bg-gray-100"><Home className="h-10 w-10 text-gray-300" /></div>}
+                  <img src={a.coverImage || '/leilao-cover-default.jpg'} alt={a.title} className="h-40 w-full object-cover" />
                   <div className="p-5">
                     <div className="mb-2 flex flex-wrap gap-2 text-xs"><span className="rounded-full bg-yellow-100 px-2 py-1 font-bold text-yellow-800">{a.source || 'Leilão'}</span>{a.discountPercent ? <span className="rounded-full bg-red-50 px-2 py-1 font-bold text-red-600">-{a.discountPercent}%</span> : null}</div>
                     <h3 className="line-clamp-2 text-sm font-bold text-gray-900">{a.title}</h3>

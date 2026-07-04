@@ -86,11 +86,21 @@ export default function LeilaoDetailClient({ auction }: { auction: any }) {
             {/* Image Gallery */}
             <div className="bg-white rounded-xl overflow-hidden shadow-sm">
               <div className="relative h-[400px] bg-gray-100">
-                {auction.coverImage ? (
-                  <img src={auction.coverImage} alt={auction.title} className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-7xl">🏠</div>
-                )}
+                {/* Foto real quando existe; senão, o banner padrão de leilão
+                    (imagem ilustrativa). onError cai no mesmo banner se a URL
+                    da Caixa/leiloeiro quebrar. */}
+                <img
+                  src={auction.coverImage || '/leilao-cover-default.jpg'}
+                  alt={auction.title}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    const img = e.target as HTMLImageElement
+                    if (!img.dataset.fallback) {
+                      img.dataset.fallback = '1'
+                      img.src = '/leilao-cover-default.jpg'
+                    }
+                  }}
+                />
                 {/* Badges */}
                 <div className="absolute top-4 left-4 flex gap-2">
                   <span className="px-3 py-1 rounded-full text-sm font-semibold bg-white shadow">
