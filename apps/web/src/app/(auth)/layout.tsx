@@ -10,20 +10,19 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
     <div className="min-h-[100dvh] flex items-center justify-center p-4" style={{ background: 'linear-gradient(135deg, #0C2412 0%, #143A1F 50%, #0E2A15 100%)' }}>
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="flex items-center justify-center mb-4">
+          {/* Logo AgoraEncontrei completo (emblema + wordmark), PNG transparente
+              sem fundo branco — dimensionado para ficar legível no mobile e no
+              desktop sobre o fundo verde escuro. */}
+          <div className="flex justify-center">
             <Image
-              src="/brand/ae-icon-round.png"
-              alt="AgoraEncontrei"
-              width={88}
-              height={88}
-              className="object-contain drop-shadow-2xl"
+              src="/brand/ae-logo-full-light.png"
+              alt="AgoraEncontrei — Marketplace Imobiliário"
+              width={760}
+              height={275}
+              className="w-auto h-auto max-w-[260px] sm:max-w-[320px] object-contain drop-shadow-2xl"
               priority
             />
           </div>
-          <div className="flex justify-center">
-            <Image src="/brand/ae-wordmark.png" alt="Agora Encontrei Marketplace" width={168} height={45} className="h-9 w-auto" priority />
-          </div>
-          <p className="text-white/50 text-sm mt-1">Marketplace Imobiliário</p>
         </div>
         {children}
       </div>

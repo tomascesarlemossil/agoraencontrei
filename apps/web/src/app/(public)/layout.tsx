@@ -11,7 +11,6 @@ import {
   resolveSiteColors,
   resolveSiteBrand,
   DEFAULT_FOOTER_LOGO_URL,
-  DEFAULT_WORDMARK_URL as DEFAULT_FOOTER_WORDMARK_URL,
 } from '@/lib/site-settings'
 
 export const metadata: Metadata = {
@@ -191,9 +190,11 @@ export default async function PublicLayout({ children }: { children: React.React
                         <span className="text-[10px] font-medium" style={{ color: '#9ca3af', letterSpacing: '0.04em' }}>Marketplace</span>
                       </div>
                     ) : (
-                      // Marca escrita padrão (imagem), editável pelo admin.
+                      // Marca escrita padrão (imagem), editável pelo admin. O
+                      // rodapé é verde escuro → usa a wordmark clara (creme +
+                      // dourado) para "Agora Encontrei" ficar legível.
                       <img
-                        src={brand.wordmarkUrl ?? DEFAULT_FOOTER_WORDMARK_URL}
+                        src={brand.wordmarkUrl ?? '/brand/ae-wordmark-light.png'}
                         alt="Agora Encontrei Marketplace"
                         width={148}
                         height={40}
