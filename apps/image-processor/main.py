@@ -136,23 +136,25 @@ async def _read_upload(file: UploadFile) -> bytes:
     return bytes(buf)
 
 
-def resolve_logo_path(logo_id: Optional[str]) -> Optional[str]:
+def resolve_logo_path(logo_id: Optional[str], company: Optional[str] = None) -> Optional[str]:
     """
     Returns the filesystem path of a given logo id, or the default logo when
-    `logo_id` is empty/None. Falls back to the legacy single-file layout
-    (logo.png / logo.jpg / ...) when nothing has been migrated to the new
-    library yet, so old installs keep working until the user uploads
-    something new.
+    `logo_id` is empty/None. Scoped by `company` (multi-tenant isolation): a
+    logo id that belongs to another company is treated as unknown, and the
+    default falls back to `company`'s own default. Falls back to the legacy
+    single-file layout (logo.png / logo.jpg / ...) when nothing has been
+    migrated to the new library yet, so old installs keep working until the
+    user uploads something new.
     """
     if logo_id:
-        p = logos_get_path(logo_id)
+        p = logos_get_path(logo_id, company)
         if p:
             return p
-        # Fall through: ignore unknown ids instead of raising — matches the
-        # previous "best-effort" behaviour of the legacy helper.
-    default = logos_get_default()
+        # Fall through: ignore unknown / cross-tenant ids instead of raising —
+        # matches the previous "best-effort" behaviour of the legacy helper.
+    default = logos_get_default(company)
     if default:
-        return logos_get_path(default["id"])
+        return logos_get_path(default["id"], company)
     # Legacy fallback — look for the hard-coded single-file logo left over
     # from before the logo library existed.
     for ext in ['png', 'jpg', 'jpeg', 'webp']:
@@ -193,6 +195,7 @@ class PreviewRequest(BaseModel):
     filter_id: str
     apply_logo: bool = True
     logo_id: Optional[str] = None          # None => use default logo
+    company: Optional[str] = None          # multi-tenant scope (companyId)
     logo_position: str = "bottom-right"
     logo_size_percent: float = 8.0         # % da menor dimensao da foto
     logo_opacity: float = 0.85             # 0.0 - 1.0
@@ -204,7 +207,7 @@ async def preview_filter(req: PreviewRequest):
     """Gera preview com filtro. Retorna base64 para exibicao imediata."""
     try:
         image_bytes = fetch_image_bytes(req.image_url)
-        logo_path = resolve_logo_path(req.logo_id) if req.apply_logo else None
+        logo_path = resolve_logo_path(req.logo_id, req.company) if req.apply_logo else None
         result = generate_preview(
             image_bytes=image_bytes,
             filter_id=req.filter_id,
@@ -228,6 +231,7 @@ async def preview_filter_upload(
     filter_id: str = Form(...),
     apply_logo: bool = Form(True),
     logo_id: Optional[str] = Form(None),
+    company: Optional[str] = Form(None),
     logo_position: str = Form("bottom-right"),
     logo_size_percent: float = Form(8.0),
     logo_opacity: float = Form(0.85),
@@ -236,7 +240,7 @@ async def preview_filter_upload(
     """Preview a partir de arquivo enviado diretamente."""
     try:
         image_bytes = await _read_upload(file)
-        logo_path = resolve_logo_path(logo_id) if apply_logo else None
+        logo_path = resolve_logo_path(logo_id, company) if apply_logo else None
         result = generate_preview(
             image_bytes=image_bytes,
             filter_id=filter_id,
@@ -259,6 +263,7 @@ class ProcessRequest(BaseModel):
     filter_id: str
     apply_logo: bool = True
     logo_id: Optional[str] = None
+    company: Optional[str] = None          # multi-tenant scope (companyId)
     logo_position: str = "bottom-right"
     logo_size_percent: float = 8.0
     logo_opacity: float = 0.85
@@ -270,7 +275,7 @@ async def process_single(req: ProcessRequest):
     """Processa uma imagem em qualidade completa."""
     try:
         image_bytes = fetch_image_bytes(req.image_url)
-        logo_path = resolve_logo_path(req.logo_id) if req.apply_logo else None
+        logo_path = resolve_logo_path(req.logo_id, req.company) if req.apply_logo else None
         result = process_image(
             image_bytes=image_bytes,
             filter_id=req.filter_id,
@@ -293,6 +298,7 @@ class BatchProcessRequest(BaseModel):
     filter_id: str
     apply_logo: bool = True
     logo_id: Optional[str] = None
+    company: Optional[str] = None          # multi-tenant scope (companyId)
     logo_position: str = "bottom-right"
     logo_size_percent: float = 8.0
     logo_opacity: float = 0.85
@@ -306,7 +312,7 @@ async def process_batch(req: BatchProcessRequest):
         raise HTTPException(status_code=400, detail=f"Maximo {MAX_BATCH_ITEMS} URLs por lote")
     results = []
     errors = []
-    logo_path = resolve_logo_path(req.logo_id) if req.apply_logo else None
+    logo_path = resolve_logo_path(req.logo_id, req.company) if req.apply_logo else None
 
     for i, url in enumerate(req.image_urls):
         try:
@@ -374,15 +380,16 @@ def _serialize_logo(rec: dict) -> dict:
 
 
 @app.get("/logos", dependencies=[Depends(verify_token)])
-def logos_list_endpoint():
-    """Returns the library of registered logos."""
-    return {"logos": [_serialize_logo(r) for r in logos_list()]}
+def logos_list_endpoint(company: Optional[str] = None):
+    """Returns the logo library OF `company` (multi-tenant isolation)."""
+    return {"logos": [_serialize_logo(r) for r in logos_list(company)]}
 
 
 @app.post("/logos", dependencies=[Depends(verify_token)])
 async def logos_upload_endpoint(
     file: UploadFile = File(...),
     name: Optional[str] = Form(None),
+    company: Optional[str] = Form(None),
 ):
     """Uploads a new logo. Accepts any image format Pillow handles, plus PDF.
     The file is normalised to PNG-RGBA on disk regardless of input format."""
@@ -406,26 +413,27 @@ async def logos_upload_endpoint(
     content = await _read_upload(file)
     display_name = (name or filename or "Logo sem nome").rsplit(".", 1)[0]
     try:
-        rec = logos_save(display_name, content, mime or f"image/{ext}")
+        rec = logos_save(display_name, content, mime or f"image/{ext}", company)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     return _serialize_logo(rec)
 
 
 @app.get("/logos/{logo_id}", dependencies=[Depends(verify_token)])
-def logos_get_endpoint(logo_id: str):
-    rec = logos_get(logo_id)
+def logos_get_endpoint(logo_id: str, company: Optional[str] = None):
+    rec = logos_get(logo_id, company)
     if rec is None:
         raise HTTPException(status_code=404, detail="Logo nao encontrado")
     return _serialize_logo(rec)
 
 
 @app.get("/logos/{logo_id}/file", dependencies=[Depends(verify_token)])
-def logos_file_endpoint(logo_id: str):
+def logos_file_endpoint(logo_id: str, company: Optional[str] = None):
     """Serves the raw PNG bytes of a logo. Used by the web UI as a
-    thumbnail source; also handy for debugging."""
+    thumbnail source; also handy for debugging. Scoped by `company` so a
+    partner can only fetch its own logo bytes."""
     from fastapi.responses import Response
-    path = logos_get_path(logo_id)
+    path = logos_get_path(logo_id, company)
     if not path:
         raise HTTPException(status_code=404, detail="Logo nao encontrado")
     with open(path, "rb") as f:
@@ -434,8 +442,8 @@ def logos_file_endpoint(logo_id: str):
 
 
 @app.delete("/logos/{logo_id}", dependencies=[Depends(verify_token)])
-def logos_delete_endpoint(logo_id: str):
-    removed = logos_delete(logo_id)
+def logos_delete_endpoint(logo_id: str, company: Optional[str] = None):
+    removed = logos_delete(logo_id, company)
     if not removed:
         raise HTTPException(status_code=404, detail="Logo nao encontrado")
     return {"ok": True}
@@ -447,25 +455,28 @@ class LogoPatchRequest(BaseModel):
 
 
 @app.patch("/logos/{logo_id}", dependencies=[Depends(verify_token)])
-def logos_patch_endpoint(logo_id: str, req: LogoPatchRequest):
-    """Renames a logo and/or toggles the default flag."""
+def logos_patch_endpoint(logo_id: str, req: LogoPatchRequest, company: Optional[str] = None):
+    """Renames a logo and/or toggles the default flag (scoped by company)."""
     updated = None
     if req.name is not None:
-        updated = logos_rename(logo_id, req.name)
+        updated = logos_rename(logo_id, req.name, company)
     if req.is_default is True:
-        updated = logos_set_default(logo_id)
-    if updated is None and logos_get(logo_id) is None:
+        updated = logos_set_default(logo_id, company)
+    if updated is None and logos_get(logo_id, company) is None:
         raise HTTPException(status_code=404, detail="Logo nao encontrado")
-    final = logos_get(logo_id)
+    final = logos_get(logo_id, company)
     return _serialize_logo(final) if final else {"ok": True}
 
 
 # ── Backwards-compat: old single-logo endpoint still works ───────────────
 @app.post("/upload-logo", dependencies=[Depends(verify_token)])
-async def upload_logo_legacy(file: UploadFile = File(...)):
+async def upload_logo_legacy(
+    file: UploadFile = File(...),
+    company: Optional[str] = Form(None),
+):
     """Legacy single-file upload. Creates a new entry in the logo library
     (marked as default when it's the first one). Prefer POST /logos."""
-    return await logos_upload_endpoint(file=file, name=None)
+    return await logos_upload_endpoint(file=file, name=None, company=company)
 
 
 @app.post("/import-filter", dependencies=[Depends(verify_token)])

@@ -1,0 +1,39 @@
+name: image-processor-tests
+
+# Roda os testes do microserviço Python (Pillow/PIL) que garantem:
+#  - preservação de alpha em logos transparentes (sem "quadrado branco");
+#  - isolamento multi-tenant da biblioteca de logos por companyId.
+on:
+  pull_request:
+    paths:
+      - 'apps/image-processor/**'
+      - '.github/workflows/image-processor-tests.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'apps/image-processor/**'
+      - '.github/workflows/image-processor-tests.yml'
+
+# Menor privilégio possível: o job só lê o código (checkout). Sem isso, o
+# GITHUB_TOKEN herda permissões amplas (alerta CodeQL "Workflow does not
+# contain permissions").
+permissions:
+  contents: read
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/image-processor
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      # Os testes só importam logos.py (PIL + stdlib), então instalamos apenas
+      # Pillow + pytest — mantém o job rápido e evita builds pesados (numpy/PyMuPDF).
+      - name: Install test deps
+        run: pip install "pillow==12.1.1" "pytest==8.3.3"
+      - name: Run tests
+        run: pytest -q

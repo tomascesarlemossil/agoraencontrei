@@ -9,6 +9,16 @@ import FormData from 'form-data'
 
 const IMAGE_PROCESSOR_URL = process.env.IMAGE_PROCESSOR_URL ?? 'http://localhost:3200'
 const IMAGE_PROCESSOR_TOKEN = process.env.IMAGE_PROCESSOR_TOKEN
+// Teto de tempo para qualquer chamada ao microserviço. Sem isso, um
+// image-processor pendurado (deploy no ar mas travado) segura a request da API
+// até o timeout do cliente — o usuário fica com o editor "carregando" para
+// sempre. Com o AbortSignal, falha rápido e cai no 503 tratado abaixo.
+const IMAGE_PROCESSOR_TIMEOUT_MS = Number(process.env.IMAGE_PROCESSOR_TIMEOUT_MS ?? 20000)
+
+/** Fetch com timeout via AbortSignal (node-fetch v3 não aceita `timeout`). */
+function timeoutSignal(ms = IMAGE_PROCESSOR_TIMEOUT_MS): AbortSignal {
+  return AbortSignal.timeout(ms)
+}
 
 async function proxyToProcessor(path: string, options: RequestInit = {}) {
   // Injects the shared-secret header automatically so every call from this
@@ -20,7 +30,11 @@ async function proxyToProcessor(path: string, options: RequestInit = {}) {
   }
   if (IMAGE_PROCESSOR_TOKEN) headers['x-image-processor-token'] = IMAGE_PROCESSOR_TOKEN
 
-  const res = await fetch(`${IMAGE_PROCESSOR_URL}${path}`, { ...options, headers } as any)
+  const res = await fetch(`${IMAGE_PROCESSOR_URL}${path}`, {
+    signal: timeoutSignal(),
+    ...options,
+    headers,
+  } as any)
   if (!res.ok) {
     const text = await res.text()
     throw new Error(`Image processor error ${res.status}: ${text}`)
@@ -60,10 +74,12 @@ export default async function photoEditorRoutes(app: FastifyInstance) {
         ...logoControls,
         preview_width: z.number().int().min(400).max(1600).default(800),
       }).parse(req.body)
+      // Multi-tenant: sempre escopa o logo pela empresa do JWT — nunca deixa o
+      // cliente escolher a empresa (evita usar/vazar logo de outro parceiro).
       const data = await proxyToProcessor('/preview', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
+        body: JSON.stringify({ ...body, company: req.user.cid }),
       })
       return reply.send(data)
     } catch (e: any) {
@@ -96,6 +112,7 @@ export default async function photoEditorRoutes(app: FastifyInstance) {
       form.append('filter_id', filterId)
       form.append('apply_logo', applyLogo ? 'true' : 'false')
       if (logoId) form.append('logo_id', logoId)
+      form.append('company', req.user.cid) // escopo multi-tenant do logo
       form.append('logo_position', logoPosition)
       form.append('logo_size_percent', String(logoSizePercent))
       form.append('logo_opacity', String(logoOpacity))
@@ -105,6 +122,7 @@ export default async function photoEditorRoutes(app: FastifyInstance) {
         method: 'POST',
         body: form as any,
         headers: form.getHeaders(),
+        signal: timeoutSignal(),
       })
 
       if (!res.ok) {
@@ -131,7 +149,7 @@ export default async function photoEditorRoutes(app: FastifyInstance) {
       const data = await proxyToProcessor('/process', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
+        body: JSON.stringify({ ...body, company: req.user.cid }),
       })
       return reply.send(data)
     } catch (e: any) {
@@ -151,7 +169,7 @@ export default async function photoEditorRoutes(app: FastifyInstance) {
       const data = await proxyToProcessor('/process/batch', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
+        body: JSON.stringify({ ...body, company: req.user.cid }),
       })
       return reply.send(data)
     } catch (e: any) {
@@ -170,10 +188,14 @@ export default async function photoEditorRoutes(app: FastifyInstance) {
   const withToken = (): Record<string, string> => (
     processorToken ? { 'x-image-processor-token': processorToken } : {}
   )
+  // Escopo multi-tenant: toda chamada de logo carrega ?company=<companyId do JWT>.
+  // O parceiro nunca escolhe a empresa — só enxerga/edita/deleta os próprios logos.
+  const companyQS = (req: { user: { cid: string } }): string =>
+    `?company=${encodeURIComponent(req.user.cid)}`
 
-  app.get('/logos', async (_req, reply) => {
+  app.get('/logos', async (req, reply) => {
     try {
-      const data = await proxyToProcessor('/logos')
+      const data = await proxyToProcessor(`/logos${companyQS(req)}`)
       return reply.send(data)
     } catch (e: any) {
       return reply.status(503).send({ error: 'IMAGE_PROCESSOR_UNAVAILABLE', detail: e.message })
@@ -196,11 +218,13 @@ export default async function photoEditorRoutes(app: FastifyInstance) {
       const form = new FormData()
       form.append('file', buffer, { filename: data.filename, contentType: data.mimetype })
       if (name) form.append('name', name)
+      form.append('company', req.user.cid) // escopo multi-tenant do logo
 
       const res = await fetch(`${IMAGE_PROCESSOR_URL}/logos`, {
         method: 'POST',
         body: form as any,
         headers: { ...form.getHeaders(), ...withToken() },
+        signal: timeoutSignal(),
       })
       if (!res.ok) {
         const text = await res.text()
@@ -216,7 +240,7 @@ export default async function photoEditorRoutes(app: FastifyInstance) {
   app.get('/logos/:id', async (req, reply) => {
     const { id } = req.params as { id: string }
     try {
-      const data = await proxyToProcessor(`/logos/${encodeURIComponent(id)}`)
+      const data = await proxyToProcessor(`/logos/${encodeURIComponent(id)}${companyQS(req)}`)
       return reply.send(data)
     } catch (e: any) {
       return reply.status(503).send({ error: 'IMAGE_PROCESSOR_UNAVAILABLE', detail: e.message })
@@ -226,8 +250,9 @@ export default async function photoEditorRoutes(app: FastifyInstance) {
   app.get('/logos/:id/file', async (req, reply) => {
     const { id } = req.params as { id: string }
     try {
-      const res = await fetch(`${IMAGE_PROCESSOR_URL}/logos/${encodeURIComponent(id)}/file`, {
+      const res = await fetch(`${IMAGE_PROCESSOR_URL}/logos/${encodeURIComponent(id)}/file${companyQS(req)}`, {
         headers: { ...withToken() },
+        signal: timeoutSignal(),
       })
       if (!res.ok) return reply.status(res.status).send({ error: 'LOGO_NOT_FOUND' })
       const buf = Buffer.from(await res.arrayBuffer())
@@ -244,7 +269,7 @@ export default async function photoEditorRoutes(app: FastifyInstance) {
         name: z.string().min(1).max(120).optional(),
         is_default: z.boolean().optional(),
       }).parse(req.body ?? {})
-      const data = await proxyToProcessor(`/logos/${encodeURIComponent(id)}`, {
+      const data = await proxyToProcessor(`/logos/${encodeURIComponent(id)}${companyQS(req)}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
@@ -258,7 +283,7 @@ export default async function photoEditorRoutes(app: FastifyInstance) {
   app.delete('/logos/:id', async (req, reply) => {
     const { id } = req.params as { id: string }
     try {
-      const data = await proxyToProcessor(`/logos/${encodeURIComponent(id)}`, { method: 'DELETE' })
+      const data = await proxyToProcessor(`/logos/${encodeURIComponent(id)}${companyQS(req)}`, { method: 'DELETE' })
       return reply.send(data)
     } catch (e: any) {
       return reply.status(503).send({ error: 'IMAGE_PROCESSOR_UNAVAILABLE', detail: e.message })
@@ -277,11 +302,13 @@ export default async function photoEditorRoutes(app: FastifyInstance) {
 
       const form = new FormData()
       form.append('file', buffer, { filename: data.filename, contentType: data.mimetype })
+      form.append('company', req.user.cid) // escopo multi-tenant do logo
 
       const res = await fetch(`${IMAGE_PROCESSOR_URL}/upload-logo`, {
         method: 'POST',
         body: form as any,
         headers: form.getHeaders(),
+        signal: timeoutSignal(),
       })
 
       if (!res.ok) {
@@ -317,6 +344,7 @@ export default async function photoEditorRoutes(app: FastifyInstance) {
         method: 'POST',
         body: form as any,
         headers: form.getHeaders(),
+        signal: timeoutSignal(),
       })
 
       if (!res.ok) {

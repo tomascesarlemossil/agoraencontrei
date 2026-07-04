@@ -160,6 +160,19 @@ export default function LoginPage() {
         strategy="afterInteractive"
         onLoad={initGoogle}
       />
+      {/* Marca do parceiro (white-label): renderizada ACIMA do card, sobre o
+          fundo escuro. Um PNG/WEBP transparente aparece sem nenhum "quadrado
+          branco" atrás — diferente de quando fica dentro do card branco. */}
+      {step === 'password' && branding?.logoUrl && (
+        <div className="flex justify-center mb-6">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={branding.logoUrl}
+            alt={branding.name}
+            className="h-16 max-w-[240px] object-contain drop-shadow-2xl"
+          />
+        </div>
+      )}
       <Card>
         {step === 'identify' ? (
           <>
@@ -224,24 +237,18 @@ export default function LoginPage() {
         ) : (
           <>
             <CardHeader>
-              {/* Marca da empresa do parceiro (white-label) */}
-              <div className="flex flex-col items-center gap-3 pb-1">
-                {branding?.logoUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={branding.logoUrl}
-                    alt={branding.name}
-                    className="h-14 max-w-[200px] object-contain"
-                  />
-                ) : branding?.name ? (
+              {/* Sem logo do parceiro, mostra o nome como marca (o logo, quando
+                  existe, é renderizado acima do card sobre o fundo escuro). */}
+              {!branding?.logoUrl && branding?.name && (
+                <div className="flex flex-col items-center gap-3 pb-1">
                   <div
                     className="text-xl font-bold text-center"
                     style={accent ? { color: accent } : undefined}
                   >
                     {branding.name}
                   </div>
-                ) : null}
-              </div>
+                </div>
+              )}
               <CardTitle className="text-center">
                 {branding?.name ? `Entrar — ${branding.name}` : 'Entrar'}
               </CardTitle>

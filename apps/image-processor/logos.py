@@ -49,49 +49,72 @@ def _save_index(idx: Dict[str, dict]) -> None:
     INDEX_PATH.write_text(json.dumps(idx, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
+# ── Multi-tenant isolation ─────────────────────────────────────────────────
+# Cada logo pertence a uma empresa (`company` = companyId do CRM). A API SEMPRE
+# envia `company` do JWT (req.user.cid). Assim um parceiro só enxerga/edita/
+# deleta/aplica os PRÓPRIOS logos — nunca os de outra empresa.
+#
+# Compatibilidade: quando `company` é None (chamada legada/interna sem escopo),
+# o comportamento antigo é mantido (todos os registros). Registros LEGADOS sem
+# o campo `company` ficam ocultos para consultas escopadas por empresa.
+
+def _belongs(rec: dict, company: Optional[str]) -> bool:
+    """True se o registro é visível para `company`. company=None → sem escopo
+    (vê tudo). Com escopo, exige match exato do campo `company` do registro."""
+    if company is None:
+        return True
+    return rec.get("company") == company
+
+
+def _scoped_index(company: Optional[str]) -> Dict[str, dict]:
+    return {k: v for k, v in _load_index().items() if _belongs(v, company)}
+
+
 # ── Public API ───────────────────────────────────────────────────────────
 
-def list_logos() -> List[dict]:
-    """Returns the list of all registered logos, newest first."""
-    idx = _load_index()
-    logos = list(idx.values())
+def list_logos(company: Optional[str] = None) -> List[dict]:
+    """Returns the registered logos of `company` (newest first)."""
+    logos = list(_scoped_index(company).values())
     logos.sort(key=lambda l: l.get("created_at", ""), reverse=True)
     return logos
 
 
-def get_logo(logo_id: str) -> Optional[dict]:
-    """Returns a single logo record, or None if not found."""
-    return _load_index().get(logo_id)
+def get_logo(logo_id: str, company: Optional[str] = None) -> Optional[dict]:
+    """Returns a single logo record IF it belongs to `company`, else None."""
+    rec = _load_index().get(logo_id)
+    if rec is None or not _belongs(rec, company):
+        return None
+    return rec
 
 
-def get_logo_path(logo_id: str) -> Optional[str]:
-    """Returns the filesystem path to the PNG file of the given logo."""
-    rec = get_logo(logo_id)
+def get_logo_path(logo_id: str, company: Optional[str] = None) -> Optional[str]:
+    """Returns the filesystem path to the PNG of the given logo (scoped)."""
+    rec = get_logo(logo_id, company)
     if not rec:
         return None
     path = LOGOS_DIR / rec["filename"]
     return str(path) if path.exists() else None
 
 
-def get_default_logo() -> Optional[dict]:
-    """Returns the logo marked as default, or the newest if none is marked,
-    or None if the store is empty. Kept for backwards compatibility with
-    callers that expect a single implicit logo."""
-    idx = _load_index()
-    if not idx:
+def get_default_logo(company: Optional[str] = None) -> Optional[dict]:
+    """Returns the default logo OF `company` (or newest if none flagged),
+    or None when the company has no logos."""
+    scoped = _scoped_index(company)
+    if not scoped:
         return None
-    for rec in idx.values():
+    for rec in scoped.values():
         if rec.get("is_default"):
             return rec
-    logos = list(idx.values())
+    logos = list(scoped.values())
     logos.sort(key=lambda l: l.get("created_at", ""), reverse=True)
     return logos[0] if logos else None
 
 
-def save_logo(name: str, image_bytes: bytes, original_mime: str) -> dict:
+def save_logo(name: str, image_bytes: bytes, original_mime: str, company: Optional[str] = None) -> dict:
     """
-    Persists a new logo. Converts the input to PNG-RGBA so the watermark
-    pipeline stays uniform regardless of the uploaded format.
+    Persists a new logo FOR `company`. Converts the input to PNG-RGBA so the
+    watermark pipeline stays uniform regardless of the uploaded format and a
+    transparent PNG/WEBP KEEPS its alpha (never flattened to white).
 
     Raises ValueError when the bytes cannot be interpreted as an image.
     """
@@ -106,17 +129,19 @@ def save_logo(name: str, image_bytes: bytes, original_mime: str) -> dict:
         width, height = probe.size
 
     idx = _load_index()
-    is_first = len(idx) == 0
+    # "is_default" é POR EMPRESA — o primeiro logo da empresa vira o default dela.
+    is_first_for_company = not any(_belongs(r, company) for r in idx.values())
     record = {
         "id": logo_id,
         "name": (name or "Logo sem nome").strip()[:120] or "Logo sem nome",
         "filename": filename,
         "mime": "image/png",
         "original_mime": original_mime,
+        "company": company,
         "width": width,
         "height": height,
         "bytes": len(png_bytes),
-        "is_default": is_first,  # first one becomes default automatically
+        "is_default": is_first_for_company,
         "created_at": datetime.utcnow().isoformat() + "Z",
     }
     idx[logo_id] = record
@@ -124,47 +149,55 @@ def save_logo(name: str, image_bytes: bytes, original_mime: str) -> dict:
     return record
 
 
-def delete_logo(logo_id: str) -> bool:
-    """Removes the logo's file and its index entry. Returns True when
-    something was actually removed."""
+def delete_logo(logo_id: str, company: Optional[str] = None) -> bool:
+    """Removes the logo (IF it belongs to `company`) and its index entry.
+    Returns True when something was actually removed."""
     idx = _load_index()
-    rec = idx.pop(logo_id, None)
-    if rec is None:
+    rec = idx.get(logo_id)
+    if rec is None or not _belongs(rec, company):
         return False
+    idx.pop(logo_id, None)
     file_path = LOGOS_DIR / rec["filename"]
     try:
         file_path.unlink(missing_ok=True)
     except OSError:
         pass
-    # If we just deleted the default, promote the most recent one.
-    if rec.get("is_default") and idx:
-        newest_id = max(idx.keys(), key=lambda k: idx[k].get("created_at", ""))
-        idx[newest_id]["is_default"] = True
+    # If we just deleted the company's default, promote its most recent one.
+    if rec.get("is_default"):
+        siblings = {k: v for k, v in idx.items() if _belongs(v, rec.get("company"))}
+        if siblings:
+            newest_id = max(siblings.keys(), key=lambda k: siblings[k].get("created_at", ""))
+            idx[newest_id]["is_default"] = True
     _save_index(idx)
     return True
 
 
-def set_default_logo(logo_id: str) -> Optional[dict]:
-    """Marks `logo_id` as the default, clearing the flag on every other
-    record. Returns the new default record or None when the id is unknown."""
+def set_default_logo(logo_id: str, company: Optional[str] = None) -> Optional[dict]:
+    """Marks `logo_id` as the default of ITS company (clearing the flag only
+    on that company's other logos). Returns the record or None when unknown/
+    not owned by `company`."""
     idx = _load_index()
-    if logo_id not in idx:
+    target = idx.get(logo_id)
+    if target is None or not _belongs(target, company):
         return None
+    owner = target.get("company")
     for k, rec in idx.items():
-        rec["is_default"] = (k == logo_id)
+        if rec.get("company") == owner:
+            rec["is_default"] = (k == logo_id)
     _save_index(idx)
     return idx[logo_id]
 
 
-def rename_logo(logo_id: str, new_name: str) -> Optional[dict]:
-    """Updates the display name of a logo. Returns the updated record or
-    None when the id is unknown."""
+def rename_logo(logo_id: str, new_name: str, company: Optional[str] = None) -> Optional[dict]:
+    """Updates the display name of a logo (IF owned by `company`). Returns the
+    updated record or None when unknown/not owned."""
     idx = _load_index()
-    if logo_id not in idx:
+    rec = idx.get(logo_id)
+    if rec is None or not _belongs(rec, company):
         return None
-    idx[logo_id]["name"] = (new_name or "").strip()[:120] or idx[logo_id]["name"]
+    rec["name"] = (new_name or "").strip()[:120] or rec["name"]
     _save_index(idx)
-    return idx[logo_id]
+    return rec
 
 
 # ── Format normalization ────────────────────────────────────────────────

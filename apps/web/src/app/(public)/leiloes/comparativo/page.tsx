@@ -204,13 +204,18 @@ function ComparativoPage() {
                 {data.map(a => (
                   <th key={a.id} className="text-center py-3 px-4 min-w-[220px]">
                     <div className="space-y-2">
-                      {(a.coverImage || a.streetViewUrl) && (
-                        <img
-                          src={a.coverImage || a.streetViewUrl || ''}
-                          alt={a.title}
-                          className="w-full h-28 object-cover rounded-lg"
-                        />
-                      )}
+                      <img
+                        src={a.coverImage || a.streetViewUrl || '/leilao-cover-default.jpg'}
+                        alt={a.title}
+                        className="w-full h-28 object-cover rounded-lg"
+                        onError={(e) => {
+                          const img = e.target as HTMLImageElement
+                          if (!img.dataset.fallback) {
+                            img.dataset.fallback = '1'
+                            img.src = '/leilao-cover-default.jpg'
+                          }
+                        }}
+                      />
                       <Link href={`/leiloes/${a.slug}`} className="text-yellow-400 hover:underline text-sm font-bold line-clamp-2">
                         {a.title}
                       </Link>

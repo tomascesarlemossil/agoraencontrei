@@ -12,6 +12,11 @@ const CAIXA_CSV_URL = '/api/caixa-csv?state=SP' // Vercel proxy (no geo-block)
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://oenbzvxcsgyzqjtlovdq.supabase.co'
 const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
 
+// Capa padrão dos leilões (banner "Imóvel em Leilão — imagem ilustrativa").
+// Usada quando o anúncio não tem foto importada OU quando a foto (ex.: URL da
+// Caixa) falha ao carregar — evita card sem imagem / quebrado.
+const DEFAULT_AUCTION_COVER = '/leilao-cover-default.jpg'
+
 // Mapa por região (satélite + pins de leilão e imóveis). É o mesmo componente
 // do /imoveis, carregado de forma lazy (sem SSR) para não pesar no carregamento
 // inicial da lista de leilões.
@@ -767,8 +772,11 @@ export default function LeiloesClient() {
 
       {/* Toolbar */}
       <div className="sticky top-16 z-20 bg-white border-b shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2 text-sm text-gray-500 flex-wrap">
+        {/* No mobile: contador empilha em cima e a barra de ações vira um
+            scroller horizontal (não estoura a largura da tela). No desktop:
+            volta ao layout lado-a-lado com justify-between. */}
+        <div className="max-w-7xl mx-auto px-4 py-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+          <div className="flex items-center gap-2 text-sm text-gray-500 flex-wrap shrink-0">
             <span className="font-semibold text-gray-800">{total.toLocaleString('pt-BR')}</span> leilões encontrados
             {userRegion?.city && !city && page === 1 && (
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold" style={{ backgroundColor: '#eef2ff', color: '#143A1F' }}>
@@ -776,10 +784,10 @@ export default function LeiloesClient() {
               </span>
             )}
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 overflow-x-auto -mx-4 px-4 pb-1 -mb-1 sm:mx-0 sm:px-0 sm:pb-0 sm:mb-0 sm:overflow-visible sm:flex-wrap sm:justify-end [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-bold transition"
+              className="inline-flex shrink-0 whitespace-nowrap items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-bold transition"
               style={{ backgroundColor: '#e5e7eb', color: '#143A1F' }}
             >
               <Filter className="w-4 h-4" /> Filtros
@@ -792,7 +800,7 @@ export default function LeiloesClient() {
                 if (next) { setSortBy('discountPercent'); setSortOrder('desc') }
                 setPage(1)
               }}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-bold transition"
+              className="inline-flex shrink-0 whitespace-nowrap items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-bold transition"
               style={{
                 backgroundColor: minDiscount === '40' ? '#000000' : '#143A1F',
                 color: minDiscount === '40' ? '#00C805' : '#FFFFFF',
@@ -810,7 +818,7 @@ export default function LeiloesClient() {
                 if (next === 'zapSpread') setSortOrder('desc')
                 setPage(1)
               }}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-bold transition"
+              className="inline-flex shrink-0 whitespace-nowrap items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-bold transition"
               style={{
                 backgroundColor: sortBy === 'zapSpread' ? '#000000' : '#143A1F',
                 color: sortBy === 'zapSpread' ? '#00C805' : '#FFFFFF',
@@ -823,14 +831,14 @@ export default function LeiloesClient() {
             </button>
             <button
               onClick={() => setShowCalc(!showCalc)}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-bold transition"
+              className="inline-flex shrink-0 whitespace-nowrap items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-bold transition"
               style={{ backgroundColor: '#143A1F', color: '#FFFFFF' }}
             >
               <Calculator className="w-4 h-4" /> Calculadora
             </button>
             <button
               onClick={() => setShowAlert(!showAlert)}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-bold transition"
+              className="inline-flex shrink-0 whitespace-nowrap items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-bold transition"
               style={{ backgroundColor: '#C9A84C', color: '#000000' }}
             >
               <Bell className="w-4 h-4" /> Alerta
@@ -838,7 +846,7 @@ export default function LeiloesClient() {
             <select
               value={sortBy}
               onChange={e => setSortBy(e.target.value)}
-              className="px-3 py-2 rounded-lg text-sm border-0 outline-none font-bold"
+              className="shrink-0 whitespace-nowrap px-3 py-2 rounded-lg text-sm border-0 outline-none font-bold"
               style={{ backgroundColor: '#e5e7eb', color: '#143A1F' }}
             >
               <option value="auctionDate">Data do Leilão</option>
@@ -1093,10 +1101,10 @@ export default function LeiloesClient() {
                     {compareIds.has(auction.id) ? '✓' : '⇔'}
                   </button>
                   <div onClick={() => openLeadModal(auction)}>
-                  {/* Image — Real photo > AgoraEncontrei banner fallback */}
+                  {/* Image — Real photo > banner padrão de leilão (imagem ilustrativa) */}
                   <div className="relative h-48 bg-gray-200 overflow-hidden">
                     <img
-                      src={auction.coverImage || '/hero-banner.jpg'}
+                      src={auction.coverImage || DEFAULT_AUCTION_COVER}
                       alt={auction.title}
                       loading="lazy"
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
@@ -1104,7 +1112,7 @@ export default function LeiloesClient() {
                         const img = e.target as HTMLImageElement
                         if (!img.dataset.fallback) {
                           img.dataset.fallback = '1'
-                          img.src = '/hero-banner.jpg'
+                          img.src = DEFAULT_AUCTION_COVER
                         }
                       }}
                     />
