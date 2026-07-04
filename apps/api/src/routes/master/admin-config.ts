@@ -384,6 +384,9 @@ export async function publicCatalogRoutes(app: FastifyInstance) {
         where: {
           isActive: true,
           // Nunca exibir planos internos (ex.: "fundador") no catálogo público.
+          // Defensivo: bloqueia por slug E por metadata.internal (mesmo se metadata
+          // estiver ausente/inconsistente).
+          slug: { not: 'fundador' },
           NOT: { metadata: { path: ['internal'], equals: true } },
           ...(nicheSlug && {
             OR: [

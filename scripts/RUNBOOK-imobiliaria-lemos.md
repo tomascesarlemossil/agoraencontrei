@@ -132,6 +132,22 @@ em lotes, e valide antes numa cópia do banco.
 
 ---
 
+## Riscos conhecidos
+
+- **JWT antigo continua válido até expirar.** Revogar `Session`/`RefreshToken` não mata o
+  *access token* já emitido. Após a migração: exija **logout + login**, **reinicie a API** e
+  respeite uma **janela mínima de ~15 min** (TTL do access token) antes de confiar 100% na
+  nova topologia de papéis. Melhoria futura: `tokenVersion`/`sessionVersion`/`roleVersion`
+  no JWT para invalidação imediata.
+- **Contatos-proprietários compartilhados** (donos de imóveis dentro e fora da seleção) **não**
+  são movidos — permanecem na empresa de origem e continuarão sendo referência cross-tenant
+  até uma **segunda migração relacional** que os duplique/segregue por empresa.
+- **Não há rollback automático executável** — existe snapshot pré-escrita (obrigatório). O
+  **backup/branch do Neon é obrigatório** antes da execução real.
+- **Isolamento multi-tenant é manual** por `companyId` em todo o código; os módulos auditados
+  neste PR (webhooks, system-events, afiliados, saas-finance, market, tenants) foram
+  verificados endpoint a endpoint, mas uma auditoria ampla dos ~407 pontos segue como follow-up.
+
 ## Rollback
 
 Cada execução real grava `./.migration-runs/lemos-provision-<stamp>.json`. O snapshot é

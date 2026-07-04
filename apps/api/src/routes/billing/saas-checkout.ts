@@ -146,7 +146,8 @@ export default async function saasBillingRoutes(app: FastifyInstance) {
     }
     // Planos internos (ex.: "fundador") NUNCA podem ser adquiridos via checkout
     // público — são atribuídos só por processo interno (provisionamento/master).
-    if ((plan.metadata as any)?.internal === true) {
+    // Defensivo: bloqueia por slug E por metadata.internal.
+    if (plan.slug === 'fundador' || (plan.metadata as any)?.internal === true) {
       return reply.status(403).send({
         error: 'PLAN_NOT_AVAILABLE',
         message: `Plano "${plan.name}" não está disponível para contratação.`,

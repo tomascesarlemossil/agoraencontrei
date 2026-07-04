@@ -8,6 +8,7 @@
  */
 
 import type { FastifyInstance } from 'fastify'
+import { EXCLUDE_INTERNAL_TENANT } from '../../services/tenant.service.js'
 
 export default async function saasFinanceRoutes(app: FastifyInstance) {
   const prisma = app.prisma as any
@@ -81,9 +82,9 @@ export default async function saasFinanceRoutes(app: FastifyInstance) {
       }),
     ])
 
-    // MRR: sum of active recurring subscriptions
+    // MRR: sum of active recurring subscriptions (exclui internos/isentos, ex.: fundadora Lemos)
     const activeTenants = await prisma.tenant.findMany({
-      where: { planStatus: 'ACTIVE' },
+      where: { planStatus: 'ACTIVE', ...EXCLUDE_INTERNAL_TENANT },
       select: { planPrice: true },
     }).catch(() => [])
 
@@ -119,19 +120,20 @@ export default async function saasFinanceRoutes(app: FastifyInstance) {
     const dailyAvg = dayOfMonth > 0 ? monthRevenueVal / dayOfMonth : 0
     const forecast = dailyAvg * daysInMonth
 
-    // Tenants by status
+    // Tenants by status (exclui internos/isentos, ex.: fundadora Lemos)
     const tenantStats = await prisma.tenant.groupBy({
       by: ['planStatus'],
+      where: { ...EXCLUDE_INTERNAL_TENANT },
       _count: true,
     }).catch(() => [])
 
     const tenantByStatus: Record<string, number> = {}
     tenantStats.forEach((s: any) => { tenantByStatus[s.planStatus] = s._count })
 
-    // Tenants by plan
+    // Tenants by plan (exclui internos/isentos → Fundador não aparece na distribuição)
     const tenantPlans = await prisma.tenant.groupBy({
       by: ['plan'],
-      where: { planStatus: 'ACTIVE' },
+      where: { planStatus: 'ACTIVE', ...EXCLUDE_INTERNAL_TENANT },
       _count: true,
       _sum: { planPrice: true },
     }).catch(() => [])
@@ -148,9 +150,9 @@ export default async function saasFinanceRoutes(app: FastifyInstance) {
       where: { isActive: true },
     }).catch(() => 0)
 
-    // MRR
+    // MRR (exclui internos/isentos, ex.: fundadora Lemos)
     const activeTenants = await prisma.tenant.findMany({
-      where: { planStatus: 'ACTIVE' },
+      where: { planStatus: 'ACTIVE', ...EXCLUDE_INTERNAL_TENANT },
       select: { planPrice: true },
     }).catch(() => [])
     const mrr = activeTenants.reduce((sum: number, t: any) => sum + Number(t.planPrice || 0), 0)
