@@ -1,14 +1,23 @@
 'use client'
 
 import { useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { useAuthStore } from '@/stores/auth.store'
 import { authApi } from '@/lib/api'
+import { isPlatformOnly, isPlatformAdmin } from '@/lib/platform-routes'
 import { Loader2 } from 'lucide-react'
 
 export function AuthGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter()
+  const pathname = usePathname()
   const { user, accessToken, refreshToken, isAuthenticated, isTokenExpired, setAuth, clearAuth } = useAuthStore()
+
+  // Defesa em profundidade: rotas exclusivas da plataforma só para super-admin.
+  // Um parceiro que tentar acessar por URL direta é redirecionado ao dashboard.
+  const blockedPlatformRoute = !!user && isPlatformOnly(pathname) && !isPlatformAdmin(user)
+  useEffect(() => {
+    if (blockedPlatformRoute) router.replace('/dashboard')
+  }, [blockedPlatformRoute, router])
 
   useEffect(() => {
     async function check() {
@@ -110,6 +119,15 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
             Voltar para login
           </button>
         </div>
+      </div>
+    )
+  }
+
+  // Enquanto redireciona uma rota de plataforma bloqueada, não renderiza o conteúdo.
+  if (blockedPlatformRoute) {
+    return (
+      <div className="min-h-[100dvh] flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     )
   }

@@ -383,6 +383,8 @@ export async function publicCatalogRoutes(app: FastifyInstance) {
       prisma.planDefinition.findMany({
         where: {
           isActive: true,
+          // Nunca exibir planos internos (ex.: "fundador") no catálogo público.
+          NOT: { metadata: { path: ['internal'], equals: true } },
           ...(nicheSlug && {
             OR: [
               { nicheFilter: { isEmpty: true } },

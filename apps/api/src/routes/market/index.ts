@@ -11,9 +11,15 @@
 import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 import { getMarketStats, estimatePrice } from '../../services/market-stats.service.js'
+import { requireSuperAdmin } from '../../utils/permissions.js'
 
 export default async function marketRoutes(app: FastifyInstance) {
+  // Radar de Mercado é ferramenta EXCLUSIVA da plataforma (agrega dados de todo
+  // o marketplace, cross-tenant). Só o super-admin acessa — o parceiro nem vê o
+  // item no menu. (Precificação por comparáveis do próprio parceiro é feita por
+  // outras rotas, ex.: public/valuation.)
   app.addHook('preHandler', app.authenticate)
+  app.addHook('preHandler', requireSuperAdmin())
 
   app.get('/stats', { schema: { tags: ['market'] } }, async (req, reply) => {
     const q = req.query as { city?: string; neighborhood?: string; type?: string; purpose?: string }

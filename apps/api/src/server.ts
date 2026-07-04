@@ -150,10 +150,17 @@ const app = Fastify({
 })
 
 async function runMigrations(prisma: any) {
-  // ── Admin role enforcement ──────────────────────────────────────────────
-  // Ensures admin users have correct role on boot (no password reset in code)
+  // ── Platform super-admin enforcement ────────────────────────────────────
+  // Garante que O ÚNICO super-admin da PLATAFORMA AgoraEncontrei tenha o papel
+  // correto no boot (sem reset de senha em código).
+  //
+  // IMPORTANTE: `tomascesarlemossilva@gmail.com` foi REMOVIDO desta lista de
+  // propósito — esse e-mail passou a ser ADMIN da empresa Imobiliária Lemos
+  // (parceiro), não super-admin da plataforma. Reintroduzi-lo aqui reverteria,
+  // a cada deploy/restart, a separação plataforma × parceiro. O papel do gmail
+  // é definido pelo script scripts/provision-imobiliaria-lemos.ts.
   try {
-    for (const email of ['tomas@agoraencontrei.com.br', 'tomascesarlemossilva@gmail.com']) {
+    for (const email of ['tomas@agoraencontrei.com.br']) {
       await prisma.$executeRawUnsafe(
         `UPDATE users SET role = 'SUPER_ADMIN', status = 'ACTIVE', "emailVerifiedAt" = COALESCE("emailVerifiedAt", NOW()) WHERE email = $1 AND role != 'SUPER_ADMIN'`,
         email
