@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 import { AuthService } from '../../services/auth.service.js'
+import { findActivePortalContract } from '../../services/portal-auth.service.js'
 
 // ── Schemas ──────────────────────────────────────────────────────────────────
 
@@ -301,11 +302,10 @@ export default async function authRoutes(app: FastifyInstance) {
 
     const cl = matches[0]
 
-    // Contrato ativo do cliente (para o resumo do portal).
-    const contract = await app.prisma.contract.findFirst({
-      where: { isActive: true, OR: [{ tenantId: cl.id }, { landlordId: cl.id }] },
-      select: { id: true, status: true, rentValue: true, propertyAddress: true, startDate: true },
-    }).catch(() => null)
+    // Contrato ativo do cliente (para o resumo do portal). SEMPRE escopado à
+    // empresa do cliente (companyId do tenant/cliente resolvido, nunca do body):
+    // um cliente da empresa A jamais recebe contrato da empresa B.
+    const contract = await findActivePortalContract(app.prisma, { id: cl.id, companyId: cl.companyId }).catch(() => null)
 
     // Token de portal — agora carrega `cid` (companyId) para escopo tenant a jusante.
     const token = app.jwt.sign(
