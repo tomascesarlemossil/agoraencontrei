@@ -547,7 +547,20 @@ export default async function publicRoutes(app: FastifyInstance) {
       data:  { views: { increment: 1 } },
     }).catch(() => {})
 
-    return reply.send(applyLocationPrivacy(property))
+    // Site do parceiro (tenant) dono do imóvel — para o marketplace ENCAMINHAR
+    // ao parceiro ("ver todos os imóveis desta imobiliária"). Só quando o tenant
+    // está ativo e não suspenso. Lookup barato (1 registro, só no detalhe).
+    const partnerTenant = await (app.prisma as any).tenant?.findFirst?.({
+      where: { companyId, isActive: true, planStatus: { not: 'SUSPENDED' } },
+      select: { subdomain: true, customDomain: true, name: true },
+    }).catch(() => null)
+
+    return reply.send({
+      ...applyLocationPrivacy(property),
+      partnerSite: partnerTenant
+        ? { subdomain: partnerTenant.subdomain, customDomain: partnerTenant.customDomain, name: partnerTenant.name }
+        : null,
+    })
   })
 
   // GET /api/v1/public/properties/:slug/similar — similar properties (same type + city)
