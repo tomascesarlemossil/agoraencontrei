@@ -1263,6 +1263,12 @@ async function runMigrations(prisma: any) {
     // Postgres). Índice único idempotente.
     `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "cpf" TEXT`,
     `CREATE UNIQUE INDEX IF NOT EXISTS "users_cpf_key" ON "users"("cpf")`,
+
+    // ── Auth hardening ────────────────────────────────────────────────────────
+    // tokenVersion: invalidação imediata de access tokens (suspend/role/senha).
+    // Índice de family: reuse-detection/logout fazem deleteMany por family.
+    `ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "tokenVersion" INTEGER NOT NULL DEFAULT 0`,
+    `CREATE INDEX IF NOT EXISTS "refresh_tokens_family_idx" ON "refresh_tokens"("family")`,
   ]
   for (const sql of recentMigrations) {
     try { await prisma.$executeRawUnsafe(sql) } catch { /* already exists */ }

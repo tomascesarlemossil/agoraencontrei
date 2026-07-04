@@ -434,6 +434,13 @@ export default async function usersRoutes(app: FastifyInstance) {
       updateData.settings = newSettings
     }
 
+    // Mudança de role/status/empresa invalida IMEDIATAMENTE os access tokens
+    // antigos do usuário (bump de tokenVersion): um usuário rebaixado/suspenso/
+    // movido não continua com o token elevado por até 15 min.
+    if (updateData.role !== undefined || updateData.status !== undefined || updateData.companyId !== undefined) {
+      updateData.tokenVersion = { increment: 1 }
+    }
+
     const user = await app.prisma.user.update({
       where: { id },
       data: updateData,
@@ -486,8 +493,11 @@ export default async function usersRoutes(app: FastifyInstance) {
 
     await app.prisma.user.update({
       where: { id },
-      data: { passwordHash },
+      // Bump tokenVersion → derruba sessões/access tokens antigos do alvo na hora.
+      data: { passwordHash, tokenVersion: { increment: 1 } },
     })
+    // Revoga refresh tokens do alvo também.
+    await app.prisma.refreshToken.deleteMany({ where: { userId: id } }).catch(() => {})
 
     await createAuditLog({
       prisma: app.prisma, req,
@@ -514,8 +524,10 @@ export default async function usersRoutes(app: FastifyInstance) {
 
     await app.prisma.user.update({
       where: { id, companyId: req.user.cid },
-      data: { status: 'INACTIVE' },
+      // Desativa e invalida imediatamente os tokens (tokenVersion + refresh).
+      data: { status: 'INACTIVE', tokenVersion: { increment: 1 } },
     })
+    await app.prisma.refreshToken.deleteMany({ where: { userId: id } }).catch(() => {})
 
     await createAuditLog({
       prisma: app.prisma, req,

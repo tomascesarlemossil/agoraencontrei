@@ -123,7 +123,31 @@ const envSchema = z.object({
   ADMIN_RESET_TOKEN: z.string().min(32).optional(),
 })
 
+// Placeholders de dev — NUNCA podem ser aceitos como segredo real em produção.
+const PLACEHOLDER_SECRETS = new Set([
+  'development-jwt-secret-placeholder-min-32-chars!!',
+  'development-cookie-secret-placeholder-32-chars!',
+])
+
+function assertNoPlaceholderSecretInProd() {
+  if (process.env.NODE_ENV !== 'production') return
+  const offenders = ['JWT_SECRET', 'COOKIE_SECRET'].filter(
+    (k) => process.env[k] && PLACEHOLDER_SECRETS.has(process.env[k] as string),
+  )
+  if (offenders.length) {
+    console.error('❌ FATAL: production boot refused — placeholder secret detected:')
+    offenders.forEach((k) => console.error(`  ${k} está usando o valor placeholder de desenvolvimento.`))
+    console.error('Defina segredos reais (>=32 chars) para JWT_SECRET e COOKIE_SECRET.')
+    process.exit(1)
+  }
+}
+
 function parseEnv() {
+  // Mesmo quando o schema valida (segredo com >=32 chars), recusa boot em produção
+  // se o valor for o placeholder de dev — senão qualquer um que conheça o
+  // placeholder forjaria tokens.
+  assertNoPlaceholderSecretInProd()
+
   const result = envSchema.safeParse(process.env)
   if (result.success) return result.data
 

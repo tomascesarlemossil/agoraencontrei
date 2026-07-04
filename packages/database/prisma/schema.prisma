@@ -188,6 +188,10 @@ model User {
   settings          Json        @default("{}")
   emailVerifiedAt   DateTime?
   lastLoginAt       DateTime?
+  // Invalidação imediata de access tokens: incrementado ao suspender/inativar,
+  // mudar role ou trocar senha. O JWT carrega o valor no claim `tv`; o
+  // authenticate rejeita tokens cujo `tv` diverge do valor atual no banco.
+  tokenVersion      Int         @default(0)
   createdAt         DateTime    @default(now())
   updatedAt         DateTime    @updatedAt
 
@@ -238,6 +242,7 @@ model RefreshToken {
 
   @@index([userId])
   @@index([token])
+  @@index([family])
   @@map("refresh_tokens")
 }
 
