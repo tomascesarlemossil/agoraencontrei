@@ -64,6 +64,14 @@ interface TomasWidgetProps {
     price?: number
     type?: string
   }
+  /**
+   * Site white-label de um parceiro: `tenantSlug` faz o widget conversar com o
+   * cérebro DAQUELE parceiro (resolvido server-side p/ companyId), e
+   * `partnerName` troca a identidade do Tomás para "Tomás IA — <Parceiro>".
+   * Sem eles, é o cérebro MARKETPLACE (nacional/imparcial) do AgoraEncontrei.
+   */
+  tenantSlug?: string
+  partnerName?: string
 }
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
@@ -83,7 +91,10 @@ type AudioState = 'idle' | 'requesting' | 'recording' | 'stopping' | 'uploading'
 
 // ── Component ───────────────────────────────────────────────────────────────
 
-export default function TomasWidget({ propertyContext }: TomasWidgetProps) {
+export default function TomasWidget({ propertyContext, tenantSlug, partnerName }: TomasWidgetProps) {
+  // Identidade do cérebro: parceiro (white-label) vs marketplace nacional.
+  const tomasName = partnerName ? `Tomás IA — ${partnerName}` : 'Tomás IA'
+  const tomasSubtitle = partnerName ? `Especialista da ${partnerName}` : 'Especialista imobiliário do AgoraEncontrei'
   const [open, setOpen] = useState(false)
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
@@ -183,16 +194,20 @@ export default function TomasWidget({ propertyContext }: TomasWidgetProps) {
     }
   }, [open])
 
-  // Initial greeting
+  // Initial greeting — identidade do cérebro (parceiro white-label vs
+  // marketplace nacional/imparcial). O marketplace NÃO se apresenta como Lemos.
   useEffect(() => {
     if (open && messages.length === 0) {
+      const brandLine = partnerName
+        ? `Muito prazer. Sou o Tomás IA, da ${partnerName}.`
+        : 'Muito prazer. Sou o Tomás IA, do AgoraEncontrei — o marketplace imobiliário.'
       const greeting = propertyContext?.title
-        ? `Muito prazer. Eu sou o Tomás, a inteligência imobiliária da AgoraEncontrei — construída a partir da experiência real de Tomas Lemos e do legado da Imobiliária Lemos, fundada por Noemia Lemos em 2002 em Franca/SP. Vi que você está olhando o "${propertyContext.title}". Posso explicar os detalhes, comparar com imóveis semelhantes da carteira ou organizar uma visita. Como prefere seguir?`
-        : 'Muito prazer. Eu sou o Tomás, a inteligência imobiliária da AgoraEncontrei — construída a partir da experiência real de Tomas Lemos e do legado da Imobiliária Lemos, fundada por Noemia Lemos em 2002 em Franca/SP. Posso te ajudar a encontrar, avaliar ou vender imóveis com leitura local de verdade. O que você procura?'
+        ? `${brandLine} Vi que você está olhando o "${propertyContext.title}". Posso explicar os detalhes, comparar com imóveis semelhantes ou organizar uma visita. Como prefere seguir?`
+        : `${brandLine} Posso te ajudar a encontrar, avaliar ou vender imóveis com leitura de mercado de verdade. O que você procura?`
 
       setMessages([{ role: 'assistant', content: greeting }])
     }
-  }, [open, messages.length, propertyContext])
+  }, [open, messages.length, propertyContext, partnerName])
 
   // ── Audio cleanup on unmount ──────────────────────────────────────────────
   useEffect(() => {
@@ -228,6 +243,8 @@ export default function TomasWidget({ propertyContext }: TomasWidgetProps) {
           chatId,
           visitorId,
           propertyContext,
+          // Site do parceiro → cérebro do parceiro (resolvido server-side).
+          ...(tenantSlug ? { tenantSlug } : {}),
         }),
       })
 
@@ -454,10 +471,10 @@ export default function TomasWidget({ propertyContext }: TomasWidgetProps) {
             T
           </div>
           <div>
-            <div className="text-sm font-semibold text-white">Tomás</div>
+            <div className="text-sm font-semibold text-white">{tomasName}</div>
             <div className="flex items-center gap-1.5 text-xs text-gray-400">
               <span className="inline-block h-1.5 w-1.5 rounded-full bg-green-400" />
-              Especialista imobiliário
+              {tomasSubtitle}
             </div>
           </div>
         </div>
