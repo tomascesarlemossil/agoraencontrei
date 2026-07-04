@@ -1,0 +1,71 @@
+name: Lemos Provisioning — DRY-RUN (seguro)
+
+# Dispara pelo celular: aba Actions → este workflow → "Run workflow".
+# SEGURANÇA: este workflow FORÇA DRY_RUN=true e NUNCA define
+# CONFIRM_PRODUCTION_MIGRATION — por construção é IMPOSSÍVEL ele executar a
+# migração real. Ele só PRÉ-VISUALIZA os números (não grava nada).
+#
+# Pré-requisito (uma vez, pelo GitHub do celular):
+#   Settings → Secrets and variables → Actions → New repository secret
+#     LEMOS_PROVISION_DATABASE_URL   = <URL Postgres de produção do Neon>
+#     LEMOS_PROVISION_DIRECT_URL     = <URL DIRETA do Neon> (opcional; senão usa a de cima)
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_mode:
+        description: 'SOURCE_MODE (company | user | company_and_user)'
+        required: true
+        default: 'company'
+      source_company_id:
+        description: 'SOURCE_COMPANY_ID (company de origem dos imóveis)'
+        required: false
+        default: 'cmnhzieqf0000mx1cqcqgfv4n'
+      source_user_email:
+        description: 'SOURCE_USER_EMAIL (só se SOURCE_MODE usar user)'
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+
+jobs:
+  dry-run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      DATABASE_URL: ${{ secrets.LEMOS_PROVISION_DATABASE_URL }}
+      DIRECT_DATABASE_URL: ${{ secrets.LEMOS_PROVISION_DIRECT_URL || secrets.LEMOS_PROVISION_DATABASE_URL }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.0.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Checar segredo configurado
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "::error::Falta o segredo LEMOS_PROVISION_DATABASE_URL. Adicione em Settings → Secrets and variables → Actions."
+            exit 1
+          fi
+          echo "Segredo presente ✅ (valor mascarado pelo GitHub)."
+
+      - name: Install
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Prisma generate
+        run: pnpm db:generate
+
+      - name: DRY-RUN (NUNCA grava — DRY_RUN forçado true, sem CONFIRM)
+        env:
+          DRY_RUN: 'true'
+          SOURCE_MODE: ${{ inputs.source_mode }}
+          SOURCE_COMPANY_ID: ${{ inputs.source_company_id }}
+          SOURCE_USER_EMAIL: ${{ inputs.source_user_email }}
+        run: npx tsx scripts/provision-imobiliaria-lemos.ts
