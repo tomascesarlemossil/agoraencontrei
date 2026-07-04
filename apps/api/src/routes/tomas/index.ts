@@ -11,6 +11,7 @@ import {
   runTomasChat,
   getOrCreateChat,
   persistMessages,
+  resolveBrainLabel,
   type TomasMessage,
   type TomasChatParams,
 } from '../../services/tomas.service.js'
@@ -111,6 +112,10 @@ export default async function tomasRoutes(app: FastifyInstance) {
       return reply.status(401).send({ error: 'Autenticação necessária para o modo dashboard.' })
     }
 
+    // Qual cérebro atende (para separar a memória). Resolvido do companyId já
+    // confiável (JWT ou lookup server-side do slug) — não do cliente.
+    const brain = await resolveBrainLabel(app.prisma, companyId)
+
     // Create or resume conversation
     const chatId = await getOrCreateChat(app.prisma, {
       chatId: body.chatId,
@@ -119,6 +124,7 @@ export default async function tomasRoutes(app: FastifyInstance) {
       companyId,
       userId,
       propertyId: body.propertyContext?.propertyId,
+      brain,
     })
 
     // Run the agent

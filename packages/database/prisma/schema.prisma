@@ -2910,6 +2910,7 @@ model TomasChat {
   contactId     String?
   userId        String?   // corretor/admin no modo interno
   channel       String    @default("site")  // "site" | "dashboard"
+  brain         String?   // "marketplace" | "partner" — separa a memória por cérebro
   visitorId     String?   // fingerprint anônimo para visitantes
   propertyId    String?   // contexto do imóvel (quando aberto na página)
   summary       String?   @db.Text
@@ -2925,6 +2926,7 @@ model TomasChat {
   @@index([leadId])
   @@index([visitorId])
   @@index([channel])
+  @@index([brain])
   @@map("tomas_chats")
 }
 
