@@ -79,6 +79,9 @@ const DEFAULT_NAV_WORDMARK = '/brand/ae-wordmark-light.png'
 interface NavbarProps {
   logoUrl?: string
   wordmarkUrl?: string | null
+  /** Logo COMPLETO (emblema + escrita). Quando presente, é renderizado como uma
+   *  única imagem (igual ao login), no lugar de ícone + wordmark separados. */
+  fullLogoUrl?: string | null
   companyName?: string | null
   hasCustomLogo?: boolean
   visible?: boolean
@@ -89,6 +92,7 @@ interface NavbarProps {
 export function Navbar({
   logoUrl,
   wordmarkUrl,
+  fullLogoUrl,
   companyName,
   hasCustomLogo,
   visible = true,
@@ -155,38 +159,53 @@ export function Navbar({
               className={`flex items-center gap-2.5 group flex-shrink-0 ${position === 'center' ? 'md:absolute md:left-1/2 md:-translate-x-1/2' : ''}`}
               aria-label={`${brandName ?? 'AgoraEncontrei'} — Marketplace Imobiliário`}
             >
-              <Image
-                src={brandLogo}
-                alt={brandName ? `${brandName} Marketplace` : 'AgoraEncontrei Marketplace'}
-                width={44}
-                height={44}
-                className="flex-shrink-0"
-                style={{ borderRadius: '50%' }}
-                priority
-                unoptimized={brandLogoUnoptimized}
-              />
-              {showText && (
-                brandName ? (
-                  <div className="flex flex-col leading-none">
-                    <span className="text-base tracking-tight" style={{ fontFamily: 'Arial, Helvetica, sans-serif', letterSpacing: '-0.01em', color: '#d1d5db', fontWeight: 700 }}>
-                      {brandName}
-                    </span>
-                    <span className="text-[9px] font-medium" style={{ color: '#9ca3af', letterSpacing: '0.04em' }}>
-                      Marketplace
-                    </span>
-                  </div>
-                ) : (
-                  // Marca escrita padrão "Agora Encontrei Marketplace" (imagem),
-                  // editável pelo admin (systemConfig.company.logoWordmarkUrl).
+              {fullLogoUrl ? (
+                // Logo COMPLETO (emblema + escrita) — igual ao login, sem caixa.
+                <Image
+                  src={fullLogoUrl}
+                  alt={brandName ? `${brandName}` : 'AgoraEncontrei — Marketplace Imobiliário'}
+                  width={320}
+                  height={116}
+                  className="w-auto h-9 sm:h-10 object-contain flex-shrink-0"
+                  priority
+                  unoptimized={fullLogoUrl.startsWith('data:')}
+                />
+              ) : (
+                <>
                   <Image
-                    src={brandWordmark}
-                    alt="Agora Encontrei Marketplace"
-                    width={148}
-                    height={40}
-                    className="flex-shrink-0 h-9 w-auto"
+                    src={brandLogo}
+                    alt={brandName ? `${brandName} Marketplace` : 'AgoraEncontrei Marketplace'}
+                    width={44}
+                    height={44}
+                    className="flex-shrink-0"
+                    style={{ borderRadius: '50%' }}
                     priority
+                    unoptimized={brandLogoUnoptimized}
                   />
-                )
+                  {showText && (
+                    brandName ? (
+                      <div className="flex flex-col leading-none">
+                        <span className="text-base tracking-tight" style={{ fontFamily: 'Arial, Helvetica, sans-serif', letterSpacing: '-0.01em', color: '#d1d5db', fontWeight: 700 }}>
+                          {brandName}
+                        </span>
+                        <span className="text-[9px] font-medium" style={{ color: '#9ca3af', letterSpacing: '0.04em' }}>
+                          Marketplace
+                        </span>
+                      </div>
+                    ) : (
+                      // Marca escrita padrão "Agora Encontrei Marketplace" (imagem),
+                      // editável pelo admin (systemConfig.company.logoWordmarkUrl).
+                      <Image
+                        src={brandWordmark}
+                        alt="Agora Encontrei Marketplace"
+                        width={148}
+                        height={40}
+                        className="flex-shrink-0 h-9 w-auto"
+                        priority
+                      />
+                    )
+                  )}
+                </>
               )}
             </Link>
           ) : <div />}

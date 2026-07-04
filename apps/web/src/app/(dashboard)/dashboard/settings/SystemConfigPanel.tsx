@@ -1260,6 +1260,15 @@ export function SystemConfigPanel() {
                     token={apiToken}
                     placeholder="Cole uma URL ou envie uma imagem"
                   />
+                  <MediaUploadInput
+                    label="Logo Completo (emblema + escrita — igual ao login)"
+                    hint="Imagem única com o emblema e a escrita juntos, exibida no canto esquerdo do cabeçalho da home (substitui ícone + marca escrita separados). Deixe em branco para usar o logo completo padrão do AgoraEncontrei."
+                    value={cfg.company?.logoFullUrl ?? ''}
+                    onChange={v => updateCfg('company','logoFullUrl', v)}
+                    kind="image"
+                    token={apiToken}
+                    placeholder="Cole uma URL ou envie uma imagem"
+                  />
                 </div>
 
                 <div className="border-t border-white/10 pt-4 space-y-3">

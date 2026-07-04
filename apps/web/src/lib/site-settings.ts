@@ -13,6 +13,10 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 export const DEFAULT_LOGO_URL = '/brand/ae-icon-round.png'
 export const DEFAULT_FOOTER_LOGO_URL = '/brand/ae-icon-round.png'
 export const DEFAULT_WORDMARK_URL = '/brand/ae-wordmark.png'
+// Logo COMPLETO (emblema + escrita) em tom claro — o mesmo do login. Usado na
+// barra superior da home quando não há logo custom configurado. Editável via
+// `settings.logoFullUrl`.
+export const DEFAULT_FULL_LOGO_URL = '/brand/ae-logo-full-light.png'
 export const DEFAULT_PRIMARY_COLOR = '#143A1F'
 export const DEFAULT_ACCENT_COLOR = '#C9A84C'
 
@@ -26,6 +30,7 @@ const STALE_PRIMARY_DEFAULTS = new Set(['#1b2b5b', '#011347'])
 export interface SiteSettings {
   logoUrl?: string | null
   logoIconUrl?: string | null
+  logoFullUrl?: string | null
   logoWordmarkUrl?: string | null
   logoVisible?: boolean | null
   logoShowText?: boolean | null
@@ -117,6 +122,7 @@ export function resolveSiteBrand(
 ): {
   logoUrl: string
   wordmarkUrl: string | null
+  fullLogoUrl: string | null
   companyName: string | null
   hasCustomLogo: boolean
   hasCustomWordmark: boolean
@@ -135,9 +141,18 @@ export function resolveSiteBrand(
   const name = typeof settings.companyName === 'string' && settings.companyName.trim() !== ''
     ? settings.companyName.trim()
     : null
+  // Logo COMPLETO (emblema + escrita), como no login. Prioridade:
+  //   1. logoFullUrl custom do admin (editável);
+  //   2. sem ícone custom → o full padrão do AgoraEncontrei (tom claro);
+  //   3. com ícone custom mas sem full → null (mantém ícone + wordmark).
+  const customFull = typeof settings.logoFullUrl === 'string' && settings.logoFullUrl.trim() !== ''
+    ? settings.logoFullUrl.trim()
+    : null
+  const fullLogoUrl = customFull || (custom ? null : DEFAULT_FULL_LOGO_URL)
   return {
     logoUrl: custom ? (iconCandidate as string).trim() : fallbackLogo,
     wordmarkUrl: wordmarkCandidate,
+    fullLogoUrl,
     companyName: name,
     hasCustomLogo: custom,
     hasCustomWordmark: !!wordmarkCandidate,
