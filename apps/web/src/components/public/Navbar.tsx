@@ -71,7 +71,10 @@ const ACCESS_AREAS = [
 ]
 
 const DEFAULT_NAV_LOGO = '/brand/ae-icon-round.png'
-const DEFAULT_NAV_WORDMARK = '/brand/ae-wordmark.png'
+// Header do site é escuro (verde da marca) → usa o wordmark em tom claro
+// (creme + dourado) para a escrita "Agora Encontrei" ficar legível. A versão
+// navy (ae-wordmark.png) é para fundos claros.
+const DEFAULT_NAV_WORDMARK = '/brand/ae-wordmark-light.png'
 
 interface NavbarProps {
   logoUrl?: string

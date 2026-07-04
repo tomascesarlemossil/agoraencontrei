@@ -16,11 +16,12 @@ export const DEFAULT_WORDMARK_URL = '/brand/ae-wordmark.png'
 export const DEFAULT_PRIMARY_COLOR = '#143A1F'
 export const DEFAULT_ACCENT_COLOR = '#C9A84C'
 
-// A API devolve `primaryColor`/`designPrimaryColor` com um default legado navy
-// (#1B2B5B) que antecede o rebrand verde. Como não existe input de admin que
-// grave esse campo (o admin edita `design.primaryColor`), tratamos esse valor
-// como "não configurado" e caímos no tema/fallback verde — evitando regressão.
-const STALE_PRIMARY_DEFAULT = '#1b2b5b'
+// A API devolve `primaryColor`/`designPrimaryColor` com defaults legados navy
+// (#1B2B5B e #011347) que antecedem o rebrand verde. Como não existe input de
+// admin que grave esse campo (o admin edita `design.primaryColor`), tratamos
+// esses valores como "não configurado" e caímos no tema/fallback verde —
+// evitando o header azul-marinho onde o logo/escrita AgoraEncontrei some.
+const STALE_PRIMARY_DEFAULTS = new Set(['#1b2b5b', '#011347'])
 
 export interface SiteSettings {
   logoUrl?: string | null
@@ -79,7 +80,7 @@ export async function fetchSiteSettings(): Promise<SiteSettings> {
 }
 
 function isMeaningfulColor(v?: string | null): v is string {
-  return !!v && typeof v === 'string' && v.trim() !== '' && v.trim().toLowerCase() !== STALE_PRIMARY_DEFAULT
+  return !!v && typeof v === 'string' && v.trim() !== '' && !STALE_PRIMARY_DEFAULTS.has(v.trim().toLowerCase())
 }
 
 /**
