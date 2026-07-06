@@ -10,6 +10,9 @@ import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import { resolveTheme } from '@/lib/site-factory/theme-registry'
 
+// Render ao vivo: evita 404 preso no cache ISR/CDN quando a API tem um blip.
+export const dynamic = 'force-dynamic'
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 const PAGE_SIZE = 24
 
