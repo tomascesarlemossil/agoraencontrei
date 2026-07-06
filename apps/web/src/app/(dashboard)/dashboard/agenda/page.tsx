@@ -1,9 +1,11 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef, Suspense } from 'react'
 import Link from 'next/link'
-import { Calendar, Loader2, RefreshCw, Check, X, Phone, MessageCircle, Star, TrendingUp, AlertTriangle, Award } from 'lucide-react'
+import { useSearchParams } from 'next/navigation'
+import { Calendar, Loader2, RefreshCw, Check, X, Phone, MessageCircle, Star, TrendingUp, AlertTriangle, Award, ChevronDown } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
+import { buildWaLink, VISIT_TEMPLATES } from '@/lib/whatsapp-templates'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 
@@ -41,7 +43,17 @@ function fmtDate(iso: string) {
 }
 
 export default function AgendaPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-gray-950" />}>
+      <AgendaContent />
+    </Suspense>
+  )
+}
+
+function AgendaContent() {
   const { getValidToken } = useAuth()
+  const searchParams = useSearchParams()
+  const focusId = searchParams.get('focus')
   const [visits, setVisits] = useState<Visit[]>([])
   const [stats, setStats] = useState<Stats | null>(null)
   const [loading, setLoading] = useState(false)
@@ -50,6 +62,8 @@ export default function AgendaPage() {
   const [feedbackFor, setFeedbackFor] = useState<string | null>(null)
   const [rating, setRating] = useState(5)
   const [fbText, setFbText] = useState('')
+  const [waMenuFor, setWaMenuFor] = useState<string | null>(null)
+  const focusRef = useRef<HTMLDivElement | null>(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -69,6 +83,13 @@ export default function AgendaPage() {
   }, [filter, getValidToken])
 
   useEffect(() => { load() }, [load])
+
+  // Rola até a visita vinda da notificação (?focus=<visitId>) e a destaca.
+  useEffect(() => {
+    if (focusId && !loading && focusRef.current) {
+      focusRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }
+  }, [focusId, loading, visits])
 
   async function patch(id: string, data: Record<string, unknown>) {
     setBusy(id)
@@ -216,9 +237,16 @@ export default function AgendaPage() {
             {visits.map(v => {
               const s = STATUS[v.status] ?? STATUS.pending
               const busyThis = busy === v.id
-              const phoneClean = v.visitorPhone.replace(/\D/g, '')
+              const isFocused = focusId === v.id
+              const waInput = { visitorName: v.visitorName, propertyTitle: v.property?.title, scheduledAt: v.scheduledAt }
               return (
-                <div key={v.id} className="rounded-xl border border-gray-800 bg-gray-900/40 p-4">
+                <div
+                  key={v.id}
+                  ref={isFocused ? focusRef : undefined}
+                  className={`rounded-xl border bg-gray-900/40 p-4 transition-colors ${
+                    isFocused ? 'border-amber-500 ring-1 ring-amber-500/40' : 'border-gray-800'
+                  }`}
+                >
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
@@ -245,15 +273,43 @@ export default function AgendaPage() {
                       )}
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
-                      <a href={`https://wa.me/55${phoneClean}`} target="_blank" rel="noopener noreferrer"
-                        className="text-emerald-400 hover:text-emerald-300" title="WhatsApp">
-                        <MessageCircle size={16} />
-                      </a>
-                      <a href={`tel:${phoneClean}`} className="text-gray-400 hover:text-white" title="Ligar">
+                      <button
+                        onClick={() => setWaMenuFor(waMenuFor === v.id ? null : v.id)}
+                        className={`flex items-center gap-1 rounded-md border px-2 py-1 text-xs transition-colors ${
+                          waMenuFor === v.id
+                            ? 'border-emerald-500/60 bg-emerald-500/20 text-emerald-200'
+                            : 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20'
+                        }`}
+                        title="Enviar mensagem no WhatsApp">
+                        <MessageCircle size={14} /> WhatsApp <ChevronDown size={12} />
+                      </button>
+                      <a href={`tel:${v.visitorPhone.replace(/\D/g, '')}`} className="text-gray-400 hover:text-white" title="Ligar">
                         <Phone size={16} />
                       </a>
                     </div>
                   </div>
+
+                  {/* Modelos de mensagem — abre o WhatsApp com o texto já pronto */}
+                  {waMenuFor === v.id && (
+                    <div className="mt-3 rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-2">
+                      <p className="px-1 pb-1.5 text-[10px] uppercase tracking-wider text-emerald-300/70">
+                        Enviar para {v.visitorName.split(' ')[0]} no WhatsApp
+                      </p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {VISIT_TEMPLATES.map(t => (
+                          <a
+                            key={t.key}
+                            href={buildWaLink(v.visitorPhone, t.build(waInput))}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={() => setWaMenuFor(null)}
+                            className="flex items-center gap-1 rounded-md border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-xs text-emerald-200 hover:bg-emerald-500/20">
+                            <MessageCircle size={12} /> {t.label}
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                   {/* Actions */}
                   {v.status === 'pending' || v.status === 'confirmed' ? (
