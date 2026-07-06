@@ -66,6 +66,26 @@ async function fetchFeaturedProperties() {
   }
 }
 
+// Empresas parceiras (arquitetos, construtoras, engenheiros, etc.) que pagam
+// destaque na home. Puxa do diretório de especialistas; prioriza planos pagos
+// (VIP > PRIME > START) e mostra no máximo 6. Sem dados → seção some (invite).
+async function fetchHighlightedPartners() {
+  try {
+    const res = await fetch(`${API_URL}/api/v1/specialists?limit=12`, {
+      next: { revalidate: 300 },
+    })
+    if (!res.ok) return []
+    const json = await res.json()
+    const list: any[] = Array.isArray(json?.data) ? json.data : []
+    const rank: Record<string, number> = { VIP: 0, PRIME: 1, START: 2 }
+    return list
+      .sort((a, b) => (rank[a.plan] ?? 3) - (rank[b.plan] ?? 3))
+      .slice(0, 6)
+  } catch {
+    return []
+  }
+}
+
 async function fetchStats() {
   try {
     const res = await fetch(`${API_URL}/api/v1/public/properties?limit=1`, {
@@ -327,10 +347,11 @@ const LOCAL_BUSINESS_SCHEMA = {
 }
 
 export default async function HomePage() {
-  const [featured, stats, siteSettings] = await Promise.all([
+  const [featured, stats, siteSettings, partners] = await Promise.all([
     fetchFeaturedProperties(),
     fetchStats(),
     fetchSiteSettings(),
+    fetchHighlightedPartners(),
   ])
 
   // Resolve the active theme from site settings. The public API returns
@@ -405,84 +426,219 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ── LEILÕES (logo após o hero) ────────────────────────────────── */}
-      <section className="py-12" style={{ backgroundColor: theme.colors.primary }}>
-        <div className="max-w-6xl mx-auto px-4 text-center">
-          <h2 className="text-3xl font-bold text-white mb-3" style={{ fontFamily: theme.typography.heroFont }}>
-            Leilões de Imóveis com até 70% de Desconto
-          </h2>
-          <p className="text-white/60 text-lg mb-6 max-w-2xl mx-auto">
-            Dados reais cruzados de Caixa, Santander, ZAP e QuintoAndar. Calculadora de ROI, score jurídico e alertas inteligentes.
-          </p>
-          <div className="flex flex-wrap items-center justify-center gap-4 mb-8">
-            <Link href="/leiloes" className="px-8 py-4 rounded-xl font-bold text-lg transition-all hover:scale-105" style={{ backgroundColor: theme.colors.accent, color: theme.colors.primary }}>
-              Ver Leilões Ativos
-            </Link>
-            <Link href="/oportunidades/melhores-alugueis-brasil" className="px-8 py-4 rounded-xl font-bold text-lg border-2 text-white transition-all hover:bg-white/10" style={{ borderColor: theme.colors.accent }}>
-              Ranking de Yield Nacional
-            </Link>
-            <Link href="/investor" className="px-8 py-4 rounded-xl font-bold text-lg border-2 text-white transition-all hover:bg-white/10" style={{ borderColor: '#4ade80' }}>
-              Terminal Investidor
-            </Link>
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-3xl mx-auto">
-            {[
-              { label: 'Leilões Monitorados', value: '500+' },
-              { label: 'Desconto Médio', value: '38%' },
-              { label: 'Cidades Cobertas', value: '5.570' },
-              { label: 'Fontes de Dados', value: '12' },
-            ].map(s => (
-              <div key={s.label} className="bg-white/10 rounded-xl px-4 py-3 text-center">
-                <div className="text-xl font-bold" style={{ color: theme.colors.accent }}>{s.value}</div>
-                <div className="text-[11px] text-white/50">{s.label}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── SMART QUIZ + CTA AVALIAÇÃO ─────────────────────────────────── */}
+      {/* ── 3 CARDS COMPACTOS: Leilões · Quiz IA · Avaliação ───────────── */}
       <SmartQuizModal>
-      <section style={{ backgroundColor: 'var(--site-secondary-color, #f8f6f1)' }} className="py-14">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 rounded-3xl overflow-hidden shadow-xl border border-gray-200/60">
-            <div className="px-8 py-10 flex flex-col justify-center" style={{ backgroundColor: 'var(--site-secondary-color, #f8f6f1)' }}>
-              <div className="inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-bold mb-5 w-fit" style={{ backgroundColor: theme.colors.badge, color: theme.colors.badgeText }}>
-                <Sparkles className="w-3.5 h-3.5" />
-                Busca Inteligente com IA
+      <section style={{ backgroundColor: 'var(--site-background-color, #f8f6f1)' }} className="py-12">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 items-stretch">
+
+            {/* Card 1 — Leilões */}
+            <div className="rounded-2xl p-6 flex flex-col" style={{ backgroundColor: 'var(--site-primary-color, #143A1F)' }}>
+              <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-bold mb-3 w-fit" style={{ backgroundColor: 'rgba(201,168,76,0.15)', color: theme.colors.accent }}>
+                🔨 Leilões de Imóveis
+              </span>
+              <h3 className="text-lg font-bold text-white mb-2 leading-snug" style={{ fontFamily: theme.typography.heroFont }}>
+                Até 70% de desconto
+              </h3>
+              <p className="text-white/60 text-sm mb-5 flex-1 leading-relaxed">
+                Caixa, Santander e mais. Calculadora de ROI, score jurídico e alertas inteligentes.
+              </p>
+              <div className="flex flex-col gap-2">
+                <Link href="/leiloes" className="px-4 py-2.5 rounded-xl text-sm font-bold text-center transition-all hover:brightness-110" style={{ backgroundColor: theme.colors.accent, color: theme.colors.primary }}>
+                  Ver Leilões Ativos
+                </Link>
+                <Link href="/investor" className="text-xs font-semibold text-center text-white/70 hover:text-white transition">
+                  Terminal Investidor →
+                </Link>
               </div>
-              <h2 className="text-2xl sm:text-3xl font-bold mb-3" style={{ color: theme.colors.sectionTitle, fontFamily: theme.typography.heroFont }}>
+            </div>
+
+            {/* Card 2 — Não sabe por onde começar (Quiz IA) */}
+            <div className="rounded-2xl p-6 flex flex-col bg-white border border-gray-200/70 shadow-sm">
+              <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-bold mb-3 w-fit" style={{ backgroundColor: theme.colors.badge, color: theme.colors.badgeText }}>
+                <Sparkles className="w-3 h-3" /> Busca Inteligente com IA
+              </span>
+              <h3 className="text-lg font-bold mb-2 leading-snug" style={{ color: theme.colors.sectionTitle, fontFamily: theme.typography.heroFont }}>
                 Não sabe por onde começar?
-              </h2>
-              <p className="text-gray-500 text-sm mb-8 max-w-sm leading-relaxed">
-                Responda 5 perguntas rápidas e nossa IA encontra os imóveis perfeitos para o seu perfil — em menos de 2 minutos.
+              </h3>
+              <p className="text-gray-500 text-sm mb-5 flex-1 leading-relaxed">
+                Responda 5 perguntas rápidas e nossa IA encontra os imóveis do seu perfil em menos de 2 minutos.
               </p>
               <SmartQuizButton />
-              <p className="text-gray-500 text-xs mt-3">Gratuito · 2 minutos · Sem compromisso</p>
+              <p className="text-gray-400 text-[11px] mt-2 text-center">Gratuito · 2 minutos · Sem compromisso</p>
             </div>
-            <div className="hidden lg:block absolute" style={{ display: 'none' }} />
-            <div className="bg-white px-8 py-10 flex flex-col justify-center border-t lg:border-t-0 lg:border-l border-gray-200">
-              <h2 className="text-2xl sm:text-3xl font-bold mb-3" style={{ color: 'var(--ae-heading)', fontFamily: '"Playfair Display", Georgia, serif' }}>
-                Quer saber quanto vale seu imóvel?
-              </h2>
-              <p className="text-gray-500 text-sm mb-8 max-w-sm leading-relaxed">
-                Avaliação profissional com dados em tempo real. 3 métodos, laudo instantâneo. 1ª avaliação gratuita por CPF.
+
+            {/* Card 3 — Quanto vale seu imóvel (Avaliação) */}
+            <div className="rounded-2xl p-6 flex flex-col bg-white border border-gray-200/70 shadow-sm">
+              <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-bold mb-3 w-fit" style={{ backgroundColor: 'rgba(201,168,76,0.15)', color: 'var(--site-accent-color, #C9A84C)' }}>
+                📊 Avaliação de Imóvel
+              </span>
+              <h3 className="text-lg font-bold mb-2 leading-snug" style={{ color: 'var(--ae-heading)', fontFamily: '"Playfair Display", Georgia, serif' }}>
+                Quanto vale seu imóvel?
+              </h3>
+              <p className="text-gray-500 text-sm mb-5 flex-1 leading-relaxed">
+                Avaliação profissional com dados em tempo real. 3 métodos, laudo instantâneo. 1ª grátis por CPF.
               </p>
-              <div className="flex flex-col sm:flex-row gap-3">
-                <Link href="/avaliacao" className="px-7 py-3 rounded-xl text-sm font-bold transition-all hover:brightness-110 text-center" style={{ backgroundColor: 'var(--site-accent-color, #C9A84C)', color: 'var(--site-primary-color, #143A1F)' }}>
+              <div className="flex flex-col gap-2">
+                <Link href="/avaliacao" className="px-4 py-2.5 rounded-xl text-sm font-bold text-center transition-all hover:brightness-110" style={{ backgroundColor: 'var(--site-accent-color, #C9A84C)', color: 'var(--site-primary-color, #143A1F)' }}>
                   Avaliação imediata
                 </Link>
-                <a href="https://wa.me/5516981010004?text=Olá! Gostaria de uma avaliação imediata do meu imóvel." target="_blank" rel="noreferrer" className="px-7 py-3 rounded-xl text-sm font-bold border-2 transition-all hover:bg-[#143A1F] hover:text-white text-center" style={{ borderColor: 'var(--ae-heading)', color: 'var(--ae-heading)' }}>
-                  Falar pelo WhatsApp
+                <a href="https://wa.me/5516981010004?text=Olá! Gostaria de uma avaliação imediata do meu imóvel." target="_blank" rel="noreferrer" className="text-xs font-semibold text-center transition hover:brightness-110" style={{ color: 'var(--ae-heading)' }}>
+                  Falar no WhatsApp →
                 </a>
               </div>
             </div>
+
           </div>
         </div>
       </section>
       </SmartQuizModal>
 
-      {/* ── SEJA UM PARCEIRO (após Quiz / Avaliação) ──────────────────── */}
+      {/* ── IMÓVEIS EM DESTAQUE (parceiros no Plano Máximo de Destaque) ──── */}
+      {featured.length > 0 && (
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 py-16">
+          <div className="flex items-center justify-between mb-8">
+            <Reveal direction="right">
+              <h2 className="text-2xl font-bold" style={{ color: 'var(--ae-heading)', fontFamily: '"Playfair Display", Georgia, serif' }}>
+                Imóveis em Destaque
+              </h2>
+              <p className="text-gray-500 text-sm mt-0.5">Selecionados dos nossos parceiros em destaque</p>
+            </Reveal>
+            <Link
+              href="/imoveis"
+              className="flex items-center gap-2 text-sm font-semibold hover:gap-3 transition-all"
+              style={{ color: 'var(--site-accent-color, #C9A84C)' }}
+            >
+              Ver todos <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {featured.slice(0, 8).map((p: any) => (
+              <Link
+                key={p.id}
+                href={`/imoveis/${p.slug}`}
+                className="group bg-white rounded-2xl overflow-hidden border border-gray-100 hover:shadow-xl hover:border-transparent transition-all duration-300"
+              >
+                <div className="relative h-44 overflow-hidden bg-gray-100">
+                  {p.coverImage && !p.coverImage.includes('telefone.png') && !p.coverImage.includes('whatsapp') ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={p.coverImage}
+                      alt={p.title}
+                      loading="lazy"
+                      decoding="async"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                  ) : (
+                    <div className="h-full flex flex-col items-center justify-center gap-2" style={{ background: 'linear-gradient(135deg, #143A1F, #0f1c3a)' }}>
+                      <svg xmlns="http://www.w3.org/2000/svg" className="w-12 h-12 text-white/30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                        <polyline points="9 22 9 12 15 12 15 22" />
+                      </svg>
+                      <span className="text-white/30 text-xs">Foto em breve</span>
+                    </div>
+                  )}
+                  <div className="absolute top-2 left-2">
+                    <span
+                      className="text-xs font-bold px-2 py-0.5 rounded-full"
+                      style={{
+                        backgroundColor: p.purpose === 'RENT' ? 'var(--site-primary-color, #143A1F)' : 'var(--site-accent-color, #C9A84C)',
+                        color: p.purpose === 'RENT' ? 'white' : 'var(--site-primary-color, #143A1F)',
+                      }}
+                    >
+                      {p.purpose === 'SALE' ? 'Venda' : p.purpose === 'RENT' ? 'Aluguel' : p.purpose === 'BOTH' ? 'Venda/Alug.' : 'Temporada'}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="p-4">
+                  <p className="font-semibold text-gray-900 text-sm line-clamp-2 leading-snug group-hover:text-[#143A1F] transition-colors">
+                    {p.title}
+                  </p>
+                  {(p.city || p.neighborhood) && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      {[p.neighborhood, p.city].filter(Boolean).join(' · ')}
+                    </p>
+                  )}
+                  <div className="flex items-center gap-3 mt-2.5 text-xs text-gray-500">
+                    {p.bedrooms > 0 && (
+                      <span className="flex items-center gap-1">
+                        <BedDouble className="w-3.5 h-3.5" /> {p.bedrooms}
+                      </span>
+                    )}
+                    {p.bathrooms > 0 && (
+                      <span className="flex items-center gap-1">
+                        <Bath className="w-3.5 h-3.5" /> {p.bathrooms}
+                      </span>
+                    )}
+                    {p.totalArea > 0 && (
+                      <span className="flex items-center gap-1">
+                        <Maximize className="w-3.5 h-3.5" /> {p.totalArea}m²
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-base font-bold mt-3" style={{ color: 'var(--ae-heading)' }}>
+                    {formatPrice(p)}
+                  </p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* ── EMPRESAS PARCEIRAS EM DESTAQUE (serviços: arquitetos, etc.) ──── */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-16">
+        <div className="text-center mb-8">
+          <h2 className="text-2xl font-bold" style={{ color: 'var(--ae-heading)', fontFamily: '"Playfair Display", Georgia, serif' }}>
+            Empresas Parceiras em Destaque
+          </h2>
+          <p className="text-gray-500 text-sm mt-1">Arquitetos, engenheiros, construtoras e serviços para o seu imóvel</p>
+        </div>
+
+        {partners.length > 0 ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+            {partners.map((sp: any) => (
+              <Link
+                key={sp.id}
+                href={`/especialistas/${sp.slug}`}
+                className="group bg-white rounded-2xl p-5 border border-gray-100 hover:border-[#C9A84C] hover:shadow-lg transition-all flex flex-col items-center text-center"
+              >
+                <div className="w-20 h-20 rounded-full overflow-hidden mb-3 ring-2" style={{ ['--tw-ring-color' as any]: 'rgba(201,168,76,0.35)' }}>
+                  {sp.photoUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={sp.photoUrl} alt={sp.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-lg font-bold" style={{ backgroundColor: 'rgba(20,58,31,0.06)', color: 'var(--ae-heading)' }}>
+                      {(sp.name || '?').slice(0, 2).toUpperCase()}
+                    </div>
+                  )}
+                </div>
+                <p className="text-sm font-semibold text-gray-900 leading-tight line-clamp-2">{sp.name}</p>
+                <p className="text-[11px] text-gray-500 mt-0.5">{sp.categoryLabel || sp.category}</p>
+                {sp.city && <p className="text-[11px] text-gray-400 mt-0.5">{sp.city}</p>}
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <div className="max-w-2xl mx-auto rounded-2xl border border-dashed p-8 text-center" style={{ borderColor: '#C9A84C' }}>
+            <p className="text-gray-800 font-semibold mb-1">Divulgue sua empresa aqui</p>
+            <p className="text-gray-500 text-sm mb-5">
+              Arquitetura, engenharia, construção, design de interiores e mais — apareça para milhares de pessoas em Franca e região.
+            </p>
+            <Link
+              href="/parceiros/cadastro"
+              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all hover:brightness-110"
+              style={{ backgroundColor: 'var(--site-accent-color, #C9A84C)', color: 'var(--site-primary-color, #143A1F)' }}
+            >
+              Quero divulgar minha empresa <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+        )}
+      </section>
+
+      {/* ── SEJA UM PARCEIRO ──────────────────────────────────────────── */}
       <section className="py-14 px-4 sm:px-6" style={{ backgroundColor: 'var(--site-primary-color, #143A1F)' }}>
         <div className="max-w-4xl mx-auto rounded-3xl p-8 sm:p-12 text-center" style={{ background: 'linear-gradient(135deg, rgba(201,168,76,0.18), rgba(201,168,76,0.05))', border: '1px solid rgba(201,168,76,0.35)' }}>
           <p className="text-xs sm:text-sm font-semibold uppercase tracking-widest mb-2" style={{ color: 'var(--site-accent-color, #C9A84C)' }}>
@@ -498,12 +654,13 @@ export default async function HomePage() {
           </p>
 
           {/* Tudo incluído — reunido de uma vez só, sem repetir CTAs */}
-          <div className="flex flex-wrap justify-center gap-2 mb-7 max-w-2xl mx-auto">
+          <div className="flex flex-wrap justify-center gap-2 mb-5 max-w-2xl mx-auto">
             {[
               'Site profissional próprio',
               'CRM completo',
               'IA do Tomás 24/7',
               'Marketplace integrado',
+              'Divulgação de serviços',
               'Anúncios ilimitados',
               'Versão offline (sistema)',
             ].map(item => (
@@ -517,6 +674,14 @@ export default async function HomePage() {
               </span>
             ))}
           </div>
+
+          {/* Planos modulares — cada parceiro assina só o que precisa */}
+          <p className="text-white/55 text-xs sm:text-sm mb-6 max-w-2xl mx-auto">
+            Planos flexíveis: <span className="text-white/80 font-medium">só site</span> ·{' '}
+            <span className="text-white/80 font-medium">só sistema/CRM</span> ·{' '}
+            <span className="text-white/80 font-medium">só divulgação</span> ·{' '}
+            <span className="text-white/80 font-medium">ou tudo integrado</span>.
+          </p>
 
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link
@@ -769,101 +934,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ── 5. IMÓVEIS EM DESTAQUE (somente admin pode selecionar) ────────── */}
-      {featured.length > 0 && (
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 py-16">
-          <div className="flex items-center justify-between mb-8">
-            <Reveal direction="right">
-              <h2 className="text-2xl font-bold" style={{ color: 'var(--ae-heading)', fontFamily: '"Playfair Display", Georgia, serif' }}>
-                Imóveis em Destaque
-              </h2>
-              <p className="text-gray-500 text-sm mt-0.5">Imóveis selecionados pela nossa equipe para você</p>
-            </Reveal>
-            <Link
-              href="/imoveis"
-              className="flex items-center gap-2 text-sm font-semibold hover:gap-3 transition-all"
-              style={{ color: 'var(--site-accent-color, #C9A84C)' }}
-            >
-              Ver todos <ArrowRight className="w-4 h-4" />
-            </Link>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            {featured.slice(0, 8).map((p: any) => (
-              <Link
-                key={p.id}
-                href={`/imoveis/${p.slug}`}
-                className="group bg-white rounded-2xl overflow-hidden border border-gray-100 hover:shadow-xl hover:border-transparent transition-all duration-300"
-              >
-                <div className="relative h-44 overflow-hidden bg-gray-100">
-                  {p.coverImage && !p.coverImage.includes('telefone.png') && !p.coverImage.includes('whatsapp') ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={p.coverImage}
-                      alt={p.title}
-                      loading="lazy"
-                      decoding="async"
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-                  ) : (
-                    <div className="h-full flex flex-col items-center justify-center gap-2" style={{ background: 'linear-gradient(135deg, #143A1F, #0f1c3a)' }}>
-                      <svg xmlns="http://www.w3.org/2000/svg" className="w-12 h-12 text-white/30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
-                        <polyline points="9 22 9 12 15 12 15 22" />
-                      </svg>
-                      <span className="text-white/30 text-xs">Foto em breve</span>
-                    </div>
-                  )}
-                  <div className="absolute top-2 left-2">
-                    <span
-                      className="text-xs font-bold px-2 py-0.5 rounded-full"
-                      style={{
-                        backgroundColor: p.purpose === 'RENT' ? 'var(--site-primary-color, #143A1F)' : 'var(--site-accent-color, #C9A84C)',
-                        color: p.purpose === 'RENT' ? 'white' : 'var(--site-primary-color, #143A1F)',
-                      }}
-                    >
-                      {p.purpose === 'SALE' ? 'Venda' : p.purpose === 'RENT' ? 'Aluguel' : p.purpose === 'BOTH' ? 'Venda/Alug.' : 'Temporada'}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="p-4">
-                  <p className="font-semibold text-gray-900 text-sm line-clamp-2 leading-snug group-hover:text-[#143A1F] transition-colors">
-                    {p.title}
-                  </p>
-                  {(p.city || p.neighborhood) && (
-                    <p className="text-xs text-gray-500 mt-1">
-                      {[p.neighborhood, p.city].filter(Boolean).join(' · ')}
-                    </p>
-                  )}
-                  <div className="flex items-center gap-3 mt-2.5 text-xs text-gray-500">
-                    {p.bedrooms > 0 && (
-                      <span className="flex items-center gap-1">
-                        <BedDouble className="w-3.5 h-3.5" /> {p.bedrooms}
-                      </span>
-                    )}
-                    {p.bathrooms > 0 && (
-                      <span className="flex items-center gap-1">
-                        <Bath className="w-3.5 h-3.5" /> {p.bathrooms}
-                      </span>
-                    )}
-                    {p.totalArea > 0 && (
-                      <span className="flex items-center gap-1">
-                        <Maximize className="w-3.5 h-3.5" /> {p.totalArea}m²
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-base font-bold mt-3" style={{ color: 'var(--ae-heading)' }}>
-                    {formatPrice(p)}
-                  </p>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* ── 7. REDES SOCIAIS + QUICK STATS ──────────────────────────────── */}
+      {/* ── REDES SOCIAIS + QUICK STATS ─────────────────────────────────── */}
       <section className="max-w-4xl mx-auto px-4 sm:px-6 py-10">
         {/* Quick Stats */}
         <div className="flex flex-wrap justify-center gap-10 py-5 px-8 rounded-2xl bg-white shadow-lg border border-gray-100 mb-10">
