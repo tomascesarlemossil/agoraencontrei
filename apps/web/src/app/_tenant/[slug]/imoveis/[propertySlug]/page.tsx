@@ -61,27 +61,33 @@ interface PropertyDetail {
   user?: { name: string; phone: string | null; email: string | null; avatarUrl: string | null; creciNumber: string | null } | null
 }
 
-async function getTenant(slug: string): Promise<TenantData | null> {
-  try {
-    const res = await fetch(`${API_URL}/api/v1/public/tenant/${encodeURIComponent(slug)}`, { next: { revalidate: 60 } })
-    if (!res.ok) return null
-    const data = await res.json()
-    return data.data || null
-  } catch {
-    return null
+// Retry em falhas de rede do SSR → API (ECONNRESET/TLS). 404 real não é retentado.
+async function fetchJsonRetry(url: string, revalidate: number): Promise<any | null> {
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const res = await fetch(url, { next: { revalidate } })
+      if (res.status === 404) return null
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      return await res.json()
+    } catch {
+      if (attempt === 2) return null
+      await new Promise(r => setTimeout(r, 200 * (attempt + 1)))
+    }
   }
+  return null
+}
+
+async function getTenant(slug: string): Promise<TenantData | null> {
+  const data = await fetchJsonRetry(`${API_URL}/api/v1/public/tenant/${encodeURIComponent(slug)}`, 60)
+  return data?.data || null
 }
 
 async function getProperty(tenantSlug: string, propertySlug: string): Promise<PropertyDetail | null> {
-  try {
-    // Endpoint ciente do parceiro: escopa ao companyId do tenant (ver resolveScopedCompanyId na API).
-    const url = `${API_URL}/api/v1/public/properties/${encodeURIComponent(propertySlug)}?tenantSlug=${encodeURIComponent(tenantSlug)}`
-    const res = await fetch(url, { next: { revalidate: 120 } })
-    if (!res.ok) return null
-    return await res.json()
-  } catch {
-    return null
-  }
+  // Endpoint ciente do parceiro: escopa ao companyId do tenant (ver resolveScopedCompanyId na API).
+  return await fetchJsonRetry(
+    `${API_URL}/api/v1/public/properties/${encodeURIComponent(propertySlug)}?tenantSlug=${encodeURIComponent(tenantSlug)}`,
+    120,
+  )
 }
 
 function formatPrice(p: number | null): string {
