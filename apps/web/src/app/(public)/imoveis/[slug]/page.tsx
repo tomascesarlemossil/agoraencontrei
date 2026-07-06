@@ -870,7 +870,7 @@ export default async function PropertyDetailPage(props: { params: Promise<{ slug
               </div>
             </div>
 
-            {/* Company info */}
+            {/* Company info — encaminha ao site do parceiro (marketplace → parceiro) */}
             {p.company && (
               <div className="bg-white rounded-2xl border p-4 text-center" style={{ borderColor: '#ddd9d0' }}>
                 <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">Anúncio de</p>
@@ -882,6 +882,19 @@ export default async function PropertyDetailPage(props: { params: Promise<{ slug
                   </a>
                 )}
                 <p className="text-[10px] text-gray-500 mt-1">CRECI 61053-F</p>
+                {p.partnerSite && (
+                  <a
+                    href={p.partnerSite.customDomain
+                      ? `https://${p.partnerSite.customDomain}`
+                      : `https://${p.partnerSite.subdomain}.agoraencontrei.com.br`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-3 inline-flex items-center justify-center gap-1 w-full py-2 rounded-lg text-xs font-bold text-white hover:opacity-90 transition"
+                    style={{ backgroundColor: '#143A1F' }}
+                  >
+                    Ver todos os imóveis desta imobiliária →
+                  </a>
+                )}
               </div>
             )}
           </div>
