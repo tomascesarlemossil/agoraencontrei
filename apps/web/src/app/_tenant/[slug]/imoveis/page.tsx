@@ -44,13 +44,25 @@ interface Property {
 
 interface Meta { total: number; page: number; limit: number; totalPages: number }
 
+// Retry em falhas de rede do SSR → API (ECONNRESET/TLS). 404 real não é retentado.
+async function fetchJsonRetry(url: string, revalidate: number): Promise<any | null> {
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const res = await fetch(url, { next: { revalidate } })
+      if (res.status === 404) return null
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      return await res.json()
+    } catch {
+      if (attempt === 2) return null
+      await new Promise(r => setTimeout(r, 200 * (attempt + 1)))
+    }
+  }
+  return null
+}
+
 async function getTenant(slug: string): Promise<TenantData | null> {
-  try {
-    const res = await fetch(`${API_URL}/api/v1/public/tenant/${encodeURIComponent(slug)}`, { next: { revalidate: 60 } })
-    if (!res.ok) return null
-    const data = await res.json()
-    return data.data || null
-  } catch { return null }
+  const data = await fetchJsonRetry(`${API_URL}/api/v1/public/tenant/${encodeURIComponent(slug)}`, 60)
+  return data?.data || null
 }
 
 async function getProperties(slug: string, sp: Record<string, string>): Promise<{ items: Property[]; meta: Meta }> {
@@ -64,16 +76,10 @@ async function getProperties(slug: string, sp: Record<string, string>): Promise<
   if (sp.purpose) qs.set('purpose', sp.purpose)
   if (sp.type) qs.set('type', sp.type)
   if (sp.search) qs.set('search', sp.search)
-  try {
-    const res = await fetch(`${API_URL}/api/v1/public/properties?${qs.toString()}`, { next: { revalidate: 120 } })
-    if (!res.ok) return { items: [], meta: { total: 0, page: 1, limit: PAGE_SIZE, totalPages: 0 } }
-    const data = await res.json()
-    return {
-      items: Array.isArray(data?.data) ? data.data : [],
-      meta: data?.meta ?? { total: 0, page: 1, limit: PAGE_SIZE, totalPages: 0 },
-    }
-  } catch {
-    return { items: [], meta: { total: 0, page: 1, limit: PAGE_SIZE, totalPages: 0 } }
+  const data = await fetchJsonRetry(`${API_URL}/api/v1/public/properties?${qs.toString()}`, 120)
+  return {
+    items: Array.isArray(data?.data) ? data.data : [],
+    meta: data?.meta ?? { total: 0, page: 1, limit: PAGE_SIZE, totalPages: 0 },
   }
 }
 
