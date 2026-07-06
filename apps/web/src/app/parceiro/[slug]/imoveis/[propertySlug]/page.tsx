@@ -2,7 +2,7 @@
  * Tenant Property Detail — página de detalhe do imóvel no site do PARCEIRO.
  *
  * Acessada via subdomínio/domínio próprio: parceiro.agoraencontrei.com.br/imoveis/{slug}
- * → middleware reescreve para /_tenant/{parceiro}/imoveis/{slug}.
+ * → middleware reescreve para /parceiro/{parceiro}/imoveis/{slug}.
  *
  * Consome o endpoint público de detalhe COM tenantSlug (ciente do parceiro), então
  * mostra só imóveis daquele parceiro e nunca dá 404 por resolver a empresa errada.
@@ -14,6 +14,9 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { resolveTheme } from '@/lib/site-factory/theme-registry'
 import TomasWidget from '@/components/tomas/TomasWidget'
+
+// Render ao vivo: evita 404 preso no cache ISR/CDN quando a API tem um blip.
+export const dynamic = 'force-dynamic'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 

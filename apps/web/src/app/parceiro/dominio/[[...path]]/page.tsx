@@ -39,6 +39,8 @@ export default async function DomainPage({
     notFound()
   }
 
-  // Redirect to the subdomain tenant page which handles rendering
-  redirect(`/_tenant/${tenant.subdomain}`)
+  // Redirect to the routable tenant page which handles rendering.
+  // Safe from loops: /parceiro/ is in the middleware BYPASS_PATHS, so this
+  // path renders directly on the custom-domain host without being re-rewritten.
+  redirect(`/parceiro/${tenant.subdomain}`)
 }

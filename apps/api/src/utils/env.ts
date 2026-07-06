@@ -53,6 +53,17 @@ const envSchema = z.object({
   // Namespace/idioma padrão dos templates aprovados na Meta (WABA).
   WHATSAPP_TEMPLATE_NAMESPACE: z.string().optional(),
 
+  // Confirmação automática de visita ao CLIENTE (via WhatsApp Cloud API).
+  // Desligado por padrão. Para ativar em produção:
+  //   1) VISIT_CLIENT_WHATSAPP_AUTO=true
+  //   2) VISIT_CONFIRMATION_TEMPLATE_NAME=<nome do template aprovado no Meta>
+  //      (o template deve ter 3 variáveis no corpo, na ordem:
+  //       {{1}}=nome do cliente, {{2}}=título do imóvel, {{3}}=data/hora)
+  // Sem um template aprovado, a Meta bloqueia mensagens fora da janela de 24h.
+  VISIT_CLIENT_WHATSAPP_AUTO: z.string().optional().transform((v) => v === '1' || v === 'true'),
+  VISIT_CONFIRMATION_TEMPLATE_NAME: z.string().optional(),
+  VISIT_CONFIRMATION_TEMPLATE_LANG: z.string().optional().default('pt_BR'),
+
   // Storage
   AWS_REGION: z.string().default('us-east-1'),
   AWS_ACCESS_KEY_ID: z.string().optional(),

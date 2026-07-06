@@ -1,7 +1,7 @@
 /**
  * Tenant Catalog — catálogo completo de imóveis no site do PARCEIRO.
  *
- * parceiro.agoraencontrei.com.br/imoveis → /_tenant/{parceiro}/imoveis
+ * parceiro.agoraencontrei.com.br/imoveis → /parceiro/{parceiro}/imoveis
  * Lista TODOS os imóveis publicados do parceiro, paginados, com busca/filtro
  * simples. Escopado pelo tenant (tenantSlug), então nunca mostra imóvel de outra
  * empresa. Cada card leva ao detalhe do imóvel no próprio site do parceiro.
@@ -9,6 +9,9 @@
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import { resolveTheme } from '@/lib/site-factory/theme-registry'
+
+// Render ao vivo: evita 404 preso no cache ISR/CDN quando a API tem um blip.
+export const dynamic = 'force-dynamic'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 const PAGE_SIZE = 24

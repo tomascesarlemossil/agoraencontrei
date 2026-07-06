@@ -1605,19 +1605,21 @@ export default async function publicRoutes(app: FastifyInstance) {
     }
   })
 
-  // GET /api/v1/public/team — lista pública de corretores com creciNumber
-  app.get('/team', async (_req, reply) => {
+  // GET /api/v1/public/team — lista pública de corretores com creciNumber.
+  // Aceita ?tenantSlug=... para escopar pelo parceiro (site do parceiro).
+  // Sem tenantSlug, cai na empresa pública padrão (site principal).
+  app.get('/team', async (req, reply) => {
     try {
-      const company = await resolveCompany(app)
-      if (!company) return reply.send([])
+      const companyId = await resolveScopedCompanyId(app, req.query)
+      if (!companyId) return reply.send([])
 
-      const cacheKey = `pub:team:v1:${company.id}`
+      const cacheKey = `pub:team:v2:${companyId}`
       const cached = await cacheGet(app.redis, cacheKey)
       if (cached) return reply.send(cached)
 
       const users = await app.prisma.user.findMany({
         where: {
-          companyId: company.id,
+          companyId,
           status: 'ACTIVE',
         },
         select: {
@@ -1626,6 +1628,7 @@ export default async function publicRoutes(app: FastifyInstance) {
           email: true,
           phone: true,
           avatarUrl: true,
+          bio: true,
           role: true,
           creciNumber: true,
         },

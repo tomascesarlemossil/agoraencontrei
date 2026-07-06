@@ -1,7 +1,7 @@
 /**
  * Tenant Home Page — Renders a clone site based on subdomain slug
  *
- * Accessed via middleware rewrite: parceiro.agoraencontrei.com.br → /_tenant/parceiro
+ * Accessed via middleware rewrite: parceiro.agoraencontrei.com.br → /parceiro/lemos
  * Fetches tenant config from API and renders appropriate layout.
  * 
  * v2: Carrega imóveis REAIS do banco de dados (com destaque e super destaque por região)
@@ -10,6 +10,9 @@ import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import { resolveTheme, type ThemeConfig } from '@/lib/site-factory/theme-registry'
 import TomasWidget from '@/components/tomas/TomasWidget'
+
+// Render ao vivo: evita 404 preso no cache ISR/CDN quando a API tem um blip.
+export const dynamic = 'force-dynamic'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 
@@ -59,6 +62,17 @@ interface Property {
   company?: { name: string; phone: string | null; logoUrl: string | null }
 }
 
+interface TeamMember {
+  id: string
+  name: string
+  email: string | null
+  phone: string | null
+  avatarUrl: string | null
+  bio: string | null
+  role: string
+  creciNumber: string | null
+}
+
 async function getTenantBySubdomain(slug: string): Promise<TenantData | null> {
   // Retry em falhas de rede (ECONNRESET/TLS do SSR → API): sem isso, um blip de
   // conexão fazia o site do parceiro cair em notFound() (404). 404 real (tenant
@@ -95,10 +109,49 @@ async function getTenantProperties(tenantSlug: string, limit = 9): Promise<Prope
   }
 }
 
+async function getTeam(tenantSlug: string): Promise<TeamMember[]> {
+  try {
+    const url = `${API_URL}/api/v1/public/team?tenantSlug=${encodeURIComponent(tenantSlug)}`
+    const res = await fetch(url, { next: { revalidate: 300 } })
+    if (!res.ok) return []
+    const data = await res.json()
+    return Array.isArray(data) ? data : (Array.isArray(data?.data) ? data.data : [])
+  } catch {
+    return []
+  }
+}
+
 function formatPrice(price: number | null, priceRent: number | null, purpose: string): string {
   const p = purpose === 'RENT' ? priceRent : price
   if (!p) return 'Consultar'
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(p)
+}
+
+// Rótulo de função amigável quando a pessoa ainda não preencheu a bio.
+function roleLabel(role: string): string {
+  switch (role) {
+    case 'BROKER': return 'Corretor(a) de Imóveis'
+    case 'ADMIN': return 'Equipe Imobiliária'
+    case 'SUPER_ADMIN': return 'Diretoria'
+    default: return 'Equipe'
+  }
+}
+
+// Iniciais para o avatar quando não há foto cadastrada.
+function initials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean)
+  if (parts.length === 0) return '?'
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+}
+
+// Normaliza telefone BR para link wa.me (só dígitos, com DDI 55).
+function waLink(phone: string | null): string | null {
+  if (!phone) return null
+  const digits = phone.replace(/\D/g, '')
+  if (digits.length < 10) return null
+  const withCountry = digits.startsWith('55') ? digits : `55${digits}`
+  return `https://wa.me/${withCountry}`
 }
 
 function PropertyBadge({ property, theme, accentColor }: { property: Property; theme: ThemeConfig; accentColor: string }) {
@@ -149,9 +202,10 @@ export default async function TenantPage({
   params: Promise<{ slug: string }>
 }) {
   const { slug } = await params
-  const [tenant, properties] = await Promise.all([
+  const [tenant, properties, teamRaw] = await Promise.all([
     getTenantBySubdomain(slug),
     getTenantProperties(slug, 9),
+    getTeam(slug),
   ])
 
   if (!tenant || !tenant.isActive) {
@@ -188,6 +242,16 @@ export default async function TenantPage({
 
   const hasProperties = sortedProperties.length > 0
 
+  // "Nossa Equipe": exclui a conta institucional (usuário com o mesmo nome da
+  // empresa, ex.: "Imobiliária Lemos") — ela representa a empresa, não uma
+  // pessoa. Gabriel e demais desligados já saem por status !== ACTIVE na API.
+  // Normaliza removendo acentos: o nome do usuário e o do tenant podem diferir
+  // só na forma Unicode do acento (NFC × NFD), o que quebraria um === simples.
+  const nameKey = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase()
+  const tenantNameNorm = nameKey(tenant.name)
+  const team = teamRaw.filter(m => m.name && nameKey(m.name) !== tenantNameNorm)
+  const hasTeam = team.length > 0
+
   return (
     <div className={`min-h-screen ${theme.bg} ${theme.text}`}>
       {/* CSS Variables for dynamic theming */}
@@ -223,7 +287,7 @@ export default async function TenantPage({
           ) : <div />}
           <nav className={`hidden md:flex items-center gap-6 text-sm ${theme.textMuted}`}>
             <a href="#imoveis" className="hover:opacity-80 transition">Imóveis</a>
-            <a href="#sobre" className="hover:opacity-80 transition">Sobre</a>
+            <a href="#equipe" className="hover:opacity-80 transition">Equipe</a>
             <a href="#contato" className="hover:opacity-80 transition">Contato</a>
           </nav>
           {/* Botão Tomás IA */}
@@ -423,6 +487,66 @@ export default async function TenantPage({
           )}
         </div>
       </section>
+
+      {/* Nossa Equipe — pessoas reais da imobiliária (fotos e dados do cadastro) */}
+      {hasTeam && (
+        <section id="equipe" className="py-16 px-4 border-t border-gray-200/10">
+          <div className="max-w-7xl mx-auto">
+            <div className="text-center mb-10">
+              <h3 className={`text-2xl ${theme.fontHeading} font-bold`}>Nossa Equipe</h3>
+              <p className={`text-sm ${theme.textMuted} mt-1`}>
+                Atendimento humano e próximo. Conheça quem cuida do seu imóvel.
+              </p>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
+              {team.map(member => {
+                const wa = waLink(member.phone)
+                return (
+                  <div key={member.id} className={`${theme.card} border rounded-2xl p-5 flex flex-col items-center text-center`}>
+                    {/* Avatar redondo: foto do cadastro ou iniciais */}
+                    {member.avatarUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={member.avatarUrl}
+                        alt={member.name}
+                        className="w-24 h-24 rounded-full object-cover ring-2"
+                        style={{ '--tw-ring-color': `${accentColor}55` } as React.CSSProperties}
+                      />
+                    ) : (
+                      <div
+                        className="w-24 h-24 rounded-full flex items-center justify-center text-2xl font-bold ring-2"
+                        style={{ backgroundColor: `${accentColor}18`, color: accentColor, '--tw-ring-color': `${accentColor}55` } as React.CSSProperties}
+                      >
+                        {initials(member.name)}
+                      </div>
+                    )}
+                    <p className={`mt-4 text-sm font-semibold ${theme.text} leading-tight`}>{member.name}</p>
+                    <p className={`text-xs ${theme.textMuted} mt-0.5`}>
+                      {member.bio?.trim() || roleLabel(member.role)}
+                    </p>
+                    {member.creciNumber && (
+                      <span className="mt-1 text-[10px] font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: `${accentColor}18`, color: accentColor }}>
+                        CRECI {member.creciNumber}
+                      </span>
+                    )}
+                    {wa && (
+                      <a
+                        href={`${wa}?text=${encodeURIComponent(`Olá ${member.name.split(' ')[0]}, vi você no site da ${tenant.name} e gostaria de falar sobre imóveis.`)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg text-white"
+                        style={{ backgroundColor: '#25D366' }}
+                      >
+                        💬 WhatsApp
+                      </a>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Contact Section */}
       <section id="contato" className="py-16 px-4 border-t border-gray-200/10">
