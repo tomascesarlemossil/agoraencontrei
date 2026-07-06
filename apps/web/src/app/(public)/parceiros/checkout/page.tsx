@@ -99,7 +99,7 @@ function CheckoutContent() {
   // Se não tem specialistId, redireciona para cadastro
   useEffect(() => {
     if (!specialistId) {
-      router.replace(`/parceiros/cadastro?plan=${plan}`)
+      router.replace(`/parceiros/assinar?plan=${plan}`)
     }
   }, [specialistId, plan, router])
 

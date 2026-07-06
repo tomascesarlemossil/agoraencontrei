@@ -450,7 +450,7 @@ export default function CrescerPage() {
                       </ul>
                     )}
                     <a
-                      href={`/parceiros/cadastro?plan=${plan.slug}`}
+                      href={`/parceiros/planos?plan=${plan.slug}`}
                       className={`mt-auto inline-flex items-center justify-center gap-1.5 sm:gap-2 px-4 sm:px-5 py-2 sm:py-2.5 rounded-lg font-semibold text-xs sm:text-sm transition-colors text-center ${
                         isHighlighted
                           ? 'bg-[#d4a853] text-gray-950 hover:bg-[#c49a48] shadow-lg shadow-[#d4a853]/20'

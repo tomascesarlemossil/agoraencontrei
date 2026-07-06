@@ -186,6 +186,13 @@ export default async function specialistsRoute(app: FastifyInstance) {
       website: z.string().optional(),
       tags: z.array(z.string()).default([]),
       buildingIds: z.array(z.string()).default([]), // IDs dos edifícios selecionados
+      // "Divulgue seu Negócio": dados da landing page editável.
+      cpfcnpj: z.string().optional(),
+      photoUrl: z.string().optional(),
+      logoUrl: z.string().optional(),
+      address: z.string().optional(),
+      businessType: z.string().optional(),
+      landingPage: z.any().optional(),
     })
 
     const parsed = schema.safeParse(request.body)
@@ -220,6 +227,13 @@ export default async function specialistsRoute(app: FastifyInstance) {
           instagram: data.instagram,
           website: data.website,
           tags: data.tags,
+          cpfCnpj: data.cpfcnpj,
+          photoUrl: data.photoUrl,
+          logoUrl: data.logoUrl,
+          address: data.address,
+          businessType: data.businessType,
+          landingPage: data.landingPage ?? undefined,
+          adPlan: data.landingPage?.adPlan ?? undefined,
           status: 'PENDING',
           buildings: data.buildingIds.length > 0 ? {
             create: data.buildingIds.map((buildingId: string) => ({ buildingId })),

@@ -19,7 +19,8 @@ const NAV_LINKS = [
   { href: '/imoveis', label: 'Todos os Imóveis' },
   { href: '/empresas-parceiras', label: 'Empresas Parceiras' },
   { href: '/avaliacao', label: 'Avaliação Imediata' },
-  { href: '/parceiros/cadastro', label: 'Seja um Parceiro' },
+  { href: '/divulgue', label: 'Divulgue seu Negócio' },
+  { href: '/seja-parceiro', label: 'Seja um Parceiro' },
   { href: '/blog', label: 'Blog' },
 ]
 
@@ -31,7 +32,8 @@ const SERVICOS_MENU = [
   { href: '/financiamentos', icon: <Calculator className="w-4 h-4" />, label: 'Financiamentos', desc: 'Simule e financie seu imóvel', color: '#2563eb' },
   { href: '/servicos/fichas-cadastrais', icon: <ClipboardList className="w-4 h-4" />, label: 'Fichas Cadastrais', desc: 'Propostas e cadastros online', color: '#16a34a' },
   { href: '/financiamentos#simulador', icon: <Home className="w-4 h-4" />, label: 'Simule seu Financiamento', desc: 'Calcule parcelas e taxas', color: '#2563eb' },
-  { href: '/parceiros/planos', icon: <Handshake className="w-4 h-4" />, label: 'Seja um Parceiro', desc: 'Dashboard privado — Planos Prime e VIP', color: '#C9A84C' },
+  { href: '/divulgue', icon: <Building className="w-4 h-4" />, label: 'Divulgue seu Negócio', desc: 'Landing page + Google a partir de R$ 39,90/mês', color: '#C9A84C' },
+  { href: '/parceiros/planos', icon: <Handshake className="w-4 h-4" />, label: 'Seja um Parceiro', desc: 'Site próprio, CRM e sistema — planos', color: '#143A1F' },
   { href: '/parceiros/plano-vip', icon: <Shield className="w-4 h-4" />, label: 'Sentinela Territorial VIP', desc: 'Exclusividade em condomínios e bairros', color: '#143A1F' },
   { href: '/leiloes', icon: <Gavel className="w-4 h-4" />, label: 'Leilões Imobiliários', desc: 'Imóveis com até 50% de desconto', color: '#7c3aed' },
 ]

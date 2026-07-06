@@ -174,7 +174,7 @@ export default function PlanoVIPPage() {
 
           <div className="flex flex-wrap justify-center gap-4">
             <Link
-              href="/parceiros/cadastro?plan=VIP"
+              href="/parceiros/assinar?plan=VIP"
               className="inline-flex items-center gap-2 px-10 py-4 rounded-2xl font-bold text-lg transition-all hover:brightness-110 shadow-lg"
               style={{ background: '#C9A84C', color: '#143A1F' }}
             >
@@ -423,7 +423,7 @@ export default function PlanoVIPPage() {
 
           <div className="mt-8 text-center">
             <Link
-              href="/parceiros/cadastro?plan=VIP"
+              href="/parceiros/assinar?plan=VIP"
               className="inline-flex items-center gap-2 px-10 py-4 rounded-2xl font-bold text-lg transition-all hover:brightness-110 shadow-md"
               style={{ background: '#143A1F', color: 'white' }}
             >
@@ -473,7 +473,7 @@ export default function PlanoVIPPage() {
               </p>
             </div>
             <Link
-              href="/parceiros/cadastro?plan=VIP"
+              href="/parceiros/assinar?plan=VIP"
               className="flex-shrink-0 inline-flex items-center gap-2 px-8 py-4 rounded-2xl font-bold text-base transition-all hover:brightness-110"
               style={{ background: '#C9A84C', color: '#143A1F' }}
             >
@@ -526,7 +526,7 @@ export default function PlanoVIPPage() {
 
           <div className="flex flex-wrap justify-center gap-4 mb-10">
             <Link
-              href="/parceiros/cadastro?plan=VIP"
+              href="/parceiros/assinar?plan=VIP"
               className="inline-flex items-center gap-2 px-12 py-5 rounded-2xl font-bold text-xl transition-all hover:brightness-110 shadow-xl"
               style={{ background: '#C9A84C', color: '#143A1F' }}
             >

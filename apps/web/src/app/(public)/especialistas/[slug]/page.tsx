@@ -67,8 +67,25 @@ export default async function EspecialistaPage(props: { params: Promise<{ slug: 
   const specialist = await getSpecialist(params.slug)
   if (!specialist) notFound()
 
-  const categoryLabel = CATEGORY_LABELS[specialist.category] || 'Especialista'
+  const lp = (specialist.landingPage && typeof specialist.landingPage === 'object') ? specialist.landingPage : null
+  const categoryLabel = lp?.segmentLabel || CATEGORY_LABELS[specialist.category] || 'Especialista'
   const profileUrl = `https://www.agoraencontrei.com.br/especialistas/${specialist.slug}`
+  const avatar = specialist.photoUrl || specialist.logoUrl || lp?.logoUrl || null
+  const services: Array<{ name: string; description?: string; price?: string; priceType?: string }> = Array.isArray(lp?.services) ? lp.services : []
+  const gallery: string[] = Array.isArray(lp?.photos) ? lp.photos : []
+  const videos: string[] = Array.isArray(lp?.videos) ? lp.videos : []
+  const hasPaidAd = !!specialist.adPlan
+  const priceLabel = (s: { price?: string; priceType?: string }) => {
+    if (!s.price || s.priceType === 'consulta') return 'Sob consulta'
+    const v = s.price.trim()
+    const val = /^\d/.test(v) ? `R$ ${v}` : v
+    switch (s.priceType) {
+      case 'a_partir': return `A partir de ${val}`
+      case 'por_m2': return `${val}/m²`
+      case 'hora': return `${val}/h`
+      default: return val
+    }
+  }
 
   const personSchema = {
     '@context': 'https://schema.org',
@@ -102,7 +119,7 @@ export default async function EspecialistaPage(props: { params: Promise<{ slug: 
     ],
   }
 
-  const whatsappUrl = specialist.whatsapp && (specialist.plan === 'PRIME' || specialist.plan === 'VIP')
+  const whatsappUrl = specialist.whatsapp && (specialist.plan === 'PRIME' || specialist.plan === 'VIP' || hasPaidAd)
     ? `https://wa.me/55${specialist.whatsapp.replace(/\D/g, '')}?text=Olá ${encodeURIComponent(specialist.name)}, vi seu perfil no AgoraEncontrei e gostaria de saber mais sobre seus serviços.`
     : null
 
@@ -140,9 +157,10 @@ export default async function EspecialistaPage(props: { params: Promise<{ slug: 
             <div className="lg:col-span-1">
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden sticky top-6">
                 <div className="bg-gradient-to-br from-[#143A1F] to-[#2d4a8a] p-8 text-center">
-                  {specialist.photoUrl ? (
-                    <Image
-                      src={specialist.photoUrl}
+                  {avatar ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={avatar}
                       alt={specialist.name}
                       width={96}
                       height={96}
@@ -249,6 +267,54 @@ export default async function EspecialistaPage(props: { params: Promise<{ slug: 
                   <div className="flex flex-wrap gap-2">
                     {specialist.tags.map((tag: string) => (
                       <span key={tag} className="px-3 py-1.5 bg-[#143A1F]/5 text-[#143A1F] text-sm rounded-full font-medium">{tag}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {services.length > 0 && (
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                  <h2 className="text-lg font-bold text-[#143A1F] mb-4 flex items-center gap-2">
+                    <Star className="w-5 h-5 text-[#C9A84C]" /> Serviços e Valores
+                  </h2>
+                  <div className="space-y-3">
+                    {services.map((s, i) => (
+                      <div key={i} className="flex items-start justify-between gap-4 p-4 rounded-xl bg-[#f8f6f1]">
+                        <div className="min-w-0">
+                          <p className="font-semibold text-[#143A1F] text-sm">{s.name}</p>
+                          {s.description && <p className="text-xs text-gray-500 mt-0.5">{s.description}</p>}
+                        </div>
+                        <span className="text-sm font-bold text-[#143A1F] whitespace-nowrap flex-shrink-0">{priceLabel(s)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {gallery.length > 0 && (
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                  <h2 className="text-lg font-bold text-[#143A1F] mb-4 flex items-center gap-2">
+                    <Building2 className="w-5 h-5 text-[#C9A84C]" /> Galeria de Trabalhos
+                  </h2>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    {gallery.map((src, i) => (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img key={i} src={src} alt={`${specialist.name} — trabalho ${i + 1}`} className="w-full aspect-square object-cover rounded-xl border border-gray-100" loading="lazy" />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {videos.length > 0 && (
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                  <h2 className="text-lg font-bold text-[#143A1F] mb-4 flex items-center gap-2">
+                    <Star className="w-5 h-5 text-[#C9A84C]" /> Vídeos
+                  </h2>
+                  <div className="space-y-2">
+                    {videos.map((v, i) => (
+                      <a key={i} href={v} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-3 rounded-xl bg-[#f8f6f1] hover:bg-[#C9A84C]/10 transition-colors text-sm text-[#143A1F] font-medium">
+                        <ExternalLink className="w-4 h-4 text-[#C9A84C] flex-shrink-0" /> <span className="truncate">{v}</span>
+                      </a>
                     ))}
                   </div>
                 </div>
