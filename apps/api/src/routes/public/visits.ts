@@ -119,6 +119,7 @@ export default async function visitRoutes(app: FastifyInstance) {
         payload: {
           visitId: propertyVisit?.id ?? null,
           propertyId: body.propertyId,
+          propertyTitle: title,
           visitorName: body.name,
           visitorPhone: body.phone,
           scheduledAt: visitDateTime.toISOString(),
