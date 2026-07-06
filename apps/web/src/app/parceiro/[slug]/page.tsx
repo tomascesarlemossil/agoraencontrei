@@ -245,8 +245,11 @@ export default async function TenantPage({
   // "Nossa Equipe": exclui a conta institucional (usuário com o mesmo nome da
   // empresa, ex.: "Imobiliária Lemos") — ela representa a empresa, não uma
   // pessoa. Gabriel e demais desligados já saem por status !== ACTIVE na API.
-  const tenantNameNorm = tenant.name.trim().toLowerCase()
-  const team = teamRaw.filter(m => m.name?.trim().toLowerCase() !== tenantNameNorm)
+  // Normaliza removendo acentos: o nome do usuário e o do tenant podem diferir
+  // só na forma Unicode do acento (NFC × NFD), o que quebraria um === simples.
+  const nameKey = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase()
+  const tenantNameNorm = nameKey(tenant.name)
+  const team = teamRaw.filter(m => m.name && nameKey(m.name) !== tenantNameNorm)
   const hasTeam = team.length > 0
 
   return (
