@@ -44,6 +44,15 @@ const envSchema = z.object({
   WHATSAPP_VERIFY_TOKEN: z.string().optional().default('lemoschat_verify'),
   WHATSAPP_BUSINESS_ID: z.string().optional(),
 
+  // WhatsApp Campaigns module
+  // Provider de envio das campanhas: simulated (MVP) | cloud_api | provider
+  WA_CAMPAIGNS_PROVIDER: z.string().optional().default('simulated'),
+  // Trava de segurança: só envia mensagem REAL quando explicitamente "true".
+  // Enquanto "false" (padrão), tudo roda em modo simulado.
+  WA_CAMPAIGNS_LIVE: z.string().optional().default('false'),
+  // Namespace/idioma padrão dos templates aprovados na Meta (WABA).
+  WHATSAPP_TEMPLATE_NAMESPACE: z.string().optional(),
+
   // Storage
   AWS_REGION: z.string().default('us-east-1'),
   AWS_ACCESS_KEY_ID: z.string().optional(),

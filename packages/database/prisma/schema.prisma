@@ -3904,3 +3904,157 @@ model PropertyVisit {
   @@index([status])
   @@map("property_visits")
 }
+
+// =============================================================================
+// WHATSAPP CAMPAIGNS MODULE (MVP)
+// Disparo profissional de campanhas de imóveis/empreendimentos para listas de
+// contatos, com validação de telefone, controle LGPD, opt-out, cálculo de
+// risco, aprovação humana e fila de envio via WhatsApp Business Platform.
+//
+// Regras: nenhum envio real no MVP (provider "simulated"); toda a integração
+// oficial fica isolada atrás de WhatsAppCampaignProvider. Todo contato carrega
+// origem (source) e base de uso (consentBasis, LGPD). Todo disparo respeita o
+// registro de opt-out (SAIR/PARAR). Escopo multi-tenant por companyId (scalar
+// indexado, sem back-relation — mesmo padrão de OutboundMessage/SalesFunnel).
+// =============================================================================
+
+/// Campanha de WhatsApp — agrupa lista de destinatários, modelo de mensagem,
+/// risco calculado e estado de aprovação/envio.
+model WaCampaign {
+  id            String   @id @default(cuid())
+  companyId     String
+  createdById   String
+  name          String
+  /// Imóvel divulgado (scalar, sem relation para manter o módulo isolado)
+  propertyId    String?
+  /// Empreendimento/lançamento em texto livre, quando não há imóvel cadastrado
+  empreendimento String?
+  /// Modelo de mensagem aprovado (nome do template WABA) — obrigatório em produção
+  templateName  String?
+  templateLang  String   @default("pt_BR")
+  /// Corpo da mensagem com placeholders {{nome}}, {{imovel}}, {{link}} etc.
+  messageBody   String   @db.Text
+  /// Variáveis padrão da campanha (ex.: link, preco) aplicadas a todos
+  variables     Json     @default("{}")
+  /// DRAFT | PENDING_APPROVAL | APPROVED | QUEUED | SENDING | SENT | CANCELLED | FAILED
+  status        String   @default("DRAFT")
+  /// simulated | cloud_api | provider
+  provider      String   @default("simulated")
+  /// 0-100 — quanto maior, mais arriscada (spam/LGPD)
+  riskScore     Int      @default(0)
+  /// low | medium | high
+  riskLevel     String   @default("low")
+  riskFactors   Json     @default("[]")
+  /// Aprovação humana obrigatória quando risco medium/high
+  requiresApproval Boolean @default(false)
+  approvedById  String?
+  approvedAt    DateTime?
+  scheduledAt   DateTime?
+  startedAt     DateTime?
+  completedAt   DateTime?
+  totalRecipients Int    @default(0)
+  totalSent     Int      @default(0)
+  totalDelivered Int     @default(0)
+  totalReplied  Int      @default(0)
+  totalFailed   Int      @default(0)
+  totalOptOut   Int      @default(0)
+  metadata      Json     @default("{}")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  recipients    WaCampaignRecipient[]
+
+  @@index([companyId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("wa_campaigns")
+}
+
+/// Destinatário individual de uma campanha. Guarda telefone normalizado (E.164),
+/// origem e base LGPD, status de envio e ids do provedor.
+model WaCampaignRecipient {
+  id            String     @id @default(cuid())
+  campaignId    String
+  campaign      WaCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  companyId     String
+  name          String?
+  /// Telefone como foi colado/importado (auditoria)
+  rawPhone      String
+  /// Telefone normalizado E.164 (+55DDDNUMERO). null se inválido.
+  phoneE164     String?
+  valid         Boolean    @default(false)
+  invalidReason String?
+  /// Origem do contato: manual | import | crm | prospect_agent | portal ...
+  source        String     @default("import")
+  /// Base de uso LGPD: consent | legitimate_interest | contract | existing_customer
+  consentBasis  String     @default("consent")
+  /// Referência da fonte (URL/planilha/descrição) — obrigatório p/ prospecção
+  sourceRef     String?
+  /// PENDING | QUEUED | SENT | DELIVERED | READ | REPLIED | FAILED | UNSUBSCRIBED | SKIPPED
+  status        String     @default("PENDING")
+  variables     Json       @default("{}")
+  providerMessageId String?
+  errorMessage  String?
+  queuedAt      DateTime?
+  sentAt        DateTime?
+  deliveredAt   DateTime?
+  repliedAt     DateTime?
+  metadata      Json       @default("{}")
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  @@unique([campaignId, phoneE164])
+  @@index([campaignId])
+  @@index([companyId])
+  @@index([phoneE164])
+  @@index([status])
+  @@map("wa_campaign_recipients")
+}
+
+/// Registro de opt-out por empresa. Bloqueia qualquer disparo futuro para o
+/// número. Alimentado por palavras-chave (SAIR/PARAR), reclamação ou ação manual.
+model WaOptOut {
+  id         String   @id @default(cuid())
+  companyId  String
+  phoneE164  String
+  /// keyword | manual | complaint | bounce
+  reason     String   @default("keyword")
+  source     String?
+  createdAt  DateTime @default(now())
+
+  @@unique([companyId, phoneE164])
+  @@index([companyId])
+  @@index([phoneE164])
+  @@map("wa_optouts")
+}
+
+/// Resultado do agente de pesquisa de empresas/contatos comerciais públicos.
+/// SEMPRE entra como PENDING_REVIEW: exige revisão humana e uma fonte antes de
+/// poder ser adicionado a uma campanha. Não coleta dados pessoais sensíveis.
+model WaProspectResult {
+  id           String   @id @default(cuid())
+  companyId    String
+  campaignId   String?
+  /// Nome comercial/empresa (dado público)
+  name         String
+  phone        String?
+  phoneE164    String?
+  category     String?
+  city         String?
+  /// Fonte pública obrigatória (URL/descrição de onde veio)
+  sourceRef    String
+  sourceUrl    String?
+  /// PENDING_REVIEW | APPROVED | REJECTED | IMPORTED
+  status       String   @default("PENDING_REVIEW")
+  reviewedById String?
+  reviewedAt   DateTime?
+  notes        String?
+  metadata     Json     @default("{}")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([companyId])
+  @@index([campaignId])
+  @@index([status])
+  @@map("wa_prospect_results")
+}

@@ -85,6 +85,7 @@ const midNavItems = [
   { href: '/dashboard/api-keys',            icon: KeyRound,         label: 'Open API',      highlight: false },
   { href: '/dashboard/automations',         icon: Zap,              label: 'Automações',    highlight: false },
   { href: '/dashboard/marketing/campanhas', icon: Megaphone,        label: 'Campanhas',     highlight: false },
+  { href: '/dashboard/marketing/wa-campanhas', icon: MessageCircle, label: 'Campanhas WhatsApp', highlight: true },
   { href: '/dashboard/fiscal',              icon: FileText,         label: 'Notas Fiscais', highlight: false },
   { href: '/dashboard/crm/renovacoes',      icon: AlertTriangle,    label: 'Renovações',    highlight: false },
   { href: '/dashboard/blog',                icon: BookOpen,         label: 'Blog',          highlight: false },

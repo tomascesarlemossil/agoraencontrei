@@ -116,6 +116,7 @@ import affiliateRoutes from './routes/affiliates/index.js'
 import saasFinanceRoutes from './routes/saas-finance/index.js'
 import previewRoutes from './routes/preview/index.js'
 import outboundRoutes from './routes/outbound/index.js'
+import waCampaignsRoutes from './routes/wa-campaigns/index.js'
 
 import { sensitiveSerializer } from './utils/log-sanitizer.js'
 import { safeStringEqual } from './utils/crypto-safe.js'
@@ -1510,6 +1511,7 @@ async function bootstrap() {
   await app.register(saasFinanceRoutes,      { prefix: '/api/v1/saas-finance' })
   await app.register(previewRoutes,          { prefix: '/api/v1/preview' })
   await app.register(outboundRoutes,         { prefix: '/api/v1/outbound' })
+  await app.register(waCampaignsRoutes,      { prefix: '/api/v1/wa-campaigns' })
 
   // ── Re-ativar leilões bancários fechados erroneamente pelo cleanup ────
   try {
