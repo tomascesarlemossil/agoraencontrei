@@ -1,7 +1,7 @@
 /**
  * Tenant Home Page — Renders a clone site based on subdomain slug
  *
- * Accessed via middleware rewrite: parceiro.agoraencontrei.com.br → /_tenant/parceiro
+ * Accessed via middleware rewrite: parceiro.agoraencontrei.com.br → /parceiro/lemos
  * Fetches tenant config from API and renders appropriate layout.
  * 
  * v2: Carrega imóveis REAIS do banco de dados (com destaque e super destaque por região)

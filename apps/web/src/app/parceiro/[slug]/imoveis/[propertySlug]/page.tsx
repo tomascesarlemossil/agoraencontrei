@@ -2,7 +2,7 @@
  * Tenant Property Detail — página de detalhe do imóvel no site do PARCEIRO.
  *
  * Acessada via subdomínio/domínio próprio: parceiro.agoraencontrei.com.br/imoveis/{slug}
- * → middleware reescreve para /_tenant/{parceiro}/imoveis/{slug}.
+ * → middleware reescreve para /parceiro/{parceiro}/imoveis/{slug}.
  *
  * Consome o endpoint público de detalhe COM tenantSlug (ciente do parceiro), então
  * mostra só imóveis daquele parceiro e nunca dá 404 por resolver a empresa errada.
