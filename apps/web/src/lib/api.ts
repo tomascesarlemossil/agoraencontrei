@@ -1543,3 +1543,60 @@ export const outboundApi = {
   ingest: (token: string, data: { name: string; phone?: string; email?: string; source?: string; campaign?: string }) =>
     request<{ success: boolean; data: any }>('/api/v1/outbound/ingest', { method: 'POST', body: JSON.stringify(data), token }),
 }
+
+// ── WhatsApp Campaigns ────────────────────────────────────────────────────
+export const waCampaignsApi = {
+  list: (token: string, params?: { status?: string }) =>
+    request<{ success: boolean; data: any[] }>(`/api/v1/wa-campaigns?${toQS(params)}`, { token }),
+
+  get: (token: string, id: string) =>
+    request<{ success: boolean; data: any }>(`/api/v1/wa-campaigns/${id}`, { token }),
+
+  create: (token: string, body: {
+    name: string; propertyId?: string; empreendimento?: string;
+    templateName?: string; templateLang?: string; messageBody: string;
+    variables?: Record<string, unknown>; scheduledAt?: string;
+  }) =>
+    request<{ success: boolean; data: any }>('/api/v1/wa-campaigns', { method: 'POST', token, body: JSON.stringify(body) }),
+
+  addRecipients: (token: string, id: string, body: {
+    rawList?: string;
+    contacts?: { phone: string; name?: string; variables?: Record<string, unknown> }[];
+    source?: string; consentBasis?: string; sourceRef?: string;
+  }) =>
+    request<{ success: boolean; data: { report: any; campaign: any } }>(
+      `/api/v1/wa-campaigns/${id}/recipients`, { method: 'POST', token, body: JSON.stringify(body) }),
+
+  removeRecipient: (token: string, id: string, rid: string) =>
+    request<{ success: boolean }>(`/api/v1/wa-campaigns/${id}/recipients/${rid}`, { method: 'DELETE', token }),
+
+  recomputeRisk: (token: string, id: string) =>
+    request<{ success: boolean; data: any }>(`/api/v1/wa-campaigns/${id}/risk`, { method: 'POST', token }),
+
+  approve: (token: string, id: string) =>
+    request<{ success: boolean; data: any }>(`/api/v1/wa-campaigns/${id}/approve`, { method: 'POST', token }),
+
+  dispatch: (token: string, id: string) =>
+    request<{ success: boolean; data: any }>(`/api/v1/wa-campaigns/${id}/dispatch`, { method: 'POST', token }),
+
+  cancel: (token: string, id: string) =>
+    request<{ success: boolean }>(`/api/v1/wa-campaigns/${id}/cancel`, { method: 'POST', token }),
+
+  listOptOut: (token: string) =>
+    request<{ success: boolean; data: any[] }>('/api/v1/wa-campaigns/optout', { token }),
+
+  addOptOut: (token: string, phone: string, reason?: string) =>
+    request<{ success: boolean; data: any }>('/api/v1/wa-campaigns/optout', { method: 'POST', token, body: JSON.stringify({ phone, reason }) }),
+
+  research: (token: string, id: string, body: { query: string; city?: string; category?: string; limit?: number }) =>
+    request<{ success: boolean; data: any[]; notice: string }>(`/api/v1/wa-campaigns/${id}/prospect/research`, { method: 'POST', token, body: JSON.stringify(body) }),
+
+  listProspects: (token: string, id: string, params?: { status?: string }) =>
+    request<{ success: boolean; data: any[] }>(`/api/v1/wa-campaigns/${id}/prospect?${toQS(params)}`, { token }),
+
+  reviewProspect: (token: string, pid: string, body: { action: 'approve' | 'reject'; phone?: string; sourceRef?: string; notes?: string }) =>
+    request<{ success: boolean; data: any }>(`/api/v1/wa-campaigns/prospect/${pid}/review`, { method: 'POST', token, body: JSON.stringify(body) }),
+
+  importProspects: (token: string, id: string) =>
+    request<{ success: boolean; data: any }>(`/api/v1/wa-campaigns/${id}/prospect/import`, { method: 'POST', token }),
+}

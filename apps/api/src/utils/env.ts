@@ -44,6 +44,15 @@ const envSchema = z.object({
   WHATSAPP_VERIFY_TOKEN: z.string().optional().default('lemoschat_verify'),
   WHATSAPP_BUSINESS_ID: z.string().optional(),
 
+  // WhatsApp Campaigns module
+  // Provider de envio das campanhas: simulated (MVP) | cloud_api | provider
+  WA_CAMPAIGNS_PROVIDER: z.string().optional().default('simulated'),
+  // Trava de segurança: só envia mensagem REAL quando explicitamente "true".
+  // Enquanto "false" (padrão), tudo roda em modo simulado.
+  WA_CAMPAIGNS_LIVE: z.string().optional().default('false'),
+  // Namespace/idioma padrão dos templates aprovados na Meta (WABA).
+  WHATSAPP_TEMPLATE_NAMESPACE: z.string().optional(),
+
   // Confirmação automática de visita ao CLIENTE (via WhatsApp Cloud API).
   // Desligado por padrão. Para ativar em produção:
   //   1) VISIT_CLIENT_WHATSAPP_AUTO=true

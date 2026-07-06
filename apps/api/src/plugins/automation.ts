@@ -9,6 +9,7 @@ import { processVisualAIJob } from '../workers/visual-ai.worker.js'
 import { processCampaignJob } from '../workers/campaign.worker.js'
 import { processVideoEditorJob } from '../workers/video-editor.worker.js'
 import { processOutboundJob } from '../services/outbound-queue.service.js'
+import { processWaCampaignJob } from '../workers/wa-campaign.worker.js'
 import type { AutomationEventPayload } from '../services/automation.types.js'
 import { env } from '../utils/env.js'
 
@@ -19,6 +20,7 @@ declare module 'fastify' {
     campaignsQueue:   Queue | null
     outboundQueue:    Queue | null
     videoEditorQueue: Queue | null
+    waCampaignsQueue: Queue | null
   }
 }
 
@@ -30,6 +32,7 @@ export default fp(async (app: FastifyInstance) => {
     app.decorate('campaignsQueue',   null)
     app.decorate('outboundQueue',    null)
     app.decorate('videoEditorQueue', null)
+    app.decorate('waCampaignsQueue', null)
     return
   }
 
@@ -55,12 +58,14 @@ export default fp(async (app: FastifyInstance) => {
   const campaignsQueue   = new Queue('campaigns',    { connection })
   const outboundQueue    = new Queue('outbound',     { connection })
   const videoEditorQueue = new Queue('video-editor', { connection })
+  const waCampaignsQueue = new Queue('wa-campaigns',  { connection })
 
   app.decorate('automationQueue',  automationQueue)
   app.decorate('visualAIQueue',    visualAIQueue)
   app.decorate('campaignsQueue',   campaignsQueue)
   app.decorate('outboundQueue',    outboundQueue)
   app.decorate('videoEditorQueue', videoEditorQueue)
+  app.decorate('waCampaignsQueue', waCampaignsQueue)
 
   // ── Funnel domain events into automation queue ────────────────────────────
   automationEmitter.on('automation:event', async (payload: AutomationEventPayload) => {
@@ -109,12 +114,20 @@ export default fp(async (app: FastifyInstance) => {
     { connection, concurrency: 1 },
   )
 
+  // ── WhatsApp campaigns worker — one recipient per job (simulated no MVP) ──
+  const waCampaignsWorker = new Worker(
+    'wa-campaigns',
+    async (job) => processWaCampaignJob(job, app.prisma),
+    { connection, concurrency: 2 },
+  )
+
   for (const [name, worker] of [
     ['automation',   automationWorker],
     ['visual-ai',    visualAIWorker],
     ['campaigns',    campaignsWorker],
     ['outbound',     outboundWorker],
     ['video-editor', videoEditorWorker],
+    ['wa-campaigns', waCampaignsWorker],
   ] as const) {
     worker.on('failed', (job, err) => {
       app.log.error({ queue: name, jobId: job?.id, err }, `${name} job failed`)
@@ -137,6 +150,7 @@ export default fp(async (app: FastifyInstance) => {
       campaignsWorker.close(),
       outboundWorker.close(),
       videoEditorWorker.close(),
+      waCampaignsWorker.close(),
     ])
     await Promise.all([
       automationQueue.close(),
@@ -144,9 +158,10 @@ export default fp(async (app: FastifyInstance) => {
       campaignsQueue.close(),
       outboundQueue.close(),
       videoEditorQueue.close(),
+      waCampaignsQueue.close(),
     ])
     await connection.quit()
   })
 
-  app.log.info('✅ Automation engine started (queues: automation, visual-ai, campaigns, outbound, video-editor)')
+  app.log.info('✅ Automation engine started (queues: automation, visual-ai, campaigns, outbound, video-editor, wa-campaigns)')
 })
