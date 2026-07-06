@@ -869,34 +869,8 @@ export default async function PropertyDetailPage(props: { params: Promise<{ slug
                 </a>
               </div>
             </div>
-
-            {/* Company info — encaminha ao site do parceiro (marketplace → parceiro) */}
-            {p.company && (
-              <div className="bg-white rounded-2xl border p-4 text-center" style={{ borderColor: '#ddd9d0' }}>
-                <p className="text-[10px] text-gray-500 uppercase tracking-wide mb-1">Anúncio de</p>
-                <p className="font-bold text-sm" style={{ color: '#143A1F' }}>{p.company.name}</p>
-                {p.company.phone && (
-                  <a href={`tel:${p.company.phone}`} className="text-xs mt-0.5 block hover:opacity-80 flex items-center justify-center gap-1"
-                    style={{ color: '#C9A84C' }}>
-                    <Phone className="w-3 h-3" />{p.company.phone}
-                  </a>
-                )}
-                <p className="text-[10px] text-gray-500 mt-1">CRECI 61053-F</p>
-                {p.partnerSite && (
-                  <a
-                    href={p.partnerSite.customDomain
-                      ? `https://${p.partnerSite.customDomain}`
-                      : `https://${p.partnerSite.subdomain}.agoraencontrei.com.br`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="mt-3 inline-flex items-center justify-center gap-1 w-full py-2 rounded-lg text-xs font-bold text-white hover:opacity-90 transition"
-                    style={{ backgroundColor: '#143A1F' }}
-                  >
-                    Ver todos os imóveis desta imobiliária →
-                  </a>
-                )}
-              </div>
-            )}
+            {/* (O bloco da imobiliária anunciante agora vive DENTRO do quadro do
+                corretor — perfil + rodapé clicáveis levam ao site do parceiro.) */}
           </div>
         </div>
       </div>
@@ -917,6 +891,16 @@ function BrokerCard({ broker, whatsappNum, whatsappMsg, visitMsg, p, condoName }
   const totalRent = hasRent ? (
     Number(p.priceRent) + (iptu ? iptu / 12 : 0) + (condoFeeNum ?? 0)
   ) : null
+
+  // Link para o site do parceiro anunciante (quando o imóvel pertence a um
+  // tenant com site próprio). Clicar no perfil do corretor / rodapé da
+  // imobiliária encaminha para a página do parceiro.
+  const partnerHref = p?.partnerSite
+    ? (p.partnerSite.customDomain
+        ? `https://${p.partnerSite.customDomain}`
+        : `https://${p.partnerSite.subdomain}.agoraencontrei.com.br`)
+    : null
+  const companyName = p?.company?.name || p?.partnerSite?.name || 'Imobiliária Lemos'
 
   function fmtCurr(v: number) {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2 }).format(v)
@@ -978,38 +962,52 @@ function BrokerCard({ broker, whatsappNum, whatsappMsg, visitMsg, p, condoName }
         )}
       </div>
 
-      {/* Broker profile */}
-      <div className="px-5 pt-4 pb-3">
-        <div className="flex items-center gap-3.5">
-          {/* Avatar */}
-          {broker?.avatarUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={broker.avatarUrl} alt={broker.name} loading="lazy"
-              className="h-16 w-16 rounded-2xl object-cover flex-shrink-0 shadow-md"
-              style={{ border: '2.5px solid #C9A84C' }} />
-          ) : (
-            <div className="h-16 w-16 rounded-2xl flex items-center justify-center text-white text-2xl font-bold flex-shrink-0 shadow-md"
-              style={{ background: 'linear-gradient(135deg, #143A1F, #2d4a8a)', border: '2.5px solid #C9A84C' }}>
-              {broker?.name?.charAt(0).toUpperCase() ?? 'L'}
-            </div>
-          )}
-          {/* Info */}
-          <div className="min-w-0 flex-1">
-            <p className="font-bold text-base leading-tight truncate" style={{ color: '#143A1F' }}>
-              {broker?.name ?? 'Imobiliária Lemos'}
-            </p>
-            <p className="text-xs text-gray-500 mt-0.5">{(broker as any)?.cargo ?? 'Corretor de Imóveis'}</p>
-            <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
-              <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full" style={{ backgroundColor: 'rgba(201,168,76,0.12)', color: '#92710a' }}>
-                CRECI {broker?.creciNumber || '279051-F'}
-              </span>
-              <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-blue-50 text-blue-700">
-                Verificado ✓
-              </span>
+      {/* Broker profile — avatar redondo (foto/logo do corretor). Clicar no
+          perfil encaminha para a página do parceiro anunciante. */}
+      {(() => {
+        const content = (
+          <div className="flex items-center gap-3.5">
+            {/* Avatar redondo: foto/logo que o corretor escolher; fallback = inicial */}
+            {broker?.avatarUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={broker.avatarUrl} alt={broker.name} loading="lazy"
+                className="h-16 w-16 rounded-full object-cover flex-shrink-0 shadow-md"
+                style={{ border: '2.5px solid #C9A84C' }} />
+            ) : (
+              <div className="h-16 w-16 rounded-full flex items-center justify-center text-white text-2xl font-bold flex-shrink-0 shadow-md"
+                style={{ background: 'linear-gradient(135deg, #143A1F, #2d4a8a)', border: '2.5px solid #C9A84C' }}>
+                {broker?.name?.charAt(0).toUpperCase() ?? 'L'}
+              </div>
+            )}
+            {/* Info */}
+            <div className="min-w-0 flex-1">
+              <p className="font-bold text-base leading-tight truncate" style={{ color: '#143A1F' }}>
+                {broker?.name ?? companyName}
+              </p>
+              <p className="text-xs text-gray-500 mt-0.5">{(broker as any)?.cargo ?? 'Corretor de Imóveis'}</p>
+              <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full" style={{ backgroundColor: 'rgba(201,168,76,0.12)', color: '#92710a' }}>
+                  CRECI {broker?.creciNumber || '279051-F'}
+                </span>
+                <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-blue-50 text-blue-700">
+                  Verificado ✓
+                </span>
+              </div>
             </div>
           </div>
-        </div>
-      </div>
+        )
+        return (
+          <div className="px-5 pt-4 pb-3">
+            {partnerHref ? (
+              <a href={partnerHref} target="_blank" rel="noreferrer"
+                className="block rounded-xl -mx-1 px-1 py-1 hover:bg-black/[0.03] transition-colors"
+                title={`Ver imóveis de ${companyName}`}>
+                {content}
+              </a>
+            ) : content}
+          </div>
+        )
+      })()}
 
       {/* CTA buttons */}
       <div className="px-5 pb-5 space-y-2.5">
@@ -1050,19 +1048,36 @@ function BrokerCard({ broker, whatsappNum, whatsappMsg, visitMsg, p, condoName }
           </div>
         )}
 
-        {/* Imobiliária info footer */}
-        <div className="flex items-center gap-2.5 pt-3 mt-1 border-t" style={{ borderColor: '#ede9df' }}>
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#143A1F' }}>
-            <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-              <polyline points="9 22 9 12 15 12 15 22"/>
-            </svg>
-          </div>
-          <div className="min-w-0">
-            <p className="text-xs font-bold truncate" style={{ color: '#143A1F' }}>Imobiliária Lemos</p>
-            <p className="text-[11px] text-gray-400">(16) 3723-0045 · CRECI-J 61053-F</p>
-          </div>
-        </div>
+        {/* Rodapé da imobiliária anunciante — clicável → site do parceiro */}
+        {(() => {
+          const footer = (
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#143A1F' }}>
+                <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                  <polyline points="9 22 9 12 15 12 15 22"/>
+                </svg>
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-bold truncate" style={{ color: '#143A1F' }}>{companyName}</p>
+                <p className="text-[11px] text-gray-400">
+                  {p?.company?.phone || '(16) 3723-0045'}{partnerHref ? ' · Ver todos os imóveis →' : ''}
+                </p>
+              </div>
+            </div>
+          )
+          return (
+            <div className="pt-3 mt-1 border-t" style={{ borderColor: '#ede9df' }}>
+              {partnerHref ? (
+                <a href={partnerHref} target="_blank" rel="noreferrer"
+                  className="block rounded-lg -mx-1 px-1 py-1 hover:bg-black/[0.03] transition-colors"
+                  title={`Ver imóveis de ${companyName}`}>
+                  {footer}
+                </a>
+              ) : footer}
+            </div>
+          )
+        })()}
       </div>
     </>
   )
