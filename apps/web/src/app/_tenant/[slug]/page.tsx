@@ -11,6 +11,9 @@ import type { Metadata } from 'next'
 import { resolveTheme, type ThemeConfig } from '@/lib/site-factory/theme-registry'
 import TomasWidget from '@/components/tomas/TomasWidget'
 
+// Render ao vivo: evita 404 preso no cache ISR/CDN quando a API tem um blip.
+export const dynamic = 'force-dynamic'
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 
 interface TenantData {
