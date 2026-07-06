@@ -1,7 +1,7 @@
 /**
  * Tenant Catalog — catálogo completo de imóveis no site do PARCEIRO.
  *
- * parceiro.agoraencontrei.com.br/imoveis → /_tenant/{parceiro}/imoveis
+ * parceiro.agoraencontrei.com.br/imoveis → /parceiro/{parceiro}/imoveis
  * Lista TODOS os imóveis publicados do parceiro, paginados, com busca/filtro
  * simples. Escopado pelo tenant (tenantSlug), então nunca mostra imóvel de outra
  * empresa. Cada card leva ao detalhe do imóvel no próprio site do parceiro.

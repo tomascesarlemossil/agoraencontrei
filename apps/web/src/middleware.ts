@@ -2,8 +2,13 @@
  * Next.js Middleware — Subdomain/Custom Domain Routing for Multi-tenant SaaS
  *
  * Detects tenant subdomains (e.g., parceiro.agoraencontrei.com.br) and
- * custom domains, rewriting requests to /_tenant/[slug] pages.
+ * custom domains, rewriting requests to /parceiro/[slug] pages.
  * The main domain (www / naked / Vercel preview) passes through normally.
+ *
+ * IMPORTANT: the rewrite target MUST be a routable folder (no leading "_").
+ * Next.js treats "_"-prefixed folders as private and opts them out of routing,
+ * so an internal rewrite to such a path silently falls through to the SEO
+ * catch-all and 404s. Hence /parceiro (not /_tenant).
  */
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -33,13 +38,16 @@ const RESERVED_SUBDOMAINS = [
   'www', 'api', 'admin', 'app', 'mail', 'smtp', 'ftp', 'ns1', 'ns2',
   'dashboard', 'portal', 'blog', 'help', 'support', 'docs', 'status',
   'staging', 'dev', 'test', 'demo',
+  // Reserved so a partner subdomain can't collide with the internal
+  // rewrite path segments (/parceiro/[slug] and /parceiro/dominio).
+  'parceiro', 'dominio',
 ]
 
 // Paths that should never be intercepted by tenant routing
 const BYPASS_PATHS = [
   '/api/',
   '/_next/',
-  '/_tenant/',
+  '/parceiro/',
   '/favicon.ico',
   '/robots.txt',
   '/sitemap',
@@ -74,7 +82,7 @@ export function middleware(request: NextRequest) {
     const subdomain = hostWithoutPort.replace(`.${BASE_DOMAIN}`, '')
     if (subdomain && !RESERVED_SUBDOMAINS.includes(subdomain)) {
       const url = request.nextUrl.clone()
-      url.pathname = `/_tenant/${subdomain}${pathname === '/' ? '' : pathname}`
+      url.pathname = `/parceiro/${subdomain}${pathname === '/' ? '' : pathname}`
       return NextResponse.rewrite(url)
     }
     // Reserved subdomain — pass through to main site
@@ -85,7 +93,7 @@ export function middleware(request: NextRequest) {
   // registered by a tenant. Rewrite to domain resolver.
   if (!hostWithoutPort.includes(BASE_DOMAIN)) {
     const url = request.nextUrl.clone()
-    url.pathname = `/_tenant/_domain${pathname}`
+    url.pathname = `/parceiro/dominio${pathname}`
     url.searchParams.set('__host', hostWithoutPort)
     return NextResponse.rewrite(url)
   }
