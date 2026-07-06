@@ -595,6 +595,9 @@ export default async function HomePage() {
             Empresas Parceiras em Destaque
           </h2>
           <p className="text-gray-500 text-sm mt-1">Arquitetos, engenheiros, construtoras e serviços para o seu imóvel</p>
+          <Link href="/empresas-parceiras" className="inline-flex items-center gap-1 text-sm font-semibold mt-3 hover:gap-2 transition-all" style={{ color: 'var(--site-accent-color, #C9A84C)' }}>
+            Ver todas as empresas parceiras <ArrowRight className="w-4 h-4" />
+          </Link>
         </div>
 
         {partners.length > 0 ? (

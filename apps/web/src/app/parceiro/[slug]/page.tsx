@@ -145,6 +145,60 @@ function initials(name: string): string {
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
 }
 
+// Fallback de foto por nome: reusa as fotos já cadastradas da equipe Lemos
+// (mesmas do /corretores). Só é usado quando a pessoa ainda não subiu um
+// avatar próprio (avatarUrl vazio) — quando subir, o avatarUrl tem prioridade.
+// Chave = primeiro nome normalizado (sem acento, minúsculo).
+const PHOTO_BY_FIRST_NAME: Record<string, string> = {
+  tomas: '/corretores/tomas.jpg',
+  naira: '/corretores/naira-lemos.jpg',
+  noemia: '/corretores/noemia-pires.jpg',
+  nadia: '/corretores/nadia.png',
+  nilton: '/corretores/nilton-lemos.jpg',
+  laura: '/corretores/laura.jpg',
+  lucas: '/corretores/lucas.jpg',
+  loren: '/corretores/lorena.jpg',
+  lorena: '/corretores/lorena.jpg',
+  miriam: '/corretores/miriam-icon-final.png',
+  gabriel: '/corretores/gabriel-icon-v2.jpg',
+  geraldo: '/corretores/geraldo.jpg',
+}
+
+function normFirst(name: string): string {
+  const first = name.trim().split(/\s+/)[0] || ''
+  return first.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+}
+
+// Foto a exibir: avatar do cadastro > foto estática por nome > null (iniciais).
+function memberPhoto(m: TeamMember): string | null {
+  if (m.avatarUrl) return m.avatarUrl
+  return PHOTO_BY_FIRST_NAME[normFirst(m.name || '')] ?? null
+}
+
+// Dados de contato do parceiro: lê de tenant.settings (address, city, phone,
+// hours). Fallback para a Lemos (dados já públicos no site principal) enquanto
+// os campos não estão no cadastro do tenant.
+interface Contact { address?: string; city?: string; phone?: string; phoneHref?: string; hours?: string; email?: string }
+function resolveContact(slug: string, settings: Record<string, any> | undefined): Contact {
+  const s = settings || {}
+  const c: Contact = {
+    address: s.address, city: s.city, phone: s.phone,
+    phoneHref: s.phone ? s.phone.replace(/\D/g, '') : undefined,
+    hours: s.hours, email: s.email,
+  }
+  if (!c.address && slug === 'lemos') {
+    return {
+      address: 'Rua João Ramalho, 1060 — Centro',
+      city: 'Franca/SP',
+      phone: '(16) 3723-0045',
+      phoneHref: '1637230045',
+      hours: 'Seg a Sex, 8h30 às 18h · Sáb, 8h30 às 12h',
+      email: 'contato@imobiliarialemos.com.br',
+    }
+  }
+  return c
+}
+
 // Normaliza telefone BR para link wa.me (só dígitos, com DDI 55).
 function waLink(phone: string | null): string | null {
   if (!phone) return null
@@ -225,8 +279,11 @@ export default async function TenantPage({
     )
   }
 
-  const theme = resolveTheme(tenant.layoutType)
-  const accentColor = tenant.primaryColor || theme.accentHex
+  // Parceiros "founder" (ex.: Lemos) adotam a identidade premium do
+  // AgoraEncontrei (verde/dourado). Demais parceiros seguem o tema do cadastro.
+  const usePremium = slug === 'lemos' || tenant.settings?.brandStyle === 'ae_premium'
+  const theme = resolveTheme(usePremium ? 'ae_premium' : tenant.layoutType)
+  const accentColor = usePremium ? theme.accentHex : (tenant.primaryColor || theme.accentHex)
   const logoVisible = tenant.settings?.logoVisible !== false
   const logoShowText = tenant.settings?.logoShowText !== false
   const logoPosition = tenant.settings?.logoPosition === 'center' ? 'center' : 'left'
@@ -251,6 +308,7 @@ export default async function TenantPage({
   const tenantNameNorm = nameKey(tenant.name)
   const team = teamRaw.filter(m => m.name && nameKey(m.name) !== tenantNameNorm)
   const hasTeam = team.length > 0
+  const contact = resolveContact(slug, tenant.settings)
 
   return (
     <div className={`min-h-screen ${theme.bg} ${theme.text}`}>
@@ -501,21 +559,26 @@ export default async function TenantPage({
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
               {team.map(member => {
                 const wa = waLink(member.phone)
+                const photo = memberPhoto(member)
+                // Perfil público do corretor no site principal (lista os imóveis
+                // que ele captou/é responsável). Absoluto: no host do parceiro a
+                // rota /corretores seria reescrita e não existe.
+                const profileHref = `https://www.agoraencontrei.com.br/corretores/${member.id}`
                 return (
                   <div key={member.id} className={`${theme.card} border rounded-2xl p-5 flex flex-col items-center text-center`}>
-                    {/* Avatar redondo: foto do cadastro ou iniciais */}
-                    {member.avatarUrl ? (
+                    {/* Avatar redondo: foto do cadastro > foto estática da equipe > iniciais */}
+                    {photo ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
-                        src={member.avatarUrl}
+                        src={photo}
                         alt={member.name}
                         className="w-24 h-24 rounded-full object-cover ring-2"
-                        style={{ '--tw-ring-color': `${accentColor}55` } as React.CSSProperties}
+                        style={{ ['--tw-ring-color' as any]: `${accentColor}55` }}
                       />
                     ) : (
                       <div
                         className="w-24 h-24 rounded-full flex items-center justify-center text-2xl font-bold ring-2"
-                        style={{ backgroundColor: `${accentColor}18`, color: accentColor, '--tw-ring-color': `${accentColor}55` } as React.CSSProperties}
+                        style={{ backgroundColor: `${accentColor}18`, color: accentColor, ['--tw-ring-color' as any]: `${accentColor}55` }}
                       >
                         {initials(member.name)}
                       </div>
@@ -529,17 +592,27 @@ export default async function TenantPage({
                         CRECI {member.creciNumber}
                       </span>
                     )}
-                    {wa && (
+                    <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
+                      {wa && (
+                        <a
+                          href={`${wa}?text=${encodeURIComponent(`Olá ${member.name.split(' ')[0]}, vi você no site da ${tenant.name} e gostaria de falar sobre imóveis.`)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg text-white"
+                          style={{ backgroundColor: '#25D366' }}
+                        >
+                          💬 WhatsApp
+                        </a>
+                      )}
                       <a
-                        href={`${wa}?text=${encodeURIComponent(`Olá ${member.name.split(' ')[0]}, vi você no site da ${tenant.name} e gostaria de falar sobre imóveis.`)}`}
+                        href={profileHref}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg text-white"
-                        style={{ backgroundColor: '#25D366' }}
+                        className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg ${theme.buttonSecondary}`}
                       >
-                        💬 WhatsApp
+                        Ver imóveis
                       </a>
-                    )}
+                    </div>
                   </div>
                 )
               })}
@@ -561,7 +634,7 @@ export default async function TenantPage({
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <a
-              href={`https://wa.me/?text=Olá, vi um imóvel no site ${tenant.name} e gostaria de mais informações.`}
+              href={`https://wa.me/${contact.phoneHref ? '55' + contact.phoneHref : ''}?text=${encodeURIComponent(`Olá, vi um imóvel no site ${tenant.name} e gostaria de mais informações.`)}`}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-6 py-3 rounded-lg text-white font-medium"
@@ -569,10 +642,38 @@ export default async function TenantPage({
             >
               💬 Falar no WhatsApp
             </a>
-            <button className={`${theme.buttonSecondary} px-6 py-3 rounded-lg`}>
-              🤖 Falar com Tomás
-            </button>
+            <a href="#imoveis" className={`${theme.buttonSecondary} px-6 py-3 rounded-lg`}>
+              🏠 Ver imóveis
+            </a>
           </div>
+
+          {/* Endereço, telefone e horário (do cadastro do parceiro) */}
+          {(contact.address || contact.phone || contact.hours) && (
+            <div className={`mt-10 grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm ${theme.textMuted}`}>
+              {contact.address && (
+                <div className="flex flex-col items-center gap-1">
+                  <span className="text-xl">📍</span>
+                  <span className={`font-semibold ${theme.text}`}>Endereço</span>
+                  <span>{contact.address}{contact.city ? `, ${contact.city}` : ''}</span>
+                </div>
+              )}
+              {contact.phone && (
+                <div className="flex flex-col items-center gap-1">
+                  <span className="text-xl">📞</span>
+                  <span className={`font-semibold ${theme.text}`}>Telefone</span>
+                  <a href={`tel:${contact.phoneHref}`} className="hover:underline">{contact.phone}</a>
+                  {contact.email && <a href={`mailto:${contact.email}`} className="hover:underline text-xs">{contact.email}</a>}
+                </div>
+              )}
+              {contact.hours && (
+                <div className="flex flex-col items-center gap-1">
+                  <span className="text-xl">🕐</span>
+                  <span className={`font-semibold ${theme.text}`}>Atendimento</span>
+                  <span>{contact.hours}</span>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </section>
 
