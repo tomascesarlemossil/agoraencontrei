@@ -114,8 +114,9 @@ export default async function TenantCatalogPage({
   if (!tenant || !tenant.isActive) notFound()
 
   const { items, meta } = await getProperties(slug, sp)
-  const theme = resolveTheme(tenant.layoutType)
-  const accentColor = tenant.primaryColor || theme.accentHex
+  const usePremium = slug === 'lemos' || (tenant.settings as any)?.brandStyle === 'ae_premium'
+  const theme = resolveTheme(usePremium ? 'ae_premium' : tenant.layoutType)
+  const accentColor = usePremium ? theme.accentHex : (tenant.primaryColor || theme.accentHex)
   const logoVisible = tenant.settings?.logoVisible !== false
   const logoShowText = tenant.settings?.logoShowText !== false
 

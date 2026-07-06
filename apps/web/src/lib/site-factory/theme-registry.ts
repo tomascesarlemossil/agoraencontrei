@@ -5,7 +5,7 @@
  * Each theme includes visual config, Tailwind classes, Tomás tone, and metadata.
  */
 
-export type ThemeKey = 'luxury_gold' | 'urban_tech' | 'landscape_living' | 'classic_trust' | 'fast_sales_pro' | 'signature_estate' | 'minimal_studio' | 'bold_agency' | 'editorial_journal'
+export type ThemeKey = 'ae_premium' | 'luxury_gold' | 'urban_tech' | 'landscape_living' | 'classic_trust' | 'fast_sales_pro' | 'signature_estate' | 'minimal_studio' | 'bold_agency' | 'editorial_journal'
 
 export interface ThemeConfig {
   key: ThemeKey
@@ -35,6 +35,34 @@ export interface ThemeConfig {
 }
 
 export const THEME_REGISTRY: Record<ThemeKey, ThemeConfig> = {
+  // Identidade premium do AgoraEncontrei: verde escuro + dourado + off-white.
+  // Usada pelos parceiros que adotam a marca AgoraEncontrei (ex.: Imobiliária
+  // Lemos, fundadora). Espelha as cores do site principal.
+  ae_premium: {
+    key: 'ae_premium',
+    name: 'AgoraEncontrei Premium',
+    tagline: 'Tradição & Tecnologia',
+    description: 'Identidade premium do AgoraEncontrei — verde escuro, dourado e off-white. Sofisticado, confiável e moderno.',
+    idealFor: 'Imobiliárias parceiras que adotam a marca AgoraEncontrei',
+    bg: 'bg-[#f8f6f1]',
+    text: 'text-[#143A1F]',
+    textMuted: 'text-[#6b7280]',
+    accent: 'text-[#C9A84C]',
+    accentHex: '#C9A84C',
+    card: 'bg-white border-[#e7e1d6] shadow-sm rounded-2xl',
+    cardHover: 'hover:shadow-lg hover:border-[#C9A84C]/40',
+    hero: 'bg-gradient-to-br from-[#143A1F] via-[#0E2A15] to-[#143A1F]',
+    headerBg: 'bg-[#143A1F] border-b border-[#C9A84C]/15',
+    footerBg: 'bg-[#143A1F] text-white border-t border-[#C9A84C]/15',
+    buttonPrimary: 'bg-[#C9A84C] text-[#143A1F] font-bold hover:brightness-110 rounded-xl',
+    buttonSecondary: 'border border-[#143A1F]/20 text-[#143A1F] hover:bg-[#143A1F]/5 rounded-xl',
+    fontHeading: 'font-serif',
+    fontBody: 'font-sans',
+    tomasTone: 'consultivo',
+    tomasGreeting: 'Olá! Sou o Tomás, consultor imobiliário. Como posso te ajudar a encontrar, avaliar ou negociar seu imóvel?',
+    tomasFocus: 'Compra, venda, locação, avaliação, financiamento e atendimento humano de confiança',
+  },
+
   luxury_gold: {
     key: 'luxury_gold',
     name: 'Luxury Gold',
@@ -268,6 +296,8 @@ export const LAYOUT_TO_THEME: Record<string, ThemeKey> = {
   social: 'fast_sales_pro',
   marketplace: 'landscape_living',
   // Direct matches
+  ae_premium: 'ae_premium',
+  premium: 'ae_premium',
   luxury_gold: 'luxury_gold',
   urban_tech: 'urban_tech',
   landscape_living: 'landscape_living',

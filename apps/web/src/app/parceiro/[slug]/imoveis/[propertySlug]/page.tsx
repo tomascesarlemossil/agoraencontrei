@@ -134,8 +134,9 @@ export default async function TenantPropertyPage({
   if (!tenant || !tenant.isActive) notFound()
   if (!property) notFound()
 
-  const theme = resolveTheme(tenant.layoutType)
-  const accentColor = tenant.primaryColor || theme.accentHex
+  const usePremium = slug === 'lemos' || (tenant.settings as any)?.brandStyle === 'ae_premium'
+  const theme = resolveTheme(usePremium ? 'ae_premium' : tenant.layoutType)
+  const accentColor = usePremium ? theme.accentHex : (tenant.primaryColor || theme.accentHex)
   const logoVisible = tenant.settings?.logoVisible !== false
   const logoShowText = tenant.settings?.logoShowText !== false
 
