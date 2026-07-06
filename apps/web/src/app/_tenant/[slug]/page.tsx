@@ -60,16 +60,24 @@ interface Property {
 }
 
 async function getTenantBySubdomain(slug: string): Promise<TenantData | null> {
-  try {
-    const res = await fetch(`${API_URL}/api/v1/public/tenant/${slug}`, {
-      next: { revalidate: 60 },
-    })
-    if (!res.ok) return null
-    const data = await res.json()
-    return data.data || null
-  } catch {
-    return null
+  // Retry em falhas de rede (ECONNRESET/TLS do SSR → API): sem isso, um blip de
+  // conexão fazia o site do parceiro cair em notFound() (404). 404 real (tenant
+  // inexistente) não é retentado — retorna null na hora.
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const res = await fetch(`${API_URL}/api/v1/public/tenant/${slug}`, {
+        next: { revalidate: 60 },
+      })
+      if (res.status === 404) return null
+      if (!res.ok) throw new Error(`tenant ${slug}: HTTP ${res.status}`)
+      const data = await res.json()
+      return data.data || null
+    } catch {
+      if (attempt === 2) return null
+      await new Promise(r => setTimeout(r, 200 * (attempt + 1)))
+    }
   }
+  return null
 }
 
 async function getTenantProperties(tenantSlug: string, limit = 9): Promise<Property[]> {
