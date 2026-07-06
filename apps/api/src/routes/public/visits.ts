@@ -201,6 +201,23 @@ export default async function visitRoutes(app: FastifyInstance) {
       }
     }
 
+    // 5. Confirmação automática ao CLIENTE via WhatsApp — DESLIGADA por padrão.
+    //    Só envia com VISIT_CLIENT_WHATSAPP_AUTO=true (+ template aprovado no
+    //    Meta em VISIT_CONFIRMATION_TEMPLATE_NAME). Best-effort, nunca quebra.
+    try {
+      const { maybeSendVisitConfirmation } = await import('../../services/visit-confirmation.service.js')
+      const result = await maybeSendVisitConfirmation({
+        visitorName: body.name,
+        visitorPhone: body.phone,
+        propertyTitle: title,
+        scheduledAt: visitDateTime,
+      })
+      if (result === 'sent') app.log.info({ visitId: propertyVisit.id }, 'visit: client WhatsApp confirmation sent')
+      else if (result === 'failed') app.log.warn({ visitId: propertyVisit.id }, 'visit: client WhatsApp confirmation failed')
+    } catch (err) {
+      app.log.warn({ err }, 'visit: client confirmation errored (non-fatal)')
+    }
+
     return reply.send({ success: true, visitId: propertyVisit.id, activityId: activity?.id ?? null, contactId: contact?.id ?? null })
   })
 
