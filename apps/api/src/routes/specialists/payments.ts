@@ -44,6 +44,19 @@ const PLAN_DESCRIPTIONS: Record<string, string> = {
   PREMIUM_CATEGORY: 'AgoraEncontrei Parceiros — Imobiliária/Loteadora (Mensal)',
 }
 
+// ── "Divulgue seu Negócio" — planos de divulgação (sem taxa de adesão) ───────
+// Mensalidade simples da landing page do parceiro. Âncora: R$ 39,90.
+const AD_PLAN_PRICES: Record<string, number> = {
+  ESSENCIAL: 39.9,
+  PROFISSIONAL: 79.9,
+  PREMIUM: 149.9,
+}
+const AD_PLAN_DESCRIPTIONS: Record<string, string> = {
+  ESSENCIAL: 'AgoraEncontrei — Divulgação Essencial (Mensal)',
+  PROFISSIONAL: 'AgoraEncontrei — Divulgação Profissional (Mensal)',
+  PREMIUM: 'AgoraEncontrei — Divulgação Premium (Mensal)',
+}
+
 async function asaasFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
   const res = await fetch(`${ASAAS_BASE_URL}${path}`, {
     ...options,
@@ -277,6 +290,97 @@ export async function specialistPaymentRoutes(app: FastifyInstance) {
     }
   })
 
+  // ── POST /divulgacao-checkout — Assinatura mensal de divulgação ──────────
+  // Diferente do /checkout (Prime/VIP): SEM aporte inicial. Apenas a
+  // mensalidade da landing page do parceiro (Essencial/Profissional/Premium).
+  app.post('/divulgacao-checkout', async (req, reply) => {
+    const { specialistId, plan, billingType = 'PIX', cpfCnpj, name, email, phone } = req.body as {
+      specialistId: string
+      plan: 'ESSENCIAL' | 'PROFISSIONAL' | 'PREMIUM'
+      billingType?: 'BOLETO' | 'PIX' | 'CREDIT_CARD'
+      cpfCnpj?: string
+      name?: string
+      email?: string
+      phone?: string
+    }
+
+    if (!specialistId || !plan) {
+      return reply.status(400).send({ error: 'specialistId e plan são obrigatórios' })
+    }
+    const price = AD_PLAN_PRICES[plan]
+    if (!price) {
+      return reply.status(400).send({ error: 'Plano de divulgação inválido.' })
+    }
+    if (!ASAAS_API_KEY) {
+      return reply.status(503).send({ error: 'ASAAS_NOT_CONFIGURED', message: 'Configure ASAAS_API_KEY para usar pagamentos.' })
+    }
+
+    try {
+      const specialist = await prisma.specialist.findUnique({
+        where: { id: specialistId },
+        select: { id: true, name: true, email: true, phone: true, cpfCnpj: true, asaasCustomerId: true },
+      })
+      if (!specialist) return reply.status(404).send({ error: 'Especialista não encontrado' })
+
+      let asaasCustomerId = specialist.asaasCustomerId
+      if (!asaasCustomerId) {
+        const customer = await findOrCreateCustomer({
+          name: name || specialist.name,
+          cpfCnpj: cpfCnpj || specialist.cpfCnpj || '00000000000',
+          email: email || specialist.email || undefined,
+          phone: phone || specialist.phone || undefined,
+        })
+        asaasCustomerId = customer.id
+        await prisma.specialist.update({ where: { id: specialistId }, data: { asaasCustomerId } })
+      }
+
+      const nextDueDate = new Date()
+      nextDueDate.setDate(nextDueDate.getDate() + 1)
+      const dueDateStr = nextDueDate.toISOString().split('T')[0]
+
+      const subscription = await createSubscription({
+        customer: asaasCustomerId,
+        billingType,
+        value: price,
+        nextDueDate: dueDateStr,
+        description: AD_PLAN_DESCRIPTIONS[plan] ?? 'AgoraEncontrei — Divulgação (Mensal)',
+        externalReference: `specialist:${specialistId}:ad:${plan}`,
+      })
+
+      await prisma.specialist.update({
+        where: { id: specialistId },
+        data: { asaasSubscriptionId: subscription.id, adPlan: plan, planStatus: 'PENDING_PAYMENT' },
+      })
+
+      const firstPayment = await getSubscriptionFirstPayment(subscription.id)
+      const invoiceUrl = firstPayment?.invoiceUrl ?? null
+      const bankSlipUrl = firstPayment?.bankSlipUrl ?? null
+      let pixQrCode: string | null = null
+      let pixCopiaECola: string | null = null
+      if (billingType === 'PIX' && firstPayment?.id) {
+        const pix = await getPixQrCode(firstPayment.id)
+        pixQrCode = pix?.encodedImage ?? null
+        pixCopiaECola = pix?.payload ?? null
+      }
+
+      return reply.send({
+        success: true,
+        subscriptionId: subscription.id,
+        status: subscription.status,
+        plan,
+        value: price,
+        invoiceUrl,
+        bankSlipUrl,
+        pixQrCode,
+        pixCopiaECola,
+        paymentUrl: invoiceUrl,
+      })
+    } catch (err: any) {
+      app.log.error({ err }, 'Erro ao criar assinatura de divulgação Asaas')
+      return reply.status(500).send({ error: 'Erro ao processar pagamento', details: err.message })
+    }
+  })
+
   // ── POST /webhook — Recebe eventos do Asaas ──────────────────────────────
   app.post('/webhook', {
     config: { rawBody: true },
@@ -338,6 +442,23 @@ export async function specialistPaymentRoutes(app: FastifyInstance) {
           // ativação do plano vem do pagamento da assinatura (PRIME/VIP).
           if (targetPlan === 'aporte') {
             app.log.info({ specialistId }, 'Aporte inicial confirmado via webhook Asaas')
+            break
+          }
+          // "Divulgue seu Negócio": externalReference = specialist:{id}:ad:{tier}.
+          // Ativa a divulgação e publica a landing page (status ACTIVE).
+          if (targetPlan === 'ad') {
+            const adTier = externalRef ? externalRef.split(':')[3] : null
+            await prisma.specialist.update({
+              where: { id: specialistId },
+              data: {
+                adPlan: adTier || undefined,
+                planStatus: 'ACTIVE',
+                status: 'ACTIVE',
+                planActivatedAt: new Date(),
+                planExpiresAt: new Date(Date.now() + 32 * 24 * 60 * 60 * 1000),
+              },
+            })
+            app.log.info({ specialistId, adTier }, 'Divulgação ativada via webhook Asaas')
             break
           }
           // Pagamento confirmado — ativar plano

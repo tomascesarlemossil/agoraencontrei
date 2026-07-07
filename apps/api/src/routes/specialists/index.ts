@@ -186,6 +186,13 @@ export default async function specialistsRoute(app: FastifyInstance) {
       website: z.string().optional(),
       tags: z.array(z.string()).default([]),
       buildingIds: z.array(z.string()).default([]), // IDs dos edifícios selecionados
+      // "Divulgue seu Negócio": dados da landing page editável.
+      cpfcnpj: z.string().optional(),
+      photoUrl: z.string().optional(),
+      logoUrl: z.string().optional(),
+      address: z.string().optional(),
+      businessType: z.string().optional(),
+      landingPage: z.any().optional(),
     })
 
     const parsed = schema.safeParse(request.body)
@@ -220,6 +227,13 @@ export default async function specialistsRoute(app: FastifyInstance) {
           instagram: data.instagram,
           website: data.website,
           tags: data.tags,
+          cpfCnpj: data.cpfcnpj,
+          photoUrl: data.photoUrl,
+          logoUrl: data.logoUrl,
+          address: data.address,
+          businessType: data.businessType,
+          landingPage: data.landingPage ?? undefined,
+          adPlan: data.landingPage?.adPlan ?? undefined,
           status: 'PENDING',
           buildings: data.buildingIds.length > 0 ? {
             create: data.buildingIds.map((buildingId: string) => ({ buildingId })),
@@ -322,6 +336,123 @@ export default async function specialistsRoute(app: FastifyInstance) {
         return reply.status(409).send({ error: 'Este e-mail já está cadastrado.' })
       }
       return reply.status(500).send({ error: 'Erro ao cadastrar especialista', details: err.message })
+    }
+  })
+
+  // ─── PATCH /:id — edição da própria landing page (magic-link OU admin) ────
+  // O parceiro edita sua página pelo painel: serviços, fotos, vídeos, logo,
+  // contatos, endereço e template. Autoriza pelo accessToken (?token=) do
+  // próprio especialista ou por admin autenticado.
+  app.patch('/:id', async (request, reply) => {
+    const { id } = request.params as { id: string }
+
+    const schema = z.object({
+      name: z.string().min(3).optional(),
+      phone: z.string().optional().nullable(),
+      whatsapp: z.string().optional().nullable(),
+      bio: z.string().optional().nullable(),
+      crea: z.string().optional().nullable(),
+      instagram: z.string().optional().nullable(),
+      website: z.string().optional().nullable(),
+      photoUrl: z.string().optional().nullable(),
+      logoUrl: z.string().optional().nullable(),
+      address: z.string().optional().nullable(),
+      businessType: z.string().optional().nullable(),
+      tags: z.array(z.string()).optional(),
+      landingPage: z.any().optional(),
+    })
+
+    const parsed = schema.safeParse(request.body)
+    if (!parsed.success) {
+      return reply.status(400).send({ error: 'Dados inválidos', details: parsed.error.flatten() })
+    }
+
+    try {
+      const existing = await prisma.specialist.findUnique({
+        where: { id },
+        select: { id: true, accessToken: true },
+      })
+      if (!existing) return reply.status(404).send({ error: 'Especialista não encontrado' })
+
+      const ok = await specialistTokenOrAdmin(request, reply, (existing as any).accessToken)
+      if (!ok) return // 401/403 já enviado
+
+      const data: any = { ...parsed.data }
+      if (data.landingPage !== undefined) {
+        data.adPlan = data.landingPage?.adPlan ?? undefined
+      }
+
+      const updated = await prisma.specialist.update({ where: { id }, data })
+      const { asaasCustomerId, asaasSubscriptionId, cpfCnpj, accessToken, ...safe } = updated as any
+      return reply.send({ success: true, data: safe })
+    } catch (err: any) {
+      return reply.status(500).send({ error: 'Erro ao atualizar', details: err.message })
+    }
+  })
+
+  // ─── GET /:id/stats — métricas do parceiro (magic-link OU admin) ─────────
+  // Lê os eventos em partner_analytics (mesma tabela do /partner-track) pelo
+  // id do especialista. Autoriza pelo accessToken do próprio parceiro.
+  app.get('/:id/stats', async (request, reply) => {
+    const { id } = request.params as { id: string }
+    const existing = await prisma.specialist.findUnique({
+      where: { id },
+      select: { id: true, accessToken: true },
+    })
+    if (!existing) return reply.status(404).send({ error: 'Especialista não encontrado' })
+
+    const ok = await specialistTokenOrAdmin(request, reply, (existing as any).accessToken)
+    if (!ok) return // 401/403 já enviado
+
+    try {
+      const now = new Date()
+      const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+      const [monthly, allTime, recent] = await Promise.all([
+        prisma.$queryRawUnsafe(
+          `SELECT
+             COUNT(*) FILTER (WHERE event = 'profile_view')   as profile_views,
+             COUNT(*) FILTER (WHERE event = 'whatsapp_click')  as whatsapp_clicks,
+             COUNT(*) FILTER (WHERE event = 'phone_click')     as phone_clicks,
+             COUNT(DISTINCT "visitorIp")                       as unique_visitors
+           FROM partner_analytics
+           WHERE "partnerId" = $1 AND "createdAt" >= $2`,
+          id, firstOfMonth,
+        ).catch(() => [{}]),
+        prisma.$queryRawUnsafe(
+          `SELECT
+             COUNT(*)                                          as total_events,
+             COUNT(*) FILTER (WHERE event = 'whatsapp_click')  as total_whatsapp,
+             COUNT(*) FILTER (WHERE event = 'profile_view')    as total_views
+           FROM partner_analytics
+           WHERE "partnerId" = $1`,
+          id,
+        ).catch(() => [{}]),
+        prisma.$queryRawUnsafe(
+          `SELECT event, "pageUrl", "createdAt"
+           FROM partner_analytics
+           WHERE "partnerId" = $1
+           ORDER BY "createdAt" DESC LIMIT 10`,
+          id,
+        ).catch(() => []),
+      ])
+      const m = monthly[0] || {}
+      const a = allTime[0] || {}
+      return reply.send({
+        monthly: {
+          profileViews: Number(m.profile_views || 0),
+          whatsappClicks: Number(m.whatsapp_clicks || 0),
+          phoneClicks: Number(m.phone_clicks || 0),
+          uniqueVisitors: Number(m.unique_visitors || 0),
+        },
+        allTime: {
+          totalEvents: Number(a.total_events || 0),
+          totalWhatsapp: Number(a.total_whatsapp || 0),
+          totalViews: Number(a.total_views || 0),
+        },
+        recentEvents: recent,
+      })
+    } catch (err: any) {
+      return reply.status(500).send({ error: 'Erro ao carregar métricas', details: err.message })
     }
   })
 

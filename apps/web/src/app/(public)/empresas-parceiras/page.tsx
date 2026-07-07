@@ -37,10 +37,13 @@ interface Specialist {
   city?: string | null
   bio?: string | null
   photoUrl?: string | null
+  logoUrl?: string | null
   whatsapp?: string | null
   phone?: string | null
   plan?: string | null
+  adPlan?: string | null
   tags?: string[] | null
+  landingPage?: { segmentLabel?: string } | null
 }
 
 async function fetchSpecialists(sp: Record<string, string>): Promise<Specialist[]> {
@@ -178,7 +181,9 @@ export default async function EmpresasParceirasPage({
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
             {specialists.map(s => {
               const wa = waHref(s)
-              const isFeatured = s.plan === 'VIP' || s.plan === 'PRIME'
+              const isFeatured = s.plan === 'VIP' || s.plan === 'PRIME' || s.adPlan === 'PROFISSIONAL' || s.adPlan === 'PREMIUM'
+              const thumb = s.photoUrl || s.logoUrl || null
+              const segLabel = s.landingPage?.segmentLabel || s.categoryLabel || s.category
               return (
                 <div
                   key={s.id}
@@ -190,9 +195,9 @@ export default async function EmpresasParceirasPage({
                     </span>
                   )}
                   <div className="w-24 h-24 rounded-full overflow-hidden mb-3 ring-2 ring-[#C9A84C]/30">
-                    {s.photoUrl ? (
+                    {thumb ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={s.photoUrl} alt={s.name} className="w-full h-full object-cover" />
+                      <img src={thumb} alt={s.name} className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-2xl font-bold" style={{ backgroundColor: 'rgba(20,58,31,0.06)', color: '#143A1F' }}>
                         {(s.name || '?').slice(0, 2).toUpperCase()}
@@ -200,7 +205,7 @@ export default async function EmpresasParceirasPage({
                     )}
                   </div>
                   <p className="text-base font-bold text-[#143A1F] leading-tight">{s.name}</p>
-                  <p className="text-xs font-medium mt-0.5" style={{ color: '#C9A84C' }}>{s.categoryLabel || s.category}</p>
+                  <p className="text-xs font-medium mt-0.5" style={{ color: '#C9A84C' }}>{segLabel}</p>
                   {s.city && <p className="text-xs text-gray-400 mt-0.5">{s.city}</p>}
                   {s.bio && <p className="text-xs text-gray-500 mt-2 line-clamp-3">{s.bio}</p>}
                   <div className="mt-4 flex flex-wrap items-center justify-center gap-2 w-full">

@@ -191,7 +191,7 @@ export default function SoftwarePage() {
                 <li>Atualizações e backup automáticos</li>
                 <li>Planos Lite, Pro e Enterprise</li>
               </ul>
-              <a href="/parceiros/cadastro" className="sw-btn sw-btn-primary">Ver planos e assinar online</a>
+              <a href="/parceiros/planos" className="sw-btn sw-btn-primary">Ver planos e assinar online</a>
             </div>
             <div className="sw-opt">
               <div className="ic">💻</div>

@@ -10,6 +10,7 @@ import {
   ChevronRight, Award, Clock, Sparkles, DollarSign, Loader2,
 } from 'lucide-react'
 import { useAuthStore } from '@/stores/auth.store'
+import { DynamicPlans } from '@/components/public/DynamicPlans'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 
@@ -583,7 +584,7 @@ export function PlanosContent() {
                 {/* CTA */}
                 <div className="px-6 pb-6">
                   <Link
-                    href={`/parceiros/cadastro?plan=${plan.id}`}
+                    href={`/parceiros/assinar?plan=${plan.id}`}
                     className={`w-full inline-flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-sm transition-all ${plan.ctaStyle}`}
                   >
                     Assinar {plan.name} — R$ {plan.price}/mês
@@ -789,6 +790,23 @@ export function PlanosContent() {
         </div>
       </section>
 
+      {/* ── Sites prontos com IA (planos de clonagem SaaS) ───────────────── */}
+      <section className="bg-gray-950 text-white py-16 px-4">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-10">
+            <p className="text-xs font-bold uppercase tracking-widest mb-2 text-amber-400">Site + Sistema prontos</p>
+            <h2 className="text-2xl sm:text-3xl font-bold mb-3">
+              Tenha seu próprio site imobiliário com <span className="text-amber-400">IA</span>
+            </h2>
+            <p className="text-gray-400 text-sm max-w-2xl mx-auto">
+              Escolha um plano, defina seu subdomínio e tema, e coloque seu site no ar em minutos.
+              Preços e recursos atualizados em tempo real.
+            </p>
+          </div>
+          <DynamicPlans />
+        </div>
+      </section>
+
       {/* ── Comparativo de planos (tabela) ───────────────────────────────── */}
       <section className="max-w-4xl mx-auto px-4 py-16">
         <div className="text-center mb-10">
@@ -860,14 +878,14 @@ export function PlanosContent() {
         {/* CTA abaixo da tabela */}
         <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
           <Link
-            href="/parceiros/cadastro?plan=PRIME"
+            href="/parceiros/assinar?plan=PRIME"
             className="inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl text-sm font-bold transition-all hover:brightness-110"
             style={{ backgroundColor: '#C9A84C', color: '#143A1F' }}
           >
             <Star className="w-4 h-4" /> Assinar Prime — R$ 197/mês
           </Link>
           <Link
-            href="/parceiros/cadastro?plan=VIP"
+            href="/parceiros/assinar?plan=VIP"
             className="inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl text-sm font-bold transition-all"
             style={{ backgroundColor: '#143A1F', color: 'white' }}
           >
@@ -975,14 +993,14 @@ export function PlanosContent() {
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link
-              href="/parceiros/cadastro?plan=PRIME"
+              href="/parceiros/assinar?plan=PRIME"
               className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl text-sm font-bold transition-all hover:brightness-110"
               style={{ backgroundColor: '#C9A84C', color: '#143A1F' }}
             >
               <Star className="w-4 h-4" /> Começar com Prime — R$ 197/mês
             </Link>
             <Link
-              href="/parceiros/cadastro?plan=VIP"
+              href="/parceiros/assinar?plan=VIP"
               className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl text-sm font-bold border border-white/20 text-white hover:bg-white/10 transition-all"
             >
               <Crown className="w-4 h-4" /> Plano VIP — R$ 497/mês

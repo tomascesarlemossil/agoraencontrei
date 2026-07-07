@@ -2546,10 +2546,19 @@ model Specialist {
   instagram          String?
   website            String?
   photoUrl           String?
+  logoUrl            String?
+  address            String?
   status             SpecialistStatus   @default(PENDING)
   tags               String[]
   buildings          SpecialistBuilding[]
   welcomeEmailSentAt DateTime?
+
+  // "Divulgue seu Negócio": tipo de cadastro (EMPRESA/AUTONOMO) e conteúdo da
+  // landing page editável (serviços com preços, galeria, vídeos, referências,
+  // endereço, template e plano de divulgação escolhido).
+  businessType       String?
+  landingPage        Json?
+  adPlan             String?
 
   // Magic-link de acesso ao painel do especialista. O especialista não usa
   // JWT/senha da plataforma — pede um link por e-mail/WhatsApp e esse token
