@@ -16,3 +16,22 @@ export function isBuildPhase(): boolean {
   return process.env.NEXT_PHASE === 'phase-production-build'
     || process.env.SSG_SKIP_FETCH === '1'
 }
+
+export function getSeoStaticLimit(envName: string, fallback: number): number {
+  if (process.env.MINIMAL_SSG === '1') return 0
+  if (process.env.SEO_FULL_SSG === '1') return Number.POSITIVE_INFINITY
+
+  const raw = process.env[envName]
+  if (!raw) return fallback
+
+  const parsed = Number(raw)
+  if (!Number.isFinite(parsed) || parsed < 0) return fallback
+  return Math.floor(parsed)
+}
+
+export function limitSeoStaticItems<T>(items: T[], envName: string, fallback: number): T[] {
+  const limit = getSeoStaticLimit(envName, fallback)
+  if (limit === 0) return []
+  if (!Number.isFinite(limit)) return items
+  return items.slice(0, limit)
+}

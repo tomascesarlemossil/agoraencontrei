@@ -8,6 +8,7 @@ import {
   getPartnerCityBySlug,
   partnerSeoPath,
 } from '@/lib/partner-seo'
+import { limitSeoStaticItems } from '@/lib/ssg-runtime'
 
 export const revalidate = 300
 
@@ -73,8 +74,10 @@ async function fetchSpecialists(city: string, category: string): Promise<Special
 }
 
 export function generateStaticParams() {
-  return PARTNER_CITY_SEO.slice(0, 6).flatMap(city =>
-    PARTNER_CATEGORY_SEO.slice(0, 8).map(category => ({
+  const cities = limitSeoStaticItems(PARTNER_CITY_SEO, 'SEO_STATIC_PARTNER_CITY_LIMIT', 3)
+  const categories = limitSeoStaticItems(PARTNER_CATEGORY_SEO, 'SEO_STATIC_PARTNER_CATEGORY_LIMIT', 4)
+  return cities.flatMap(city =>
+    categories.map(category => ({
       cidade: city.slug,
       categoria: category.slug,
     }))

@@ -10,6 +10,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { ChevronRight, Home, Search } from 'lucide-react'
 import { IBGE_CITY_BY_SLUG, IBGE_CITIES_152, getIbgeCitySnippet } from '@/data/seo-ibge-cities-expanded'
+import { limitSeoStaticItems } from '@/lib/ssg-runtime'
 
 const WEB_URL = process.env.NEXT_PUBLIC_WEB_URL || 'https://agoraencontrei.com.br'
 
@@ -45,12 +46,23 @@ function clusterLabel(cluster: string): string {
 }
 
 export async function generateStaticParams() {
-  if (process.env.MINIMAL_SSG === '1') return []  // build offline (.exe) nao precisa das paginas SEO publicas
   const params: { estado: string; cidade: string; cluster: string; modificador: string }[] = []
-  // Gerar apenas para as top 20 cidades por população para não explodir o build
-  const topCidades = IBGE_CITIES_152.sort((a, b) => b.populacao - a.populacao).slice(0, 20)
-  const topClusters = VALID_CLUSTERS.slice(0, 10)
-  const topMods = Object.keys(MODIFICADORES).slice(0, 5)
+  // Pre-renderiza apenas combinacoes prioritarias; a cauda longa fica em ISR.
+  const topCidades = limitSeoStaticItems(
+    [...IBGE_CITIES_152].sort((a, b) => b.populacao - a.populacao),
+    'SEO_STATIC_MODIFIER_CITY_LIMIT',
+    5
+  )
+  const topClusters = limitSeoStaticItems(
+    VALID_CLUSTERS,
+    'SEO_STATIC_MODIFIER_CLUSTER_LIMIT',
+    3
+  )
+  const topMods = limitSeoStaticItems(
+    Object.keys(MODIFICADORES),
+    'SEO_STATIC_MODIFIER_LIMIT',
+    2
+  )
   for (const city of topCidades) {
     for (const cluster of topClusters) {
       for (const mod of topMods) {

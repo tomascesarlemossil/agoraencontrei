@@ -10,7 +10,7 @@ import { notFound } from 'next/navigation'
 import { MapPin, Home, Search, ChevronRight } from 'lucide-react'
 import { IBGE_CITY_BY_SLUG, IBGE_CITIES_152, getIbgeCitySnippet } from '@/data/seo-ibge-cities-expanded'
 import { CitySeoContent } from '@/components/public/CitySeoContent'
-import { isBuildPhase } from '@/lib/ssg-runtime'
+import { isBuildPhase, limitSeoStaticItems } from '@/lib/ssg-runtime'
 
 const WEB_URL = process.env.NEXT_PUBLIC_WEB_URL || 'https://agoraencontrei.com.br'
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api-production-669c.up.railway.app'
@@ -57,10 +57,19 @@ function resolveMeta(cluster: string, cityName: string, state: string) {
 }
 
 export async function generateStaticParams() {
-  if (process.env.MINIMAL_SSG === '1') return []  // build offline (.exe) nao precisa das paginas SEO publicas
   const params: { estado: string; cidade: string; cluster: string }[] = []
-  for (const city of IBGE_CITIES_152) {
-    for (const cluster of Object.keys(CLUSTER_META)) {
+  const cities = limitSeoStaticItems(
+    [...IBGE_CITIES_152].sort((a, b) => b.populacao - a.populacao),
+    'SEO_STATIC_CLUSTER_CITY_LIMIT',
+    10
+  )
+  const clusters = limitSeoStaticItems(
+    Object.keys(CLUSTER_META),
+    'SEO_STATIC_CLUSTER_LIMIT',
+    8
+  )
+  for (const city of cities) {
+    for (const cluster of clusters) {
       params.push({ estado: city.stateSlug, cidade: city.slug, cluster })
     }
   }
