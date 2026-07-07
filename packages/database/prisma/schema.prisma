@@ -2572,6 +2572,9 @@ model Specialist {
   planStatus         String?            @default("FREE")
   planActivatedAt    DateTime?
   planExpiresAt      DateTime?
+  isFeatured         Boolean            @default(false)
+  featuredUntil      DateTime?
+  featuredWeight     Int                @default(0)
   asaasCustomerId    String?
   asaasSubscriptionId String?
 
@@ -2582,6 +2585,7 @@ model Specialist {
   @@index([category])
   @@index([city, state])
   @@index([plan])
+  @@index([isFeatured, featuredUntil])
   @@map("specialists")
 }
 

@@ -296,6 +296,11 @@ async function runMigrations(prisma: any) {
       crea TEXT, instagram TEXT, website TEXT, "photoUrl" TEXT,
       status TEXT NOT NULL DEFAULT 'PENDING',
       tags TEXT[] NOT NULL DEFAULT '{}',
+      "logoUrl" TEXT,
+      address TEXT,
+      "businessType" TEXT,
+      "landingPage" JSONB,
+      "adPlan" TEXT,
       "welcomeEmailSentAt" TIMESTAMPTZ,
       "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -319,12 +324,21 @@ async function runMigrations(prisma: any) {
       UNIQUE("specialistId", "buildingId")
     )`,
     `CREATE INDEX IF NOT EXISTS specialists_status_idx ON specialists(status)`,
+    // Campos do produto "Divulgue seu Negocio" (landing page editavel).
+    `ALTER TABLE specialists ADD COLUMN IF NOT EXISTS "logoUrl" TEXT`,
+    `ALTER TABLE specialists ADD COLUMN IF NOT EXISTS address TEXT`,
+    `ALTER TABLE specialists ADD COLUMN IF NOT EXISTS "businessType" TEXT`,
+    `ALTER TABLE specialists ADD COLUMN IF NOT EXISTS "landingPage" JSONB`,
+    `ALTER TABLE specialists ADD COLUMN IF NOT EXISTS "adPlan" TEXT`,
     // Campos de pagamento (idempotentes)
     `ALTER TABLE specialists ADD COLUMN IF NOT EXISTS cpfcnpj TEXT`,
     `ALTER TABLE specialists ADD COLUMN IF NOT EXISTS plan TEXT NOT NULL DEFAULT 'START'`,
     `ALTER TABLE specialists ADD COLUMN IF NOT EXISTS "planStatus" TEXT DEFAULT 'FREE'`,
     `ALTER TABLE specialists ADD COLUMN IF NOT EXISTS "planActivatedAt" TIMESTAMP`,
     `ALTER TABLE specialists ADD COLUMN IF NOT EXISTS "planExpiresAt" TIMESTAMP`,
+    `ALTER TABLE specialists ADD COLUMN IF NOT EXISTS "isFeatured" BOOLEAN NOT NULL DEFAULT false`,
+    `ALTER TABLE specialists ADD COLUMN IF NOT EXISTS "featuredUntil" TIMESTAMP`,
+    `ALTER TABLE specialists ADD COLUMN IF NOT EXISTS "featuredWeight" INTEGER NOT NULL DEFAULT 0`,
     `ALTER TABLE specialists ADD COLUMN IF NOT EXISTS "asaasCustomerId" TEXT`,
     `ALTER TABLE specialists ADD COLUMN IF NOT EXISTS "asaasSubscriptionId" TEXT`,
     // Magic-link de acesso ao painel do especialista (login sem senha).
@@ -332,6 +346,7 @@ async function runMigrations(prisma: any) {
     `ALTER TABLE specialists ADD COLUMN IF NOT EXISTS "accessTokenSentAt" TIMESTAMP`,
     `CREATE UNIQUE INDEX IF NOT EXISTS specialists_access_token_key ON specialists("accessToken")`,
     `CREATE INDEX IF NOT EXISTS specialists_plan_idx ON specialists(plan)`,
+    `CREATE INDEX IF NOT EXISTS specialists_featured_idx ON specialists("isFeatured", "featuredUntil", "featuredWeight")`,
     `CREATE INDEX IF NOT EXISTS specialists_category_idx ON specialists(category)`,
     `CREATE INDEX IF NOT EXISTS buildings_city_idx ON buildings(city, state)`,
   ]

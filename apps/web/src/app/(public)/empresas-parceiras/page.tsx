@@ -8,6 +8,12 @@
  */
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import {
+  PARTNER_CATEGORY_SEO,
+  PARTNER_CITY_SEO,
+  PARTNER_INTENT_PAGES,
+  partnerSeoPath,
+} from '@/lib/partner-seo'
 
 export const revalidate = 300
 
@@ -42,6 +48,9 @@ interface Specialist {
   phone?: string | null
   plan?: string | null
   adPlan?: string | null
+  isFeatured?: boolean | null
+  featuredUntil?: string | null
+  featuredWeight?: number | null
   tags?: string[] | null
   landingPage?: { segmentLabel?: string } | null
 }
@@ -56,9 +65,22 @@ async function fetchSpecialists(sp: Record<string, string>): Promise<Specialist[
     if (!res.ok) return []
     const json = await res.json()
     const list: Specialist[] = Array.isArray(json?.data) ? json.data : []
-    // Destaque primeiro: VIP > PRIME > START, e depois por nome.
-    const rank: Record<string, number> = { VIP: 0, PRIME: 1, START: 2 }
-    return list.sort((a, b) => (rank[a.plan ?? ''] ?? 3) - (rank[b.plan ?? ''] ?? 3))
+    const rank: Record<string, number> = { VIP: 0, PREMIUM: 1, PRIME: 2, PROFISSIONAL: 3, ESSENCIAL: 4, START: 5 }
+    const now = Date.now()
+    return list.sort((a, b) => {
+      const aUntil = a.featuredUntil ? new Date(a.featuredUntil).getTime() : null
+      const bUntil = b.featuredUntil ? new Date(b.featuredUntil).getTime() : null
+      const aFeatured = !!a.isFeatured && (!aUntil || aUntil >= now)
+      const bFeatured = !!b.isFeatured && (!bUntil || bUntil >= now)
+      if (aFeatured !== bFeatured) return aFeatured ? -1 : 1
+      const weight = Number(b.featuredWeight ?? 0) - Number(a.featuredWeight ?? 0)
+      if (weight !== 0) return weight
+      const aPlan = a.adPlan || a.plan || ''
+      const bPlan = b.adPlan || b.plan || ''
+      const plan = (rank[aPlan] ?? 6) - (rank[bPlan] ?? 6)
+      if (plan !== 0) return plan
+      return a.name.localeCompare(b.name, 'pt-BR')
+    })
   } catch {
     return []
   }
@@ -102,9 +124,26 @@ export default async function EmpresasParceirasPage({
 
   const specialists = await fetchSpecialists(sp)
   const activeCat = CATEGORIES.find(c => c.value === sp.category)
+  const directorySchema = {
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    name: 'Empresas Parceiras do AgoraEncontrei',
+    description: 'Diretorio de profissionais e empresas parceiras para imoveis, arquitetura, engenharia, reformas, documentacao e marketing imobiliario.',
+    url: 'https://www.agoraencontrei.com.br/empresas-parceiras',
+    mainEntity: {
+      '@type': 'ItemList',
+      itemListElement: specialists.slice(0, 20).map((s, index) => ({
+        '@type': 'ListItem',
+        position: index + 1,
+        name: s.name,
+        url: `https://www.agoraencontrei.com.br/especialistas/${s.slug}`,
+      })),
+    },
+  }
 
   return (
     <main style={{ backgroundColor: '#f8f6f1' }} className="min-h-screen">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(directorySchema) }} />
       {/* Hero premium */}
       <section className="py-16 px-4 text-center text-white" style={{ background: 'linear-gradient(135deg, #143A1F 0%, #0E2A15 60%, #143A1F 100%)' }}>
         <div className="max-w-3xl mx-auto">
@@ -172,6 +211,44 @@ export default async function EmpresasParceirasPage({
           })}
         </div>
 
+        <section className="mb-10 grid gap-5 lg:grid-cols-[1.2fr_0.8fr]">
+          <div className="rounded-3xl bg-white p-6 shadow-sm">
+            <p className="text-xs font-bold uppercase tracking-[0.2em]" style={{ color: '#C9A84C' }}>
+              Buscas mais fortes
+            </p>
+            <h2 className="mt-2 text-2xl font-bold text-[#143A1F]" style={{ fontFamily: 'Georgia, serif' }}>
+              Encontre profissionais por cidade e profissao
+            </h2>
+            <p className="mt-3 text-sm leading-6 text-gray-600">
+              O AgoraEncontrei organiza paginas locais para que arquitetos, engenheiros,
+              designers, avaliadores, imobiliarias e outras empresas parceiras aparecam
+              mais nas buscas e recebam clientes com intencao real.
+            </p>
+            <div className="mt-5 grid gap-3 sm:grid-cols-2">
+              {PARTNER_INTENT_PAGES.map(item => (
+                <Link key={item.href} href={item.href} className="rounded-2xl border border-gray-100 p-4 transition hover:border-[#C9A84C] hover:shadow-sm">
+                  <p className="text-sm font-bold text-[#143A1F]">{item.title}</p>
+                  <p className="mt-1 text-xs leading-5 text-gray-500">{item.description}</p>
+                </Link>
+              ))}
+            </div>
+          </div>
+          <div className="rounded-3xl border border-[#C9A84C]/25 bg-[#143A1F] p-6 text-white shadow-sm">
+            <p className="text-xs font-bold uppercase tracking-[0.2em]" style={{ color: '#C9A84C' }}>
+              Vitrine inteligente
+            </p>
+            <h2 className="mt-2 text-2xl font-bold" style={{ fontFamily: 'Georgia, serif' }}>
+              Mais visibilidade para cada parceiro
+            </h2>
+            <ul className="mt-5 space-y-3 text-sm leading-6 text-white/75">
+              <li>Ranking com planos em destaque primeiro.</li>
+              <li>URLs limpas por cidade e categoria para SEO.</li>
+              <li>Perfis individuais com WhatsApp, tags e prova de especialidade.</li>
+              <li>Base pronta para Tomas IA qualificar demanda antes do contato.</li>
+            </ul>
+          </div>
+        </section>
+
         <p className="text-sm text-gray-500 mb-6">
           {specialists.length} empresa{specialists.length === 1 ? '' : 's'} parceira{specialists.length === 1 ? '' : 's'}
           {activeCat ? ` em ${activeCat.label}` : ''}{sp.city ? ` · ${sp.city}` : ''}
@@ -181,7 +258,9 @@ export default async function EmpresasParceirasPage({
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
             {specialists.map(s => {
               const wa = waHref(s)
-              const isFeatured = s.plan === 'VIP' || s.plan === 'PRIME' || s.adPlan === 'PROFISSIONAL' || s.adPlan === 'PREMIUM'
+              const until = s.featuredUntil ? new Date(s.featuredUntil).getTime() : null
+              const activeFeatured = !!s.isFeatured && (!until || until >= Date.now())
+              const isFeatured = activeFeatured || s.plan === 'VIP' || s.plan === 'PRIME' || s.adPlan === 'PROFISSIONAL' || s.adPlan === 'PREMIUM'
               const thumb = s.photoUrl || s.logoUrl || null
               const segLabel = s.landingPage?.segmentLabel || s.categoryLabel || s.category
               return (
@@ -251,6 +330,30 @@ export default async function EmpresasParceirasPage({
         )}
 
         {/* CTA final — anuncie sua empresa */}
+        <section className="mt-14 rounded-3xl bg-white p-6">
+          <h2 className="text-2xl font-bold text-[#143A1F]" style={{ fontFamily: 'Georgia, serif' }}>
+            Paginas por cidade e categoria
+          </h2>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-gray-600">
+            Atalhos preparados para disputar buscas locais de alto valor, como arquiteto em Franca,
+            engenheiro em Ribeirao Preto, avaliador de imoveis e empresas para construir,
+            reformar, vender ou alugar melhor.
+          </p>
+          <div className="mt-5 flex flex-wrap gap-2">
+            {PARTNER_CITY_SEO.slice(0, 6).flatMap(city =>
+              PARTNER_CATEGORY_SEO.slice(0, 4).map(category => (
+                <Link
+                  key={`${city.slug}-${category.slug}`}
+                  href={partnerSeoPath(city.slug, category.slug)}
+                  className="rounded-full border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-700 transition hover:border-[#C9A84C] hover:text-[#143A1F]"
+                >
+                  {category.label} em {city.city}
+                </Link>
+              ))
+            )}
+          </div>
+        </section>
+
         <div className="mt-14 rounded-3xl p-8 sm:p-10 text-center" style={{ background: 'linear-gradient(135deg, #143A1F, #0E2A15)' }}>
           <h2 className="text-2xl font-bold text-white mb-2" style={{ fontFamily: 'Georgia, serif' }}>
             Sua empresa no maior marketplace imobiliário da região
