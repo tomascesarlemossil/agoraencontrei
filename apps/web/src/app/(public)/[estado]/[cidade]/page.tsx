@@ -8,6 +8,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { MapPin, TrendingUp, Home, Building2, Gavel, Wrench, Search } from 'lucide-react'
 import { IBGE_CITY_BY_SLUG, IBGE_CITIES_152, getIbgeCitySnippet } from '@/data/seo-ibge-cities-expanded'
+import { limitSeoStaticItems } from '@/lib/ssg-runtime'
 
 const WEB_URL = process.env.NEXT_PUBLIC_WEB_URL || 'https://agoraencontrei.com.br'
 
@@ -37,8 +38,12 @@ const SERVICE_CLUSTERS = [
 ]
 
 export async function generateStaticParams() {
-  if (process.env.MINIMAL_SSG === '1') return []  // build offline (.exe) nao precisa das paginas SEO publicas
-  return IBGE_CITIES_152.map(city => ({
+  const cities = limitSeoStaticItems(
+    [...IBGE_CITIES_152].sort((a, b) => b.populacao - a.populacao),
+    'SEO_STATIC_CITY_LIMIT',
+    20
+  )
+  return cities.map(city => ({
     estado: city.stateSlug,
     cidade: city.slug,
   }))

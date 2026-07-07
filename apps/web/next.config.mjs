@@ -1,10 +1,20 @@
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const workspaceRoot = path.resolve(__dirname, '../..')
+const useStandaloneOutput = process.platform !== 'win32' || process.env.FORCE_NEXT_STANDALONE === '1'
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
   // Transpile workspace packages (TS sources imported via exports.ts)
   transpilePackages: ['@agoraencontrei/tomas-knowledge'],
-  // Standalone output for Docker/Railway deployment
-  output: 'standalone',
+  // Standalone output for Docker/Railway deployment. On Windows, Next tries to
+  // create package symlinks during trace copy and often fails without developer
+  // mode/admin privileges; production Linux builds keep standalone enabled.
+  output: useStandaloneOutput ? 'standalone' : undefined,
+  outputFileTracingRoot: workspaceRoot,
   // Compressão gzip/brotli automática
   compress: true,
   // swcMinify is the default on Next 15 and the key itself is deprecated —

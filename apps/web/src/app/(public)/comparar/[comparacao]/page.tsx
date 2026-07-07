@@ -13,6 +13,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { ArrowRight, TrendingUp, Users, BarChart3, MapPin, Home } from 'lucide-react'
 import { IBGE_CITIES_152, IBGE_CITY_BY_SLUG, type IbgeCityData } from '@/data/seo-ibge-cities-expanded'
+import { limitSeoStaticItems } from '@/lib/ssg-runtime'
 
 export const revalidate = 86400
 
@@ -22,12 +23,10 @@ const ALL_CITIES_SORTED = IBGE_CITIES_152
 type CompareParams = { comparacao: string }
 
 export function generateStaticParams() {
-  if (process.env.MINIMAL_SSG === '1') return []  // build offline (.exe) nao precisa das paginas SEO publicas
-  // Pré-gera as combinações entre as ~40 maiores cidades (40×39/2 = 780
-  // páginas). As demais combinações são geradas sob demanda via ISR
+  // Pre-gera combinacoes entre cidades prioritarias. As demais combinacoes sao geradas sob demanda via ISR
   // (dynamicParams = true por padrão) — mantém o build rápido sem perder
   // cobertura de SEO.
-  const TOP = ALL_CITIES_SORTED.slice(0, 40)
+  const TOP = limitSeoStaticItems(ALL_CITIES_SORTED, 'SEO_STATIC_COMPARE_CITY_LIMIT', 10)
   const params: { comparacao: string }[] = []
   for (let i = 0; i < TOP.length; i++) {
     for (let j = i + 1; j < TOP.length; j++) {

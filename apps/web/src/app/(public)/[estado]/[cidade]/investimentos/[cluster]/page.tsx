@@ -10,6 +10,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { ChevronRight, TrendingUp, Search } from 'lucide-react'
 import { IBGE_CITY_BY_SLUG, IBGE_CITIES_152, getIbgeCitySnippet } from '@/data/seo-ibge-cities-expanded'
+import { limitSeoStaticItems } from '@/lib/ssg-runtime'
 
 const WEB_URL = process.env.NEXT_PUBLIC_WEB_URL || 'https://agoraencontrei.com.br'
 
@@ -25,10 +26,19 @@ const INVESTIMENTOS: Record<string, { label: string; desc: string; icon: string 
 }
 
 export async function generateStaticParams() {
-  if (process.env.MINIMAL_SSG === '1') return []  // build offline (.exe) nao precisa das paginas SEO publicas
   const params: { estado: string; cidade: string; cluster: string }[] = []
-  for (const city of IBGE_CITIES_152) {
-    for (const cluster of Object.keys(INVESTIMENTOS)) {
+  const cities = limitSeoStaticItems(
+    [...IBGE_CITIES_152].sort((a, b) => b.populacao - a.populacao),
+    'SEO_STATIC_INVESTMENT_CITY_LIMIT',
+    10
+  )
+  const investments = limitSeoStaticItems(
+    Object.keys(INVESTIMENTOS),
+    'SEO_STATIC_INVESTMENT_LIMIT',
+    3
+  )
+  for (const city of cities) {
+    for (const cluster of investments) {
       params.push({ estado: city.stateSlug, cidade: city.slug, cluster })
     }
   }
