@@ -1,4 +1,5 @@
 import type { MetadataRoute } from 'next'
+import { PARTNER_CATEGORY_SEO, PARTNER_CITY_SEO, partnerSeoPath } from '@/lib/partner-seo'
 
 /**
  * Fonte única de verdade das URLs do sitemap principal.
@@ -218,6 +219,7 @@ export function buildStaticEntries(): MetadataRoute.Sitemap {
     { url: `${WEB_URL}/imoveis`, lastModified: now, changeFrequency: 'hourly', priority: 0.95 },
     { url: `${WEB_URL}/leiloes`, lastModified: now, changeFrequency: 'hourly', priority: 0.95 },
     { url: `${WEB_URL}/profissionais/franca`, lastModified: now, changeFrequency: 'weekly', priority: 0.9 },
+    { url: `${WEB_URL}/empresas-parceiras`, lastModified: now, changeFrequency: 'daily', priority: 0.9 },
     { url: `${WEB_URL}/parceiros/cadastro`, lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
     { url: `${WEB_URL}/parceiros/membro-fundador`, lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
     { url: `${WEB_URL}/anunciar-imovel`, lastModified: now, changeFrequency: 'monthly', priority: 0.85 },
@@ -246,6 +248,15 @@ export function buildStaticEntries(): MetadataRoute.Sitemap {
   const servicos = SERVICOS.map(p => ({
     url: `${WEB_URL}${p}`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.75,
   }))
+
+  const empresasParceiras = PARTNER_CITY_SEO.flatMap(city =>
+    PARTNER_CATEGORY_SEO.map(category => ({
+      url: `${WEB_URL}${partnerSeoPath(city.slug, category.slug)}`,
+      lastModified: now,
+      changeFrequency: 'weekly' as const,
+      priority: city.slug === 'franca-sp' ? 0.88 : 0.72,
+    }))
+  )
 
   const cidades = CIDADES_REGIONAIS.map(c => ({
     url: `${WEB_URL}/imoveis-${c}-sp`, lastModified: now, changeFrequency: 'daily' as const, priority: 0.85,
@@ -413,6 +424,7 @@ export function buildStaticEntries(): MetadataRoute.Sitemap {
     ...landings,
     ...leilaoBairros,
     ...servicos,
+    ...empresasParceiras,
     ...capitais,
     ...cidades,
     ...bairros,

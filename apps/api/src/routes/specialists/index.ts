@@ -21,7 +21,34 @@ const categoryLabels: Record<string, string> = {
   VIDEOMAKER: 'Videomaker',
   ADVOGADO_IMOBILIARIO: 'Advogado(a) Imobiliário',
   DESPACHANTE: 'Despachante',
+  IMOBILIARIA: 'Imobiliaria',
+  LOTEADORA: 'Loteadora',
   OUTRO: 'Outro',
+}
+
+function specialistVisibilityRank(s: any) {
+  const now = Date.now()
+  const featuredUntil = s.featuredUntil ? new Date(s.featuredUntil).getTime() : null
+  const activeFeatured = !!s.isFeatured && (!featuredUntil || featuredUntil >= now)
+  const planRank: Record<string, number> = { VIP: 0, PREMIUM: 1, PRIME: 2, PROFISSIONAL: 3, ESSENCIAL: 4, START: 5 }
+  const commercialPlan = s.adPlan || s.plan || ''
+  return [
+    activeFeatured ? 0 : 1,
+    -(Number(s.featuredWeight ?? 0)),
+    planRank[commercialPlan] ?? 6,
+    s.name || '',
+  ] as const
+}
+
+function sortSpecialistsForVisibility(list: any[]) {
+  return [...list].sort((a, b) => {
+    const ar = specialistVisibilityRank(a)
+    const br = specialistVisibilityRank(b)
+    if (ar[0] !== br[0]) return ar[0] - br[0]
+    if (ar[1] !== br[1]) return ar[1] - br[1]
+    if (ar[2] !== br[2]) return ar[2] - br[2]
+    return String(ar[3]).localeCompare(String(br[3]), 'pt-BR')
+  })
 }
 
 export default async function specialistsRoute(app: FastifyInstance) {
@@ -122,7 +149,7 @@ export default async function specialistsRoute(app: FastifyInstance) {
       ])
 
       return reply.send({
-        data: specialists.map((s: any) => ({
+        data: sortSpecialistsForVisibility(specialists).map((s: any) => ({
           ...s,
           categoryLabel: categoryLabels[s.category] || s.category,
           profileUrl: `https://www.agoraencontrei.com.br/especialistas/${s.slug}`,
