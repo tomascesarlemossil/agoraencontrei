@@ -10,7 +10,7 @@ export const revalidate = 1800
 export const metadata: Metadata = {
   title: 'Parceria com o AgoraEncontrei — Divulgue seu Negócio ou Contrate Site/Sistema',
   description:
-    'Duas formas de crescer com o AgoraEncontrei: Divulgue seu Negócio (landing page + Google a partir de R$ 39,90/mês) ou Seja um Parceiro de tecnologia (site próprio, CRM com IA e versões offline).',
+    'Duas formas de crescer com o AgoraEncontrei: Divulgue seu Negócio (landing page + Google por R$ 39,90/mês) ou Seja um Parceiro de tecnologia (site próprio, CRM com IA e versões offline).',
   alternates: { canonical: 'https://www.agoraencontrei.com.br/seja-parceiro' },
 }
 
@@ -55,7 +55,7 @@ export default function SejaParceiroHub() {
             <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-4" style={{ backgroundColor: 'rgba(201,168,76,0.15)' }}>
               <Megaphone className="w-6 h-6" style={{ color: '#C9A84C' }} />
             </div>
-            <span className="text-xs font-bold uppercase tracking-widest mb-1" style={{ color: '#C9A84C' }}>A partir de R$ 39,90/mês</span>
+            <span className="text-xs font-bold uppercase tracking-widest mb-1" style={{ color: '#C9A84C' }}>R$ 39,90/mês</span>
             <h2 className="text-2xl font-bold text-[#143A1F] mb-2" style={{ fontFamily: 'Georgia, serif' }}>Divulgue seu Negócio</h2>
             <p className="text-gray-600 text-sm mb-5">
               Para quem quer <strong>anunciar sua empresa ou serviço</strong> e ter uma landing page própria no
@@ -109,7 +109,7 @@ export default function SejaParceiroHub() {
           {[
             { label: 'O que é', a: 'Anúncio + landing page', b: 'Site/sistema próprio' },
             { label: 'Para quem', a: 'Prestadores e empresas', b: 'Imobiliárias e corretores' },
-            { label: 'Investimento', a: 'A partir de R$ 39,90/mês', b: 'Planos e projetos sob medida' },
+            { label: 'Investimento', a: 'R$ 39,90/mês', b: 'Planos e projetos sob medida' },
             { label: 'Você gerencia', a: 'Sua página e seus leads', b: 'Sua plataforma completa' },
           ].map((row, i) => (
             <div key={i} className="grid grid-cols-3 text-sm border-t">

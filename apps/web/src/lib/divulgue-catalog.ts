@@ -59,69 +59,35 @@ export interface LandingTemplate {
   layout: 'classic' | 'showcase' | 'bold' | 'minimal'
 }
 
-// ─── PLANOS DE DIVULGAÇÃO ────────────────────────────────────────────────────
-// Âncora do produto: R$ 39,90/mês (Essencial). Sem taxa de adesão / aporte.
+// ─── PLANO DE DIVULGAÇÃO ─────────────────────────────────────────────────────
+// Preço único e fixo: R$ 39,90/mês. Sem taxa de adesão, sem fidelidade. Dá
+// acesso completo à landing page editável e à listagem de Empresas Parceiras.
 export const AD_PLANS: AdPlan[] = [
   {
     id: 'ESSENCIAL',
-    name: 'Essencial',
+    name: 'Divulgação',
     price: 39.9,
-    tagline: 'Para começar a ser encontrado hoje',
+    tagline: 'Tudo o que você precisa para ser encontrado',
+    highlight: true,
     badge: null,
-    maxPhotos: 6,
-    maxVideos: 1,
-    maxServices: 5,
+    maxPhotos: 40,
+    maxVideos: 6,
+    maxServices: 50,
     features: [
-      'Landing page pronta no AgoraEncontrei',
+      'Landing page própria no AgoraEncontrei',
       'Listagem em Empresas Parceiras',
       'Botão de WhatsApp e telefone direto',
-      'Até 6 fotos + 1 vídeo',
-      'Até 5 serviços com preços',
-      'Painel para editar sua página',
-      'Métricas de cliques e leads',
-    ],
-  },
-  {
-    id: 'PROFISSIONAL',
-    name: 'Profissional',
-    price: 79.9,
-    tagline: 'Para quem quer aparecer no topo',
-    highlight: true,
-    badge: 'Mais Popular',
-    maxPhotos: 20,
-    maxVideos: 3,
-    maxServices: 12,
-    features: [
-      'Tudo do Essencial +',
+      'Fotos, vídeos e serviços com preços',
       'Selo Verificado ✓',
-      'Destaque no topo da sua categoria',
-      'Prioridade no Google (páginas de bairro e condomínio)',
-      'Até 20 fotos + 3 vídeos',
-      'Até 12 serviços com preços e descrições',
-      'Landing page com modelos premium',
-      'Relatório de desempenho por e-mail',
-    ],
-  },
-  {
-    id: 'PREMIUM',
-    name: 'Premium',
-    price: 149.9,
-    tagline: 'Para dominar a região',
-    badge: 'Resultado Máximo',
-    maxPhotos: 60,
-    maxVideos: 8,
-    maxServices: 100,
-    features: [
-      'Tudo do Profissional +',
-      'Banner em condomínios e páginas de leilão',
-      'Landing page 100% personalizável',
-      'Serviços e portfólio ilimitados',
-      'Campanha de tráfego (Google e redes) inclusa',
-      'Relatório mensal completo de leads',
-      'Suporte prioritário e ajuda na montagem',
+      'Otimização de SEO no Google',
+      'Painel para editar sua página quando quiser',
+      'Métricas de visitas, cliques e leads',
     ],
   },
 ]
+
+/** Plano único de divulgação (preço fixo). */
+export const DIVULGACAO_PLAN: AdPlan = AD_PLANS[0]
 
 export const AD_PLAN_BY_ID: Record<AdPlan['id'], AdPlan> = AD_PLANS.reduce(
   (acc, p) => { acc[p.id] = p; return acc },

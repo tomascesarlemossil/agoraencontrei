@@ -44,17 +44,14 @@ const PLAN_DESCRIPTIONS: Record<string, string> = {
   PREMIUM_CATEGORY: 'AgoraEncontrei Parceiros — Imobiliária/Loteadora (Mensal)',
 }
 
-// ── "Divulgue seu Negócio" — planos de divulgação (sem taxa de adesão) ───────
-// Mensalidade simples da landing page do parceiro. Âncora: R$ 39,90.
+// ── "Divulgue seu Negócio" — plano de divulgação (sem taxa de adesão) ────────
+// Mensalidade única e FIXA da landing page do parceiro: R$ 39,90.
+const AD_PLAN_PRICE = 39.9
 const AD_PLAN_PRICES: Record<string, number> = {
-  ESSENCIAL: 39.9,
-  PROFISSIONAL: 79.9,
-  PREMIUM: 149.9,
+  ESSENCIAL: AD_PLAN_PRICE,
 }
 const AD_PLAN_DESCRIPTIONS: Record<string, string> = {
-  ESSENCIAL: 'AgoraEncontrei — Divulgação Essencial (Mensal)',
-  PROFISSIONAL: 'AgoraEncontrei — Divulgação Profissional (Mensal)',
-  PREMIUM: 'AgoraEncontrei — Divulgação Premium (Mensal)',
+  ESSENCIAL: 'AgoraEncontrei — Divulgação (Mensal)',
 }
 
 async function asaasFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
@@ -304,13 +301,12 @@ export async function specialistPaymentRoutes(app: FastifyInstance) {
       phone?: string
     }
 
-    if (!specialistId || !plan) {
-      return reply.status(400).send({ error: 'specialistId e plan são obrigatórios' })
+    if (!specialistId) {
+      return reply.status(400).send({ error: 'specialistId é obrigatório' })
     }
-    const price = AD_PLAN_PRICES[plan]
-    if (!price) {
-      return reply.status(400).send({ error: 'Plano de divulgação inválido.' })
-    }
+    // Plano único e fixo: qualquer valor cai no plano de divulgação (R$ 39,90).
+    const adTier = 'ESSENCIAL'
+    const price = AD_PLAN_PRICE
     if (!ASAAS_API_KEY) {
       return reply.status(503).send({ error: 'ASAAS_NOT_CONFIGURED', message: 'Configure ASAAS_API_KEY para usar pagamentos.' })
     }
@@ -343,13 +339,13 @@ export async function specialistPaymentRoutes(app: FastifyInstance) {
         billingType,
         value: price,
         nextDueDate: dueDateStr,
-        description: AD_PLAN_DESCRIPTIONS[plan] ?? 'AgoraEncontrei — Divulgação (Mensal)',
-        externalReference: `specialist:${specialistId}:ad:${plan}`,
+        description: AD_PLAN_DESCRIPTIONS[adTier] ?? 'AgoraEncontrei — Divulgação (Mensal)',
+        externalReference: `specialist:${specialistId}:ad:${adTier}`,
       })
 
       await prisma.specialist.update({
         where: { id: specialistId },
-        data: { asaasSubscriptionId: subscription.id, adPlan: plan, planStatus: 'PENDING_PAYMENT' },
+        data: { asaasSubscriptionId: subscription.id, adPlan: adTier, planStatus: 'PENDING_PAYMENT' },
       })
 
       const firstPayment = await getSubscriptionFirstPayment(subscription.id)
@@ -367,7 +363,7 @@ export async function specialistPaymentRoutes(app: FastifyInstance) {
         success: true,
         subscriptionId: subscription.id,
         status: subscription.status,
-        plan,
+        plan: adTier,
         value: price,
         invoiceUrl,
         bankSlipUrl,
