@@ -440,6 +440,7 @@ export default async function specialistsRoute(app: FastifyInstance) {
              COUNT(*) FILTER (WHERE event = 'profile_view')   as profile_views,
              COUNT(*) FILTER (WHERE event = 'whatsapp_click')  as whatsapp_clicks,
              COUNT(*) FILTER (WHERE event = 'phone_click')     as phone_clicks,
+             COUNT(*) FILTER (WHERE event = 'qualified_lead')  as qualified_leads,
              COUNT(DISTINCT "visitorIp")                       as unique_visitors
            FROM partner_analytics
            WHERE "partnerId" = $1 AND "createdAt" >= $2`,
@@ -449,7 +450,8 @@ export default async function specialistsRoute(app: FastifyInstance) {
           `SELECT
              COUNT(*)                                          as total_events,
              COUNT(*) FILTER (WHERE event = 'whatsapp_click')  as total_whatsapp,
-             COUNT(*) FILTER (WHERE event = 'profile_view')    as total_views
+             COUNT(*) FILTER (WHERE event = 'profile_view')    as total_views,
+             COUNT(*) FILTER (WHERE event = 'qualified_lead')  as total_qualified_leads
            FROM partner_analytics
            WHERE "partnerId" = $1`,
           id,
@@ -469,12 +471,14 @@ export default async function specialistsRoute(app: FastifyInstance) {
           profileViews: Number(m.profile_views || 0),
           whatsappClicks: Number(m.whatsapp_clicks || 0),
           phoneClicks: Number(m.phone_clicks || 0),
+          qualifiedLeads: Number(m.qualified_leads || 0),
           uniqueVisitors: Number(m.unique_visitors || 0),
         },
         allTime: {
           totalEvents: Number(a.total_events || 0),
           totalWhatsapp: Number(a.total_whatsapp || 0),
           totalViews: Number(a.total_views || 0),
+          totalQualifiedLeads: Number(a.total_qualified_leads || 0),
         },
         recentEvents: recent,
       })
