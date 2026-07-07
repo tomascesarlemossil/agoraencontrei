@@ -343,31 +343,44 @@ export default async function TenantPage({
               )}
             </div>
           ) : <div />}
-          <nav className={`hidden md:flex items-center gap-6 text-sm ${theme.textMuted}`}>
-            <a href="#imoveis" className="hover:opacity-80 transition">Imóveis</a>
-            <a href="#equipe" className="hover:opacity-80 transition">Equipe</a>
-            <a href="#contato" className="hover:opacity-80 transition">Contato</a>
+          {/* Menu de ferramentas — links internos do parceiro + serviços nacionais (absolutos).
+              Header é escuro (verde), então os links usam tom claro para contraste. */}
+          <nav className="hidden md:flex items-center gap-5 text-sm text-white/80">
+            <a href="/imoveis" className="hover:text-white transition">Imóveis</a>
+            <a href="#equipe" className="hover:text-white transition">Equipe</a>
+            <a href="#sobre" className="hover:text-white transition">Sobre</a>
+            <a href="#contato" className="hover:text-white transition">Contato</a>
+            <a href="https://www.agoraencontrei.com.br/avaliacao" className="hover:text-white transition">Avaliação</a>
           </nav>
-          {/* Botão Tomás IA */}
-          <a
-            href={`https://wa.me/?text=Olá! Quero saber mais sobre os imóveis de ${tenant.name}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold ${theme.buttonPrimary}`}
-          >
-            💬 Tomás IA
-          </a>
+          <div className="flex items-center gap-2">
+            {/* Área de Acesso (painel/CRM/portal no site principal) */}
+            <a
+              href="https://www.agoraencontrei.com.br/login"
+              className="hidden sm:inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold border border-white/25 text-white/90 hover:bg-white/10 transition"
+            >
+              🔐 Área de Acesso
+            </a>
+            {/* Falar com corretor (WhatsApp da imobiliária) */}
+            <a
+              href={`https://wa.me/${contact.phoneHref ? '55' + contact.phoneHref : ''}?text=${encodeURIComponent(`Olá! Quero saber mais sobre os imóveis de ${tenant.name}`)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold ${theme.buttonPrimary}`}
+            >
+              💬 Falar com corretor
+            </a>
+          </div>
         </div>
       </header>
 
-      {/* Hero Section */}
+      {/* Hero Section — heróis escuros usam texto claro para contraste */}
       <section className={`${theme.hero} py-20 sm:py-28 px-4`}>
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className={`text-3xl sm:text-4xl md:text-5xl ${theme.fontHeading} font-bold mb-6 leading-tight`}>
+          <h2 className={`text-3xl sm:text-4xl md:text-5xl ${theme.fontHeading} font-bold mb-6 leading-tight ${['ae_premium', 'luxury_gold', 'bold_agency', 'signature_estate'].includes(theme.key) ? 'text-white' : ''}`}>
             Encontre o imóvel dos seus{' '}
             <span style={{ color: accentColor }}>sonhos</span>
           </h2>
-          <p className={`text-base sm:text-lg ${theme.textMuted} mb-8 max-w-2xl mx-auto`}>
+          <p className={`text-base sm:text-lg mb-8 max-w-2xl mx-auto ${['ae_premium', 'luxury_gold', 'bold_agency', 'signature_estate'].includes(theme.key) ? 'text-white/70' : theme.textMuted}`}>
             {theme.key === 'luxury_gold'
               ? 'Imóveis selecionados e oportunidades exclusivas para investidores exigentes.'
               : theme.key === 'landscape_living'
@@ -403,24 +416,27 @@ export default async function TenantPage({
             </div>
           )}
           {/* Stats */}
-          {hasProperties && (
+          {hasProperties && (() => {
+            const statLabel = ['ae_premium', 'luxury_gold', 'bold_agency', 'signature_estate'].includes(theme.key) ? 'text-white/60' : theme.textMuted
+            return (
             <div className="flex items-center justify-center gap-6 mt-8 text-xs">
               <div className="text-center">
                 <p className={`text-lg font-bold`} style={{ color: accentColor }}>{sortedProperties.length}+</p>
-                <p className={`text-[10px] ${theme.textMuted}`}>Imóveis</p>
+                <p className={`text-[10px] ${statLabel}`}>Imóveis</p>
               </div>
               <div className="text-center">
                 <p className={`text-lg font-bold`} style={{ color: accentColor }}>
                   {sortedProperties.filter(p => p.isFeatured || p.isPremium).length}
                 </p>
-                <p className={`text-[10px] ${theme.textMuted}`}>Destaques</p>
+                <p className={`text-[10px] ${statLabel}`}>Destaques</p>
               </div>
               <div className="text-center">
                 <p className={`text-lg font-bold`} style={{ color: accentColor }}>24/7</p>
-                <p className={`text-[10px] ${theme.textMuted}`}>Atendimento</p>
+                <p className={`text-[10px] ${statLabel}`}>Atendimento</p>
               </div>
             </div>
-          )}
+            )
+          })()}
         </div>
       </section>
 
@@ -620,6 +636,33 @@ export default async function TenantPage({
           </div>
         </section>
       )}
+
+      {/* Sobre — apresentação e sinais de confiança da imobiliária */}
+      <section id="sobre" className="py-16 px-4 border-t border-gray-200/10">
+        <div className="max-w-4xl mx-auto text-center">
+          <h3 className={`text-2xl ${theme.fontHeading} font-bold mb-4`}>Sobre a {tenant.name}</h3>
+          <p className={`${theme.textMuted} max-w-2xl mx-auto leading-relaxed`}>
+            {slug === 'lemos'
+              ? 'Referência no mercado imobiliário de Franca e região desde 2002. Especializada em compra, venda e locação de imóveis residenciais e comerciais, com atendimento humano, tecnologia e transparência em cada negociação.'
+              : `Atendimento próximo e especializado em compra, venda e locação de imóveis${contact.city ? ` em ${contact.city}` : ''}. Conte com a nossa equipe para encontrar o imóvel ideal com segurança e transparência.`}
+          </p>
+          <div className="mt-10 grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {[
+              slug === 'lemos'
+                ? { icon: '🏆', title: 'Desde 2002', desc: '+22 anos de tradição e experiência' }
+                : { icon: '🤝', title: 'Confiança', desc: 'Negociações seguras e transparentes' },
+              { icon: '👥', title: 'Atendimento humano', desc: 'Uma equipe real cuidando do seu imóvel' },
+              { icon: '📍', title: contact.city || 'Franca e região', desc: 'Conhecimento local de verdade' },
+            ].map(item => (
+              <div key={item.title} className={`${theme.card} border rounded-2xl p-6`}>
+                <div className="text-3xl mb-2">{item.icon}</div>
+                <p className={`font-bold ${theme.text}`}>{item.title}</p>
+                <p className={`text-sm ${theme.textMuted} mt-1`}>{item.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
       {/* Contact Section */}
       <section id="contato" className="py-16 px-4 border-t border-gray-200/10">
