@@ -369,8 +369,9 @@ export default async function publicRoutes(app: FastifyInstance) {
           const aRes = residentialTypes.includes(a.type) ? 0 : 1
           const bRes = residentialTypes.includes(b.type) ? 0 : 1
           if (aRes !== bRes) return aRes - bRes
-          // secondary: featured first
-          return (b.isFeatured ? 1 : 0) - (a.isFeatured ? 1 : 0)
+          const aScore = (a.isPremium ? 2 : 0) + (a.isFeatured ? 1 : 0)
+          const bScore = (b.isPremium ? 2 : 0) + (b.isFeatured ? 1 : 0)
+          return bScore - aScore
         })
       : items
 
@@ -391,7 +392,7 @@ export default async function publicRoutes(app: FastifyInstance) {
         fallbackItems = await app.prisma.property.findMany({
           where: { ...baseWhere, type: filters.type, ...purposeFilter },
           select: PUBLIC_PROPERTY_SELECT,
-          orderBy: [{ isFeatured: 'desc' }, { createdAt: 'desc' }],
+          orderBy: [{ isPremium: 'desc' }, { isFeatured: 'desc' }, { createdAt: 'desc' }],
           take: limit,
         })
       }
@@ -415,7 +416,7 @@ export default async function publicRoutes(app: FastifyInstance) {
         const more = await app.prisma.property.findMany({
           where: { ...baseWhere, ...purposeFilter, ...typeFilter, id: { notIn: Array.from(existing) as string[] } },
           select: PUBLIC_PROPERTY_SELECT,
-          orderBy: [{ isFeatured: 'desc' }, { createdAt: 'desc' }],
+          orderBy: [{ isPremium: 'desc' }, { isFeatured: 'desc' }, { createdAt: 'desc' }],
           take: limit - fallbackItems.length,
         })
         fallbackItems = [...fallbackItems, ...more]
@@ -427,7 +428,7 @@ export default async function publicRoutes(app: FastifyInstance) {
         const more = await app.prisma.property.findMany({
           where: { ...baseWhere, type: filters.type, id: { notIn: Array.from(existing) as string[] } },
           select: PUBLIC_PROPERTY_SELECT,
-          orderBy: [{ isFeatured: 'desc' }, { createdAt: 'desc' }],
+          orderBy: [{ isPremium: 'desc' }, { isFeatured: 'desc' }, { createdAt: 'desc' }],
           take: limit - fallbackItems.length,
         })
         fallbackItems = [...fallbackItems, ...more]
@@ -439,7 +440,7 @@ export default async function publicRoutes(app: FastifyInstance) {
         const more = await app.prisma.property.findMany({
           where: { ...baseWhere, neighborhood: { contains: filters.neighborhood, mode: 'insensitive' }, id: { notIn: Array.from(existing) as string[] } },
           select: PUBLIC_PROPERTY_SELECT,
-          orderBy: [{ isFeatured: 'desc' }, { createdAt: 'desc' }],
+          orderBy: [{ isPremium: 'desc' }, { isFeatured: 'desc' }, { createdAt: 'desc' }],
           take: limit,
         })
         fallbackItems = [...fallbackItems, ...more]
@@ -459,7 +460,7 @@ export default async function publicRoutes(app: FastifyInstance) {
         fallbackItems = await app.prisma.property.findMany({
           where: { ...baseWhere, ...typeFilter },
           select: PUBLIC_PROPERTY_SELECT,
-          orderBy: [{ isFeatured: 'desc' }, { createdAt: 'desc' }],
+          orderBy: [{ isPremium: 'desc' }, { isFeatured: 'desc' }, { createdAt: 'desc' }],
           take: limit,
         })
       }
@@ -588,7 +589,7 @@ export default async function publicRoutes(app: FastifyInstance) {
       ? await app.prisma.property.findMany({
           where: { ...baseWhere, type: base.type, city: { contains: base.city, mode: 'insensitive' as const } },
           select: PUBLIC_PROPERTY_SELECT,
-          orderBy: [{ isFeatured: 'desc' }, { createdAt: 'desc' }],
+          orderBy: [{ isPremium: 'desc' }, { isFeatured: 'desc' }, { createdAt: 'desc' }],
           take: 6,
         })
       : []
@@ -599,7 +600,7 @@ export default async function publicRoutes(app: FastifyInstance) {
       const more = await app.prisma.property.findMany({
         where: { ...baseWhere, type: base.type, id: { notIn: [base.id, ...Array.from(moreIds) as string[]] } },
         select: PUBLIC_PROPERTY_SELECT,
-        orderBy: [{ isFeatured: 'desc' }, { createdAt: 'desc' }],
+        orderBy: [{ isPremium: 'desc' }, { isFeatured: 'desc' }, { createdAt: 'desc' }],
         take: 6 - similar.length,
       })
       similar = [...similar, ...more]
@@ -610,7 +611,7 @@ export default async function publicRoutes(app: FastifyInstance) {
       similar = await app.prisma.property.findMany({
         where: { ...baseWhere, purpose: base.purpose },
         select: PUBLIC_PROPERTY_SELECT,
-        orderBy: [{ isFeatured: 'desc' }, { createdAt: 'desc' }],
+        orderBy: [{ isPremium: 'desc' }, { isFeatured: 'desc' }, { createdAt: 'desc' }],
         take: 6,
       })
     }
@@ -618,21 +619,41 @@ export default async function publicRoutes(app: FastifyInstance) {
     return reply.send(similar.map(applyLocationPrivacy))
   })
 
-  // GET /api/v1/public/featured — featured properties
+  // GET /api/v1/public/featured — premium homepage highlights
   app.get('/featured', async (req, reply) => {
     const company = await resolveCompany(app)
     if (!company) return reply.status(503).send({ error: 'SERVICE_UNAVAILABLE' })
 
-    const cacheKey = `pub:featured:v1:${company.id}`
+    const cacheKey = `pub:featured:v2:${company.id}`
     const cached = await cacheGet(app.redis, cacheKey)
     if (cached) return reply.send(cached)
 
-    const items = await app.prisma.property.findMany({
-      where:   { status: 'ACTIVE', authorizedPublish: true, isFeatured: true },
+    const baseWhere = { companyId: company.id, status: 'ACTIVE' as const, authorizedPublish: true }
+
+    let items = await app.prisma.property.findMany({
+      where:   { ...baseWhere, isPremium: true },
       select:  PUBLIC_PROPERTY_SELECT,
-      orderBy: [{ createdAt: 'desc' }, { updatedAt: 'desc' }],
+      orderBy: [{ isFeatured: 'desc' }, { createdAt: 'desc' }, { updatedAt: 'desc' }],
       take:    8,
     })
+
+    if (items.length === 0) {
+      items = await app.prisma.property.findMany({
+        where:   { ...baseWhere, isFeatured: true },
+        select:  PUBLIC_PROPERTY_SELECT,
+        orderBy: [{ createdAt: 'desc' }, { updatedAt: 'desc' }],
+        take:    8,
+      })
+    }
+
+    if (items.length === 0) {
+      items = await app.prisma.property.findMany({
+        where:   baseWhere,
+        select:  PUBLIC_PROPERTY_SELECT,
+        orderBy: [{ createdAt: 'desc' }, { updatedAt: 'desc' }],
+        take:    8,
+      })
+    }
 
     const result = items.map(applyLocationPrivacy)
     await cacheSet(app.redis, cacheKey, result, 300) // 5 min cache

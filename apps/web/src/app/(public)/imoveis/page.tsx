@@ -19,11 +19,12 @@ export const metadata: Metadata = {
 
 export const revalidate = 60
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
+const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100').replace(/\/api\/v1\/?$/, '')
 
 // Map is loaded via MapSearchWrapper (client component) — no dynamic import needed in server component
 
 interface SearchParams {
+  [key: string]: string | undefined
   page?: string
   search?: string
   type?: string
@@ -42,6 +43,17 @@ interface SearchParams {
   view?: string
   closedCondo?: string
   isFeatured?: string
+}
+
+type RawSearchParams = Record<string, string | string[] | undefined>
+
+function normalizeSearchParams(raw?: RawSearchParams | null): SearchParams {
+  const params: SearchParams = {}
+  for (const [key, value] of Object.entries(raw ?? {})) {
+    if (typeof value === 'string') params[key] = value
+    else if (Array.isArray(value) && typeof value[0] === 'string') params[key] = value[0]
+  }
+  return params
 }
 
 // Map the user-facing `sort` param to API `sortBy` + `sortOrder`
@@ -179,8 +191,8 @@ function formatPrice(price: number | null, priceRent: number | null, purpose: st
   return 'Consulte'
 }
 
-export default async function ImoveisPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
-  const resolvedSearchParams = await searchParams
+export default async function ImoveisPage({ searchParams }: { searchParams?: Promise<RawSearchParams> }) {
+  const resolvedSearchParams = normalizeSearchParams(await searchParams)
   const isMapView = resolvedSearchParams.view === 'map'
   const { data: properties, meta } = isMapView ? { data: [], meta: { total: 0, page: 1, totalPages: 1 } } : await fetchProperties(resolvedSearchParams)
 

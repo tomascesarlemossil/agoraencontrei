@@ -44,7 +44,7 @@ export const metadata: Metadata = {
 
 export const revalidate = 60
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
+const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100').replace(/\/api\/v1\/?$/, '')
 
 async function fetchFeaturedProperties() {
   try {
@@ -540,15 +540,22 @@ export default async function HomePage() {
                     </div>
                   )}
                   <div className="absolute top-2 left-2">
-                    <span
-                      className="text-xs font-bold px-2 py-0.5 rounded-full"
-                      style={{
-                        backgroundColor: p.purpose === 'RENT' ? 'var(--site-primary-color, #143A1F)' : 'var(--site-accent-color, #C9A84C)',
-                        color: p.purpose === 'RENT' ? 'white' : 'var(--site-primary-color, #143A1F)',
-                      }}
-                    >
-                      {p.purpose === 'SALE' ? 'Venda' : p.purpose === 'RENT' ? 'Aluguel' : p.purpose === 'BOTH' ? 'Venda/Alug.' : 'Temporada'}
-                    </span>
+                    <div className="flex flex-wrap gap-1.5">
+                      <span
+                        className="text-xs font-bold px-2 py-0.5 rounded-full"
+                        style={{
+                          backgroundColor: p.purpose === 'RENT' ? 'var(--site-primary-color, #143A1F)' : 'var(--site-accent-color, #C9A84C)',
+                          color: p.purpose === 'RENT' ? 'white' : 'var(--site-primary-color, #143A1F)',
+                        }}
+                      >
+                        {p.purpose === 'SALE' ? 'Venda' : p.purpose === 'RENT' ? 'Aluguel' : p.purpose === 'BOTH' ? 'Venda/Alug.' : 'Temporada'}
+                      </span>
+                      {(p.isPremium || p.isFeatured) && (
+                        <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-white/95 text-[#143A1F]">
+                          {p.isPremium ? 'Premium' : 'Destaque'}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
 

@@ -6,7 +6,7 @@ import { BedDouble, Bath, Car, Maximize, Loader2, Building2, ChevronLeft, Chevro
 import { FavoriteButton } from '@/components/FavoriteButton'
 import { CompareButton } from '@/components/CompareButton'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
+const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100').replace(/\/api\/v1\/?$/, '')
 
 const PURPOSE_LABEL: Record<string, string> = {
   SALE: 'Venda', RENT: 'Aluguel', BOTH: 'Venda/Aluguel', SEASON: 'Temporada',
@@ -49,10 +49,11 @@ function PriceDisplay({ price, priceRent, purpose }: { price: number | null; pri
   return <p className="text-sm font-medium mt-3 text-gray-500">Consulte</p>
 }
 
-function PropertyCardCarousel({ images, coverImage, title, isFeatured, purpose, propertyId }: {
+function PropertyCardCarousel({ images, coverImage, title, isPremium, isFeatured, purpose, propertyId }: {
   images?: string[] | null
   coverImage?: string | null
   title: string
+  isPremium?: boolean
   isFeatured?: boolean
   purpose: string
   propertyId: string
@@ -169,9 +170,9 @@ function PropertyCardCarousel({ images, coverImage, title, isFeatured, purpose, 
         >
           {PURPOSE_LABEL[purpose] ?? purpose}
         </span>
-        {isFeatured && (
+        {(isPremium || isFeatured) && (
           <span className="text-xs font-bold px-2.5 py-1 rounded-full" style={{ backgroundColor: 'rgba(255,255,255,0.95)', color: '#143A1F' }}>
-            ★ Destaque
+            {isPremium ? 'Premium' : 'Destaque'}
           </span>
         )}
       </div>
@@ -196,6 +197,7 @@ function PropertyCard({ p }: { p: any }) {
         images={p.images}
         coverImage={p.coverImage}
         title={p.title}
+        isPremium={p.isPremium}
         isFeatured={p.isFeatured}
         purpose={p.purpose}
         propertyId={p.id}

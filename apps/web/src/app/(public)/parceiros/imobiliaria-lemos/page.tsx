@@ -1,8 +1,9 @@
 import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
-import { ArrowLeft, MapPin, Phone, Mail, Globe, Instagram, Clock, Star, Building2, Users, Award, ArrowRight } from 'lucide-react'
+import { ArrowLeft, MapPin, Phone, Mail, Globe, Clock, Star, Building2, Users, Award, ArrowRight, BedDouble, Bath, Car, Maximize } from 'lucide-react'
 import { MembroCard, type Membro } from '../../corretores/MembroCard'
+import { PartnerOfficialLink } from '@/components/public/PartnerOfficialLink'
 
 export const metadata: Metadata = {
   title: 'Imobiliária Lemos | 1º Parceiro Oficial — AgoraEncontrei Marketplace',
@@ -13,11 +14,15 @@ export const metadata: Metadata = {
 
 export const revalidate = 60
 
+const PARTNER_SITE = 'https://www.imobiliarialemos.com.br'
+const PARTNER_LOGO = '/partners/imobiliaria-lemos/logo.jpg'
+
 // Busca avatares atualizados do banco
 async function fetchTeamFromDB(): Promise<Record<string, { creci?: string; avatarUrl?: string }>> {
   try {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
-    const res = await fetch(`${apiUrl}/api/v1/public/team`, { next: { revalidate: 60 } })
+    const apiBase = (process.env.NEXT_PUBLIC_API_URL ?? 'https://www.agoraencontrei.com.br/api/v1').replace(/\/$/, '')
+    const apiUrl = apiBase.endsWith('/api/v1') ? apiBase : `${apiBase}/api/v1`
+    const res = await fetch(`${apiUrl}/public/team`, { next: { revalidate: 60 } })
     if (!res.ok) return {}
     const users: Array<{ name: string; email: string; creciNumber?: string; avatarUrl?: string }> = await res.json()
     return Object.fromEntries(
@@ -28,6 +33,54 @@ async function fetchTeamFromDB(): Promise<Record<string, { creci?: string; avata
   } catch {
     return {}
   }
+}
+
+type PartnerProperty = {
+  id: string
+  slug: string
+  title: string
+  city?: string | null
+  neighborhood?: string | null
+  coverImage?: string | null
+  images?: string[] | null
+  purpose: string
+  price?: number | string | null
+  priceRent?: number | string | null
+  bedrooms?: number | null
+  bathrooms?: number | null
+  parkingSpaces?: number | null
+  totalArea?: number | string | null
+  isPremium?: boolean
+  isFeatured?: boolean
+}
+
+async function fetchPartnerProperties(): Promise<{ properties: PartnerProperty[]; total: number }> {
+  try {
+    const apiBase = (process.env.NEXT_PUBLIC_API_URL ?? 'https://www.agoraencontrei.com.br/api/v1').replace(/\/$/, '')
+    const apiUrl = apiBase.endsWith('/api/v1') ? apiBase : `${apiBase}/api/v1`
+    const res = await fetch(`${apiUrl}/public/properties?limit=4&sortBy=createdAt&sortOrder=desc`, { next: { revalidate: 60 } })
+    if (!res.ok) return { properties: [], total: 0 }
+    const payload: { data?: PartnerProperty[]; meta?: { total?: number } } = await res.json()
+    return {
+      properties: payload.data ?? [],
+      total: payload.meta?.total ?? payload.data?.length ?? 0,
+    }
+  } catch {
+    return { properties: [], total: 0 }
+  }
+}
+
+const money = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })
+
+function formatPropertyPrice(property: PartnerProperty): string {
+  const sale = property.price ? Number(property.price) : 0
+  const rent = property.priceRent ? Number(property.priceRent) : 0
+  if (property.purpose === 'RENT' && rent) return `${money.format(rent)}/mes`
+  if (property.purpose === 'SEASON' && rent) return `${money.format(rent)}/dia`
+  if (property.purpose === 'BOTH' && sale && rent) return `${money.format(sale)} | ${money.format(rent)}/mes`
+  if (sale) return money.format(sale)
+  if (rent) return `${money.format(rent)}/mes`
+  return 'Consulte'
 }
 
 function mergeFromDB(membros: Membro[], dbMap: Record<string, { creci?: string; avatarUrl?: string }>): Membro[] {
@@ -179,6 +232,7 @@ const STATS = [
 
 export default async function ImobiliariaLemosPage() {
   const dbMap = await fetchTeamFromDB()
+  const portfolio = await fetchPartnerProperties()
   const diretoria = mergeFromDB(EQUIPE.diretoria, dbMap)
   const corretores = mergeFromDB(EQUIPE.corretores, dbMap)
 
@@ -203,11 +257,11 @@ export default async function ImobiliariaLemosPage() {
             <div className="flex-shrink-0">
               <div className="w-36 h-36 flex items-center justify-center">
                 <Image
-                  src="/logo-lemos-v2.png"
+                  src={PARTNER_LOGO}
                   alt="Imobiliária Lemos"
                   width={144}
                   height={144}
-                  className="w-full h-full object-contain drop-shadow-2xl"
+                  className="w-full h-full object-cover rounded-full drop-shadow-2xl"
                   priority
                 />
               </div>
@@ -244,6 +298,12 @@ export default async function ImobiliariaLemosPage() {
                 >
                   Ver Imóveis <ArrowRight className="w-3.5 h-3.5" />
                 </Link>
+                <PartnerOfficialLink
+                  partnerName="Imobiliária Lemos"
+                  website={PARTNER_SITE}
+                  logoSrc={PARTNER_LOGO}
+                  compact
+                />
               </div>
             </div>
           </div>
@@ -332,8 +392,14 @@ export default async function ImobiliariaLemosPage() {
                 <div className="flex items-start gap-3">
                   <Globe className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: '#C9A84C' }} />
                   <div>
-                    <p className="text-sm font-semibold" style={{ color: '#143A1F' }}>Site & Redes Sociais</p>
-                    <a href="https://www.imobiliarialemos.com.br" target="_blank" rel="noreferrer" className="text-sm text-gray-600 hover:text-blue-600 transition-colors">www.imobiliarialemos.com.br</a>
+                    <p className="text-sm font-semibold" style={{ color: '#1B2B5B' }}>Site & Redes Sociais</p>
+                    <PartnerOfficialLink
+                      partnerName="Imobiliária Lemos"
+                      website={PARTNER_SITE}
+                      logoSrc={PARTNER_LOGO}
+                      compact
+                      className="mt-1 !text-[#1B2B5B]"
+                    />
                     <br />
                     <a href="https://www.instagram.com/imobiliarialemos" target="_blank" rel="noreferrer" className="text-sm text-gray-600 hover:text-pink-600 transition-colors">@imobiliarialemos</a>
                   </div>
@@ -391,6 +457,90 @@ export default async function ImobiliariaLemosPage() {
       </section>
 
       {/* ── CTA FINAL ────────────────────────────────────────────────────── */}
+      <section className="py-12" style={{ backgroundColor: '#ffffff' }}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-8">
+            <div>
+              <span className="inline-block px-4 py-1 rounded-full text-sm font-semibold mb-3" style={{ backgroundColor: 'rgba(27,43,91,0.08)', color: '#1B2B5B' }}>
+                Portfolio
+              </span>
+              <h2 className="text-3xl font-bold" style={{ color: '#1B2B5B', fontFamily: 'Georgia, serif' }}>
+                Imóveis da Imobiliária Lemos
+              </h2>
+              <p className="text-sm text-gray-500 mt-2">
+                {portfolio.total > 0 ? `${portfolio.total} imóveis publicados no AgoraEncontrei` : 'Imóveis publicados no AgoraEncontrei'}
+              </p>
+            </div>
+            <Link
+              href="/imoveis"
+              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold border transition-all hover:bg-[#1B2B5B] hover:text-white"
+              style={{ borderColor: '#1B2B5B', color: '#1B2B5B' }}
+            >
+              Ver todos <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+
+          {portfolio.properties.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+              {portfolio.properties.map(property => {
+                const image = property.coverImage || property.images?.[0]
+                return (
+                  <Link
+                    key={property.id}
+                    href={`/imoveis/${property.slug}`}
+                    className="group bg-white rounded-xl overflow-hidden border transition-all hover:shadow-xl"
+                    style={{ borderColor: '#e8e4dc' }}
+                  >
+                    <div className="relative h-44 overflow-hidden" style={{ backgroundColor: '#f0ece4' }}>
+                      {image ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={image}
+                          alt={property.title}
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #1B2B5B, #2d4a8a)' }}>
+                          <Building2 className="w-12 h-12 text-white/40" />
+                        </div>
+                      )}
+                      {(property.isPremium || property.isFeatured) && (
+                        <span className="absolute top-3 left-3 text-xs font-bold px-2.5 py-1 rounded-full" style={{ backgroundColor: '#C9A84C', color: '#1B2B5B' }}>
+                          {property.isPremium ? 'Premium' : 'Destaque'}
+                        </span>
+                      )}
+                    </div>
+                    <div className="p-4">
+                      <h3 className="font-semibold text-sm line-clamp-2 min-h-[40px] transition-colors group-hover:text-[#1B2B5B]" style={{ color: '#111827' }}>
+                        {property.title}
+                      </h3>
+                      <p className="text-xs text-gray-500 mt-1 truncate">
+                        {[property.neighborhood, property.city].filter(Boolean).join(' - ') || 'Franca - SP'}
+                      </p>
+                      <div className="flex items-center gap-3 mt-3 text-xs text-gray-500">
+                        {!!property.bedrooms && <span className="flex items-center gap-1"><BedDouble className="w-3.5 h-3.5" />{property.bedrooms}</span>}
+                        {!!property.bathrooms && <span className="flex items-center gap-1"><Bath className="w-3.5 h-3.5" />{property.bathrooms}</span>}
+                        {!!property.parkingSpaces && <span className="flex items-center gap-1"><Car className="w-3.5 h-3.5" />{property.parkingSpaces}</span>}
+                        {!!property.totalArea && <span className="flex items-center gap-1"><Maximize className="w-3.5 h-3.5" />{Number(property.totalArea)}m²</span>}
+                      </div>
+                      <p className="text-base font-bold mt-3" style={{ color: '#1B2B5B' }}>
+                        {formatPropertyPrice(property)}
+                      </p>
+                    </div>
+                  </Link>
+                )
+              })}
+            </div>
+          ) : (
+            <div className="border rounded-xl p-8 text-center" style={{ borderColor: '#e8e4dc', backgroundColor: '#f9f7f4' }}>
+              <Building2 className="w-10 h-10 mx-auto mb-3" style={{ color: '#C9A84C' }} />
+              <p className="text-sm text-gray-600">Os imóveis publicados serão exibidos aqui automaticamente.</p>
+            </div>
+          )}
+        </div>
+      </section>
+
       <section className="py-16 text-center relative overflow-hidden"
         style={{ background: 'linear-gradient(135deg, #143A1F 0%, #2d4a8a 100%)' }}>
         <div className="absolute inset-0 opacity-5"

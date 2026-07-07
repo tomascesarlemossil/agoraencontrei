@@ -29,9 +29,9 @@ export function getSeoStaticLimit(envName: string, fallback: number): number {
   return Math.floor(parsed)
 }
 
-export function limitSeoStaticItems<T>(items: T[], envName: string, fallback: number): T[] {
+export function limitSeoStaticItems<T>(items: readonly T[], envName: string, fallback: number): T[] {
   const limit = getSeoStaticLimit(envName, fallback)
   if (limit === 0) return []
-  if (!Number.isFinite(limit)) return items
+  if (!Number.isFinite(limit)) return [...items]
   return items.slice(0, limit)
 }
