@@ -240,7 +240,7 @@ const WEBSITE_SCHEMA = {
     name: 'Imobiliária Lemos',
     logo: {
       '@type': 'ImageObject',
-      url: 'https://www.agoraencontrei.com.br/logo-lemos-v2.png',
+      url: 'https://www.agoraencontrei.com.br/brand/ae-icon-round.png',
       width: 200,
       height: 200,
     },
@@ -336,7 +336,7 @@ const LOCAL_BUSINESS_SCHEMA = {
     { '@type': 'City', name: 'Itirapuã', containedInPlace: { '@type': 'State', name: 'São Paulo' } },
   ],
   hasMap: 'https://maps.google.com/?q=Imobiliária+Lemos+Franca+SP',
-  logo: 'https://www.agoraencontrei.com.br/logo-lemos-v2.png',
+  logo: 'https://www.agoraencontrei.com.br/brand/ae-icon-round.png',
   image: 'https://www.agoraencontrei.com.br/og-image.jpg',
   sameAs: [
     'https://www.instagram.com/imobiliarialemos',

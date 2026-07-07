@@ -73,7 +73,7 @@ export default function GuiaCompletoFrancaPage() {
     headline: `Guia Completo do Mercado Imobiliário de Franca/SP ${YEAR}`,
     description: `Guia definitivo de imóveis em Franca/SP com preços por m², melhores bairros, leilões e oportunidades.`,
     author: { '@type': 'Organization', name: 'AgoraEncontrei — Imobiliária Lemos', url: WEB },
-    publisher: { '@type': 'Organization', name: 'AgoraEncontrei', url: WEB, logo: { '@type': 'ImageObject', url: `${WEB}/logo-lemos-v2.png` } },
+    publisher: { '@type': 'Organization', name: 'AgoraEncontrei', url: WEB, logo: { '@type': 'ImageObject', url: `${WEB}/brand/ae-icon-round.png` } },
     datePublished: `${YEAR}-01-01`,
     dateModified: new Date().toISOString().split('T')[0],
     url: `${WEB}/sp/franca/guia-completo-imobiliario`,
