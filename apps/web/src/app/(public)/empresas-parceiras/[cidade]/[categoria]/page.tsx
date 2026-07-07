@@ -9,6 +9,7 @@ import {
   partnerSeoPath,
 } from '@/lib/partner-seo'
 import { limitSeoStaticItems } from '@/lib/ssg-runtime'
+import { PartnerLeadQualifier } from '../../../especialistas/[slug]/PartnerLeadQualifier'
 
 export const revalidate = 300
 
@@ -123,6 +124,7 @@ export default async function PartnerSeoPage({
   if (!city || !cat) notFound()
 
   const specialists = await fetchSpecialists(city.city, cat.value)
+  const leadTarget = specialists[0]
 
   const itemListSchema = {
     '@context': 'https://schema.org',
@@ -239,6 +241,22 @@ export default async function PartnerSeoPage({
         </div>
 
         {specialists.length > 0 ? (
+          <>
+            <div className="mb-8">
+              <PartnerLeadQualifier
+                specialistId={leadTarget.id}
+                specialistName={leadTarget.name}
+                categoryLabel={`${cat.label} em ${city.city}/${city.state}`}
+                whatsapp={leadTarget.whatsapp || leadTarget.phone}
+                services={[
+                  { name: cat.service },
+                  { name: 'Projeto ou orcamento' },
+                  { name: 'Comparar profissionais' },
+                  { name: 'Outro' },
+                ]}
+              />
+            </div>
+
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {specialists.map(s => {
               const wa = waHref(s)
@@ -281,6 +299,7 @@ export default async function PartnerSeoPage({
               )
             })}
           </div>
+          </>
         ) : (
           <div className="rounded-3xl border border-dashed border-[#C9A84C] bg-white p-10 text-center">
             <h2 className="text-xl font-bold text-[#143A1F]">Seja o primeiro destaque nesta busca</h2>
