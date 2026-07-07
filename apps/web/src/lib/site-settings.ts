@@ -27,6 +27,24 @@ export const DEFAULT_ACCENT_COLOR = '#C9A84C'
 // evitando o header azul-marinho onde o logo/escrita AgoraEncontrei some.
 const STALE_PRIMARY_DEFAULTS = new Set(['#1b2b5b', '#011347'])
 
+// O site PRINCIPAL é o marketplace AgoraEncontrei. A Imobiliária Lemos é a
+// empresa operadora (aparece no rodapé/contato e na landing do parceiro), mas
+// NÃO deve ser a marca do cabeçalho. Provisionamentos antigos gravaram o
+// logo/nome da Lemos na config do site; tratamos esses valores como "não
+// configurado" para o cabeçalho voltar à marca AgoraEncontrei (mesma lógica do
+// STALE_PRIMARY_DEFAULTS). Logos/nomes custom que NÃO sejam da Lemos seguem
+// respeitados normalmente.
+function isStaleBrandLogo(v?: string | null): boolean {
+  if (!v || typeof v !== 'string') return false
+  const s = v.toLowerCase()
+  return s.includes('logo-lemos') || s.includes('imobiliaria-lemos/logo') || s.includes('imobiliaria-lemos%2flogo')
+}
+function isStaleBrandName(v?: string | null): boolean {
+  if (!v || typeof v !== 'string') return false
+  const n = v.normalize('NFKD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/\s+/g, ' ').trim()
+  return n === 'imobiliaria lemos' || n === 'imobiliaria lemos marketplace' || n === 'lemos'
+}
+
 export interface SiteSettings {
   logoUrl?: string | null
   logoIconUrl?: string | null
@@ -132,20 +150,21 @@ export function resolveSiteBrand(
 } {
   const settings = s ?? {}
   // Prioridade do ícone: logoIconUrl (campo dedicado) > logoUrl (legado) > fallback.
+  // Ignora logos legados da Imobiliária Lemos (o cabeçalho do marketplace é AE).
   const iconCandidate =
-    [settings.logoIconUrl, settings.logoUrl].find(v => typeof v === 'string' && v.trim() !== '')
+    [settings.logoIconUrl, settings.logoUrl].find(v => typeof v === 'string' && v.trim() !== '' && !isStaleBrandLogo(v))
   const custom = typeof iconCandidate === 'string'
-  const wordmarkCandidate = typeof settings.logoWordmarkUrl === 'string' && settings.logoWordmarkUrl.trim() !== ''
+  const wordmarkCandidate = typeof settings.logoWordmarkUrl === 'string' && settings.logoWordmarkUrl.trim() !== '' && !isStaleBrandLogo(settings.logoWordmarkUrl)
     ? settings.logoWordmarkUrl.trim()
     : null
-  const name = typeof settings.companyName === 'string' && settings.companyName.trim() !== ''
+  const name = typeof settings.companyName === 'string' && settings.companyName.trim() !== '' && !isStaleBrandName(settings.companyName)
     ? settings.companyName.trim()
     : null
   // Logo COMPLETO (emblema + escrita), como no login. Prioridade:
   //   1. logoFullUrl custom do admin (editável);
   //   2. sem ícone custom → o full padrão do AgoraEncontrei (tom claro);
   //   3. com ícone custom mas sem full → null (mantém ícone + wordmark).
-  const customFull = typeof settings.logoFullUrl === 'string' && settings.logoFullUrl.trim() !== ''
+  const customFull = typeof settings.logoFullUrl === 'string' && settings.logoFullUrl.trim() !== '' && !isStaleBrandLogo(settings.logoFullUrl)
     ? settings.logoFullUrl.trim()
     : null
   const fullLogoUrl = customFull || (custom ? null : DEFAULT_FULL_LOGO_URL)

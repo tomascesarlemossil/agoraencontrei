@@ -6,7 +6,7 @@ import {
   User, Star, Crown, Zap, CheckCircle, ArrowRight, Building2,
   MessageCircle, TrendingUp, Eye, Edit3, Share2, AlertCircle,
   ExternalLink, Camera, FileText, MapPin, Award, Shield, Lock,
-  BarChart2, Phone, MousePointer
+  BarChart2, MousePointer
 } from 'lucide-react'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
@@ -17,6 +17,7 @@ interface Specialist {
   email: string
   slug: string
   plan: 'START' | 'PRIME' | 'VIP'
+  adPlan?: string | null
   planStatus: string
   planExpiresAt?: string
   category: string
@@ -119,7 +120,9 @@ export default function MeuPainelPage() {
     setLoadingAnalytics(true)
     const qs = token ? `?token=${encodeURIComponent(token)}` : ''
     Promise.all([
-      fetch(`${API_URL}/api/v1/public/partner-stats/${specialist.id}${qs}`).then(r => r.ok ? r.json() : null).catch(() => null),
+      // Métricas do parceiro pelo endpoint com magic-link (funciona para
+      // anunciantes de divulgação, que entram sem JWT).
+      fetch(`${API_URL}/api/v1/specialists/${specialist.id}/stats${qs}`).then(r => r.ok ? r.json() : null).catch(() => null),
       fetch(`${API_URL}/api/v1/public/territory/my/${specialist.id}`).then(r => r.ok ? r.json() : null).catch(() => null),
     ]).then(([analyticsData, territoryData]) => {
       if (analyticsData) setAnalytics(analyticsData)
@@ -407,8 +410,8 @@ export default function MeuPainelPage() {
               </div>
             </div>
 
-            {/* Analytics em tempo real */}
-            {specialist.plan !== 'START' && (
+            {/* Analytics em tempo real (planos pagos OU divulgação ativa) */}
+            {(specialist.plan !== 'START' || specialist.adPlan) && (
               <div className="bg-white rounded-2xl border p-6 shadow-sm">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="font-bold text-[#143A1F] flex items-center gap-2">
@@ -427,12 +430,12 @@ export default function MeuPainelPage() {
                       <div className="text-xs text-gray-500 mt-1 flex items-center justify-center gap-1"><MessageCircle className="w-3 h-3" /> WhatsApp</div>
                     </div>
                     <div className="bg-[#f8faff] rounded-xl p-3 text-center">
-                      <div className="text-2xl font-bold text-[#C9A84C]">{analytics.monthly?.condoImpressions ?? 0}</div>
-                      <div className="text-xs text-gray-500 mt-1 flex items-center justify-center gap-1"><Building2 className="w-3 h-3" /> Impressões</div>
+                      <div className="text-2xl font-bold text-[#C9A84C]">{analytics.monthly?.uniqueVisitors ?? 0}</div>
+                      <div className="text-xs text-gray-500 mt-1 flex items-center justify-center gap-1"><User className="w-3 h-3" /> Visitantes</div>
                     </div>
                     <div className="bg-[#f8faff] rounded-xl p-3 text-center">
-                      <div className="text-2xl font-bold text-purple-600">{analytics.monthly?.phoneClicks ?? 0}</div>
-                      <div className="text-xs text-gray-500 mt-1 flex items-center justify-center gap-1"><Phone className="w-3 h-3" /> Ligações</div>
+                      <div className="text-2xl font-bold text-purple-600">{analytics.monthly?.qualifiedLeads ?? 0}</div>
+                      <div className="text-xs text-gray-500 mt-1 flex items-center justify-center gap-1"><MousePointer className="w-3 h-3" /> Leads</div>
                     </div>
                   </div>
                 ) : (
@@ -440,14 +443,10 @@ export default function MeuPainelPage() {
                     {loadingAnalytics ? 'Carregando métricas...' : 'Nenhum dado disponível ainda'}
                   </div>
                 )}
-                {analytics?.monthly && (
+                {analytics?.allTime && (
                   <div className="mt-3 pt-3 border-t flex items-center justify-between text-xs text-gray-500">
-                    <span>Custo por lead: <strong className="text-[#143A1F]">
-                      {analytics.monthly.whatsappClicks > 0
-                        ? `R$ ${((analytics.partner?.planPrice || 0) / analytics.monthly.whatsappClicks).toFixed(0)}`
-                        : '—'}
-                    </strong></span>
-                    <span>Total histórico: <strong className="text-[#143A1F]">{analytics.allTime?.totalContacts ?? 0} contatos</strong></span>
+                    <span>Total de visualizações: <strong className="text-[#143A1F]">{analytics.allTime?.totalViews ?? 0}</strong></span>
+                    <span>Cliques no WhatsApp: <strong className="text-[#143A1F]">{analytics.allTime?.totalWhatsapp ?? 0}</strong></span>
                   </div>
                 )}
               </div>
