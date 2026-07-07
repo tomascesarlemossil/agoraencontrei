@@ -353,6 +353,26 @@ export default async function TenantPage({
             <a href="https://www.agoraencontrei.com.br/avaliacao" className="hover:text-white transition">Avaliação</a>
           </nav>
           <div className="flex items-center gap-2">
+            {/* Menu mobile — CSS-only via <details> (sem JS num server component) */}
+            <details className="md:hidden relative">
+              <summary className="list-none cursor-pointer p-2 rounded-lg text-white/90 hover:bg-white/10 transition select-none [&::-webkit-details-marker]:hidden">
+                <span className="text-lg leading-none">☰</span>
+              </summary>
+              <div className="absolute right-0 top-full mt-2 w-56 rounded-xl shadow-2xl border py-1 z-50" style={{ backgroundColor: '#0E2A15', borderColor: 'rgba(255,255,255,0.12)' }}>
+                {[
+                  { href: '/imoveis', label: 'Imóveis' },
+                  { href: '#equipe', label: 'Equipe' },
+                  { href: '#sobre', label: 'Sobre' },
+                  { href: '#contato', label: 'Contato' },
+                  { href: 'https://www.agoraencontrei.com.br/avaliacao', label: 'Avaliação' },
+                  { href: 'https://www.agoraencontrei.com.br/login', label: '🔐 Área de Acesso' },
+                ].map(item => (
+                  <a key={item.label} href={item.href} className="block px-4 py-2.5 text-sm text-white/85 hover:bg-white/8 transition">
+                    {item.label}
+                  </a>
+                ))}
+              </div>
+            </details>
             {/* Área de Acesso (painel/CRM/portal no site principal) */}
             <a
               href="https://www.agoraencontrei.com.br/login"
@@ -389,22 +409,24 @@ export default async function TenantPage({
               ? 'As melhores oportunidades do mercado. Encontre rápido, negocie direto.'
               : 'Navegue por nossa seleção de imóveis. Casas, apartamentos, terrenos e mais.'}
           </p>
-          {/* Search Bar */}
-          <div className="max-w-xl mx-auto">
+          {/* Search Bar — GET form para o catálogo do parceiro (?search=) */}
+          <form action="/imoveis" method="get" className="max-w-xl mx-auto">
             <div className="flex gap-2">
               <input
                 type="text"
+                name="search"
                 placeholder={theme.key === 'urban_tech' ? 'Casa com piscina em Franca até 500k...' : 'Buscar por bairro, cidade ou tipo...'}
                 className={`flex-1 px-4 py-3 rounded-lg border text-gray-900 focus:outline-none focus:ring-2 ${theme.key === 'luxury_gold' ? 'bg-gray-800 text-white border-gray-700 placeholder:text-gray-500' : 'border-gray-300 bg-white'}`}
                 style={{ '--tw-ring-color': accentColor } as React.CSSProperties}
               />
               <button
+                type="submit"
                 className={`${theme.buttonPrimary} px-6 py-3 rounded-lg transition`}
               >
                 Buscar
               </button>
             </div>
-          </div>
+          </form>
           {/* Quick filter chips */}
           {(theme.key === 'urban_tech' || theme.key === 'fast_sales_pro') && (
             <div className="flex flex-wrap justify-center gap-2 mt-4">
