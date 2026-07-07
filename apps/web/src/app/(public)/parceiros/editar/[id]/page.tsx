@@ -11,7 +11,7 @@ import Link from 'next/link'
 import {
   Loader2, Plus, Trash2, X, ImageIcon, Video, Star, DollarSign,
   Layout, CheckCircle2, ArrowLeft, Save, Globe, Instagram, Phone,
-  Eye, MessageCircle, Users,
+  Eye, MessageCircle, Users, ClipboardCheck,
 } from 'lucide-react'
 import { LANDING_TEMPLATES, getCategory } from '@/lib/divulgue-catalog'
 
@@ -19,6 +19,26 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 
 interface ServiceItem { name: string; description: string; price: string; priceType: string }
 interface ReferenceItem { title: string; url: string; note?: string }
+interface PartnerLead {
+  id: string
+  name: string
+  phone?: string | null
+  email?: string | null
+  city?: string | null
+  projectType?: string | null
+  objective?: string | null
+  budget?: string | null
+  timeline?: string | null
+  score?: number | null
+  scoreLabel?: string | null
+  recommendedAction?: string | null
+  createdAt?: string | null
+}
+interface PartnerStats {
+  monthly: { profileViews: number; whatsappClicks: number; qualifiedLeads: number; uniqueVisitors: number }
+  allTime: { totalViews: number; totalWhatsapp: number; totalQualifiedLeads: number }
+  recentLeads?: PartnerLead[]
+}
 
 const PRICE_TYPES = [
   { value: 'a_partir', label: 'A partir de' },
@@ -80,7 +100,7 @@ export default function EditarParceiroPage() {
   const [newPhotoUrl, setNewPhotoUrl] = useState('')
   const [newVideoUrl, setNewVideoUrl] = useState('')
   const [profileUrl, setProfileUrl] = useState('')
-  const [stats, setStats] = useState<{ monthly: { profileViews: number; whatsappClicks: number; uniqueVisitors: number }; allTime: { totalViews: number; totalWhatsapp: number } } | null>(null)
+  const [stats, setStats] = useState<PartnerStats | null>(null)
   const logoRef = useRef<HTMLInputElement>(null)
   const photoRef = useRef<HTMLInputElement>(null)
 
@@ -196,11 +216,12 @@ export default function EditarParceiroPage() {
         {stats && (
           <div className="mb-6">
             <p className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-2">Seu desempenho este mês</p>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               {[
-                { icon: Eye, label: 'Visualizações', value: stats.monthly.profileViews, sub: `${stats.allTime.totalViews} no total` },
-                { icon: MessageCircle, label: 'Cliques no WhatsApp', value: stats.monthly.whatsappClicks, sub: `${stats.allTime.totalWhatsapp} no total` },
-                { icon: Users, label: 'Visitantes únicos', value: stats.monthly.uniqueVisitors, sub: 'este mês' },
+                { icon: Eye, label: 'Visualizações', value: stats.monthly.profileViews ?? 0, sub: `${stats.allTime.totalViews ?? 0} no total` },
+                { icon: MessageCircle, label: 'Cliques no WhatsApp', value: stats.monthly.whatsappClicks ?? 0, sub: `${stats.allTime.totalWhatsapp ?? 0} no total` },
+                { icon: ClipboardCheck, label: 'Briefings recebidos', value: stats.monthly.qualifiedLeads ?? 0, sub: `${stats.allTime.totalQualifiedLeads ?? 0} no total` },
+                { icon: Users, label: 'Visitantes únicos', value: stats.monthly.uniqueVisitors ?? 0, sub: 'este mês' },
               ].map((s, i) => (
                 <div key={i} className="bg-white border rounded-2xl p-4 text-center">
                   <s.icon className="w-5 h-5 mx-auto mb-2" style={{ color: '#C9A84C' }} />
@@ -212,6 +233,55 @@ export default function EditarParceiroPage() {
             </div>
             {stats.allTime.totalViews === 0 && (
               <p className="text-xs text-gray-400 mt-2">As métricas começam a contar assim que sua página estiver ativa e as pessoas a visitarem.</p>
+            )}
+            {stats.recentLeads && stats.recentLeads.length > 0 && (
+              <div className="mt-4 rounded-2xl border bg-white p-4">
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <p className="text-sm font-bold text-[#143A1F]">Briefings recentes</p>
+                  <span className="rounded-full bg-[#C9A84C]/10 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-[#9A7A23]">
+                    Leads qualificados
+                  </span>
+                </div>
+                <div className="space-y-3">
+                  {stats.recentLeads.slice(0, 5).map(lead => {
+                    const score = Number(lead.score || 0)
+                    const digits = (lead.phone || '').replace(/\D/g, '')
+                    const wa = digits.length >= 10 ? `https://wa.me/${digits.startsWith('55') ? digits : `55${digits}`}` : null
+                    const hot = score >= 80
+                    const warm = score >= 55 && score < 80
+                    return (
+                      <div key={lead.id} className="rounded-xl border border-gray-100 bg-[#f8f6f1] p-3">
+                        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                          <div className="min-w-0">
+                            <p className="text-sm font-bold text-[#143A1F]">{lead.name}</p>
+                            <p className="mt-0.5 text-xs text-gray-500">
+                              {[lead.projectType, lead.city, lead.timeline].filter(Boolean).join(' - ') || 'Briefing recebido'}
+                            </p>
+                            {(lead.objective || lead.budget) && (
+                              <p className="mt-1 text-xs text-gray-500">
+                                {[lead.objective, lead.budget].filter(Boolean).join(' - ')}
+                              </p>
+                            )}
+                            {lead.recommendedAction && (
+                              <p className="mt-2 text-xs font-medium text-[#143A1F]">{lead.recommendedAction}</p>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 sm:flex-col sm:items-end">
+                            <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${hot ? 'bg-green-100 text-green-700' : warm ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-600'}`}>
+                              Score {score}
+                            </span>
+                            {wa && (
+                              <a href={wa} target="_blank" rel="noreferrer" className="rounded-full bg-[#25D366] px-3 py-1 text-xs font-bold text-white">
+                                WhatsApp
+                              </a>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
             )}
           </div>
         )}

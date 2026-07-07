@@ -434,7 +434,7 @@ export default async function specialistsRoute(app: FastifyInstance) {
     try {
       const now = new Date()
       const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
-      const [monthly, allTime, recent] = await Promise.all([
+      const [monthly, allTime, recent, recentLeads] = await Promise.all([
         prisma.$queryRawUnsafe(
           `SELECT
              COUNT(*) FILTER (WHERE event = 'profile_view')   as profile_views,
@@ -463,6 +463,15 @@ export default async function specialistsRoute(app: FastifyInstance) {
            ORDER BY "createdAt" DESC LIMIT 10`,
           id,
         ).catch(() => []),
+        prisma.$queryRawUnsafe(
+          `SELECT id, name, phone, email, city, "projectType", objective, budget,
+                  timeline, property, score, "scoreLabel", "recommendedAction",
+                  summary, "createdAt"
+           FROM partner_leads
+           WHERE "partnerId" = $1
+           ORDER BY "createdAt" DESC LIMIT 12`,
+          id,
+        ).catch(() => []),
       ])
       const m = monthly[0] || {}
       const a = allTime[0] || {}
@@ -481,6 +490,7 @@ export default async function specialistsRoute(app: FastifyInstance) {
           totalQualifiedLeads: Number(a.total_qualified_leads || 0),
         },
         recentEvents: recent,
+        recentLeads,
       })
     } catch (err: any) {
       return reply.status(500).send({ error: 'Erro ao carregar métricas', details: err.message })
