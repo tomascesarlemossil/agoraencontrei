@@ -5,9 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/server.ts",
+    "prebuild": "pnpm --filter @agoraencontrei/tomas-knowledge build",
     "build": "tsc --project tsconfig.build.json || true",
     "verify:boot": "node scripts/verify-route-imports.mjs",
     "start": "node dist/server.js",
+    "pretypecheck": "pnpm --filter @agoraencontrei/tomas-knowledge build",
     "typecheck": "tsc --noEmit",
     "test": "tsx --test test/*.test.ts",
     "lint": "eslint src --ext .ts"
