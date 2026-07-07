@@ -14,6 +14,7 @@ import {
   PARTNER_INTENT_PAGES,
   partnerSeoPath,
 } from '@/lib/partner-seo'
+import { PartnerLeadQualifier } from '../especialistas/[slug]/PartnerLeadQualifier'
 
 export const revalidate = 300
 
@@ -124,6 +125,8 @@ export default async function EmpresasParceirasPage({
 
   const specialists = await fetchSpecialists(sp)
   const activeCat = CATEGORIES.find(c => c.value === sp.category)
+  const leadTarget = specialists[0]
+  const leadCategoryLabel = activeCat?.label || leadTarget?.landingPage?.segmentLabel || leadTarget?.categoryLabel || 'Servicos para imoveis'
   const directorySchema = {
     '@context': 'https://schema.org',
     '@type': 'CollectionPage',
@@ -255,6 +258,22 @@ export default async function EmpresasParceirasPage({
         </p>
 
         {specialists.length > 0 ? (
+          <>
+            <div className="mb-8">
+              <PartnerLeadQualifier
+                specialistId={leadTarget.id}
+                specialistName={leadTarget.name}
+                categoryLabel={leadCategoryLabel}
+                whatsapp={leadTarget.whatsapp || leadTarget.phone}
+                services={[
+                  { name: leadCategoryLabel },
+                  { name: 'Orcamento e diagnostico' },
+                  { name: 'Comparar profissionais' },
+                  { name: 'Outro' },
+                ]}
+              />
+            </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
             {specialists.map(s => {
               const wa = waHref(s)
@@ -311,6 +330,7 @@ export default async function EmpresasParceirasPage({
               )
             })}
           </div>
+          </>
         ) : (
           <div className="max-w-2xl mx-auto rounded-2xl border border-dashed p-10 text-center bg-white" style={{ borderColor: '#C9A84C' }}>
             <div className="text-5xl mb-3 opacity-30">🏢</div>
