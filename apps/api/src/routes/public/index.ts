@@ -67,6 +67,14 @@ function applyLocationPrivacy<T extends WithLocation>(p: T): T {
   }
 }
 
+type WithPropertyImages = { coverImage?: string | null; images?: string[] | null }
+function normalizePublicImages<T extends WithPropertyImages>(p: T): T {
+  const coverImage = p.coverImage?.trim() || null
+  const images = Array.isArray(p.images) ? p.images.filter(Boolean) : []
+  if (!coverImage || images.includes(coverImage)) return { ...p, images } as T
+  return { ...p, images: [coverImage, ...images] } as T
+}
+
 // Public fields exposed — no sensitive data
 const PUBLIC_PROPERTY_SELECT = {
   id: true,
@@ -655,7 +663,7 @@ export default async function publicRoutes(app: FastifyInstance) {
       })
     }
 
-    const result = items.map(applyLocationPrivacy)
+    const result = items.map(p => normalizePublicImages(applyLocationPrivacy(p)))
     await cacheSet(app.redis, cacheKey, result, 300) // 5 min cache
     return reply.send(result)
   })
