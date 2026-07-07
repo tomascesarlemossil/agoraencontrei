@@ -8,8 +8,10 @@
  */
 import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
+import { nanoid } from 'nanoid'
 import { slugify } from '../../utils/slugify.js'
 import { specialistTokenOrAdmin, generateSpecialistAccessToken } from './auth.js'
+import { s3Service } from '../../services/s3.service.js'
 
 const categoryLabels: Record<string, string> = {
   ARQUITETO: 'Arquiteto(a)',
@@ -53,6 +55,50 @@ function sortSpecialistsForVisibility(list: any[]) {
 
 export default async function specialistsRoute(app: FastifyInstance) {
   const prisma = (app as any).prisma
+
+  // ─── POST /upload — upload de imagem da landing (S3 ou base64 fallback) ───
+  // Público: o cadastro de "Divulgue seu Negócio" é anônimo (o parceiro ainda
+  // não tem conta) e o editor usa magic-link. Restrito a imagens, tamanho e
+  // rate-limit apertados para conter abuso. Retorna { url }.
+  const UPLOAD_MIMES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/avif', 'image/gif'])
+  const UPLOAD_MAX = 8 * 1024 * 1024 // 8 MB
+  app.post('/upload', {
+    config: { rateLimit: { max: 40, timeWindow: '1 minute' } },
+  }, async (req: any, reply) => {
+    let data: any
+    try {
+      data = await req.file({ limits: { fileSize: UPLOAD_MAX } })
+    } catch {
+      return reply.status(400).send({ error: 'INVALID_UPLOAD' })
+    }
+    if (!data) return reply.status(400).send({ error: 'NO_FILE' })
+
+    const mimetype = data.mimetype || 'application/octet-stream'
+    if (!UPLOAD_MIMES.has(mimetype)) {
+      return reply.status(400).send({ error: 'INVALID_FILE_TYPE', message: 'Envie uma imagem (JPG, PNG, WEBP, AVIF ou GIF).' })
+    }
+
+    const chunks: Buffer[] = []
+    let total = 0
+    for await (const chunk of data.file) {
+      total += chunk.length
+      if (total > UPLOAD_MAX) return reply.status(413).send({ error: 'FILE_TOO_LARGE', message: 'Imagem acima de 8 MB.' })
+      chunks.push(chunk)
+    }
+    const buffer = Buffer.concat(chunks)
+
+    try {
+      if (s3Service.isConfigured()) {
+        const key = `specialists/${nanoid()}.${mimetype.split('/')[1] || 'jpg'}`
+        const url = await s3Service.upload(key, buffer, mimetype)
+        return reply.send({ url, key })
+      }
+    } catch (err: any) {
+      req.log?.error({ err }, '[specialists/upload] S3 falhou — usando base64')
+    }
+    // Fallback: data URL inline (sem S3 configurado)
+    return reply.send({ url: `data:${mimetype};base64,${buffer.toString('base64')}`, inline: true })
+  })
 
   // ─── GET /buildings — lista de edifícios para o formulário de cadastro ───
   app.get('/buildings', async (request, reply) => {
@@ -414,6 +460,55 @@ export default async function specialistsRoute(app: FastifyInstance) {
       return reply.send({ success: true, data: safe })
     } catch (err: any) {
       return reply.status(500).send({ error: 'Erro ao atualizar', details: err.message })
+    }
+  })
+
+  // ─── PATCH /:id/feature — destaque do parceiro (somente admin) ───────────
+  // Controle manual do "destaque" (isFeatured/featuredWeight/featuredUntil) que
+  // alimenta o ranqueamento do diretório e das buscas. Só ADMIN/SUPER_ADMIN.
+  app.patch('/:id/feature', {
+    preHandler: [(app as any).authenticate],
+  }, async (request, reply) => {
+    const { id } = request.params as { id: string }
+    const user = (request as any).user
+    if (!['ADMIN', 'SUPER_ADMIN', 'MANAGER'].includes(user?.role)) {
+      return reply.status(403).send({ error: 'Acesso negado' })
+    }
+
+    const parsed = z.object({
+      isFeatured: z.boolean().optional(),
+      featuredWeight: z.number().int().min(0).max(1000).optional(),
+      featuredDays: z.number().int().min(1).max(365).optional().nullable(),
+    }).safeParse(request.body)
+    if (!parsed.success) {
+      return reply.status(400).send({ error: 'Dados inválidos', details: parsed.error.flatten() })
+    }
+
+    const data: any = {}
+    if (parsed.data.isFeatured !== undefined) data.isFeatured = parsed.data.isFeatured
+    if (parsed.data.featuredWeight !== undefined) data.featuredWeight = parsed.data.featuredWeight
+    if (parsed.data.featuredDays !== undefined) {
+      data.featuredUntil = parsed.data.featuredDays
+        ? new Date(Date.now() + parsed.data.featuredDays * 24 * 60 * 60 * 1000)
+        : null
+    }
+    // Ligar destaque sem prazo definido → mantém enquanto isFeatured for true.
+    if (parsed.data.isFeatured === false) data.featuredUntil = null
+
+    try {
+      const updated = await prisma.specialist.update({ where: { id }, data })
+      return reply.send({
+        success: true,
+        data: {
+          id: updated.id,
+          isFeatured: updated.isFeatured,
+          featuredWeight: updated.featuredWeight,
+          featuredUntil: updated.featuredUntil,
+        },
+      })
+    } catch (err: any) {
+      if (err.code === 'P2025') return reply.status(404).send({ error: 'Especialista não encontrado' })
+      return reply.status(500).send({ error: 'Erro ao atualizar destaque', details: err.message })
     }
   })
 
