@@ -6,6 +6,7 @@ import {
   MapPin, Phone, Mail, Globe, Instagram, Award, Building2,
   Star, CheckCircle2, ArrowLeft, ExternalLink, MessageCircle
 } from 'lucide-react'
+import { ProfileViewBeacon, TrackedLink } from './SpecialistTracking'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 
@@ -127,6 +128,7 @@ export default async function EspecialistaPage(props: { params: Promise<{ slug: 
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(personSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
+      <ProfileViewBeacon specialistId={specialist.id} />
 
       <div className="min-h-screen bg-gradient-to-b from-[#f8f6f1] to-white">
         <header className="bg-[#143A1F] py-4 px-6">
@@ -229,10 +231,10 @@ export default async function EspecialistaPage(props: { params: Promise<{ slug: 
 
                 <div className="p-5 pt-0 space-y-2">
                   {whatsappUrl ? (
-                    <a href={whatsappUrl} target="_blank" rel="noopener noreferrer"
+                    <TrackedLink specialistId={specialist.id} event="whatsapp_click" href={whatsappUrl}
                       className="w-full bg-green-500 text-white py-3 rounded-xl font-semibold hover:bg-green-600 transition-colors flex items-center justify-center gap-2 text-sm">
                       <MessageCircle className="w-4 h-4" /> Falar pelo WhatsApp
-                    </a>
+                    </TrackedLink>
                   ) : specialist.whatsapp ? (
                     <div className="w-full bg-gray-100 text-gray-400 py-3 rounded-xl text-sm text-center">
                       WhatsApp disponível no plano Prime

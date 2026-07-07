@@ -11,6 +11,7 @@ import Link from 'next/link'
 import {
   Loader2, Plus, Trash2, X, ImageIcon, Video, Star, DollarSign,
   Layout, CheckCircle2, ArrowLeft, Save, Globe, Instagram, Phone,
+  Eye, MessageCircle, Users,
 } from 'lucide-react'
 import { LANDING_TEMPLATES, getCategory } from '@/lib/divulgue-catalog'
 
@@ -79,6 +80,7 @@ export default function EditarParceiroPage() {
   const [newPhotoUrl, setNewPhotoUrl] = useState('')
   const [newVideoUrl, setNewVideoUrl] = useState('')
   const [profileUrl, setProfileUrl] = useState('')
+  const [stats, setStats] = useState<{ monthly: { profileViews: number; whatsappClicks: number; uniqueVisitors: number }; allTime: { totalViews: number; totalWhatsapp: number } } | null>(null)
   const logoRef = useRef<HTMLInputElement>(null)
   const photoRef = useRef<HTMLInputElement>(null)
 
@@ -114,6 +116,15 @@ export default function EditarParceiroPage() {
       .catch(() => setNotFound(true))
       .finally(() => setLoading(false))
   }, [])
+
+  // Métricas (visualizações, cliques no WhatsApp) do parceiro.
+  useEffect(() => {
+    if (!token || !id) return
+    fetch(`${API_URL}/api/v1/specialists/${id}/stats?token=${encodeURIComponent(token)}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d) setStats(d) })
+      .catch(() => {})
+  }, [token, id])
 
   const toggleCatalog = (svcName: string) => {
     setServices(prev => prev.find(s => s.name === svcName)
@@ -180,6 +191,30 @@ export default function EditarParceiroPage() {
       <div className="max-w-3xl mx-auto px-4 py-8">
         <h1 className="text-2xl font-bold text-[#143A1F] mb-1">Editar minha página</h1>
         <p className="text-gray-500 text-sm mb-6">Atualize seus serviços, fotos e contatos. As alterações aparecem na sua página pública.{profileUrl && <> · <a href={profileUrl} target="_blank" rel="noreferrer" className="text-[#C9A84C] font-medium underline">ver página</a></>}</p>
+
+        {/* Métricas */}
+        {stats && (
+          <div className="mb-6">
+            <p className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-2">Seu desempenho este mês</p>
+            <div className="grid grid-cols-3 gap-3">
+              {[
+                { icon: Eye, label: 'Visualizações', value: stats.monthly.profileViews, sub: `${stats.allTime.totalViews} no total` },
+                { icon: MessageCircle, label: 'Cliques no WhatsApp', value: stats.monthly.whatsappClicks, sub: `${stats.allTime.totalWhatsapp} no total` },
+                { icon: Users, label: 'Visitantes únicos', value: stats.monthly.uniqueVisitors, sub: 'este mês' },
+              ].map((s, i) => (
+                <div key={i} className="bg-white border rounded-2xl p-4 text-center">
+                  <s.icon className="w-5 h-5 mx-auto mb-2" style={{ color: '#C9A84C' }} />
+                  <p className="text-2xl font-bold text-[#143A1F]">{s.value}</p>
+                  <p className="text-[11px] text-gray-500 leading-tight">{s.label}</p>
+                  <p className="text-[10px] text-gray-400 mt-0.5">{s.sub}</p>
+                </div>
+              ))}
+            </div>
+            {stats.allTime.totalViews === 0 && (
+              <p className="text-xs text-gray-400 mt-2">As métricas começam a contar assim que sua página estiver ativa e as pessoas a visitarem.</p>
+            )}
+          </div>
+        )}
 
         {/* Contatos */}
         <div className="bg-white border rounded-2xl p-5 mb-5">

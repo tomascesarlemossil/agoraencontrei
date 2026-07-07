@@ -390,6 +390,72 @@ export default async function specialistsRoute(app: FastifyInstance) {
     }
   })
 
+  // ─── GET /:id/stats — métricas do parceiro (magic-link OU admin) ─────────
+  // Lê os eventos em partner_analytics (mesma tabela do /partner-track) pelo
+  // id do especialista. Autoriza pelo accessToken do próprio parceiro.
+  app.get('/:id/stats', async (request, reply) => {
+    const { id } = request.params as { id: string }
+    const existing = await prisma.specialist.findUnique({
+      where: { id },
+      select: { id: true, accessToken: true },
+    })
+    if (!existing) return reply.status(404).send({ error: 'Especialista não encontrado' })
+
+    const ok = await specialistTokenOrAdmin(request, reply, (existing as any).accessToken)
+    if (!ok) return // 401/403 já enviado
+
+    try {
+      const now = new Date()
+      const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+      const [monthly, allTime, recent] = await Promise.all([
+        prisma.$queryRawUnsafe(
+          `SELECT
+             COUNT(*) FILTER (WHERE event = 'profile_view')   as profile_views,
+             COUNT(*) FILTER (WHERE event = 'whatsapp_click')  as whatsapp_clicks,
+             COUNT(*) FILTER (WHERE event = 'phone_click')     as phone_clicks,
+             COUNT(DISTINCT "visitorIp")                       as unique_visitors
+           FROM partner_analytics
+           WHERE "partnerId" = $1 AND "createdAt" >= $2`,
+          id, firstOfMonth,
+        ).catch(() => [{}]),
+        prisma.$queryRawUnsafe(
+          `SELECT
+             COUNT(*)                                          as total_events,
+             COUNT(*) FILTER (WHERE event = 'whatsapp_click')  as total_whatsapp,
+             COUNT(*) FILTER (WHERE event = 'profile_view')    as total_views
+           FROM partner_analytics
+           WHERE "partnerId" = $1`,
+          id,
+        ).catch(() => [{}]),
+        prisma.$queryRawUnsafe(
+          `SELECT event, "pageUrl", "createdAt"
+           FROM partner_analytics
+           WHERE "partnerId" = $1
+           ORDER BY "createdAt" DESC LIMIT 10`,
+          id,
+        ).catch(() => []),
+      ])
+      const m = monthly[0] || {}
+      const a = allTime[0] || {}
+      return reply.send({
+        monthly: {
+          profileViews: Number(m.profile_views || 0),
+          whatsappClicks: Number(m.whatsapp_clicks || 0),
+          phoneClicks: Number(m.phone_clicks || 0),
+          uniqueVisitors: Number(m.unique_visitors || 0),
+        },
+        allTime: {
+          totalEvents: Number(a.total_events || 0),
+          totalWhatsapp: Number(a.total_whatsapp || 0),
+          totalViews: Number(a.total_views || 0),
+        },
+        recentEvents: recent,
+      })
+    } catch (err: any) {
+      return reply.status(500).send({ error: 'Erro ao carregar métricas', details: err.message })
+    }
+  })
+
   // ─── PATCH /:id/approve — aprovação pelo admin ───────────────────────────
   app.patch('/:id/approve', {
     preHandler: [(app as any).authenticate],
