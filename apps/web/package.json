@@ -5,9 +5,11 @@
   "packageManager": "pnpm@10.6.0",
   "scripts": {
     "dev": "next dev -p 3000",
+    "prebuild": "pnpm --filter @agoraencontrei/tomas-knowledge build",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "pretypecheck": "pnpm --filter @agoraencontrei/tomas-knowledge build",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
