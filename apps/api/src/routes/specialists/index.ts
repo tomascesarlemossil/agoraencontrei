@@ -339,6 +339,57 @@ export default async function specialistsRoute(app: FastifyInstance) {
     }
   })
 
+  // ─── PATCH /:id — edição da própria landing page (magic-link OU admin) ────
+  // O parceiro edita sua página pelo painel: serviços, fotos, vídeos, logo,
+  // contatos, endereço e template. Autoriza pelo accessToken (?token=) do
+  // próprio especialista ou por admin autenticado.
+  app.patch('/:id', async (request, reply) => {
+    const { id } = request.params as { id: string }
+
+    const schema = z.object({
+      name: z.string().min(3).optional(),
+      phone: z.string().optional().nullable(),
+      whatsapp: z.string().optional().nullable(),
+      bio: z.string().optional().nullable(),
+      crea: z.string().optional().nullable(),
+      instagram: z.string().optional().nullable(),
+      website: z.string().optional().nullable(),
+      photoUrl: z.string().optional().nullable(),
+      logoUrl: z.string().optional().nullable(),
+      address: z.string().optional().nullable(),
+      businessType: z.string().optional().nullable(),
+      tags: z.array(z.string()).optional(),
+      landingPage: z.any().optional(),
+    })
+
+    const parsed = schema.safeParse(request.body)
+    if (!parsed.success) {
+      return reply.status(400).send({ error: 'Dados inválidos', details: parsed.error.flatten() })
+    }
+
+    try {
+      const existing = await prisma.specialist.findUnique({
+        where: { id },
+        select: { id: true, accessToken: true },
+      })
+      if (!existing) return reply.status(404).send({ error: 'Especialista não encontrado' })
+
+      const ok = await specialistTokenOrAdmin(request, reply, (existing as any).accessToken)
+      if (!ok) return // 401/403 já enviado
+
+      const data: any = { ...parsed.data }
+      if (data.landingPage !== undefined) {
+        data.adPlan = data.landingPage?.adPlan ?? undefined
+      }
+
+      const updated = await prisma.specialist.update({ where: { id }, data })
+      const { asaasCustomerId, asaasSubscriptionId, cpfCnpj, accessToken, ...safe } = updated as any
+      return reply.send({ success: true, data: safe })
+    } catch (err: any) {
+      return reply.status(500).send({ error: 'Erro ao atualizar', details: err.message })
+    }
+  })
+
   // ─── PATCH /:id/approve — aprovação pelo admin ───────────────────────────
   app.patch('/:id/approve', {
     preHandler: [(app as any).authenticate],
