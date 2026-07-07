@@ -44,7 +44,8 @@ const contactSchema = z.object({
   isTenant:    z.boolean().default(false),
   isGuarantor: z.boolean().default(false),
 })
-type ContactForm = z.infer<typeof contactSchema>
+type ContactFormInput = z.input<typeof contactSchema>
+type ContactForm = z.output<typeof contactSchema>
 
 function typeLabel(type: string) {
   return type === 'COMPANY' ? 'Empresa' : 'Pessoa Física'
@@ -71,7 +72,7 @@ export default function ContactsPage() {
     },
   })
 
-  const { register, handleSubmit, formState: { errors }, reset, setValue, watch } = useForm<ContactForm>({
+  const { register, handleSubmit, formState: { errors }, reset, setValue, watch } = useForm<ContactFormInput, unknown, ContactForm>({
     resolver: zodResolver(contactSchema),
     defaultValues: { type: 'INDIVIDUAL', isOwner: false, isTenant: false, isGuarantor: false },
   })

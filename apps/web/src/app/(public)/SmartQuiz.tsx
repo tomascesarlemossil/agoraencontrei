@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, createContext, useContext } from 'react'
+import { useState, useEffect, useRef, createContext, useContext, type ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
 import { ChevronLeft, Sparkles, CheckCircle2, Loader2, X } from 'lucide-react'
 import { useBodyScrollLock } from '@/lib/use-body-scroll-lock'
@@ -133,7 +133,7 @@ export function SmartQuizButton() {
 }
 
 // ── Main component ─────────────────────────────────────────────────────────
-export function SmartQuiz({ children }: { children?: React.ReactNode }) {
+export function SmartQuiz({ children }: { children?: ReactNode }) {
   const router = useRouter()
   const [isOpen, setIsOpen] = useState(false)
   const [step, setStep] = useState(0)
@@ -459,6 +459,6 @@ export function SmartQuiz({ children }: { children?: React.ReactNode }) {
 }
 
 // ── SmartQuizModal: wrapper que provê o contexto + modal (usado na página) ──────
-export function SmartQuizModal({ children }: { children?: React.ReactNode }) {
+export function SmartQuizModal({ children }: { children?: ReactNode }) {
   return <SmartQuiz>{children}</SmartQuiz>
 }

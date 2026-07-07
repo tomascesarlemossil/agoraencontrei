@@ -80,7 +80,8 @@ const financingSchema = z.object({
   notes:         z.string().max(2000).optional().or(z.literal('')),
   simulatorLink: z.string().url('URL inválida').optional().or(z.literal('')),
 })
-type FinancingForm = z.infer<typeof financingSchema>
+type FinancingFormInput = z.input<typeof financingSchema>
+type FinancingForm = z.output<typeof financingSchema>
 
 // ── Card component ────────────────────────────────────────────────────────────
 
@@ -171,7 +172,7 @@ export default function FinanciamentosPage() {
 
   const items = listData?.data ?? []
 
-  const { register, handleSubmit, control, reset, formState: { errors } } = useForm<FinancingForm>({
+  const { register, handleSubmit, control, reset, formState: { errors } } = useForm<FinancingFormInput, unknown, FinancingForm>({
     resolver: zodResolver(financingSchema),
     defaultValues: { stage: 'SIMULACAO' },
   })

@@ -18,7 +18,7 @@ import {
   Sparkles, Loader2, Check, Copy,
 } from 'lucide-react'
 import Link from 'next/link'
-import { useState, useCallback } from 'react'
+import { useState, useCallback, type ReactNode } from 'react'
 import { MoneyInput, CepInput } from '@/components/ui/MoneyInput'
 import { useQuery } from '@tanstack/react-query'
 import { usersApi, type User } from '@/lib/api'
@@ -180,15 +180,16 @@ const schema = z.object({
   administrationFeePct:   z.coerce.number().positive().optional().or(z.literal('')),
 })
 
-type FormData = z.infer<typeof schema>
+type FormInput = z.input<typeof schema>
+type FormData = z.output<typeof schema>
 
 // ─── Helper components ────────────────────────────────────────────────────────
 
-function FieldRow({ children }: { children: React.ReactNode }) {
+function FieldRow({ children }: { children: ReactNode }) {
   return <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">{children}</div>
 }
 
-function Field({ label, error, children, span }: { label: string; error?: string; children: React.ReactNode; span?: string }) {
+function Field({ label, error, children, span }: { label: string; error?: string; children: ReactNode; span?: string }) {
   return (
     <div className={cn('space-y-1.5', span)}>
       <Label className="text-white/60 text-xs">{label}</Label>
@@ -198,7 +199,7 @@ function Field({ label, error, children, span }: { label: string; error?: string
   )
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <div className="bg-white/5 rounded-xl border border-white/10 p-5 space-y-4">
       <h3 className="text-xs font-semibold text-white/40 uppercase tracking-wider">{title}</h3>
@@ -240,7 +241,7 @@ export default function NewPropertyPage() {
     },
   })
 
-  const { register, handleSubmit, control, watch, setValue, getValues, formState: { errors } } = useForm<FormData>({
+  const { register, handleSubmit, control, watch, setValue, getValues, formState: { errors } } = useForm<FormInput, unknown, FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
       title: '', type: '', purpose: '', category: 'RESIDENTIAL', status: 'ACTIVE',
@@ -423,19 +424,19 @@ export default function NewPropertyPage() {
               </div>
               <div className="flex flex-wrap gap-6 pt-1">
                 <Controller name="priceNegotiable" control={control} render={({ field }) => (
-                  <CheckField label="Valor Negociável" checked={field.value} onChange={field.onChange} />
+                  <CheckField label="Valor Negociável" checked={!!field.value} onChange={field.onChange} />
                 )} />
                 <Controller name="valueUnderConsultation" control={control} render={({ field }) => (
-                  <CheckField label="Valor Sob Consulta" checked={field.value} onChange={field.onChange} />
+                  <CheckField label="Valor Sob Consulta" checked={!!field.value} onChange={field.onChange} />
                 )} />
                 <Controller name="allowExchange" control={control} render={({ field }) => (
-                  <CheckField label="Aceita Permuta" checked={field.value} onChange={field.onChange} />
+                  <CheckField label="Aceita Permuta" checked={!!field.value} onChange={field.onChange} />
                 )} />
                 <Controller name="isFeatured" control={control} render={({ field }) => (
-                  <CheckField label="Imóvel em Destaque" checked={field.value} onChange={field.onChange} />
+                  <CheckField label="Imóvel em Destaque" checked={!!field.value} onChange={field.onChange} />
                 )} />
                 <Controller name="isPremium" control={control} render={({ field }) => (
-                  <CheckField label="Premium" checked={field.value} onChange={field.onChange} />
+                  <CheckField label="Premium" checked={!!field.value} onChange={field.onChange} />
                 )} />
               </div>
             </Section>
@@ -546,7 +547,7 @@ export default function NewPropertyPage() {
                   <label className="flex items-start gap-3 cursor-pointer">
                     <input
                       type="checkbox"
-                      checked={field.value}
+                      checked={!!field.value}
                       onChange={e => field.onChange(e.target.checked)}
                       className="w-4 h-4 mt-0.5 rounded border-white/20 bg-white/5 text-yellow-500 cursor-pointer flex-shrink-0"
                     />
@@ -566,7 +567,7 @@ export default function NewPropertyPage() {
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                 <Controller name="closedCondo" control={control} render={({ field }) => (
                   <div className="col-span-full">
-                    <CheckField label="Condomínio Fechado" checked={field.value} onChange={field.onChange} />
+                    <CheckField label="Condomínio Fechado" checked={!!field.value} onChange={field.onChange} />
                   </div>
                 )} />
                 <Field label="Nome do Condomínio / Empreendimento" span="sm:col-span-2">
@@ -581,7 +582,7 @@ export default function NewPropertyPage() {
                 </Field>
                 <Controller name="signOnSite" control={control} render={({ field }) => (
                   <div className="col-span-full">
-                    <CheckField label="Placa no local" checked={field.value} onChange={field.onChange} />
+                    <CheckField label="Placa no local" checked={!!field.value} onChange={field.onChange} />
                   </div>
                 )} />
               </div>
@@ -691,13 +692,13 @@ export default function NewPropertyPage() {
             <Section title="Opções de Publicação">
               <div className="flex flex-wrap gap-6">
                 <Controller name="isFeatured" control={control} render={({ field }) => (
-                  <CheckField label="Imóvel em Destaque" checked={field.value} onChange={field.onChange} />
+                  <CheckField label="Imóvel em Destaque" checked={!!field.value} onChange={field.onChange} />
                 )} />
                 <Controller name="isPremium" control={control} render={({ field }) => (
-                  <CheckField label="Premium" checked={field.value} onChange={field.onChange} />
+                  <CheckField label="Premium" checked={!!field.value} onChange={field.onChange} />
                 )} />
                 <Controller name="authorizedPublish" control={control} render={({ field }) => (
-                  <CheckField label="Autorizado para Publicar" checked={field.value} onChange={field.onChange} />
+                  <CheckField label="Autorizado para Publicar" checked={!!field.value} onChange={field.onChange} />
                 )} />
               </div>
             </Section>
@@ -832,7 +833,7 @@ export default function NewPropertyPage() {
 
             <Section title="Exclusividade">
               <Controller name="exclusivityContract" control={control} render={({ field }) => (
-                <CheckField label="Contrato de Exclusividade" checked={field.value} onChange={field.onChange} />
+                <CheckField label="Contrato de Exclusividade" checked={!!field.value} onChange={field.onChange} />
               )} />
             </Section>
 
@@ -929,7 +930,7 @@ export default function NewPropertyPage() {
               </div>
               <div className="pt-2">
                 <Controller name="documentationPending" control={control} render={({ field }) => (
-                  <CheckField label="Documentação Pendente" checked={field.value} onChange={field.onChange} />
+                  <CheckField label="Documentação Pendente" checked={!!field.value} onChange={field.onChange} />
                 )} />
               </div>
               <Field label="Observações de Documentação">
@@ -958,10 +959,10 @@ export default function NewPropertyPage() {
             <Section title="Reserva e Publicação">
               <div className="flex flex-wrap gap-6">
                 <Controller name="isReserved" control={control} render={({ field }) => (
-                  <CheckField label="Imóvel Reservado" checked={field.value} onChange={field.onChange} />
+                  <CheckField label="Imóvel Reservado" checked={!!field.value} onChange={field.onChange} />
                 )} />
                 <Controller name="authorizedPublish" control={control} render={({ field }) => (
-                  <CheckField label="Autorizado para Publicar" checked={field.value} onChange={field.onChange} />
+                  <CheckField label="Autorizado para Publicar" checked={!!field.value} onChange={field.onChange} />
                 )} />
               </div>
             </Section>

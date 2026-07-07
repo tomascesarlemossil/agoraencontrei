@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useState, type FormEvent, use } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
+import { useParams } from 'next/navigation'
 import { Loader2, MapPin, CheckCircle2, X } from 'lucide-react'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
@@ -38,8 +39,9 @@ const STATUS: Record<Lote['status'], { label: string; cell: string; dot: string 
 const brl = (n: number | null) =>
   n != null && n > 0 ? `R$ ${Number(n).toLocaleString('pt-BR', { maximumFractionDigits: 0 })}` : 'Consulte'
 
-export default function LoteamentoMapPage({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = use(params)
+export default function LoteamentoMapPage() {
+  const params = useParams<{ slug: string }>()
+  const slug = params.slug
   const [data, setData] = useState<Loteamento | null>(null)
   const [loading, setLoading] = useState(true)
   const [selected, setSelected] = useState<Lote | null>(null)
