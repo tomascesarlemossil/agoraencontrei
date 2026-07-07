@@ -7,11 +7,11 @@ import Image from 'next/image'
 import {
   User, Mail, Phone, Building2, Award, MapPin, Instagram, Globe,
   CheckCircle2, ChevronRight, Loader2, X, Plus, Trash2, ImageIcon,
-  Video, Star, Crown, Zap, Sparkles, CreditCard, QrCode, FileText,
+  Video, Star, Sparkles, CreditCard, QrCode, FileText,
   Copy, ExternalLink, Layout, DollarSign, ArrowLeft,
 } from 'lucide-react'
 import {
-  DIVULGUE_CATEGORIES, CATEGORY_GROUPS, BUSINESS_TYPES, AD_PLANS,
+  DIVULGUE_CATEGORIES, CATEGORY_GROUPS, BUSINESS_TYPES,
   AD_PLAN_BY_ID, LANDING_TEMPLATES, getCategory, formatBRL,
   type AdPlan,
 } from '@/lib/divulgue-catalog'
@@ -112,7 +112,8 @@ function CadastroContent() {
   // Seleção
   const [businessType, setBusinessType] = useState<string>('EMPRESA')
   const [segment, setSegment] = useState<string>('')
-  const [adPlanId, setAdPlanId] = useState<AdPlan['id']>(AD_PLAN_BY_ID[initialPlan] ? initialPlan : 'ESSENCIAL')
+  // Divulgação é um plano único de preço fixo — não há seleção de tier.
+  const adPlanId: AdPlan['id'] = AD_PLAN_BY_ID[initialPlan] ? initialPlan : 'ESSENCIAL'
 
   // Dados
   const [form, setForm] = useState({
@@ -354,7 +355,7 @@ function CadastroContent() {
                 <Sparkles className="w-3 h-3" /> Divulgue seu Negócio
               </div>
               <h1 className="text-3xl font-bold text-[#143A1F] mb-2">Crie a página do seu negócio</h1>
-              <p className="text-gray-600 text-lg">Apareça no Google e na lista de empresas parceiras do AgoraEncontrei. A partir de R$ 39,90/mês.</p>
+              <p className="text-gray-600 text-lg">Apareça no Google e na lista de empresas parceiras do AgoraEncontrei. R$ 39,90/mês.</p>
             </div>
 
             {/* Tipo de cadastro */}
@@ -673,34 +674,19 @@ function CadastroContent() {
         {step === 'payment' && (
           <div>
             <div className="mb-6">
-              <h1 className="text-2xl font-bold text-[#143A1F] mb-2">Escolha seu plano de divulgação</h1>
-              <p className="text-gray-600">Sua página está pronta. Ative a divulgação para entrar no ar e começar a aparecer.</p>
+              <h1 className="text-2xl font-bold text-[#143A1F] mb-2">Ative sua divulgação</h1>
+              <p className="text-gray-600">Sua página está pronta. Ative para entrar no ar e começar a aparecer.</p>
             </div>
 
-            {/* Planos */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
-              {AD_PLANS.map(p => {
-                const on = adPlanId === p.id
-                return (
-                  <button key={p.id} onClick={() => setAdPlanId(p.id)}
-                    className={`relative text-left p-4 rounded-2xl border-2 transition-all ${on ? 'border-[#C9A84C] bg-[#C9A84C]/5 shadow-sm' : 'border-gray-200 bg-white hover:border-gray-300'}`}>
-                    {p.badge && <span className="absolute -top-2.5 left-4 px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#143A1F] text-white">{p.badge}</span>}
-                    <div className="flex items-center gap-1.5 mb-1">
-                      {p.id === 'ESSENCIAL' && <Zap className="w-4 h-4 text-gray-500" />}
-                      {p.id === 'PROFISSIONAL' && <Star className="w-4 h-4 text-[#C9A84C]" />}
-                      {p.id === 'PREMIUM' && <Crown className="w-4 h-4 text-[#143A1F]" />}
-                      <p className="font-bold text-[#143A1F]">{p.name}</p>
-                    </div>
-                    <p className="text-2xl font-bold text-[#143A1F]">{formatBRL(p.price)}<span className="text-sm font-normal text-gray-400">/mês</span></p>
-                    <p className="text-xs text-gray-500 mt-1">{p.tagline}</p>
-                  </button>
-                )
-              })}
-            </div>
-
-            {/* Resumo do plano escolhido */}
-            <div className="bg-white border rounded-2xl p-5 mb-6">
-              <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">Incluído no plano {plan.name}</p>
+            {/* Plano único */}
+            <div className="bg-white border-2 border-[#C9A84C] rounded-2xl p-5 mb-6">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <Star className="w-5 h-5 text-[#C9A84C]" />
+                  <p className="font-bold text-[#143A1F]">Plano {plan.name}</p>
+                </div>
+                <p className="text-2xl font-bold text-[#143A1F]">{formatBRL(plan.price)}<span className="text-sm font-normal text-gray-400">/mês</span></p>
+              </div>
               <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
                 {plan.features.map((f, i) => (
                   <li key={i} className="flex items-start gap-2 text-sm text-gray-600"><CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />{f}</li>

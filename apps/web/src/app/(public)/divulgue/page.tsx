@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import {
-  ArrowRight, CheckCircle, Star, Crown, Zap, Search,
+  ArrowRight, CheckCircle, Star, Search,
   TrendingUp, BarChart3, Globe, MessageCircle, Sparkles, ShieldCheck,
 } from 'lucide-react'
 import {
@@ -12,9 +12,9 @@ import {
 export const revalidate = 1800
 
 export const metadata: Metadata = {
-  title: 'Divulgue seu Negócio | AgoraEncontrei — Landing page + Google a partir de R$ 39,90/mês',
+  title: 'Divulgue seu Negócio | AgoraEncontrei — Landing page + Google por R$ 39,90/mês',
   description:
-    'Coloque sua empresa ou serviço no maior marketplace imobiliário de Franca e região. Landing page pronta, otimização de SEO no Google e leads qualificados a partir de R$ 39,90/mês.',
+    'Coloque sua empresa ou serviço no maior marketplace imobiliário de Franca e região. Landing page pronta, otimização de SEO no Google e leads qualificados por R$ 39,90/mês.',
   keywords: [
     'divulgar empresa franca sp',
     'anunciar serviços franca',
@@ -24,7 +24,7 @@ export const metadata: Metadata = {
   ],
   openGraph: {
     title: 'Divulgue seu Negócio | AgoraEncontrei',
-    description: 'Landing page pronta + SEO no Google + leads qualificados a partir de R$ 39,90/mês.',
+    description: 'Landing page pronta + SEO no Google + leads qualificados por R$ 39,90/mês.',
     type: 'website',
     locale: 'pt_BR',
     siteName: 'AgoraEncontrei',
@@ -32,16 +32,10 @@ export const metadata: Metadata = {
   alternates: { canonical: 'https://www.agoraencontrei.com.br/divulgue' },
 }
 
-const PLAN_META: Record<string, { icon: React.ReactNode; ctaStyle: string }> = {
-  ESSENCIAL: { icon: <Zap className="w-5 h-5 text-gray-500" />, ctaStyle: 'border-2 border-[#143A1F] text-[#143A1F] hover:bg-[#143A1F] hover:text-white' },
-  PROFISSIONAL: { icon: <Star className="w-5 h-5 text-[#C9A84C]" />, ctaStyle: 'bg-[#C9A84C] text-[#143A1F] hover:bg-[#b8943d]' },
-  PREMIUM: { icon: <Crown className="w-5 h-5 text-[#143A1F]" />, ctaStyle: 'bg-[#143A1F] text-white hover:bg-[#0E2A15]' },
-}
-
 const HOW_IT_WORKS = [
   { step: '01', icon: Search, title: 'Escolha seu segmento', desc: 'Selecione o tipo do seu negócio e os serviços que você entrega — cada segmento tem seu próprio catálogo.' },
   { step: '02', icon: Sparkles, title: 'Monte sua landing page', desc: 'Adicione fotos, vídeos, preços, endereço e logo. Use um modelo pronto ou personalize do seu jeito.' },
-  { step: '03', icon: MessageCircle, title: 'Ative sua divulgação', desc: 'Assine a partir de R$ 39,90/mês. Sua página entra no ar e começa a ser indexada no Google.' },
+  { step: '03', icon: MessageCircle, title: 'Ative sua divulgação', desc: 'Assine por R$ 39,90/mês. Sua página entra no ar e começa a ser indexada no Google.' },
   { step: '04', icon: BarChart3, title: 'Receba e acompanhe leads', desc: 'Entre no painel para editar sua página e ver visualizações, cliques no WhatsApp e contatos recebidos.' },
 ]
 
@@ -52,7 +46,7 @@ const TESTIMONIALS = [
 ]
 
 const FAQ = [
-  { q: 'Qual a diferença entre "Divulgue seu Negócio" e "Seja um Parceiro"?', a: 'Divulgue seu Negócio é para quem quer aparecer na lista de empresas e prestadores de serviço do AgoraEncontrei com uma landing page própria, a partir de R$ 39,90/mês. Seja um Parceiro é para quem quer contratar um site próprio, o CRM/sistema ou versões offline — outra linha de produtos.' },
+  { q: 'Qual a diferença entre "Divulgue seu Negócio" e "Seja um Parceiro"?', a: 'Divulgue seu Negócio é para quem quer aparecer na lista de empresas e prestadores de serviço do AgoraEncontrei com uma landing page própria, por R$ 39,90/mês. Seja um Parceiro é para quem quer contratar um site próprio, o CRM/sistema ou versões offline — outra linha de produtos.' },
   { q: 'Preciso saber montar site?', a: 'Não. Você escolhe um modelo pronto, adiciona suas fotos, serviços e contato, e a página fica no ar. Depois é só editar pelo painel quando quiser.' },
   { q: 'Como isso me ajuda a aparecer no Google?', a: 'Sua página é otimizada para SEO, tem endereço estruturado e é interligada a páginas de bairros, condomínios e imóveis do marketplace que já recebem muito tráfego. Isso aumenta suas chances de ser encontrado em buscas locais.' },
   { q: 'Tem fidelidade ou taxa de adesão?', a: 'Não. É uma mensalidade simples, sem taxa de adesão e sem fidelidade. Você cancela quando quiser.' },
@@ -160,51 +154,46 @@ export default function DivulguePage() {
         </div>
       </section>
 
-      {/* ── PLANOS ───────────────────────────────────────────────────────── */}
+      {/* ── PLANO ────────────────────────────────────────────────────────── */}
       <section id="planos" className="max-w-6xl mx-auto px-4 py-16">
         <div className="text-center mb-12">
-          <p className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: '#C9A84C' }}>Planos de divulgação</p>
+          <p className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: '#C9A84C' }}>Plano de divulgação</p>
           <h2 className="text-3xl font-bold text-[#143A1F]" style={{ fontFamily: 'Georgia, serif' }}>
-            Escolha quanto quer aparecer
+            Um preço simples, tudo incluído
           </h2>
           <p className="text-gray-500 mt-2">Sem taxa de adesão. Sem fidelidade. Cancele quando quiser.</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
-          {AD_PLANS.map((plan) => {
-            const meta = PLAN_META[plan.id]
-            return (
-              <div key={plan.id} className={`relative bg-white rounded-2xl border-2 p-8 shadow-sm ${plan.highlight ? 'border-[#C9A84C] shadow-lg shadow-[#C9A84C]/10 md:scale-105' : 'border-gray-200'}`}>
-                {plan.badge && (
-                  <div className={`absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-xs font-bold whitespace-nowrap ${plan.highlight ? 'bg-[#C9A84C] text-[#143A1F]' : 'bg-[#143A1F] text-white'}`}>
-                    {plan.badge}
-                  </div>
-                )}
-                <div className="mb-6">
-                  <div className="flex items-center gap-2 mb-1">
-                    {meta.icon}
-                    <h3 className="text-xl font-bold text-[#143A1F]">{plan.name}</h3>
-                  </div>
-                  <p className="text-gray-500 text-sm mb-4">{plan.tagline}</p>
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-4xl font-bold text-[#143A1F]">{formatBRL(plan.price)}</span>
-                    <span className="text-gray-500">/mês</span>
-                  </div>
-                </div>
-                <ul className="space-y-3 mb-8">
-                  {plan.features.map((f, i) => (
-                    <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
-                      <CheckCircle className="w-4 h-4 flex-shrink-0 mt-0.5 text-green-500" />
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-                <Link href={`/parceiros/cadastro?plano=${plan.id}`} className={`w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold text-sm transition-colors ${meta.ctaStyle}`}>
-                  Começar com {plan.name} <ArrowRight className="w-4 h-4" />
-                </Link>
+        <div className="max-w-md mx-auto">
+          {AD_PLANS.map((plan) => (
+            <div key={plan.id} className="relative bg-white rounded-2xl border-2 border-[#C9A84C] shadow-lg shadow-[#C9A84C]/10 p-8">
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-xs font-bold whitespace-nowrap bg-[#C9A84C] text-[#143A1F]">
+                Preço único
               </div>
-            )
-          })}
+              <div className="mb-6 text-center">
+                <div className="flex items-center justify-center gap-2 mb-1">
+                  <Star className="w-5 h-5 text-[#C9A84C]" />
+                  <h3 className="text-xl font-bold text-[#143A1F]">{plan.name}</h3>
+                </div>
+                <p className="text-gray-500 text-sm mb-4">{plan.tagline}</p>
+                <div className="flex items-baseline justify-center gap-1">
+                  <span className="text-5xl font-bold text-[#143A1F]">{formatBRL(plan.price)}</span>
+                  <span className="text-gray-500">/mês</span>
+                </div>
+              </div>
+              <ul className="space-y-3 mb-8">
+                {plan.features.map((f, i) => (
+                  <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
+                    <CheckCircle className="w-4 h-4 flex-shrink-0 mt-0.5 text-green-500" />
+                    {f}
+                  </li>
+                ))}
+              </ul>
+              <Link href="/parceiros/cadastro" className="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl font-bold text-sm bg-[#C9A84C] text-[#143A1F] hover:brightness-105 transition-all">
+                Criar minha página <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+          ))}
         </div>
         <p className="text-center text-gray-400 text-xs mt-6">
           Pagamento via PIX, cartão ou boleto · Seguro via Asaas (regulado pelo Banco Central)
