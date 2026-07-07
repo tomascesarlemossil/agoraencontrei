@@ -7,6 +7,7 @@ import {
   Star, CheckCircle2, ArrowLeft, ExternalLink, MessageCircle
 } from 'lucide-react'
 import { ProfileViewBeacon, TrackedLink } from './SpecialistTracking'
+import { PartnerLeadQualifier } from './PartnerLeadQualifier'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 
@@ -273,6 +274,14 @@ export default async function EspecialistaPage(props: { params: Promise<{ slug: 
                   </div>
                 </div>
               )}
+
+              <PartnerLeadQualifier
+                specialistId={specialist.id}
+                specialistName={specialist.name}
+                categoryLabel={categoryLabel}
+                whatsapp={specialist.whatsapp || specialist.phone}
+                services={services.map(s => ({ name: s.name, description: s.description }))}
+              />
 
               {services.length > 0 && (
                 <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
