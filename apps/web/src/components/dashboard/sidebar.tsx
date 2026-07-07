@@ -215,15 +215,15 @@ function NavContent({ onClose }: { onClose?: () => void }) {
         ) : (
           <>
             <Image
-              src="/logo-lemos-v2.png"
-              alt="Imobiliária Lemos"
+              src="/brand/ae-icon-round.png"
+              alt="AgoraEncontrei"
               width={40}
               height={40}
               className="rounded-full flex-shrink-0 object-cover"
             />
             <div className="min-w-0">
-              <p className="font-bold text-sm leading-none text-white" style={{ fontFamily: 'Georgia, serif' }}>IMOBILIÁRIA</p>
-              <p className="text-xs font-bold leading-none mt-0.5 truncate" style={{ color: '#C9A84C', fontFamily: 'Georgia, serif' }}>LEMOS</p>
+              <p className="font-bold text-sm leading-none text-white" style={{ fontFamily: 'Georgia, serif' }}>AGORA</p>
+              <p className="text-xs font-bold leading-none mt-0.5 truncate" style={{ color: '#C9A84C', fontFamily: 'Georgia, serif' }}>ENCONTREI</p>
             </div>
           </>
         )}

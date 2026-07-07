@@ -15,6 +15,7 @@ import {
   AD_PLAN_BY_ID, LANDING_TEMPLATES, getCategory, formatBRL,
   type AdPlan,
 } from '@/lib/divulgue-catalog'
+import { uploadSpecialistImage } from '@/lib/specialist-upload'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 
@@ -65,33 +66,6 @@ function validateDocument(value: string): { valid: boolean; error: string } {
   if (d.length <= 11) return d.length < 11 ? { valid: true, error: '' } : (validateCPF(d) ? { valid: true, error: '' } : { valid: false, error: 'CPF inválido' })
   if (d.length < 14) return { valid: true, error: '' }
   return validateCNPJ(d) ? { valid: true, error: '' } : { valid: false, error: 'CNPJ inválido' }
-}
-
-// Reduz uma imagem para dataURL leve (máx ~1000px, JPEG 0.82).
-function fileToDataUrl(file: File, maxSize = 1000): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onload = () => {
-      const img = document.createElement('img')
-      img.onload = () => {
-        let { width, height } = img
-        if (width > maxSize || height > maxSize) {
-          if (width >= height) { height = Math.round((height * maxSize) / width); width = maxSize }
-          else { width = Math.round((width * maxSize) / height); height = maxSize }
-        }
-        const canvas = document.createElement('canvas')
-        canvas.width = width; canvas.height = height
-        const ctx = canvas.getContext('2d')
-        if (!ctx) { resolve(reader.result as string); return }
-        ctx.drawImage(img, 0, 0, width, height)
-        resolve(canvas.toDataURL('image/jpeg', 0.82))
-      }
-      img.onerror = reject
-      img.src = reader.result as string
-    }
-    reader.onerror = reject
-    reader.readAsDataURL(file)
-  })
 }
 
 const PRICE_TYPES = [
@@ -176,9 +150,10 @@ function CadastroContent() {
   }
   const onPhotoFiles = async (files: FileList | null) => {
     if (!files) return
+    let count = photos.length
     for (const file of Array.from(files)) {
-      if (photos.length >= plan.maxPhotos) { setError(`Seu plano permite até ${plan.maxPhotos} fotos.`); break }
-      try { const data = await fileToDataUrl(file); setPhotos(prev => [...prev, data]) } catch { /* ignora arquivo inválido */ }
+      if (count >= plan.maxPhotos) { setError(`Seu plano permite até ${plan.maxPhotos} fotos.`); break }
+      try { const url = await uploadSpecialistImage(file); setPhotos(prev => [...prev, url]); count++ } catch { /* ignora arquivo inválido */ }
     }
   }
   const removePhoto = (i: number) => setPhotos(prev => prev.filter((_, idx) => idx !== i))
@@ -193,7 +168,7 @@ function CadastroContent() {
 
   const onLogoFile = async (file: File | null) => {
     if (!file) return
-    try { setLogoUrl(await fileToDataUrl(file, 512)) } catch { /* ignora */ }
+    try { setLogoUrl(await uploadSpecialistImage(file, { maxSize: 512 })) } catch { /* ignora */ }
   }
 
   const fmtDoc = (v: string) => {

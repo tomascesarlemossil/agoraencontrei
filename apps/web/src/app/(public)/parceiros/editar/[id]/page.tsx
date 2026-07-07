@@ -14,6 +14,7 @@ import {
   Eye, MessageCircle, Users, ClipboardCheck,
 } from 'lucide-react'
 import { LANDING_TEMPLATES, getCategory } from '@/lib/divulgue-catalog'
+import { uploadSpecialistImage } from '@/lib/specialist-upload'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 
@@ -47,32 +48,6 @@ const PRICE_TYPES = [
   { value: 'hora', label: 'Por hora' },
   { value: 'consulta', label: 'Sob consulta' },
 ]
-
-function fileToDataUrl(file: File, maxSize = 1000): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onload = () => {
-      const img = document.createElement('img')
-      img.onload = () => {
-        let { width, height } = img
-        if (width > maxSize || height > maxSize) {
-          if (width >= height) { height = Math.round((height * maxSize) / width); width = maxSize }
-          else { width = Math.round((width * maxSize) / height); height = maxSize }
-        }
-        const canvas = document.createElement('canvas')
-        canvas.width = width; canvas.height = height
-        const ctx = canvas.getContext('2d')
-        if (!ctx) { resolve(reader.result as string); return }
-        ctx.drawImage(img, 0, 0, width, height)
-        resolve(canvas.toDataURL('image/jpeg', 0.82))
-      }
-      img.onerror = reject
-      img.src = reader.result as string
-    }
-    reader.onerror = reject
-    reader.readAsDataURL(file)
-  })
-}
 
 export default function EditarParceiroPage() {
   const params = useParams<{ id: string }>()
@@ -153,10 +128,10 @@ export default function EditarParceiroPage() {
   }
   const updateService = (i: number, patch: Partial<ServiceItem>) => setServices(prev => prev.map((s, idx) => idx === i ? { ...s, ...patch } : s))
 
-  const onLogo = async (f: File | null) => { if (f) { try { setLogoUrl(await fileToDataUrl(f, 512)) } catch {} } }
+  const onLogo = async (f: File | null) => { if (f) { try { setLogoUrl(await uploadSpecialistImage(f, { maxSize: 512 })) } catch {} } }
   const onPhotos = async (files: FileList | null) => {
     if (!files) return
-    for (const f of Array.from(files)) { try { const d = await fileToDataUrl(f); setPhotos(p => [...p, d]) } catch {} }
+    for (const f of Array.from(files)) { try { const url = await uploadSpecialistImage(f); setPhotos(p => [...p, url]) } catch {} }
   }
 
   const save = async () => {

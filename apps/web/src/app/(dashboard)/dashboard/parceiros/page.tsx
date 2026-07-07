@@ -53,6 +53,7 @@ interface SpecialistStats {
 
 interface Specialist {
   id: string
+  slug?: string
   name: string
   email: string
   phone?: string
@@ -64,6 +65,9 @@ interface Specialist {
   createdAt: string
   planActivatedAt?: string
   planExpiresAt?: string
+  isFeatured?: boolean
+  featuredWeight?: number
+  featuredUntil?: string | null
 }
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -140,6 +144,22 @@ export default function ParceirosPage() {
       headers: { Authorization: `Bearer ${accessToken}` },
     })
     window.location.reload()
+  }
+
+  // Liga/desliga o destaque do parceiro (alimenta o ranking do diretório).
+  const [featBusy, setFeatBusy] = useState<string | null>(null)
+  const handleFeature = async (id: string, next: boolean) => {
+    setFeatBusy(id)
+    try {
+      await fetch(`${API_URL}/api/v1/specialists/${id}/feature`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
+        body: JSON.stringify({ isFeatured: next, featuredWeight: next ? 100 : 0 }),
+      })
+      window.location.reload()
+    } finally {
+      setFeatBusy(null)
+    }
   }
 
   if (isLoading) {
@@ -369,8 +389,21 @@ export default function ParceirosPage() {
                               Aprovar
                             </button>
                           )}
+                          <button
+                            onClick={() => handleFeature(s.id, !s.isFeatured)}
+                            disabled={featBusy === s.id}
+                            title={s.isFeatured ? 'Remover destaque' : 'Destacar no diretório'}
+                            className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors inline-flex items-center gap-1 disabled:opacity-50 ${
+                              s.isFeatured
+                                ? 'bg-amber-100 text-amber-700 hover:bg-amber-200'
+                                : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                            }`}
+                          >
+                            <Star className={`w-3 h-3 ${s.isFeatured ? 'fill-amber-500 text-amber-500' : ''}`} />
+                            {s.isFeatured ? 'Em destaque' : 'Destacar'}
+                          </button>
                           <Link
-                            href={`/especialistas/${s.id}`}
+                            href={`/especialistas/${s.slug ?? s.id}`}
                             target="_blank"
                             className="px-3 py-1 rounded-lg text-xs font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors inline-flex items-center gap-1"
                           >
