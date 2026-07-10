@@ -174,6 +174,8 @@ export default function MeuSitePage() {
     name: '', primaryColor: '#143A1F', layoutType: 'urban_tech' as ThemeKey,
     logoUrl: '', logoWordmarkUrl: '', logoVisible: true, logoShowText: true,
     logoPosition: 'left' as 'left' | 'center',
+    heroTitle: '', heroSubtitle: '', aboutText: '', address: '', city: '', phone: '',
+    email: '', hours: '', officialWebsite: '', chatMode: 'tomas' as 'tomas' | 'partner' | 'both' | 'off',
   })
   const [saved, setSaved] = useState(false)
   // Domínio próprio — fluxo à parte (POST /:id/domain com integração Vercel).
@@ -192,6 +194,16 @@ export default function MeuSitePage() {
         logoVisible: tenant.settings?.logoVisible !== false,
         logoShowText: tenant.settings?.logoShowText !== false,
         logoPosition: tenant.settings?.logoPosition === 'center' ? 'center' : 'left',
+        heroTitle: tenant.settings?.heroTitle ?? '',
+        heroSubtitle: tenant.settings?.heroSubtitle ?? '',
+        aboutText: tenant.settings?.aboutText ?? '',
+        address: tenant.settings?.address ?? '',
+        city: tenant.settings?.city ?? '',
+        phone: tenant.settings?.phone ?? '',
+        email: tenant.settings?.email ?? '',
+        hours: tenant.settings?.hours ?? '',
+        officialWebsite: tenant.settings?.officialWebsite ?? '',
+        chatMode: tenant.settings?.chatMode ?? 'tomas',
       })
     }
   }, [tenant])
@@ -203,7 +215,28 @@ export default function MeuSitePage() {
       const res = await fetch(`${API_URL}/api/v1/tenants/${tenant.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify(form),
+        body: JSON.stringify({
+          name: form.name,
+          primaryColor: form.primaryColor,
+          layoutType: form.layoutType,
+          logoUrl: form.logoUrl,
+          logoWordmarkUrl: form.logoWordmarkUrl,
+          logoVisible: form.logoVisible,
+          logoShowText: form.logoShowText,
+          logoPosition: form.logoPosition,
+          settings: {
+            heroTitle: form.heroTitle,
+            heroSubtitle: form.heroSubtitle,
+            aboutText: form.aboutText,
+            address: form.address,
+            city: form.city,
+            phone: form.phone,
+            email: form.email,
+            hours: form.hours,
+            officialWebsite: form.officialWebsite,
+            chatMode: form.chatMode,
+          },
+        }),
       })
       if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.message ?? 'Erro ao salvar') }
       return res.json()
@@ -422,6 +455,33 @@ export default function MeuSitePage() {
               token={apiToken}
               placeholder="https://... ou envie um arquivo"
             />
+          </div>
+
+          <div className="bg-white/5 border border-white/10 rounded-2xl p-5 space-y-4">
+            <h2 className="text-sm font-semibold text-white/90 uppercase tracking-wide">Conteúdo e atendimento</h2>
+            <DarkInput label="Título principal" value={form.heroTitle} onChange={e => setForm(p => ({ ...p, heroTitle: e.target.value }))} placeholder="Encontre o imóvel ideal" />
+            <DarkInput label="Texto de apresentação" value={form.heroSubtitle} onChange={e => setForm(p => ({ ...p, heroSubtitle: e.target.value }))} placeholder="Venda, locação e atendimento especializado" />
+            <div>
+              <label className="text-xs font-semibold text-white/70 mb-1.5 block">Sobre a empresa</label>
+              <textarea value={form.aboutText} onChange={e => setForm(p => ({ ...p, aboutText: e.target.value }))} rows={4} className="bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-white/40 outline-none focus:border-yellow-400/50 w-full resize-y" />
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <DarkInput label="Endereço" value={form.address} onChange={e => setForm(p => ({ ...p, address: e.target.value }))} />
+              <DarkInput label="Cidade/UF" value={form.city} onChange={e => setForm(p => ({ ...p, city: e.target.value }))} />
+              <DarkInput label="Telefone / WhatsApp" value={form.phone} onChange={e => setForm(p => ({ ...p, phone: e.target.value }))} />
+              <DarkInput label="E-mail" value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} />
+              <DarkInput label="Horário de atendimento" value={form.hours} onChange={e => setForm(p => ({ ...p, hours: e.target.value }))} />
+              <DarkInput label="Site oficial" value={form.officialWebsite} onChange={e => setForm(p => ({ ...p, officialWebsite: e.target.value }))} placeholder="https://www.suaimobiliaria.com.br" />
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-white/70 mb-1.5 block">Chat do site</label>
+              <select value={form.chatMode} onChange={e => setForm(p => ({ ...p, chatMode: e.target.value as typeof form.chatMode }))} className="bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white outline-none focus:border-yellow-400/50 w-full">
+                <option value="tomas">Tomás com identidade da imobiliária</option>
+                <option value="partner">Somente atendimento da imobiliária</option>
+                <option value="both">Tomás e atendimento da imobiliária</option>
+                <option value="off">Sem chat flutuante</option>
+              </select>
+            </div>
           </div>
 
           <div className="bg-white/5 border border-white/10 rounded-2xl p-5 space-y-1">

@@ -2166,6 +2166,20 @@ export default async function publicRoutes(app: FastifyInstance) {
       logoVisible: s.logoVisible ?? true,
       logoShowText: s.logoShowText ?? true,
       logoPosition: s.logoPosition ?? 'left',
+      brandStyle: s.brandStyle ?? null,
+      heroTitle: s.heroTitle ?? null,
+      heroSubtitle: s.heroSubtitle ?? null,
+      aboutText: s.aboutText ?? null,
+      address: s.address ?? null,
+      city: s.city ?? null,
+      phone: s.phone ?? null,
+      email: s.email ?? null,
+      hours: s.hours ?? null,
+      officialWebsite: s.officialWebsite ?? null,
+      instagramUrl: s.instagramUrl ?? null,
+      facebookUrl: s.facebookUrl ?? null,
+      youtubeUrl: s.youtubeUrl ?? null,
+      chatMode: ['tomas', 'partner', 'both', 'off'].includes(s.chatMode) ? s.chatMode : 'tomas',
     }
   }
 

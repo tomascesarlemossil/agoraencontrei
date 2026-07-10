@@ -94,18 +94,19 @@ async function getTenantBySubdomain(slug: string): Promise<TenantData | null> {
   return null
 }
 
-async function getTenantProperties(tenantSlug: string, limit = 9): Promise<Property[]> {
+async function getTenantProperties(tenantSlug: string, limit = 9): Promise<{ items: Property[]; total: number }> {
   try {
     const url = `${API_URL}/api/v1/public/properties?tenantSlug=${encodeURIComponent(tenantSlug)}&limit=${limit}&sortBy=createdAt&sortOrder=desc`
     const res = await fetch(url, { next: { revalidate: 120 } })
-    if (!res.ok) return []
+    if (!res.ok) return { items: [], total: 0 }
     const data = await res.json()
     // A rota /api/v1/public/properties responde { data: [...], meta }.
     // `data.data` JÁ é o array — o acesso anterior (data.data?.items) dava
     // sempre undefined, fazendo TODO site de parceiro renderizar vazio.
-    return Array.isArray(data?.data) ? data.data : (Array.isArray(data?.items) ? data.items : [])
+    const items = Array.isArray(data?.data) ? data.data : (Array.isArray(data?.items) ? data.items : [])
+    return { items, total: Number(data?.meta?.total ?? items.length) }
   } catch {
-    return []
+    return { items: [], total: 0 }
   }
 }
 
@@ -256,7 +257,7 @@ export default async function TenantPage({
   params: Promise<{ slug: string }>
 }) {
   const { slug } = await params
-  const [tenant, properties, teamRaw] = await Promise.all([
+  const [tenant, propertyResult, teamRaw] = await Promise.all([
     getTenantBySubdomain(slug),
     getTenantProperties(slug, 9),
     getTeam(slug),
@@ -265,6 +266,9 @@ export default async function TenantPage({
   if (!tenant || !tenant.isActive) {
     notFound()
   }
+
+  const properties = propertyResult.items
+  const propertyTotal = propertyResult.total
 
   if (tenant.planStatus === 'SUSPENDED') {
     return (
@@ -397,17 +401,16 @@ export default async function TenantPage({
       <section className={`${theme.hero} py-20 sm:py-28 px-4`}>
         <div className="max-w-4xl mx-auto text-center">
           <h2 className={`text-3xl sm:text-4xl md:text-5xl ${theme.fontHeading} font-bold mb-6 leading-tight ${['ae_premium', 'luxury_gold', 'bold_agency', 'signature_estate'].includes(theme.key) ? 'text-white' : ''}`}>
-            Encontre o imóvel dos seus{' '}
-            <span style={{ color: accentColor }}>sonhos</span>
+            {tenant.settings?.heroTitle || <>Encontre o imóvel dos seus <span style={{ color: accentColor }}>sonhos</span></>}
           </h2>
           <p className={`text-base sm:text-lg mb-8 max-w-2xl mx-auto ${['ae_premium', 'luxury_gold', 'bold_agency', 'signature_estate'].includes(theme.key) ? 'text-white/70' : theme.textMuted}`}>
-            {theme.key === 'luxury_gold'
+            {tenant.settings?.heroSubtitle || (theme.key === 'luxury_gold'
               ? 'Imóveis selecionados e oportunidades exclusivas para investidores exigentes.'
               : theme.key === 'landscape_living'
               ? 'Terrenos, chácaras e loteamentos para quem busca qualidade de vida.'
               : theme.key === 'fast_sales_pro'
               ? 'As melhores oportunidades do mercado. Encontre rápido, negocie direto.'
-              : 'Navegue por nossa seleção de imóveis. Casas, apartamentos, terrenos e mais.'}
+              : 'Navegue por nossa seleção de imóveis. Casas, apartamentos, terrenos e mais.')}
           </p>
           {/* Search Bar — GET form para o catálogo do parceiro (?search=) */}
           <form action="/imoveis" method="get" className="max-w-xl mx-auto">
@@ -443,7 +446,7 @@ export default async function TenantPage({
             return (
             <div className="flex items-center justify-center gap-6 mt-8 text-xs">
               <div className="text-center">
-                <p className={`text-lg font-bold`} style={{ color: accentColor }}>{sortedProperties.length}+</p>
+                <p className={`text-lg font-bold`} style={{ color: accentColor }}>{propertyTotal}</p>
                 <p className={`text-[10px] ${statLabel}`}>Imóveis</p>
               </div>
               <div className="text-center">
@@ -475,7 +478,7 @@ export default async function TenantPage({
               </h3>
               {hasProperties && (
                 <p className={`text-sm ${theme.textMuted} mt-1`}>
-                  {sortedProperties.length} imóve{sortedProperties.length === 1 ? 'l' : 'is'} disponíve{sortedProperties.length === 1 ? 'l' : 'is'}
+                  {propertyTotal} imóve{propertyTotal === 1 ? 'l' : 'is'} disponíve{propertyTotal === 1 ? 'l' : 'is'}
                   {sortedProperties.filter(p => p.isPremium).length > 0 && (
                     <span> · <span className="text-rose-400 font-medium">{sortedProperties.filter(p => p.isPremium).length} super destaque{sortedProperties.filter(p => p.isPremium).length > 1 ? 's' : ''}</span></span>
                   )}
@@ -664,9 +667,9 @@ export default async function TenantPage({
         <div className="max-w-4xl mx-auto text-center">
           <h3 className={`text-2xl ${theme.fontHeading} font-bold mb-4`}>Sobre a {tenant.name}</h3>
           <p className={`${theme.textMuted} max-w-2xl mx-auto leading-relaxed`}>
-            {slug === 'lemos'
+            {tenant.settings?.aboutText || (slug === 'lemos'
               ? 'Referência no mercado imobiliário de Franca e região desde 2002. Especializada em compra, venda e locação de imóveis residenciais e comerciais, com atendimento humano, tecnologia e transparência em cada negociação.'
-              : `Atendimento próximo e especializado em compra, venda e locação de imóveis${contact.city ? ` em ${contact.city}` : ''}. Conte com a nossa equipe para encontrar o imóvel ideal com segurança e transparência.`}
+              : `Atendimento próximo e especializado em compra, venda e locação de imóveis${contact.city ? ` em ${contact.city}` : ''}. Conte com a nossa equipe para encontrar o imóvel ideal com segurança e transparência.`)}
           </p>
           <div className="mt-10 grid grid-cols-1 sm:grid-cols-3 gap-4">
             {[
@@ -710,6 +713,16 @@ export default async function TenantPage({
             <a href="#imoveis" className={`${theme.buttonSecondary} px-6 py-3 rounded-lg`}>
               🏠 Ver imóveis
             </a>
+            {tenant.settings?.officialWebsite && (
+              <a
+                href={tenant.settings.officialWebsite}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`${theme.buttonSecondary} px-6 py-3 rounded-lg`}
+              >
+                Acessar site oficial
+              </a>
+            )}
           </div>
 
           {/* Endereço, telefone e horário (do cadastro do parceiro) */}
@@ -757,7 +770,9 @@ export default async function TenantPage({
 
       {/* Tomás IA do PARCEIRO: conversa com o cérebro daquele parceiro (modo
           público). O companyId é resolvido server-side a partir do slug. */}
-      <TomasWidget tenantSlug={slug} partnerName={tenant.name} />
+      {tenant.settings?.chatMode !== 'off' && tenant.settings?.chatMode !== 'partner' && (
+        <TomasWidget tenantSlug={slug} partnerName={tenant.name} />
+      )}
     </div>
   )
 }
