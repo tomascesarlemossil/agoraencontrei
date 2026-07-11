@@ -20,7 +20,25 @@ export async function GET() {
     checks.api = { status: 'error', latency: -1 }
   }
 
-  // 2. Self check
+  // 2. Public sitemap
+  try {
+    const sitemapStart = Date.now()
+    const res = await fetch('https://www.agoraencontrei.com.br/sitemap-index.xml', { signal: AbortSignal.timeout(5000), cache: 'no-store' })
+    checks.sitemap = { status: res.ok ? 'ok' : 'error', latency: Date.now() - sitemapStart }
+  } catch {
+    checks.sitemap = { status: 'error', latency: -1 }
+  }
+
+  // 3. Founding partner site
+  try {
+    const partnerStart = Date.now()
+    const res = await fetch('https://lemos.agoraencontrei.com.br', { signal: AbortSignal.timeout(5000), cache: 'no-store' })
+    checks.partnerSite = { status: res.ok ? 'ok' : 'error', latency: Date.now() - partnerStart }
+  } catch {
+    checks.partnerSite = { status: 'error', latency: -1 }
+  }
+
+  // 4. Self check
   checks.frontend = { status: 'ok', latency: Date.now() - start }
 
   // 3. Timestamp
@@ -31,5 +49,5 @@ export async function GET() {
     checks,
     timestamp: new Date().toISOString(),
     version: process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) || 'dev',
-  }, { status: 200 }) // Always 200 — Railway healthcheck must not fail due to API being slow
+  }, { status: allOk ? 200 : 503 })
 }
