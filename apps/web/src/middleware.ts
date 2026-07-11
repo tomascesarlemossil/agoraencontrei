@@ -61,7 +61,8 @@ export function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname
 
   // Skip static assets, API routes, and internal paths
-  if (BYPASS_PATHS.some(p => pathname.startsWith(p))) {
+  const isPublicFile = /\.[a-z0-9]{2,8}$/i.test(pathname)
+  if (isPublicFile || BYPASS_PATHS.some(p => pathname.startsWith(p))) {
     return NextResponse.next()
   }
 
