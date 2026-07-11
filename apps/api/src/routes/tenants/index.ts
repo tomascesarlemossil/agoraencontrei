@@ -67,6 +67,36 @@ async function getTenantReadiness(prisma: any, tenant: any) {
   return { complete: completed === items.length, completed, total: items.length, items, propertyCount, teamCount }
 }
 
+async function getTenantQuality(prisma: any, tenant: any) {
+  const settings = (tenant.settings ?? {}) as Record<string, any>
+  const companyId = tenant.companyId as string | null
+  const [active, withCover, withGallery, mapped, team] = companyId
+    ? await Promise.all([
+        prisma.property.count({ where: { companyId, status: 'ACTIVE', authorizedPublish: true } }),
+        prisma.property.count({ where: { companyId, status: 'ACTIVE', authorizedPublish: true, coverImage: { not: null } } }),
+        prisma.property.count({ where: { companyId, status: 'ACTIVE', authorizedPublish: true, images: { isEmpty: false } } }),
+        prisma.property.count({ where: { companyId, status: 'ACTIVE', authorizedPublish: true, latitude: { not: null }, longitude: { not: null } } }),
+        prisma.user.count({ where: { companyId, status: 'ACTIVE' } }),
+      ])
+    : [0, 0, 0, 0, 0]
+  const ratio = (value: number) => active > 0 ? value / active : 0
+  const chatMode = ['tomas', 'partner', 'both', 'off'].includes(settings.chatMode) ? settings.chatMode : 'tomas'
+  const checks = [
+    { id: 'catalog', label: 'Catálogo público possui imóveis', passed: active > 0, detail: `${active} ativos` },
+    { id: 'covers', label: 'Fotos de capa completas', passed: ratio(withCover) >= 0.9, detail: `${Math.round(ratio(withCover) * 100)}%` },
+    { id: 'galleries', label: 'Galerias de fotos completas', passed: ratio(withGallery) >= 0.9, detail: `${Math.round(ratio(withGallery) * 100)}%` },
+    { id: 'map', label: 'Imóveis disponíveis no mapa', passed: mapped > 0, detail: `${mapped} localizados` },
+    { id: 'contact', label: 'Formulário e contatos configurados', passed: Boolean(settings.phone && settings.email) },
+    { id: 'chat', label: 'Modo de atendimento válido', passed: Boolean(chatMode), detail: chatMode },
+    { id: 'team', label: 'Equipe disponível para atendimento', passed: team > 0, detail: `${team} usuários` },
+    { id: 'domain', label: 'Endereço do site reservado', passed: Boolean(tenant.customDomain || tenant.subdomain) },
+    { id: 'theme', label: 'Tema responsivo selecionado', passed: Boolean(tenant.layoutType) },
+    { id: 'privacy', label: 'Termos e Política de Privacidade disponíveis', passed: true },
+  ]
+  const passed = checks.filter(check => check.passed).length
+  return { approved: passed === checks.length, passed, total: checks.length, checkedAt: new Date().toISOString(), checks }
+}
+
 export default async function tenantRoutes(app: FastifyInstance) {
   app.addHook('preHandler', app.authenticate)
 
@@ -193,8 +223,9 @@ export default async function tenantRoutes(app: FastifyInstance) {
     if (!tenant) return reply.status(404).send({ error: 'NO_TENANT_FOR_USER' })
 
     const readiness = await getTenantReadiness(app.prisma as any, tenant)
-    if (body.published && !readiness.complete) {
-      return reply.status(409).send({ error: 'ONBOARDING_INCOMPLETE', message: 'Conclua todos os itens obrigatórios antes de publicar.', data: readiness })
+    const quality = await getTenantQuality(app.prisma as any, tenant)
+    if (body.published && (!readiness.complete || !quality.approved)) {
+      return reply.status(409).send({ error: 'QUALITY_GATE_FAILED', message: 'Conclua o onboarding e todos os testes obrigatórios antes de publicar.', data: { readiness, quality } })
     }
 
     const settings = { ...(tenant.settings ?? {}), sitePublished: body.published, publicationUpdatedAt: new Date().toISOString() }
@@ -205,7 +236,20 @@ export default async function tenantRoutes(app: FastifyInstance) {
       resource: 'tenant', resourceId: tenant.id,
       meta: { type: body.published ? 'tenant.site_published' : 'tenant.site_unpublished' },
     })
-    return reply.send({ success: true, data: { ...updated, readiness } })
+    return reply.send({ success: true, data: { ...updated, readiness, quality } })
+  })
+
+  app.get('/mine/quality', {
+    schema: { tags: ['tenants'], summary: 'Run partner site quality gate' },
+  }, async (req, reply) => {
+    const isManagerRole = ['ADMIN', 'MANAGER', 'SUPER_ADMIN'].includes(req.user.role)
+    const tenant = await (app.prisma as any).tenant.findFirst({
+      where: { OR: [{ ownerId: req.user.sub }, ...(isManagerRole ? [{ companyId: req.user.cid }] : [])] },
+      orderBy: { createdAt: 'desc' },
+    })
+    if (!tenant) return reply.status(404).send({ error: 'NO_TENANT_FOR_USER' })
+    const quality = await getTenantQuality(app.prisma as any, tenant)
+    return reply.send({ success: true, data: quality })
   })
 
   // GET /mine/operations — resumo operacional isolado da empresa parceira.

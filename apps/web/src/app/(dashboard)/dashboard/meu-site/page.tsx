@@ -59,6 +59,14 @@ interface OperationsSummary {
   audit: { total: number; recent: Array<{ id: string; action: string; resource: string; createdAt: string }> }
 }
 
+interface QualitySummary {
+  approved: boolean
+  passed: number
+  total: number
+  checkedAt: string
+  checks: Array<{ id: string; label: string; passed: boolean; detail?: string }>
+}
+
 function DarkInput({ label, hint, ...props }: React.InputHTMLAttributes<HTMLInputElement> & { label?: string; hint?: string }) {
   return (
     <div>
@@ -212,6 +220,17 @@ export default function MeuSitePage() {
       const response = await fetch(`${API_URL}/api/v1/tenants/mine/operations`, { headers: { Authorization: `Bearer ${token}` } })
       if (!response.ok) throw new Error('Não foi possível carregar o resumo operacional')
       return (await response.json()).data as OperationsSummary
+    },
+    enabled: Boolean(tenant),
+  })
+
+  const { data: quality, refetch: rerunQuality, isFetching: qualityLoading } = useQuery<QualitySummary>({
+    queryKey: ['partner-quality'],
+    queryFn: async () => {
+      const token = await getValidToken()
+      const response = await fetch(`${API_URL}/api/v1/tenants/mine/quality`, { headers: { Authorization: `Bearer ${token}` } })
+      if (!response.ok) throw new Error('Não foi possível executar os testes')
+      return (await response.json()).data as QualitySummary
     },
     enabled: Boolean(tenant),
   })
@@ -411,7 +430,7 @@ export default function MeuSitePage() {
           </div>
           <button
             type="button"
-            disabled={publicationMutation.isPending || (!sitePublished && !tenant.readiness?.complete)}
+            disabled={publicationMutation.isPending || (!sitePublished && (!tenant.readiness?.complete || !quality?.approved))}
             onClick={() => publicationMutation.mutate(!sitePublished)}
             className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-40"
             style={{ backgroundColor: sitePublished ? '#ffffff1a' : '#C9A84C', color: sitePublished ? 'white' : '#143A1F' }}
@@ -436,6 +455,28 @@ export default function MeuSitePage() {
           </p>
         )}
       </section>
+
+      {quality && (
+        <section className="rounded-lg border border-white/10 bg-white/5 p-5" aria-labelledby="quality-title">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h2 id="quality-title" className="flex items-center gap-2 text-sm font-bold text-white"><ShieldCheck className="h-4 w-4 text-yellow-400" />Testes de qualidade</h2>
+              <p className="mt-1 text-xs text-white/45">{quality.passed} de {quality.total} verificações aprovadas.</p>
+            </div>
+            <button type="button" onClick={() => rerunQuality()} disabled={qualityLoading} className="inline-flex items-center gap-2 rounded-md border border-white/15 px-3 py-2 text-xs font-semibold text-white disabled:opacity-50">{qualityLoading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}Executar novamente</button>
+          </div>
+          <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
+            {quality.checks.map(check => (
+              <div key={check.id} className="flex items-center gap-2 rounded-md bg-black/10 px-3 py-2 text-xs">
+                {check.passed ? <CheckCircle2 className="h-4 w-4 flex-none text-emerald-400" /> : <Circle className="h-4 w-4 flex-none text-amber-300" />}
+                <span className={check.passed ? 'text-white/70' : 'text-amber-100'}>{check.label}</span>
+                {check.detail && <span className="ml-auto text-white/35">{check.detail}</span>}
+              </div>
+            ))}
+          </div>
+          <p className={`mt-4 rounded-md px-3 py-2 text-xs ${quality.approved ? 'bg-emerald-500/10 text-emerald-300' : 'bg-amber-500/10 text-amber-200'}`}>{quality.approved ? 'Site aprovado no gate automático de publicação.' : 'A publicação permanece bloqueada até corrigir as verificações pendentes.'}</p>
+        </section>
+      )}
 
       {operations && (
         <section className="space-y-4" aria-labelledby="operations-title">
