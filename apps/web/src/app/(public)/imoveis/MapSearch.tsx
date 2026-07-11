@@ -126,6 +126,8 @@ interface Props {
   userLat?: number // localização do visitante (passada pelo pai p/ evitar 2º prompt)
   userLng?: number
   userCity?: string // cidade do visitante — escopa os pins de leilão à região
+  tenantSlug?: string // site parceiro: escopa mapa e resultados à empresa
+  listingsPath?: string // rota de retorno do catálogo no host atual
 }
 
 // Nominatim cache in module scope
@@ -152,7 +154,8 @@ async function geocodeNeighborhood(neighborhood: string, city: string): Promise<
   return null
 }
 
-export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initialBedrooms, initialClusters, auctionsOnly, userLat, userLng, userCity }: Props) {
+export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initialBedrooms, initialClusters, auctionsOnly, userLat, userLng, userCity, tenantSlug, listingsPath = '/imoveis' }: Props) {
+  const partnerMode = Boolean(tenantSlug)
   const mapRef = useRef<HTMLDivElement>(null)
   const mapInstance = useRef<MapLibreMap | null>(null)
   const markersRef = useRef<MapLibreMarker[]>([])
@@ -272,6 +275,7 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
       try {
         const params = new URLSearchParams()
         if (initialPurpose) params.set('purpose', initialPurpose)
+        if (tenantSlug) params.set('tenantSlug', tenantSlug)
         // Use BBOX for targeted loading — default to Franca/SP area
         const b = bbox ?? FRANCA_BBOX
         params.set('swLat', b.swLat.toFixed(6))
@@ -328,21 +332,22 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
         delay += NOMINATIM_DELAY
       }
     }
-  }, [initialPurpose]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [initialPurpose, tenantSlug]) // eslint-disable-line react-hooks/exhaustive-deps
   // Load owner-direct (green pins) properties from free-listing endpoint
   useEffect(() => {
     // Modo "só leilões": não mostra os pins verdes de imóveis dos proprietários.
-    if (auctionsOnly) return
+    if (auctionsOnly || partnerMode) return
     fetch(`${API_URL}/api/v1/public/free-listing/map-pins`)
       .then(r => r.ok ? r.json() : [])
       .then((data: OwnerDirectPin[]) => setOwnerDirectPins(Array.isArray(data) ? data : []))
       .catch(() => {})
-  }, [])
+  }, [auctionsOnly, partnerMode])
 
   // Load auction pins — bypass Railway, read directly from Supabase.
   // Com a cidade do visitante (userCity), escopa os pins à região dele; sem
   // ela, cai no estado padrão (SP). Refaz a busca quando a cidade resolve.
   useEffect(() => {
+    if (partnerMode) { setAuctions([]); return }
     async function loadAuctions() {
       const scope = userCity ? `city=${encodeURIComponent(userCity)}` : 'state=SP'
       // Try API first
@@ -374,7 +379,7 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
     }
     didFitAuctionsRef.current = false // novo conjunto → permite reenquadrar
     loadAuctions()
-  }, [userCity])
+  }, [userCity, partnerMode])
 
   // Sincroniza com a localização vinda do pai (quando passada via props).
   useEffect(() => {
@@ -996,6 +1001,7 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
     Promise.all(
       selectedNeighborhoods.map(async n => {
         const params = new URLSearchParams({ limit: '20' })
+        if (tenantSlug) params.set('tenantSlug', tenantSlug)
         params.set('neighborhood', n) // precise neighborhood filter
         if (initialPurpose) params.set('purpose', initialPurpose)
         if (initialMaxPrice) params.set('maxPrice', initialMaxPrice)
@@ -1016,7 +1022,7 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
       setProperties(unique.slice(0, 60))
       setLoadingProps(false)
     }).catch(() => setLoadingProps(false))
-  }, [selectedNeighborhoods, initialPurpose, initialMaxPrice, initialBedrooms])
+  }, [selectedNeighborhoods, initialPurpose, initialMaxPrice, initialBedrooms, tenantSlug])
 
   function handleNeighborhoodClick(neighborhood: string, city: string | null) {
     setSelectedNeighborhoods([neighborhood])
@@ -1034,7 +1040,7 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
     }
     if (initialMaxPrice) params.set('maxPrice', initialMaxPrice)
     if (initialBedrooms) params.set('bedrooms', initialBedrooms)
-    router.push(`/imoveis?${params}`)
+    router.push(`${listingsPath}?${params}`)
   }
 
   const totalInPolygon = selectedNeighborhoods.reduce((acc, n) => {
@@ -1140,7 +1146,7 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
         </div>
 
         {/* ROI Slider — hidden on small mobile */}
-        {showAuctionLayer && (
+        {showAuctionLayer && !partnerMode && (
           <div className="pointer-events-auto hidden sm:flex items-center gap-2 bg-white/95 backdrop-blur px-3 py-2 rounded-xl shadow-lg">
             <span className="text-[10px] font-semibold text-gray-500 whitespace-nowrap">ROI mín.</span>
             <input
@@ -1162,7 +1168,7 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
         )}
 
         {/* Heatmap Toggle + Filtros Estilo de Vida — hidden on small mobile */}
-        {showAuctionLayer && (
+        {showAuctionLayer && !partnerMode && (
           <div className="pointer-events-auto hidden sm:flex items-center gap-1.5 bg-white/95 backdrop-blur px-2 py-1.5 rounded-xl shadow-lg">
             <span className="text-[10px] font-semibold text-gray-500 whitespace-nowrap hidden sm:block">Filtros:</span>
             {([
@@ -1202,6 +1208,7 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
             🏠 Venda
           </button>
           )}
+          {!partnerMode && (
           <button
             onClick={() => setShowAuctionLayer(v => !v)}
             className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold shadow-lg transition-all ${
@@ -1217,6 +1224,7 @@ export function MapSearch({ initialPurpose, initialCity, initialMaxPrice, initia
               <span className="ml-0.5 bg-[#143A1F] text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">{auctions.length}</span>
             )}
           </button>
+          )}
         </div>
       </div>
 

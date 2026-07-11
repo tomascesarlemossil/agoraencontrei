@@ -9,6 +9,7 @@
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import { resolveTheme } from '@/lib/site-factory/theme-registry'
+import { MapSearch } from '@/app/(public)/imoveis/MapSearch'
 
 // Render ao vivo: evita 404 preso no cache ISR/CDN quando a API tem um blip.
 export const dynamic = 'force-dynamic'
@@ -79,6 +80,12 @@ async function getProperties(slug: string, sp: Record<string, string>): Promise<
   if (sp.purpose) qs.set('purpose', sp.purpose)
   if (sp.type) qs.set('type', sp.type)
   if (sp.search) qs.set('search', sp.search)
+  if (sp.minPrice) qs.set('minPrice', sp.minPrice)
+  if (sp.maxPrice) qs.set('maxPrice', sp.maxPrice)
+  if (sp.bedrooms) qs.set('bedrooms', sp.bedrooms)
+  if (sp.bathrooms) qs.set('bathrooms', sp.bathrooms)
+  if (sp.minArea) qs.set('minArea', sp.minArea)
+  if (sp.maxArea) qs.set('maxArea', sp.maxArea)
   const data = await fetchJsonRetry(`${API_URL}/api/v1/public/properties?${qs.toString()}`, 120)
   return {
     items: Array.isArray(data?.data) ? data.data : [],
@@ -121,6 +128,7 @@ export default async function TenantCatalogPage({
   const logoShowText = tenant.settings?.logoShowText !== false
 
   const currentPage = meta.page
+  const mapView = sp.view === 'map'
   const buildHref = (page: number) => {
     const q = new URLSearchParams(sp)
     q.set('page', String(page))
@@ -150,29 +158,54 @@ export default async function TenantCatalogPage({
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
-        <div className="mb-6">
-          <h1 className={`text-2xl ${theme.fontHeading} font-bold`}>Imóveis disponíveis</h1>
-          <p className={`text-sm ${theme.textMuted} mt-1`}>{meta.total} imóve{meta.total === 1 ? 'l' : 'is'} encontrado{meta.total === 1 ? '' : 's'}</p>
+        <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <h1 className={`text-2xl ${theme.fontHeading} font-bold`}>Imóveis disponíveis</h1>
+            <p className={`text-sm ${theme.textMuted} mt-1`}>{meta.total} imóve{meta.total === 1 ? 'l' : 'is'} encontrado{meta.total === 1 ? '' : 's'}</p>
+          </div>
+          <div className="inline-flex rounded-lg border border-gray-300 bg-white p-1 text-sm">
+            <a href={`/imoveis?${new URLSearchParams({ ...sp, view: 'list', page: '1' })}`} className={`px-3 py-1.5 rounded-md ${!mapView ? 'bg-gray-900 text-white' : 'text-gray-600'}`}>Lista</a>
+            <a href={`/imoveis?${new URLSearchParams({ ...sp, view: 'map', page: '1' })}`} className={`px-3 py-1.5 rounded-md ${mapView ? 'bg-gray-900 text-white' : 'text-gray-600'}`}>Mapa</a>
+          </div>
         </div>
 
         {/* Filtro simples (GET form) */}
-        <form method="get" className="flex flex-wrap gap-2 mb-6">
+        <form method="get" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2 mb-6">
+          <input type="hidden" name="view" value={mapView ? 'map' : 'list'} />
           <input
             type="text"
             name="search"
             defaultValue={sp.search ?? ''}
             placeholder="Buscar por bairro, cidade ou título..."
-            className="flex-1 min-w-[200px] px-4 py-2.5 rounded-lg border border-gray-300 bg-white text-gray-900 text-sm focus:outline-none"
+            className="sm:col-span-2 px-4 py-2.5 rounded-lg border border-gray-300 bg-white text-gray-900 text-sm focus:outline-none"
           />
           <select name="purpose" defaultValue={sp.purpose ?? ''} className="px-3 py-2.5 rounded-lg border border-gray-300 bg-white text-gray-900 text-sm">
             <option value="">Venda e Aluguel</option>
             <option value="SALE">Venda</option>
             <option value="RENT">Aluguel</option>
           </select>
+          <select name="type" defaultValue={sp.type ?? ''} className="px-3 py-2.5 rounded-lg border border-gray-300 bg-white text-gray-900 text-sm">
+            <option value="">Todos os tipos</option>
+            <option value="HOUSE">Casa</option><option value="APARTMENT">Apartamento</option><option value="LAND">Terreno</option>
+            <option value="STORE">Loja</option><option value="OFFICE">Sala</option><option value="WAREHOUSE">Galpão</option><option value="FARM">Rural</option>
+          </select>
+          <input type="number" name="maxPrice" defaultValue={sp.maxPrice ?? ''} placeholder="Valor máximo" className="px-3 py-2.5 rounded-lg border border-gray-300 bg-white text-gray-900 text-sm" />
+          <select name="bedrooms" defaultValue={sp.bedrooms ?? ''} className="px-3 py-2.5 rounded-lg border border-gray-300 bg-white text-gray-900 text-sm">
+            <option value="">Quartos</option><option value="1">1+</option><option value="2">2+</option><option value="3">3+</option><option value="4">4+</option>
+          </select>
           <button type="submit" className={`${theme.buttonPrimary} px-5 py-2.5 rounded-lg text-sm`}>Buscar</button>
         </form>
 
-        {items.length > 0 ? (
+        {mapView ? (
+          <MapSearch
+            initialPurpose={sp.purpose}
+            initialCity={sp.city}
+            initialMaxPrice={sp.maxPrice}
+            initialBedrooms={sp.bedrooms}
+            tenantSlug={slug}
+            listingsPath="/imoveis"
+          />
+        ) : items.length > 0 ? (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {items.map(property => (

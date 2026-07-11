@@ -1339,15 +1339,25 @@ export default async function publicRoutes(app: FastifyInstance) {
     const company = await resolveCompany(app)
     if (!company) return reply.status(503).send({ error: 'SERVICE_UNAVAILABLE' })
 
-    const { purpose, type, swLat, swLng, neLat, neLng } = req.query as {
+    const { purpose, type, swLat, swLng, neLat, neLng, tenantSlug } = req.query as {
       purpose?: string; type?: string
       swLat?: string; swLng?: string; neLat?: string; neLng?: string
+      tenantSlug?: string
+    }
+
+    let scopedCompanyId: string | undefined
+    if (tenantSlug) {
+      const tenant = await (app.prisma as any).tenant?.findUnique?.({
+        where: { subdomain: tenantSlug },
+        select: { companyId: true },
+      }).catch(() => null)
+      scopedCompanyId = tenant?.companyId ?? '__no_such_tenant__'
     }
 
     // BBOX filter — only apply when all 4 coords are provided
     const hasBbox = swLat && swLng && neLat && neLng
     const bboxStr = hasBbox ? `:${swLat},${swLng},${neLat},${neLng}` : ''
-    const cacheKey = `pub:map-clusters:v3:marketplace:${purpose ?? ''}:${type ?? ''}${bboxStr}`
+    const cacheKey = `pub:map-clusters:v4:${scopedCompanyId ?? 'marketplace'}:${purpose ?? ''}:${type ?? ''}${bboxStr}`
     const cached = await cacheGet(app.redis, cacheKey)
     if (cached) return reply.send(cached)
 
@@ -1355,6 +1365,7 @@ export default async function publicRoutes(app: FastifyInstance) {
     const where: any = {
       status: 'ACTIVE',
       authorizedPublish: true,
+      ...(scopedCompanyId && { companyId: scopedCompanyId }),
       neighborhood: { not: null },
       ...(purpose && { purpose: purpose.toUpperCase() }),
       ...(type && { type: type.toUpperCase() }),
