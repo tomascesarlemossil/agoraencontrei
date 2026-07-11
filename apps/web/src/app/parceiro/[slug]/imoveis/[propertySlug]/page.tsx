@@ -14,6 +14,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { resolveTheme } from '@/lib/site-factory/theme-registry'
 import TomasWidget from '@/components/tomas/TomasWidget'
+import { PartnerChatWidget } from '@/components/partner/PartnerChatWidget'
 
 // Render ao vivo: evita 404 preso no cache ISR/CDN quando a API tem um blip.
 export const dynamic = 'force-dynamic'
@@ -338,7 +339,12 @@ export default async function TenantPropertyPage({
         </div>
       </footer>
 
-      <TomasWidget tenantSlug={slug} partnerName={tenant.name} />
+      {tenant.settings?.chatMode !== 'off' && tenant.settings?.chatMode !== 'partner' && (
+        <TomasWidget tenantSlug={slug} partnerName={tenant.name} propertyContext={{ propertyId: property.id, title: property.title }} />
+      )}
+      {(tenant.settings?.chatMode === 'partner' || tenant.settings?.chatMode === 'both') && (
+        <PartnerChatWidget tenantSlug={slug} partnerName={tenant.name} propertyId={property.id} offsetForTomas={tenant.settings?.chatMode === 'both'} />
+      )}
     </div>
   )
 }

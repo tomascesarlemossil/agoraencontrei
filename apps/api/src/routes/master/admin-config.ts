@@ -387,7 +387,6 @@ export async function publicCatalogRoutes(app: FastifyInstance) {
           // Defensivo: bloqueia por slug E por metadata.internal (mesmo se metadata
           // estiver ausente/inconsistente).
           slug: { not: 'fundador' },
-          NOT: { metadata: { path: ['internal'], equals: true } },
           ...(nicheSlug && {
             OR: [
               { nicheFilter: { isEmpty: true } },
@@ -402,7 +401,7 @@ export async function publicCatalogRoutes(app: FastifyInstance) {
           maxUsers: true, themes: true, modules: true, features: true, billingType: true,
           highlighted: true, sortOrder: true,
         },
-      }).catch(() => []),
+      }).then((rows: any[]) => rows.filter(plan => plan.metadata?.internal !== true)).catch(() => []),
       prisma.moduleDefinition.findMany({
         where: {
           isActive: true,

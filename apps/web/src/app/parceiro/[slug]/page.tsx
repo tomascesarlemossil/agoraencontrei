@@ -10,6 +10,7 @@ import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import { resolveTheme, type ThemeConfig } from '@/lib/site-factory/theme-registry'
 import TomasWidget from '@/components/tomas/TomasWidget'
+import { PartnerChatWidget } from '@/components/partner/PartnerChatWidget'
 
 // Render ao vivo: evita 404 preso no cache ISR/CDN quando a API tem um blip.
 export const dynamic = 'force-dynamic'
@@ -772,6 +773,9 @@ export default async function TenantPage({
           público). O companyId é resolvido server-side a partir do slug. */}
       {tenant.settings?.chatMode !== 'off' && tenant.settings?.chatMode !== 'partner' && (
         <TomasWidget tenantSlug={slug} partnerName={tenant.name} />
+      )}
+      {(tenant.settings?.chatMode === 'partner' || tenant.settings?.chatMode === 'both') && (
+        <PartnerChatWidget tenantSlug={slug} partnerName={tenant.name} offsetForTomas={tenant.settings?.chatMode === 'both'} />
       )}
     </div>
   )

@@ -2241,4 +2241,86 @@ export default async function publicRoutes(app: FastifyInstance) {
 
     return reply.send({ success: true, data: { ...tenant, settings: publicTenantSettings(tenant.settings) } })
   })
+
+  // POST /api/v1/public/partner-chat — atendimento humano do site parceiro.
+  // O companyId é sempre resolvido pelo tenant no servidor e o consentimento
+  // explícito é obrigatório antes de compartilhar contato com a imobiliária.
+  app.post('/partner-chat', async (req, reply) => {
+    const body = z.object({
+      tenantSlug: z.string().min(2).max(80),
+      visitorId: z.string().min(8).max(120).optional(),
+      name: z.string().min(2).max(120),
+      phone: z.string().min(10).max(30),
+      email: z.string().email().max(180).optional().or(z.literal('')),
+      message: z.string().min(2).max(2000),
+      consent: z.literal(true),
+      propertyId: z.string().optional(),
+    }).parse(req.body)
+
+    const tenant = await (app.prisma as any).tenant.findUnique({
+      where: { subdomain: body.tenantSlug },
+      select: { id: true, name: true, companyId: true, isActive: true, planStatus: true, settings: true },
+    }).catch(() => null)
+    const settings = (tenant?.settings ?? {}) as Record<string, any>
+    const chatMode = ['tomas', 'partner', 'both', 'off'].includes(settings.chatMode) ? settings.chatMode : 'tomas'
+    if (!tenant?.companyId || !tenant.isActive || tenant.planStatus === 'SUSPENDED' || !['partner', 'both'].includes(chatMode)) {
+      return reply.status(404).send({ error: 'PARTNER_CHAT_UNAVAILABLE' })
+    }
+
+    const digits = body.phone.replace(/\D/g, '')
+    const phone = `+${digits.startsWith('55') ? digits : `55${digits}`}`
+    const team = await app.prisma.user.findMany({
+      where: { companyId: tenant.companyId, status: 'ACTIVE', role: { in: ['BROKER', 'MANAGER', 'ADMIN'] as any } },
+      select: { id: true, _count: { select: { assignedLeads: true } } },
+    })
+    const configuredBroker = typeof settings.onCallBrokerId === 'string'
+      ? team.find(member => member.id === settings.onCallBrokerId)
+      : null
+    const assignedToId = (configuredBroker ?? [...team].sort((a, b) => a._count.assignedLeads - b._count.assignedLeads)[0])?.id
+
+    const result = await app.prisma.$transaction(async tx => {
+      const existingLead = await tx.lead.findFirst({ where: { companyId: tenant.companyId, phone } })
+      const lead = existingLead
+        ? await tx.lead.update({
+            where: { id: existingLead.id },
+            data: { name: body.name, email: body.email || existingLead.email, assignedToId: existingLead.assignedToId || assignedToId, lastContactAt: new Date() },
+          })
+        : await tx.lead.create({
+            data: {
+              companyId: tenant.companyId, name: body.name, phone, email: body.email || null,
+              source: 'partner_site', status: 'NEW', assignedToId, lastContactAt: new Date(),
+              notes: body.propertyId ? `Contato iniciado no imóvel ${body.propertyId}` : 'Contato iniciado no site do parceiro',
+            },
+          })
+      const conversation = await tx.conversation.upsert({
+        where: { companyId_phone: { companyId: tenant.companyId, phone } },
+        create: {
+          companyId: tenant.companyId, phone, contactName: body.name, channel: 'web',
+          status: assignedToId ? 'assigned' : 'open', assignedToId, leadId: lead.id,
+          lastMessage: body.message, lastMessageAt: new Date(), unreadCount: 1,
+          metadata: { tenantSlug: body.tenantSlug, visitorId: body.visitorId || null, whatsappConsent: true },
+        },
+        update: {
+          contactName: body.name, channel: 'web', leadId: lead.id,
+          assignedToId: assignedToId || undefined, status: assignedToId ? 'assigned' : 'open',
+          lastMessage: body.message, lastMessageAt: new Date(), unreadCount: { increment: 1 },
+          metadata: { tenantSlug: body.tenantSlug, visitorId: body.visitorId || null, whatsappConsent: true },
+        },
+      })
+      await tx.message.create({
+        data: { conversationId: conversation.id, direction: 'inbound', type: 'text', content: body.message, status: 'delivered', metadata: { source: 'partner_site' } },
+      })
+      return { lead, conversation }
+    })
+
+    const { recordLeadTransferConsent } = await import('../../services/lead-transfer-consent.service.js')
+    await recordLeadTransferConsent(app.prisma, {
+      visitorId: body.visitorId, leadId: result.lead.id,
+      toCompanyId: tenant.companyId, toCompanyName: tenant.name,
+      purpose: 'atendimento imobiliário solicitado pelo visitante', channel: 'WhatsApp',
+      data: { name: body.name, phone, email: body.email || undefined }, source: 'partner_site_chat',
+    })
+
+    return reply.status(201).send({ success: true, data: { conversationId: result.conversation.id, assigned: Boolean(assignedToId) } })
+  })
 }
