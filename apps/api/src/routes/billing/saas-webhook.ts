@@ -209,6 +209,20 @@ async function handleTenantEvent(
             data: { isActive: true },
           }).catch(() => null)
         }
+
+        const bundled = await tx.tenantModuleActivation.findMany({
+          where: { tenantId: tenant.id, status: 'pending_payment' },
+          select: { id: true, metadata: true },
+        })
+        const bundledIds = bundled
+          .filter((activation: any) => activation.metadata?.bundledCheckout === true)
+          .map((activation: any) => activation.id)
+        if (bundledIds.length > 0) {
+          await tx.tenantModuleActivation.updateMany({
+            where: { id: { in: bundledIds } },
+            data: { status: 'active', activatedAt: new Date() },
+          })
+        }
       })
 
       // Envia credenciais ao parceiro (e-mail + WhatsApp em paralelo).

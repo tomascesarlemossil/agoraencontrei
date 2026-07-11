@@ -37,6 +37,7 @@ interface ModuleDef {
   billingType: string
   category: string
   icon: string | null
+  requiredPlan?: string | null
 }
 
 interface NicheDef {
@@ -122,6 +123,9 @@ export function DynamicPlans() {
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly')
   const [checkoutPlan, setCheckoutPlan] = useState<PlanDef | null>(null)
   const [checkoutLoading, setCheckoutLoading] = useState(false)
+  const [selectedModuleSlugs, setSelectedModuleSlugs] = useState<string[]>([])
+  const [termsAccepted, setTermsAccepted] = useState(false)
+  const [privacyAccepted, setPrivacyAccepted] = useState(false)
   // Erro inline do checkout — substitui o alert() opaco por um aviso visível
   // dentro do modal, com o motivo real devolvido pela API (CPF inválido,
   // subdomínio em uso, Asaas auth, etc.).
@@ -129,8 +133,15 @@ export function DynamicPlans() {
   const [checkoutForm, setCheckoutForm] = useState({
     name: '', email: '', cpfCnpj: '', phone: '',
     tenantName: '', subdomain: '', layoutType: 'urban_tech', primaryColor: '#d4a853',
-    nicheSlug: 'imobiliaria',
+    nicheSlug: 'imobiliaria', domainType: 'subdomain' as 'subdomain' | 'own', customDomain: '',
   })
+
+  const checkoutModules = checkoutPlan
+    ? modules.filter(mod => mod.billingType === 'recurring' && !checkoutPlan.modules.includes(mod.slug))
+    : []
+  const selectedModulesMonthly = checkoutModules
+    .filter(mod => selectedModuleSlugs.includes(mod.slug))
+    .reduce((sum, mod) => sum + Number(mod.priceMonthly || 0), 0)
   // Check de disponibilidade do subdomínio em tempo real (debounce 400ms).
   // Mostra ✓ verde se livre, X vermelho se ocupado/inválido.
   const [subdomainStatus, setSubdomainStatus] = useState<
@@ -284,7 +295,12 @@ export function DynamicPlans() {
               </ul>
 
               <button
-                onClick={() => setCheckoutPlan(plan)}
+                onClick={() => {
+                  setSelectedModuleSlugs([])
+                  setTermsAccepted(false)
+                  setPrivacyAccepted(false)
+                  setCheckoutPlan(plan)
+                }}
                 className={`block w-full text-center py-2.5 sm:py-3 rounded-lg sm:rounded-xl font-bold text-xs sm:text-sm transition cursor-pointer ${style.cta}`}
               >
                 Assinar Agora <ArrowRight className="inline w-3.5 h-3.5 sm:w-4 sm:h-4 ml-1" />
@@ -456,9 +472,9 @@ export function DynamicPlans() {
             </h3>
             <p className="text-xs sm:text-sm text-gray-400 mb-4 sm:mb-6">
               R$ {formatPrice(
-                billingCycle === 'yearly' && checkoutPlan.priceYearly
+                (billingCycle === 'yearly' && checkoutPlan.priceYearly
                   ? Math.round(Number(checkoutPlan.priceYearly) / 12)
-                  : Number(checkoutPlan.priceMonthly)
+                  : Number(checkoutPlan.priceMonthly)) + selectedModulesMonthly
               )}/mês
               {billingCycle === 'yearly' && checkoutPlan.priceYearly && (
                 <span className="text-emerald-400 ml-1">(cobrança anual)</span>
@@ -497,6 +513,12 @@ export function DynamicPlans() {
                       layoutType: checkoutForm.layoutType,
                       primaryColor: checkoutForm.primaryColor,
                       nicheSlug: checkoutForm.nicheSlug,
+                      domainType: checkoutForm.domainType,
+                      customDomain: checkoutForm.domainType === 'own' ? checkoutForm.customDomain : undefined,
+                      selectedModuleSlugs,
+                      termsAccepted,
+                      privacyAccepted,
+                      termsVersion: '2026-07-11',
                     }),
                   })
 
@@ -643,6 +665,37 @@ export function DynamicPlans() {
               </div>
 
               {/* Nicho */}
+              <div>
+                <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-2">Endereço do site</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setCheckoutForm(f => ({ ...f, domainType: 'subdomain' }))}
+                    className={`rounded-lg border px-3 py-2 text-xs font-semibold ${checkoutForm.domainType === 'subdomain' ? 'border-amber-500 bg-amber-500/10 text-amber-300' : 'border-gray-700 text-gray-400'}`}
+                  >
+                    Subdomínio incluso
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCheckoutForm(f => ({ ...f, domainType: 'own' }))}
+                    className={`rounded-lg border px-3 py-2 text-xs font-semibold ${checkoutForm.domainType === 'own' ? 'border-amber-500 bg-amber-500/10 text-amber-300' : 'border-gray-700 text-gray-400'}`}
+                  >
+                    Domínio próprio
+                  </button>
+                </div>
+                {checkoutForm.domainType === 'own' && (
+                  <input
+                    required
+                    type="text"
+                    value={checkoutForm.customDomain}
+                    onChange={e => setCheckoutForm(f => ({ ...f, customDomain: e.target.value }))}
+                    className="mt-2 w-full rounded-lg border border-gray-700 bg-gray-800 px-3 py-2.5 text-sm text-white outline-none focus:border-transparent focus:ring-2 focus:ring-amber-500"
+                    placeholder="www.suaimobiliaria.com.br"
+                  />
+                )}
+                <p className="mt-1 text-[11px] text-gray-500">O subdomínio permanece como endereço técnico e reserva da sua conta.</p>
+              </div>
+
               {niches.length > 0 && (
                 <div>
                   <label className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">
@@ -772,6 +825,43 @@ export function DynamicPlans() {
               </div>
 
               {/* Erro inline (substitui o alert opaco) */}
+              {checkoutModules.length > 0 && (
+                <fieldset className="rounded-xl border border-gray-700 p-3">
+                  <legend className="px-1 text-xs font-semibold text-gray-300">Módulos adicionais</legend>
+                  <div className="space-y-2">
+                    {checkoutModules.map(mod => {
+                      const checked = selectedModuleSlugs.includes(mod.slug)
+                      return (
+                        <label key={mod.id} className="flex cursor-pointer items-start gap-3 rounded-lg p-2 hover:bg-white/5">
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={() => setSelectedModuleSlugs(current => checked ? current.filter(slug => slug !== mod.slug) : [...current, mod.slug])}
+                            className="mt-0.5 h-4 w-4 accent-amber-500"
+                          />
+                          <span className="min-w-0 flex-1">
+                            <span className="block text-xs font-semibold text-white">{mod.name}</span>
+                            {mod.description && <span className="block text-[11px] text-gray-500">{mod.description}</span>}
+                          </span>
+                          <span className="text-xs font-semibold text-amber-300">+ R$ {formatPrice(Number(mod.priceMonthly || 0))}/mês</span>
+                        </label>
+                      )
+                    })}
+                  </div>
+                </fieldset>
+              )}
+
+              <div className="space-y-2 rounded-xl border border-gray-700 p-3 text-xs text-gray-300">
+                <label className="flex items-start gap-2">
+                  <input required type="checkbox" checked={termsAccepted} onChange={e => setTermsAccepted(e.target.checked)} className="mt-0.5 h-4 w-4 accent-amber-500" />
+                  <span>Li e aceito o <a href="/termos-uso" target="_blank" rel="noreferrer" className="font-semibold text-amber-300 underline">contrato eletrônico e os termos de uso</a>.</span>
+                </label>
+                <label className="flex items-start gap-2">
+                  <input required type="checkbox" checked={privacyAccepted} onChange={e => setPrivacyAccepted(e.target.checked)} className="mt-0.5 h-4 w-4 accent-amber-500" />
+                  <span>Li e aceito a <a href="/politica-privacidade" target="_blank" rel="noreferrer" className="font-semibold text-amber-300 underline">Política de Privacidade</a> e o tratamento de dados conforme a LGPD.</span>
+                </label>
+              </div>
+
               {checkoutError && (
                 <div className="rounded-lg border border-red-500/40 bg-red-500/10 p-3 text-xs sm:text-sm">
                   <div className="flex items-start gap-2">
@@ -810,8 +900,8 @@ export function DynamicPlans() {
                     <Shield className="w-4 h-4" />
                     Assinar — R$ {formatPrice(
                       billingCycle === 'yearly' && checkoutPlan.priceYearly
-                        ? Number(checkoutPlan.priceYearly)
-                        : Number(checkoutPlan.priceMonthly)
+                        ? Number(checkoutPlan.priceYearly) + selectedModulesMonthly * 12
+                        : Number(checkoutPlan.priceMonthly) + selectedModulesMonthly
                     )}{billingCycle === 'yearly' ? '/ano' : '/mês'}
                   </>
                 )}

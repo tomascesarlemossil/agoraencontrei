@@ -84,8 +84,14 @@ export default async function saasBillingRoutes(app: FastifyInstance) {
           layoutType: { type: 'string' },
           primaryColor: { type: 'string' },
           nicheSlug: { type: 'string' },
+          domainType: { type: 'string', enum: ['subdomain', 'own'] },
+          customDomain: { type: 'string' },
+          selectedModuleSlugs: { type: 'array', items: { type: 'string' }, maxItems: 20 },
+          termsAccepted: { type: 'boolean' },
+          privacyAccepted: { type: 'boolean' },
+          termsVersion: { type: 'string' },
         },
-        required: ['planSlug', 'customer', 'tenantName', 'subdomain'],
+        required: ['planSlug', 'customer', 'tenantName', 'subdomain', 'termsAccepted', 'privacyAccepted'],
       },
     },
   }, async (req, reply) => {
@@ -105,6 +111,12 @@ export default async function saasBillingRoutes(app: FastifyInstance) {
       layoutType?: string
       primaryColor?: string
       nicheSlug?: string
+      domainType?: 'subdomain' | 'own'
+      customDomain?: string
+      selectedModuleSlugs?: string[]
+      termsAccepted: boolean
+      privacyAccepted: boolean
+      termsVersion?: string
     }
 
     // Sanity-check obrigatórios antes de bater no Asaas — devolve o motivo
@@ -122,6 +134,17 @@ export default async function saasBillingRoutes(app: FastifyInstance) {
         error: 'INVALID_SUBDOMAIN',
         message: 'Subdomínio deve ter pelo menos 3 caracteres (letras, números e hífen).',
       })
+    }
+    if (!body.termsAccepted || !body.privacyAccepted) {
+      return reply.status(400).send({
+        error: 'TERMS_REQUIRED',
+        message: 'É necessário aceitar o contrato de assinatura e a Política de Privacidade.',
+      })
+    }
+    const customDomain = (body.customDomain || '').trim().toLowerCase()
+      .replace(/^https?:\/\//, '').replace(/\/.*$/, '')
+    if (body.domainType === 'own' && (!customDomain.includes('.') || customDomain.length < 4)) {
+      return reply.status(400).send({ error: 'INVALID_CUSTOM_DOMAIN', message: 'Informe um domínio próprio válido.' })
     }
 
     // 1. Validate plan exists and is active — price from DB, never frontend
@@ -165,6 +188,12 @@ export default async function saasBillingRoutes(app: FastifyInstance) {
         message: `O subdomínio "${body.subdomain}" já está em uso. Escolha outro.`,
       })
     }
+    if (body.domainType === 'own') {
+      const existingDomain = await prisma.tenant.findFirst({ where: { customDomain } }).catch(() => null)
+      if (existingDomain) {
+        return reply.status(409).send({ error: 'DOMAIN_TAKEN', message: `O domínio "${customDomain}" já está vinculado a outro parceiro.` })
+      }
+    }
 
     // Bloqueia checkout duplicado — se o e-mail já tem conta, manda logar
     // em vez de criar uma segunda Company silenciosamente.
@@ -188,9 +217,42 @@ export default async function saasBillingRoutes(app: FastifyInstance) {
 
     // 3. Price from DB — never trust frontend
     const cycle = body.billingCycle || 'MONTHLY'
-    const price = cycle === 'YEARLY' && plan.priceYearly
+    const basePlanPrice = cycle === 'YEARLY' && plan.priceYearly
       ? Number(plan.priceYearly)
       : Number(plan.priceMonthly)
+    const requestedModuleSlugs = [...new Set(body.selectedModuleSlugs ?? [])]
+      .filter(slug => !(plan.modules as string[]).includes(slug))
+    const selectedModules = requestedModuleSlugs.length > 0
+      ? await prisma.moduleDefinition.findMany({
+          where: { slug: { in: requestedModuleSlugs }, isActive: true, billingType: 'recurring' },
+        })
+      : []
+    if (selectedModules.length !== requestedModuleSlugs.length) {
+      return reply.status(400).send({
+        error: 'INVALID_MODULE_SELECTION',
+        message: 'Um ou mais módulos escolhidos não estão disponíveis para contratação recorrente.',
+      })
+    }
+    const requiredPlanSlugs = [...new Set(selectedModules.map((mod: any) => mod.requiredPlan).filter(Boolean))] as string[]
+    const requiredPlans = requiredPlanSlugs.length
+      ? await prisma.planDefinition.findMany({ where: { slug: { in: requiredPlanSlugs } }, select: { slug: true, sortOrder: true } })
+      : []
+    const requiredPlanOrder = new Map(requiredPlans.map((required: any) => [required.slug, required.sortOrder]))
+    const incompatibleModule = selectedModules.find((mod: any) => {
+      const wrongNiche = Array.isArray(mod.nicheFilter) && mod.nicheFilter.length > 0 && !mod.nicheFilter.includes(body.nicheSlug || 'imobiliaria')
+      const minimumOrder = mod.requiredPlan ? requiredPlanOrder.get(mod.requiredPlan) : undefined
+      const wrongPlan = typeof minimumOrder === 'number' && plan.sortOrder < minimumOrder
+      return wrongNiche || wrongPlan
+    })
+    if (incompatibleModule) {
+      return reply.status(409).send({
+        error: 'MODULE_NOT_AVAILABLE_FOR_PLAN',
+        message: `O módulo "${incompatibleModule.name}" não está disponível para o plano ou nicho escolhido.`,
+      })
+    }
+    const moduleMonthlyTotal = selectedModules.reduce((sum: number, mod: any) => sum + Number(mod.priceMonthly || 0), 0)
+    const modulePrice = cycle === 'YEARLY' ? moduleMonthlyTotal * 12 : moduleMonthlyTotal
+    const price = basePlanPrice + modulePrice
 
     const asaasCycle = cycle === 'YEARLY' ? 'YEARLY' as const : 'MONTHLY' as const
 
@@ -262,6 +324,8 @@ export default async function saasBillingRoutes(app: FastifyInstance) {
           data: {
             name: body.tenantName,
             subdomain: body.subdomain,
+            customDomain: body.domainType === 'own' ? customDomain : null,
+            domainType: body.domainType === 'own' ? 'own' : 'subdomain',
             layoutType: body.layoutType || 'urban_tech',
             primaryColor: body.primaryColor || '#d4a853',
             plan: plan.slug.toUpperCase(),
@@ -287,9 +351,31 @@ export default async function saasBillingRoutes(app: FastifyInstance) {
               // Novos sites ficam em preparação até o checklist obrigatório
               // ser concluído e a publicação ser confirmada pelo parceiro.
               sitePublished: false,
+              selectedModules: selectedModules.map((mod: any) => mod.slug),
+              termsAcceptedAt: new Date().toISOString(),
+              termsVersion: body.termsVersion || '2026-07-11',
+              privacyAcceptedAt: new Date().toISOString(),
             },
           },
         })
+
+        if (selectedModules.length > 0) {
+          await tx.tenantModuleActivation.createMany({
+            data: selectedModules.map((mod: any) => ({
+              tenantId: tenant.id,
+              moduleId: mod.id,
+              status: 'pending_payment',
+              asaasChargeId: subscription.id,
+              metadata: {
+                bundledCheckout: true,
+                moduleSlug: mod.slug,
+                priceMonthly: Number(mod.priceMonthly || 0),
+                billingCycle: cycle,
+              },
+            })),
+            skipDuplicates: true,
+          })
+        }
 
         // Provision the video editor quota when the chosen plan unlocks the
         // module. Only Nível Máximo includes `video_editor` today; future
@@ -323,10 +409,20 @@ export default async function saasBillingRoutes(app: FastifyInstance) {
           payload: {
             planSlug: plan.slug,
             price,
+            basePlanPrice,
+            modulePrice,
+            selectedModules: selectedModules.map((mod: any) => mod.slug),
             cycle,
             asaasCustomerId: customer.id,
             asaasSubscriptionId: subscription.id,
             subdomain: body.subdomain,
+            domainType: body.domainType || 'subdomain',
+            customDomain: body.domainType === 'own' ? customDomain : null,
+            termsVersion: body.termsVersion || '2026-07-11',
+            termsAcceptedAt: new Date().toISOString(),
+            privacyAcceptedAt: new Date().toISOString(),
+            acceptanceIp: req.ip,
+            acceptanceUserAgent: req.headers['user-agent'] || null,
           } as any,
         },
       }).catch(() => {})
@@ -388,6 +484,9 @@ export default async function saasBillingRoutes(app: FastifyInstance) {
           subdomain: tenant.subdomain,
           plan: plan.name,
           price,
+          basePlanPrice,
+          modulePrice,
+          modules: selectedModules.map((mod: any) => ({ slug: mod.slug, name: mod.name })),
           cycle,
           asaasSubscriptionId: subscription.id,
           // Client deve redirecionar para a página de sucesso (que mostra
