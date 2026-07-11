@@ -295,12 +295,35 @@ export default async function tenantRoutes(app: FastifyInstance) {
     if (logoShowText !== undefined) brandingSettings.logoShowText = logoShowText
     if (logoPosition !== undefined) brandingSettings.logoPosition = logoPosition
 
+    const normalizedSettings = { ...(settings ?? {}) }
+    if (normalizedSettings.leadRoutingMode !== undefined) {
+      normalizedSettings.leadRoutingMode = z.enum(['balanced', 'on_call', 'region']).parse(normalizedSettings.leadRoutingMode)
+    }
+    const routingRules = z.array(z.object({ region: z.string().min(2).max(120), brokerId: z.string().min(1) })).max(50)
+      .optional().parse(normalizedSettings.regionRoutingRules)
+    const referencedUserIds = [
+      typeof normalizedSettings.onCallBrokerId === 'string' ? normalizedSettings.onCallBrokerId : null,
+      ...(routingRules ?? []).map(rule => rule.brokerId),
+    ].filter(Boolean) as string[]
+    if (referencedUserIds.length > 0) {
+      if (!tenant.companyId) {
+        return reply.status(400).send({ error: 'TENANT_WITHOUT_COMPANY', message: 'Vincule uma empresa antes de configurar responsáveis.' })
+      }
+      const validUsers = await app.prisma.user.count({
+        where: { id: { in: [...new Set(referencedUserIds)] }, companyId: tenant.companyId, status: 'ACTIVE' },
+      })
+      if (validUsers !== new Set(referencedUserIds).size) {
+        return reply.status(400).send({ error: 'INVALID_ROUTING_USER', message: 'Um dos responsáveis selecionados não pertence à equipe ativa desta empresa.' })
+      }
+    }
+    if (routingRules) normalizedSettings.regionRoutingRules = routingRules.map(rule => ({ region: rule.region.trim(), brokerId: rule.brokerId }))
+
     const updated = await (app.prisma as any).tenant.update({
       where: { id },
       data: {
         ...columns,
         ...((settings || Object.keys(brandingSettings).length > 0) && {
-          settings: { ...(tenant.settings || {}), ...settings, ...brandingSettings },
+          settings: { ...(tenant.settings || {}), ...normalizedSettings, ...brandingSettings },
         }),
       },
     })

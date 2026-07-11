@@ -11,7 +11,7 @@ export function PartnerChatWidget({ tenantSlug, partnerName, propertyId, offsetF
   const [sent, setSent] = useState(false)
   const [error, setError] = useState('')
   const [visitorId, setVisitorId] = useState('')
-  const [form, setForm] = useState({ name: '', phone: '', email: '', message: '', consent: false })
+  const [form, setForm] = useState({ name: '', phone: '', email: '', city: '', message: '', consent: false })
 
   useEffect(() => {
     const key = 'ae_partner_visitor_id'
@@ -55,6 +55,7 @@ export function PartnerChatWidget({ tenantSlug, partnerName, propertyId, offsetF
               <input required value={form.name} onChange={e => setForm(v => ({ ...v, name: e.target.value }))} placeholder="Seu nome" className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900" />
               <input required value={form.phone} onChange={e => setForm(v => ({ ...v, phone: e.target.value }))} placeholder="WhatsApp com DDD" className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900" />
               <input type="email" value={form.email} onChange={e => setForm(v => ({ ...v, email: e.target.value }))} placeholder="E-mail (opcional)" className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900" />
+              {!propertyId && <input value={form.city} onChange={e => setForm(v => ({ ...v, city: e.target.value }))} placeholder="Cidade ou bairro de interesse" className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900" />}
               <textarea required rows={3} value={form.message} onChange={e => setForm(v => ({ ...v, message: e.target.value }))} placeholder="Como podemos ajudar?" className="w-full resize-none rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900" />
               <label className="flex items-start gap-2 text-xs leading-relaxed text-gray-600"><input required type="checkbox" checked={form.consent} onChange={e => setForm(v => ({ ...v, consent: e.target.checked }))} className="mt-0.5 h-4 w-4" /><span>Autorizo o envio destes dados para {partnerName} e o contato pelo WhatsApp. Posso revogar a autorização.</span></label>
               {error && <p className="text-xs text-red-600">{error}</p>}

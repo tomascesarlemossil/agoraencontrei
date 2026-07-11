@@ -2255,6 +2255,7 @@ export default async function publicRoutes(app: FastifyInstance) {
       message: z.string().min(2).max(2000),
       consent: z.literal(true),
       propertyId: z.string().optional(),
+      city: z.string().max(120).optional(),
     }).parse(req.body)
 
     const tenant = await (app.prisma as any).tenant.findUnique({
@@ -2273,10 +2274,25 @@ export default async function publicRoutes(app: FastifyInstance) {
       where: { companyId: tenant.companyId, status: 'ACTIVE', role: { in: ['BROKER', 'MANAGER', 'ADMIN'] as any } },
       select: { id: true, _count: { select: { assignedLeads: true } } },
     })
+    const propertyLocation = body.propertyId
+      ? await app.prisma.property.findFirst({ where: { id: body.propertyId, companyId: tenant.companyId }, select: { city: true, neighborhood: true } })
+      : null
+    const requestedRegion = `${propertyLocation?.neighborhood || ''} ${propertyLocation?.city || body.city || ''}`.trim().toLocaleLowerCase('pt-BR')
+    const regionRules = Array.isArray(settings.regionRoutingRules) ? settings.regionRoutingRules : []
+    const regionRule = requestedRegion
+      ? regionRules.find((rule: any) => typeof rule?.region === 'string' && requestedRegion.includes(rule.region.trim().toLocaleLowerCase('pt-BR')))
+      : null
+    const regionBroker = regionRule ? team.find(member => member.id === regionRule.brokerId) : null
     const configuredBroker = typeof settings.onCallBrokerId === 'string'
       ? team.find(member => member.id === settings.onCallBrokerId)
       : null
-    const assignedToId = (configuredBroker ?? [...team].sort((a, b) => a._count.assignedLeads - b._count.assignedLeads)[0])?.id
+    const balancedBroker = [...team].sort((a, b) => a._count.assignedLeads - b._count.assignedLeads)[0]
+    const routingMode = ['balanced', 'on_call', 'region'].includes(settings.leadRoutingMode) ? settings.leadRoutingMode : 'balanced'
+    const assignedToId = (
+      routingMode === 'region' ? (regionBroker ?? configuredBroker ?? balancedBroker)
+        : routingMode === 'on_call' ? (configuredBroker ?? balancedBroker)
+          : balancedBroker
+    )?.id
 
     const result = await app.prisma.$transaction(async tx => {
       const existingLead = await tx.lead.findFirst({ where: { companyId: tenant.companyId, phone } })

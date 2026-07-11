@@ -16,8 +16,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@/hooks/useAuth'
 import { cn } from '@/lib/utils'
 import { MediaUploadInput } from '@/components/dashboard/MediaUploadInput'
+import { usersApi, type User } from '@/lib/api'
 import { ALL_THEMES, resolveTheme, type ThemeKey } from '@/lib/site-factory/theme-registry'
-import { Store, ExternalLink, Loader2, CheckCircle2, Circle, Globe, Palette as PaletteIcon } from 'lucide-react'
+import { Store, ExternalLink, Loader2, CheckCircle2, Circle, Globe, Palette as PaletteIcon, Plus, Trash2, Users } from 'lucide-react'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 const SITE_ROOT = process.env.NEXT_PUBLIC_SITE_ROOT ?? 'agoraencontrei.com.br'
@@ -182,7 +183,16 @@ export default function MeuSitePage() {
     logoPosition: 'left' as 'left' | 'center',
     heroTitle: '', heroSubtitle: '', aboutText: '', address: '', city: '', phone: '', creci: '',
     email: '', hours: '', officialWebsite: '', instagramUrl: '', facebookUrl: '', youtubeUrl: '', chatMode: 'tomas' as 'tomas' | 'partner' | 'both' | 'off',
+    leadRoutingMode: 'balanced' as 'balanced' | 'on_call' | 'region', onCallBrokerId: '',
+    regionRoutingRules: [] as Array<{ region: string; brokerId: string }>,
   })
+
+  const { data: team = [] } = useQuery<User[]>({
+    queryKey: ['partner-routing-team'],
+    queryFn: async () => usersApi.list((await getValidToken())!),
+    enabled: Boolean(tenant),
+  })
+  const routingTeam = team.filter(member => member.status === 'ACTIVE' && ['ADMIN', 'MANAGER', 'BROKER'].includes(member.role))
   const [saved, setSaved] = useState(false)
   // Domínio próprio — fluxo à parte (POST /:id/domain com integração Vercel).
   const [domainInput, setDomainInput] = useState('')
@@ -214,6 +224,9 @@ export default function MeuSitePage() {
         facebookUrl: tenant.settings?.facebookUrl ?? '',
         youtubeUrl: tenant.settings?.youtubeUrl ?? '',
         chatMode: tenant.settings?.chatMode ?? 'tomas',
+        leadRoutingMode: tenant.settings?.leadRoutingMode ?? 'balanced',
+        onCallBrokerId: tenant.settings?.onCallBrokerId ?? '',
+        regionRoutingRules: Array.isArray(tenant.settings?.regionRoutingRules) ? tenant.settings.regionRoutingRules : [],
       })
     }
   }, [tenant])
@@ -249,6 +262,9 @@ export default function MeuSitePage() {
             facebookUrl: form.facebookUrl,
             youtubeUrl: form.youtubeUrl,
             chatMode: form.chatMode,
+            leadRoutingMode: form.leadRoutingMode,
+            onCallBrokerId: form.onCallBrokerId || null,
+            regionRoutingRules: form.regionRoutingRules.filter(rule => rule.region.trim() && rule.brokerId),
           },
         }),
       })
@@ -553,6 +569,47 @@ export default function MeuSitePage() {
                 <option value="off">Sem chat flutuante</option>
               </select>
             </div>
+            {(form.chatMode === 'partner' || form.chatMode === 'both') && (
+              <div className="space-y-3 rounded-lg border border-white/10 bg-black/10 p-4">
+                <h3 className="flex items-center gap-2 text-sm font-semibold text-white"><Users className="h-4 w-4 text-yellow-400" />Distribuição dos atendimentos</h3>
+                <div>
+                  <label className="mb-1.5 block text-xs font-semibold text-white/70">Regra principal</label>
+                  <select value={form.leadRoutingMode} onChange={e => setForm(p => ({ ...p, leadRoutingMode: e.target.value as typeof form.leadRoutingMode }))} className="w-full rounded-lg border border-white/10 bg-gray-900 px-3 py-2.5 text-sm text-white">
+                    <option value="balanced">Distribuir para quem tem menos leads</option>
+                    <option value="on_call">Enviar para o corretor de plantão</option>
+                    <option value="region">Distribuir conforme bairro ou cidade</option>
+                  </select>
+                </div>
+                {(form.leadRoutingMode === 'on_call' || form.leadRoutingMode === 'region') && (
+                  <div>
+                    <label className="mb-1.5 block text-xs font-semibold text-white/70">Corretor de plantão ou reserva</label>
+                    <select value={form.onCallBrokerId} onChange={e => setForm(p => ({ ...p, onCallBrokerId: e.target.value }))} className="w-full rounded-lg border border-white/10 bg-gray-900 px-3 py-2.5 text-sm text-white">
+                      <option value="">Usar distribuição equilibrada como reserva</option>
+                      {routingTeam.map(member => <option key={member.id} value={member.id}>{member.name} — {member.role}</option>)}
+                    </select>
+                  </div>
+                )}
+                {form.leadRoutingMode === 'region' && (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between gap-3">
+                      <label className="text-xs font-semibold text-white/70">Regras por região</label>
+                      <button type="button" onClick={() => setForm(p => ({ ...p, regionRoutingRules: [...p.regionRoutingRules, { region: '', brokerId: '' }] }))} className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-white/15 text-white" title="Adicionar região"><Plus className="h-4 w-4" /></button>
+                    </div>
+                    {form.regionRoutingRules.map((rule, index) => (
+                      <div key={`${index}-${rule.brokerId}`} className="grid grid-cols-[1fr_1fr_auto] gap-2">
+                        <input value={rule.region} onChange={e => setForm(p => ({ ...p, regionRoutingRules: p.regionRoutingRules.map((item, itemIndex) => itemIndex === index ? { ...item, region: e.target.value } : item) }))} placeholder="Bairro ou cidade" className="min-w-0 rounded-md border border-white/10 bg-gray-900 px-3 py-2 text-xs text-white" />
+                        <select value={rule.brokerId} onChange={e => setForm(p => ({ ...p, regionRoutingRules: p.regionRoutingRules.map((item, itemIndex) => itemIndex === index ? { ...item, brokerId: e.target.value } : item) }))} className="min-w-0 rounded-md border border-white/10 bg-gray-900 px-2 py-2 text-xs text-white">
+                          <option value="">Responsável</option>
+                          {routingTeam.map(member => <option key={member.id} value={member.id}>{member.name}</option>)}
+                        </select>
+                        <button type="button" onClick={() => setForm(p => ({ ...p, regionRoutingRules: p.regionRoutingRules.filter((_, itemIndex) => itemIndex !== index) }))} className="flex h-8 w-8 items-center justify-center rounded-md text-red-300" title="Remover região"><Trash2 className="h-4 w-4" /></button>
+                      </div>
+                    ))}
+                    {form.regionRoutingRules.length === 0 && <p className="text-xs text-white/40">Adicione bairros ou cidades e escolha o responsável. Sem correspondência, o plantão ou a distribuição equilibrada será usada.</p>}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           <div className="bg-white/5 border border-white/10 rounded-2xl p-5 space-y-1">
