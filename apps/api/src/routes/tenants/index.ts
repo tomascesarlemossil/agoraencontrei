@@ -208,6 +208,60 @@ export default async function tenantRoutes(app: FastifyInstance) {
     return reply.send({ success: true, data: { ...updated, readiness } })
   })
 
+  // GET /mine/operations — resumo operacional isolado da empresa parceira.
+  app.get('/mine/operations', {
+    schema: { tags: ['tenants'], summary: 'Get partner site operational summary' },
+  }, async (req, reply) => {
+    const isManagerRole = ['ADMIN', 'MANAGER', 'SUPER_ADMIN'].includes(req.user.role)
+    if (!isManagerRole) return reply.status(403).send({ error: 'FORBIDDEN' })
+    const tenant = await (app.prisma as any).tenant.findFirst({
+      where: { OR: [{ ownerId: req.user.sub }, { companyId: req.user.cid }] },
+      orderBy: { createdAt: 'desc' },
+    })
+    if (!tenant?.companyId) return reply.status(404).send({ error: 'NO_TENANT_FOR_USER' })
+    const companyId = tenant.companyId
+    const last30d = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+    const [properties, leadsTotal, leads30d, leadsWon, conversationsTotal, conversationsOpen, unread, usersActive, portalsActive, auditTotal, recentAudit] = await Promise.all([
+      app.prisma.property.aggregate({
+        where: { companyId },
+        _count: { _all: true }, _sum: { views: true },
+      }),
+      app.prisma.lead.count({ where: { companyId } }),
+      app.prisma.lead.count({ where: { companyId, createdAt: { gte: last30d } } }),
+      app.prisma.lead.count({ where: { companyId, status: 'WON' } }),
+      app.prisma.conversation.count({ where: { companyId } }),
+      app.prisma.conversation.count({ where: { companyId, status: { in: ['open', 'assigned'] } } }),
+      app.prisma.conversation.aggregate({ where: { companyId }, _sum: { unreadCount: true } }),
+      app.prisma.user.count({ where: { companyId, status: 'ACTIVE' } }),
+      app.prisma.portalConfig.count({ where: { companyId, isActive: true } }),
+      app.prisma.auditLog.count({ where: { companyId } }),
+      app.prisma.auditLog.findMany({
+        where: { companyId }, orderBy: { createdAt: 'desc' }, take: 8,
+        select: { id: true, action: true, resource: true, resourceId: true, createdAt: true, userId: true },
+      }),
+    ])
+    const [activeProperties, featuredProperties, activeModules, pendingModules] = await Promise.all([
+      app.prisma.property.count({ where: { companyId, status: 'ACTIVE', authorizedPublish: true } }),
+      app.prisma.property.count({ where: { companyId, status: 'ACTIVE', authorizedPublish: true, isFeatured: true } }),
+      (app.prisma as any).tenantModuleActivation.count({ where: { tenantId: tenant.id, status: 'active' } }).catch(() => 0),
+      (app.prisma as any).tenantModuleActivation.count({ where: { tenantId: tenant.id, status: 'pending_payment' } }).catch(() => 0),
+    ])
+    const settings = (tenant.settings ?? {}) as Record<string, any>
+    return reply.send({
+      success: true,
+      data: {
+        properties: { total: properties._count._all, active: activeProperties, featured: featuredProperties, views: properties._sum.views ?? 0 },
+        leads: { total: leadsTotal, last30d: leads30d, won: leadsWon, conversionRate: leadsTotal > 0 ? leadsWon / leadsTotal : 0 },
+        conversations: { total: conversationsTotal, open: conversationsOpen, unread: unread._sum.unreadCount ?? 0 },
+        team: { active: usersActive },
+        integrations: { activePortals: portalsActive, activeModules, pendingModules, chatMode: settings.chatMode ?? 'tomas' },
+        subscription: { plan: tenant.plan, status: tenant.planStatus, price: tenant.planPrice, activatedAt: tenant.activatedAt, trialEndsAt: tenant.trialEndsAt },
+        domain: { type: tenant.domainType, subdomain: tenant.subdomain, customDomain: tenant.customDomain, configured: Boolean(tenant.customDomain || tenant.subdomain) },
+        audit: { total: auditTotal, recent: recentAudit },
+      },
+    })
+  })
+
   // GET /mrr — Métricas MRR (apenas SUPER_ADMIN)
   app.get('/mrr', {
     schema: { tags: ['tenants'], summary: 'SaaS MRR metrics (master only)' },

@@ -18,7 +18,7 @@ import { cn } from '@/lib/utils'
 import { MediaUploadInput } from '@/components/dashboard/MediaUploadInput'
 import { usersApi, type User } from '@/lib/api'
 import { ALL_THEMES, resolveTheme, type ThemeKey } from '@/lib/site-factory/theme-registry'
-import { Store, ExternalLink, Loader2, CheckCircle2, Circle, Globe, Palette as PaletteIcon, Plus, Trash2, Users } from 'lucide-react'
+import { Store, ExternalLink, Loader2, CheckCircle2, Circle, Globe, Palette as PaletteIcon, Plus, Trash2, Users, Building2, Eye, UserCheck, MessageSquare, Plug, ShieldCheck } from 'lucide-react'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 const SITE_ROOT = process.env.NEXT_PUBLIC_SITE_ROOT ?? 'agoraencontrei.com.br'
@@ -46,6 +46,17 @@ interface Tenant {
     logoPosition?: 'left' | 'center'
     [key: string]: any
   } | null
+}
+
+interface OperationsSummary {
+  properties: { total: number; active: number; featured: number; views: number }
+  leads: { total: number; last30d: number; won: number; conversionRate: number }
+  conversations: { total: number; open: number; unread: number }
+  team: { active: number }
+  integrations: { activePortals: number; activeModules: number; pendingModules: number; chatMode: string }
+  subscription: { plan: string; status: string; price: string | number | null }
+  domain: { type: string; subdomain: string; customDomain: string | null; configured: boolean }
+  audit: { total: number; recent: Array<{ id: string; action: string; resource: string; createdAt: string }> }
 }
 
 function DarkInput({ label, hint, ...props }: React.InputHTMLAttributes<HTMLInputElement> & { label?: string; hint?: string }) {
@@ -193,6 +204,17 @@ export default function MeuSitePage() {
     enabled: Boolean(tenant),
   })
   const routingTeam = team.filter(member => member.status === 'ACTIVE' && ['ADMIN', 'MANAGER', 'BROKER'].includes(member.role))
+
+  const { data: operations } = useQuery<OperationsSummary>({
+    queryKey: ['partner-operations'],
+    queryFn: async () => {
+      const token = await getValidToken()
+      const response = await fetch(`${API_URL}/api/v1/tenants/mine/operations`, { headers: { Authorization: `Bearer ${token}` } })
+      if (!response.ok) throw new Error('Não foi possível carregar o resumo operacional')
+      return (await response.json()).data as OperationsSummary
+    },
+    enabled: Boolean(tenant),
+  })
   const [saved, setSaved] = useState(false)
   // Domínio próprio — fluxo à parte (POST /:id/domain com integração Vercel).
   const [domainInput, setDomainInput] = useState('')
@@ -414,6 +436,51 @@ export default function MeuSitePage() {
           </p>
         )}
       </section>
+
+      {operations && (
+        <section className="space-y-4" aria-labelledby="operations-title">
+          <div className="flex items-end justify-between gap-3">
+            <div><h2 id="operations-title" className="text-base font-bold text-white">Operação do site</h2><p className="text-xs text-white/45">Resumo atualizado da empresa e do atendimento.</p></div>
+            <span className={`rounded-md px-2.5 py-1 text-xs font-bold ${operations.subscription.status === 'ACTIVE' ? 'bg-emerald-500/15 text-emerald-300' : 'bg-amber-500/15 text-amber-200'}`}>{operations.subscription.plan} · {operations.subscription.status}</span>
+          </div>
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-6">
+            {[
+              { label: 'Imóveis ativos', value: operations.properties.active, detail: `${operations.properties.total} cadastrados`, icon: Building2 },
+              { label: 'Visualizações', value: operations.properties.views, detail: `${operations.properties.featured} destaques`, icon: Eye },
+              { label: 'Leads', value: operations.leads.total, detail: `${operations.leads.last30d} nos últimos 30 dias`, icon: UserCheck },
+              { label: 'Conversas abertas', value: operations.conversations.open, detail: `${operations.conversations.unread} não lidas`, icon: MessageSquare },
+              { label: 'Equipe ativa', value: operations.team.active, detail: 'usuários habilitados', icon: Users },
+              { label: 'Integrações', value: operations.integrations.activePortals + operations.integrations.activeModules, detail: `${operations.integrations.pendingModules} pendentes`, icon: Plug },
+            ].map(item => (
+              <div key={item.label} className="min-w-0 rounded-lg border border-white/10 bg-white/5 p-3">
+                <item.icon className="mb-3 h-4 w-4 text-yellow-400/80" />
+                <p className="text-xl font-bold text-white">{item.value.toLocaleString('pt-BR')}</p>
+                <p className="truncate text-xs font-semibold text-white/70">{item.label}</p>
+                <p className="mt-1 text-[11px] leading-tight text-white/35">{item.detail}</p>
+              </div>
+            ))}
+          </div>
+          <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
+            <div className="rounded-lg border border-white/10 bg-white/5 p-4">
+              <p className="flex items-center gap-2 text-xs font-bold text-white"><Globe className="h-4 w-4 text-yellow-400/80" />Domínio</p>
+              <p className="mt-2 truncate text-sm text-white/75">{operations.domain.customDomain || `${operations.domain.subdomain}.${SITE_ROOT}`}</p>
+              <p className="mt-1 text-xs text-emerald-300">Configurado</p>
+            </div>
+            <div className="rounded-lg border border-white/10 bg-white/5 p-4">
+              <p className="flex items-center gap-2 text-xs font-bold text-white"><ShieldCheck className="h-4 w-4 text-yellow-400/80" />Conversão de leads</p>
+              <p className="mt-2 text-2xl font-bold text-white">{(operations.leads.conversionRate * 100).toLocaleString('pt-BR', { maximumFractionDigits: 1 })}%</p>
+              <p className="mt-1 text-xs text-white/40">{operations.leads.won} negócios ganhos</p>
+            </div>
+            <div className="rounded-lg border border-white/10 bg-white/5 p-4">
+              <p className="text-xs font-bold text-white">Últimas alterações</p>
+              <div className="mt-2 space-y-1.5">
+                {operations.audit.recent.slice(0, 3).map(event => <p key={event.id} className="truncate text-xs text-white/50">{event.action} · {new Date(event.createdAt).toLocaleDateString('pt-BR')}</p>)}
+                {operations.audit.recent.length === 0 && <p className="text-xs text-white/35">Nenhuma alteração registrada.</p>}
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Domínio próprio (opcional) — conecta um domínio do parceiro via Vercel */}
       <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
