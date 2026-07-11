@@ -37,6 +37,36 @@ const TENANT_LAYOUT_TYPES = z.enum([
   'editorial_journal',
 ])
 
+type ReadinessItem = { id: string; label: string; complete: boolean }
+
+async function getTenantReadiness(prisma: any, tenant: any) {
+  const settings = (tenant.settings ?? {}) as Record<string, unknown>
+  const company = tenant.companyId
+    ? await prisma.company.findUnique({ where: { id: tenant.companyId } })
+    : null
+  const [propertyCount, teamCount] = tenant.companyId
+    ? await Promise.all([
+        prisma.property.count({ where: { companyId: tenant.companyId, status: 'ACTIVE', authorizedPublish: true } }),
+        prisma.user.count({ where: { companyId: tenant.companyId, status: 'ACTIVE' } }),
+      ])
+    : [0, 0]
+
+  const present = (...values: unknown[]) => values.some(value => typeof value === 'string' && value.trim().length > 0)
+  const items: ReadinessItem[] = [
+    { id: 'identity', label: 'Nome e identidade visual', complete: present(tenant.name) && present(tenant.logoUrl, company?.logoUrl) && present(tenant.primaryColor) },
+    { id: 'contact', label: 'Telefone e e-mail', complete: present(settings.phone, company?.phone) && present(settings.email, company?.email) },
+    { id: 'creci', label: 'CRECI da imobiliária', complete: present(settings.creci, company?.creci) },
+    { id: 'address', label: 'Endereço e cidade', complete: present(settings.address, company?.address) && present(settings.city, company?.city) },
+    { id: 'social', label: 'Ao menos uma rede social', complete: present(settings.instagramUrl, settings.facebookUrl, settings.youtubeUrl) },
+    { id: 'content', label: 'Título, apresentação e sobre', complete: present(settings.heroTitle) && present(settings.heroSubtitle) && present(settings.aboutText) },
+    { id: 'domain', label: 'Domínio ou subdomínio', complete: present(tenant.customDomain, tenant.subdomain) },
+    { id: 'properties', label: 'Ao menos um imóvel publicado', complete: propertyCount > 0 },
+    { id: 'team', label: 'Ao menos um usuário ativo na equipe', complete: teamCount > 0 },
+  ]
+  const completed = items.filter(item => item.complete).length
+  return { complete: completed === items.length, completed, total: items.length, items, propertyCount, teamCount }
+}
+
 export default async function tenantRoutes(app: FastifyInstance) {
   app.addHook('preHandler', app.authenticate)
 
@@ -146,7 +176,36 @@ export default async function tenantRoutes(app: FastifyInstance) {
     const canManage = tenant.ownerId === req.user.sub
       || (tenant.companyId === req.user.cid && isManagerRole)
     if (!canManage) return reply.status(403).send({ error: 'FORBIDDEN' })
-    return reply.send({ success: true, data: tenant })
+    const readiness = await getTenantReadiness(app.prisma as any, tenant)
+    return reply.send({ success: true, data: { ...tenant, readiness } })
+  })
+
+  // POST /mine/publication — publication gate backed by server-side data.
+  app.post('/mine/publication', {
+    schema: { tags: ['tenants'], summary: 'Publish or unpublish the current tenant site' },
+  }, async (req, reply) => {
+    const body = z.object({ published: z.boolean() }).parse(req.body)
+    const isManagerRole = ['ADMIN', 'MANAGER', 'SUPER_ADMIN'].includes(req.user.role)
+    const tenant = await (app.prisma as any).tenant.findFirst({
+      where: { OR: [{ ownerId: req.user.sub }, ...(isManagerRole ? [{ companyId: req.user.cid }] : [])] },
+      orderBy: { createdAt: 'desc' },
+    })
+    if (!tenant) return reply.status(404).send({ error: 'NO_TENANT_FOR_USER' })
+
+    const readiness = await getTenantReadiness(app.prisma as any, tenant)
+    if (body.published && !readiness.complete) {
+      return reply.status(409).send({ error: 'ONBOARDING_INCOMPLETE', message: 'Conclua todos os itens obrigatórios antes de publicar.', data: readiness })
+    }
+
+    const settings = { ...(tenant.settings ?? {}), sitePublished: body.published, publicationUpdatedAt: new Date().toISOString() }
+    const updated = await (app.prisma as any).tenant.update({ where: { id: tenant.id }, data: { settings } })
+    await createAuditLog({
+      prisma: app.prisma as any, req,
+      action: 'automation.run' as any,
+      resource: 'tenant', resourceId: tenant.id,
+      meta: { type: body.published ? 'tenant.site_published' : 'tenant.site_unpublished' },
+    })
+    return reply.send({ success: true, data: { ...updated, readiness } })
   })
 
   // GET /mrr — Métricas MRR (apenas SUPER_ADMIN)

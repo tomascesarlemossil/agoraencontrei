@@ -284,6 +284,9 @@ export default async function saasBillingRoutes(app: FastifyInstance) {
               // senha em texto puro no banco. A flag abaixo só sinaliza que o
               // onboarding ainda não teve o primeiro login.
               tempPasswordIssued: true,
+              // Novos sites ficam em preparação até o checklist obrigatório
+              // ser concluído e a publicação ser confirmada pelo parceiro.
+              sitePublished: false,
             },
           },
         })

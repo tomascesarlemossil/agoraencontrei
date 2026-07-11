@@ -17,7 +17,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { cn } from '@/lib/utils'
 import { MediaUploadInput } from '@/components/dashboard/MediaUploadInput'
 import { ALL_THEMES, resolveTheme, type ThemeKey } from '@/lib/site-factory/theme-registry'
-import { Store, ExternalLink, Loader2, CheckCircle2, Globe, Palette as PaletteIcon } from 'lucide-react'
+import { Store, ExternalLink, Loader2, CheckCircle2, Circle, Globe, Palette as PaletteIcon } from 'lucide-react'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100'
 const SITE_ROOT = process.env.NEXT_PUBLIC_SITE_ROOT ?? 'agoraencontrei.com.br'
@@ -32,6 +32,12 @@ interface Tenant {
   logoUrl: string | null
   planStatus: string
   isActive: boolean
+  readiness?: {
+    complete: boolean
+    completed: number
+    total: number
+    items: Array<{ id: string; label: string; complete: boolean }>
+  }
   settings: {
     logoWordmarkUrl?: string | null
     logoVisible?: boolean
@@ -174,8 +180,8 @@ export default function MeuSitePage() {
     name: '', primaryColor: '#143A1F', layoutType: 'urban_tech' as ThemeKey,
     logoUrl: '', logoWordmarkUrl: '', logoVisible: true, logoShowText: true,
     logoPosition: 'left' as 'left' | 'center',
-    heroTitle: '', heroSubtitle: '', aboutText: '', address: '', city: '', phone: '',
-    email: '', hours: '', officialWebsite: '', chatMode: 'tomas' as 'tomas' | 'partner' | 'both' | 'off',
+    heroTitle: '', heroSubtitle: '', aboutText: '', address: '', city: '', phone: '', creci: '',
+    email: '', hours: '', officialWebsite: '', instagramUrl: '', facebookUrl: '', youtubeUrl: '', chatMode: 'tomas' as 'tomas' | 'partner' | 'both' | 'off',
   })
   const [saved, setSaved] = useState(false)
   // Domínio próprio — fluxo à parte (POST /:id/domain com integração Vercel).
@@ -200,9 +206,13 @@ export default function MeuSitePage() {
         address: tenant.settings?.address ?? '',
         city: tenant.settings?.city ?? '',
         phone: tenant.settings?.phone ?? '',
+        creci: tenant.settings?.creci ?? '',
         email: tenant.settings?.email ?? '',
         hours: tenant.settings?.hours ?? '',
         officialWebsite: tenant.settings?.officialWebsite ?? '',
+        instagramUrl: tenant.settings?.instagramUrl ?? '',
+        facebookUrl: tenant.settings?.facebookUrl ?? '',
+        youtubeUrl: tenant.settings?.youtubeUrl ?? '',
         chatMode: tenant.settings?.chatMode ?? 'tomas',
       })
     }
@@ -231,9 +241,13 @@ export default function MeuSitePage() {
             address: form.address,
             city: form.city,
             phone: form.phone,
+            creci: form.creci,
             email: form.email,
             hours: form.hours,
             officialWebsite: form.officialWebsite,
+            instagramUrl: form.instagramUrl,
+            facebookUrl: form.facebookUrl,
+            youtubeUrl: form.youtubeUrl,
             chatMode: form.chatMode,
           },
         }),
@@ -270,6 +284,22 @@ export default function MeuSitePage() {
       qc.invalidateQueries({ queryKey: ['tenant-mine'] })
     },
     onError: (e: Error) => { setDomainError(e.message); setDnsInfo(null) },
+  })
+
+  const publicationMutation = useMutation({
+    mutationFn: async (published: boolean) => {
+      const token = await getValidToken()
+      const res = await fetch(`${API_URL}/api/v1/tenants/mine/publication`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ published }),
+      })
+      const json = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(json?.message ?? 'Não foi possível alterar a publicação')
+      return json
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['tenant-mine'] }),
+    onError: (e: Error) => alert(e.message),
   })
 
   if (isLoading) {
@@ -310,6 +340,7 @@ export default function MeuSitePage() {
   const siteUrl = tenant.customDomain
     ? `https://${tenant.customDomain}`
     : `https://${tenant.subdomain}.${SITE_ROOT}`
+  const sitePublished = tenant.settings?.sitePublished !== false
 
   return (
     <div className="px-4 sm:px-6 py-6 max-w-5xl mx-auto space-y-6">
@@ -331,6 +362,42 @@ export default function MeuSitePage() {
           <Globe className="w-4 h-4" /> {siteUrl.replace(/^https?:\/\//, '')} <ExternalLink className="w-3.5 h-3.5" />
         </a>
       </div>
+
+      <section className="bg-white/5 border border-white/10 rounded-2xl p-5" aria-labelledby="publication-checklist-title">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h2 id="publication-checklist-title" className="text-sm font-bold text-white">Checklist de publicação</h2>
+            <p className="mt-1 text-xs text-white/50">
+              {tenant.readiness?.completed ?? 0} de {tenant.readiness?.total ?? 0} itens obrigatórios concluídos.
+            </p>
+          </div>
+          <button
+            type="button"
+            disabled={publicationMutation.isPending || (!sitePublished && !tenant.readiness?.complete)}
+            onClick={() => publicationMutation.mutate(!sitePublished)}
+            className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-40"
+            style={{ backgroundColor: sitePublished ? '#ffffff1a' : '#C9A84C', color: sitePublished ? 'white' : '#143A1F' }}
+          >
+            {publicationMutation.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+            {sitePublished ? 'Retirar do ar' : 'Publicar site'}
+          </button>
+        </div>
+        <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
+          {tenant.readiness?.items.map(item => (
+            <div key={item.id} className="flex items-center gap-2 text-xs text-white/70">
+              {item.complete
+                ? <CheckCircle2 className="h-4 w-4 flex-none text-emerald-400" />
+                : <Circle className="h-4 w-4 flex-none text-amber-300" />}
+              <span>{item.label}</span>
+            </div>
+          ))}
+        </div>
+        {!sitePublished && !tenant.readiness?.complete && (
+          <p className="mt-4 rounded-lg bg-amber-400/10 px-3 py-2 text-xs text-amber-200">
+            O site permanece em preparação até todos os itens acima serem concluídos.
+          </p>
+        )}
+      </section>
 
       {/* Domínio próprio (opcional) — conecta um domínio do parceiro via Vercel */}
       <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
@@ -470,8 +537,12 @@ export default function MeuSitePage() {
               <DarkInput label="Cidade/UF" value={form.city} onChange={e => setForm(p => ({ ...p, city: e.target.value }))} />
               <DarkInput label="Telefone / WhatsApp" value={form.phone} onChange={e => setForm(p => ({ ...p, phone: e.target.value }))} />
               <DarkInput label="E-mail" value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} />
+              <DarkInput label="CRECI da imobiliária" value={form.creci} onChange={e => setForm(p => ({ ...p, creci: e.target.value }))} />
               <DarkInput label="Horário de atendimento" value={form.hours} onChange={e => setForm(p => ({ ...p, hours: e.target.value }))} />
               <DarkInput label="Site oficial" value={form.officialWebsite} onChange={e => setForm(p => ({ ...p, officialWebsite: e.target.value }))} placeholder="https://www.suaimobiliaria.com.br" />
+              <DarkInput label="Instagram" value={form.instagramUrl} onChange={e => setForm(p => ({ ...p, instagramUrl: e.target.value }))} placeholder="https://instagram.com/suaimobiliaria" />
+              <DarkInput label="Facebook" value={form.facebookUrl} onChange={e => setForm(p => ({ ...p, facebookUrl: e.target.value }))} placeholder="https://facebook.com/suaimobiliaria" />
+              <DarkInput label="YouTube" value={form.youtubeUrl} onChange={e => setForm(p => ({ ...p, youtubeUrl: e.target.value }))} placeholder="https://youtube.com/@suaimobiliaria" />
             </div>
             <div>
               <label className="text-xs font-semibold text-white/70 mb-1.5 block">Chat do site</label>

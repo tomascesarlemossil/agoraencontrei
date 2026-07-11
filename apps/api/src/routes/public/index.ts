@@ -2211,6 +2211,10 @@ export default async function publicRoutes(app: FastifyInstance) {
       return reply.status(404).send({ error: 'TENANT_NOT_FOUND' })
     }
 
+    if (!tenant.isActive || (tenant.settings as any)?.sitePublished === false) {
+      return reply.status(404).send({ error: 'TENANT_NOT_PUBLISHED' })
+    }
+
     return reply.send({ success: true, data: { ...tenant, settings: publicTenantSettings(tenant.settings) } })
   })
 
@@ -2229,6 +2233,10 @@ export default async function publicRoutes(app: FastifyInstance) {
 
     if (!tenant) {
       return reply.status(404).send({ error: 'TENANT_NOT_FOUND' })
+    }
+
+    if (!tenant.isActive || (tenant.settings as any)?.sitePublished === false) {
+      return reply.status(404).send({ error: 'TENANT_NOT_PUBLISHED' })
     }
 
     return reply.send({ success: true, data: { ...tenant, settings: publicTenantSettings(tenant.settings) } })
