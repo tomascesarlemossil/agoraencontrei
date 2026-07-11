@@ -52,7 +52,10 @@ interface Meta { total: number; page: number; limit: number; totalPages: number 
 async function fetchJsonRetry(url: string, revalidate: number): Promise<any | null> {
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
-      const res = await fetch(url, { next: { revalidate } })
+      const res = await fetch(
+        url,
+        revalidate === 0 ? { cache: 'no-store' } : { next: { revalidate } },
+      )
       if (res.status === 404) return null
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       return await res.json()
@@ -86,7 +89,8 @@ async function getProperties(slug: string, sp: Record<string, string>): Promise<
   if (sp.bathrooms) qs.set('bathrooms', sp.bathrooms)
   if (sp.minArea) qs.set('minArea', sp.minArea)
   if (sp.maxArea) qs.set('maxArea', sp.maxArea)
-  const data = await fetchJsonRetry(`${API_URL}/api/v1/public/properties?${qs.toString()}`, 120)
+  // Availability changes must appear immediately on partner catalogs.
+  const data = await fetchJsonRetry(`${API_URL}/api/v1/public/properties?${qs.toString()}`, 0)
   return {
     items: Array.isArray(data?.data) ? data.data : [],
     meta: data?.meta ?? { total: 0, page: 1, limit: PAGE_SIZE, totalPages: 0 },
