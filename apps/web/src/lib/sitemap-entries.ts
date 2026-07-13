@@ -220,6 +220,7 @@ export function buildStaticEntries(): MetadataRoute.Sitemap {
     { url: `${WEB_URL}/leiloes`, lastModified: now, changeFrequency: 'hourly', priority: 0.95 },
     { url: `${WEB_URL}/profissionais/franca`, lastModified: now, changeFrequency: 'weekly', priority: 0.9 },
     { url: `${WEB_URL}/empresas-parceiras`, lastModified: now, changeFrequency: 'daily', priority: 0.9 },
+    { url: `${WEB_URL}/parceiros/niu-arquitetura`, lastModified: now, changeFrequency: 'weekly', priority: 0.9 },
     { url: `${WEB_URL}/parceiros/cadastro`, lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
     { url: `${WEB_URL}/parceiros/membro-fundador`, lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
     { url: `${WEB_URL}/anunciar-imovel`, lastModified: now, changeFrequency: 'monthly', priority: 0.85 },

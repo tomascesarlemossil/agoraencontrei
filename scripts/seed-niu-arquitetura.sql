@@ -2,14 +2,12 @@
 -- Seed: NIU Arquitetura como primeira Empresa Parceira (Specialist) do
 -- AgoraEncontrei.
 --
--- Dados publicos extraidos do Instagram em 2026-07-06:
+-- Dados publicos extraidos do Instagram e dos materiais oficiais enviados:
 --   @niu_arquitetura
 --   Estudio de Arquitetura e Design.
---   +55 16 99264-6070 | +55 16 99463-0822
+--   +55 16 99264-6070 | +55 16 99460-8222
 --   contato@niuarquitetura.com
---
--- Nao inclui fotos do Instagram. Use apenas imagem autorizada pela NIU em
--- photoUrl depois que eles enviarem o arquivo oficial.
+--   Fundada em 2018 por Yuri Miranda e Douglas Costa.
 --
 -- Como rodar: cole no SQL editor do Neon e execute.
 -- Idempotente: pode rodar novamente depois de ajustar campos.
@@ -36,45 +34,70 @@ INSERT INTO specialists (
   'niu-arquitetura',
   'NIU Arquitetura',
   'contato@niuarquitetura.com',
-  '+55 16 99463-0822',
+  '+55 16 99460-8222',
   '+55 16 99264-6070',
   'ARQUITETO',
-  'Estudio de Arquitetura e Design. Projetos residenciais, interiores, reformas e arquitetura contemporanea para construir, transformar e valorizar imoveis.',
+  'Escritorio de Arquitetura e Design fundado em 2018 por Yuri Miranda e Douglas Costa. A NIU traduz arquitetura contemporanea com brasilidade, geometria e materialidade para criar espacos autenticos, funcionais e memoraveis.',
   'Franca',
   'SP',
   'niu_arquitetura',
-  NULL,
-  NULL,
-  NULL,
+  'https://www.agoraencontrei.com.br/parceiros/niu-arquitetura',
+  '/partners/niu/niu-logo.jpg',
+  '/partners/niu/niu-logo.jpg',
   NULL,
   'arquitetura',
   '{
     "segmentLabel": "Arquitetura e Design",
     "adPlan": "PREMIUM",
     "template": "vitrine",
-    "heroTitle": "Projetos de arquitetura contemporanea para construir, reformar e valorizar imoveis",
-    "heroSubtitle": "Atendimento para projetos residenciais, interiores, reformas e arquitetura sob medida em Franca/SP e para todo o Brasil.",
+    "logoUrl": "/partners/niu/niu-logo.jpg",
+    "heroTitle": "Arquitetura contemporanea com brasilidade, geometria e materialidade",
+    "heroSubtitle": "Projetos residenciais, interiores, reformas e arquitetura comercial para transformar espacos, processos e pensamentos.",
     "services": [
       { "name": "Projeto arquitetonico residencial", "description": "Briefing, conceito, estudos e desenvolvimento do projeto para obra nova ou reforma.", "price": null },
       { "name": "Interiores e ambientacao", "description": "Planejamento de ambientes, materiais, marcenaria, iluminacao e composicao visual.", "price": null },
-      { "name": "Reforma e valorizacao de imoveis", "description": "Solucoes para atualizar, adequar e valorizar casas, apartamentos e areas de lazer.", "price": null },
+      { "name": "Arquitetura comercial", "description": "Projetos para lojas, escritorios, marcas e experiencias que precisam comunicar identidade e impacto.", "price": null },
+      { "name": "Reforma e valorizacao de imoveis", "description": "Solucoes para atualizar, adequar e valorizar casas, apartamentos, areas de lazer e imoveis comerciais.", "price": null },
       { "name": "Consultoria inicial online", "description": "Triagem do objetivo, medidas, fotos, prazo e orcamento para indicar o caminho de projeto.", "price": null }
     ],
-    "gallery": [],
+    "photos": [
+      "/partners/niu/niu-equipe.jpg",
+      "/partners/niu/niu-escritorio.jpg",
+      "/partners/niu/niu-cultura.jpg",
+      "/partners/niu/niu-o-que-fazemos.jpg",
+      "/partners/niu/niu-linguagem.jpg",
+      "/partners/niu/niu-onde-estamos.jpg"
+    ],
+    "gallery": [
+      "/partners/niu/niu-equipe.jpg",
+      "/partners/niu/niu-escritorio.jpg",
+      "/partners/niu/niu-cultura.jpg",
+      "/partners/niu/niu-o-que-fazemos.jpg",
+      "/partners/niu/niu-linguagem.jpg",
+      "/partners/niu/niu-onde-estamos.jpg"
+    ],
     "videos": [],
     "faq": [
       { "question": "A NIU atende clientes fora de Franca/SP?", "answer": "O atendimento pode comecar online. Confirme escopo, cidade, prazos e formato diretamente com a equipe." },
-      { "question": "Quais informacoes ajudam no primeiro contato?", "answer": "Cidade, tipo de imovel, objetivo do projeto, fotos, medidas aproximadas, prazo desejado e faixa de investimento." }
+      { "question": "Quais tipos de projeto a NIU desenvolve?", "answer": "Projetos residenciais, interiores, reformas, arquitetura comercial e estudos para transformar espacos, processos e pensamentos." },
+      { "question": "Quais informacoes ajudam no primeiro contato?", "answer": "Cidade, tipo de imovel, objetivo do projeto, fotos, medidas aproximadas, prazo desejado, faixa de investimento e referencias." }
     ],
-    "source": "Instagram publico @niu_arquitetura, consultado em 2026-07-06"
+    "mission": "Transformar limites em criatividade.",
+    "vision": "Ser excelencia em arquitetura desafiando o obvio por meio da desobediencia criativa.",
+    "values": ["excelencia", "paixao", "criatividade", "pessoas"],
+    "officialPage": "/parceiros/niu-arquitetura",
+    "source": "Materiais oficiais anexados pelo parceiro e Instagram publico @niu_arquitetura"
   }'::jsonb,
   'PREMIUM',
   'ACTIVE',
   ARRAY[
     'Arquitetura residencial',
+    'Arquitetura comercial',
     'Interiores',
     'Reformas',
     'Alto padrao',
+    'Geometria e materialidade',
+    'Desobediencia criativa',
     'Design contemporaneo',
     'Projeto online',
     'Franca SP',
@@ -99,6 +122,10 @@ ON CONFLICT (id) DO UPDATE SET
   city = EXCLUDED.city,
   state = EXCLUDED.state,
   instagram = EXCLUDED.instagram,
+  website = EXCLUDED.website,
+  "photoUrl" = EXCLUDED."photoUrl",
+  "logoUrl" = EXCLUDED."logoUrl",
+  address = EXCLUDED.address,
   "businessType" = EXCLUDED."businessType",
   "landingPage" = EXCLUDED."landingPage",
   "adPlan" = EXCLUDED."adPlan",
