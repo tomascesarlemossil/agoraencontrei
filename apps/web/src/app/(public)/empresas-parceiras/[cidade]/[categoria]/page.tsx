@@ -2,11 +2,13 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import {
+  NIU_OFFICIAL_PARTNER,
   PARTNER_CATEGORY_SEO,
   PARTNER_CITY_SEO,
   getPartnerCategoryBySlug,
   getPartnerCityBySlug,
   partnerSeoPath,
+  shouldShowNiuForPartnerSeo,
 } from '@/lib/partner-seo'
 import { limitSeoStaticItems } from '@/lib/ssg-runtime'
 import { PartnerLeadQualifier } from '../../../especialistas/[slug]/PartnerLeadQualifier'
@@ -36,6 +38,7 @@ interface Specialist {
   featuredWeight?: number | null
   tags?: string[] | null
   landingPage?: { segmentLabel?: string } | null
+  profilePath?: string | null
 }
 
 function waHref(s: Specialist): string | null {
@@ -98,10 +101,22 @@ export async function generateMetadata({
   const title = `${cat.label} em ${city.city}/${city.state} | Empresas Parceiras AgoraEncontrei`
   const description = `${cat.description} Encontre ${cat.singular} em ${city.city}/${city.state} e receba atendimento pelo AgoraEncontrei.`
   const canonical = `${WEB_URL}${partnerSeoPath(city.slug, cat.slug)}`
+  const niuRelevant = shouldShowNiuForPartnerSeo(cat.slug)
 
   return {
     title,
     description,
+    keywords: niuRelevant
+      ? [
+          `${cat.singular} em ${city.city}`,
+          `arquitetura em ${city.city}`,
+          `projeto arquitetonico em ${city.city}`,
+          `projetos de casas em ${city.city}`,
+          `construcao em ${city.city}`,
+          'NIU Arquitetura',
+          'AgoraEncontrei empresas parceiras',
+        ]
+      : undefined,
     alternates: { canonical },
     openGraph: {
       title,
@@ -123,8 +138,24 @@ export default async function PartnerSeoPage({
   const cat = getPartnerCategoryBySlug(categoria)
   if (!city || !cat) notFound()
 
-  const specialists = await fetchSpecialists(city.city, cat.value)
+  const fetchedSpecialists = await fetchSpecialists(city.city, cat.value)
+  const officialMatches: Specialist[] = shouldShowNiuForPartnerSeo(cat.slug)
+    ? [{
+        ...NIU_OFFICIAL_PARTNER,
+        category: cat.value,
+        categoryLabel: cat.label,
+        city: city.city,
+        state: city.state,
+        tags: [...NIU_OFFICIAL_PARTNER.tags],
+      }]
+    : []
+  const fetchedSlugs = new Set(fetchedSpecialists.map(s => s.slug))
+  const specialists = [
+    ...officialMatches.filter(s => !fetchedSlugs.has(s.slug)),
+    ...fetchedSpecialists,
+  ]
   const leadTarget = specialists[0]
+  const niuRelevant = shouldShowNiuForPartnerSeo(cat.slug)
 
   const itemListSchema = {
     '@context': 'https://schema.org',
@@ -133,7 +164,7 @@ export default async function PartnerSeoPage({
     itemListElement: specialists.map((s, index) => ({
       '@type': 'ListItem',
       position: index + 1,
-      url: `${WEB_URL}/especialistas/${s.slug}`,
+      url: `${WEB_URL}${s.profilePath || `/especialistas/${s.slug}`}`,
       name: s.name,
     })),
   }
@@ -226,6 +257,32 @@ export default async function PartnerSeoPage({
           ))}
         </div>
 
+        {niuRelevant && (
+          <section className="mb-8 rounded-3xl border border-[#C9A84C]/25 bg-white p-6 shadow-sm md:p-8">
+            <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#9A7A23]">
+              NIU em busca organica
+            </p>
+            <div className="mt-3 grid gap-5 lg:grid-cols-[1.1fr_0.9fr] lg:items-end">
+              <div>
+                <h2 className="text-2xl font-bold text-[#143A1F]" style={{ fontFamily: 'Georgia, serif' }}>
+                  NIU Arquitetura posicionada para buscas por arquitetura, projetos, reforma e construcao.
+                </h2>
+                <p className="mt-3 text-sm leading-6 text-gray-600">
+                  Esta pagina conecta a NIU a termos como arquiteto, escritorio de arquitetura, projeto arquitetonico,
+                  projetos de casas, interiores, reforma e construcao em {city.city}/{city.state}. O objetivo e criar
+                  uma trilha clara entre pesquisa no Google, AgoraEncontrei, briefing inteligente e contato no WhatsApp.
+                </p>
+              </div>
+              <Link
+                href="/parceiros/niu-arquitetura"
+                className="inline-flex items-center justify-center rounded-xl bg-[#143A1F] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#0E2A15]"
+              >
+                Ver landing oficial da NIU
+              </Link>
+            </div>
+          </section>
+        )}
+
         <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h2 className="text-2xl font-bold text-[#143A1F]" style={{ fontFamily: 'Georgia, serif' }}>
@@ -286,7 +343,7 @@ export default async function PartnerSeoPage({
                   <p className="mt-1 text-xs font-semibold text-[#C9A84C]">{segLabel}</p>
                   {s.bio && <p className="mt-3 line-clamp-3 text-xs leading-5 text-gray-500">{s.bio}</p>}
                   <div className="mt-5 flex gap-2">
-                    <Link href={`/especialistas/${s.slug}`} className="flex-1 rounded-lg bg-[#143A1F] px-3 py-2 text-xs font-bold text-white">
+                    <Link href={s.profilePath || `/especialistas/${s.slug}`} className="flex-1 rounded-lg bg-[#143A1F] px-3 py-2 text-xs font-bold text-white">
                       Ver perfil
                     </Link>
                     {wa && (
