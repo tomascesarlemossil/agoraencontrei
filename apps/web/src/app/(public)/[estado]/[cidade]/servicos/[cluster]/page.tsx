@@ -10,6 +10,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { ChevronRight, Search, Star } from 'lucide-react'
 import { IBGE_CITY_BY_SLUG, IBGE_CITIES_152, getIbgeCitySnippet } from '@/data/seo-ibge-cities-expanded'
+import { NIU_OFFICIAL_PARTNER } from '@/lib/partner-seo'
 import { limitSeoStaticItems } from '@/lib/ssg-runtime'
 
 const WEB_URL = process.env.NEXT_PUBLIC_WEB_URL || 'https://agoraencontrei.com.br'
@@ -72,6 +73,18 @@ const SERVICOS: Record<string, { label: string; desc: string; icon: string; faq:
   'seja-um-parceiro':           { label: 'Seja um Parceiro',           icon: '🤝', desc: 'Seja um parceiro AgoraEncontrei em {cidade}: tecnologia, leads e suporte para crescer suas vendas.', faq: ['Como ser parceiro em {cidade}?', 'Quais os benefícios?', 'Tem custo de adesão?'] },
 }
 
+const NIU_SERVICE_CLUSTERS = new Set([
+  'arquiteto',
+  'decoracao-de-interiores',
+  'construtora',
+  'empreiteira',
+  'planta-humanizada',
+])
+
+function isNiuServiceCluster(cluster: string) {
+  return NIU_SERVICE_CLUSTERS.has(cluster)
+}
+
 export async function generateStaticParams() {
   const params: { estado: string; cidade: string; cluster: string }[] = []
   const cities = limitSeoStaticItems(
@@ -101,10 +114,23 @@ export async function generateMetadata(props: { params: Promise<{ estado: string
 
   const label = servico.label
   const desc = servico.desc.replace(/\{cidade\}/g, city.name)
+  const niuRelevant = isNiuServiceCluster(params.cluster)
 
   return {
     title: `${label} em ${city.name}/${city.state} | AgoraEncontrei`,
     description: desc,
+    keywords: niuRelevant
+      ? [
+          `${label} em ${city.name}`,
+          `arquiteto em ${city.name}`,
+          `arquitetura em ${city.name}`,
+          `projeto arquitetonico em ${city.name}`,
+          `projetos de casas em ${city.name}`,
+          `construcao em ${city.name}`,
+          'NIU Arquitetura',
+          'AgoraEncontrei empresas parceiras',
+        ]
+      : undefined,
     openGraph: {
       title: `${label} em ${city.name}/${city.state} | AgoraEncontrei`,
       description: desc,
@@ -132,6 +158,7 @@ export default async function ServicoCidadePage(props: { params: Promise<{ estad
   const faq = servico.faq.map(q => q.replace(/\{cidade\}/g, city.name))
   const pop = city.populacao.toLocaleString('pt-BR')
   const pib = city.pibPerCapita.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })
+  const niuRelevant = isNiuServiceCluster(params.cluster)
 
   const schema = {
     '@context': 'https://schema.org',
@@ -210,6 +237,40 @@ export default async function ServicoCidadePage(props: { params: Promise<{ estad
             imobiliário da cidade.
           </p>
         </section>
+
+        {niuRelevant && (
+          <section className="rounded-2xl border border-[#C9A84C]/30 bg-white p-6 shadow-sm">
+            <div className="grid gap-5 lg:grid-cols-[1fr_0.8fr] lg:items-center">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#9A7A23]">
+                  Parceiro oficial em destaque
+                </p>
+                <h2 className="mt-2 text-2xl font-bold text-[#143A1F]" style={{ fontFamily: 'Georgia, serif' }}>
+                  {NIU_OFFICIAL_PARTNER.name} para arquitetura, projetos e preparacao de obra.
+                </h2>
+                <p className="mt-3 text-sm leading-6 text-gray-600">
+                  Para quem pesquisa {label.toLowerCase()} em {city.name}/{city.state}, o AgoraEncontrei tambem apresenta
+                  a NIU como escritorio parceiro para projeto arquitetonico, interiores, reformas, casas de alto padrao
+                  e atendimento inicial online para demandas em Franca, regiao e Brasil.
+                </p>
+              </div>
+              <div className="flex flex-col gap-2 sm:flex-row lg:flex-col">
+                <Link
+                  href="/parceiros/niu-arquitetura"
+                  className="inline-flex items-center justify-center rounded-xl bg-[#143A1F] px-5 py-3 text-sm font-bold text-white"
+                >
+                  Conhecer a NIU
+                </Link>
+                <Link
+                  href="/empresas-parceiras/franca-sp/arquitetos"
+                  className="inline-flex items-center justify-center rounded-xl border border-[#143A1F] px-5 py-3 text-sm font-bold text-[#143A1F]"
+                >
+                  Ver arquitetos parceiros
+                </Link>
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* FAQ com Schema */}
         <section>

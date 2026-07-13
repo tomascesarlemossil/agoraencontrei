@@ -116,6 +116,81 @@ export const PARTNER_CITY_SEO = [
 export type PartnerCategorySeo = (typeof PARTNER_CATEGORY_SEO)[number]
 export type PartnerCitySeo = (typeof PARTNER_CITY_SEO)[number]
 
+export const NIU_OFFICIAL_PARTNER = {
+  id: 'seed_niu_arquitetura',
+  slug: 'niu-arquitetura',
+  name: 'NIU Arquitetura',
+  category: 'ARQUITETO',
+  categoryLabel: 'Arquitetura e Design',
+  city: 'Franca',
+  state: 'SP',
+  bio: 'Escritorio de Arquitetura e Design fundado em 2018 por Yuri Miranda e Douglas Costa. Projetos residenciais, interiores, reformas, arquitetura comercial e estudos de alto padrao para Franca, regiao e atendimento online no Brasil.',
+  photoUrl: '/partners/niu/niu-logo.jpg',
+  logoUrl: '/partners/niu/niu-logo.jpg',
+  whatsapp: '+55 16 99264-6070',
+  phone: '+55 16 99460-8222',
+  plan: 'VIP',
+  adPlan: 'PREMIUM',
+  isFeatured: true,
+  featuredWeight: 1000,
+  tags: [
+    'Arquitetura residencial',
+    'Arquitetura comercial',
+    'Projeto arquitetonico',
+    'Projetos de casas',
+    'Design de interiores',
+    'Reformas',
+    'Construcao',
+    'Franca SP',
+    'Brasil',
+  ],
+  landingPage: { segmentLabel: 'Arquitetura e Design' },
+  profilePath: '/parceiros/niu-arquitetura',
+} as const
+
+export const NIU_RELATED_CATEGORY_SLUGS = new Set([
+  'arquitetos',
+  'designers-de-interiores',
+  'servicos-para-imoveis',
+])
+
+export function shouldShowNiuForPartnerSeo(categorySlug: string) {
+  return NIU_RELATED_CATEGORY_SLUGS.has(categorySlug)
+}
+
+export const NIU_SEARCH_INTENT_LINKS = [
+  {
+    href: '/empresas-parceiras/franca-sp/arquitetos',
+    title: 'Arquitetos em Franca/SP',
+    description: 'Pagina local para quem busca arquiteto, projeto arquitetonico, interiores, reforma e construcao em Franca.',
+  },
+  {
+    href: '/empresas-parceiras/ribeirao-preto-sp/arquitetos',
+    title: 'Arquitetos em Ribeirao Preto/SP',
+    description: 'Vitrine regional para demanda de arquitetura residencial, comercial e atendimento online.',
+  },
+  {
+    href: '/empresas-parceiras/sao-paulo-sp/arquitetos',
+    title: 'Arquitetos em Sao Paulo/SP',
+    description: 'Presenca em busca nacional para pessoas comparando escritorios e projetos de alto padrao.',
+  },
+  {
+    href: '/empresas-parceiras/campinas-sp/arquitetos',
+    title: 'Arquitetos em Campinas/SP',
+    description: 'Pagina de descoberta para projetos, reformas, interiores e construcao em cidades estrategicas.',
+  },
+  {
+    href: '/empresas-parceiras/franca-sp/designers-de-interiores',
+    title: 'Design de interiores em Franca/SP',
+    description: 'Intencao complementar para ambientes, materiais, marcenaria, iluminacao e valorizacao do imovel.',
+  },
+  {
+    href: '/parceiros/niu-arquitetura',
+    title: 'Landing oficial da NIU',
+    description: 'Pagina completa com historia, projetos, briefing inteligente, contatos e prova visual.',
+  },
+] as const
+
 export function getPartnerCategoryBySlug(slug: string) {
   return PARTNER_CATEGORY_SEO.find(c => c.slug === slug)
 }
@@ -161,5 +236,20 @@ export const PARTNER_INTENT_PAGES = [
     href: '/empresas-parceiras/franca-sp/fotografos-imobiliarios',
     title: 'Fotografia imobiliaria',
     description: 'Imagens profissionais para vender e alugar melhor.',
+  },
+  {
+    href: '/empresas-parceiras/ribeirao-preto-sp/arquitetos',
+    title: 'Arquitetura em Ribeirao Preto/SP',
+    description: 'Busca regional por projeto arquitetonico, interiores e reformas.',
+  },
+  {
+    href: '/empresas-parceiras/sao-paulo-sp/arquitetos',
+    title: 'Arquitetos para projetos no Brasil',
+    description: 'Vitrine nacional para quem procura escritorio de arquitetura online.',
+  },
+  {
+    href: '/parceiros/niu-arquitetura',
+    title: 'NIU Arquitetura em destaque',
+    description: 'Primeiro parceiro oficial de arquitetura no AgoraEncontrei.',
   },
 ] as const

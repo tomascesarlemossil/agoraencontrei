@@ -9,6 +9,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import {
+  NIU_OFFICIAL_PARTNER,
   PARTNER_CATEGORY_SEO,
   PARTNER_CITY_SEO,
   PARTNER_INTENT_PAGES,
@@ -59,23 +60,8 @@ interface Specialist {
 
 const OFFICIAL_PARTNERS: Specialist[] = [
   {
-    id: 'seed_niu_arquitetura',
-    slug: 'niu-arquitetura',
-    name: 'NIU Arquitetura',
-    category: 'ARQUITETO',
-    categoryLabel: 'Arquitetura',
-    city: 'Franca',
-    bio: 'Escritorio de Arquitetura e Design fundado em 2018 por Yuri Miranda e Douglas Costa. Arquitetura contemporanea com brasilidade, geometria e materialidade.',
-    photoUrl: '/partners/niu/niu-logo.jpg',
-    logoUrl: '/partners/niu/niu-logo.jpg',
-    whatsapp: '+55 16 99264-6070',
-    phone: '+55 16 99460-8222',
-    adPlan: 'PREMIUM',
-    isFeatured: true,
-    featuredWeight: 1000,
-    tags: ['Arquitetura residencial', 'Interiores', 'Arquitetura comercial', 'Reformas', 'Franca SP'],
-    landingPage: { segmentLabel: 'Arquitetura e Design' },
-    profilePath: '/parceiros/niu-arquitetura',
+    ...NIU_OFFICIAL_PARTNER,
+    tags: [...NIU_OFFICIAL_PARTNER.tags],
   },
 ]
 

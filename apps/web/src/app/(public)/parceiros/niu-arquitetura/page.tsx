@@ -13,6 +13,7 @@ import {
   Phone,
   Sparkles,
 } from 'lucide-react'
+import { NIU_SEARCH_INTENT_LINKS } from '@/lib/partner-seo'
 import { PartnerLeadQualifier } from '../../especialistas/[slug]/PartnerLeadQualifier'
 
 const WEB_URL = process.env.NEXT_PUBLIC_WEB_URL ?? 'https://www.agoraencontrei.com.br'
@@ -122,8 +123,15 @@ export const metadata: Metadata = {
     'arquiteto Franca SP',
     'arquitetura contemporanea',
     'projeto arquitetonico',
+    'projetos de casas',
+    'projeto residencial alto padrao',
+    'construcao civil Franca SP',
+    'reforma residencial Franca SP',
+    'escritorio de arquitetura Brasil',
+    'arquiteto online Brasil',
     'design de interiores',
     'arquitetura residencial',
+    'arquitetura comercial',
     'AgoraEncontrei parceiro oficial',
   ],
   alternates: { canonical: PAGE_URL },
@@ -438,6 +446,32 @@ export default function NiuArquiteturaPage() {
               { name: 'Consultoria inicial online', description: 'Triagem de objetivo, medidas, fotos e viabilidade.' },
             ]}
           />
+        </div>
+      </section>
+
+      <section className="bg-white px-5 py-16 sm:px-8 lg:py-24">
+        <div className="mx-auto max-w-7xl">
+          <div className="grid gap-10 lg:grid-cols-[0.85fr_1.15fr] lg:items-start">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.25em] text-[#8c8173]">presenca organica</p>
+              <h2 className="mt-4 text-4xl font-semibold tracking-[-0.03em] sm:text-5xl">
+                Por que divulgar a NIU no AgoraEncontrei faz sentido.
+              </h2>
+              <p className="mt-5 text-sm leading-7 text-[#625d56]">
+                A landing oficial nao fica isolada. Ela e conectada a paginas de busca por cidade, categoria e intencao:
+                arquitetura, arquiteto, projetos de casas, design de interiores, reforma, construcao e atendimento online.
+                Assim, quem pesquisa por uma necessidade entra no AgoraEncontrei e encontra a NIU como parceira destacada.
+              </p>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {NIU_SEARCH_INTENT_LINKS.map(item => (
+                <Link key={item.href} href={item.href} className="border border-[#d8d1c6] bg-[#f5f2ec] p-5 transition hover:border-[#11110f] hover:bg-white">
+                  <p className="text-sm font-semibold text-[#11110f]">{item.title}</p>
+                  <p className="mt-2 text-xs leading-5 text-[#625d56]">{item.description}</p>
+                </Link>
+              ))}
+            </div>
+          </div>
         </div>
       </section>
 
