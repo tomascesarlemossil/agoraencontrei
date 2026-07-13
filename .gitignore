@@ -15,6 +15,7 @@ apps/api/.env.backup-upload
 *.env.backup*
 test-results/
 screenshots/
+scripts/.gallery-main-cache.json
 
 # Python (image-processor)
 __pycache__/

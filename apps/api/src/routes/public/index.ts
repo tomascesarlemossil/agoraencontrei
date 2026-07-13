@@ -350,7 +350,7 @@ export default async function publicRoutes(app: FastifyInstance) {
     const skip  = (page - 1) * limit
 
     // Redis cache: skip cache for searches (dynamic), cache simple filters 5 min
-    const cacheKey = `pub:props:v3:${company.id}:${JSON.stringify(req.query)}`
+    const cacheKey = `pub:props:v4:${company.id}:${JSON.stringify(req.query)}`
     if (!filters.search) {
       const cached = await cacheGet(app.redis, cacheKey)
       if (cached) return reply.send(cached)
@@ -631,7 +631,7 @@ export default async function publicRoutes(app: FastifyInstance) {
     const company = await resolveCompany(app)
     if (!company) return reply.status(503).send({ error: 'SERVICE_UNAVAILABLE' })
 
-    const cacheKey = `pub:featured:v2:${company.id}`
+    const cacheKey = `pub:featured:v3:${company.id}`
     const cached = await cacheGet(app.redis, cacheKey)
     if (cached) return reply.send(cached)
 
