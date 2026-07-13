@@ -54,11 +54,14 @@ export async function POST(request: NextRequest) {
     // ── Strategy 1: Anthropic streaming direto ────────────────────────────
     const anthropicKey = process.env.ANTHROPIC_API_KEY
     if (anthropicKey) {
-      return streamFromAnthropic(anthropicKey, messages)
+      const direct = await streamFromAnthropic(anthropicKey, messages)
+      if (direct.ok) return direct
+
+      console.warn('[chat/stream] direct provider unavailable; falling back to Fastify')
     }
 
     // ── Strategy 2: proxy para Fastify (non-streaming fallback) ──────────
-    return proxyToFastify(messages)
+    return proxyToFastify(messages, request)
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Erro interno.'
     console.error('[chat/stream] error:', message)
@@ -164,11 +167,18 @@ async function streamFromAnthropic(
 
 async function proxyToFastify(
   messages: Array<{ role: 'user' | 'assistant'; content: string }>,
+  request: NextRequest,
 ): Promise<Response> {
   try {
+    const authorization = request.headers.get('authorization')
+    const cookie = request.headers.get('cookie')
     const res = await fetch(`${API_URL}/api/v1/tomas/chat`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(authorization ? { Authorization: authorization } : {}),
+        ...(cookie ? { Cookie: cookie } : {}),
+      },
       body: JSON.stringify({
         messages,
         channel: 'dashboard',
