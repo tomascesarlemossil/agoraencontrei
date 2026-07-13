@@ -54,6 +54,45 @@ interface Specialist {
   featuredWeight?: number | null
   tags?: string[] | null
   landingPage?: { segmentLabel?: string } | null
+  profilePath?: string | null
+}
+
+const OFFICIAL_PARTNERS: Specialist[] = [
+  {
+    id: 'seed_niu_arquitetura',
+    slug: 'niu-arquitetura',
+    name: 'NIU Arquitetura',
+    category: 'ARQUITETO',
+    categoryLabel: 'Arquitetura',
+    city: 'Franca',
+    bio: 'Escritorio de Arquitetura e Design fundado em 2018 por Yuri Miranda e Douglas Costa. Arquitetura contemporanea com brasilidade, geometria e materialidade.',
+    photoUrl: '/partners/niu/niu-logo.jpg',
+    logoUrl: '/partners/niu/niu-logo.jpg',
+    whatsapp: '+55 16 99264-6070',
+    phone: '+55 16 99460-8222',
+    adPlan: 'PREMIUM',
+    isFeatured: true,
+    featuredWeight: 1000,
+    tags: ['Arquitetura residencial', 'Interiores', 'Arquitetura comercial', 'Reformas', 'Franca SP'],
+    landingPage: { segmentLabel: 'Arquitetura e Design' },
+    profilePath: '/parceiros/niu-arquitetura',
+  },
+]
+
+function matchesFilters(s: Specialist, sp: Record<string, string>): boolean {
+  if (sp.category && s.category !== sp.category) return false
+  if (sp.city && !(s.city || '').toLowerCase().includes(sp.city.toLowerCase())) return false
+  if (sp.q) {
+    const haystack = [
+      s.name,
+      s.categoryLabel,
+      s.bio,
+      s.city,
+      ...(s.tags || []),
+    ].filter(Boolean).join(' ').toLowerCase()
+    if (!haystack.includes(sp.q.toLowerCase())) return false
+  }
+  return true
 }
 
 async function fetchSpecialists(sp: Record<string, string>): Promise<Specialist[]> {
@@ -123,7 +162,13 @@ export default async function EmpresasParceirasPage({
   const sp: Record<string, string> = {}
   for (const [k, v] of Object.entries(spRaw)) if (typeof v === 'string') sp[k] = v
 
-  const specialists = await fetchSpecialists(sp)
+  const fetchedSpecialists = await fetchSpecialists(sp)
+  const officialMatches = OFFICIAL_PARTNERS.filter(s => matchesFilters(s, sp))
+  const fetchedSlugs = new Set(fetchedSpecialists.map(s => s.slug))
+  const specialists = [
+    ...officialMatches.filter(s => !fetchedSlugs.has(s.slug)),
+    ...fetchedSpecialists,
+  ]
   const activeCat = CATEGORIES.find(c => c.value === sp.category)
   const leadTarget = specialists[0]
   const leadCategoryLabel = activeCat?.label || leadTarget?.landingPage?.segmentLabel || leadTarget?.categoryLabel || 'Servicos para imoveis'
@@ -139,7 +184,7 @@ export default async function EmpresasParceirasPage({
         '@type': 'ListItem',
         position: index + 1,
         name: s.name,
-        url: `https://www.agoraencontrei.com.br/especialistas/${s.slug}`,
+        url: `https://www.agoraencontrei.com.br${s.profilePath || `/especialistas/${s.slug}`}`,
       })),
     },
   }
@@ -308,7 +353,7 @@ export default async function EmpresasParceirasPage({
                   {s.bio && <p className="text-xs text-gray-500 mt-2 line-clamp-3">{s.bio}</p>}
                   <div className="mt-4 flex flex-wrap items-center justify-center gap-2 w-full">
                     <Link
-                      href={`/especialistas/${s.slug}`}
+                      href={s.profilePath || `/especialistas/${s.slug}`}
                       className="flex-1 min-w-[90px] px-3 py-2 rounded-lg text-xs font-bold text-white text-center"
                       style={{ backgroundColor: '#143A1F' }}
                     >
