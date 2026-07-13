@@ -181,7 +181,7 @@ async function proxyToFastify(
       },
       body: JSON.stringify({
         messages,
-        channel: 'dashboard',
+        channel: 'site',
       }),
       signal: AbortSignal.timeout(30_000),
     })
