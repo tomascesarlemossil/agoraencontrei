@@ -149,7 +149,6 @@ const PUBLIC_PROPERTY_SELECT = {
       phone: true,
       email: true,
       website: true,
-      logoUrl: true,
     },
   },
   user: {
