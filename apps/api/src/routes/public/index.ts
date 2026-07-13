@@ -631,7 +631,7 @@ export default async function publicRoutes(app: FastifyInstance) {
     const company = await resolveCompany(app)
     if (!company) return reply.status(503).send({ error: 'SERVICE_UNAVAILABLE' })
 
-    const cacheKey = `pub:featured:v3:${company.id}`
+    const cacheKey = `pub:featured:v4:${company.id}`
     const cached = await cacheGet(app.redis, cacheKey)
     if (cached) return reply.send(cached)
 
@@ -641,7 +641,7 @@ export default async function publicRoutes(app: FastifyInstance) {
       where:   { ...baseWhere, isPremium: true },
       select:  PUBLIC_PROPERTY_SELECT,
       orderBy: [{ isFeatured: 'desc' }, { createdAt: 'desc' }, { updatedAt: 'desc' }],
-      take:    8,
+      take:    10,
     })
 
     if (items.length === 0) {
@@ -649,7 +649,7 @@ export default async function publicRoutes(app: FastifyInstance) {
         where:   { ...baseWhere, isFeatured: true },
         select:  PUBLIC_PROPERTY_SELECT,
         orderBy: [{ createdAt: 'desc' }, { updatedAt: 'desc' }],
-        take:    8,
+        take:    10,
       })
     }
 
@@ -658,7 +658,7 @@ export default async function publicRoutes(app: FastifyInstance) {
         where:   baseWhere,
         select:  PUBLIC_PROPERTY_SELECT,
         orderBy: [{ createdAt: 'desc' }, { updatedAt: 'desc' }],
-        take:    8,
+        take:    10,
       })
     }
 

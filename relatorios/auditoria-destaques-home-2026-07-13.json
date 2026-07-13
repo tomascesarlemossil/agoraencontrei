@@ -1,0 +1,38 @@
+{
+  "executedAt": "2026-07-13",
+  "backup": {
+    "branchName": "backup-before-home-featured-2026-07-13",
+    "branchId": "br-jolly-hat-an8fyvfd"
+  },
+  "result": {
+    "selected": 10,
+    "active": 10,
+    "authorizedPublish": 10,
+    "featured": 10,
+    "premium": 10,
+    "photos": 287,
+    "brokenStoredImages": 0,
+    "duplicateReferencesReactivated": 0
+  },
+  "properties": [
+    { "reference": "CA01538", "id": "uv0c7c9825ee87aba655fbb5", "photos": 33 },
+    { "reference": "CA01597", "id": "uv2516edfc179152c951b0b0", "photos": 21 },
+    { "reference": "CA01545", "id": "uv306e77f63527896ba3dbf5", "photos": 39 },
+    { "reference": "BA00105", "id": "uv572041faa9ce74b00f7533", "photos": 5 },
+    { "reference": "CA01611", "id": "uv2f6488be7f840f5d00b8e2", "photos": 67 },
+    { "reference": "AR00019", "id": "uveaea92265835363b2e0c9b", "photos": 1 },
+    { "reference": "CA00659", "id": "uv215e4deea7bdf6fbf092ea", "photos": 48 },
+    { "reference": "TR00538", "id": "uv231a03d3c92fe8e50fa132", "photos": 4 },
+    { "reference": "CA01643", "id": "uv9ae09560d41d308144022a", "photos": 40 },
+    { "reference": "FA00016", "id": "uv8d5e4a9fb8afa875599094", "photos": 29 }
+  ],
+  "inactiveDuplicatesKeptArchived": [
+    { "reference": "CA01643", "id": "uv797e97948fadb623923d29" },
+    { "reference": "TR00538", "id": "uva35a63918bbaab10df28b3" }
+  ],
+  "notes": [
+    "CA01611 retains 67 working photos; three source links previously proven unavailable were not reintroduced.",
+    "CA01643 and TR00538 were enriched only on their active canonical records.",
+    "The public featured endpoint and home page limit were increased from 8 to 10."
+  ]
+}

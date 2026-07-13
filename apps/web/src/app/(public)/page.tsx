@@ -536,8 +536,8 @@ export default async function HomePage() {
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            {featured.slice(0, 8).map((p: any) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-5">
+            {featured.slice(0, 10).map((p: any) => (
               <Link
                 key={p.id}
                 href={`/imoveis/${p.slug}`}
