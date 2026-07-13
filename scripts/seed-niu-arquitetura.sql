@@ -44,7 +44,7 @@ INSERT INTO specialists (
   'https://www.agoraencontrei.com.br/parceiros/niu-arquitetura',
   '/partners/niu/niu-logo.jpg',
   '/partners/niu/niu-logo.jpg',
-  NULL,
+  'Av. Dr. Armando Sales de Oliveira, 503 - Franca/SP',
   'arquitetura',
   '{
     "segmentLabel": "Arquitetura e Design",
@@ -66,7 +66,12 @@ INSERT INTO specialists (
       "/partners/niu/niu-cultura.jpg",
       "/partners/niu/niu-o-que-fazemos.jpg",
       "/partners/niu/niu-linguagem.jpg",
-      "/partners/niu/niu-onde-estamos.jpg"
+      "/partners/niu/niu-onde-estamos.jpg",
+      "/partners/niu/niu-projeto-seven.jpg",
+      "/partners/niu/niu-projeto-gama.jpg",
+      "/partners/niu/niu-projeto-patio.jpg",
+      "/partners/niu/niu-projeto-gaia.jpg",
+      "/partners/niu/niu-projeto-alvorada.jpg"
     ],
     "gallery": [
       "/partners/niu/niu-equipe.jpg",
@@ -74,7 +79,19 @@ INSERT INTO specialists (
       "/partners/niu/niu-cultura.jpg",
       "/partners/niu/niu-o-que-fazemos.jpg",
       "/partners/niu/niu-linguagem.jpg",
-      "/partners/niu/niu-onde-estamos.jpg"
+      "/partners/niu/niu-onde-estamos.jpg",
+      "/partners/niu/niu-projeto-seven.jpg",
+      "/partners/niu/niu-projeto-gama.jpg",
+      "/partners/niu/niu-projeto-patio.jpg",
+      "/partners/niu/niu-projeto-gaia.jpg",
+      "/partners/niu/niu-projeto-alvorada.jpg"
+    ],
+    "projects": [
+      { "name": "Casa Seven", "status": "Novo projeto", "image": "/partners/niu/niu-projeto-seven.jpg" },
+      { "name": "Casa Gama", "status": "Novo projeto", "image": "/partners/niu/niu-projeto-gama.jpg" },
+      { "name": "Casa Patio", "status": "Estudo residencial de alto padrao em Franca/SP", "image": "/partners/niu/niu-projeto-patio.jpg" },
+      { "name": "Casa Gaia", "status": "Novo projeto", "image": "/partners/niu/niu-projeto-gaia.jpg" },
+      { "name": "Casa Alvorada", "status": "Obra em andamento em Franca/SP, ano 2025, 448,00m2", "image": "/partners/niu/niu-projeto-alvorada.jpg" }
     ],
     "videos": [],
     "faq": [
