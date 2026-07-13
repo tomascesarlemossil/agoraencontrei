@@ -1,9 +1,9 @@
-const { PrismaClient } = require('/Users/tomaslemos/Downloads/squads/agoraencontrei/packages/database/node_modules/@prisma/client');
+const { PrismaClient } = require('@prisma/client');
 
 const prisma = new PrismaClient({
   datasources: {
     db: {
-      url: 'postgresql://neondb_owner:npg_KAver0xR2jiU@ep-holy-band-andfuwo5.c-6.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require'
+      url: process.env.DATABASE_URL
     }
   }
 });

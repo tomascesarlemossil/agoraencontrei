@@ -11,9 +11,9 @@
 
 'use strict'
 
-const { PrismaClient } = require('/Users/tomaslemos/Downloads/squads/agoraencontrei/packages/database/node_modules/@prisma/client')
+const { PrismaClient } = require('@prisma/client')
 
-const DB_URL = 'postgresql://neondb_owner:npg_KAver0xR2jiU@ep-holy-band-andfuwo5.c-6.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require'
+const DB_URL = process.env.DATABASE_URL
 const COMPANY_ID = 'cmnhzieqf0000mx1cqcqgfv4n'
 const GUSTAVO_CANONICAL_ID = 'cmnhzieqf0001mx1cqcqgfv4n' // will be determined dynamically
 

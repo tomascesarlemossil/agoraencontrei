@@ -4,6 +4,7 @@ Precision geocoding per property using full address (street + number + city + st
 Runs AFTER geocode-properties.py (city-level pass) to refine coordinates.
 Only processes properties that have a street address defined.
 """
+import os
 import json
 import time
 import urllib.request
@@ -11,7 +12,7 @@ import urllib.parse
 import unicodedata
 import re
 
-DB_URL = "postgresql://neondb_owner:npg_KAver0xR2jiU@ep-holy-band-andfuwo5.c-6.us-east-1.aws.neon.tech/neondb?sslmode=require"
+DB_URL = os.environ["DATABASE_URL"]
 NEON_API = "https://ep-holy-band-andfuwo5.c-6.us-east-1.aws.neon.tech/sql"
 
 def neon_query(sql, params=None, retries=4):

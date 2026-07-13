@@ -21,7 +21,10 @@
     "scrape:all": "npx tsx scripts/scrape-caixa.ts",
     "test:e2e": "playwright test",
     "test:e2e:smoke": "playwright test tests/public-pages-smoke.spec.ts",
-    "seo:smoke": "tsx scripts/seo-import/smoke-test.ts"
+    "seo:smoke": "tsx scripts/seo-import/smoke-test.ts",
+    "audit:properties": "node scripts/audit-public-properties.js",
+    "test:property-audit": "node --test scripts/audit-public-properties.test.js",
+    "security:secrets": "node scripts/check-no-production-credentials.js"
   },
   "engines": {
     "node": "22.x",

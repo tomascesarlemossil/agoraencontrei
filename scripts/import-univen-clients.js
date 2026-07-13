@@ -13,12 +13,12 @@
  *  - Upsert by legacyId (Código) — skip if already present
  *  - Also import into contacts table (for CRM use)
  */
-const { PrismaClient } = require('/Users/tomaslemos/Downloads/squads/agoraencontrei/packages/database/node_modules/@prisma/client');
+const { PrismaClient } = require('@prisma/client');
 const fs = require('fs');
 const crypto = require('crypto');
 
 const prisma = new PrismaClient({
-  datasources: { db: { url: 'postgresql://neondb_owner:npg_KAver0xR2jiU@ep-holy-band-andfuwo5.c-6.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require' } }
+  datasources: { db: { url: process.env.DATABASE_URL } }
 });
 
 const COMPANY_ID = 'cmnhzieqf0000mx1cqcqgfv4n';

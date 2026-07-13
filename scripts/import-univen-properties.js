@@ -10,21 +10,21 @@
  * - ATIVO properties → authorizedPublish=true (public site)
  * - Other statuses → authorizedPublish=false (Lemosbank internal)
  */
-const { PrismaClient } = require('/Users/tomaslemos/Downloads/squads/agoraencontrei/packages/database/node_modules/@prisma/client');
+const { PrismaClient } = require('@prisma/client');
 const fs = require('fs');
 const crypto = require('crypto');
 
 const prisma = new PrismaClient({
   datasources: {
     db: {
-      url: 'postgresql://neondb_owner:npg_KAver0xR2jiU@ep-holy-band-andfuwo5.c-6.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require'
+      url: process.env.DATABASE_URL
     }
   }
 });
 
-const COMPANY_ID = 'cmnhzieqf0000mx1cqcqgfv4n';
-const ADMIN_USER_ID = 'c2wi7zc86aky1uurzpa1xujm0'; // Noêmia ADMIN
-const XLS_FILE = '/Users/tomaslemos/Downloads/univen /univen-imoveis_31-03-2026_16_03_49.xls';
+const COMPANY_ID = process.env.COMPANY_ID;
+const ADMIN_USER_ID = process.env.ADMIN_USER_ID;
+const XLS_FILE = process.env.XLS_FILE;
 
 // ── Type mappings ──────────────────────────────────────────────────────────────
 const TYPE_MAP = {
@@ -46,10 +46,16 @@ function mapType(t) {
 }
 
 function mapPurpose(f) {
-  const u = (f || '').toUpperCase().trim();
+  const u = (f || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toUpperCase()
+    .trim();
   if (u.includes('TEMPORADA')) return 'SEASON';
-  if (u === 'MISTO') return 'BOTH';
-  if (u.includes('LOCAÇ') || u.includes('ALUGUEL') || u.includes('RESIDENCIAL') || u.includes('COMERCIAL') || u.includes('RURAL') || u.includes('INDUSTRIAL')) return 'SALE';
+  const hasSale = u.includes('VENDA');
+  const hasRent = u.includes('LOCAC') || u.includes('ALUGUEL');
+  if (u === 'MISTO' || (hasSale && hasRent)) return 'BOTH';
+  if (hasRent) return 'RENT';
   return 'SALE';
 }
 
@@ -165,6 +171,12 @@ function buildKeywords(row, h) {
 
 // ── Main ──────────────────────────────────────────────────────────────────────
 async function main() {
+  if (!process.env.DATABASE_URL || !COMPANY_ID || !ADMIN_USER_ID || !XLS_FILE) {
+    throw new Error('DATABASE_URL, COMPANY_ID, ADMIN_USER_ID and XLS_FILE are required');
+  }
+  if (process.env.ALLOW_LEGACY_IMPORT !== 'I_UNDERSTAND') {
+    throw new Error('Legacy importer blocked. Run the property audit and set ALLOW_LEGACY_IMPORT=I_UNDERSTAND explicitly.');
+  }
   console.log('📂 Parsing Univen XLS...');
   const rows = parseHTMLTable(XLS_FILE);
   const hdrs = rows[0];
@@ -263,7 +275,8 @@ async function main() {
       const type = mapType(row[h['Tipo']]);
       const purpose = mapPurpose(row[h['Finalidade']]);
       const status = mapStatus(situacao);
-      const authorizedPublish = status === 'ACTIVE'; // Only ATIVO → public
+      const authorizedPublish = status === 'ACTIVE' && process.env.PUBLISH_IMPORTED === 'true';
+      // Imports stay private until the post-import integrity audit passes.
 
       const title = buildTitle(row, h);
       const neighborhood = row[h['Bairro']] || null;

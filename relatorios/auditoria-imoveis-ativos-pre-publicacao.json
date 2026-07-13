@@ -1,0 +1,541 @@
+{
+  "generatedAt": "2026-07-13T20:11:32.080Z",
+  "scope": "cmr6k6kqy0001gle5y1x3xtwi",
+  "mode": "active-all-publication-states",
+  "publishedProperties": 1006,
+  "blockingCount": 0,
+  "counts": {
+    "duplicateExternalIds": 0,
+    "duplicateIdentity": 0,
+    "duplicateAddresses": 20,
+    "missingCover": 0,
+    "missingGallery": 0,
+    "missingDescription": 0,
+    "coverOutsideGallery": 0,
+    "sharedImages": 0
+  },
+  "findings": {
+    "duplicateExternalIds": [],
+    "duplicateIdentity": [],
+    "duplicateAddresses": [
+      {
+        "key": "rodovia francisco rodrigues duarte|1001||rifaina|rifaina|sp",
+        "properties": [
+          {
+            "id": "uve316c5fb3fa19f7791ae8f",
+            "companyId": "cmr6k6kqy0001gle5y1x3xtwi",
+            "reference": "1300030",
+            "externalId": "76477943",
+            "title": "RANCHO DE ALTISSIMO PADRÃO COM PROJETO MODERNO À VENDA EM CONDOMONIO FECHADO EM RIFAINA   - Condomínio Ecoville  - 05 su"
+          },
+          {
+            "id": "uv6f7c83b2cfeea47651fef4",
+            "companyId": "cmr6k6kqy0001gle5y1x3xtwi",
+            "reference": "TR00496",
+            "externalId": "77052575",
+            "title": "TERRENO À VENDA NO CONDOMÍNIO ECOVILLE EM RIFAINA-SP  - LOTE NA RUA PRINCIPAL DO CONDOMINIO  - TERRENO: 360 M² - CONDOMÍ"
+          }
+        ]
+      },
+      {
+        "key": "rua coronel luiz da silva batista|763|apto 1|jardim iraja|ribeirao preto|sp",
+        "properties": [
+          {
+            "id": "uvb7b7db5f0bc8f758d0677e",
+            "companyId": "cmr6k6kqy0001gle5y1x3xtwi",
+            "reference": "AP00484",
+            "externalId": "70829705",
+            "title": "Excelente sobrado em Ribeirão Preto   Conta com  : - 1 dormitório - Sala conjugada com a cozinha  - Área de serviço  - T"
+          },
+          {
+            "id": "uv6216b11a54c82ffbb0cb48",
+            "companyId": "cmr6k6kqy0001gle5y1x3xtwi",
+            "reference": "AP00499",
+            "externalId": "71061989",
+            "title": "VENDE-SE APARTAMENTO EM RIBEIRÃO PRETO  - 1 DORMITÓRIO - SALA COZINHA CONJUGADO -1 BANHEIRO -1 VAGA GARAGEM      MELHORE"
+          }
+        ]
+      },
+      {
+        "key": "rua paulo vieira da silva|2480||jardim piratininga|franca|sp",
+        "properties": [
+          {
+            "id": "uve2658bb2b7a1296aeb71e7",
+            "companyId": "cmr6k6kqy0001gle5y1x3xtwi",
+            "reference": "AP00515",
+            "externalId": "71230471",
+            "title": "VENDE-SE APARTAMENTO ALTO PADRÃO  NO PIRATININGA 1  OBS:  FASE FINAL DE ACABAMENTO  Apartamento  alto padrão no piratini"
+          },
+          {
+            "id": "uv7eb01bd15b8e6f20c43460",
+            "companyId": "cmr6k6kqy0001gle5y1x3xtwi",
+            "reference": "AP00516",
+            "externalId": "71232893",
+            "title": "VENDE-SE APARTAMENTO ALTO PADRÃO  NO PIRATINIGA 1   Excelente apartamento no piratininga 1 com   - 92,68 metros quadrado"
+          }
+        ]
+      },
+      {
+        "key": "rua floriano peixoto|2188||centro|franca|sp",
+        "properties": [
+          {
+            "id": "uv57932c18f1e5592d162043",
+            "companyId": "cmr6k6kqy0001gle5y1x3xtwi",
+            "reference": "AP00587",
+            "externalId": "72693170",
+            "title": "Unidade à venda no EDIFICIO VILLA FRANCA   - Quarto andar / sétimo pavimento - Vista para alonso y alonso  - 03 suítes  "
+          },
+          {
+            "id": "uv6fda2c215a696b5cbaeb3f",
+            "companyId": "cmr6k6kqy0001gle5y1x3xtwi",
+            "reference": "AP00604",
+            "externalId": "73233603",
+            "title": "APARTAMENTO NOVO À VENDA EDIFICIO VILLA FRANCA  - 127 metros - 03 suites  - wc social  - ambientes amplos e integrados  "
+          },
+          {
+            "id": "uveffdc0601bb9f8f9cce144",
+            "companyId": "cmr6k6kqy0001gle5y1x3xtwi",
+            "reference": "AP00640",
+            "externalId": "73647906",
+            "title": "UNIDADE À VENDA NO EDIFICIO VILLA FRANCA   - 155m²  - 03 suítes  - Andar alto  - 04 vagas   Valor de venda: R$ 1.600.000"
+          }
+        ]
+      },
+      {
+        "key": "rua professor jose geraldo porto|5851||jardim tres colinas|franca|sp",
+        "properties": [
+          {
+            "id": "uv62c72ef5163f3facf66c70",
+            "companyId": "cmr6k6kqy0001gle5y1x3xtwi",
+            "reference": "AP00739",
+            "externalId": "74964709",
+            "title": "APARTAMENTO À VENDA NO JARDIM TRES COLINAS EM FRANCA/SP   - 95m  - 02 quartos  - 02 vagas   Valor de venda: R$ 340.000,0"
+          },
+          {
+            "id": "uv540729edb8ec32bf42d190",
+            "companyId": "cmr6k6kqy0001gle5y1x3xtwi",
+            "reference": "AP00745",
+            "externalId": "75247582",
+            "title": "EXCELENTE APARTAMENTO À VENDA NO TRES COLINAS EM FRANCA/SP   - 97m² - Sala ampla  - Cozinha com armários planejados  - 0"
+          }
+        ]
+      },
+      {
+        "key": "rua do sol|730||residencial paraiso|franca|sp",
+        "properties": [
+          {
+            "id": "uv696b27352ab8294b44f19e",
+            "companyId": "cmr6k6kqy0001gle5y1x3xtwi",
+            "reference": "AP00877",
+            "externalId": "77599320",
+            "title": "A imobiliaria Lemos lhe apresenta o seu mais novo investimento! Em um dos locais mais procurados de Franca, no Bairro Re"
+          },
+          {
+            "id": "uvcbb30412d9e2bbe93dcbd5",
+            "companyId": "cmr6k6kqy0001gle5y1x3xtwi",
+            "reference": "AP00878",
+            "externalId": "77603047",
+            "title": "A imobiliaria Lemos lhe apresenta o seu mais novo investimento! Em um dos locais mais procurados de Franca, no Bairro Re"
+          },
+          {
+            "id": "uv5d99ea5a19e5eca81b3e78",
+            "companyId": "cmr6k6kqy0001gle5y1x3xtwi",
+            "reference": "AP00879",
+            "externalId": "77603083",
+            "title": "A imobiliaria Lemos lhe apresenta o seu mais novo investimento! Em um dos locais mais procurados de Franca, no Bairro Re"
+          },
+          {
+            "id": "uvb1f6ee8ad607c5e4c0c921",
+            "companyId": "cmr6k6kqy0001gle5y1x3xtwi",
+            "reference": "AP00880",
+            "externalId": "77603100",
+            "title": "A imobiliaria Lemos lhe apresenta o seu mais novo investimento! Em um dos locais mais procurados de Franca, no Bairro Re"
+          },
+          {
+            "id": "uvf2c862bab55592bc2b8a09",
+            "companyId": "cmr6k6kqy0001gle5y1x3xtwi",
+            "reference": "AP00881",
+            "externalId": "77603133",
+            "title": "A imobiliaria Lemos lhe apresenta o seu mais novo investimento! Em um dos locais mais procurados de Franca, no Bairro Re"
+          }
+        ]
+      },
+      {
+        "key": "rua saldanha marinho|1171||vila flores|franca|sp",
+        "properties": [
+          {
+            "id": "uv6cdde5f43363b37e395cd4",
+            "companyId": "cmr6k6kqy0001gle5y1x3xtwi",
+            "reference": "AP00918",
+            "externalId": "78096219",
+            "title": "Vende linda cobertura Edifício Regina no Centro de Franca   3 dormitórios sendo 2 suítes, sala com dois ambientes, cozin"
+          },
+          {
+            "id": "uv26f3eb9c28727751322064",
+            "companyId": "cmr6k6kqy0001gle5y1x3xtwi",
+            "reference": "AP00927",
+            "externalId": "78282518",
+            "title": "APARTAMENTO A VENDA NO VILA FLORES EM FRANCA"
+          }
+        ]
+      },
+      {
+        "key": "rua alfredo tosi|1580||nucleo agricola alpha|franca|sp",
+        "properties": [
+          {
+            "id": "uv6bd1926a285b5b3f7cd628",
+            "companyId": "cmr6k6kqy0001gle5y1x3xtwi",
+            "reference": "AP00922",
+            "externalId": "78231446",
+            "title": "APARTAMENTO A VENDA NO NÚCLEO AGRÍCOLA ALPHA EM FRANCA"
+          },
+          {
+            "id": "uvcf4543042dbb6f7b4fd962",
+            "companyId": "cmr6k6kqy0001gle5y1x3xtwi",
+            "reference": "AP00923",
+            "externalId": "78253017",
+            "title": "APARTAMENTO A VENDA NO NÚCLEO AGRÍCOLA ALPHA EM FRANCA"
+          },
+          {
+            "id": "ulemosap00930",
+            "companyId": "cmr6k6kqy0001gle5y1x3xtwi",
+            "reference": "AP00930",
+            "externalId": "78306275",
+            "title": "APARTAMENTO para alugar - Ref. AP00930"
+          }
+        ]
+      },
+      {
+        "key": "rua erico verissimo|1099||miramontes|franca|sp",
+        "properties": [
+          {
+            "id": "uve2a3dd5bb12cafb14b0972",
+            "companyId": "cmr6k6kqy0001gle5y1x3xtwi",
+            "reference": "AR00013",
+            "externalId": "70288601",
+            "title": "Área residencial/comercial na cidade de Franca/SP localizada no Bairro Miramontes disponivel para negociação!  Área ampl"
+          },
+          {
+            "id": "uvc4c7d37663d555a8489646",
+            "companyId": "cmr6k6kqy0001gle5y1x3xtwi",
+            "reference": "AR00034",
+            "externalId": "73978246",
+            "title": "ÁREA RESIDENCIAL/COMERCIAL DISPONÍVEL PARA ALUGUEL NO BAIRRO MIRAMONTES EM FRANCA/SP   - Área ampla com 20.000m total se"
+          }
+        ]
+      },
+      {
+        "key": "rua padre conrado|565||vila santos dumont|franca|sp",
+        "properties": [
+          {
+            "id": "uv9c2116603ceab96d96efa6",
+            "companyId": "cmr6k6kqy0001gle5y1x3xtwi",
+            "reference": "CA01025",
+            "externalId": "71698719",
+            "title": "Linda casa na Vila Santos Dumont, Franca-SP  2 dormitórios 1 banheiro 1 Sala 1 Copa 1 Cozinha 1 Área de Serviço Garagem "
+          },
+          {
+            "id": "uv15ad7965ae8de5cc0f043c",
+            "companyId": "cmr6k6kqy0001gle5y1x3xtwi",
+            "reference": "CA01030",
+            "externalId": "71723739",
+            "title": "Casa Localizada na Estação 10m²X20m² com 160m² área construída.  - 02 quartos (armários embutido em 1 quarto) - Sala - C"
+          }
+        ]
+      },
+      {
+        "key": "centro|000||santa clara|itirapua|sp",
+        "properties": [
+          {
+            "id": "uv0ba0fa5934bb961948dd6d",
+            "companyId": "cmr6k6kqy0001gle5y1x3xtwi",
+            "reference": "CH00066",
+            "externalId": "71327522",
+            "title": "CHACARA À VENDA NO MUNICIPIO DE ITIRAPUÃ  Excelente chácara medindo 1200,63 m² - 21,58 m² de frente lote 19  ultimas uni"
+          },
+          {
+            "id": "uv4073fd13229184ffc64639",
+            "companyId": "cmr6k6kqy0001gle5y1x3xtwi",
+            "reference": "CH00067",
+            "externalId": "71327531",
+            "title": "CHACARA À VENDA NO MUNICIPIO DE ITIRAPUA   - Excelente terreno de chácara -  Medindo 1199,10m²    - Lote 20 parte alta p"
+          }
+        ]
+      },
+      {
+        "key": "avenida sao vicente|4101||jardim noemia|franca|sp",
+        "properties": [
+          {
+            "id": "uvcff12ffc1eb1c717fb9ef7",
+            "companyId": "cmr6k6kqy0001gle5y1x3xtwi",
+            "reference": "GL00044",
+            "externalId": "76901679",
+            "title": "EXELENTE GALPÃO COMERCIAL EM FASES DE CONTRUÇÃO DISPONIVEL PARA LOCAÇÃO NA AVENIDA SÃO VICENTE   - previsão de finalizaç"
+          },
+          {
+            "id": "uv8d394d7587c4187c728e1a",
+            "companyId": "cmr6k6kqy0001gle5y1x3xtwi",
+            "reference": "GL00045",
+            "externalId": "76901685",
+            "title": "EXELENTE GALPÃO COMERCIAL EM FASES DE CONTRUÇÃO DISPONIVEL PARA LOCAÇÃO NA AVENIDA SÃO VICENTE   - previsão de finalizaç"
+          }
+        ]
+      },
+      {
+        "key": "avenida doutor chafic facury|2870||prolongamento jardim angela rosa|franca|sp",
+        "properties": [
+          {
+            "id": "uv86bb819ec3f297571bd245",
+            "companyId": "cmr6k6kqy0001gle5y1x3xtwi",
+            "reference": "GL00053",
+            "externalId": "77750016",
+            "title": "EXCELENTE GALPÃO DE ALTO PADRÃO DISPONIVEL PARA LOCAÇÃO NA AVENIDA CHAFIC FACURY AO LADO DOS IRMÃOS PATROCINIO NO PROLON"
+          },
+          {
+            "id": "uve24cd7c851314e526dbd6a",
+            "companyId": "cmr6k6kqy0001gle5y1x3xtwi",
+            "reference": "GL00054",
+            "externalId": "77750021",
+            "title": "EXCELENTE GALPÃO DE ALTO PADRÃO DISPONIVEL PARÀ VENDA NA AVENIDA CHAFIC FACURY AO LADO DOS IRMÃOS PATROCINIO NO PROLONGA"
+          }
+        ]
+      },
+      {
+        "key": "avenida doutor flavio rocha|5891||jardim redentor|franca|sp",
+        "properties": [
+          {
+            "id": "uv11e4265e493d9b299326be",
+            "companyId": "cmr6k6kqy0001gle5y1x3xtwi",
+            "reference": "TR00152",
+            "externalId": "70538788",
+            "title": "LOTE DISPONIVEL À VENDA NA AVENIDA DOUTOR FLAVIO ROCHA EM FRANCA/SP  - Lote com 304 metros total, com excelente localiza"
+          },
+          {
+            "id": "uv6614c8d7fb63519ecd64ce",
+            "companyId": "cmr6k6kqy0001gle5y1x3xtwi",
+            "reference": "TR00153",
+            "externalId": "70538789",
+            "title": "LOTE DISPONIVEL À VENDA NA AVENIDA DOUTOR FLAVIO ROCHA EM FRANCA/SP  - Lote com 332 metros total, com excelente localiza"
+          }
+        ]
+      },
+      {
+        "key": "avenida alagoas|5655||jardim paulista|franca|sp",
+        "properties": [
+          {
+            "id": "uvcadf12851815a45c0ac8a3",
+            "companyId": "cmr6k6kqy0001gle5y1x3xtwi",
+            "reference": "TR00217",
+            "externalId": "71322036",
+            "title": "EXCELENTE LOTE DISPONÍVEL NO CONDOMINIO FECHADO RESIDENCIAL GAIA  Lote com 455 metros totalmente plano em uma das melhor"
+          },
+          {
+            "id": "uvc781b6078dc0c2a0b06653",
+            "companyId": "cmr6k6kqy0001gle5y1x3xtwi",
+            "reference": "TR00314",
+            "externalId": "73642608",
+            "title": "EXCELENTE LOTES À VENDA NO CONDOMINIO FECHADO RESIDENCIAL GAIA EM FRANCA/SP - Localizados em uma das melhores quadras do"
+          },
+          {
+            "id": "uv2e1ae87741cca9fb0c6d72",
+            "companyId": "cmr6k6kqy0001gle5y1x3xtwi",
+            "reference": "TR00322",
+            "externalId": "73851840",
+            "title": "EXCELENTE TERRENO À VENDA NA QUADRA J NA PARTE ALTA DO CONDOMINIO GAIA EM FRANCA/SP - 429 METROS PLANO   Valor de venda:"
+          },
+          {
+            "id": "uv0352597db39f02fc53c969",
+            "companyId": "cmr6k6kqy0001gle5y1x3xtwi",
+            "reference": "TR00323",
+            "externalId": "73851853",
+            "title": "VENDE-SE DOIS LOTES JUNTOS NA MELHOR PARTE DO CONDOMINIO RESIDENCIAL GAIA EM FRANCA/SP - TOTAL DE 997 METROS  Valor de v"
+          }
+        ]
+      },
+      {
+        "key": "av dr helio palermo|5655|residencial gaia|jardim paulista|franca|sp",
+        "properties": [
+          {
+            "id": "uv86cb82956b2fc099845b94",
+            "companyId": "cmr6k6kqy0001gle5y1x3xtwi",
+            "reference": "TR00219",
+            "externalId": "71322215",
+            "title": "LOTE DISPONÍVEL NO CONDOMINIO FECHADO RESIDENCIAL GAIA  -  831,49 METROS - LOTE PLANO - QUADRA D  R$ 914.639,00  Entre e"
+          },
+          {
+            "id": "uvd31bce24ed7e4f2c5a32e8",
+            "companyId": "cmr6k6kqy0001gle5y1x3xtwi",
+            "reference": "TR00220",
+            "externalId": "71322247",
+            "title": "LOTE DISPONÍVEL NO CONDOMINIO FECHADO RESIDENCIAL GAIA  - 855,32 METROS - LOTE PLANO - QUADRA E  R$ 940.852,00  Entre em"
+          },
+          {
+            "id": "uv2f51d65704597fbeeca4cd",
+            "companyId": "cmr6k6kqy0001gle5y1x3xtwi",
+            "reference": "TR00221",
+            "externalId": "71322285",
+            "title": "LOTE DISPONÍVEL NO CONDOMINIO FECHADO RESIDENCIAL GAIA  - 680,70 METROS - LOTE PLANO - QUADRA E  R$ 748.770,00  Entre em"
+          },
+          {
+            "id": "uv73446ec5c2b35d7b2d42c6",
+            "companyId": "cmr6k6kqy0001gle5y1x3xtwi",
+            "reference": "TR00222",
+            "externalId": "71322542",
+            "title": "LOTE DISPONÍVEL NO CONDOMINIO FECHADO RESIDENCIAL GAIA  - 815,09 METROS - LOTE PLANO - QUADRA F  R$ 896.599,00  Entre em"
+          },
+          {
+            "id": "uvef7266472539d7b1ed55e3",
+            "companyId": "cmr6k6kqy0001gle5y1x3xtwi",
+            "reference": "TR00223",
+            "externalId": "71322580",
+            "title": "LOTE DISPONÍVEL NO CONDOMINIO FECHADO RESIDENCIAL GAIA  - 849,30 METROS - LOTE PLANO - QUADRA J  R$ 934.230,00  Entre em"
+          },
+          {
+            "id": "uv79e5d8677e0169b3101b94",
+            "companyId": "cmr6k6kqy0001gle5y1x3xtwi",
+            "reference": "TR00224",
+            "externalId": "71322620",
+            "title": "LOTE DISPONÍVEL NO CONDOMINIO FECHADO RESIDENCIAL GAIA  - 593,94 METROS - LOTE PLANO - QUADRA J  R$ 653.334,00  Entre em"
+          },
+          {
+            "id": "uvaeeff3ecebf4ab53da8c7d",
+            "companyId": "cmr6k6kqy0001gle5y1x3xtwi",
+            "reference": "TR00225",
+            "externalId": "71322701",
+            "title": "LOTE DISPONÍVEL NO CONDOMINIO FECHADO RESIDENCIAL GAIA  - 683,88 METROS - LOTE PLANO - QUADRA J  R$ 752.268,00  Entre em"
+          },
+          {
+            "id": "uvfdf331d332c8f6d44b9519",
+            "companyId": "cmr6k6kqy0001gle5y1x3xtwi",
+            "reference": "TR00226",
+            "externalId": "71322730",
+            "title": "LOTE DISPONÍVEL NO CONDOMINIO FECHADO RESIDENCIAL GAIA  - 799,93 METROS - LOTE PLANO - QUADRA K  R$ 879.923,00  Entre em"
+          },
+          {
+            "id": "uv52ec4814bb530b455a0c92",
+            "companyId": "cmr6k6kqy0001gle5y1x3xtwi",
+            "reference": "TR00227",
+            "externalId": "71322759",
+            "title": "LOTE DISPONÍVEL NO CONDOMINIO FECHADO RESIDENCIAL GAIA  - 837,11 METROS - LOTE PLANO - QUADRA L  R$ 920.821,00  Entre em"
+          },
+          {
+            "id": "uv20bdb1dcd6fa7747c3f329",
+            "companyId": "cmr6k6kqy0001gle5y1x3xtwi",
+            "reference": "TR00228",
+            "externalId": "71322784",
+            "title": "LOTE DISPONÍVEL NO CONDOMINIO FECHADO RESIDENCIAL GAIA  - 768,77 METROS - LOTE PLANO - QUADRA L  R$ 845.647,00  Entre em"
+          },
+          {
+            "id": "uv0c41257c605e507c9c9e5e",
+            "companyId": "cmr6k6kqy0001gle5y1x3xtwi",
+            "reference": "TR00229",
+            "externalId": "71322821",
+            "title": "LOTE DISPONÍVEL NO CONDOMINIO FECHADO RESIDENCIAL GAIA  - 798,97 METROS - LOTE PLANO - QUADRA P  R$ 878.867,00  Entre em"
+          }
+        ]
+      },
+      {
+        "key": "rua lazaro cruz|200||polo industrial abilio nogueira|franca|sp",
+        "properties": [
+          {
+            "id": "uv83bbbb9667141e836cff01",
+            "companyId": "cmr6k6kqy0001gle5y1x3xtwi",
+            "reference": "TR00302",
+            "externalId": "73488718",
+            "title": "TERRENO À VENDA NO DISTRITO INDUSTRIAL ABILIO NOGUEIRA  - 909,08 metros  - 22,71x40,03 - terreno plano   Valor: R$ 637.0"
+          },
+          {
+            "id": "uv65a1db84f1fecd165f5f56",
+            "companyId": "cmr6k6kqy0001gle5y1x3xtwi",
+            "reference": "TR00303",
+            "externalId": "73488723",
+            "title": "LOTE À VENDA NO DISTRITO ABILIO NOGUEIRA EM FRANCA/SP  - 853,83 METROS  - 21,33X40,03 - TERRENO PLANO  Valor: R$ 598.000"
+          },
+          {
+            "id": "uv2708a850c8854fb8f0dd8c",
+            "companyId": "cmr6k6kqy0001gle5y1x3xtwi",
+            "reference": "TR00304",
+            "externalId": "73488729",
+            "title": "TERRENO À VENDA NO DISTRITO INDUSTRIAL ABILIO NOGUEIRA - 831,39 metros total  - 25.70 metros de frente  - terreno plano "
+          }
+        ]
+      },
+      {
+        "key": "condominio residencial rodrigo salloum|3000||residencial rodrigo salloum|franca|sp",
+        "properties": [
+          {
+            "id": "uv29f203e46875b7b13dbdec",
+            "companyId": "cmr6k6kqy0001gle5y1x3xtwi",
+            "reference": "TR00315",
+            "externalId": "73642711",
+            "title": "LOTE DISPONIVEL À VENDA NO CONDOMINIO RESIDENCIAL RODRIGO SALLOUM EM FRANCA/SP - lote com 450 metros na quadra D Valor: "
+          },
+          {
+            "id": "uv0da77d0129d1e5fec55b53",
+            "companyId": "cmr6k6kqy0001gle5y1x3xtwi",
+            "reference": "TR00316",
+            "externalId": "73657511",
+            "title": "TERRENO EM CONDOMÍNIO FECHADO - RODRIGO SALLOUM  Terreno plano, área de 450m²  15x30  Condomínio fechado de alto padrão,"
+          }
+        ]
+      },
+      {
+        "key": "avenida doutor helio palermo|5655||recanto do itambe|franca|sp",
+        "properties": [
+          {
+            "id": "uv06fd58f133961218428ab4",
+            "companyId": "cmr6k6kqy0001gle5y1x3xtwi",
+            "reference": "TR00379",
+            "externalId": "74425047",
+            "title": "EXCELENTE TERRENO À VENDA NO RESIDENCIAL GAIA EM FRANCA/SP   - Excelente localização no condomínio  - 421,20m² - Medindo"
+          },
+          {
+            "id": "uvae7f69a2374a213800a222",
+            "companyId": "cmr6k6kqy0001gle5y1x3xtwi",
+            "reference": "TR00525",
+            "externalId": "78175071",
+            "title": "TERRENO À VENDA NO CONDOMÍNIO GAIA EM FRANCA/SP  Excelente terreno no Condomínio Gaia  - 444 metros - Ótima localização "
+          },
+          {
+            "id": "uva3d5977873ca6fc3f5dfec",
+            "companyId": "cmr6k6kqy0001gle5y1x3xtwi",
+            "reference": "TR00526",
+            "externalId": "78175102",
+            "title": "TERRENO À VENDA NO CONDOMÍNIO GAIA EM FRANCA/SP  Excelente terreno no Condomínio Gaia  - 444 metros - Ótima localização "
+          },
+          {
+            "id": "uve2a0894bcec8f891cb346d",
+            "companyId": "cmr6k6kqy0001gle5y1x3xtwi",
+            "reference": "TR00527",
+            "externalId": "78175123",
+            "title": "TERRENO À VENDA NO CONDOMÍNIO GAIA EM FRANCA/SP  Excelente terreno no Condomínio Gaia  - 444 metros - Ótima localização "
+          }
+        ]
+      },
+      {
+        "key": "avenida doutor armando de salles oliveira|1000||parque universitario|franca|sp",
+        "properties": [
+          {
+            "id": "uv0d9ebb67ce1733cbc660d6",
+            "companyId": "cmr6k6kqy0001gle5y1x3xtwi",
+            "reference": "TR00528",
+            "externalId": "78177586",
+            "title": "TERRENO À VENDA - CONDOMÍNIO VILLA DI CAPRI  - Condomínio fechado em ótima localização na cidade de Franca - SP - Terren"
+          },
+          {
+            "id": "uvc383a21285f5a58923adca",
+            "companyId": "cmr6k6kqy0001gle5y1x3xtwi",
+            "reference": "TR00529",
+            "externalId": "78178670",
+            "title": "TERRENO À VENDA - CONDOMÍNIO VILLA DI CAPRI  - Condomínio fechado em ótima localização na cidade de Franca - SP - Terren"
+          }
+        ]
+      }
+    ],
+    "missingCover": [],
+    "missingGallery": [],
+    "missingDescription": [],
+    "coverOutsideGallery": [],
+    "sharedImages": []
+  }
+}

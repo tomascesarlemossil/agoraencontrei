@@ -13,9 +13,9 @@ if [ -z "$RAILWAY_TOKEN" ]; then
   exit 1
 fi
 
-DB_URL="postgresql://neondb_owner:npg_KAver0xR2jiU@ep-holy-band-andfuwo5.c-6.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
-JWT_SECRET="a3f8d2e1c7b4a9f6e5d0c3b2a1f8e7d6c5b4a3f2e1d0c9b8a7f6e5d4c3b2a1f0"
-COOKIE_SECRET="f0e1d2c3b4a5f6e7d8c9b0a1f2e3d4c5b6a7f8e9d0c1b2a3f4e5d6c7b8a9f0e1"
+: "${DB_URL:?Set DB_URL first}"
+: "${JWT_SECRET:?Set JWT_SECRET first}"
+: "${COOKIE_SECRET:?Set COOKIE_SECRET first}"
 
 echo "→ Criando projeto no Railway..."
 PROJECT_JSON=$(RAILWAY_TOKEN=$RAILWAY_TOKEN $RAILWAY projects create \
