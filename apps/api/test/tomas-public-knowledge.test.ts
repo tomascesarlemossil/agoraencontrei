@@ -34,6 +34,14 @@ test('prompts dos dois cérebros instruem consulta pública sem romper isolament
   assert.match(marketplace, /NUNCA acesse, mencione ou exponha informações internas/i)
 })
 
+test('prompt operacional exige justificativa nas indicações e não inventa tour 360', async () => {
+  const source = await import('../src/services/tomas.service.js')
+  assert.ok(source.executeTool)
+  const file = await import('node:fs/promises').then(fs => fs.readFile(new URL('../src/services/tomas.service.ts', import.meta.url), 'utf8'))
+  assert.match(file, /explique em 1-2 frases por que o perfil combina/i)
+  assert.match(file, /não significa automaticamente tour 360°/i)
+})
+
 test('fallback editorial dos planos acompanha os limites públicos atuais', () => {
   const lite = PLATFORM_PLANS.find(plan => plan.slug === 'lite')
   const pro = PLATFORM_PLANS.find(plan => plan.slug === 'pro')
