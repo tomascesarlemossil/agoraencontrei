@@ -26,6 +26,7 @@
 import { FRANCA_SUBMARKETS, FRANCA_MARKET_FACTS, FRANCA_VALUATION_RULES } from './franca-knowledge.js'
 import { LEMOS_COMPARABLES, CMA_CONFIDENCE_RULES } from './lemos-comparables.js'
 import { buildPlatformKnowledge } from './platform-knowledge.js'
+import { buildPublicKnowledgeGuide } from './public-knowledge.js'
 
 export type TomasBrain = 'marketplace' | 'partner'
 
@@ -123,6 +124,8 @@ ${ANTI_HALLUCINATION_RULES}
 
 ${buildPlatformKnowledge()}
 
+${buildPublicKnowledgeGuide()}
+
 ${RESPONSE_FORMAT_BLOCK}
 `
 }
@@ -213,6 +216,8 @@ ${ANTI_HALLUCINATION_RULES}
 
 ${regionalKnowledge}${buildPlatformKnowledge()}
 
+${buildPublicKnowledgeGuide()}
+
 ═══════════════════════════════════════════════════════
 FLUXO DE ATENDIMENTO
 ═══════════════════════════════════════════════════════
@@ -247,3 +252,14 @@ export {
   buildPlatformKnowledge,
 } from './platform-knowledge.js'
 export type { PlatformPlan, PlatformService, PlatformFunction } from './platform-knowledge.js'
+export {
+  NIU_PUBLIC_PROFILE,
+  PUBLIC_KNOWLEDGE,
+  buildPublicKnowledgeGuide,
+  searchPublicKnowledge,
+} from './public-knowledge.js'
+export type {
+  PublicKnowledgeEntry,
+  PublicKnowledgeKind,
+  PublicKnowledgeSource,
+} from './public-knowledge.js'

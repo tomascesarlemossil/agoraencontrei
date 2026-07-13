@@ -33,15 +33,15 @@ export const PLATFORM_PLANS: PlatformPlan[] = [
     name: 'Lite',
     priceMonthly: 97,
     priceYearly: 970,
-    pitch: 'Site profissional + CRM básico para começar a vender online.',
+    pitch: 'Plano inicial para corretores autônomos.',
     highlights: [
-      'Site multi-tenant (seu-nome.agoraencontrei.com.br)',
-      'Até 30 imóveis publicados',
-      'CRM básico — leads e contatos',
-      'Tomás IA — 50 conversas/mês',
-      'Suporte por e-mail',
+      'Até 5 imóveis',
+      'Até 10 visualizações de leads por mês',
+      'CRM básico',
+      '1 usuário',
+      'Temas Urban Tech e Classic Trust',
     ],
-    limits: { properties: 30, leadViews: 100, users: 1, aiRequests: 50 },
+    limits: { properties: 5, leadViews: 10, users: 1, aiRequests: 0 },
     highlighted: false,
   },
   {
@@ -52,15 +52,15 @@ export const PLATFORM_PLANS: PlatformPlan[] = [
     pitch: 'Para corretores e imobiliárias que querem escalar com IA e automação.',
     highlights: [
       'Tudo do Lite',
-      'Até 200 imóveis publicados',
-      'CRM avançado — funil, negócios e automações',
-      'Tomás IA — 1.000 conversas/mês + voz',
-      'Integração WhatsApp Cloud API',
-      'Painel de leilões (Caixa, Santander, Zuk)',
+      'Até 30 imóveis publicados',
+      'Até 50 visualizações de leads por mês',
+      'CRM, funil e relatórios',
+      'Tomás IA — até 100 solicitações por mês',
+      'Automação de WhatsApp',
+      'Blog e SEO',
       'Até 5 corretores',
-      'Suporte prioritário',
     ],
-    limits: { properties: 200, leadViews: 1000, users: 5, aiRequests: 1000 },
+    limits: { properties: 30, leadViews: 50, users: 5, aiRequests: 100 },
     highlighted: true,
   },
   {
@@ -72,11 +72,10 @@ export const PLATFORM_PLANS: PlatformPlan[] = [
     highlights: [
       'Tudo do Pro',
       'Imóveis e leads ilimitados',
-      'Domínio próprio (.com.br)',
-      'Split de pagamentos via Asaas',
-      'Tomás IA ilimitado',
+      'Todas as inteligências artificiais',
+      'API dedicada e white-label',
       'Usuários e corretores ilimitados',
-      'Onboarding e suporte dedicado',
+      'Suporte VIP',
     ],
     limits: { properties: -1, leadViews: -1, users: -1, aiRequests: -1 },
     highlighted: false,
@@ -153,10 +152,10 @@ export const PLATFORM_FUNCTIONS: PlatformFunction[] = [
 
 /** Passo a passo da criação de site / contratação de plano. */
 export const SITE_CREATION_FLOW = {
-  entryPath: '/parceiros',
+  entryPath: '/parceiros/planos',
   checkoutPath: '/parceiros/checkout',
   steps: [
-    'O cliente escolhe um plano (Lite, Pro, Enterprise ou Nível Máximo) em /parceiros.',
+    'O cliente escolhe um plano comercial ativo em /parceiros/planos.',
     'Preenche os dados do negócio, escolhe um nicho (imobiliária, leilões, rural) e um tema visual.',
     'Conclui o checkout (cobrança via Asaas — cartão, boleto ou Pix).',
     'O sistema cria automaticamente o tenant, o site no subdomínio, o usuário/login e a área de CRM.',
@@ -214,9 +213,9 @@ a plataforma.
 PLANOS DE ASSINATURA (criação de site + sistema):
 ${plans}
 
-Todos os planos têm 7 dias de teste e podem ser cancelados quando quiser.
-Cobrança via Asaas (cartão, boleto ou Pix). O plano anual equivale a ~2
-meses grátis.
+Os planos comerciais não têm fidelidade segundo a página pública. Preços,
+limites, teste promocional, meios de pagamento e condições podem mudar:
+consulte sempre consultar_conhecimento_publico antes de afirmar esses dados.
 
 SERVIÇOS IMOBILIÁRIOS AVULSOS:
 ${services}

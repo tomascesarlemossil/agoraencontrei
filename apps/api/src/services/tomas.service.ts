@@ -14,6 +14,8 @@ import type { PrismaClient, Prisma } from '@prisma/client'
 import {
   buildMarketplaceSystemPrompt,
   buildPartnerSystemPrompt,
+  NIU_PUBLIC_PROFILE,
+  searchPublicKnowledge,
   type PartnerContext,
 } from '@agoraencontrei/tomas-knowledge'
 import { evaluateToolPolicy, roleRank, type TomasBrain } from './tomas-policy.js'
@@ -155,7 +157,9 @@ REGRAS DURAS PARA SHORTLIST E ACTIONS (NÃO QUEBRE):
 - Se buscar_imoveis retornar found=0, NÃO crie shortlist com itens fictícios — siga o Hunter Mode.
 - actions com type="open_property" DEVEM ter payload.propertyId = id real do tool result.
 - Os botões NÃO são para o usuário "digitar de volta" — o front lê o type e o payload e navega.
-- Tipos válidos: open_property, schedule_visit, open_proposal, send_whatsapp, open_tour, show_shortlist, capture_lead
+- Tipos válidos: open_property, schedule_visit, open_proposal, send_whatsapp, open_tour, show_shortlist, capture_lead, open_url
+- Para consultar conteúdo, pessoas, serviços ou parceiros, use consultar_conhecimento_publico e buscar_parceiros antes de responder.
+- Quando uma ferramenta retornar path ou profilePath, use open_url com esse caminho para oferecer o próximo passo.
 - Se shortlist vazia, use []. Se não houver ações, use []. Se não houver atualização de lead, omita leadUpdate.
 `
 
@@ -285,6 +289,31 @@ TOM FAST SALES PRO — Conversão Máxima:
 
 const TOMAS_TOOLS: Anthropic.Tool[] = [
   {
+    name: 'consultar_conhecimento_publico',
+    description: 'Pesquisa a base pública verificada do AgoraEncontrei. Use para dúvidas sobre a plataforma, planos, ferramentas, serviços, jornadas, parceiros, pessoas (como Douglas ou Yuri) e projetos. Para preço e limites de planos, esta ferramenta também consulta os planos ativos no banco.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        query: { type: 'string', description: 'Pergunta ou assunto a pesquisar' },
+        limit: { type: 'number', description: 'Quantidade máxima de resultados, de 1 a 10' },
+      },
+      required: ['query'],
+    },
+  },
+  {
+    name: 'buscar_parceiros',
+    description: 'Busca profissionais e empresas no diretório público aprovado. Use para indicações e perguntas sobre parceiros, por nome, serviço, categoria ou cidade. Nunca invente um parceiro.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        query: { type: 'string', description: 'Nome, pessoa, serviço ou palavra-chave (ex.: NIU, Douglas, arquiteto, reforma)' },
+        category: { type: 'string', description: 'Categoria opcional (ex.: ARQUITETO, ENGENHEIRO, IMOBILIARIA)' },
+        city: { type: 'string', description: 'Cidade opcional' },
+        limit: { type: 'number', description: 'Quantidade máxima, de 1 a 10' },
+      },
+    },
+  },
+  {
     name: 'buscar_imoveis',
     description: 'Busca imóveis no catálogo do AgoraEncontrei com filtros. Use quando o cliente descrever o perfil do imóvel desejado.',
     input_schema: {
@@ -408,6 +437,124 @@ export async function executeTool(
   // and legitimately need to see the full catalogue.
   const isPublic = channel === 'site'
   switch (toolName) {
+    case 'consultar_conhecimento_publico': {
+      const query = typeof toolInput.query === 'string' ? toolInput.query.trim() : ''
+      const limit = Math.max(1, Math.min(Number(toolInput.limit) || 6, 10))
+      if (!query) return JSON.stringify({ error: 'Informe o assunto que deseja consultar.' })
+
+      const entries = searchPublicKnowledge(query, limit).map(entry => ({
+        id: entry.id,
+        kind: entry.kind,
+        title: entry.title,
+        summary: entry.summary,
+        details: entry.details,
+        path: entry.path ?? null,
+        sources: entry.sources ?? [],
+      }))
+
+      const asksAboutPlans = /plano|pre[cç]o|custa|valor|quanto|contratar|mensal|assinatura|lite|pro|enterprise|premium|site|sistema/i.test(query)
+      let activePlans: Array<Record<string, unknown>> = []
+      if (asksAboutPlans) {
+        try {
+          const plans = await (prisma as any).planDefinition.findMany({
+            where: { isActive: true },
+            select: {
+              slug: true, name: true, description: true,
+              priceMonthly: true, priceYearly: true,
+              maxProperties: true, maxLeadViews: true, maxUsers: true, maxAIRequests: true,
+              features: true, modules: true, highlighted: true, metadata: true,
+            },
+            orderBy: { sortOrder: 'asc' },
+          })
+          activePlans = plans
+            .filter((plan: any) => !(plan.metadata && plan.metadata.internal === true))
+            .map((plan: any) => ({
+              ...plan,
+              priceMonthly: Number(plan.priceMonthly),
+              priceYearly: Number(plan.priceYearly),
+              source: 'cadastro ativo do sistema',
+            }))
+        } catch { /* mantém o conteúdo editorial quando o banco não estiver disponível */ }
+      }
+
+      return JSON.stringify({ query, found: entries.length, entries, activePlans })
+    }
+
+    case 'buscar_parceiros': {
+      const query = typeof toolInput.query === 'string' ? toolInput.query.trim() : ''
+      const city = typeof toolInput.city === 'string' ? toolInput.city.trim() : ''
+      const category = typeof toolInput.category === 'string' ? toolInput.category.trim().toUpperCase() : ''
+      const limit = Math.max(1, Math.min(Number(toolInput.limit) || 6, 10))
+      const knownCategories = new Set([
+        'ARQUITETO', 'ENGENHEIRO', 'DESIGNER_INTERIORES', 'AVALIADOR',
+        'ADVOGADO_IMOBILIARIO', 'DESPACHANTE', 'FOTOGRAFO', 'VIDEOMAKER',
+        'IMOBILIARIA', 'LOTEADORA', 'OUTRO',
+      ])
+
+      let databasePartners: any[] = []
+      try {
+        const and: any[] = [{ status: 'APPROVED' }]
+        if (city) and.push({ city: { contains: city, mode: 'insensitive' } })
+        if (category && knownCategories.has(category)) and.push({ category })
+        if (query) {
+          and.push({
+            OR: [
+              { name: { contains: query, mode: 'insensitive' } },
+              { bio: { contains: query, mode: 'insensitive' } },
+              { tags: { has: query } },
+            ],
+          })
+        }
+        databasePartners = await (prisma as any).specialist.findMany({
+          where: { AND: and },
+          select: {
+            id: true, slug: true, name: true, category: true, bio: true,
+            city: true, state: true, crea: true, instagram: true, website: true,
+            photoUrl: true, logoUrl: true, address: true, tags: true,
+            whatsapp: true, phone: true, isFeatured: true,
+          },
+          orderBy: [{ isFeatured: 'desc' }, { featuredWeight: 'desc' }, { name: 'asc' }],
+          take: limit,
+        })
+      } catch { /* diretório pode estar indisponível durante bootstrap */ }
+
+      const normalize = (value: string) => value
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, ' ')
+        .trim()
+      const haystack = normalize([
+        NIU_PUBLIC_PROFILE.name,
+        ...NIU_PUBLIC_PROFILE.aliases,
+        ...NIU_PUBLIC_PROFILE.services,
+        ...NIU_PUBLIC_PROFILE.people.map(person => `${person.name} ${person.role}`),
+        NIU_PUBLIC_PROFILE.city,
+      ].join(' '))
+      const ignoredTerms = new Set(['a', 'ao', 'da', 'das', 'de', 'do', 'dos', 'e', 'eh', 'em', 'me', 'o', 'os', 'quem', 'sobre', 'uma', 'um', 'indica', 'indicacao'])
+      const queryTerms = normalize(query).split(/\s+/).filter(term => term && !ignoredTerms.has(term))
+      const matchesNiu = (!queryTerms.length || queryTerms.some(term => haystack.includes(term)))
+        && (!city || normalize(NIU_PUBLIC_PROFILE.city).includes(normalize(city)))
+        && (!category || category === NIU_PUBLIC_PROFILE.category || category === 'DESIGNER_INTERIORES' || category === 'OUTRO')
+
+      const partners = databasePartners.map(partner => ({
+        ...partner,
+        profilePath: `/especialistas/${partner.slug}`,
+        source: 'diretório público aprovado',
+      }))
+      if (matchesNiu && !partners.some(partner => partner.slug === NIU_PUBLIC_PROFILE.slug)) {
+        partners.unshift({ ...NIU_PUBLIC_PROFILE, source: 'parceiro oficial verificado' })
+      }
+
+      return JSON.stringify({
+        found: Math.min(partners.length, limit),
+        partners: partners.slice(0, limit),
+        nameClarification: /neo/i.test(query)
+          ? 'O parceiro confirmado no AgoraEncontrei se chama NIU Arquitetura. Confirme com o usuário antes de assumir que “Neo” é a mesma empresa.'
+          : undefined,
+      })
+    }
+
     // ── Transferência de lead marketplace → parceiro (SÓ com consentimento) ──
     case 'transferir_lead': {
       const toCompanyId = typeof toolInput.toCompanyId === 'string' ? toolInput.toCompanyId : ''

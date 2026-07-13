@@ -53,6 +53,13 @@ test('leitura pública de imóveis liberada para anônimo nos dois cérebros', (
   assert.equal(evaluateToolPolicy('buscar_imoveis', { brain: 'partner', companyId: 'c1', roleRank: 0 }).decision, 'allow')
 })
 
+test('conhecimento e diretório público liberados nos dois cérebros', () => {
+  for (const brain of ['marketplace', 'partner'] as const) {
+    assert.equal(evaluateToolPolicy('consultar_conhecimento_publico', { brain, roleRank: 0 }).decision, 'allow')
+    assert.equal(evaluateToolPolicy('buscar_parceiros', { brain, roleRank: 0 }).decision, 'allow')
+  }
+})
+
 test('roleRank: desconhecido/nulo → 0 (anônimo)', () => {
   assert.equal(roleRank(null), 0)
   assert.equal(roleRank('HACKER'), 0)

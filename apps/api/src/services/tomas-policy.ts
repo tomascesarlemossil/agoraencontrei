@@ -73,6 +73,16 @@ export const TOOL_POLICIES: Record<string, ToolPolicy> = {
     requiresConfirmation: false, minRoleRank: R.anonymous, audit: false,
     description: 'Detalha um imóvel. Mesmo escopo de buscar_imoveis.',
   },
+  consultar_conhecimento_publico: {
+    brains: ['marketplace', 'partner'], requiresCompanyId: false, access: 'read',
+    requiresConfirmation: false, minRoleRank: R.anonymous, audit: false,
+    description: 'Consulta conteúdo público verificado sobre a plataforma, jornadas, ferramentas, serviços, pessoas e projetos.',
+  },
+  buscar_parceiros: {
+    brains: ['marketplace', 'partner'], requiresCompanyId: false, access: 'read',
+    requiresConfirmation: false, minRoleRank: R.anonymous, audit: false,
+    description: 'Busca somente empresas e profissionais com perfil público aprovado no diretório.',
+  },
   alterar_imovel: {
     brains: ['partner'], requiresCompanyId: true, access: 'write',
     requiresConfirmation: true, minRoleRank: R.BROKER, audit: true,
