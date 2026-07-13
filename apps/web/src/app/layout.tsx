@@ -20,10 +20,9 @@ export const viewport: Viewport = {
 }
 
 export const metadata: Metadata = {
-  // ── Título: combina AgoraEncontrei + Imobiliária Lemos para unir as marcas ──
   title: {
-    default: 'AgoraEncontrei | Imobiliária Lemos — Franca/SP | Comprar, Alugar e Avaliar Imóveis',
-    template: '%s | Imobiliária Lemos — Franca/SP',
+    default: 'AgoraEncontrei — Marketplace Imobiliário',
+    template: '%s',
   },
   description: 'AgoraEncontrei — Imobiliária Lemos em Franca/SP há mais de 20 anos. Encontre casas à venda, apartamentos para alugar, terrenos e imóveis comerciais. Residencial Amazonas, Villa Piemonte, Centro e todos os bairros..',
   keywords: [

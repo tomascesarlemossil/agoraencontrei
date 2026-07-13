@@ -10,7 +10,7 @@ import { getThemeById } from './themes/site-themes'
 import { Reveal } from '@/components/public/Reveal'
 
 export const metadata: Metadata = {
-  title: 'AgoraEncontrei — Marketplace Imobiliário de Franca/SP | Imobiliária Lemos',
+  title: 'AgoraEncontrei — Marketplace Imobiliário de Franca/SP',
   description: 'Encontre seu imóvel ideal em Franca e região. 1.000+ imóveis com busca por IA e mapa interativo. Casas, apartamentos, terrenos e imóveis comerciais. Marketplace criado pela Imobiliária Lemos — 22+ anos de tradição.',
   keywords: [
     'agoraencontrei', 'marketplace imobiliário', 'imobiliária franca', 'imóveis franca sp',
