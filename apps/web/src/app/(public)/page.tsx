@@ -46,6 +46,22 @@ export const revalidate = 60
 
 const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3100').replace(/\/api\/v1\/?$/, '')
 
+const OFFICIAL_HIGHLIGHTED_PARTNERS = [
+  {
+    id: 'seed_niu_arquitetura',
+    slug: 'niu-arquitetura',
+    name: 'NIU Arquitetura',
+    category: 'ARQUITETO',
+    categoryLabel: 'Arquitetura e Design',
+    city: 'Franca/SP e Brasil',
+    photoUrl: '/partners/niu/niu-logo.jpg',
+    logoUrl: '/partners/niu/niu-logo.jpg',
+    plan: 'PREMIUM',
+    isOfficial: true,
+    profilePath: '/parceiros/niu-arquitetura',
+  },
+]
+
 async function fetchFeaturedProperties() {
   try {
     const resFeatured = await fetch(`${API_URL}/api/v1/public/featured`, {
@@ -74,15 +90,22 @@ async function fetchHighlightedPartners() {
     const res = await fetch(`${API_URL}/api/v1/specialists?limit=12`, {
       next: { revalidate: 300 },
     })
-    if (!res.ok) return []
+    if (!res.ok) return OFFICIAL_HIGHLIGHTED_PARTNERS
     const json = await res.json()
     const list: any[] = Array.isArray(json?.data) ? json.data : []
-    const rank: Record<string, number> = { VIP: 0, PRIME: 1, START: 2 }
-    return list
-      .sort((a, b) => (rank[a.plan] ?? 3) - (rank[b.plan] ?? 3))
+    const officialSlugs = new Set(OFFICIAL_HIGHLIGHTED_PARTNERS.map(p => p.slug))
+    const rank: Record<string, number> = { VIP: 0, PREMIUM: 1, PRIME: 2, PROFISSIONAL: 3, START: 4 }
+    return [
+      ...OFFICIAL_HIGHLIGHTED_PARTNERS,
+      ...list.filter(p => !officialSlugs.has(p.slug)),
+    ]
+      .sort((a, b) => {
+        if (!!a.isOfficial !== !!b.isOfficial) return a.isOfficial ? -1 : 1
+        return (rank[a.plan] ?? 5) - (rank[b.plan] ?? 5)
+      })
       .slice(0, 6)
   } catch {
-    return []
+    return OFFICIAL_HIGHLIGHTED_PARTNERS
   }
 }
 
@@ -612,13 +635,18 @@ export default async function HomePage() {
             {partners.map((sp: any) => (
               <Link
                 key={sp.id}
-                href={`/especialistas/${sp.slug}`}
+                href={sp.profilePath || `/especialistas/${sp.slug}`}
                 className="group bg-white rounded-2xl p-5 border border-gray-100 hover:border-[#C9A84C] hover:shadow-lg transition-all flex flex-col items-center text-center"
               >
+                {sp.isOfficial && (
+                  <span className="mb-3 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide" style={{ backgroundColor: 'rgba(201,168,76,0.16)', color: '#143A1F' }}>
+                    1º parceiro oficial
+                  </span>
+                )}
                 <div className="w-20 h-20 rounded-full overflow-hidden mb-3 ring-2" style={{ ['--tw-ring-color' as any]: 'rgba(201,168,76,0.35)' }}>
-                  {sp.photoUrl ? (
+                  {sp.photoUrl || sp.logoUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={sp.photoUrl} alt={sp.name} className="w-full h-full object-cover" />
+                    <img src={sp.photoUrl || sp.logoUrl} alt={sp.name} className="w-full h-full object-cover" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-lg font-bold" style={{ backgroundColor: 'rgba(20,58,31,0.06)', color: 'var(--ae-heading)' }}>
                       {(sp.name || '?').slice(0, 2).toUpperCase()}
