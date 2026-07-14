@@ -1,6 +1,7 @@
 import { PrismaClient } from '@prisma/client'
 import { CaixaScraper } from './caixa-scraper.js'
 import { GenericLeiloeiroScraper, LEILOEIROS_CONFIG, BANCOS_CONFIG } from './generic-scraper.js'
+import { MegaLeiloesScraper } from './mega-scraper.js'
 import { AiNewsroomService } from '../ai-newsroom.service.js'
 import { env } from '../../utils/env.js'
 import { fetchSantanderApifyLastRun, persistApifySantanderItems } from '../apify-santander.service.js'
@@ -272,6 +273,21 @@ export class ScraperScheduler {
       } catch (err: any) {
         console.error(`[ScraperScheduler] ${config.name} falhou:`, err.message)
         results.push({ source: config.source, found: 0, created: 0, updated: 0, errors: [err.message], duration: Date.now() - start })
+      }
+    }
+
+    // Mega Leilões — scraper estruturado (o site é HTML renderizado; o parser
+    // genérico por regex registrava 0). Alimenta o pipeline completo do arquivo.
+    {
+      const start = Date.now()
+      try {
+        const scraper = new MegaLeiloesScraper(this.prisma)
+        const result = await scraper.run()
+        console.log(`[ScraperScheduler] Mega Leilões: ${result.found} encontrados (${Date.now() - start}ms)`)
+        results.push({ source: 'MEGA_LEILOES', ...result, duration: Date.now() - start })
+      } catch (err: any) {
+        console.error('[ScraperScheduler] Mega Leilões falhou:', err.message)
+        results.push({ source: 'MEGA_LEILOES', found: 0, created: 0, updated: 0, errors: [err.message], duration: Date.now() - start })
       }
     }
 
