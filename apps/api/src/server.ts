@@ -309,6 +309,7 @@ async function runMigrations(prisma: any) {
     `ALTER TABLE auctions ADD COLUMN IF NOT EXISTS "soldDate" TIMESTAMPTZ`,
     `ALTER TABLE auctions ADD COLUMN IF NOT EXISTS "outcomeCapturedAt" TIMESTAMPTZ`,
     `ALTER TABLE auctions ADD COLUMN IF NOT EXISTS "outcomeAttempts" INTEGER NOT NULL DEFAULT 0`,
+    `ALTER TABLE auctions ADD COLUMN IF NOT EXISTS "detailEnrichedAt" TIMESTAMPTZ`,
     // ── Snapshots temporais (histórico imutável de cada mudança observada) ────
     `CREATE TABLE IF NOT EXISTS auction_snapshots (
       id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
