@@ -47,7 +47,7 @@ function executiveSummary(report: Report, location: string): string[] {
   const discount = report.values?.discountPercent?.median
   const coverage = report.dataQuality?.withDocuments != null ? Math.round(report.dataQuality.withDocuments / report.total * 100) : null
   return [
-    `A amostra de ${location || 'todo o mercado pesquisado'} reúne ${report.total} leilões, sendo ${active} oportunidades em situação ativa.`,
+    `A amostra de ${location || 'todo o mercado pesquisado'} reúne ${report.total} ${report.total === 1 ? 'leilão' : 'leilões'}, sendo ${active} ${active === 1 ? 'oportunidade' : 'oportunidades'} em situação ativa.`,
     sold > 0 ? `${sold} arremates possuem resultado confirmado; a mediana observada foi ${fmt(report.values?.soldValue?.median)}.` : 'Ainda não há valor de arremate confirmado nesta seleção; os preços exibidos representam ofertas anunciadas.',
     discount != null ? `O desconto anunciado mediano é de ${Math.round(discount)}% sobre a avaliação.` : 'A amostra ainda não possui descontos suficientes para uma leitura estatística.',
     coverage != null ? `${coverage}% dos registros possuem edital ou documento associado, indicador importante para a diligência.` : '',
