@@ -61,6 +61,13 @@ jobs:
         continue-on-error: true
         env:
           NEXT_TELEMETRY_DISABLED: '1'
+          # O runner é windows-latest; o next.config desliga o output standalone
+          # no Windows (process.platform === 'win32') para o dev local não exigir
+          # Developer Mode/admin p/ symlinks. Mas o app offline PRECISA do
+          # standalone (o bundle-server.mjs copia apps/web/.next/standalone).
+          # Sem esta flag o build gera .next sem standalone → o bundle pula o web
+          # e o "Verify API packed" falha em "✗ web .next".
+          FORCE_NEXT_STANDALONE: '1'
           # CRÍTICO: o client Next inlina NEXT_PUBLIC_* no BUILD. O app offline
           # sobe a API local em 127.0.0.1:31764 (AGORA_API_PORT em main.js); sem
           # isto o bundle chamaria o fallback localhost:3100 e NADA funcionaria.
