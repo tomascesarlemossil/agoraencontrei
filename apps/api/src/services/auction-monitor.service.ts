@@ -64,7 +64,9 @@ export class AuctionMonitorService {
       data: { status: 'CLOSED' },
     })
 
-    // 2. Detectar leilões sem atualização há mais de 7 dias (possível suspensão)
+    // 2. Detectar leilões sem atualização há mais de 7 dias (deslistagem).
+    // Ausência na fonte não comprova suspensão judicial/administrativa. CLOSED
+    // preserva o registro histórico sem afirmar um motivo que não observamos.
     const staleThreshold = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
     const staleAuctions = await this.prisma.auction.findMany({
       where: {
@@ -74,7 +76,7 @@ export class AuctionMonitorService {
       select: { id: true, title: true, source: true },
     })
 
-    // Marcar como SUSPENDED se não foram atualizados por scraper em 7 dias
+    // Marcar como CLOSED se não foram atualizados por scraper em 7 dias.
     let suspended = 0
     if (staleAuctions.length > 0) {
       const result = await this.prisma.auction.updateMany({
@@ -82,10 +84,10 @@ export class AuctionMonitorService {
         // Saiu da fonte (sem sighting > 7 dias): marca deslistagem. O registro
         // é preservado como histórico — nunca deletamos. disappearedAt é o
         // gatilho da futura captura de desfecho (arrematado por quanto).
-        data: { status: 'SUSPENDED', disappearedAt: now },
+        data: { status: 'CLOSED', disappearedAt: now },
       })
       suspended = result.count
-      console.log(`[AuctionMonitor] ${suspended} leilões marcados como SUSPENDED (sem atualização > 7 dias)`)
+      console.log(`[AuctionMonitor] ${suspended} leilões marcados como CLOSED/deslistados (sem atualização > 7 dias)`)
     }
 
     // 3. Recalcular scores de oportunidade para leilões ativos

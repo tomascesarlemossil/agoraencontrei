@@ -310,6 +310,22 @@ async function runMigrations(prisma: any) {
     `ALTER TABLE auctions ADD COLUMN IF NOT EXISTS "outcomeCapturedAt" TIMESTAMPTZ`,
     `ALTER TABLE auctions ADD COLUMN IF NOT EXISTS "outcomeAttempts" INTEGER NOT NULL DEFAULT 0`,
     `ALTER TABLE auctions ADD COLUMN IF NOT EXISTS "detailEnrichedAt" TIMESTAMPTZ`,
+    // Reconcilia auction_bids legado (amount/status/createdAt) com o modelo
+    // histórico atual. A tabela já existia em produção, então CREATE IF NOT
+    // EXISTS não adicionava as colunas novas e quebrava o detalhe com P2022.
+    `ALTER TABLE auction_bids ADD COLUMN IF NOT EXISTS round INTEGER NOT NULL DEFAULT 1`,
+    `ALTER TABLE auction_bids ADD COLUMN IF NOT EXISTS "bidValue" DECIMAL(14,2)`,
+    `ALTER TABLE auction_bids ADD COLUMN IF NOT EXISTS "bidderName" TEXT`,
+    `ALTER TABLE auction_bids ADD COLUMN IF NOT EXISTS "bidderCpf" TEXT`,
+    `ALTER TABLE auction_bids ADD COLUMN IF NOT EXISTS "bidDate" TIMESTAMPTZ NOT NULL DEFAULT NOW()`,
+    `ALTER TABLE auction_bids ADD COLUMN IF NOT EXISTS "isWinning" BOOLEAN NOT NULL DEFAULT false`,
+    `ALTER TABLE auction_bids ADD COLUMN IF NOT EXISTS metadata JSONB NOT NULL DEFAULT '{}'`,
+    `UPDATE auction_bids SET "bidValue" = amount WHERE "bidValue" IS NULL AND amount IS NOT NULL`,
+    `ALTER TABLE auction_bids ALTER COLUMN "bidValue" SET NOT NULL`,
+    `ALTER TABLE auction_bids ALTER COLUMN amount DROP NOT NULL`,
+    // Corrige a classificação histórica criada pelo monitor antigo: sumir da
+    // fonte significa deslistado/encerrado, não suspensão comprovada.
+    `UPDATE auctions SET status = 'CLOSED' WHERE status = 'SUSPENDED' AND "disappearedAt" IS NOT NULL`,
     // ── Snapshots temporais (histórico imutável de cada mudança observada) ────
     `CREATE TABLE IF NOT EXISTS auction_snapshots (
       id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
