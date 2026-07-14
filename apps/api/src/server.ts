@@ -279,6 +279,46 @@ async function runMigrations(prisma: any) {
     `CREATE INDEX IF NOT EXISTS auctions_discount_idx ON auctions("discountPercent")`,
     `CREATE INDEX IF NOT EXISTS auctions_created_idx ON auctions("createdAt" DESC)`,
     `ALTER TABLE auctions ADD COLUMN IF NOT EXISTS "streetViewUrl" TEXT`,
+    // ── Reconciliação: colunas presentes no schema Prisma mas ausentes do
+    //    CREATE TABLE acima. O scraper já escreve algumas destas (registryNumber,
+    //    registryOffice, debtorName, documentsUrls, features) — sem estes ALTERs
+    //    uma base recriada do zero quebraria a ingestão. Idempotente.
+    `ALTER TABLE auctions ADD COLUMN IF NOT EXISTS "auctioneerUrl" TEXT`,
+    `ALTER TABLE auctions ADD COLUMN IF NOT EXISTS "auctioneerCnpj" TEXT`,
+    `ALTER TABLE auctions ADD COLUMN IF NOT EXISTS "auctioneerJucesp" TEXT`,
+    `ALTER TABLE auctions ADD COLUMN IF NOT EXISTS "itbiEstimate" DECIMAL(12,2)`,
+    `ALTER TABLE auctions ADD COLUMN IF NOT EXISTS "registryEstimate" DECIMAL(12,2)`,
+    `ALTER TABLE auctions ADD COLUMN IF NOT EXISTS "lawyerEstimate" DECIMAL(12,2)`,
+    `ALTER TABLE auctions ADD COLUMN IF NOT EXISTS "evictionEstimate" DECIMAL(12,2)`,
+    `ALTER TABLE auctions ADD COLUMN IF NOT EXISTS judge TEXT`,
+    `ALTER TABLE auctions ADD COLUMN IF NOT EXISTS "registryNumber" TEXT`,
+    `ALTER TABLE auctions ADD COLUMN IF NOT EXISTS "registryOffice" TEXT`,
+    `ALTER TABLE auctions ADD COLUMN IF NOT EXISTS "debtorName" TEXT`,
+    `ALTER TABLE auctions ADD COLUMN IF NOT EXISTS "creditorName" TEXT`,
+    `ALTER TABLE auctions ADD COLUMN IF NOT EXISTS restrictions TEXT`,
+    `ALTER TABLE auctions ADD COLUMN IF NOT EXISTS "bankBranch" TEXT`,
+    `ALTER TABLE auctions ADD COLUMN IF NOT EXISTS "documentsUrls" TEXT[] NOT NULL DEFAULT '{}'`,
+    `ALTER TABLE auctions ADD COLUMN IF NOT EXISTS features TEXT[] NOT NULL DEFAULT '{}'`,
+    // ── Ciclo de vida / arquivo histórico ────────────────────────────────────
+    `ALTER TABLE auctions ADD COLUMN IF NOT EXISTS "firstSeenAt" TIMESTAMPTZ`,
+    `ALTER TABLE auctions ADD COLUMN IF NOT EXISTS "lastSeenAt" TIMESTAMPTZ`,
+    `ALTER TABLE auctions ADD COLUMN IF NOT EXISTS "disappearedAt" TIMESTAMPTZ`,
+    `CREATE INDEX IF NOT EXISTS auctions_disappeared_idx ON auctions("disappearedAt")`,
+    // ── Snapshots temporais (histórico imutável de cada mudança observada) ────
+    `CREATE TABLE IF NOT EXISTS auction_snapshots (
+      id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+      "auctionId" TEXT NOT NULL REFERENCES auctions(id) ON DELETE CASCADE,
+      "capturedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      "scrapedHash" TEXT,
+      status TEXT,
+      "appraisalValue" DECIMAL(14,2),
+      "minimumBid" DECIMAL(14,2),
+      "currentBid" DECIMAL(14,2),
+      "soldValue" DECIMAL(14,2),
+      "discountPercent" DOUBLE PRECISION,
+      raw JSONB NOT NULL DEFAULT '{}'
+    )`,
+    `CREATE INDEX IF NOT EXISTS auction_snapshots_auction_idx ON auction_snapshots("auctionId", "capturedAt")`,
     `CREATE INDEX IF NOT EXISTS scraper_runs_source_idx ON scraper_runs(source)`,
     `CREATE INDEX IF NOT EXISTS scraper_runs_started_idx ON scraper_runs("startedAt")`,
   ]

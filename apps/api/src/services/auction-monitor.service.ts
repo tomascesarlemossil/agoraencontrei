@@ -79,7 +79,10 @@ export class AuctionMonitorService {
     if (staleAuctions.length > 0) {
       const result = await this.prisma.auction.updateMany({
         where: { id: { in: staleAuctions.map(a => a.id) } },
-        data: { status: 'SUSPENDED' },
+        // Saiu da fonte (sem sighting > 7 dias): marca deslistagem. O registro
+        // é preservado como histórico — nunca deletamos. disappearedAt é o
+        // gatilho da futura captura de desfecho (arrematado por quanto).
+        data: { status: 'SUSPENDED', disappearedAt: now },
       })
       suspended = result.count
       console.log(`[AuctionMonitor] ${suspended} leilões marcados como SUSPENDED (sem atualização > 7 dias)`)

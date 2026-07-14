@@ -218,6 +218,9 @@ export abstract class BaseScraper {
             opportunityScore: score,
             estimatedROI: discount ? discount * 0.7 : null,
             lastScrapedAt: new Date(),
+            lastSeenAt: new Date(),
+            // Reapareceu na fonte → limpa marca de deslistagem (o leilão voltou).
+            disappearedAt: null,
             scrapedHash: hash,
           }
 
@@ -228,17 +231,35 @@ export abstract class BaseScraper {
                 data: auctionData,
               })
               updated++
+              // Registra a mudança na linha do tempo histórica (best-effort).
+              await this.writeSnapshot(existing.id, item, hash, discount, score).catch(() => {})
+            } else {
+              // Ainda listado, sem mudança de conteúdo: só marca que continua
+              // vivo. Sem isto, lastScrapedAt ficaria congelado no create e o
+              // monitor marcaria como SUSPENDED após 7 dias mesmo sendo visto a
+              // cada scrape (bug de falso-positivo de deslistagem).
+              await this.prisma.auction.update({
+                where: { id: existing.id },
+                data: { lastSeenAt: new Date(), lastScrapedAt: new Date(), disappearedAt: null },
+              }).catch(() => {})
             }
           } else {
-            await this.prisma.auction.create({
-              data: { ...auctionData, slug },
-            }).catch(async () => {
-              // Slug conflict — add random suffix
-              await this.prisma.auction.create({
-                data: { ...auctionData, slug: `${slug}-${Date.now().toString(36)}` },
+            let createdId: string | null = null
+            try {
+              const row = await this.prisma.auction.create({
+                data: { ...auctionData, slug, firstSeenAt: new Date() },
               })
-            })
+              createdId = row.id
+            } catch {
+              // Slug conflict — add random suffix
+              const row = await this.prisma.auction.create({
+                data: { ...auctionData, slug: `${slug}-${Date.now().toString(36)}`, firstSeenAt: new Date() },
+              })
+              createdId = row.id
+            }
             created++
+            // Primeiro snapshot do histórico (best-effort).
+            if (createdId) await this.writeSnapshot(createdId, item, hash, discount, score).catch(() => {})
 
             // Geocode novos leilões na hora da ingestão (bairro → cidade como
             // fallback). Sem lat/lng o leilão não vira pin em /auctions/map,
@@ -306,5 +327,37 @@ export abstract class BaseScraper {
     }
 
     return { created, updated, found: items.length, errors }
+  }
+
+  /**
+   * Grava um snapshot temporal do leilão — histórico imutável de cada mudança
+   * observada (preço, status, desconto). Permite reconstruir a evolução do
+   * leilão (1ª praça → 2ª praça → arrematado) mesmo depois que a fonte remove
+   * o item. Best-effort: uma falha aqui nunca deve interromper a ingestão.
+   */
+  protected async writeSnapshot(
+    auctionId: string,
+    item: ScrapedAuction,
+    hash: string,
+    discount: number | null,
+    score: number,
+  ): Promise<void> {
+    await this.prisma.auctionSnapshot.create({
+      data: {
+        auctionId,
+        scrapedHash: hash,
+        status: item.status || 'UPCOMING',
+        appraisalValue: item.appraisalValue,
+        minimumBid: item.minimumBid,
+        discountPercent: discount,
+        raw: {
+          firstRoundBid: item.firstRoundBid ?? null,
+          secondRoundBid: item.secondRoundBid ?? null,
+          auctionDate: item.auctionDate?.toISOString() ?? null,
+          opportunityScore: score,
+          occupation: item.occupation ?? null,
+        },
+      },
+    })
   }
 }

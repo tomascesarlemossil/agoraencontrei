@@ -296,13 +296,15 @@ export class ScraperScheduler {
 
     // For bank auctions, only close if they haven't been scraped in 7+ days
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+    // Só quem não foi visto há 7+ dias saiu da fonte → marca deslistagem
+    // (disappearedAt). O registro é preservado como histórico, nunca deletado.
     const bankResult = await this.prisma.auction.updateMany({
       where: {
         lastScrapedAt: { lt: sevenDaysAgo },
         status: { in: ['UPCOMING', 'OPEN', 'FIRST_ROUND', 'SECOND_ROUND'] },
         source: { in: ['CAIXA', 'BANCO_DO_BRASIL', 'BRADESCO', 'SANTANDER', 'ITAU'] },
       },
-      data: { status: 'CLOSED' },
+      data: { status: 'CLOSED', disappearedAt: now },
     })
 
     console.log(`[ScraperScheduler] ${result.count} leilões + ${bankResult.count} bancários marcados como CLOSED`)
