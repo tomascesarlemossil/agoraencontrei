@@ -32,8 +32,16 @@ export default fp(async (app: FastifyInstance) => {
     // Matrículas usam apenas banco + fonte oficial; não dependem das filas Redis.
     auctionBackfillTimer = setTimeout(async () => {
       try {
-        const detail = await runDetailEnrichmentBatch(app.prisma, 500)
-        app.log.info(`[auction-backfill] ${detail.enriched}/${detail.processed} documentos oficiais descobertos`)
+        let discovered = 0
+        let checked = 0
+        // O acervo nacional supera 5 mil itens; percorre páginas até esgotar.
+        for (let page = 0; page < 30; page++) {
+          const detail = await runDetailEnrichmentBatch(app.prisma, 500)
+          discovered += detail.enriched
+          checked += detail.processed
+          if (detail.processed < 500) break
+        }
+        app.log.info(`[auction-backfill] ${discovered}/${checked} documentos oficiais descobertos`)
         const archive = await runAuctionArchiveBatch(app.prisma, 500)
         app.log.info(`[auction-backfill] ${archive.archived} documentos arquivados de ${archive.processed} leilões`)
       } catch (e) {
