@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { useAuthStore } from '@/stores/auth.store'
 import { authApi } from '@/lib/api'
@@ -11,6 +11,27 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter()
   const pathname = usePathname()
   const { user, accessToken, refreshToken, isAuthenticated, isTokenExpired, setAuth, clearAuth } = useAuthStore()
+  // O middleware do Zustand só existe no navegador. Durante o prerender do
+  // Next.js ele pode estar ausente, então a leitura precisa acontecer no efeito.
+  const [hasHydrated, setHasHydrated] = useState(false)
+
+  useEffect(() => {
+    const persistence = useAuthStore.persist
+    if (!persistence) {
+      setHasHydrated(true)
+      return
+    }
+
+    const unsubscribe = persistence.onFinishHydration(() => {
+      setHasHydrated(true)
+    })
+
+    // A persistência pode ter terminado entre a inicialização do estado e o
+    // registro do listener. Esta segunda leitura elimina essa janela de corrida.
+    if (persistence.hasHydrated()) setHasHydrated(true)
+
+    return unsubscribe
+  }, [])
 
   // Defesa em profundidade: rotas exclusivas da plataforma só para super-admin.
   // Um parceiro que tentar acessar por URL direta é redirecionado ao dashboard.
@@ -20,6 +41,8 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   }, [blockedPlatformRoute, router])
 
   useEffect(() => {
+    if (!hasHydrated) return
+
     async function check() {
       // No tokens at all → redirect to login immediately
       if (!accessToken && !refreshToken) {
@@ -70,9 +93,9 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
       }
     }, 5000)
     return () => clearTimeout(timeout)
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [hasHydrated]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  if (!user) {
+  if (!hasHydrated || !user) {
     return (
       <div className="min-h-[100dvh] flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
