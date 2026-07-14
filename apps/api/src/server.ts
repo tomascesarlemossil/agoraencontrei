@@ -319,6 +319,23 @@ async function runMigrations(prisma: any) {
       raw JSONB NOT NULL DEFAULT '{}'
     )`,
     `CREATE INDEX IF NOT EXISTS auction_snapshots_auction_idx ON auction_snapshots("auctionId", "capturedAt")`,
+    // ── Documentos arquivados (edital, matrícula, laudo, ata) → S3 ────────────
+    `CREATE TABLE IF NOT EXISTS auction_documents (
+      id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+      "auctionId" TEXT NOT NULL REFERENCES auctions(id) ON DELETE CASCADE,
+      type TEXT NOT NULL DEFAULT 'OUTRO',
+      "sourceUrl" TEXT NOT NULL,
+      "s3Key" TEXT, "s3Url" TEXT,
+      sha256 TEXT NOT NULL,
+      "sizeBytes" INTEGER,
+      "mimeType" TEXT,
+      "extractedText" TEXT,
+      status TEXT NOT NULL DEFAULT 'ARCHIVED',
+      "capturedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )`,
+    `CREATE UNIQUE INDEX IF NOT EXISTS auction_documents_auction_sha_key ON auction_documents("auctionId", sha256)`,
+    `CREATE INDEX IF NOT EXISTS auction_documents_auction_idx ON auction_documents("auctionId")`,
+    `CREATE INDEX IF NOT EXISTS auction_documents_type_idx ON auction_documents(type)`,
     `CREATE INDEX IF NOT EXISTS scraper_runs_source_idx ON scraper_runs(source)`,
     `CREATE INDEX IF NOT EXISTS scraper_runs_started_idx ON scraper_runs("startedAt")`,
   ]

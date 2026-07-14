@@ -2394,6 +2394,7 @@ model Auction {
   alerts              AuctionAlert[]
   analyses            AuctionAnalysis[]
   snapshots           AuctionSnapshot[]
+  documents           AuctionDocument[]
 
   @@index([source])
   @@index([status])
@@ -2428,6 +2429,31 @@ model AuctionSnapshot {
 
   @@index([auctionId, capturedAt])
   @@map("auction_snapshots")
+}
+
+// Documento público de leilão arquivado internamente (edital, matrícula, laudo,
+// ata). Baixamos o arquivo da fonte e guardamos no S3 — os links dos leiloeiros
+// apodrecem depois que o leilão encerra; o binário arquivado sobrevive.
+model AuctionDocument {
+  id            String   @id @default(cuid())
+  auctionId     String
+  auction       Auction  @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+  type          String   @default("OUTRO") // EDITAL | MATRICULA | LAUDO | ATA | OUTRO
+  sourceUrl     String                     // URL original de onde foi baixado
+  s3Key         String?                    // chave no S3 (null se S3 indisponível)
+  s3Url         String?
+  sha256        String                     // hash do conteúdo — dedup/versionamento
+  sizeBytes     Int?
+  mimeType      String?
+  extractedText String?  @db.Text          // texto extraído (HTML/texto), quando disponível
+  status        String   @default("ARCHIVED") // ARCHIVED | PENDING | FAILED
+  capturedAt    DateTime @default(now())
+
+  // Mesmo conteúdo (sha256) não duplica; conteúdo novo vira nova versão.
+  @@unique([auctionId, sha256])
+  @@index([auctionId])
+  @@index([type])
+  @@map("auction_documents")
 }
 
 model AuctionBid {
