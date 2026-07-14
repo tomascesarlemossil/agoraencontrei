@@ -58,6 +58,7 @@ import legalRoutes from './routes/legal/index.js'
 import financeAutomationRoutes from './routes/finance/automation.js'
 import alertsRoutes from './routes/alerts/index.js'
 import auctionsRoutes from './routes/auctions/index.js'
+import auctionsArchiveRoutes from './routes/auctions-archive/index.js'
 import specialistsRoutes from './routes/specialists/index.js'
 import { specialistPaymentRoutes } from './routes/specialists/payments.js'
 import { ScraperScheduler } from './services/scrapers/scheduler.js'
@@ -340,6 +341,21 @@ async function runMigrations(prisma: any) {
     `CREATE UNIQUE INDEX IF NOT EXISTS auction_documents_auction_sha_key ON auction_documents("auctionId", sha256)`,
     `CREATE INDEX IF NOT EXISTS auction_documents_auction_idx ON auction_documents("auctionId")`,
     `CREATE INDEX IF NOT EXISTS auction_documents_type_idx ON auction_documents(type)`,
+    // ── Identidade canônica do imóvel (agrupa leilões do mesmo imóvel no tempo) ─
+    `CREATE TABLE IF NOT EXISTS auction_property_identities (
+      id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+      "registryKey" TEXT UNIQUE,
+      "addressKey" TEXT UNIQUE,
+      city TEXT, state TEXT, neighborhood TEXT,
+      "auctionCount" INTEGER NOT NULL DEFAULT 0,
+      "firstAuctionAt" TIMESTAMPTZ,
+      "lastAuctionAt" TIMESTAMPTZ,
+      "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )`,
+    `CREATE INDEX IF NOT EXISTS auction_identities_city_idx ON auction_property_identities(city, state)`,
+    `ALTER TABLE auctions ADD COLUMN IF NOT EXISTS "identityId" TEXT`,
+    `CREATE INDEX IF NOT EXISTS auctions_identity_idx ON auctions("identityId")`,
     `CREATE INDEX IF NOT EXISTS scraper_runs_source_idx ON scraper_runs(source)`,
     `CREATE INDEX IF NOT EXISTS scraper_runs_started_idx ON scraper_runs("startedAt")`,
   ]
@@ -1561,6 +1577,7 @@ async function bootstrap() {
   await app.register(financeAutomationRoutes, { prefix: '/api/v1/finance/automation' })
   await app.register(alertsRoutes,            { prefix: '/api/v1/public/alerts' })
   await app.register(auctionsRoutes,          { prefix: '/api/v1/auctions' })
+  await app.register(auctionsArchiveRoutes,   { prefix: '/api/v1/auctions' })
   // auctionsRoute desativada (FST_ERR_DUPLICATED_ROUTE com publicRoutes)
   // Leilões disponíveis em /api/v1/auctions (Claude) e /api/v1/public/auctions via publicRoutes
   await app.register(freeListingRoutes,        { prefix: '/api/v1/public' })
