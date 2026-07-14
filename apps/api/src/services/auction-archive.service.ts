@@ -218,7 +218,8 @@ export async function runAuctionArchiveBatch(
     where: {
       AND: [
         { OR: [{ editalUrl: { not: null } }, { documentsUrls: { isEmpty: false } }] },
-        { documents: { none: {} } },
+        // Um edital já arquivado não pode impedir a matrícula descoberta depois.
+        { documents: { none: { type: 'MATRICULA' } } },
       ],
     },
     select: { id: true },
@@ -227,9 +228,11 @@ export async function runAuctionArchiveBatch(
   })
 
   let archived = 0
-  for (const a of pending) {
-    const r = await archiveAuctionDocuments(prisma, a.id, deps)
-    archived += r.archived
+  for (let i = 0; i < pending.length; i += 4) {
+    const results = await Promise.all(
+      pending.slice(i, i + 4).map((a) => archiveAuctionDocuments(prisma, a.id, deps)),
+    )
+    archived += results.reduce((sum, r) => sum + r.archived, 0)
   }
   return { processed: pending.length, archived }
 }

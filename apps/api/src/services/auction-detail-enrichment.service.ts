@@ -39,7 +39,60 @@ const DETAIL_PARSERS: DetailParser[] = [
 ]
 
 /** Filtro Prisma dos leilões que têm parser de detalhe conhecido. */
-export const ENRICHABLE_HOSTS = ['megaleiloes']
+export const ENRICHABLE_HOSTS = ['megaleiloes', 'venda-imoveis.caixa.gov.br']
+
+const BRAZILIAN_STATES = new Set([
+  'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS',
+  'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC',
+  'SP', 'SE', 'TO',
+])
+
+/** Gera a URL da matrícula oficial da Caixa sem depender da página com CAPTCHA. */
+export function deriveCaixaMatriculaUrl(
+  sourceUrl: string | null | undefined,
+  state: string | null | undefined,
+  externalId?: string | null,
+): string | undefined {
+  const uf = state?.trim().toUpperCase()
+  if (!uf || !BRAZILIAN_STATES.has(uf)) return undefined
+
+  let propertyId = ''
+  if (sourceUrl && /venda-imoveis\.caixa\.gov\.br/i.test(sourceUrl)) {
+    try {
+      const url = new URL(sourceUrl)
+      propertyId = url.searchParams.get('hdnimovel') || url.searchParams.get('idImo') || ''
+    } catch {
+      const match = sourceUrl.match(/[?&](?:hdnimovel|idImo)=([^&#]+)/i)
+      propertyId = match?.[1] || ''
+    }
+  }
+  if (!propertyId && externalId && /^CAIXA[-_:]/i.test(externalId)) {
+    propertyId = externalId.replace(/^CAIXA[-_:]/i, '')
+  }
+
+  const digits = propertyId.replace(/\D/g, '')
+  if (!digits) return undefined
+  return `https://venda-imoveis.caixa.gov.br/editais/matricula/${uf}/${digits}.pdf`
+}
+
+async function officialPdfExists(url: string, fetchImpl: typeof fetch): Promise<'yes' | 'no' | 'retry'> {
+  try {
+    const head = await fetchImpl(url, { method: 'HEAD', headers: { 'User-Agent': UA } })
+    if (head.ok && /pdf|octet-stream/i.test(head.headers.get('content-type') || '')) return 'yes'
+    if (head.status === 404) return 'no'
+    if (![403, 405, 501].includes(head.status)) return 'retry'
+
+    const probe = await fetchImpl(url, {
+      method: 'GET',
+      headers: { 'User-Agent': UA, Range: 'bytes=0-4' },
+    })
+    if (probe.ok && /pdf|octet-stream/i.test(probe.headers.get('content-type') || '')) return 'yes'
+    if (probe.status === 404) return 'no'
+    return 'retry'
+  } catch {
+    return 'retry'
+  }
+}
 
 /**
  * Enriquece um leilão a partir da página de detalhe: descobre editalUrl e
@@ -54,9 +107,32 @@ export async function enrichAuctionDetail(
   const fetchImpl = deps.fetchImpl || fetch
   const auction = await prisma.auction.findUnique({
     where: { id: auctionId },
-    select: { id: true, sourceUrl: true, editalUrl: true, documentsUrls: true },
+    select: {
+      id: true, sourceUrl: true, externalId: true, state: true,
+      editalUrl: true, documentsUrls: true,
+    },
   })
   if (!auction?.sourceUrl) return { enriched: false }
+
+  const caixaMatriculaUrl = deriveCaixaMatriculaUrl(auction.sourceUrl, auction.state, auction.externalId)
+  if (caixaMatriculaUrl) {
+    const exists = await officialPdfExists(caixaMatriculaUrl, fetchImpl)
+    if (exists === 'retry') return { enriched: false }
+
+    const previousDocs = auction.documentsUrls || []
+    const mergedDocs = exists === 'yes'
+      ? [...new Set([...previousDocs, caixaMatriculaUrl])]
+      : previousDocs
+    const changed = mergedDocs.length !== previousDocs.length
+    await prisma.auction.update({
+      where: { id: auctionId },
+      data: {
+        detailEnrichedAt: new Date(),
+        ...(changed ? { documentsUrls: mergedDocs } : {}),
+      },
+    }).catch(() => {})
+    return { enriched: changed }
+  }
 
   const parser = DETAIL_PARSERS.find((p) => p.match.test(auction.sourceUrl!))
   if (!parser) {
@@ -92,21 +168,39 @@ export async function runDetailEnrichmentBatch(
   limit = 30,
   deps: EnrichmentDeps = {},
 ): Promise<{ processed: number; enriched: number }> {
-  const pending = await prisma.auction.findMany({
+  const baseWhere = {
+    detailEnrichedAt: null,
+    sourceUrl: { not: null },
+    OR: ENRICHABLE_HOSTS.map((h) => ({ sourceUrl: { contains: h } })),
+  }
+  const active = await prisma.auction.findMany({
     where: {
-      detailEnrichedAt: null,
-      sourceUrl: { not: null },
-      OR: ENRICHABLE_HOSTS.map((h) => ({ sourceUrl: { contains: h } })),
+      ...baseWhere,
+      status: { in: ['OPEN', 'UPCOMING', 'FIRST_ROUND', 'SECOND_ROUND'] },
     },
     select: { id: true },
     orderBy: { createdAt: 'desc' },
     take: limit,
   })
 
+  const remaining = limit - active.length
+  const historical = remaining > 0 ? await prisma.auction.findMany({
+    where: {
+      ...baseWhere,
+      id: { notIn: active.map((a) => a.id) },
+    },
+    select: { id: true },
+    orderBy: { createdAt: 'desc' },
+    take: remaining,
+  }) : []
+  const pending = [...active, ...historical]
+
   let enriched = 0
-  for (const a of pending) {
-    const r = await enrichAuctionDetail(prisma, a.id, deps)
-    if (r.enriched) enriched++
+  for (let i = 0; i < pending.length; i += 10) {
+    const results = await Promise.all(
+      pending.slice(i, i + 10).map((a) => enrichAuctionDetail(prisma, a.id, deps)),
+    )
+    enriched += results.filter((r) => r.enriched).length
   }
   return { processed: pending.length, enriched }
 }

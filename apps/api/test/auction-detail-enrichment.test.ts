@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import { PrismaClient } from '@prisma/client'
 import {
   parseMegaDetail,
+  deriveCaixaMatriculaUrl,
   enrichAuctionDetail,
   runDetailEnrichmentBatch,
   type EnrichmentDeps,
@@ -25,6 +26,52 @@ test('parseMegaDetail extrai edital + matrícula e ignora institucional', () => 
 })
 
 // ── Integração ──────────────────────────────────────────────────────────────
+test('deriveCaixaMatriculaUrl usa o código oficial do imóvel', () => {
+  assert.equal(
+    deriveCaixaMatriculaUrl(
+      'https://venda-imoveis.caixa.gov.br/sistema/detalhe-imovel.asp?hdnimovel=8444427779074',
+      'sp',
+    ),
+    'https://venda-imoveis.caixa.gov.br/editais/matricula/SP/8444427779074.pdf',
+  )
+  assert.equal(
+    deriveCaixaMatriculaUrl('https://venda-imoveis.caixa.gov.br/?idImo=123.456', 'MG'),
+    'https://venda-imoveis.caixa.gov.br/editais/matricula/MG/123456.pdf',
+  )
+  assert.equal(
+    deriveCaixaMatriculaUrl('https://venda-imoveis.caixa.gov.br/detalhe', 'PR', 'CAIXA-998877'),
+    'https://venda-imoveis.caixa.gov.br/editais/matricula/PR/998877.pdf',
+  )
+  assert.equal(deriveCaixaMatriculaUrl('https://example.com', 'XX', 'CAIXA-1'), undefined)
+})
+
+test('enriquecimento Caixa confirma e salva a matrícula oficial', async () => {
+  let saved: Record<string, unknown> | undefined
+  const prisma = {
+    auction: {
+      findUnique: async () => ({
+        id: 'auction-1',
+        sourceUrl: 'https://venda-imoveis.caixa.gov.br/sistema/detalhe-imovel.asp?hdnimovel=8444427779074',
+        externalId: 'CAIXA-8444427779074', state: 'SP', editalUrl: null, documentsUrls: [],
+      }),
+      update: async ({ data }: { data: Record<string, unknown> }) => { saved = data },
+    },
+  } as unknown as PrismaClient
+  const deps: EnrichmentDeps = {
+    fetchImpl: (async (_url: string, init?: RequestInit) => {
+      assert.equal(init?.method, 'HEAD')
+      return new Response(null, { status: 200, headers: { 'content-type': 'application/pdf' } })
+    }) as typeof fetch,
+  }
+
+  const result = await enrichAuctionDetail(prisma, 'auction-1', deps)
+  assert.equal(result.enriched, true)
+  assert.deepEqual(saved?.documentsUrls, [
+    'https://venda-imoveis.caixa.gov.br/editais/matricula/SP/8444427779074.pdf',
+  ])
+  assert.ok(saved?.detailEnrichedAt instanceof Date)
+})
+
 const DB = process.env.TEST_DATABASE_URL
 
 test('enriquecimento por detalhe preenche editalUrl/documentos + guard', { skip: DB ? false : 'defina TEST_DATABASE_URL' }, async () => {

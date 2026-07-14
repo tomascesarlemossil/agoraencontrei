@@ -917,7 +917,7 @@ export async function runScheduledJobs(app: FastifyInstance) {
   // ar. Roda antes do arquivamento para o edital já estar disponível.
   try {
     const { runDetailEnrichmentBatch } = await import('./auction-detail-enrichment.service.js')
-    const r = await runDetailEnrichmentBatch(app.prisma, 30)
+    const r = await runDetailEnrichmentBatch(app.prisma, 500)
     if (r.enriched > 0) {
       app.log.info(`[scheduled] auction-detail-enrich: ${r.enriched}/${r.processed} leilões enriquecidos`)
     }
@@ -932,7 +932,7 @@ export async function runScheduledJobs(app: FastifyInstance) {
   // cartório e processo do texto e preenche o leilão se estiverem vazios.
   try {
     const { runAuctionArchiveBatch } = await import('./auction-archive.service.js')
-    const r = await runAuctionArchiveBatch(app.prisma, 20)
+    const r = await runAuctionArchiveBatch(app.prisma, 100)
     if (r.processed > 0) {
       app.log.info(`[scheduled] auction-archive: ${r.archived} docs arquivados de ${r.processed} leilões`)
     }
