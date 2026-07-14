@@ -836,6 +836,13 @@ export default function LeiloesClient() {
             >
               <Calculator className="w-4 h-4" /> Calculadora
             </button>
+            <a
+              href="/leiloes/relatorios"
+              className="inline-flex shrink-0 whitespace-nowrap items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-bold transition border"
+              style={{ borderColor: '#143A1F', color: '#143A1F' }}
+            >
+              <BarChart3 className="w-4 h-4" /> Relatórios
+            </a>
             <button
               onClick={() => setShowAlert(!showAlert)}
               className="inline-flex shrink-0 whitespace-nowrap items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-bold transition"
