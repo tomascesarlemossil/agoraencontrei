@@ -346,6 +346,10 @@ async function runMigrations(prisma: any) {
     // Corrige a classificação histórica criada pelo monitor antigo: sumir da
     // fonte significa deslistado/encerrado, não suspensão comprovada.
     `UPDATE auctions SET status = 'CLOSED' WHERE status = 'SUSPENDED' AND "disappearedAt" IS NOT NULL`,
+    // Versões antigas do monitor gravaram SUSPENDED antes de disappearedAt
+    // existir. Para fontes bancárias, esses registros significam apenas que o
+    // item não foi reencontrado; reclassificamos como encerrado sem desfecho.
+    `UPDATE auctions SET status = 'CLOSED' WHERE status = 'SUSPENDED' AND source IN ('CAIXA','BANCO_DO_BRASIL','BRADESCO','SANTANDER','ITAU') AND "outcomeCapturedAt" IS NULL`,
     // ── Snapshots temporais (histórico imutável de cada mudança observada) ────
     `CREATE TABLE IF NOT EXISTS auction_snapshots (
       id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
