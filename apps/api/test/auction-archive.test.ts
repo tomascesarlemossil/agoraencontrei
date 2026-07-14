@@ -34,8 +34,29 @@ test('arquivamento: download → S3 → AuctionDocument + extração', { skip: D
   const prisma = new PrismaClient({ datasourceUrl: DB })
   const EDITAL = 'https://leiloeiro.test/edital.html'
   const LAUDO = 'https://leiloeiro.test/laudo.pdf'
+  const PDF_EDITAL = 'https://leiloeiro.test/edital.pdf'
   const html = '<html><body>Matrícula nº 90.123 do 2º Cartório de Registro de Imóveis de Franca. ' +
     'Processo 1234567-89.2024.8.26.0196.</body></html>'
+
+  // Gera um PDF mínimo válido com uma linha de texto (para testar extração real).
+  const makePdf = (line: string): Buffer => {
+    const o = [
+      '<</Type/Catalog/Pages 2 0 R>>',
+      '<</Type/Pages/Kids[3 0 R]/Count 1>>',
+      '<</Type/Page/Parent 2 0 R/MediaBox[0 0 2000 200]/Contents 4 0 R/Resources<</Font<</F1 5 0 R>>>>>>',
+    ]
+    const s = `BT /F1 12 Tf 20 120 Td (${line}) Tj ET`
+    o.push(`<</Length ${s.length}>>\nstream\n${s}\nendstream`)
+    o.push('<</Type/Font/Subtype/Type1/BaseFont/Helvetica>>')
+    let p = '%PDF-1.4\n'; const off: number[] = []
+    o.forEach((x, i) => { off.push(p.length); p += `${i + 1} 0 obj\n${x}\nendobj\n` })
+    const xr = p.length
+    p += `xref\n0 ${o.length + 1}\n0000000000 65535 f \n`
+    off.forEach(f => { p += String(f).padStart(10, '0') + ' 00000 n \n' })
+    p += `trailer\n<</Size ${o.length + 1}/Root 1 0 R>>\nstartxref\n${xr}\n%%EOF`
+    return Buffer.from(p, 'latin1')
+  }
+  const pdfEdital = makePdf('Imovel objeto da Matricula no 55.777 do 1o Oficio de Registro de Imoveis. Processo 7654321-01.2023.8.26.0196')
 
   const uploads: { key: string; size: number }[] = []
   const s3Ok: ArchiveDeps['s3'] = {
@@ -45,6 +66,7 @@ test('arquivamento: download → S3 → AuctionDocument + extração', { skip: D
   const fetchImpl = (async (url: any) => {
     if (url === EDITAL) return new Response(html, { status: 200, headers: { 'content-type': 'text/html; charset=utf-8' } })
     if (url === LAUDO) return new Response(new Uint8Array([1, 2, 3, 4, 5]), { status: 200, headers: { 'content-type': 'application/pdf' } })
+    if (url === PDF_EDITAL) return new Response(pdfEdital, { status: 200, headers: { 'content-type': 'application/pdf' } })
     return new Response('', { status: 404 })
   }) as typeof fetch
 
@@ -99,8 +121,18 @@ test('arquivamento: download → S3 → AuctionDocument + extração', { skip: D
     assert.ok(rb.processed >= 1, 'batch processa ao menos 1 leilão pendente')
     assert.ok((await prisma.auctionDocument.count({ where: { auctionId: a3.id } })) >= 1, 'a3 arquivado pelo batch')
 
+    // 5) Edital em PDF → extrai matrícula/cartório/processo do texto do PDF
+    const a4 = await mk('IT-ARQ-4', { editalUrl: PDF_EDITAL })
+    await archiveAuctionDocuments(prisma, a4.id, { fetchImpl, s3: s3Ok })
+    const d4 = (await prisma.auctionDocument.findFirst({ where: { auctionId: a4.id } }))!
+    assert.match(d4.extractedText || '', /Matricula/, 'texto extraído do PDF (unpdf)')
+    assert.equal(d4.type, 'EDITAL')
+    const a4b = (await prisma.auction.findUnique({ where: { id: a4.id } }))!
+    assert.equal(a4b.registryNumber, '55777', 'matrícula extraída do PDF')
+    assert.equal(a4b.processNumber, '7654321-01.2023.8.26.0196', 'processo extraído do PDF')
+
     // Limpeza
-    for (const id of [a1.id, a2.id, a3.id]) {
+    for (const id of [a1.id, a2.id, a3.id, a4.id]) {
       await prisma.auctionDocument.deleteMany({ where: { auctionId: id } })
       await prisma.auction.deleteMany({ where: { id } })
     }

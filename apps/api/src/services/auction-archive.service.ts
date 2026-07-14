@@ -51,8 +51,9 @@ export function extractRegistryInfo(text: string): {
   const out: { registryNumber?: string; registryOffice?: string; processNumber?: string } = {}
   if (!text) return out
 
-  // Matrícula: "matrícula nº 12.345", "matricula n. 12345", "matrícula 90123"
-  const mat = text.match(/matr[íi]cula\s*(?:imobili[áa]ria\s*)?(?:n[º°.]*\s*)?([\d][\d.]{2,})/i)
+  // Matrícula: "matrícula nº 12.345", "matricula no 12345", "matrícula n. 90123"
+  // n[º°o.]{0,3} tolera nº / no / n° / n. antes do número.
+  const mat = text.match(/matr[íi]cula\s*(?:imobili[áa]ria\s*)?(?:n[º°o.]{0,3}\s*)?([\d][\d.]{2,})/i)
   if (mat) {
     const num = mat[1].replace(/\./g, '').replace(/\D/g, '')
     if (num.length >= 3) out.registryNumber = num
@@ -69,6 +70,24 @@ export function extractRegistryInfo(text: string): {
   if (proc) out.processNumber = proc[0]
 
   return out
+}
+
+function isPdf(buf: Buffer, mime?: string | null): boolean {
+  if (mime && /pdf/.test(mime)) return true
+  return buf.length > 4 && buf.subarray(0, 5).toString('latin1') === '%PDF-'
+}
+
+/** Extrai texto de um PDF (unpdf, JS puro). Best-effort — null se falhar. */
+async function extractPdfText(buf: Buffer): Promise<string | null> {
+  try {
+    const { extractText, getDocumentProxy } = await import('unpdf')
+    const pdf = await getDocumentProxy(new Uint8Array(buf))
+    const { text } = await extractText(pdf, { mergePages: true })
+    const s = (Array.isArray(text) ? text.join('\n') : text || '').trim()
+    return s ? s.slice(0, MAX_TEXT_CHARS) : null
+  } catch {
+    return null
+  }
 }
 
 function extForMime(mime?: string): string {
@@ -138,6 +157,10 @@ export async function archiveAuctionDocuments(
       if (mimeType && /text\/(html|plain)/.test(mimeType)) {
         extractedText = buf.toString('utf-8').slice(0, MAX_TEXT_CHARS)
         collectedText.push(extractedText)
+      } else if (isPdf(buf, mimeType)) {
+        // Editais em geral são PDF — extrai o texto para achar a matrícula.
+        extractedText = await extractPdfText(buf)
+        if (extractedText) collectedText.push(extractedText)
       }
 
       let s3Key: string | null = null
