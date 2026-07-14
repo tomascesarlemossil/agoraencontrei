@@ -5,6 +5,8 @@ import type { FastifyInstance } from 'fastify'
 import { automationEmitter } from '../services/automation.emitter.js'
 import { runAutomation } from '../services/automation.worker.js'
 import { runScheduledJobs } from '../services/scheduled.jobs.js'
+import { runDetailEnrichmentBatch } from '../services/auction-detail-enrichment.service.js'
+import { runAuctionArchiveBatch } from '../services/auction-archive.service.js'
 import { processVisualAIJob } from '../workers/visual-ai.worker.js'
 import { processCampaignJob } from '../workers/campaign.worker.js'
 import { processVideoEditorJob } from '../workers/video-editor.worker.js'
@@ -136,13 +138,27 @@ export default fp(async (app: FastifyInstance) => {
 
   // ── Scheduled jobs — every 30 minutes after boot ──────────────────────────
   let scheduledTimer: ReturnType<typeof setInterval> | null = null
+  let auctionBackfillTimer: ReturnType<typeof setTimeout> | null = null
   app.addHook('onReady', () => {
+    // A carga inicial de matrículas não deve esperar todas as demais automações.
+    // Executa fora do caminho de boot e é idempotente.
+    auctionBackfillTimer = setTimeout(async () => {
+      try {
+        const detail = await runDetailEnrichmentBatch(app.prisma, 500)
+        app.log.info(`[auction-backfill] ${detail.enriched}/${detail.processed} documentos oficiais descobertos`)
+        const archive = await runAuctionArchiveBatch(app.prisma, 500)
+        app.log.info(`[auction-backfill] ${archive.archived} documentos arquivados de ${archive.processed} leilões`)
+      } catch (e) {
+        app.log.error({ err: e }, '[auction-backfill] failed')
+      }
+    }, 5_000)
     setTimeout(() => runScheduledJobs(app).catch(e => app.log.error('Scheduled jobs error:', e.message)), 60_000)
     scheduledTimer = setInterval(() => runScheduledJobs(app).catch(e => app.log.error('Scheduled jobs error:', e.message)), 30 * 60 * 1000)
     app.log.info('✅ Scheduled jobs started (interval: 30min)')
   })
 
   app.addHook('onClose', async () => {
+    if (auctionBackfillTimer) clearTimeout(auctionBackfillTimer)
     if (scheduledTimer) clearInterval(scheduledTimer)
     await Promise.all([
       automationWorker.close(),
