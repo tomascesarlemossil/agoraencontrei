@@ -39,7 +39,7 @@ export default fp(async (app: FastifyInstance) => {
           const detail = await runDetailEnrichmentBatch(app.prisma, 500)
           discovered += detail.enriched
           checked += detail.processed
-          if (detail.processed < 500) break
+          if (detail.processed === 0) break
         }
         app.log.info(`[auction-backfill] ${discovered}/${checked} documentos oficiais descobertos`)
         const archive = await runAuctionArchiveBatch(app.prisma, 500)

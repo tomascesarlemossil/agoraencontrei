@@ -162,26 +162,27 @@ export async function runDetailEnrichmentBatch(
       },
     ],
   }
+  const activeStatuses = ['OPEN', 'UPCOMING', 'FIRST_ROUND', 'SECOND_ROUND'] as const
+  const activeLimit = Math.ceil(limit / 2)
   const active = await prisma.auction.findMany({
     where: {
       ...baseWhere,
-      status: { in: ['OPEN', 'UPCOMING', 'FIRST_ROUND', 'SECOND_ROUND'] },
+      status: { in: [...activeStatuses] },
     },
     select: { id: true },
     orderBy: { createdAt: 'asc' },
-    take: limit,
+    take: activeLimit,
   })
 
-  const remaining = limit - active.length
-  const historical = remaining > 0 ? await prisma.auction.findMany({
+  const historical = await prisma.auction.findMany({
     where: {
       ...baseWhere,
-      id: { notIn: active.map((a) => a.id) },
+      status: { notIn: [...activeStatuses] },
     },
     select: { id: true },
     orderBy: { createdAt: 'asc' },
-    take: remaining,
-  }) : []
+    take: limit - activeLimit,
+  })
   const pending = [...active, ...historical]
 
   let enriched = 0
