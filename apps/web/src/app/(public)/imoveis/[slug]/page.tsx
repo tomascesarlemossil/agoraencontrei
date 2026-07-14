@@ -385,7 +385,7 @@ export default async function PropertyDetailPage(props: { params: Promise<{ slug
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'Início', item: SITE_URL },
       { '@type': 'ListItem', position: 2, name: 'Imóveis', item: `${SITE_URL}/imoveis` },
-      ...(p.city ? [{ '@type': 'ListItem', position: 3, name: p.city, item: `${SITE_URL}/imoveis?cidade=${encodeURIComponent(p.city)}` }] : []),
+      ...(p.city ? [{ '@type': 'ListItem', position: 3, name: p.city, item: `${SITE_URL}/imoveis?city=${encodeURIComponent(p.city)}` }] : []),
       { '@type': 'ListItem', position: p.city ? 4 : 3, name: p.title?.slice(0, 60) || (TYPE_LABEL[p.type] ?? p.type) },
     ],
   }
@@ -405,7 +405,7 @@ export default async function PropertyDetailPage(props: { params: Promise<{ slug
           <ChevronRight className="w-3.5 h-3.5 flex-shrink-0" />
           <Link href="/imoveis" className="hover:text-gray-600 transition-colors">Imóveis</Link>
           <ChevronRight className="w-3.5 h-3.5 flex-shrink-0" />
-          {p.city && <><Link href={`/imoveis?cidade=${encodeURIComponent(p.city)}`} className="hover:text-gray-600 transition-colors">{p.city}</Link><ChevronRight className="w-3.5 h-3.5 flex-shrink-0" /></>}
+          {p.city && <><Link href={`/imoveis?city=${encodeURIComponent(p.city)}`} className="hover:text-gray-600 transition-colors">{p.city}</Link><ChevronRight className="w-3.5 h-3.5 flex-shrink-0" /></>}
           <span className="text-gray-600 font-medium truncate">{TYPE_LABEL[p.type] ?? p.type}</span>
         </nav>
       </div>
@@ -593,7 +593,7 @@ export default async function PropertyDetailPage(props: { params: Promise<{ slug
                   )}
                   {p.totalArea > 0 && (
                     <div className="border-r last:border-r-0" style={{ borderColor: '#e8e4dc' }}>
-                      <StatBox icon={Maximize} value={`${fmtNum(Number(p.totalArea))}m²`} label="Área Útil" />
+                      <StatBox icon={Maximize} value={`${fmtNum(Number(p.totalArea))}m²`} label="Área Total" />
                     </div>
                   )}
                   {p.builtArea > 0 && (

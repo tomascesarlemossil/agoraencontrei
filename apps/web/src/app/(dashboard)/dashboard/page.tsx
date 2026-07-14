@@ -246,10 +246,10 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        {/* Leads por Mes */}
+        {/* Leads por mês */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Leads por Mes</CardTitle>
+            <CardTitle className="text-base">Leads por Mês</CardTitle>
           </CardHeader>
           <CardContent>
             {leadsPerMonth.length ? (
@@ -319,7 +319,7 @@ export default function DashboardPage() {
                     <div key={item.city} className="flex items-center gap-3">
                       <span className="text-xs text-muted-foreground w-4">{i + 1}</span>
                       <span className="text-sm flex-1">{item.city}</span>
-                      <span className="text-sm font-medium">{item._count} imóveis</span>
+                      <span className="text-sm font-medium">{item._count} {item._count === 1 ? 'imóvel' : 'imóveis'}</span>
                     </div>
                   ))}
                 </div>

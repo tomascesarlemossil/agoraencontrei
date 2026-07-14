@@ -116,6 +116,7 @@ export default function AvaliacaoPage() {
             Avaliação profissional com dados em tempo real
           </div>
           <h1
+            aria-label="Quanto vale o seu imóvel?"
             className="text-4xl sm:text-5xl font-bold text-white mb-4 leading-tight"
             style={{ fontFamily: 'Georgia, serif' }}
           >
