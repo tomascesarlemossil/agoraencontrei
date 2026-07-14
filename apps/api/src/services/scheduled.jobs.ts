@@ -941,6 +941,20 @@ export async function runScheduledJobs(app: FastifyInstance) {
     app.log.error({ err }, '[scheduled] auction-outcome failed')
   }
 
+  // ── 9e. Identidade canônica do imóvel (agrupa leilões do mesmo imóvel) ───
+  // Vincula leilões chaveáveis (matrícula+cartório, ou endereço completo) a uma
+  // identidade única, habilitando a linha do tempo "foi a leilão N vezes".
+  // 100/rodada, idempotente.
+  try {
+    const { runAuctionIdentityBatch } = await import('./auction-identity.service.js')
+    const r = await runAuctionIdentityBatch(app.prisma, 100)
+    if (r.linked > 0) {
+      app.log.info(`[scheduled] auction-identity: ${r.linked}/${r.processed} leilões vinculados a identidades`)
+    }
+  } catch (err) {
+    app.log.error({ err }, '[scheduled] auction-identity failed')
+  }
+
   // ── 10. Lead re-scoring nightly (03h UTC = 00h BRT) ─────────────────────
   // Aplica recency decay e captura mudanças que aconteceram sem trigger
   // direto (ex.: lead que ficou parado, atividades manuais no CRM, etc.).

@@ -2387,6 +2387,10 @@ model Auction {
   outcomeCapturedAt   DateTime?       // Quando capturamos um desfecho conclusivo
   outcomeAttempts     Int             @default(0) // Tentativas de captura (limite anti-hammer)
 
+  // Identidade canônica do imóvel (liga o mesmo imóvel entre vários leilões no tempo)
+  identityId          String?
+  identity            AuctionPropertyIdentity? @relation(fields: [identityId], references: [id])
+
   // Analytics
   views               Int             @default(0)
   favorites           Int             @default(0)
@@ -2412,7 +2416,30 @@ model Auction {
   @@index([slug])
   @@index([externalId, source])
   @@index([disappearedAt])
+  @@index([identityId])
   @@map("auctions")
+}
+
+// Identidade canônica de um imóvel — agrupa todas as vezes que o MESMO imóvel
+// foi a leilão ao longo do tempo (chave = matrícula+cartório; fallback endereço
+// completo). Permite a linha do tempo "este imóvel já foi a leilão 3x desde 2023".
+model AuctionPropertyIdentity {
+  id             String    @id @default(cuid())
+  registryKey    String?   @unique // cartório+matrícula normalizado (chave forte)
+  addressKey     String?   @unique // endereço normalizado (fallback)
+  city           String?
+  state          String?
+  neighborhood   String?
+  auctionCount   Int       @default(0)
+  firstAuctionAt DateTime?
+  lastAuctionAt  DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  auctions       Auction[]
+
+  @@index([city, state])
+  @@map("auction_property_identities")
 }
 
 // Snapshot temporal de um leilão — histórico imutável de cada mudança observada.
