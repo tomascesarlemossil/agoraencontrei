@@ -2382,6 +2382,11 @@ model Auction {
   lastSeenAt          DateTime?       // Última vez que a fonte ainda o listava (bump a cada sighting)
   disappearedAt       DateTime?       // Quando saiu da fonte (deslistado) — gatilho da captura de desfecho
 
+  // Desfecho do leilão (arrematado por quanto / deserto)
+  soldDate            DateTime?       // Data do arremate
+  outcomeCapturedAt   DateTime?       // Quando capturamos um desfecho conclusivo
+  outcomeAttempts     Int             @default(0) // Tentativas de captura (limite anti-hammer)
+
   // Analytics
   views               Int             @default(0)
   favorites           Int             @default(0)
