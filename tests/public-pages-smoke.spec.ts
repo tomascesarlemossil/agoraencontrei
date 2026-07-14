@@ -8,7 +8,7 @@ import { test, expect, request as pwRequest } from '@playwright/test'
  */
 const BASE_URL = process.env.E2E_BASE_URL || 'https://agoraencontrei.com.br'
 
-// Rotas públicas críticas — devem responder 2xx (ou 3xx), nunca 5xx.
+// Rotas públicas críticas — após seguir redirects, devem responder 2xx/3xx.
 const PUBLIC_ROUTES = [
   '/',
   '/leiloes',
@@ -31,12 +31,12 @@ const SITEMAP_ROUTES = [
 
 test.describe('Público — smoke de disponibilidade', () => {
   for (const route of PUBLIC_ROUTES) {
-    test(`GET ${route} não retorna 5xx`, async () => {
+    test(`GET ${route} responde sem erro`, async () => {
       const ctx = await pwRequest.newContext()
       const res = await ctx.get(`${BASE_URL}${route}`, { maxRedirects: 5, timeout: 30_000 })
       const status = res.status()
       console.log(`${route} → ${status}`)
-      expect(status, `${route} deveria responder < 500`).toBeLessThan(500)
+      expect(status, `${route} não pode responder 4xx/5xx`).toBeLessThan(400)
       await ctx.dispose()
     })
   }

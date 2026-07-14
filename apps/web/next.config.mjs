@@ -103,6 +103,21 @@ const nextConfig = {
         destination: '/parceiros/planos',
         permanent: true,
       },
+      {
+        source: '/imoveis-a-venda',
+        destination: '/imoveis?purpose=SALE',
+        permanent: true,
+      },
+      {
+        source: '/imoveis-para-alugar',
+        destination: '/imoveis?purpose=RENT',
+        permanent: true,
+      },
+      {
+        source: '/especialistas',
+        destination: '/empresas-parceiras',
+        permanent: true,
+      },
     ]
   },
   async rewrites() {
