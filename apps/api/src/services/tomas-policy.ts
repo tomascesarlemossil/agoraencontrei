@@ -88,6 +88,17 @@ export const TOOL_POLICIES: Record<string, ToolPolicy> = {
     requiresConfirmation: true, minRoleRank: R.BROKER, audit: true,
     description: 'Altera dados/preço de um imóvel do parceiro. Escrita — exige confirmação.',
   },
+  // ── Leilões (dados públicos globais — ativos e históricos/arrematados) ─────
+  buscar_leiloes: {
+    brains: ['marketplace', 'partner'], requiresCompanyId: false, access: 'read',
+    requiresConfirmation: false, minRoleRank: R.anonymous, audit: false,
+    description: 'Busca leilões de imóveis (Caixa, bancos, judiciais, leiloeiros) por localização/tipo/valor. Dados públicos, ativos e históricos.',
+  },
+  relatorio_leiloes: {
+    brains: ['marketplace', 'partner'], requiresCompanyId: false, access: 'read',
+    requiresConfirmation: false, minRoleRank: R.anonymous, audit: false,
+    description: 'Relatório estatístico agregado de leilões (contagem, valores mín/médio/mediana/máx, desconto) por localização/tipo. Dados públicos.',
+  },
   // ── Leads / Contatos / Visitas / Propostas ─────────────────────────────────
   registrar_lead: {
     brains: ['marketplace', 'partner'], requiresCompanyId: false, access: 'write',
