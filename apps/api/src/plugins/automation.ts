@@ -27,6 +27,24 @@ declare module 'fastify' {
 }
 
 export default fp(async (app: FastifyInstance) => {
+  let auctionBackfillTimer: ReturnType<typeof setTimeout> | null = null
+  app.addHook('onReady', () => {
+    // Matrículas usam apenas banco + fonte oficial; não dependem das filas Redis.
+    auctionBackfillTimer = setTimeout(async () => {
+      try {
+        const detail = await runDetailEnrichmentBatch(app.prisma, 500)
+        app.log.info(`[auction-backfill] ${detail.enriched}/${detail.processed} documentos oficiais descobertos`)
+        const archive = await runAuctionArchiveBatch(app.prisma, 500)
+        app.log.info(`[auction-backfill] ${archive.archived} documentos arquivados de ${archive.processed} leilões`)
+      } catch (e) {
+        app.log.error({ err: e }, '[auction-backfill] failed')
+      }
+    }, 5_000)
+  })
+  app.addHook('onClose', () => {
+    if (auctionBackfillTimer) clearTimeout(auctionBackfillTimer)
+  })
+
   if (!env.REDIS_URL) {
     app.log.warn('REDIS_URL not set — automation engine disabled')
     app.decorate('automationQueue',  null)
@@ -138,27 +156,13 @@ export default fp(async (app: FastifyInstance) => {
 
   // ── Scheduled jobs — every 30 minutes after boot ──────────────────────────
   let scheduledTimer: ReturnType<typeof setInterval> | null = null
-  let auctionBackfillTimer: ReturnType<typeof setTimeout> | null = null
   app.addHook('onReady', () => {
-    // A carga inicial de matrículas não deve esperar todas as demais automações.
-    // Executa fora do caminho de boot e é idempotente.
-    auctionBackfillTimer = setTimeout(async () => {
-      try {
-        const detail = await runDetailEnrichmentBatch(app.prisma, 500)
-        app.log.info(`[auction-backfill] ${detail.enriched}/${detail.processed} documentos oficiais descobertos`)
-        const archive = await runAuctionArchiveBatch(app.prisma, 500)
-        app.log.info(`[auction-backfill] ${archive.archived} documentos arquivados de ${archive.processed} leilões`)
-      } catch (e) {
-        app.log.error({ err: e }, '[auction-backfill] failed')
-      }
-    }, 5_000)
     setTimeout(() => runScheduledJobs(app).catch(e => app.log.error('Scheduled jobs error:', e.message)), 60_000)
     scheduledTimer = setInterval(() => runScheduledJobs(app).catch(e => app.log.error('Scheduled jobs error:', e.message)), 30 * 60 * 1000)
     app.log.info('✅ Scheduled jobs started (interval: 30min)')
   })
 
   app.addHook('onClose', async () => {
-    if (auctionBackfillTimer) clearTimeout(auctionBackfillTimer)
     if (scheduledTimer) clearInterval(scheduledTimer)
     await Promise.all([
       automationWorker.close(),
