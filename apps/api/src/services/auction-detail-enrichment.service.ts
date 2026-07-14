@@ -148,9 +148,19 @@ export async function runDetailEnrichmentBatch(
   deps: EnrichmentDeps = {},
 ): Promise<{ processed: number; enriched: number }> {
   const baseWhere = {
-    detailEnrichedAt: null,
     sourceUrl: { not: null },
-    OR: ENRICHABLE_HOSTS.map((h) => ({ sourceUrl: { contains: h } })),
+    AND: [
+      { OR: ENRICHABLE_HOSTS.map((h) => ({ sourceUrl: { contains: h } })) },
+      {
+        OR: [
+          { detailEnrichedAt: null },
+          {
+            sourceUrl: { contains: 'venda-imoveis.caixa.gov.br' },
+            documentsUrls: { isEmpty: true },
+          },
+        ],
+      },
+    ],
   }
   const active = await prisma.auction.findMany({
     where: {
