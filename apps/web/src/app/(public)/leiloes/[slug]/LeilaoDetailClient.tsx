@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { MapPin, Clock, Star, Calculator, Bell, ArrowLeft, ExternalLink, FileText, DollarSign, Home, Building, AlertTriangle, CheckCircle, ChevronRight, Share2, TrendingUp, Shield, BarChart3 } from 'lucide-react'
+import AuctionArchivePanel from '@/components/public/AuctionArchivePanel'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? ''
 
@@ -219,6 +220,9 @@ export default function LeilaoDetailClient({ auction }: { auction: any }) {
                 </a>
               )}
             </div>
+
+            {/* Arquivo histórico: documentos + histórico de preço/status */}
+            <AuctionArchivePanel slug={auction.slug} />
 
             {/* Market Comparison */}
             {analysis?.marketComparison?.similarProperties?.length > 0 && (
