@@ -44,6 +44,10 @@ test('relatório de leilões por localização/tipo/valor + tool do Tomás', { s
     assert.equal(rep.counts.sold, 2)
     assert.equal(rep.topNeighborhoods[0].neighborhood, 'Centro')
     assert.ok(rep.values.pricePerM2 && rep.values.pricePerM2.count === 2, 'preço/m² calculado')
+    assert.equal(rep.dataQuality.withAppraisal, 2)
+    assert.equal(rep.dataQuality.withSoldValue, 2)
+    assert.equal(rep.counts.bySource.LEILOEIRO, 2)
+    assert.ok(rep.generatedAt, 'informa quando o relatório foi gerado')
 
     // soldOnly + fonte + janela
     const repSold: any = await buildAuctionReport(prisma, { city: 'Franca', soldOnly: true })

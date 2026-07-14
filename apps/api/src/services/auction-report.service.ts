@@ -118,9 +118,12 @@ export async function buildAuctionReport(prisma: PrismaClient, f: AuctionReportF
   const rows = await prisma.auction.findMany({
     where,
     select: {
+      slug: true, title: true, source: true, auctioneerName: true, coverImage: true,
       appraisalValue: true, minimumBid: true, soldValue: true, discountPercent: true,
       opportunityScore: true, totalArea: true, propertyType: true, category: true,
-      neighborhood: true, city: true, status: true, occupation: true,
+      neighborhood: true, city: true, state: true, status: true, occupation: true,
+      auctionDate: true, auctionEndDate: true, editalUrl: true, registryNumber: true,
+      documentsUrls: true, createdAt: true,
     },
     take: CAP,
   })
@@ -142,6 +145,7 @@ export async function buildAuctionReport(prisma: PrismaClient, f: AuctionReportF
   const byNeighborhood = new Map<string, { count: number; sum: number; n: number }>()
   const byType = new Map<string, number>()
   const byStatus = new Map<string, number>()
+  const bySource = new Map<string, number>()
   let soldCount = 0, occupiedCount = 0
   for (const r of rows) {
     const nb = (r.neighborhood || 'Não informado').trim()
@@ -152,6 +156,7 @@ export async function buildAuctionReport(prisma: PrismaClient, f: AuctionReportF
     byNeighborhood.set(nb, agg)
     byType.set(r.propertyType || '?', (byType.get(r.propertyType || '?') || 0) + 1)
     byStatus.set(r.status || '?', (byStatus.get(r.status || '?') || 0) + 1)
+    bySource.set(r.auctioneerName || r.source || 'Não informada', (bySource.get(r.auctioneerName || r.source || 'Não informada') || 0) + 1)
     if (r.status === 'SOLD') soldCount++
     if (r.occupation === 'OCUPADO') occupiedCount++
   }
@@ -161,8 +166,33 @@ export async function buildAuctionReport(prisma: PrismaClient, f: AuctionReportF
     .sort((a, b) => b.count - a.count)
     .slice(0, 15)
 
+  const activeStatuses = new Set(['UPCOMING', 'OPEN', 'FIRST_ROUND', 'SECOND_ROUND'])
+  const opportunities = rows
+    .filter((r) => activeStatuses.has(r.status) && toNum(r.minimumBid) != null)
+    .sort((a, b) => (b.opportunityScore ?? 0) - (a.opportunityScore ?? 0) || (b.discountPercent ?? 0) - (a.discountPercent ?? 0))
+    .slice(0, 8)
+    .map((r) => ({
+      slug: r.slug, title: r.title, city: r.city, state: r.state, neighborhood: r.neighborhood,
+      status: r.status, source: r.auctioneerName || r.source, coverImage: r.coverImage,
+      appraisalValue: toNum(r.appraisalValue), minimumBid: toNum(r.minimumBid),
+      discountPercent: r.discountPercent, opportunityScore: r.opportunityScore,
+      occupation: r.occupation, auctionDate: r.auctionEndDate || r.auctionDate,
+    }))
+
+  const count = (predicate: (r: typeof rows[number]) => boolean) => rows.filter(predicate).length
+  const dataQuality = {
+    withAppraisal: count((r) => toNum(r.appraisalValue) != null),
+    withMinimumBid: count((r) => toNum(r.minimumBid) != null),
+    withSoldValue: count((r) => toNum(r.soldValue) != null),
+    withArea: count((r) => toNum(r.totalArea) != null),
+    withRegistry: count((r) => !!r.registryNumber),
+    withDocuments: count((r) => !!r.editalUrl || r.documentsUrls.length > 0),
+    withOccupation: count((r) => !!r.occupation && r.occupation !== 'DESCONHECIDO'),
+  }
+
   return {
     filters: f,
+    generatedAt: new Date().toISOString(),
     total,
     truncated: total >= CAP,
     counts: {
@@ -170,6 +200,7 @@ export async function buildAuctionReport(prisma: PrismaClient, f: AuctionReportF
       occupied: occupiedCount,
       byStatus: Object.fromEntries([...byStatus.entries()].sort((a, b) => b[1] - a[1])),
       byPropertyType: Object.fromEntries([...byType.entries()].sort((a, b) => b[1] - a[1])),
+      bySource: Object.fromEntries([...bySource.entries()].sort((a, b) => b[1] - a[1])),
     },
     values: {
       appraisalValue: numStats(rows.map((r) => toNum(r.appraisalValue))),
@@ -180,5 +211,7 @@ export async function buildAuctionReport(prisma: PrismaClient, f: AuctionReportF
       opportunityScore: numStats(rows.map((r) => r.opportunityScore)),
     },
     topNeighborhoods: neighborhoods,
+    dataQuality,
+    opportunities,
   }
 }
