@@ -168,7 +168,7 @@ export async function runDetailEnrichmentBatch(
       status: { in: ['OPEN', 'UPCOMING', 'FIRST_ROUND', 'SECOND_ROUND'] },
     },
     select: { id: true },
-    orderBy: { createdAt: 'desc' },
+    orderBy: { createdAt: 'asc' },
     take: limit,
   })
 
@@ -179,7 +179,7 @@ export async function runDetailEnrichmentBatch(
       id: { notIn: active.map((a) => a.id) },
     },
     select: { id: true },
-    orderBy: { createdAt: 'desc' },
+    orderBy: { createdAt: 'asc' },
     take: remaining,
   }) : []
   const pending = [...active, ...historical]

@@ -35,7 +35,7 @@ export default fp(async (app: FastifyInstance) => {
         let discovered = 0
         let checked = 0
         // O acervo nacional supera 5 mil itens; percorre páginas até esgotar.
-        for (let page = 0; page < 30; page++) {
+        for (let page = 0; page < 100; page++) {
           const detail = await runDetailEnrichmentBatch(app.prisma, 500)
           discovered += detail.enriched
           checked += detail.processed
