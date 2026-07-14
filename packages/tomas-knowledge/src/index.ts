@@ -71,6 +71,16 @@ const CLASSIFY_INFO_BLOCK = `Diferencie SEMPRE e com clareza:
 NUNCA invente imóveis, valores, taxas, documentos, regras, aprovações ou garantias.
 Use SEMPRE as ferramentas (tools) para dados reais — JAMAIS invente preços ou disponibilidade.`
 
+const REAL_ESTATE_INTELLIGENCE_BLOCK = `INTELIGÊNCIA IMOBILIÁRIA — ORDEM OBRIGATÓRIA
+- Endereço/bairro: use identificar_bairro e informe se o resultado é inferido ou oficial.
+- Análise de preço: use buscar_comparaveis antes de estimar_valor_imovel.
+- Mercado local: use consultar_indice_bairro; nunca calcule média apenas de memória.
+- Imóvel específico: use consultar_historico_preco e diferencie preço pedido, avaliação e fechamento confirmado.
+- Origem duvidosa: use verificar_fonte antes de citar, armazenar ou recomendar o dado.
+- Toda resposta de valor deve trazer faixa, valor central, número de comparáveis, período, confiança e limitação.
+- Com menos de 3 comparáveis válidos, diga que os dados são insuficientes e solicite avaliação profissional.
+- Nunca exponha proprietário, CPF, telefone privado, matrícula integral, contrato ou dado interno no chat público.`
+
 // ── CÉREBRO 1 — MARKETPLACE (público, nacional, imparcial) ──────────────────
 
 export function buildMarketplaceSystemPrompt(): string {
@@ -118,6 +128,8 @@ NEUTRALIDADE COMERCIAL
 ANTI-ALUCINAÇÃO E CLASSIFICAÇÃO DA INFORMAÇÃO
 ═══════════════════════════════════════════════════════
 ${CLASSIFY_INFO_BLOCK}
+
+${REAL_ESTATE_INTELLIGENCE_BLOCK}
 
 Regras de avaliação:
 ${ANTI_HALLUCINATION_RULES}
@@ -210,6 +222,8 @@ REGRA CENTRAL: NUNCA revele informação interna a um usuário sem a permissão 
 ANTI-ALUCINAÇÃO E CLASSIFICAÇÃO DA INFORMAÇÃO
 ═══════════════════════════════════════════════════════
 ${CLASSIFY_INFO_BLOCK}
+
+${REAL_ESTATE_INTELLIGENCE_BLOCK}
 
 Regras de avaliação:
 ${ANTI_HALLUCINATION_RULES}

@@ -2832,6 +2832,91 @@ model PropertyValuation {
   @@map("property_valuations")
 }
 
+/// Fonte autorizada utilizada pela inteligência imobiliária.
+/// Permissões e termos ficam registrados para impedir coleta indiscriminada.
+model IntelligenceDataSource {
+  id                    String   @id @default(cuid())
+  slug                  String   @unique
+  name                  String
+  kind                  String   // INTERNAL | PARTNER_FEED | OFFICIAL | PORTAL | MANUAL
+  accessMethod          String   // INTERNAL | API | XML | FILE | MANUAL | OPEN_DATA
+  baseUrl               String?
+  termsUrl              String?
+  storageAllowed        Boolean  @default(false)
+  republicationAllowed  Boolean  @default(false)
+  attributionRequired   Boolean  @default(false)
+  retentionDays         Int?
+  rateLimitPerMinute    Int?
+  reliabilityScore      Int      @default(50)
+  legalStatus           String   @default("PENDING") // PENDING | APPROVED | BLOCKED | EXPIRED
+  legalReviewedAt       DateTime?
+  isActive              Boolean  @default(false)
+  metadata              Json     @default("{}")
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  snapshots PropertyListingSnapshot[]
+
+  @@index([kind, isActive])
+  @@index([legalStatus])
+  @@map("intelligence_data_sources")
+}
+
+/// Fotografia imutável de um anúncio em uma determinada captura.
+/// Nunca substitui silenciosamente o dado anterior.
+model PropertyListingSnapshot {
+  id                String   @id @default(cuid())
+  propertyId        String
+  sourceId          String?
+  source            IntelligenceDataSource? @relation(fields: [sourceId], references: [id], onDelete: SetNull)
+  externalListingId String?
+  sourceUrl         String?
+  capturedAt        DateTime @default(now())
+  listingStatus     String   @default("ACTIVE")
+  askingPrice       Decimal? @db.Decimal(14, 2)
+  rentPrice         Decimal? @db.Decimal(14, 2)
+  condoFee          Decimal? @db.Decimal(12, 2)
+  propertyTax       Decimal? @db.Decimal(12, 2)
+  builtArea         Float?
+  landArea          Float?
+  bedrooms          Int?
+  parkingSpaces     Int?
+  addressFingerprint String?
+  contentFingerprint String
+  dataCompleteness  Int      @default(0)
+  sourceReliability Int      @default(50)
+  rawData           Json     @default("{}")
+  createdAt         DateTime @default(now())
+
+  @@unique([propertyId, contentFingerprint])
+  @@index([propertyId, capturedAt])
+  @@index([sourceId, externalListingId])
+  @@index([addressFingerprint])
+  @@index([listingStatus, capturedAt])
+  @@map("property_listing_snapshots")
+}
+
+/// Possível identidade compartilhada entre dois cadastros de imóvel.
+/// Os originais são preservados; a decisão pode ser revista por uma pessoa.
+model PropertyDuplicateCandidate {
+  id                  String   @id @default(cuid())
+  propertyId          String
+  candidatePropertyId String
+  score               Int
+  reasons             Json     @default("[]")
+  status              String   @default("PENDING") // PENDING | CONFIRMED | REJECTED
+  reviewedById        String?
+  reviewedAt          DateTime?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@unique([propertyId, candidatePropertyId])
+  @@index([propertyId, status])
+  @@index([candidatePropertyId, status])
+  @@index([score, status])
+  @@map("property_duplicate_candidates")
+}
+
 /// Posts de redes sociais gerados automaticamente
 model SocialPost {
   id          String    @id @default(cuid())

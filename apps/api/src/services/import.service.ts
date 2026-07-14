@@ -11,6 +11,7 @@
 
 import type { PrismaClient } from '@prisma/client'
 import { env } from '../utils/env.js'
+import { capturePropertySnapshotBestEffort } from './property-intelligence-ingestion.service.js'
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -148,7 +149,7 @@ export async function executeImport(
         })
 
         if (existing) {
-          await prisma.property.update({
+          const updated = await prisma.property.update({
             where: { id: existing.id },
             data: {
               ...propertyData,
@@ -156,19 +157,27 @@ export async function executeImport(
               companyId,
             } as any,
           })
+          await capturePropertySnapshotBestEffort(prisma, {
+            propertyId: updated.id, sourceSlug: 'agoraencontrei-internal',
+            externalListingId: updated.externalId || undefined, listingStatus: updated.status,
+          })
           result.updated++
           continue
         }
       }
 
       // Create new property
-      await prisma.property.create({
+      const created = await prisma.property.create({
         data: {
           ...propertyData,
           companyId,
           status: 'ACTIVE',
           isActive: true,
         } as any,
+      })
+      await capturePropertySnapshotBestEffort(prisma, {
+        propertyId: created.id, sourceSlug: 'agoraencontrei-internal',
+        externalListingId: created.externalId || undefined, listingStatus: created.status,
       })
       result.created++
     } catch (error: any) {

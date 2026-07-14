@@ -24,6 +24,14 @@ import { queryAuctions, buildAuctionReport, type AuctionReportFilters } from './
 import { env } from '../utils/env.js'
 import { notify } from './notification.service.js'
 import { checkAIQuota } from './plan-gating.service.js'
+import {
+  estimateMarketValue,
+  findComparables,
+  getNeighborhoodIndex,
+  getPriceHistory,
+  identifyNeighborhood,
+} from './real-estate-intelligence.service.js'
+import { verifyIntelligenceSource } from './property-intelligence-ingestion.service.js'
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -293,6 +301,36 @@ TOM FAST SALES PRO — Conversão Máxima:
 
 const TOMAS_TOOLS: Anthropic.Tool[] = [
   {
+    name: 'identificar_bairro',
+    description: 'Identifica o bairro provável de um logradouro. Informa confiança e não substitui validação territorial oficial.',
+    input_schema: { type: 'object' as const, properties: { city: { type: 'string' }, street: { type: 'string' }, number: { type: 'string' } }, required: ['city', 'street'] },
+  },
+  {
+    name: 'buscar_comparaveis',
+    description: 'Busca imóveis comparáveis reais por local, tipo, área e quartos. Use antes de analisar preço.',
+    input_schema: { type: 'object' as const, properties: { city: { type: 'string' }, neighborhood: { type: 'string' }, propertyType: { type: 'string' }, purpose: { type: 'string' }, builtArea: { type: 'number' }, landArea: { type: 'number' }, bedrooms: { type: 'number' }, excludePropertyId: { type: 'string' }, limit: { type: 'number' } }, required: ['city'] },
+  },
+  {
+    name: 'estimar_valor_imovel',
+    description: 'Calcula faixa preliminar com comparáveis, período, tipo de dado e confiança. Nunca equivale a laudo oficial.',
+    input_schema: { type: 'object' as const, properties: { city: { type: 'string' }, neighborhood: { type: 'string' }, propertyType: { type: 'string' }, purpose: { type: 'string' }, builtArea: { type: 'number' }, landArea: { type: 'number' }, bedrooms: { type: 'number' }, excludePropertyId: { type: 'string' } }, required: ['city'] },
+  },
+  {
+    name: 'consultar_indice_bairro',
+    description: 'Calcula a faixa de preço anunciado por m² e a confiança para um bairro.',
+    input_schema: { type: 'object' as const, properties: { city: { type: 'string' }, neighborhood: { type: 'string' }, propertyType: { type: 'string' }, purpose: { type: 'string' } }, required: ['city', 'neighborhood'] },
+  },
+  {
+    name: 'consultar_historico_preco',
+    description: 'Consulta datas, preço atual e avaliações históricas disponíveis de um imóvel real.',
+    input_schema: { type: 'object' as const, properties: { propertyId: { type: 'string' } }, required: ['propertyId'] },
+  },
+  {
+    name: 'verificar_fonte',
+    description: 'Verifica se uma fonte imobiliária está cadastrada, autorizada para armazenamento/republicação e qual seu grau de confiabilidade.',
+    input_schema: { type: 'object' as const, properties: { sourceSlug: { type: 'string' } }, required: ['sourceSlug'] },
+  },
+  {
     name: 'consultar_conhecimento_publico',
     description: 'Pesquisa a base pública verificada do AgoraEncontrei. Use para dúvidas sobre a plataforma, planos, ferramentas, serviços, jornadas, parceiros, pessoas (como Douglas ou Yuri) e projetos. Para preço e limites de planos, esta ferramenta também consulta os planos ativos no banco.',
     input_schema: {
@@ -480,6 +518,18 @@ export async function executeTool(
   // and legitimately need to see the full catalogue.
   const isPublic = channel === 'site'
   switch (toolName) {
+    case 'identificar_bairro':
+      return JSON.stringify(await identifyNeighborhood(prisma, toolInput as any, { companyId, publicOnly: isPublic }))
+    case 'buscar_comparaveis':
+      return JSON.stringify(await findComparables(prisma, toolInput as any, { companyId, publicOnly: isPublic }))
+    case 'estimar_valor_imovel':
+      return JSON.stringify(await estimateMarketValue(prisma, toolInput as any, { companyId, publicOnly: isPublic }))
+    case 'consultar_indice_bairro':
+      return JSON.stringify(await getNeighborhoodIndex(prisma, toolInput as any, { companyId, publicOnly: isPublic }))
+    case 'consultar_historico_preco':
+      return JSON.stringify(await getPriceHistory(prisma, String(toolInput.propertyId || ''), { companyId, publicOnly: isPublic }))
+    case 'verificar_fonte':
+      return JSON.stringify(await verifyIntelligenceSource(prisma, String(toolInput.sourceSlug || '')))
     case 'consultar_conhecimento_publico': {
       const query = typeof toolInput.query === 'string' ? toolInput.query.trim() : ''
       const limit = Math.max(1, Math.min(Number(toolInput.limit) || 6, 10))

@@ -73,6 +73,36 @@ export const TOOL_POLICIES: Record<string, ToolPolicy> = {
     requiresConfirmation: false, minRoleRank: R.anonymous, audit: false,
     description: 'Detalha um imóvel. Mesmo escopo de buscar_imoveis.',
   },
+  identificar_bairro: {
+    brains: ['marketplace', 'partner'], requiresCompanyId: false, access: 'read',
+    requiresConfirmation: false, minRoleRank: R.anonymous, audit: false,
+    description: 'Infere o bairro pelo cadastro imobiliário, sem tratá-lo como fonte oficial.',
+  },
+  buscar_comparaveis: {
+    brains: ['marketplace', 'partner'], requiresCompanyId: false, access: 'read',
+    requiresConfirmation: false, minRoleRank: R.anonymous, audit: false,
+    description: 'Busca comparáveis públicos ou somente da empresa do parceiro.',
+  },
+  estimar_valor_imovel: {
+    brains: ['marketplace', 'partner'], requiresCompanyId: false, access: 'read',
+    requiresConfirmation: false, minRoleRank: R.anonymous, audit: false,
+    description: 'Produz faixa estatística preliminar com confiança e origem explícitas.',
+  },
+  consultar_indice_bairro: {
+    brains: ['marketplace', 'partner'], requiresCompanyId: false, access: 'read',
+    requiresConfirmation: false, minRoleRank: R.anonymous, audit: false,
+    description: 'Consulta índice agregado de preços anunciados por bairro.',
+  },
+  consultar_historico_preco: {
+    brains: ['marketplace', 'partner'], requiresCompanyId: false, access: 'read',
+    requiresConfirmation: false, minRoleRank: R.anonymous, audit: false,
+    description: 'Consulta o histórico disponível sem expor dados pessoais ou cruzar empresas.',
+  },
+  verificar_fonte: {
+    brains: ['marketplace', 'partner'], requiresCompanyId: false, access: 'read',
+    requiresConfirmation: false, minRoleRank: R.anonymous, audit: false,
+    description: 'Verifica autorização, confiabilidade e regras de uso de uma fonte cadastrada.',
+  },
   consultar_conhecimento_publico: {
     brains: ['marketplace', 'partner'], requiresCompanyId: false, access: 'read',
     requiresConfirmation: false, minRoleRank: R.anonymous, audit: false,

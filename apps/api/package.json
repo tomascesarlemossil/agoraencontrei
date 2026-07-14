@@ -12,7 +12,8 @@
     "pretypecheck": "pnpm --filter @agoraencontrei/tomas-knowledge build",
     "typecheck": "tsc --noEmit",
     "test": "tsx --test test/*.test.ts",
-    "lint": "eslint src --ext .ts"
+    "lint": "eslint src --ext .ts",
+    "intelligence:backfill": "tsx scripts/backfill-property-intelligence.ts"
   },
   "dependencies": {
     "@agoraencontrei/database": "workspace:*",

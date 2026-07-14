@@ -6,6 +6,7 @@ import { assertWithinPlanQuota, PlanLimitError } from '../../services/plan-gatin
 import { notifyMatchingAlerts } from '../../services/property-match.service.js'
 import { dispatchWebhooks } from '../../services/outgoing-webhook.service.js'
 import { recordEvent } from '../../services/system-event.service.js'
+import { capturePropertySnapshotBestEffort } from '../../services/property-intelligence-ingestion.service.js'
 
 const toUpper = (v: unknown) => typeof v === 'string' ? v.toUpperCase() : v
 
@@ -639,6 +640,15 @@ export default async function propertiesRoutes(app: FastifyInstance) {
       payload: { title: property.title, type: property.type, purpose: property.purpose, city: property.city },
     })
 
+    void capturePropertySnapshotBestEffort(app.prisma, {
+      propertyId: property.id,
+      sourceSlug: 'agoraencontrei-internal',
+      externalListingId: property.externalId || undefined,
+      listingStatus: property.status,
+    }).then(result => {
+      if (!result.captured && result.reason === 'intelligence_storage_unavailable') app.log.warn({ reason: result.reason }, '[property-intelligence] snapshot unavailable')
+    })
+
     return reply.status(201).send(property)
   })
 
@@ -696,6 +706,12 @@ export default async function propertiesRoutes(app: FastifyInstance) {
         ...(body.status === 'ACTIVE' && !existing.publishedAt && { publishedAt: new Date() }),
         ...(body.portalDescriptions !== undefined && { portalDescriptions: body.portalDescriptions as any }),
       },
+    })
+    void capturePropertySnapshotBestEffort(app.prisma, {
+      propertyId: updated.id,
+      sourceSlug: 'agoraencontrei-internal',
+      externalListingId: updated.externalId || undefined,
+      listingStatus: updated.status,
     })
     await createAuditLog({
       prisma: app.prisma as any, req,
@@ -784,6 +800,11 @@ export default async function propertiesRoutes(app: FastifyInstance) {
     await app.prisma.property.update({
       where: { id, companyId: req.user.cid },
       data: { status: 'INACTIVE' },
+    })
+    void capturePropertySnapshotBestEffort(app.prisma, {
+      propertyId: id,
+      sourceSlug: 'agoraencontrei-internal',
+      listingStatus: 'INACTIVE',
     })
 
     await createAuditLog({
