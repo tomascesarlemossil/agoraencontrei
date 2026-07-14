@@ -911,6 +911,20 @@ export async function runScheduledJobs(app: FastifyInstance) {
     app.log.error({ err }, '[scheduled] auction-geocode-bairro failed')
   }
 
+  // ── 9f. Enriquecimento por detalhe (descobre editalUrl/documentos) ───────
+  // Busca a página de detalhe dos lotes de leiloeiros SSR (ex.: Mega) e extrai
+  // os PDFs (edital/matrícula), preenchendo editalUrl enquanto o lote está no
+  // ar. Roda antes do arquivamento para o edital já estar disponível.
+  try {
+    const { runDetailEnrichmentBatch } = await import('./auction-detail-enrichment.service.js')
+    const r = await runDetailEnrichmentBatch(app.prisma, 30)
+    if (r.enriched > 0) {
+      app.log.info(`[scheduled] auction-detail-enrich: ${r.enriched}/${r.processed} leilões enriquecidos`)
+    }
+  } catch (err) {
+    app.log.error({ err }, '[scheduled] auction-detail-enrich failed')
+  }
+
   // ── 9c. Arquivamento de documentos de leilão (edital/matrícula → S3) ─────
   // Baixa e arquiva os documentos públicos dos leilões que ainda não têm
   // nenhum documento arquivado. Idempotente (dedup por sha256) e limitado a

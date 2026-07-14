@@ -2391,6 +2391,9 @@ model Auction {
   identityId          String?
   identity            AuctionPropertyIdentity? @relation(fields: [identityId], references: [id])
 
+  // Enriquecimento por página de detalhe (descoberta de editalUrl/documentos)
+  detailEnrichedAt    DateTime?
+
   // Analytics
   views               Int             @default(0)
   favorites           Int             @default(0)
