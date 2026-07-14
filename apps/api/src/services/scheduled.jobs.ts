@@ -911,6 +911,36 @@ export async function runScheduledJobs(app: FastifyInstance) {
     app.log.error({ err }, '[scheduled] auction-geocode-bairro failed')
   }
 
+  // ── 9c. Arquivamento de documentos de leilão (edital/matrícula → S3) ─────
+  // Baixa e arquiva os documentos públicos dos leilões que ainda não têm
+  // nenhum documento arquivado. Idempotente (dedup por sha256) e limitado a
+  // 20 leilões por rodada — throttle natural. Também extrai nº de matrícula,
+  // cartório e processo do texto e preenche o leilão se estiverem vazios.
+  try {
+    const { runAuctionArchiveBatch } = await import('./auction-archive.service.js')
+    const r = await runAuctionArchiveBatch(app.prisma, 20)
+    if (r.processed > 0) {
+      app.log.info(`[scheduled] auction-archive: ${r.archived} docs arquivados de ${r.processed} leilões`)
+    }
+  } catch (err) {
+    app.log.error({ err }, '[scheduled] auction-archive failed')
+  }
+
+  // ── 9d. Captura de desfecho de leilão (arrematado por quanto / deserto) ──
+  // Leilões que saíram da fonte (disappearedAt) ou cuja data passou têm o
+  // sourceUrl re-visitado para extrair o resultado (arrematado + valor, deserto,
+  // revogado). Limite de 20/rodada e anti-hammer (outcomeAttempts < 5). Só o
+  // valor do arremate é persistido — sem dados pessoais do arrematante (LGPD).
+  try {
+    const { runAuctionOutcomeBatch } = await import('./auction-outcome.service.js')
+    const r = await runAuctionOutcomeBatch(app.prisma, 20)
+    if (r.processed > 0 && (r.sold > 0 || r.deserted > 0)) {
+      app.log.info(`[scheduled] auction-outcome: ${r.sold} arrematados, ${r.deserted} desertos de ${r.processed} verificados`)
+    }
+  } catch (err) {
+    app.log.error({ err }, '[scheduled] auction-outcome failed')
+  }
+
   // ── 10. Lead re-scoring nightly (03h UTC = 00h BRT) ─────────────────────
   // Aplica recency decay e captura mudanças que aconteceram sem trigger
   // direto (ex.: lead que ficou parado, atividades manuais no CRM, etc.).

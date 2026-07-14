@@ -2377,6 +2377,16 @@ model Auction {
   scrapedHash         String?         // Hash para detectar mudanças
   isVerified          Boolean         @default(false)
 
+  // Ciclo de vida / arquivo histórico (nunca deletar — leilão sumido vira histórico)
+  firstSeenAt         DateTime?       // 1ª vez que a fonte listou este leilão
+  lastSeenAt          DateTime?       // Última vez que a fonte ainda o listava (bump a cada sighting)
+  disappearedAt       DateTime?       // Quando saiu da fonte (deslistado) — gatilho da captura de desfecho
+
+  // Desfecho do leilão (arrematado por quanto / deserto)
+  soldDate            DateTime?       // Data do arremate
+  outcomeCapturedAt   DateTime?       // Quando capturamos um desfecho conclusivo
+  outcomeAttempts     Int             @default(0) // Tentativas de captura (limite anti-hammer)
+
   // Analytics
   views               Int             @default(0)
   favorites           Int             @default(0)
@@ -2388,6 +2398,8 @@ model Auction {
   bids                AuctionBid[]
   alerts              AuctionAlert[]
   analyses            AuctionAnalysis[]
+  snapshots           AuctionSnapshot[]
+  documents           AuctionDocument[]
 
   @@index([source])
   @@index([status])
@@ -2399,7 +2411,54 @@ model Auction {
   @@index([opportunityScore])
   @@index([slug])
   @@index([externalId, source])
+  @@index([disappearedAt])
   @@map("auctions")
+}
+
+// Snapshot temporal de um leilão — histórico imutável de cada mudança observada.
+// Preserva a evolução (1ª praça → 2ª praça → arrematado) mesmo depois que a fonte
+// remove o item do site. É a base do arquivo histórico de leilões.
+model AuctionSnapshot {
+  id              String   @id @default(cuid())
+  auctionId       String
+  auction         Auction  @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+  capturedAt      DateTime @default(now())
+  scrapedHash     String?
+  status          String?  // status observado neste snapshot
+  appraisalValue  Decimal? @db.Decimal(14, 2)
+  minimumBid      Decimal? @db.Decimal(14, 2)
+  currentBid      Decimal? @db.Decimal(14, 2)
+  soldValue       Decimal? @db.Decimal(14, 2)
+  discountPercent Float?
+  raw             Json     @default("{}") // campos brutos relevantes no momento da captura
+
+  @@index([auctionId, capturedAt])
+  @@map("auction_snapshots")
+}
+
+// Documento público de leilão arquivado internamente (edital, matrícula, laudo,
+// ata). Baixamos o arquivo da fonte e guardamos no S3 — os links dos leiloeiros
+// apodrecem depois que o leilão encerra; o binário arquivado sobrevive.
+model AuctionDocument {
+  id            String   @id @default(cuid())
+  auctionId     String
+  auction       Auction  @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+  type          String   @default("OUTRO") // EDITAL | MATRICULA | LAUDO | ATA | OUTRO
+  sourceUrl     String                     // URL original de onde foi baixado
+  s3Key         String?                    // chave no S3 (null se S3 indisponível)
+  s3Url         String?
+  sha256        String                     // hash do conteúdo — dedup/versionamento
+  sizeBytes     Int?
+  mimeType      String?
+  extractedText String?  @db.Text          // texto extraído (HTML/texto), quando disponível
+  status        String   @default("ARCHIVED") // ARCHIVED | PENDING | FAILED
+  capturedAt    DateTime @default(now())
+
+  // Mesmo conteúdo (sha256) não duplica; conteúdo novo vira nova versão.
+  @@unique([auctionId, sha256])
+  @@index([auctionId])
+  @@index([type])
+  @@map("auction_documents")
 }
 
 model AuctionBid {
