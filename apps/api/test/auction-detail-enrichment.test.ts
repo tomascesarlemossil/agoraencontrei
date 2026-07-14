@@ -45,8 +45,9 @@ test('deriveCaixaMatriculaUrl usa o código oficial do imóvel', () => {
   assert.equal(deriveCaixaMatriculaUrl('https://example.com', 'XX', 'CAIXA-1'), undefined)
 })
 
-test('enriquecimento Caixa confirma e salva a matrícula oficial', async () => {
+test('enriquecimento Caixa salva a URL oficial sem depender da página protegida', async () => {
   let saved: Record<string, unknown> | undefined
+  let fetches = 0
   const prisma = {
     auction: {
       findUnique: async () => ({
@@ -58,10 +59,7 @@ test('enriquecimento Caixa confirma e salva a matrícula oficial', async () => {
     },
   } as unknown as PrismaClient
   const deps: EnrichmentDeps = {
-    fetchImpl: (async (_url: string, init?: RequestInit) => {
-      assert.equal(init?.method, 'HEAD')
-      return new Response(null, { status: 200, headers: { 'content-type': 'application/pdf' } })
-    }) as typeof fetch,
+    fetchImpl: (async () => { fetches++; throw new Error('não deve buscar a página protegida') }) as typeof fetch,
   }
 
   const result = await enrichAuctionDetail(prisma, 'auction-1', deps)
@@ -70,6 +68,7 @@ test('enriquecimento Caixa confirma e salva a matrícula oficial', async () => {
     'https://venda-imoveis.caixa.gov.br/editais/matricula/SP/8444427779074.pdf',
   ])
   assert.ok(saved?.detailEnrichedAt instanceof Date)
+  assert.equal(fetches, 0)
 })
 
 const DB = process.env.TEST_DATABASE_URL

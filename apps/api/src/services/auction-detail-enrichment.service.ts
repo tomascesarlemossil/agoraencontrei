@@ -75,25 +75,6 @@ export function deriveCaixaMatriculaUrl(
   return `https://venda-imoveis.caixa.gov.br/editais/matricula/${uf}/${digits}.pdf`
 }
 
-async function officialPdfExists(url: string, fetchImpl: typeof fetch): Promise<'yes' | 'no' | 'retry'> {
-  try {
-    const head = await fetchImpl(url, { method: 'HEAD', headers: { 'User-Agent': UA } })
-    if (head.ok && /pdf|octet-stream/i.test(head.headers.get('content-type') || '')) return 'yes'
-    if (head.status === 404) return 'no'
-    if (![403, 405, 501].includes(head.status)) return 'retry'
-
-    const probe = await fetchImpl(url, {
-      method: 'GET',
-      headers: { 'User-Agent': UA, Range: 'bytes=0-4' },
-    })
-    if (probe.ok && /pdf|octet-stream/i.test(probe.headers.get('content-type') || '')) return 'yes'
-    if (probe.status === 404) return 'no'
-    return 'retry'
-  } catch {
-    return 'retry'
-  }
-}
-
 /**
  * Enriquece um leilão a partir da página de detalhe: descobre editalUrl e
  * documentos. Marca detailEnrichedAt quando a página carrega (evita re-tentar
@@ -116,13 +97,11 @@ export async function enrichAuctionDetail(
 
   const caixaMatriculaUrl = deriveCaixaMatriculaUrl(auction.sourceUrl, auction.state, auction.externalId)
   if (caixaMatriculaUrl) {
-    const exists = await officialPdfExists(caixaMatriculaUrl, fetchImpl)
-    if (exists === 'retry') return { enriched: false }
-
     const previousDocs = auction.documentsUrls || []
-    const mergedDocs = exists === 'yes'
-      ? [...new Set([...previousDocs, caixaMatriculaUrl])]
-      : previousDocs
+    // A URL é formada por UF + código oficial já recebido no CSV da Caixa.
+    // Não bloqueamos o cadastro por uma checagem HTTP: a origem pode recusar
+    // datacenters, enquanto o mesmo documento segue acessível ao usuário.
+    const mergedDocs = [...new Set([...previousDocs, caixaMatriculaUrl])]
     const changed = mergedDocs.length !== previousDocs.length
     await prisma.auction.update({
       where: { id: auctionId },
