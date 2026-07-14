@@ -20,6 +20,7 @@ import {
 } from '@agoraencontrei/tomas-knowledge'
 import { evaluateToolPolicy, roleRank, type TomasBrain } from './tomas-policy.js'
 import { hasValidConsent } from './lead-transfer-consent.service.js'
+import { queryAuctions, buildAuctionReport, type AuctionReportFilters } from './auction-report.service.js'
 import { env } from '../utils/env.js'
 import { notify } from './notification.service.js'
 import { checkAIQuota } from './plan-gating.service.js'
@@ -341,6 +342,45 @@ const TOMAS_TOOLS: Anthropic.Tool[] = [
       properties: {
         propertyId: { type: 'string', description: 'ID do imóvel' },
         reference: { type: 'string', description: 'Código de referência (ex: LEM-0087)' },
+      },
+    },
+  },
+  {
+    name: 'buscar_leiloes',
+    description: 'Busca leilões de imóveis (Caixa, bancos, judiciais, leiloeiros) no arquivo do AgoraEncontrei — ativos e históricos (já arrematados). Use quando o cliente perguntar sobre leilões específicos por localização, tipo ou faixa de valor. Retorna lance mínimo, valor de arremate, desconto, status e link.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        city: { type: 'string', description: 'Cidade (ex.: Franca)' },
+        neighborhood: { type: 'string', description: 'Bairro (ex.: Centro)' },
+        state: { type: 'string', description: 'UF (ex.: SP)' },
+        propertyType: { type: 'string', description: 'Tipo: HOUSE, APARTMENT, LAND, COMMERCIAL, etc.' },
+        category: { type: 'string', description: 'Categoria: RESIDENTIAL ou COMMERCIAL' },
+        status: { type: 'string', description: 'Status: OPEN, SOLD, DESERTED, etc.' },
+        soldOnly: { type: 'boolean', description: 'true para trazer só arrematados (com valor de arremate)' },
+        maxPrice: { type: 'number', description: 'Teto sobre o lance mínimo' },
+        minDiscount: { type: 'number', description: 'Desconto mínimo (%)' },
+        limit: { type: 'number', description: 'Quantidade máxima, de 1 a 30' },
+      },
+    },
+  },
+  {
+    name: 'relatorio_leiloes',
+    description: 'Gera um RELATÓRIO ESTATÍSTICO agregado dos leilões (ativos e históricos) por localização/tipo/valor. Use para perguntas sobre VALORES, MÉDIAS ou QUANTIDADES — ex.: "quais foram os valores dos imóveis residenciais no centro de Franca-SP", "qual o desconto médio dos apartamentos", "quantos foram arrematados". Retorna contagem, valores (mín/médio/mediana/máx) de avaliação, lance mínimo e arremate, preço por m², desconto médio, e recortes por bairro e por tipo.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        city: { type: 'string', description: 'Cidade (ex.: Franca)' },
+        neighborhood: { type: 'string', description: 'Bairro (ex.: Centro)' },
+        state: { type: 'string', description: 'UF (ex.: SP)' },
+        propertyType: { type: 'string', description: 'Tipo: HOUSE, APARTMENT, LAND, COMMERCIAL, etc.' },
+        category: { type: 'string', description: 'Categoria: RESIDENTIAL ou COMMERCIAL' },
+        status: { type: 'string', description: 'Status específico (ex.: SOLD)' },
+        source: { type: 'string', description: 'Fonte: CAIXA, SANTANDER, JUDICIAL, etc.' },
+        soldOnly: { type: 'boolean', description: 'true para estatísticas só de arrematados' },
+        minDiscount: { type: 'number', description: 'Desconto mínimo (%)' },
+        maxPrice: { type: 'number', description: 'Teto sobre o lance mínimo' },
+        sinceMonths: { type: 'number', description: 'Janela temporal em meses (ex.: 12 = último ano)' },
       },
     },
   },
@@ -684,6 +724,44 @@ export async function executeTool(
         condoFee: property.condoFee ? Number(property.condoFee) : null,
         iptu: property.iptu ? Number(property.iptu) : null,
       })
+    }
+
+    case 'buscar_leiloes': {
+      const f: AuctionReportFilters = {
+        city: toolInput.city as string | undefined,
+        neighborhood: toolInput.neighborhood as string | undefined,
+        state: toolInput.state as string | undefined,
+        propertyType: toolInput.propertyType as string | undefined,
+        category: toolInput.category as string | undefined,
+        status: toolInput.status as string | undefined,
+        soldOnly: toolInput.soldOnly === true,
+        maxPrice: toolInput.maxPrice as number | undefined,
+        minDiscount: toolInput.minDiscount as number | undefined,
+      }
+      const limit = Math.max(1, Math.min(Number(toolInput.limit) || 12, 30))
+      const auctions = await queryAuctions(prisma, f, limit)
+      if (!auctions.length) {
+        return JSON.stringify({ found: 0, message: 'Nenhum leilão encontrado com esses filtros no arquivo.' })
+      }
+      return JSON.stringify({ found: auctions.length, auctions })
+    }
+
+    case 'relatorio_leiloes': {
+      const f: AuctionReportFilters = {
+        city: toolInput.city as string | undefined,
+        neighborhood: toolInput.neighborhood as string | undefined,
+        state: toolInput.state as string | undefined,
+        propertyType: toolInput.propertyType as string | undefined,
+        category: toolInput.category as string | undefined,
+        status: toolInput.status as string | undefined,
+        source: toolInput.source as string | undefined,
+        soldOnly: toolInput.soldOnly === true,
+        minDiscount: toolInput.minDiscount as number | undefined,
+        maxPrice: toolInput.maxPrice as number | undefined,
+        sinceMonths: toolInput.sinceMonths as number | undefined,
+      }
+      const report = await buildAuctionReport(prisma, f)
+      return JSON.stringify(report)
     }
 
     case 'registrar_lead': {
