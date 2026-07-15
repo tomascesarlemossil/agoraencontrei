@@ -31,8 +31,17 @@ function statusLabel(status: string): string {
     UPCOMING: 'Em breve', OPEN: 'Aberto para Lances',
     FIRST_ROUND: '1ª Praça', SECOND_ROUND: '2ª Praça',
     SOLD: 'Arrematado', DESERTED: 'Deserto',
+    CLOSED: 'Encerrado', SUSPENDED: 'Suspenso', CANCELLED: 'Cancelado',
   }
   return labels[status] || status
+}
+
+function modalityLabel(modality: string): string {
+  const labels: Record<string, string> = {
+    ONLINE: 'Online', PRESENTIAL: 'Presencial', HYBRID: 'Híbrido',
+    DIRECT_SALE: 'Venda direta', OPEN_BID: 'Licitação aberta',
+  }
+  return labels[modality] || modality
 }
 
 export default function LeilaoDetailClient({ auction, initialAnalysis = null }: { auction: any; initialAnalysis?: any }) {
@@ -278,7 +287,9 @@ export default function LeilaoDetailClient({ auction, initialAnalysis = null }: 
                     <Link key={p.id} href={`/imoveis/${p.slug}`} className="flex justify-between items-center text-sm border-b pb-2 hover:text-[#143A1F]">
                       <div>
                         <div className="font-medium text-gray-700">{p.title}</div>
-                        <div className="text-xs text-gray-400">{p.neighborhood} · {p.bedrooms} quartos · {p.totalArea}m²</div>
+                        <div className="text-xs text-gray-400">
+                          {[p.neighborhood, p.bedrooms ? `${p.bedrooms} quartos` : null, p.totalArea ? `${p.totalArea}m²` : null].filter(Boolean).join(' · ')}
+                        </div>
                       </div>
                       <div className="font-bold text-gray-800">{formatCurrency(Number(p.price))}</div>
                     </Link>
@@ -453,7 +464,7 @@ export default function LeilaoDetailClient({ auction, initialAnalysis = null }: 
                 <div className="mt-4 border-t pt-4 text-sm text-gray-500">
                   <div><strong>Leiloeiro:</strong> {auction.auctioneerName}</div>
                   {auction.bankName && <div><strong>Banco:</strong> {auction.bankName}</div>}
-                  {auction.modality && <div><strong>Modalidade:</strong> {auction.modality === 'ONLINE' ? 'Online' : auction.modality === 'PRESENTIAL' ? 'Presencial' : 'Híbrido'}</div>}
+                  {auction.modality && <div><strong>Modalidade:</strong> {modalityLabel(auction.modality)}</div>}
                 </div>
               )}
             </div>

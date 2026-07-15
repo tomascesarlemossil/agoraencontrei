@@ -773,7 +773,7 @@ export default async function auctionsRoutes(app: FastifyInstance) {
         city: auction.city ? { equals: auction.city, mode: 'insensitive' } : undefined,
         type: auction.propertyType as any,
         status: 'ACTIVE' as const,
-        price: { not: null },
+        price: { gt: 0 },
       },
       select: {
         id: true,
@@ -790,13 +790,9 @@ export default async function auctionsRoutes(app: FastifyInstance) {
     })
 
     // Preço médio do m² na região
-    const avgPriceM2 = similarProperties.length > 0
-      ? similarProperties.reduce((acc, p) => {
-          if (p.price && p.totalArea && p.totalArea > 0) {
-            return acc + Number(p.price) / p.totalArea
-          }
-          return acc
-        }, 0) / similarProperties.filter(p => p.price && p.totalArea).length
+    const propertiesWithArea = similarProperties.filter(p => p.price && p.totalArea && p.totalArea > 0)
+    const avgPriceM2 = propertiesWithArea.length > 0
+      ? propertiesWithArea.reduce((acc, p) => acc + Number(p.price) / Number(p.totalArea), 0) / propertiesWithArea.length
       : null
 
     return reply.send({
