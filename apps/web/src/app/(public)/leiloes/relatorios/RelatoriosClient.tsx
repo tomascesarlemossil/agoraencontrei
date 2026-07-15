@@ -35,6 +35,7 @@ interface Report {
   topNeighborhoods?: { neighborhood: string; count: number; avgValue: number | null }[]
   dataQuality?: { withAppraisal: number; withMinimumBid: number; withSoldValue: number; withArea: number; withRegistry: number; withDocuments: number; withOccupation: number }
   opportunities?: { slug: string; title: string; city?: string; state?: string; neighborhood?: string; status: string; source: string; coverImage?: string; appraisalValue?: number; minimumBid?: number; discountPercent?: number; opportunityScore?: number; occupation?: string; auctionDate?: string }[]
+  history?: { slug: string; title: string; city?: string; state?: string; neighborhood?: string; status: string; source: string; appraisalValue?: number; minimumBid?: number; soldValue?: number; soldDate?: string; discountPercent?: number; registryNumber?: string | null; hasMatricula?: boolean; hasDocuments?: boolean }[]
 }
 
 const TYPE_LABEL: Record<string, string> = {
@@ -311,6 +312,29 @@ export default function RelatoriosClient() {
                       <td className="py-4 text-center"><span className="rounded-full bg-emerald-50 px-2.5 py-1 font-bold text-emerald-700">{item.discountPercent != null ? `${Math.round(item.discountPercent)}%` : '—'}</span></td>
                       <td className="py-4 text-center text-xs text-gray-600">{STATUS_LABEL[item.status] || item.status}</td>
                       <td className="py-4 pl-4"><Link href={`/leiloes/${item.slug}`} className="inline-flex items-center gap-1 whitespace-nowrap font-semibold text-[#1B2B5B] hover:underline">Ver dossiê <ExternalLink className="h-3.5 w-3.5" /></Link></td>
+                    </tr>)}</tbody>
+                  </table>
+                </div>
+              </section>
+            )}
+
+            {report.history && report.history.length > 0 && (
+              <section className="rounded-xl bg-white p-6 shadow-sm">
+                <div className="mb-4 flex flex-wrap items-end justify-between gap-2">
+                  <div><h3 className="flex items-center gap-2 text-lg font-bold text-gray-800"><Clock3 className="h-5 w-5 text-[#C9A84C]" /> Histórico de leilões encerrados e arrematados</h3><p className="mt-1 text-sm text-gray-500">A análise e a matrícula de cada imóvel continuam acessíveis mesmo após o leilão terminar.</p></div>
+                  <span className="text-xs text-gray-400">{report.history.length} registros recentes</span>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[880px] text-left text-sm">
+                    <thead><tr className="border-b text-xs uppercase tracking-wide text-gray-400"><th className="pb-3">Imóvel</th><th className="pb-3">Localização</th><th className="pb-3 text-center">Situação</th><th className="pb-3 text-right">Avaliação</th><th className="pb-3 text-right">Arremate</th><th className="pb-3 text-center">Matrícula</th><th className="pb-3" /></tr></thead>
+                    <tbody>{report.history.map((item) => <tr key={item.slug} className="border-b last:border-0 hover:bg-gray-50">
+                      <td className="max-w-[240px] py-4 pr-4"><div className="line-clamp-2 font-semibold text-gray-800">{item.title}</div><div className="mt-1 text-xs text-gray-400">{item.source}{item.soldDate ? ` · ${new Date(item.soldDate).toLocaleDateString('pt-BR')}` : ''}</div></td>
+                      <td className="py-4 pr-4 text-gray-600">{[item.neighborhood, item.city, item.state].filter(Boolean).join(' · ') || 'Não informada'}</td>
+                      <td className="py-4 text-center"><span className="rounded-full px-2.5 py-1 text-xs font-bold" style={{ background: (STATUS_COLORS[item.status] || '#94a3b8') + '22', color: STATUS_COLORS[item.status] || '#475569' }}>{STATUS_LABEL[item.status] || item.status}</span></td>
+                      <td className="py-4 text-right text-gray-600">{fmt(item.appraisalValue)}</td>
+                      <td className="py-4 text-right font-semibold text-gray-800">{item.soldValue ? fmt(item.soldValue) : '—'}</td>
+                      <td className="py-4 text-center">{item.hasMatricula ? <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700"><ShieldCheck className="h-3.5 w-3.5" /> Sim</span> : <span className="text-xs text-gray-400">—</span>}</td>
+                      <td className="py-4 pl-4"><Link href={`/leiloes/${item.slug}`} className="inline-flex items-center gap-1 whitespace-nowrap font-semibold text-[#1B2B5B] hover:underline">Ver análise <ExternalLink className="h-3.5 w-3.5" /></Link></td>
                     </tr>)}</tbody>
                   </table>
                 </div>
