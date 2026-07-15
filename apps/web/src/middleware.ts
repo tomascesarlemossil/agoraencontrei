@@ -66,7 +66,11 @@ export function middleware(request: NextRequest) {
   const malformedDomainSuffix = pathname.match(/^(.*)\/(?:www\.)?(?:agoraencontrei\.com\.br|imobiliarialemos\.com\.br)\/?$/i)
   if (malformedDomainSuffix) {
     const url = request.nextUrl.clone()
-    url.pathname = malformedDomainSuffix[1] || '/'
+    const cleanPath = malformedDomainSuffix[1] || '/'
+    // /{uf}/{cidade}/guia|investimentos|servicos não são páginas por si
+    // só; precisam de um cluster. Se o cluster era o domínio malformado,
+    // consolide no hub da cidade, que é a alternativa válida mais próxima.
+    url.pathname = cleanPath.replace(/\/(?:guia|investimentos|servicos)$/i, '') || '/'
     return NextResponse.redirect(url, 308)
   }
 
