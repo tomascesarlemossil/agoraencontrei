@@ -135,10 +135,27 @@ export async function buildAuctionReport(prisma: PrismaClient, f: AuctionReportF
 
   // pricePerM2 (usa arremate se houver, senão lance mínimo)
   const perM2: number[] = []
+  // Split leilão x mercado (plano §3): R$/m² do lance/arremate vs R$/m² da
+  // avaliação (proxy do valor de mercado). A diferença mostra o quanto o leilão
+  // está abaixo do mercado por metro quadrado.
+  const perM2Auction: number[] = []
+  const perM2Market: number[] = []
+  // Desconto "real" aproximado: desconto sobre a avaliação líquido de um custo
+  // padrão de arrematação (~18% do lance). Mostra que o desconto anunciado
+  // encolhe depois dos custos — sem prometer "lucro garantido".
+  const COST_LOAD = 0.18
+  const netDiscount: number[] = []
   for (const r of rows) {
     const val = toNum(r.soldValue) ?? toNum(r.minimumBid)
     const area = toNum(r.totalArea)
     if (val && area && area > 0) perM2.push(val / area)
+    const bid = toNum(r.minimumBid)
+    const appraisal = toNum(r.appraisalValue)
+    if (bid && area && area > 0) perM2Auction.push(bid / area)
+    if (appraisal && area && area > 0) perM2Market.push(appraisal / area)
+    if (bid && appraisal && appraisal > 0) {
+      netDiscount.push((1 - (bid * (1 + COST_LOAD)) / appraisal) * 100)
+    }
   }
 
   // recorte por bairro (top) e por tipo/status
@@ -210,6 +227,24 @@ export async function buildAuctionReport(prisma: PrismaClient, f: AuctionReportF
       discountPercent: numStats(rows.map((r) => r.discountPercent)),
       opportunityScore: numStats(rows.map((r) => r.opportunityScore)),
     },
+    // Painel regional (plano §3): indicadores estilo plataforma financeira.
+    regional: (() => {
+      const auctionM2 = numStats(perM2Auction)
+      const marketM2 = numStats(perM2Market)
+      const net = numStats(netDiscount)
+      const spreadM2 = auctionM2 && marketM2 && marketM2.median > 0
+        ? Math.round((1 - auctionM2.median / marketM2.median) * 100)
+        : null
+      return {
+        pricePerM2Auction: auctionM2,   // R$/m² pelo lance mínimo
+        pricePerM2Market: marketM2,     // R$/m² pela avaliação (proxy de mercado)
+        m2SpreadPercent: spreadM2,      // quanto o leilão está abaixo do mercado por m²
+        announcedDiscountMedian: rows.length ? numStats(rows.map((r) => r.discountPercent))?.median ?? null : null,
+        netDiscountMedian: net?.median ?? null, // desconto após custos (estimado)
+        liquidityPercent: total > 0 ? Math.round((soldCount / total) * 100) : 0,
+        occupiedPercent: total > 0 ? Math.round((occupiedCount / total) * 100) : 0,
+      }
+    })(),
     topNeighborhoods: neighborhoods,
     dataQuality,
     opportunities,

@@ -23,6 +23,15 @@ interface Report {
     appraisalValue: NumStats | null; minimumBid: NumStats | null; soldValue: NumStats | null
     pricePerM2: NumStats | null; discountPercent: NumStats | null; opportunityScore: NumStats | null
   }
+  regional?: {
+    pricePerM2Auction: NumStats | null
+    pricePerM2Market: NumStats | null
+    m2SpreadPercent: number | null
+    announcedDiscountMedian: number | null
+    netDiscountMedian: number | null
+    liquidityPercent: number
+    occupiedPercent: number
+  }
   topNeighborhoods?: { neighborhood: string; count: number; avgValue: number | null }[]
   dataQuality?: { withAppraisal: number; withMinimumBid: number; withSoldValue: number; withArea: number; withRegistry: number; withDocuments: number; withOccupation: number }
   opportunities?: { slug: string; title: string; city?: string; state?: string; neighborhood?: string; status: string; source: string; coverImage?: string; appraisalValue?: number; minimumBid?: number; discountPercent?: number; opportunityScore?: number; occupation?: string; auctionDate?: string }[]
@@ -221,6 +230,47 @@ export default function RelatoriosClient() {
               <div className="flex gap-3 rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-950">
                 <AlertTriangle className="h-5 w-5 shrink-0 text-blue-600" />
                 <div><b>Nenhum valor de arremate foi confirmado nesta amostra.</b><br />Os valores abaixo representam avaliação e lance mínimo anunciados; não devem ser interpretados como preço efetivo de venda.</div>
+              </div>
+            )}
+
+            {/* Painel regional (plano §3): leilão x mercado, liquidez, desconto real */}
+            {report.regional && (
+              <div className="bg-white rounded-xl p-6 shadow-sm">
+                <h3 className="mb-1 flex items-center gap-2 text-lg font-bold text-gray-800"><TrendingDown className="h-5 w-5 text-[#C9A84C]" /> Leilão x mercado na região</h3>
+                <p className="mb-4 text-sm text-gray-500">O desconto anunciado usa a avaliação como base. Aqui comparamos o preço por m² do leilão com o de mercado e mostramos o desconto que sobra depois dos custos.</p>
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                  <div className="rounded-lg border border-gray-100 bg-gray-50 p-4">
+                    <div className="text-xs text-gray-500">R$/m² em leilão</div>
+                    <div className="text-xl font-bold text-[#143A1F]">{report.regional.pricePerM2Auction ? fmt(report.regional.pricePerM2Auction.median) : '—'}</div>
+                    <div className="text-[11px] text-gray-400">mediana pelo lance mínimo</div>
+                  </div>
+                  <div className="rounded-lg border border-gray-100 bg-gray-50 p-4">
+                    <div className="text-xs text-gray-500">R$/m² de mercado</div>
+                    <div className="text-xl font-bold text-gray-700">{report.regional.pricePerM2Market ? fmt(report.regional.pricePerM2Market.median) : '—'}</div>
+                    <div className="text-[11px] text-gray-400">mediana pela avaliação</div>
+                  </div>
+                  <div className="rounded-lg border border-green-100 bg-green-50 p-4">
+                    <div className="text-xs text-gray-500">Abaixo do mercado por m²</div>
+                    <div className="text-xl font-bold text-green-700">{report.regional.m2SpreadPercent != null ? `${report.regional.m2SpreadPercent}%` : '—'}</div>
+                    <div className="text-[11px] text-gray-400">leilão vs mercado</div>
+                  </div>
+                  <div className="rounded-lg border border-amber-100 bg-amber-50 p-4">
+                    <div className="text-xs text-gray-500">Desconto após custos</div>
+                    <div className="text-xl font-bold text-amber-700">{report.regional.netDiscountMedian != null ? `${Math.round(report.regional.netDiscountMedian)}%` : '—'}</div>
+                    <div className="text-[11px] text-gray-400">anunciado: {report.regional.announcedDiscountMedian != null ? `${Math.round(report.regional.announcedDiscountMedian)}%` : '—'}</div>
+                  </div>
+                </div>
+                <div className="mt-3 grid grid-cols-2 gap-3">
+                  <div className="rounded-lg border border-gray-100 p-3">
+                    <div className="mb-1 flex justify-between text-sm"><span className="text-gray-600">Liquidez (arrematados)</span><b>{report.regional.liquidityPercent}%</b></div>
+                    <div className="h-2 overflow-hidden rounded-full bg-gray-100"><div className="h-full rounded-full bg-teal-500" style={{ width: `${report.regional.liquidityPercent}%` }} /></div>
+                  </div>
+                  <div className="rounded-lg border border-gray-100 p-3">
+                    <div className="mb-1 flex justify-between text-sm"><span className="text-gray-600">Imóveis ocupados</span><b>{report.regional.occupiedPercent}%</b></div>
+                    <div className="h-2 overflow-hidden rounded-full bg-gray-100"><div className="h-full rounded-full bg-red-400" style={{ width: `${report.regional.occupiedPercent}%` }} /></div>
+                  </div>
+                </div>
+                <p className="mt-3 text-[11px] leading-4 text-gray-400">Estimativas: o R$/m² de mercado usa a avaliação como proxy (pode estar acima do praticado) e o desconto após custos aplica uma carga padrão de ~18% sobre o lance. Não substitui a análise de comparáveis reais e do edital.</p>
               </div>
             )}
 
