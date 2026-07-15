@@ -37,6 +37,13 @@ export async function resolveTerritorialAddress(prisma: PrismaClient, input: Ter
   const streetSelect = {
     id: true, name: true, streetType: true, postalCode: true, confidence: true,
     neighborhood: { select: { id: true, name: true, kind: true, confidence: true } },
+    neighborhoodLinks: {
+      orderBy: [{ confidence: 'desc' }, { evidenceCount: 'desc' }],
+      select: {
+        confidence: true, evidenceCount: true,
+        neighborhood: { select: { id: true, name: true, slug: true, kind: true, confidence: true } },
+      },
+    },
   }
   let street = null
   if (normalizedStreet) {
@@ -57,7 +64,15 @@ export async function resolveTerritorialAddress(prisma: PrismaClient, input: Ter
     }
   }
 
+  const neighborhoodCandidates = (street?.neighborhoodLinks || []).map((link: any) => ({
+    ...link.neighborhood, relationConfidence: link.confidence, evidenceCount: link.evidenceCount,
+  }))
   let neighborhood = street?.neighborhood || null
+  if (!neighborhood && input.neighborhood && neighborhoodCandidates.length) {
+    const declared = normalizeTerritorialName(input.neighborhood)
+    neighborhood = neighborhoodCandidates.find((candidate: any) => normalizeTerritorialName(candidate.name) === declared) || null
+  }
+  if (!neighborhood && neighborhoodCandidates.length === 1) neighborhood = neighborhoodCandidates[0]
   if (!neighborhood && input.neighborhood) {
     const normalizedNeighborhood = normalizeTerritorialName(input.neighborhood)
     neighborhood = await client.territorialNeighborhood?.findFirst({
@@ -75,11 +90,16 @@ export async function resolveTerritorialAddress(prisma: PrismaClient, input: Ter
 
   return {
     resolved: Boolean(street || neighborhood),
-    classification: street?.neighborhood ? 'canonical_street_mapping' : neighborhood ? 'canonical_neighborhood_mapping' : 'city_only',
+    classification: street?.neighborhood ? 'canonical_street_mapping' : neighborhood ? (neighborhood.kind === 'OFFICIAL' ? 'canonical_neighborhood_mapping' : 'operational_neighborhood_mapping') : neighborhoodCandidates.length ? 'ambiguous_neighborhood_candidates' : 'city_only',
     city,
     street: street ? { id: street.id, name: street.name, streetType: street.streetType, postalCode: street.postalCode } : null,
     neighborhood,
+    neighborhoodCandidates,
     confidence: Math.min(city.confidence, street?.confidence ?? 100, neighborhood?.confidence ?? 100),
-    warning: street || neighborhood ? undefined : 'Cidade mapeada, mas logradouro e bairro ainda não foram confirmados no cadastro territorial.',
+    warning: neighborhood?.kind && neighborhood.kind !== 'OFFICIAL'
+      ? 'Bairro operacional derivado do cadastro de imóveis; não representa delimitação oficial.'
+      : neighborhoodCandidates.length > 1 && !neighborhood
+        ? 'O logradouro possui mais de um bairro observado; informe o bairro para desambiguar.'
+        : street || neighborhood ? undefined : 'Cidade mapeada, mas logradouro e bairro ainda não foram confirmados no cadastro territorial.',
   }
 }

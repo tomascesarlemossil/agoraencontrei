@@ -98,7 +98,7 @@ export async function linkPropertiesToTerritory(
 ) {
   const batchSize = Math.min(500, Math.max(10, options.batchSize || 100))
   let cursor: string | undefined
-  const summary = { cityLinked: 0, examined: 0, linked: 0, unresolved: 0, failed: 0 }
+  const summary = { cityLinked: 0, neighborhoodLinked: 0, examined: 0, linked: 0, unresolved: 0, failed: 0 }
 
   // Cidade é um nível de precisão independente: vincule-a mesmo quando rua/bairro ainda não foram resolvidos.
   const mappedCities = await (prisma as any).territorialCity.findMany({
@@ -116,6 +116,22 @@ export async function linkPropertiesToTerritory(
       data: { territorialCityId: city.id } as any,
     })
     summary.cityLinked += result.count
+
+    const neighborhoods = await (prisma as any).territorialNeighborhood?.findMany?.({
+      where: { cityId: city.id }, select: { id: true, name: true },
+    }) || []
+    for (const neighborhood of neighborhoods) {
+      const neighborhoodResult = await prisma.property.updateMany({
+        where: {
+          ...(options.companyId ? { companyId: options.companyId } : {}),
+          territorialCityId: city.id,
+          territorialNeighborhoodId: null,
+          neighborhood: { equals: neighborhood.name, mode: 'insensitive' },
+        } as any,
+        data: { territorialNeighborhoodId: neighborhood.id } as any,
+      })
+      summary.neighborhoodLinked += neighborhoodResult.count
+    }
   }
   do {
     const rows = await prisma.property.findMany({

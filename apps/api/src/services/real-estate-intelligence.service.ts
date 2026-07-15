@@ -48,7 +48,19 @@ export async function identifyNeighborhood(prisma: PrismaClient, input: { city: 
         references: 1,
         candidates: [{ name: territorial.neighborhood.name, references: 1 }],
         territorial,
-        warning: undefined,
+        warning: territorial.warning,
+      }
+    }
+    if (territorial.neighborhoodCandidates?.length) {
+      return {
+        classification: territorial.classification,
+        neighborhood: null,
+        confidence: 'insufficient',
+        confidenceScore: territorial.confidence,
+        references: territorial.neighborhoodCandidates.reduce((total: number, item: any) => total + item.evidenceCount, 0),
+        candidates: territorial.neighborhoodCandidates.map((item: any) => ({ name: item.name, references: item.evidenceCount, kind: item.kind })),
+        territorial,
+        warning: territorial.warning,
       }
     }
   } catch { /* cadastro territorial pode ainda não estar migrado */ }

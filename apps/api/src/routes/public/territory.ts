@@ -40,6 +40,9 @@ export async function territoryRoute(app: FastifyInstance) {
         tc.confidence AS "cityConfidence",
         (SELECT COUNT(*)::int FROM territorial_streets ts WHERE ts."cityId" = tc.id) AS streets,
         (SELECT COUNT(*)::int FROM territorial_neighborhoods tn WHERE tn."cityId" = tc.id) AS neighborhoods,
+        (SELECT COUNT(*)::int FROM territorial_neighborhoods tn WHERE tn."cityId" = tc.id AND tn.kind = 'OFFICIAL') AS "officialNeighborhoods",
+        (SELECT COUNT(*)::int FROM territorial_neighborhoods tn WHERE tn."cityId" = tc.id AND tn.kind <> 'OFFICIAL') AS "operationalNeighborhoods",
+        (SELECT COUNT(*)::int FROM territorial_street_neighborhoods tsn JOIN territorial_streets ts ON ts.id = tsn."streetId" WHERE ts."cityId" = tc.id) AS "streetNeighborhoodRelations",
         (SELECT COUNT(*)::int FROM properties p WHERE LOWER(p.city) = LOWER($1) AND UPPER(COALESCE(p.state, $2)) = UPPER($2)) AS "propertiesTotal",
         (SELECT COUNT(*)::int FROM properties p WHERE LOWER(p.city) = LOWER($1) AND UPPER(COALESCE(p.state, $2)) = UPPER($2) AND p."territorialCityId" = tc.id) AS "propertiesLinkedCity",
         (SELECT COUNT(*)::int FROM properties p WHERE LOWER(p.city) = LOWER($1) AND UPPER(COALESCE(p.state, $2)) = UPPER($2) AND p."territorialStreetId" IS NOT NULL) AS "propertiesLinkedStreet",
@@ -59,8 +62,11 @@ export async function territoryRoute(app: FastifyInstance) {
         streetPct: total ? Math.round((result.propertiesLinkedStreet / total) * 10_000) / 100 : 0,
         neighborhoodPct: total ? Math.round((result.propertiesLinkedNeighborhood / total) * 10_000) / 100 : 0,
       },
-      source: { slug: 'ibge-faces-logradouros-2022', attribution: 'Fonte: IBGE, Base de Faces de Logradouros 2022', referenceYear: 2022 },
-      caveat: 'A base de faces do IBGE não confirma o bairro de cada logradouro; bairros permanecem separados até validação oficial.',
+      sources: [
+        { slug: 'ibge-faces-logradouros-2022', attribution: 'Fonte: IBGE, Base de Faces de Logradouros 2022', referenceYear: 2022, classification: 'official_streets' },
+        { slug: 'internal-property-neighborhoods', attribution: 'Cadastro interno de imóveis', classification: 'operational_neighborhoods' },
+      ],
+      caveat: 'O IBGE não publica malha de bairros de Franca no Censo 2022. Bairros e relações rua-bairro aqui marcados como operacionais são evidências do cadastro de imóveis, não limites oficiais.',
       updatedAt: new Date().toISOString(),
     })
   })

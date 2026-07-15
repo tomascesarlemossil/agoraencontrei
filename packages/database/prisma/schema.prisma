@@ -2881,6 +2881,7 @@ model TerritorialNeighborhood {
 
   aliases    TerritorialNeighborhoodAlias[]
   streets    TerritorialStreet[]
+  streetLinks TerritorialStreetNeighborhood[]
   properties Property[]
 
   @@unique([cityId, slug])
@@ -2920,11 +2921,31 @@ model TerritorialStreet {
   updatedAt      DateTime @updatedAt
 
   properties Property[]
+  neighborhoodLinks TerritorialStreetNeighborhood[]
 
   @@unique([cityId, normalizedName, neighborhoodId])
   @@index([cityId, normalizedName])
   @@index([postalCode])
   @@map("territorial_streets")
+}
+
+/// Relação muitos-para-muitos: um logradouro pode atravessar mais de um bairro.
+model TerritorialStreetNeighborhood {
+  id             String   @id @default(cuid())
+  streetId       String
+  street         TerritorialStreet @relation(fields: [streetId], references: [id], onDelete: Cascade)
+  neighborhoodId String
+  neighborhood   TerritorialNeighborhood @relation(fields: [neighborhoodId], references: [id], onDelete: Cascade)
+  sourceId       String?
+  confidence     Int      @default(50)
+  evidenceCount  Int      @default(1)
+  metadata       Json     @default("{}")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([streetId, neighborhoodId])
+  @@index([neighborhoodId])
+  @@map("territorial_street_neighborhoods")
 }
 
 /// Fonte autorizada utilizada pela inteligência imobiliária.
