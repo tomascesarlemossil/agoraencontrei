@@ -660,6 +660,26 @@ export default async function auctionsRoutes(app: FastifyInstance) {
   })
 
   // ── GET /auctions/:slug — Detalhe do leilão ───────────────────────────────
+  app.get('/sitemap', async (req: FastifyRequest, reply: FastifyReply) => {
+    const query = z.object({
+      page: z.coerce.number().int().min(1).default(1),
+      limit: z.coerce.number().int().min(1).max(50000).default(50000),
+    }).safeParse(req.query)
+    if (!query.success) return reply.status(400).send({ error: 'VALIDATION_ERROR' })
+
+    const { page, limit } = query.data
+    const [total, rows] = await Promise.all([
+      app.prisma.auction.count(),
+      app.prisma.auction.findMany({
+        select: { slug: true, updatedAt: true, status: true },
+        orderBy: { id: 'asc' },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+    ])
+    return reply.send({ data: rows, total, page, limit, pages: Math.ceil(total / limit) })
+  })
+
   app.get('/:slug', async (req: FastifyRequest<{ Params: { slug: string } }>, reply: FastifyReply) => {
     const { slug } = req.params
 
@@ -668,6 +688,13 @@ export default async function auctionsRoutes(app: FastifyInstance) {
       include: {
         bids: { orderBy: { bidDate: 'desc' }, take: 10 },
         analyses: { orderBy: { createdAt: 'desc' }, take: 1 },
+        documents: {
+          orderBy: { capturedAt: 'desc' },
+          select: {
+            id: true, type: true, sourceUrl: true, s3Url: true,
+            mimeType: true, status: true, capturedAt: true,
+          },
+        },
       },
     })
 
@@ -675,13 +702,32 @@ export default async function auctionsRoutes(app: FastifyInstance) {
       return reply.status(404).send({ error: 'Leilão não encontrado' })
     }
 
-    // Incrementar views
-    await app.prisma.auction.update({
-      where: { id: auction.id },
-      data: { views: { increment: 1 } },
-    }).catch(() => {})
+    const activeStatuses = ['OPEN', 'UPCOMING', 'FIRST_ROUND', 'SECOND_ROUND'] as const
+    const [relatedAuctions] = await Promise.all([
+      app.prisma.auction.findMany({
+        where: {
+          id: { not: auction.id },
+          city: auction.city ? { equals: auction.city, mode: 'insensitive' } : undefined,
+          state: auction.state || undefined,
+          propertyType: auction.propertyType || undefined,
+          status: { in: [...activeStatuses] },
+        },
+        select: {
+          id: true, slug: true, title: true, source: true, status: true,
+          city: true, state: true, neighborhood: true, coverImage: true,
+          minimumBid: true, appraisalValue: true, discountPercent: true,
+          totalArea: true, bedrooms: true,
+        },
+        orderBy: [{ discountPercent: 'desc' }, { opportunityScore: 'desc' }],
+        take: 6,
+      }),
+      app.prisma.auction.update({
+        where: { id: auction.id },
+        data: { views: { increment: 1 } },
+      }).catch(() => null),
+    ])
 
-    return reply.send(auction)
+    return reply.send({ ...auction, relatedAuctions })
   })
 
   // ── POST /auctions/calculate — Calculadora financeira ──────────────────────
@@ -731,7 +777,9 @@ export default async function auctionsRoutes(app: FastifyInstance) {
       },
       select: {
         id: true,
+        slug: true,
         title: true,
+        coverImage: true,
         price: true,
         totalArea: true,
         neighborhood: true,

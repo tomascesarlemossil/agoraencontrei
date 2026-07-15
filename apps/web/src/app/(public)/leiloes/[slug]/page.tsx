@@ -5,7 +5,7 @@ import LeilaoDetailClient from './LeilaoDetailClient'
 
 type Props = { params: Promise<{ slug: string }> }
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'https://api-production-669c.up.railway.app'
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'https://api.agoraencontrei.com.br'
 const WEB_URL = process.env.NEXT_PUBLIC_WEB_URL ?? 'https://www.agoraencontrei.com.br'
 
 type LandingConfig = {
@@ -140,6 +140,16 @@ async function getAuction(slug: string) {
   }
 }
 
+async function getAuctionAnalysis(slug: string) {
+  try {
+    const res = await fetch(`${API_URL}/api/v1/auctions/${slug}/analysis`, { next: { revalidate: 1800 } })
+    if (!res.ok) return null
+    return res.json()
+  } catch {
+    return null
+  }
+}
+
 async function fetchLandingAuctions(config: LandingConfig) {
   const params = new URLSearchParams({ city: config.city, limit: '12', sortBy: 'discountPercent', sortOrder: 'desc' })
   if (config.search) params.set('search', config.search)
@@ -182,12 +192,22 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
   return {
     title,
     description,
+    keywords: [
+      auction.title,
+      `leilão de imóveis ${auction.city || ''}`,
+      `imóvel em leilão ${auction.neighborhood || auction.city || ''}`,
+      `${auction.source || 'leilão'} ${auction.city || ''}`,
+      'matrícula de imóvel em leilão',
+      'imóveis semelhantes',
+    ],
+    robots: { index: true, follow: true },
     openGraph: {
       title,
       description,
       type: 'website',
       locale: 'pt_BR',
       siteName: 'AgoraEncontrei',
+      url: `${WEB_URL}/leiloes/${params.slug}`,
       images: auction.coverImage ? [{ url: auction.coverImage }] : [],
     },
     alternates: { canonical: `${WEB_URL}/leiloes/${params.slug}` },
@@ -312,7 +332,10 @@ export default async function LeilaoPage(props: Props) {
     return <LandingPage config={landing} auctions={auctions} />
   }
 
-  const auction = await getAuction(params.slug)
+  const [auction, analysis] = await Promise.all([
+    getAuction(params.slug),
+    getAuctionAnalysis(params.slug),
+  ])
 
   if (!auction) {
     return (
@@ -343,13 +366,25 @@ export default async function LeilaoPage(props: Props) {
       availability: auction.status === 'OPEN' || auction.status === 'UPCOMING'
         ? 'https://schema.org/InStock'
         : 'https://schema.org/SoldOut',
+      seller: { '@type': 'Organization', name: auction.auctioneerName || auction.source || 'Leiloeiro oficial' },
     },
+  }
+
+  const breadcrumbSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Início', item: WEB_URL },
+      { '@type': 'ListItem', position: 2, name: 'Leilões', item: `${WEB_URL}/leiloes` },
+      { '@type': 'ListItem', position: 3, name: auction.title, item: `${WEB_URL}/leiloes/${params.slug}` },
+    ],
   }
 
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
-      <LeilaoDetailClient auction={auction} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
+      <LeilaoDetailClient auction={auction} initialAnalysis={analysis} />
     </>
   )
 }

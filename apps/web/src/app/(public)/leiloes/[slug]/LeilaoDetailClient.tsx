@@ -35,26 +35,34 @@ function statusLabel(status: string): string {
   return labels[status] || status
 }
 
-export default function LeilaoDetailClient({ auction }: { auction: any }) {
-  const [analysis, setAnalysis] = useState<any>(null)
-  const [loadingAnalysis, setLoadingAnalysis] = useState(false)
+export default function LeilaoDetailClient({ auction, initialAnalysis = null }: { auction: any; initialAnalysis?: any }) {
+  const [analysis, setAnalysis] = useState<any>(initialAnalysis)
 
-  const loadAnalysis = async () => {
-    setLoadingAnalysis(true)
-    try {
-      const res = await fetch(`${API_URL}/api/v1/auctions/${auction.slug}/analysis`)
-      if (res.ok) setAnalysis(await res.json())
-    } catch {}
-    setLoadingAnalysis(false)
-  }
-
-  useEffect(() => { loadAnalysis() }, [])
+  useEffect(() => {
+    if (initialAnalysis) return
+    const controller = new AbortController()
+    fetch(`${API_URL}/api/v1/auctions/${auction.slug}/analysis`, { signal: controller.signal })
+      .then(res => res.ok ? res.json() : null)
+      .then(data => { if (data) setAnalysis(data) })
+      .catch(() => {})
+    return () => controller.abort()
+  }, [auction.slug, initialAnalysis])
 
   const discount = auction.discountPercent || (
     auction.appraisalValue && auction.minimumBid
       ? ((Number(auction.appraisalValue) - Number(auction.minimumBid)) / Number(auction.appraisalValue) * 100).toFixed(1)
       : null
   )
+
+  const officialDocuments = [
+    ...(auction.documents || []).map((doc: any) => ({
+      key: doc.id, type: doc.type, url: doc.s3Url || doc.sourceUrl,
+      archived: Boolean(doc.s3Url),
+    })),
+    ...(auction.documentsUrls || []).map((url: string, index: number) => ({
+      key: `source-${index}`, type: /matricula/i.test(url) ? 'MATRICULA' : 'DOCUMENTO', url, archived: false,
+    })),
+  ].filter((doc, index, all) => doc.url && all.findIndex(item => item.url === doc.url) === index)
 
   return (
     <div className="min-h-screen bg-[#f8f6f1]">
@@ -122,7 +130,7 @@ export default function LeilaoDetailClient({ auction }: { auction: any }) {
               {auction.images?.length > 0 && (
                 <div className="flex gap-1 p-2 overflow-x-auto">
                   {auction.images.slice(0, 6).map((img: string, i: number) => (
-                    <img key={i} src={img} alt={`Foto ${i + 1}`} className="h-20 w-28 object-cover rounded cursor-pointer hover:opacity-80" />
+                    <img key={img} src={img} alt={`Foto ${i + 1}`} className="h-20 w-28 object-cover rounded cursor-pointer hover:opacity-80" />
                   ))}
                 </div>
               )}
@@ -219,6 +227,22 @@ export default function LeilaoDetailClient({ auction }: { auction: any }) {
                   <FileText className="w-4 h-4" /> Baixar Edital
                 </a>
               )}
+
+              {officialDocuments.length > 0 && (
+                <div className="mt-5 border-t pt-4">
+                  <h4 className="mb-3 text-sm font-semibold text-gray-700">Documentos oficiais encontrados</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {officialDocuments.map(doc => (
+                      <a key={doc.key} href={doc.url} target="_blank" rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-900 hover:bg-amber-100">
+                        <FileText className="h-4 w-4" />
+                        {doc.type === 'MATRICULA' ? 'Ver matrícula' : doc.type === 'EDITAL' ? 'Ver edital' : 'Ver documento'}
+                        {doc.archived ? <span className="text-xs font-normal text-green-700">arquivado</span> : null}
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Arquivo histórico: documentos + histórico de preço/status */}
@@ -251,13 +275,35 @@ export default function LeilaoDetailClient({ auction }: { auction: any }) {
                 <h4 className="text-sm font-semibold text-gray-600 mb-2">Imóveis similares no mercado convencional:</h4>
                 <div className="space-y-2">
                   {analysis.marketComparison.similarProperties.map((p: any) => (
-                    <div key={p.id} className="flex justify-between items-center text-sm border-b pb-2">
+                    <Link key={p.id} href={`/imoveis/${p.slug}`} className="flex justify-between items-center text-sm border-b pb-2 hover:text-[#143A1F]">
                       <div>
                         <div className="font-medium text-gray-700">{p.title}</div>
                         <div className="text-xs text-gray-400">{p.neighborhood} · {p.bedrooms} quartos · {p.totalArea}m²</div>
                       </div>
                       <div className="font-bold text-gray-800">{formatCurrency(Number(p.price))}</div>
-                    </div>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {auction.relatedAuctions?.length > 0 && (
+              <div className="rounded-xl bg-white p-6 shadow-sm">
+                <h3 className="mb-1 flex items-center gap-2 text-lg font-bold text-gray-800">
+                  <Home className="h-5 w-5 text-[#C9A84C]" /> Leilões semelhantes na região
+                </h3>
+                <p className="mb-4 text-sm text-gray-500">Compare desconto, lance mínimo e localização antes de decidir.</p>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {auction.relatedAuctions.map((item: any) => (
+                    <Link key={item.id} href={`/leiloes/${item.slug}`} className="rounded-xl border p-4 transition hover:border-[#C9A84C] hover:shadow-sm">
+                      <div className="mb-2 flex items-center justify-between gap-2">
+                        <span className="text-xs font-bold uppercase text-[#143A1F]">{sourceLabel(item.source)}</span>
+                        {item.discountPercent ? <span className="rounded-full bg-red-50 px-2 py-1 text-xs font-bold text-red-600">-{Number(item.discountPercent).toFixed(0)}%</span> : null}
+                      </div>
+                      <h4 className="line-clamp-2 text-sm font-semibold text-gray-800">{item.title}</h4>
+                      <p className="mt-2 text-xs text-gray-500">{item.neighborhood || item.city}, {item.state}</p>
+                      <p className="mt-3 text-base font-bold text-[#143A1F]">{formatCurrency(Number(item.minimumBid))}</p>
+                    </Link>
                   ))}
                 </div>
               </div>
