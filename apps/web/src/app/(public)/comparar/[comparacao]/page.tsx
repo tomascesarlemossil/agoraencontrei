@@ -66,8 +66,11 @@ export async function generateMetadata(
       siteName: 'AgoraEncontrei',
     },
     alternates: {
-      canonical: `https://agoraencontrei.com.br/comparar/${cityA.slug}-vs-${cityB.slug}`,
+      canonical: `https://www.agoraencontrei.com.br/comparar/${cityA.slug}-vs-${cityB.slug}`,
     },
+    // O layout de /comparar mantém a ferramenta interativa fora do índice,
+    // mas as comparações cidade × cidade são landings públicas do sitemap.
+    robots: { index: true, follow: true },
   }
 }
 
@@ -134,7 +137,7 @@ export default async function CompareCidadesPage(
     '@type': 'Article',
     name: `${cityA.name} vs ${cityB.name} — Comparação`,
     description: `Comparação de custo de vida e mercado imobiliário entre ${cityA.name}/${cityA.state} e ${cityB.name}/${cityB.state}`,
-    url: `https://agoraencontrei.com.br/comparar/${cityA.slug}-vs-${cityB.slug}`,
+    url: `https://www.agoraencontrei.com.br/comparar/${cityA.slug}-vs-${cityB.slug}`,
   }
 
   return (
@@ -214,7 +217,7 @@ export default async function CompareCidadesPage(
         <div className="mt-8 text-center">
           <p className="text-gray-600 text-sm mb-4">
             Para conferir a lista completa e atualizada de oportunidades reais agora mesmo,{' '}
-            <a href="https://agoraencontrei.com.br" className="font-semibold underline" style={{ color: '#143A1F' }}>
+            <a href="https://www.agoraencontrei.com.br" className="font-semibold underline" style={{ color: '#143A1F' }}>
               acesse nossa vitrine principal no marketplace AgoraEncontrei
             </a>.
           </p>

@@ -183,7 +183,7 @@ export default async function BairroPage(props: { params: Promise<{ estado: stri
           </p>
           <p className="text-gray-600 text-sm leading-relaxed mt-4 border-t pt-4">
             Para conferir a lista completa e atualizada de oportunidades reais,{' '}
-            <a href="https://agoraencontrei.com.br" className="font-semibold underline" style={{ color: '#143A1F' }}>
+            <a href="https://www.agoraencontrei.com.br" className="font-semibold underline" style={{ color: '#143A1F' }}>
               acesse o marketplace AgoraEncontrei
             </a>.
           </p>

@@ -12,7 +12,7 @@ import { IBGE_CITY_BY_SLUG, IBGE_CITIES_152, getIbgeCitySnippet } from '@/data/s
 import { CitySeoContent } from '@/components/public/CitySeoContent'
 import { isBuildPhase, limitSeoStaticItems } from '@/lib/ssg-runtime'
 
-const WEB_URL = process.env.NEXT_PUBLIC_WEB_URL || 'https://agoraencontrei.com.br'
+const WEB_URL = process.env.NEXT_PUBLIC_WEB_URL || 'https://www.agoraencontrei.com.br'
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.agoraencontrei.com.br'
 
 // Mapeamento de cluster-slug para metadados

@@ -13,7 +13,7 @@ import { IBGE_CITY_BY_SLUG, IBGE_CITIES_152, getIbgeCitySnippet } from '@/data/s
 import { NIU_OFFICIAL_PARTNER } from '@/lib/partner-seo'
 import { limitSeoStaticItems } from '@/lib/ssg-runtime'
 
-const WEB_URL = process.env.NEXT_PUBLIC_WEB_URL || 'https://agoraencontrei.com.br'
+const WEB_URL = process.env.NEXT_PUBLIC_WEB_URL || 'https://www.agoraencontrei.com.br'
 
 const SERVICOS: Record<string, { label: string; desc: string; icon: string; faq: string[] }> = {
   'arquiteto':              { label: 'Arquiteto',              icon: '📐', desc: 'Encontre arquitetos qualificados em {cidade} para projetos residenciais, comerciais e interiores.',  faq: ['Quanto custa um arquiteto em {cidade}?', 'Como contratar um arquiteto?', 'O que faz um arquiteto?'] },

@@ -12,7 +12,7 @@ import { ChevronRight, BookOpen } from 'lucide-react'
 import { IBGE_CITY_BY_SLUG, IBGE_CITIES_152, getIbgeCitySnippet } from '@/data/seo-ibge-cities-expanded'
 import { limitSeoStaticItems } from '@/lib/ssg-runtime'
 
-const WEB_URL = process.env.NEXT_PUBLIC_WEB_URL || 'https://agoraencontrei.com.br'
+const WEB_URL = process.env.NEXT_PUBLIC_WEB_URL || 'https://www.agoraencontrei.com.br'
 
 const GUIAS: Record<string, { label: string; desc: string; icon: string }> = {
   'melhores-bairros-para-morar': { label: 'Melhores Bairros para Morar',  icon: '🏘️', desc: 'Guia completo dos melhores bairros para morar em {cidade}. Segurança, infraestrutura e qualidade de vida.' },

@@ -12,7 +12,7 @@ import { ChevronRight, Home, Search } from 'lucide-react'
 import { IBGE_CITY_BY_SLUG, IBGE_CITIES_152, getIbgeCitySnippet } from '@/data/seo-ibge-cities-expanded'
 import { limitSeoStaticItems } from '@/lib/ssg-runtime'
 
-const WEB_URL = process.env.NEXT_PUBLIC_WEB_URL || 'https://agoraencontrei.com.br'
+const WEB_URL = process.env.NEXT_PUBLIC_WEB_URL || 'https://www.agoraencontrei.com.br'
 
 const MODIFICADORES: Record<string, { label: string; desc: string }> = {
   'para-investidor':    { label: 'para Investidor',    desc: 'Oportunidades de investimento imobiliário com alto potencial de valorização e renda passiva.' },

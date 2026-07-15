@@ -10,7 +10,7 @@ import { MapPin, TrendingUp, Home, Building2, Gavel, Wrench, Search } from 'luci
 import { IBGE_CITY_BY_SLUG, IBGE_CITIES_152, getIbgeCitySnippet } from '@/data/seo-ibge-cities-expanded'
 import { limitSeoStaticItems } from '@/lib/ssg-runtime'
 
-const WEB_URL = process.env.NEXT_PUBLIC_WEB_URL || 'https://agoraencontrei.com.br'
+const WEB_URL = process.env.NEXT_PUBLIC_WEB_URL || 'https://www.agoraencontrei.com.br'
 
 // Clusters principais por família de URL
 const MONEY_CLUSTERS = [
