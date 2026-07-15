@@ -3,6 +3,7 @@ import Fastify from 'fastify'
 import { ZodError } from 'zod'
 import { env, logEnvWarnings } from './utils/env.js'
 import { initSentry, captureError } from './utils/sentry.js'
+import { seedIbgeFrancaTerritory } from './services/ibge-territorial-seed.service.js'
 
 // ── v2026.04.01 ────────────────────────────────────────────────────────────
 // ── Plugins ────────────────────────────────────────────────────────────────
@@ -1588,6 +1589,18 @@ async function runMigrations(prisma: any) {
       'INTERNAL','INTERNAL',true,true,90,'APPROVED',NOW(),true,
       '{"scope":"Dados próprios e autorizados de imóveis publicados"}',NOW(),NOW()
     ) ON CONFLICT ("slug") DO NOTHING`,
+    `INSERT INTO "intelligence_data_sources" (
+      "id","slug","name","kind","accessMethod","baseUrl","termsUrl","storageAllowed",
+      "republicationAllowed","attributionRequired","reliabilityScore","legalStatus","legalReviewedAt",
+      "isActive","metadata","createdAt","updatedAt"
+    ) VALUES (
+      'source_ibge_faces_2022','ibge-faces-logradouros-2022','IBGE — Base de Faces de Logradouros 2022',
+      'OFFICIAL','OPEN_DATA','https://www.ibge.gov.br/geociencias/organizacao-do-territorio/malhas-territoriais/28971-base-de-faces-de-logradouros-do-brasil.html',
+      'https://www.ibge.gov.br/acesso-informacao/acoes-e-programas/termos-de-uso.html',true,true,true,95,
+      'APPROVED',NOW(),true,
+      '{"scope":"Nomes e tipos de logradouros públicos; município de Franca 3516200","referenceDate":"2022","attribution":"Fonte: IBGE, Base de Faces de Logradouros 2022"}',
+      NOW(),NOW()
+    ) ON CONFLICT ("slug") DO UPDATE SET "metadata" = EXCLUDED."metadata", "updatedAt" = NOW()`,
   ]
   for (const sql of intelligenceMigrations) {
     try { await prisma.$executeRawUnsafe(sql) } catch { /* idempotente / próxima inicialização tenta novamente */ }
@@ -1633,6 +1646,9 @@ async function bootstrap() {
     await Promise.race([migP, timeoutP]).catch(e => app.log.warn('Migration warning:', e.message))
     migP.catch(() => {})
   }
+  seedIbgeFrancaTerritory(app.prisma)
+    .then(result => app.log.info({ territorialSeed: result }, 'IBGE Franca territorial seed completed'))
+    .catch(error => app.log.warn({ error: error?.message || String(error) }, 'IBGE Franca territorial seed deferred'))
   await app.register(redisPlugin)
   await app.register(automationPlugin)
   // File uploads: bound per-file size so a malicious client cannot exhaust

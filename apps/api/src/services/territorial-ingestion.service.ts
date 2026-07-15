@@ -22,7 +22,6 @@ export function validateTerritorialImportRow(row: TerritorialImportRow) {
   const errors: string[] = []
   if (!normalizeTerritorialName(row.city)) errors.push('city_required')
   if (!/^[A-Za-z]{2}$/.test(row.state || '')) errors.push('state_must_have_two_letters')
-  if (row.street && !row.neighborhood) errors.push('street_requires_neighborhood')
   if (row.confidence !== undefined && (row.confidence < 0 || row.confidence > 100)) errors.push('confidence_out_of_range')
   return { valid: errors.length === 0, errors }
 }
@@ -75,11 +74,12 @@ export async function importTerritorialRows(
       }
     }
 
-    if (row.street && neighborhood) {
+    if (row.street) {
       const normalizedName = normalizeTerritorialName(row.street)
-      const existing = await client.territorialStreet.findFirst({ where: { cityId: city.id, neighborhoodId: neighborhood.id, normalizedName }, select: { id: true } })
+      const neighborhoodId = neighborhood?.id || null
+      const existing = await client.territorialStreet.findFirst({ where: { cityId: city.id, neighborhoodId, normalizedName }, select: { id: true } })
       const data = {
-        cityId: city.id, neighborhoodId: neighborhood.id, name: row.street.trim(), normalizedName,
+        cityId: city.id, neighborhoodId, name: row.street.trim(), normalizedName,
         streetType: row.streetType, postalCode: row.postalCode?.replace(/\D/g, ''),
         confidence: score(row.confidence), sourceId: source.id, metadata: row.metadata || {},
       }
@@ -134,4 +134,3 @@ export async function linkPropertiesToTerritory(
   } while (cursor)
   return summary
 }
-

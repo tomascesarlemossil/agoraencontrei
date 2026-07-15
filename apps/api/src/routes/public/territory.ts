@@ -29,6 +29,42 @@ const WaitlistSchema = z.object({
 
 export async function territoryRoute(app: FastifyInstance) {
 
+  // Métricas territoriais agregadas; não expõem imóveis ou dados pessoais.
+  app.get('/intelligence/territorial-coverage', async (req, reply) => {
+    const query = z.object({ city: z.string().default('Franca'), state: z.string().length(2).default('SP') }).safeParse(req.query)
+    if (!query.success) return reply.status(400).send({ error: 'VALIDATION_ERROR' })
+    const { city, state } = query.data
+    const rows = await app.prisma.$queryRawUnsafe<any[]>(
+      `SELECT
+        tc.id AS "cityId", tc.name AS city, tc."stateCode" AS state, tc."ibgeCode",
+        tc.confidence AS "cityConfidence",
+        (SELECT COUNT(*)::int FROM territorial_streets ts WHERE ts."cityId" = tc.id) AS streets,
+        (SELECT COUNT(*)::int FROM territorial_neighborhoods tn WHERE tn."cityId" = tc.id) AS neighborhoods,
+        (SELECT COUNT(*)::int FROM properties p WHERE LOWER(p.city) = LOWER($1) AND UPPER(COALESCE(p.state, $2)) = UPPER($2)) AS "propertiesTotal",
+        (SELECT COUNT(*)::int FROM properties p WHERE LOWER(p.city) = LOWER($1) AND UPPER(COALESCE(p.state, $2)) = UPPER($2) AND p."territorialCityId" = tc.id) AS "propertiesLinkedCity",
+        (SELECT COUNT(*)::int FROM properties p WHERE LOWER(p.city) = LOWER($1) AND UPPER(COALESCE(p.state, $2)) = UPPER($2) AND p."territorialStreetId" IS NOT NULL) AS "propertiesLinkedStreet",
+        (SELECT COUNT(*)::int FROM properties p WHERE LOWER(p.city) = LOWER($1) AND UPPER(COALESCE(p.state, $2)) = UPPER($2) AND p."territorialNeighborhoodId" IS NOT NULL) AS "propertiesLinkedNeighborhood"
+       FROM territorial_cities tc
+       WHERE LOWER(tc.name) = LOWER($1) AND UPPER(tc."stateCode") = UPPER($2)
+       LIMIT 1`,
+      city, state,
+    )
+    if (!rows[0]) return reply.status(404).send({ error: 'TERRITORY_NOT_MAPPED', city, state })
+    const result = rows[0]
+    const total = result.propertiesTotal || 0
+    return reply.send({
+      ...result,
+      coverage: {
+        cityPct: total ? Math.round((result.propertiesLinkedCity / total) * 10_000) / 100 : 0,
+        streetPct: total ? Math.round((result.propertiesLinkedStreet / total) * 10_000) / 100 : 0,
+        neighborhoodPct: total ? Math.round((result.propertiesLinkedNeighborhood / total) * 10_000) / 100 : 0,
+      },
+      source: { slug: 'ibge-faces-logradouros-2022', attribution: 'Fonte: IBGE, Base de Faces de Logradouros 2022', referenceYear: 2022 },
+      caveat: 'A base de faces do IBGE não confirma o bairro de cada logradouro; bairros permanecem separados até validação oficial.',
+      updatedAt: new Date().toISOString(),
+    })
+  })
+
   // POST /api/v1/territory/claim — reivindicar território
   app.post('/territory/claim', async (req, reply) => {
     const result = ClaimSchema.safeParse(req.body)

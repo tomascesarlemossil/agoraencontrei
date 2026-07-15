@@ -5,6 +5,7 @@ import { evaluateToolPolicy } from '../src/services/tomas-policy.js'
 import { capturePropertySnapshot, scoreDuplicate } from '../src/services/property-intelligence-ingestion.service.js'
 import { normalizeTerritorialName, resolveTerritorialAddress } from '../src/services/territorial-intelligence.service.js'
 import { importTerritorialRows, validateTerritorialImportRow } from '../src/services/territorial-ingestion.service.js'
+import { ibgeFrancaStreetCount } from '../src/services/ibge-territorial-seed.service.js'
 
 test('ferramentas imobiliárias são leitura pública e preservam fail-closed', () => {
   for (const name of ['identificar_bairro', 'buscar_comparaveis', 'estimar_valor_imovel', 'consultar_indice_bairro', 'consultar_historico_preco']) {
@@ -66,17 +67,22 @@ test('cadastro territorial canônico tem precedência sobre inferência de anún
   assert.equal(listingQueries, 0)
 })
 
-test('importação territorial valida UF, confiança e vínculo rua-bairro', () => {
+test('importação territorial valida UF e confiança e aceita rua sem bairro confirmado', () => {
   assert.deepEqual(validateTerritorialImportRow({ city: 'Franca', state: 'SP', neighborhood: 'Centro' }), { valid: true, errors: [] })
+  assert.deepEqual(validateTerritorialImportRow({ city: 'Franca', state: 'SP', street: 'Rua oficial sem bairro confirmado' }), { valid: true, errors: [] })
   const invalid = validateTerritorialImportRow({ city: 'Franca', state: 'S', street: 'Rua sem bairro', confidence: 120 })
   assert.equal(invalid.valid, false)
-  assert.deepEqual(invalid.errors, ['state_must_have_two_letters', 'street_requires_neighborhood', 'confidence_out_of_range'])
+  assert.deepEqual(invalid.errors, ['state_must_have_two_letters', 'confidence_out_of_range'])
 })
 
 test('importação territorial recusa fonte sem autorização de armazenamento', async () => {
   const prisma = { intelligenceDataSource: { findUnique: async () => ({ isActive: true, legalStatus: 'PENDING', storageAllowed: false }) } } as any
   const result = await importTerritorialRows(prisma, { sourceSlug: 'fonte-nao-aprovada', rows: [{ city: 'Franca', state: 'SP' }] })
   assert.deepEqual(result, { imported: false, reason: 'source_not_authorized_for_storage', processed: 0 })
+})
+
+test('recorte IBGE de Franca contém a carga consolidada esperada', () => {
+  assert.equal(ibgeFrancaStreetCount, 2977)
 })
 
 test('deduplicação pontua candidato sem confirmar automaticamente evidência insuficiente', () => {
