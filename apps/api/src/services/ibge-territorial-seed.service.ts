@@ -1,6 +1,5 @@
 import type { PrismaClient } from '@prisma/client'
 import streets from '../data/ibge-franca-streets-2022.json' with { type: 'json' }
-import { linkPropertiesToTerritory } from './territorial-ingestion.service.js'
 import { seedOperationalNeighborhoods } from './operational-neighborhood-seed.service.js'
 
 type IbgeStreet = {
@@ -50,9 +49,8 @@ export async function seedIbgeFrancaTerritory(prisma: PrismaClient) {
     }
   }
 
-  const linked = await linkPropertiesToTerritory(prisma)
   const operationalNeighborhoods = await seedOperationalNeighborhoods(prisma, city.id)
-  return { seeded: true, source: 'ibge-faces-logradouros-2022', available: streets.length, existing, inserted, linked, operationalNeighborhoods }
+  return { seeded: true, source: 'ibge-faces-logradouros-2022', available: streets.length, existing, inserted, linked: operationalNeighborhoods.linked, operationalNeighborhoods }
 }
 
 export const ibgeFrancaStreetCount = streets.length
