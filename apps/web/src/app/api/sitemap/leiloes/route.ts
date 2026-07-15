@@ -18,7 +18,9 @@ export async function GET(req: NextRequest) {
   try {
     const response = await fetch(
       `${API_URL}/api/v1/auctions/sitemap?page=${page + 1}&limit=${URLS_PER_PAGE}`,
-      { next: { revalidate: 3600 } },
+      // A resposta pode ultrapassar o limite de 2 MB do Data Cache do Next.js.
+      // O XML final continua cacheado na CDN pelo cabeçalho abaixo.
+      { cache: 'no-store' },
     )
     if (response.ok) rows = (await response.json()).data || []
   } catch {
