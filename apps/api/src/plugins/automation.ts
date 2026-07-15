@@ -7,6 +7,7 @@ import { runAutomation } from '../services/automation.worker.js'
 import { runScheduledJobs } from '../services/scheduled.jobs.js'
 import { runDetailEnrichmentBatch } from '../services/auction-detail-enrichment.service.js'
 import { runAuctionArchiveBatch } from '../services/auction-archive.service.js'
+import { runAuctionImageBatch } from '../services/auction-image.service.js'
 import { processVisualAIJob } from '../workers/visual-ai.worker.js'
 import { processCampaignJob } from '../workers/campaign.worker.js'
 import { processVideoEditorJob } from '../workers/video-editor.worker.js'
@@ -44,6 +45,21 @@ export default fp(async (app: FastifyInstance) => {
         app.log.info(`[auction-backfill] ${discovered}/${checked} documentos oficiais descobertos`)
         const archive = await runAuctionArchiveBatch(app.prisma, 500)
         app.log.info(`[auction-backfill] ${archive.archived} documentos arquivados de ${archive.processed} leilões`)
+
+        // Agente de imagem: dá foto real (leiloeiro/Caixa) ou fachada (Street
+        // View) aos leilões sem capa. Percorre o backlog em lotes até esgotar
+        // ou atingir o teto de segurança (evita loop infinito no boot).
+        let covered = 0
+        let processedImgs = 0
+        for (let page = 0; page < 40; page++) {
+          const imgs = await runAuctionImageBatch(app.prisma, 60)
+          covered += imgs.withCover
+          processedImgs += imgs.processed
+          if (imgs.processed === 0) break
+        }
+        if (processedImgs > 0) {
+          app.log.info(`[auction-backfill] ${covered}/${processedImgs} leilões receberam imagem (foto ou fachada)`)
+        }
       } catch (e) {
         app.log.error({ err: e }, '[auction-backfill] failed')
       }

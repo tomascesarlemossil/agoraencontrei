@@ -2369,6 +2369,10 @@ model Auction {
   coverImage          String?
   images              String[]
   documentsUrls       String[]        // Links para editais, laudos
+  streetViewUrl       String?         // Fachada via Google Street View (fallback quando não há foto do leiloeiro)
+  imageSource         String?         // Origem da coverImage: AUCTIONEER | STREETVIEW | DEFAULT (transparência/confiabilidade)
+  imageCapturedAt     DateTime?       // Última tentativa do agente de captura de imagem
+  imageCaptureAttempts Int            @default(0) // Tentativas (limite anti-hammer)
 
   // Score de oportunidade (calculado pela IA)
   opportunityScore    Int?            // 0-100

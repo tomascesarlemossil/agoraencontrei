@@ -1107,7 +1107,21 @@ export default function LeiloesClient() {
                   >
                     {compareIds.has(auction.id) ? '✓' : '⇔'}
                   </button>
-                  <div data-testid="auction-card" onClick={() => openLeadModal(auction)}>
+                  <Link
+                    href={`/leiloes/${auction.slug}`}
+                    data-testid="auction-card"
+                    prefetch={false}
+                    className="block"
+                    onClick={(e) => {
+                      // Itens do feed público da Caixa (ao vivo) não têm landing
+                      // própria — para esses, mantém o fluxo de captação. Todos os
+                      // demais abrem a página do leilão no AgoraEncontrei.
+                      if (auction.slug.startsWith('public-')) {
+                        e.preventDefault()
+                        openLeadModal(auction)
+                      }
+                    }}
+                  >
                   {/* Image — Real photo > banner padrão de leilão (imagem ilustrativa) */}
                   <div className="relative h-48 bg-gray-200 overflow-hidden">
                     <img
@@ -1226,7 +1240,7 @@ export default function LeiloesClient() {
                       )}
                     </div>
                   </div>
-                  </div>{/* close onClick wrapper */}
+                  </Link>{/* close card link */}
                 </div>
               ))}
             </div>

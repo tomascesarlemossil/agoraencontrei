@@ -133,6 +133,17 @@ export default function LeilaoDetailClient({ auction, initialAnalysis = null }: 
                     -{discount}% de desconto
                   </div>
                 )}
+                {/* Procedência da imagem — transparência: foto do leiloeiro x
+                    fachada aproximada via Street View x banner ilustrativo. */}
+                {auction.imageSource && (
+                  <div className="absolute bottom-4 left-4 px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-black/60 text-white backdrop-blur">
+                    {auction.imageSource === 'AUCTIONEER'
+                      ? '📷 Foto do leiloeiro'
+                      : auction.imageSource === 'STREETVIEW'
+                        ? '🗺️ Fachada (Street View) — aproximada'
+                        : 'Imagem ilustrativa'}
+                  </div>
+                )}
               </div>
 
               {/* Extra images */}
@@ -141,6 +152,21 @@ export default function LeilaoDetailClient({ auction, initialAnalysis = null }: 
                   {auction.images.slice(0, 6).map((img: string, i: number) => (
                     <img key={img} src={img} alt={`Foto ${i + 1}`} className="h-20 w-28 object-cover rounded cursor-pointer hover:opacity-80" />
                   ))}
+                </div>
+              )}
+
+              {/* Fachada via Street View — mostra quando temos a fachada e ela
+                  não é a própria capa (ex.: capa é foto do leiloeiro). Dá ao
+                  usuário a vista de rua do endereço informado no leilão. */}
+              {auction.streetViewUrl && auction.streetViewUrl !== auction.coverImage && (
+                <div className="p-2 border-t border-gray-100">
+                  <p className="px-1 pb-1 text-xs font-semibold text-gray-500">Fachada aproximada (Google Street View)</p>
+                  <img
+                    src={auction.streetViewUrl}
+                    alt={`Fachada aproximada de ${auction.title}`}
+                    loading="lazy"
+                    className="h-40 w-full object-cover rounded-lg"
+                  />
                 </div>
               )}
             </div>
