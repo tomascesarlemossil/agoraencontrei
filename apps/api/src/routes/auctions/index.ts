@@ -5,6 +5,7 @@ import { env } from '../../utils/env.js'
 import { calculateAcquisitionCosts, getStateCosts, validateDocument } from '../../utils/brazil-costs.js'
 import { CaixaScraper } from '../../services/scrapers/caixa-scraper.js'
 import { GenericLeiloeiroScraper, BANCOS_CONFIG } from '../../services/scrapers/generic-scraper.js'
+import { computeRealDiscount } from '../../services/auction-real-discount.service.js'
 
 // ── Schemas de validação ────────────────────────────────────────────────────
 
@@ -727,7 +728,17 @@ export default async function auctionsRoutes(app: FastifyInstance) {
       }).catch(() => null),
     ])
 
-    return reply.send({ ...auction, relatedAuctions })
+    // Desconto Real AE — vantagem líquida real (mercado − lance − custos).
+    const realDiscount = await computeRealDiscount(app.prisma, {
+      city: auction.city, state: auction.state, propertyType: auction.propertyType,
+      totalArea: auction.totalArea, builtArea: auction.builtArea, landArea: auction.landArea,
+      appraisalValue: auction.appraisalValue ? Number(auction.appraisalValue) : null,
+      minimumBid: auction.minimumBid ? Number(auction.minimumBid) : null,
+      marketPriceEstimate: auction.marketPriceEstimate ? Number(auction.marketPriceEstimate) : null,
+      occupation: auction.occupation, discountPercent: auction.discountPercent,
+    }).catch(() => null)
+
+    return reply.send({ ...auction, relatedAuctions, realDiscount })
   })
 
   // ── POST /auctions/calculate — Calculadora financeira ──────────────────────
