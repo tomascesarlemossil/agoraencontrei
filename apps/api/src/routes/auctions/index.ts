@@ -8,6 +8,7 @@ import { GenericLeiloeiroScraper, BANCOS_CONFIG } from '../../services/scrapers/
 import { computeRealDiscount } from '../../services/auction-real-discount.service.js'
 import { findComparables } from '../../services/auction-comparables.service.js'
 import { computeAgoraScore } from '../../services/auction-score.service.js'
+import { computeRiskMatrix } from '../../services/auction-risk.service.js'
 
 // ── Schemas de validação ────────────────────────────────────────────────────
 
@@ -778,6 +779,14 @@ export default async function auctionsRoutes(app: FastifyInstance) {
       occupation: auction.occupation, discountPercent: auction.discountPercent,
     }, marketOverride).catch(() => null)
 
+    // Mapa de risco documental (§22) — puro, a partir dos campos do leilão.
+    const riskMatrix = computeRiskMatrix({
+      occupation: auction.occupation, hasDebts: auction.hasDebts, debtDetails: auction.debtDetails,
+      restrictions: auction.restrictions, processNumber: auction.processNumber,
+      registryNumber: auction.registryNumber, editalUrl: auction.editalUrl,
+      documentsUrls: auction.documentsUrls || [], visitDate: auction.visitDate, modality: auction.modality,
+    })
+
     // Leilão encerrado com snapshot da análise → usa o registro imutável da
     // época (mercado do dia do encerramento) em vez de recalcular com dados
     // atuais. Ativos e encerrados sem snapshot seguem no cálculo ao vivo.
@@ -789,6 +798,7 @@ export default async function auctionsRoutes(app: FastifyInstance) {
         comparables: snap.comparables ?? comparables,
         agoraScore: snap.agoraScore ?? null,
         analysisSnapshotAt: (auction as any).analysisSnapshotAt,
+        riskMatrix,
       })
     }
 
@@ -807,7 +817,7 @@ export default async function auctionsRoutes(app: FastifyInstance) {
       comparables,
     )
 
-    return reply.send({ ...auction, relatedAuctions, realDiscount, comparables, agoraScore })
+    return reply.send({ ...auction, relatedAuctions, realDiscount, comparables, agoraScore, riskMatrix })
   })
 
   // ── POST /auctions/calculate — Calculadora financeira ──────────────────────

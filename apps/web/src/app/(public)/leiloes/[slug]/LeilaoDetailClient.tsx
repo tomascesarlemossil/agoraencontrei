@@ -208,6 +208,48 @@ const INFLATED_UI: Record<string, { label: string; cls: string }> = {
   UNKNOWN: { label: 'Sem comparáveis suficientes', cls: 'bg-gray-50 text-gray-700 border-gray-200' },
 }
 
+const RISK_UI: Record<string, { label: string; cls: string; dot: string }> = {
+  ALTO: { label: 'Alto', cls: 'text-red-700', dot: 'bg-red-500' },
+  MEDIO: { label: 'Médio', cls: 'text-yellow-700', dot: 'bg-yellow-500' },
+  BAIXO: { label: 'Baixo', cls: 'text-green-700', dot: 'bg-green-500' },
+  DESCONHECIDO: { label: '—', cls: 'text-gray-500', dot: 'bg-gray-400' },
+}
+
+function RiskMatrixPanel({ rm }: { rm: any }) {
+  const overall = RISK_UI[rm.overall] || RISK_UI.DESCONHECIDO
+  return (
+    <div className="bg-white rounded-xl p-6 shadow-sm">
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <Shield className="w-5 h-5 text-[#C9A84C]" />
+          <h2 className="text-lg font-bold text-gray-800">Mapa de risco documental</h2>
+        </div>
+        <span className="text-xs font-bold px-3 py-1 rounded-full border border-gray-200">
+          Risco geral: <span className={overall.cls}>{overall.label}</span>
+        </span>
+      </div>
+      <div className="divide-y divide-gray-100">
+        {rm.dimensions?.map((d: any) => {
+          const ui = RISK_UI[d.level] || RISK_UI.DESCONHECIDO
+          return (
+            <div key={d.key} className="flex items-start gap-3 py-2.5">
+              <span className={`mt-1 h-2.5 w-2.5 shrink-0 rounded-full ${ui.dot}`} />
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-sm font-semibold text-gray-800">{d.label}</span>
+                  <span className={`text-xs font-bold ${ui.cls}`}>{ui.label}</span>
+                </div>
+                <p className="text-xs text-gray-500">{d.situation}</p>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+      <p className="mt-3 text-[11px] leading-4 text-gray-400">Leitura preliminar a partir dos dados do leilão. Não substitui a análise do edital, da matrícula e de um advogado.</p>
+    </div>
+  )
+}
+
 function ComparablesPanel({ data }: { data: any }) {
   const ia = data.inflatedAppraisal
   const me = data.marketEstimate
@@ -444,6 +486,9 @@ export default function LeilaoDetailClient({ auction, initialAnalysis = null }: 
 
             {/* Comparáveis automáticos + detector de avaliação inflada */}
             {auction.comparables && <ComparablesPanel data={auction.comparables} />}
+
+            {/* Mapa de risco documental (§22) */}
+            {auction.riskMatrix && <RiskMatrixPanel rm={auction.riskMatrix} />}
 
             {/* Title & Location */}
             <div className="bg-white rounded-xl p-6 shadow-sm">
