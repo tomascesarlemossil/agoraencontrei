@@ -7,6 +7,7 @@ import { CaixaScraper } from '../../services/scrapers/caixa-scraper.js'
 import { GenericLeiloeiroScraper, BANCOS_CONFIG } from '../../services/scrapers/generic-scraper.js'
 import { computeRealDiscount } from '../../services/auction-real-discount.service.js'
 import { findComparables } from '../../services/auction-comparables.service.js'
+import { computeAgoraScore } from '../../services/auction-score.service.js'
 
 // ── Schemas de validação ────────────────────────────────────────────────────
 
@@ -777,7 +778,22 @@ export default async function auctionsRoutes(app: FastifyInstance) {
       occupation: auction.occupation, discountPercent: auction.discountPercent,
     }, marketOverride).catch(() => null)
 
-    return reply.send({ ...auction, relatedAuctions, realDiscount, comparables })
+    // Nota AgoraEncontrei 0–100 — score explicável reusando os artefatos acima.
+    const agoraScore = computeAgoraScore(
+      {
+        occupation: auction.occupation,
+        financingAvailable: auction.financingAvailable,
+        fgtsAllowed: auction.fgtsAllowed,
+        hasEdital: !!auction.editalUrl || (auction.documentsUrls || []).some((u) => /edital/i.test(u)),
+        hasMatricula: (auction.documents || []).some((d) => d.type === 'MATRICULA') ||
+          (auction.documentsUrls || []).some((u) => /matricula/i.test(u)),
+        hasRegistryNumber: !!auction.registryNumber,
+      },
+      realDiscount,
+      comparables,
+    )
+
+    return reply.send({ ...auction, relatedAuctions, realDiscount, comparables, agoraScore })
   })
 
   // ── POST /auctions/calculate — Calculadora financeira ──────────────────────

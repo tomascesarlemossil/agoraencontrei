@@ -44,6 +44,56 @@ function modalityLabel(modality: string): string {
   return labels[modality] || modality
 }
 
+const SCORE_UI: Record<string, { ring: string; text: string; chip: string }> = {
+  EXCEPCIONAL: { ring: '#16a34a', text: 'text-green-700', chip: 'bg-green-50 text-green-800 border-green-200' },
+  FORTE: { ring: '#65a30d', text: 'text-lime-700', chip: 'bg-lime-50 text-lime-800 border-lime-200' },
+  MODERADA: { ring: '#ca8a04', text: 'text-yellow-700', chip: 'bg-yellow-50 text-yellow-800 border-yellow-200' },
+  RISCO_ELEVADO: { ring: '#ea580c', text: 'text-orange-700', chip: 'bg-orange-50 text-orange-800 border-orange-200' },
+  NAO_RECOMENDADA: { ring: '#dc2626', text: 'text-red-700', chip: 'bg-red-50 text-red-800 border-red-200' },
+}
+
+function AgoraScorePanel({ s }: { s: any }) {
+  const ui = SCORE_UI[s.grade] || SCORE_UI.MODERADA
+  const pct = Math.max(0, Math.min(100, s.score))
+  return (
+    <div className="bg-white rounded-xl p-6 shadow-sm border-l-4" style={{ borderColor: ui.ring }}>
+      <div className="flex items-start gap-5">
+        {/* Anel de progresso da nota */}
+        <div className="relative shrink-0" style={{ width: 96, height: 96 }}>
+          <div className="rounded-full" style={{ width: 96, height: 96, background: `conic-gradient(${ui.ring} ${pct * 3.6}deg, #e5e7eb 0deg)` }} />
+          <div className="absolute inset-[8px] rounded-full bg-white flex flex-col items-center justify-center">
+            <span className={`text-2xl font-extrabold ${ui.text}`}>{s.score}</span>
+            <span className="text-[10px] text-gray-400">de 100</span>
+          </div>
+        </div>
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 mb-1">
+            <Star className={`w-5 h-5 ${ui.text}`} />
+            <h2 className="text-lg font-bold text-gray-800">Nota AgoraEncontrei</h2>
+          </div>
+          <span className={`inline-block text-xs font-bold px-3 py-1 rounded-full border ${ui.chip}`}>{s.gradeLabel}</span>
+          <p className="mt-2 text-xs text-gray-500">Confiança dos dados: {s.confidence}%. Cada critério abaixo é ponderado e explicado — sem "número mágico".</p>
+        </div>
+      </div>
+
+      {/* Breakdown dos critérios */}
+      <div className="mt-4 space-y-2">
+        {s.criteria?.map((c: any) => (
+          <div key={c.key}>
+            <div className="flex items-center justify-between text-xs mb-0.5">
+              <span className="text-gray-600">{c.label} <span className="text-gray-400">({c.points}/{c.weight})</span></span>
+              <span className="text-gray-400">{c.note}</span>
+            </div>
+            <div className="h-1.5 w-full rounded-full bg-gray-100 overflow-hidden">
+              <div className="h-full rounded-full" style={{ width: `${c.weight ? (c.points / c.weight) * 100 : 0}%`, background: ui.ring }} />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 const VERDICT_UI: Record<string, { label: string; cls: string; bar: string }> = {
   STRONG: { label: 'Oportunidade forte', cls: 'bg-green-50 text-green-800 border-green-200', bar: 'bg-green-500' },
   MODERATE: { label: 'Oportunidade moderada', cls: 'bg-yellow-50 text-yellow-800 border-yellow-200', bar: 'bg-yellow-500' },
@@ -377,6 +427,9 @@ export default function LeilaoDetailClient({ auction, initialAnalysis = null }: 
                 </div>
               )}
             </div>
+
+            {/* Nota AgoraEncontrei 0–100 (score explicável) */}
+            {auction.agoraScore && <AgoraScorePanel s={auction.agoraScore} />}
 
             {/* Desconto Real AE — vale a pena? (vantagem líquida real) */}
             {auction.realDiscount && <RealDiscountPanel rd={auction.realDiscount} />}
