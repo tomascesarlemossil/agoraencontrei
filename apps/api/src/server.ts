@@ -281,6 +281,12 @@ async function runMigrations(prisma: any) {
     `CREATE INDEX IF NOT EXISTS auctions_discount_idx ON auctions("discountPercent")`,
     `CREATE INDEX IF NOT EXISTS auctions_created_idx ON auctions("createdAt" DESC)`,
     `ALTER TABLE auctions ADD COLUMN IF NOT EXISTS "streetViewUrl" TEXT`,
+    // ── Agente de captura de imagem (origin: 20260715140000_auction_image_capture)
+    //    Sem estes ALTERs o findUnique do Prisma seleciona colunas inexistentes e
+    //    TODA página de leilão responde 500 (P2022). Idempotente.
+    `ALTER TABLE auctions ADD COLUMN IF NOT EXISTS "imageSource" TEXT`,
+    `ALTER TABLE auctions ADD COLUMN IF NOT EXISTS "imageCapturedAt" TIMESTAMPTZ`,
+    `ALTER TABLE auctions ADD COLUMN IF NOT EXISTS "imageCaptureAttempts" INTEGER NOT NULL DEFAULT 0`,
     // ── Reconciliação: colunas presentes no schema Prisma mas ausentes do
     //    CREATE TABLE acima. O scraper já escreve algumas destas (registryNumber,
     //    registryOffice, debtorName, documentsUrls, features) — sem estes ALTERs
