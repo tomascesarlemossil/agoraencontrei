@@ -100,6 +100,21 @@ test('recorte IBGE de Franca contém a carga consolidada esperada', () => {
   assert.equal(ibgeFrancaStreetCount, 2977)
 })
 
+test('vinculação territorial trata cidade como precisão independente da rua', async () => {
+  let cityUpdate: any = null
+  const prisma = {
+    territorialCity: { findMany: async () => [{ id: 'franca', name: 'Franca', stateCode: 'SP' }] },
+    property: {
+      updateMany: async (args: any) => { cityUpdate = args; return { count: 3 } },
+      findMany: async () => [],
+    },
+  } as any
+  const { linkPropertiesToTerritory } = await import('../src/services/territorial-ingestion.service.js')
+  const result = await linkPropertiesToTerritory(prisma)
+  assert.equal(result.cityLinked, 3)
+  assert.equal(cityUpdate.data.territorialCityId, 'franca')
+})
+
 test('deduplicação pontua candidato sem confirmar automaticamente evidência insuficiente', () => {
   const base = { id: 'a', street: 'Rua das Flores', number: '10', city: 'Franca', neighborhood: 'Centro', latitude: null, longitude: null, builtArea: 100, landArea: 150, bedrooms: 3, parkingSpaces: 2, condoName: null }
   const candidate = { ...base, id: 'b', street: 'R. das Flores', builtArea: 103 }
