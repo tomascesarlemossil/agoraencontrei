@@ -60,6 +60,24 @@ export function middleware(request: NextRequest) {
   const hostname = request.headers.get('host') || ''
   const pathname = request.nextUrl.pathname
 
+  // Alguns links antigos/importados terminaram com um domínio sem protocolo,
+  // que o navegador interpretou como mais um segmento do path. Remova o sufixo
+  // e consolide a autoridade na URL válida em vez de responder 404 ao crawler.
+  const malformedDomainSuffix = pathname.match(/^(.*)\/(?:www\.)?(?:agoraencontrei\.com\.br|imobiliarialemos\.com\.br)\/?$/i)
+  if (malformedDomainSuffix) {
+    const url = request.nextUrl.clone()
+    url.pathname = malformedDomainSuffix[1] || '/'
+    return NextResponse.redirect(url, 308)
+  }
+
+  // Compatibilidade com a rota antiga de leilões por cidade.
+  const legacyCityAuctions = pathname.match(/^\/([a-z]{2})\/([^/]+)\/leiloes\/?$/i)
+  if (legacyCityAuctions) {
+    const url = request.nextUrl.clone()
+    url.pathname = `/${legacyCityAuctions[1].toLowerCase()}/${legacyCityAuctions[2]}/investimentos/leilao-de-imoveis`
+    return NextResponse.redirect(url, 308)
+  }
+
   // Skip static assets, API routes, and internal paths
   const isPublicFile = /\.[a-z0-9]{2,8}$/i.test(pathname)
   if (isPublicFile || BYPASS_PATHS.some(p => pathname.startsWith(p))) {

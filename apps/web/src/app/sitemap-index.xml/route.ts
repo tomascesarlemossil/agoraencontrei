@@ -9,14 +9,18 @@
  */
 import { NextResponse } from 'next/server'
 import { sitemapChunkCount } from '@/lib/sitemap-entries'
+import { IBGE_CITIES_152 } from '@/data/seo-ibge-cities-expanded'
+import { UNIQUE_CITIES } from '@/data/seo-cities'
 
 const WEB_URL = 'https://www.agoraencontrei.com.br'
 
-// Estimativas de URLs por família servida via /api/sitemap/*
-const CIDADES_TOTAL = 5570 * 22 // 5.570 cidades × 22 clusters
-const COMPARACOES_TOTAL = 499500 // 1.000 cidades top × combinações
-const LEILAO_PAGES_TOTAL = 5570 * 27 // 5.570 cidades × 27 estados
-const BAIRROS_TOTAL = 45000 // Estimativa de bairros com dados
+// Contagens reais das fontes usadas pelos handlers. As estimativas antigas
+// anunciavam sub-sitemaps inexistentes, que respondiam 404 ao Googlebot.
+const CITY_CLUSTERS = 18
+const ibgeCitySlugs = new Set(IBGE_CITIES_152.map(city => city.slug))
+const extraCities = UNIQUE_CITIES.filter(city => !ibgeCitySlugs.has(city.slug)).length
+const CIDADES_TOTAL = IBGE_CITIES_152.length * (1 + CITY_CLUSTERS) + extraCities * 3
+const COMPARACOES_TOTAL = IBGE_CITIES_152.length * (IBGE_CITIES_152.length - 1) / 2
 const URLS_PER_SITEMAP = 50000
 
 export async function GET() {
@@ -47,16 +51,12 @@ export async function GET() {
   }
 
   // 5. Sitemaps de leilões por cidade (paginados) — /leilao/[estado]/[cidade]
-  const leilaoPages = Math.ceil(LEILAO_PAGES_TOTAL / URLS_PER_SITEMAP)
-  for (let i = 0; i < leilaoPages; i++) {
-    sitemaps.push(`<sitemap><loc>${WEB_URL}/sitemaps/leiloes?page=${i}</loc><lastmod>${now}</lastmod></sitemap>`)
-  }
+  // O endpoint consulta a API em tempo real e o inventário atual cabe em um
+  // arquivo. Páginas extras vazias não devem ser anunciadas no índice.
+  sitemaps.push(`<sitemap><loc>${WEB_URL}/sitemaps/leiloes?page=0</loc><lastmod>${now}</lastmod></sitemap>`)
 
   // 6. Sitemaps de bairros (paginados) — /[estado]/[cidade]/bairro/[bairro]
-  const bairroPages = Math.ceil(BAIRROS_TOTAL / URLS_PER_SITEMAP)
-  for (let i = 0; i < bairroPages; i++) {
-    sitemaps.push(`<sitemap><loc>${WEB_URL}/sitemaps/bairros?page=${i}</loc><lastmod>${now}</lastmod></sitemap>`)
-  }
+  sitemaps.push(`<sitemap><loc>${WEB_URL}/sitemaps/bairros?page=0</loc><lastmod>${now}</lastmod></sitemap>`)
 
   // 7. Blog
   sitemaps.push(`<sitemap><loc>${WEB_URL}/sitemaps/blog</loc><lastmod>${now}</lastmod></sitemap>`)
