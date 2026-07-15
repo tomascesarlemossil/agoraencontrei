@@ -287,6 +287,9 @@ async function runMigrations(prisma: any) {
     `ALTER TABLE auctions ADD COLUMN IF NOT EXISTS "imageSource" TEXT`,
     `ALTER TABLE auctions ADD COLUMN IF NOT EXISTS "imageCapturedAt" TIMESTAMPTZ`,
     `ALTER TABLE auctions ADD COLUMN IF NOT EXISTS "imageCaptureAttempts" INTEGER NOT NULL DEFAULT 0`,
+    // ── Snapshot imutável da análise no encerramento ─────────────────────────
+    `ALTER TABLE auctions ADD COLUMN IF NOT EXISTS "analysisSnapshot" JSONB`,
+    `ALTER TABLE auctions ADD COLUMN IF NOT EXISTS "analysisSnapshotAt" TIMESTAMPTZ`,
     // ── Reconciliação: colunas presentes no schema Prisma mas ausentes do
     //    CREATE TABLE acima. O scraper já escreve algumas destas (registryNumber,
     //    registryOffice, debtorName, documentsUrls, features) — sem estes ALTERs

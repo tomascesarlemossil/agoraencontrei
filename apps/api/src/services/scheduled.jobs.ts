@@ -843,6 +843,17 @@ export async function runScheduledJobs(app: FastifyInstance) {
     app.log.error({ err }, '[scheduled] auction-image failed')
   }
 
+  // Congela a análise de leilões encerrados sem snapshot (registro histórico).
+  try {
+    const { runAnalysisSnapshotBacklog } = await import('./auction-analysis-snapshot.service.js')
+    const snap = await runAnalysisSnapshotBacklog(app.prisma, 15)
+    if (snap.captured > 0) {
+      app.log.info(`[scheduled] auction-analysis-snapshot: ${snap.captured}/${snap.processed} análises congeladas`)
+    }
+  } catch (err) {
+    app.log.error({ err }, '[scheduled] auction-analysis-snapshot failed')
+  }
+
   // Street View para IMÓVEIS (carteira própria) segue no passe diário das 13h.
   if (hour === 13 && minute < 30) {
     try {

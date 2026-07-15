@@ -133,6 +133,12 @@ export async function captureAuctionOutcome(
     }
   }
 
+  // Congela a análise no encerramento (registro imutável do mercado da época).
+  try {
+    const { captureAnalysisSnapshot } = await import('./auction-analysis-snapshot.service.js')
+    await captureAnalysisSnapshot(prisma, auctionId, now)
+  } catch { /* best-effort */ }
+
   return { outcome: parsed.status, soldValue }
 }
 

@@ -2407,6 +2407,11 @@ model Auction {
   // Enriquecimento por página de detalhe (descoberta de editalUrl/documentos)
   detailEnrichedAt    DateTime?
 
+  // Registro imutável da análise no momento do encerramento (Desconto Real,
+  // Nota AE, comparáveis) — o histórico reflete o mercado da época, não o atual.
+  analysisSnapshot    Json?
+  analysisSnapshotAt  DateTime?
+
   // Analytics
   views               Int             @default(0)
   favorites           Int             @default(0)

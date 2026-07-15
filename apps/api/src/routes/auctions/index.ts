@@ -778,6 +778,20 @@ export default async function auctionsRoutes(app: FastifyInstance) {
       occupation: auction.occupation, discountPercent: auction.discountPercent,
     }, marketOverride).catch(() => null)
 
+    // Leilão encerrado com snapshot da análise → usa o registro imutável da
+    // época (mercado do dia do encerramento) em vez de recalcular com dados
+    // atuais. Ativos e encerrados sem snapshot seguem no cálculo ao vivo.
+    const snap = (auction as any).analysisSnapshot
+    if (snap && (auction as any).analysisSnapshotAt) {
+      return reply.send({
+        ...auction, relatedAuctions,
+        realDiscount: snap.realDiscount ?? realDiscount,
+        comparables: snap.comparables ?? comparables,
+        agoraScore: snap.agoraScore ?? null,
+        analysisSnapshotAt: (auction as any).analysisSnapshotAt,
+      })
+    }
+
     // Nota AgoraEncontrei 0–100 — score explicável reusando os artefatos acima.
     const agoraScore = computeAgoraScore(
       {

@@ -428,6 +428,14 @@ export default function LeilaoDetailClient({ auction, initialAnalysis = null }: 
               )}
             </div>
 
+            {/* Registro imutável: análise congelada no encerramento */}
+            {auction.analysisSnapshotAt && (
+              <div className="flex items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-4 py-2.5 text-sm text-blue-900">
+                <Shield className="h-4 w-4 shrink-0 text-blue-600" />
+                <span>Análise registrada no encerramento do leilão em <b>{formatDate(auction.analysisSnapshotAt)}</b> — reflete o mercado da época.</span>
+              </div>
+            )}
+
             {/* Nota AgoraEncontrei 0–100 (score explicável) */}
             {auction.agoraScore && <AgoraScorePanel s={auction.agoraScore} />}
 
