@@ -44,6 +44,113 @@ function modalityLabel(modality: string): string {
   return labels[modality] || modality
 }
 
+const VERDICT_UI: Record<string, { label: string; cls: string; bar: string }> = {
+  STRONG: { label: 'Oportunidade forte', cls: 'bg-green-50 text-green-800 border-green-200', bar: 'bg-green-500' },
+  MODERATE: { label: 'Oportunidade moderada', cls: 'bg-yellow-50 text-yellow-800 border-yellow-200', bar: 'bg-yellow-500' },
+  WEAK: { label: 'Margem apertada', cls: 'bg-orange-50 text-orange-800 border-orange-200', bar: 'bg-orange-500' },
+  NEGATIVE: { label: 'Sem margem no lance atual', cls: 'bg-red-50 text-red-800 border-red-200', bar: 'bg-red-500' },
+  INSUFFICIENT_DATA: { label: 'Dados insuficientes', cls: 'bg-gray-50 text-gray-700 border-gray-200', bar: 'bg-gray-400' },
+}
+
+function RealDiscountPanel({ rd }: { rd: any }) {
+  const v = VERDICT_UI[rd.verdict] || VERDICT_UI.INSUFFICIENT_DATA
+  const fmt = (n: number | null | undefined) => formatCurrency(n)
+  const insufficient = rd.verdict === 'INSUFFICIENT_DATA' || !rd.marketValue
+
+  return (
+    <div className="bg-white rounded-xl p-6 shadow-sm border-l-4 border-[#C9A84C]">
+      <div className="flex items-center justify-between gap-3 mb-4">
+        <div className="flex items-center gap-2">
+          <BarChart3 className="w-5 h-5 text-[#C9A84C]" />
+          <h2 className="text-lg font-bold text-gray-800">Desconto Real AE — vale a pena?</h2>
+        </div>
+        <span className={`text-xs font-bold px-3 py-1 rounded-full border ${v.cls}`}>{v.label}</span>
+      </div>
+
+      {insufficient ? (
+        <p className="text-sm text-gray-500">
+          Ainda não há dados suficientes (lance mínimo ou referência de mercado) para calcular a vantagem líquida real deste imóvel.
+        </p>
+      ) : (
+        <>
+          {/* Números-chave */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+            <div className="rounded-lg bg-gray-50 p-3">
+              <p className="text-[11px] text-gray-500">Lance mínimo</p>
+              <p className="text-base font-bold text-gray-800">{fmt(rd.minimumBid)}</p>
+            </div>
+            <div className="rounded-lg bg-gray-50 p-3">
+              <p className="text-[11px] text-gray-500">Investimento total</p>
+              <p className="text-base font-bold text-gray-800">{fmt(rd.totalInvestment)}</p>
+            </div>
+            <div className="rounded-lg bg-gray-50 p-3">
+              <p className="text-[11px] text-gray-500">Valor de mercado (conservador)</p>
+              <p className="text-base font-bold text-gray-800">{fmt(rd.marketValue?.conservative)}</p>
+            </div>
+            <div className="rounded-lg bg-[#143A1F]/5 p-3">
+              <p className="text-[11px] text-gray-500">Margem líquida</p>
+              <p className={`text-base font-bold ${rd.netMargin >= 0 ? 'text-green-700' : 'text-red-600'}`}>
+                {fmt(rd.netMargin)} {rd.netMarginPercent != null && <span className="text-xs">({rd.netMarginPercent}%)</span>}
+              </p>
+            </div>
+          </div>
+
+          {/* Desconto anunciado x real */}
+          <div className="flex flex-wrap gap-4 mb-4 text-sm">
+            {rd.announcedDiscountPercent != null && (
+              <span className="text-gray-500">Desconto anunciado: <b className="text-gray-700">{rd.announcedDiscountPercent}%</b></span>
+            )}
+            {rd.realDiscountPercent != null && (
+              <span className="text-gray-500">Desconto real AE: <b className="text-[#143A1F]">{rd.realDiscountPercent}%</b></span>
+            )}
+            {rd.maxRecommendedBid != null && (
+              <span className="text-gray-500">Lance máx. p/ {rd.targetReturnPercent}%: <b className="text-[#143A1F]">{fmt(rd.maxRecommendedBid)}</b></span>
+            )}
+          </div>
+
+          {/* Procedência do valor de mercado (transparência) */}
+          {rd.marketValue && (
+            <div className="rounded-lg border border-gray-100 bg-gray-50 p-3 mb-4">
+              <div className="flex items-center justify-between gap-2 mb-1">
+                <p className="text-xs font-semibold text-gray-600">Origem do valor de mercado: {rd.marketValue.originLabel}</p>
+                <span className="text-[11px] text-gray-500">confiança {rd.marketValue.confidence}%</span>
+              </div>
+              <div className="h-1.5 w-full rounded-full bg-gray-200 overflow-hidden mb-2">
+                <div className={`h-full ${v.bar}`} style={{ width: `${rd.marketValue.confidence}%` }} />
+              </div>
+              <p className="text-[11px] leading-4 text-gray-500">{rd.marketValue.note}</p>
+            </div>
+          )}
+
+          {/* Custos considerados */}
+          {rd.costs && (
+            <details className="text-sm">
+              <summary className="cursor-pointer text-xs font-semibold text-gray-600 mb-2">Ver custos de arrematação considerados</summary>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-2 text-xs text-gray-600">
+                <span>Comissão leiloeiro: <b>{fmt(rd.costs.auctioneerCommission)}</b></span>
+                <span>ITBI: <b>{fmt(rd.costs.itbi)}</b></span>
+                <span>Registro: <b>{fmt(rd.costs.registry)}</b></span>
+                <span>Escritura: <b>{fmt(rd.costs.notary)}</b></span>
+                <span>Advogado: <b>{fmt(rd.costs.lawyer)}</b></span>
+                {rd.costs.eviction > 0 && <span>Desocupação: <b>{fmt(rd.costs.eviction)}</b></span>}
+                <span>Reforma: <b>{fmt(rd.costs.reform)}</b></span>
+                <span>Margem segurança: <b>{fmt(rd.costs.safetyMargin)}</b></span>
+              </div>
+            </details>
+          )}
+
+          {/* Premissas — evita "lucro garantido" */}
+          {rd.assumptions?.length > 0 && (
+            <p className="mt-3 text-[11px] leading-4 text-gray-400">
+              Estimativa com premissas conservadoras: {rd.assumptions.join(' ')} Não substitui a análise do edital, da matrícula e uma visita técnica.
+            </p>
+          )}
+        </>
+      )}
+    </div>
+  )
+}
+
 export default function LeilaoDetailClient({ auction, initialAnalysis = null }: { auction: any; initialAnalysis?: any }) {
   const [analysis, setAnalysis] = useState<any>(initialAnalysis)
 
@@ -170,6 +277,9 @@ export default function LeilaoDetailClient({ auction, initialAnalysis = null }: 
                 </div>
               )}
             </div>
+
+            {/* Desconto Real AE — vale a pena? (vantagem líquida real) */}
+            {auction.realDiscount && <RealDiscountPanel rd={auction.realDiscount} />}
 
             {/* Title & Location */}
             <div className="bg-white rounded-xl p-6 shadow-sm">
