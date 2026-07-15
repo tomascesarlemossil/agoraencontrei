@@ -75,7 +75,7 @@ test.describe('AgoraEncontrei — Testes E2E Completos', () => {
     await page.goto(BASE_URL);
     await page.waitForLoadState('networkidle');
     await page.screenshot({ path: 'screenshots/05-mobile-home.png' });
-    const hamburger = page.locator('button[aria-label*="menu"], button[aria-label*="Menu"], button[aria-label*="Abrir"], button[aria-label*="Fechar"]').first();
+    const hamburger = page.locator('button[aria-label="Abrir menu"]:visible, button[aria-label="Fechar menu"]:visible').first();
     await expect(hamburger).toBeVisible({ timeout: 5000 });
     await hamburger.click();
     await page.waitForTimeout(500);
