@@ -78,7 +78,9 @@ export function middleware(request: NextRequest) {
   const legacyCityAuctions = pathname.match(/^\/([a-z]{2})\/([^/]+)\/leiloes\/?$/i)
   if (legacyCityAuctions) {
     const url = request.nextUrl.clone()
-    url.pathname = `/${legacyCityAuctions[1].toLowerCase()}/${legacyCityAuctions[2]}/investimentos/leilao-de-imoveis`
+    const state = legacyCityAuctions[1].toLowerCase()
+    const city = legacyCityAuctions[2].toLowerCase()
+    url.pathname = `/leilao-imoveis-em/${city}-${state}`
     return NextResponse.redirect(url, 308)
   }
 
