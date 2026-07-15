@@ -22,7 +22,6 @@ export async function seedOperationalNeighborhoods(prisma: PrismaClient, cityId 
     select: { street: true, neighborhood: true },
   })
   const neighborhoodEvidence = new Map<string, { name: string; count: number }>()
-  const pairEvidence = new Map<string, { street: string; neighborhood: string; count: number }>()
   for (const row of rows) {
     const name = row.neighborhood?.trim()
     if (!name) continue
@@ -32,14 +31,6 @@ export async function seedOperationalNeighborhoods(prisma: PrismaClient, cityId 
     if (neighborhood) neighborhood.count++
     else neighborhoodEvidence.set(neighborhoodSlug, { name, count: 1 })
 
-    if (row.street?.trim()) {
-      const normalizedStreet = normalizeTerritorialName(row.street)
-      if (!normalizedStreet) continue
-      const key = `${normalizedStreet}\u0000${neighborhoodSlug}`
-      const pair = pairEvidence.get(key)
-      if (pair) pair.count++
-      else pairEvidence.set(key, { street: normalizedStreet, neighborhood: neighborhoodSlug, count: 1 })
-    }
   }
 
   for (const [neighborhoodSlug, evidence] of neighborhoodEvidence) {
@@ -57,27 +48,32 @@ export async function seedOperationalNeighborhoods(prisma: PrismaClient, cityId 
     })
   }
 
-  const neighborhoods = await client.territorialNeighborhood.findMany({ where: { cityId }, select: { id: true, slug: true } })
-  const streets = await client.territorialStreet.findMany({ where: { cityId }, select: { id: true, normalizedName: true } })
-  const neighborhoodBySlug = new Map(neighborhoods.map((item: any) => [item.slug, item.id]))
-  const streetByName = new Map(streets.map((item: any) => [item.normalizedName, item.id]))
-  let relations = 0
-  for (const [key, evidence] of pairEvidence) {
-    const streetId = streetByName.get(evidence.street)
-    const neighborhoodId = neighborhoodBySlug.get(evidence.neighborhood)
-    if (!streetId || !neighborhoodId) continue
-    await client.territorialStreetNeighborhood.upsert({
-      where: { streetId_neighborhoodId: { streetId, neighborhoodId } },
-      update: { evidenceCount: evidence.count, metadata: { classification: 'observed', derivedFrom: 'property_listings' } },
-      create: {
-        id: stableId('territorial_street_neighborhood', key), streetId, neighborhoodId,
-        sourceId: source.id, confidence: Math.min(75, 45 + Math.round(Math.log2(evidence.count + 1) * 5)),
-        evidenceCount: evidence.count, metadata: { classification: 'observed', derivedFrom: 'property_listings' },
-      },
-    })
-    relations++
-  }
+  const neighborhoodLinked = await prisma.$executeRawUnsafe(
+    `UPDATE properties p
+     SET "territorialNeighborhoodId" = tn.id
+     FROM territorial_neighborhoods tn
+     WHERE tn."cityId" = $1 AND p."territorialCityId" = $1
+       AND p."territorialNeighborhoodId" IS NULL AND p.neighborhood IS NOT NULL
+       AND LOWER(TRIM(p.neighborhood)) = LOWER(TRIM(tn.name))`,
+    cityId,
+  )
+  await prisma.$executeRawUnsafe(
+    `INSERT INTO territorial_street_neighborhoods
+       (id, "streetId", "neighborhoodId", "sourceId", confidence, "evidenceCount", metadata, "createdAt", "updatedAt")
+     SELECT 'territorial_street_neighborhood_' || MD5(p."territorialStreetId" || ':' || p."territorialNeighborhoodId"),
+       p."territorialStreetId", p."territorialNeighborhoodId", $1, 55, COUNT(*)::int,
+       '{"classification":"observed","derivedFrom":"property_listings"}'::jsonb, NOW(), NOW()
+     FROM properties p
+     WHERE p."territorialCityId" = $2 AND p."territorialStreetId" IS NOT NULL AND p."territorialNeighborhoodId" IS NOT NULL
+     GROUP BY p."territorialStreetId", p."territorialNeighborhoodId"
+     ON CONFLICT ("streetId", "neighborhoodId") DO UPDATE SET
+       "evidenceCount" = EXCLUDED."evidenceCount", "updatedAt" = NOW()`,
+    source.id, cityId,
+  )
+  const relations = await client.territorialStreetNeighborhood.count({
+    where: { street: { cityId } },
+  })
 
   const linked = await linkPropertiesToTerritory(prisma)
-  return { seeded: true, neighborhoods: neighborhoodEvidence.size, relations, linked }
+  return { seeded: true, neighborhoods: neighborhoodEvidence.size, neighborhoodLinked, relations, linked }
 }
