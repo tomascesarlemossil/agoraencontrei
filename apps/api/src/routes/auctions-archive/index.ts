@@ -2,6 +2,7 @@ import { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 import { buildAuctionReport, type AuctionReportFilters } from '../../services/auction-report.service.js'
 import { getPropertyTimeline } from '../../services/auction-identity.service.js'
+import { buildHiddenOpportunities } from '../../services/auction-hidden-opportunity.service.js'
 
 /**
  * Endpoints públicos do arquivo histórico de leilões. Registrados no mesmo
@@ -31,6 +32,16 @@ export default async function auctionsArchiveRoutes(app: FastifyInstance) {
     if (!parsed.success) return reply.status(400).send({ error: 'invalid_query', issues: parsed.error.issues })
     const report = await buildAuctionReport(app.prisma, parsed.data as AuctionReportFilters)
     return reply.send(report)
+  })
+
+  // Radar de oportunidades ocultas (índice + motivos) por região.
+  app.get('/hidden-opportunities', async (req, reply) => {
+    const q = req.query as Record<string, string>
+    const result = await buildHiddenOpportunities(app.prisma, {
+      city: q.city, state: q.state, propertyType: q.propertyType,
+      limit: q.limit ? Number(q.limit) : undefined,
+    })
+    return reply.send(result)
   })
 
   // Histórico temporal (snapshots) de um leilão.

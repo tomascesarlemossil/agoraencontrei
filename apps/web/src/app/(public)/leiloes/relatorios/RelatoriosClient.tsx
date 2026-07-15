@@ -86,12 +86,14 @@ export default function RelatoriosClient() {
   const [soldOnly, setSoldOnly] = useState(false)
   const [sinceMonths, setSinceMonths] = useState('12')
   const [report, setReport] = useState<Report | null>(null)
+  const [radar, setRadar] = useState<{ items: any[] } | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
   const run = async () => {
     setLoading(true)
     setReport(null)
+    setRadar(null)
     setError('')
     const p = new URLSearchParams()
     if (city) p.set('city', city)
@@ -100,10 +102,20 @@ export default function RelatoriosClient() {
     if (propertyType) p.set('propertyType', propertyType)
     if (soldOnly) p.set('soldOnly', 'true')
     if (sinceMonths) p.set('sinceMonths', sinceMonths)
+    // Radar usa apenas cidade/UF/tipo (oportunidades ativas ocultas).
+    const rp = new URLSearchParams()
+    if (city) rp.set('city', city)
+    if (propertyType) rp.set('propertyType', propertyType)
     try {
-      const r = await fetch(`${API_URL}/api/v1/auctions/report?${p.toString()}`)
-      if (!r.ok) throw new Error('Não foi possível gerar o relatório agora.')
-      setReport(await r.json())
+      const [rRes, radarRes] = await Promise.all([
+        fetch(`${API_URL}/api/v1/auctions/report?${p.toString()}`),
+        fetch(`${API_URL}/api/v1/auctions/hidden-opportunities?${rp.toString()}`).catch(() => null),
+      ])
+      if (!rRes.ok) throw new Error('Não foi possível gerar o relatório agora.')
+      setReport(await rRes.json())
+      if (radarRes && radarRes.ok) {
+        try { setRadar(await radarRes.json()) } catch { /* ignore */ }
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Não foi possível gerar o relatório agora.')
     }
@@ -232,6 +244,34 @@ export default function RelatoriosClient() {
                 <AlertTriangle className="h-5 w-5 shrink-0 text-blue-600" />
                 <div><b>Nenhum valor de arremate foi confirmado nesta amostra.</b><br />Os valores abaixo representam avaliação e lance mínimo anunciados; não devem ser interpretados como preço efetivo de venda.</div>
               </div>
+            )}
+
+            {/* Radar de oportunidades ocultas (§1) */}
+            {radar && radar.items && radar.items.length > 0 && (
+              <section className="rounded-xl border border-[#C9A84C]/40 bg-gradient-to-br from-[#143A1F]/[0.03] to-white p-6 shadow-sm">
+                <div className="mb-4 flex items-center gap-2">
+                  <Lightbulb className="h-5 w-5 text-[#C9A84C]" />
+                  <h3 className="text-lg font-bold text-gray-800">Radar de oportunidades ocultas</h3>
+                </div>
+                <p className="mb-4 text-sm text-gray-500">Imóveis com sinais de subavaliação ou pouca disputa — republicados, em 2ª praça, sem lance, preço/m² abaixo da região ou encerrando em breve. Índice quanto maior, mais oculta a oportunidade.</p>
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {radar.items.slice(0, 9).map((it: any) => (
+                    <Link key={it.slug} href={`/leiloes/${it.slug}`} className="group rounded-xl border bg-white p-4 hover:border-[#C9A84C] hover:shadow-md transition">
+                      <div className="mb-2 flex items-start justify-between gap-2">
+                        <span className="line-clamp-2 text-sm font-semibold text-gray-800 group-hover:text-[#143A1F]">{it.title}</span>
+                        <span className="shrink-0 rounded-lg bg-[#143A1F] px-2 py-1 text-xs font-bold text-white">{it.hiddenIndex}</span>
+                      </div>
+                      <p className="mb-2 flex items-center gap-1 text-xs text-gray-500"><MapPin className="h-3 w-3" />{[it.neighborhood, it.city, it.state].filter(Boolean).join(', ') || '—'}</p>
+                      <p className="text-sm font-bold text-[#143A1F]">{fmt(it.minimumBid)}{it.pricePerM2 ? <span className="ml-1 text-[11px] font-normal text-gray-400">· {fmt(it.pricePerM2)}/m²</span> : null}</p>
+                      <ul className="mt-2 space-y-0.5">
+                        {it.reasons.slice(0, 3).map((r: string, i: number) => (
+                          <li key={i} className="flex items-start gap-1 text-[11px] leading-4 text-gray-500"><span className="text-[#C9A84C]">•</span>{r}</li>
+                        ))}
+                      </ul>
+                    </Link>
+                  ))}
+                </div>
+              </section>
             )}
 
             {/* Painel regional (plano §3): leilão x mercado, liquidez, desconto real */}
