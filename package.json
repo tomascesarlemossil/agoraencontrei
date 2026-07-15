@@ -21,6 +21,7 @@
     "scrape:all": "npx tsx scripts/scrape-caixa.ts",
     "test:e2e": "playwright test",
     "test:e2e:smoke": "playwright test tests/public-pages-smoke.spec.ts",
+    "test:e2e:tools": "playwright test tests/public-tools-smoke.spec.ts --workers=1",
     "seo:smoke": "tsx scripts/seo-import/smoke-test.ts",
     "audit:properties": "node scripts/audit-public-properties.js",
     "test:property-audit": "node --test scripts/audit-public-properties.test.js",
