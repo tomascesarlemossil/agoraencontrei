@@ -1107,7 +1107,7 @@ export default function LeiloesClient() {
                   >
                     {compareIds.has(auction.id) ? '✓' : '⇔'}
                   </button>
-                  <div onClick={() => openLeadModal(auction)}>
+                  <div data-testid="auction-card" onClick={() => openLeadModal(auction)}>
                   {/* Image — Real photo > banner padrão de leilão (imagem ilustrativa) */}
                   <div className="relative h-48 bg-gray-200 overflow-hidden">
                     <img

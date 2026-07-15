@@ -31,12 +31,12 @@ async function doLogin(page: Page) {
 test.describe('1. Autenticação', () => {
   test('Login com credenciais admin', async ({ page }) => {
     const start = Date.now()
+    if (!PASSWORD) {
+      log('Login', 'SKIP', 'E2E_ADMIN_PASSWORD not set in env')
+      test.skip()
+      return
+    }
     try {
-      if (!PASSWORD) {
-        log('Login', 'SKIP', 'E2E_ADMIN_PASSWORD not set in env')
-        test.skip()
-        return
-      }
       await doLogin(page)
       await expect(page).toHaveURL(/dashboard/)
       const userName = await page.locator('text=Tomás').first().isVisible().catch(() => false)
@@ -177,17 +177,14 @@ test.describe('4. Captura de Lead', () => {
       // Wait for auction cards to load
       await page.waitForTimeout(3000)
       // Click first auction card
-      const card = page.locator('[class*="cursor-pointer"]').first()
+      const card = page.getByTestId('auction-card').first()
       if (await card.isVisible({ timeout: 5000 }).catch(() => false)) {
         await card.click()
         await page.waitForTimeout(1000)
         // Check if lead modal opened
         const modal = page.locator('[class*="fixed"]').filter({ hasText: 'Interesse' })
-        if (await modal.isVisible({ timeout: 3000 }).catch(() => false)) {
-          log('Lead Modal Opens', 'PASS', undefined, Date.now() - start)
-        } else {
-          log('Lead Modal Opens', 'FAIL', 'Modal não apareceu ao clicar no card')
-        }
+        await expect(modal).toBeVisible({ timeout: 5000 })
+        log('Lead Modal Opens', 'PASS', undefined, Date.now() - start)
       } else {
         log('Lead Modal Opens', 'SKIP', 'Nenhum card de leilão visível')
         test.skip()
@@ -200,8 +197,8 @@ test.describe('4. Captura de Lead', () => {
 
   test('Dashboard de leads carrega', async ({ page }) => {
     const start = Date.now()
+    if (!PASSWORD) { log('Dashboard Leads', 'SKIP', 'No password'); test.skip(); return }
     try {
-      if (!PASSWORD) { log('Dashboard Leads', 'SKIP', 'No password'); test.skip(); return }
       await doLogin(page)
       await page.goto(`${BASE}/dashboard/leads`, { waitUntil: 'networkidle', timeout: 15000 })
       expect(page.url()).toContain('leads')
@@ -217,8 +214,8 @@ test.describe('4. Captura de Lead', () => {
 test.describe('5. Logout', () => {
   test('Logout funciona', async ({ page }) => {
     const start = Date.now()
+    if (!PASSWORD) { log('Logout', 'SKIP', 'No password'); test.skip(); return }
     try {
-      if (!PASSWORD) { log('Logout', 'SKIP', 'No password'); test.skip(); return }
       await doLogin(page)
       // Find logout button/link
       const logoutBtn = page.locator('text=Sair, a:has-text("Sair"), button:has-text("Sair")').first()
@@ -276,7 +273,7 @@ test.describe('7. Mobile Menu', () => {
       await page.setViewportSize({ width: 375, height: 812 }) // iPhone X
       await page.goto(`${BASE}/leiloes`, { waitUntil: 'networkidle', timeout: 15000 })
       // Find hamburger button
-      const hamburger = page.locator('button[aria-label*="menu"], button[aria-label*="Menu"]').first()
+      const hamburger = page.locator('button[aria-label="Abrir menu"]:visible, button[aria-label="Fechar menu"]:visible').first()
       await expect(hamburger).toBeVisible({ timeout: 5000 })
       await hamburger.click()
       await page.waitForTimeout(500)
@@ -296,9 +293,9 @@ test.describe('7. Mobile Menu', () => {
     try {
       await page.setViewportSize({ width: 375, height: 812 })
       await page.goto(`${BASE}/leiloes`, { waitUntil: 'networkidle', timeout: 15000 })
-      const cta = page.locator('text=Falar com Corretor').first()
-      const visible = await cta.isVisible({ timeout: 5000 }).catch(() => false)
-      log('Sticky CTA Mobile', visible ? 'PASS' : 'FAIL', undefined, Date.now() - start)
+      const cta = page.locator('a:visible, button:visible').filter({ hasText: 'Falar com Corretor' }).first()
+      await expect(cta).toBeVisible({ timeout: 5000 })
+      log('Sticky CTA Mobile', 'PASS', undefined, Date.now() - start)
     } catch (e: any) {
       log('Sticky CTA Mobile', 'FAIL', e.message, Date.now() - start)
       throw e
