@@ -1654,6 +1654,27 @@ async function runMigrations(prisma: any) {
   } catch { /* column may not exist yet */ }
 }
 
+async function ensureOperationalNeighborhoodSchema(prisma: any) {
+  await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "territorial_street_neighborhoods" (
+    "id" TEXT PRIMARY KEY, "streetId" TEXT NOT NULL, "neighborhoodId" TEXT NOT NULL,
+    "sourceId" TEXT, "confidence" INTEGER NOT NULL DEFAULT 50,
+    "evidenceCount" INTEGER NOT NULL DEFAULT 1, "metadata" JSONB NOT NULL DEFAULT '{}',
+    "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(), "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )`)
+  await prisma.$executeRawUnsafe(`CREATE UNIQUE INDEX IF NOT EXISTS "territorial_street_neighborhoods_streetId_neighborhoodId_key" ON "territorial_street_neighborhoods"("streetId","neighborhoodId")`)
+  await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "territorial_street_neighborhoods_neighborhoodId_idx" ON "territorial_street_neighborhoods"("neighborhoodId")`)
+  await prisma.$executeRawUnsafe(`INSERT INTO "intelligence_data_sources" (
+    "id","slug","name","kind","accessMethod","storageAllowed","republicationAllowed",
+    "attributionRequired","reliabilityScore","legalStatus","legalReviewedAt","isActive","metadata","createdAt","updatedAt"
+  ) VALUES (
+    'source_internal_property_neighborhoods','internal-property-neighborhoods',
+    'Cadastro interno de imóveis — bairros declarados','INTERNAL','INTERNAL',true,false,false,55,
+    'APPROVED',NOW(),true,
+    '{"scope":"Nomes de bairros declarados nos imóveis e relações observadas com logradouros","classification":"operational","warning":"Não representa delimitação oficial de bairro"}',
+    NOW(),NOW()
+  ) ON CONFLICT ("slug") DO UPDATE SET "metadata" = EXCLUDED."metadata", "updatedAt" = NOW()`)
+}
+
 async function bootstrap() {
   // Monitoramento de erros — no-op se SENTRY_DSN ausente ou @sentry/node não instalado.
   await initSentry(app)
@@ -1670,6 +1691,8 @@ async function bootstrap() {
     await Promise.race([migP, timeoutP]).catch(e => app.log.warn('Migration warning:', e.message))
     migP.catch(() => {})
   }
+  // Dependência crítica da rota pública: precisa existir antes de o servidor aceitar tráfego.
+  await ensureOperationalNeighborhoodSchema(app.prisma)
   seedIbgeFrancaTerritory(app.prisma)
     .then(result => app.log.info({ territorialSeed: result }, 'IBGE Franca territorial seed completed'))
     .catch(error => app.log.warn({ error: error?.message || String(error) }, 'IBGE Franca territorial seed deferred'))
