@@ -78,9 +78,9 @@ export function middleware(request: NextRequest) {
   const legacyCityAuctions = pathname.match(/^\/([a-z]{2})\/([^/]+)\/leiloes\/?$/i)
   if (legacyCityAuctions) {
     const url = request.nextUrl.clone()
-    const state = legacyCityAuctions[1].toLowerCase()
-    const city = legacyCityAuctions[2].toLowerCase()
-    url.pathname = `/leilao-imoveis-em/${city}-${state}`
+    // Nem toda cidade legada existe no conjunto atual de landings locais.
+    // O hub nacional de leilões é sempre válido e evita um soft 404.
+    url.pathname = '/leiloes'
     return NextResponse.redirect(url, 308)
   }
 
