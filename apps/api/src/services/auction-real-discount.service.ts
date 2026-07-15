@@ -20,7 +20,17 @@ const AUCTIONEER_COMMISSION_RATE = 0.05 // comissão do leiloeiro (padrão de me
 const SAFETY_MARGIN_RATE = 0.05         // margem de imprevistos sobre o investimento
 const DEFAULT_TARGET_RETURN = 0.20      // retorno-alvo padrão p/ o lance máximo
 
-export type MarketValueOrigin = 'AI_ESTIMATE' | 'REGIONAL_M2' | 'APPRAISAL_HAIRCUT'
+export type MarketValueOrigin = 'COMPARABLES' | 'AI_ESTIMATE' | 'REGIONAL_M2' | 'APPRAISAL_HAIRCUT'
+
+/** Âncora de mercado pré-computada (ex.: comparáveis) para o Desconto Real usar. */
+export interface MarketOverride {
+  conservative: number
+  confidence: number
+  pricePerM2?: number | null
+  sampleSize?: number | null
+  originLabel: string
+  note: string
+}
 
 export interface RealDiscountResult {
   currency: 'BRL'
@@ -122,6 +132,7 @@ export interface RealDiscountInput {
 export async function computeRealDiscount(
   prisma: PrismaClient,
   auction: RealDiscountInput,
+  marketOverride?: MarketOverride | null,
 ): Promise<RealDiscountResult> {
   const minimumBid = auction.minimumBid && auction.minimumBid > 0 ? Number(auction.minimumBid) : null
   const appraisalValue = auction.appraisalValue && auction.appraisalValue > 0 ? Number(auction.appraisalValue) : null
@@ -132,7 +143,19 @@ export async function computeRealDiscount(
   let market: RealDiscountResult['marketValue'] = null
   const aiEstimate = auction.marketPriceEstimate && auction.marketPriceEstimate > 0 ? Number(auction.marketPriceEstimate) : null
 
-  if (aiEstimate) {
+  if (marketOverride && marketOverride.conservative > 0) {
+    // Âncora preferida: comparáveis reais da região (calculados fora).
+    market = {
+      conservative: round(marketOverride.conservative),
+      origin: 'COMPARABLES',
+      originLabel: marketOverride.originLabel,
+      confidence: marketOverride.confidence,
+      pricePerM2: marketOverride.pricePerM2 ?? null,
+      sampleSize: marketOverride.sampleSize ?? null,
+      note: marketOverride.note,
+    }
+    assumptions.push('Valor de mercado estimado por comparáveis diretos da região.')
+  } else if (aiEstimate) {
     market = {
       conservative: round(aiEstimate * 0.95), // deságio conservador sobre a estimativa
       origin: 'AI_ESTIMATE',

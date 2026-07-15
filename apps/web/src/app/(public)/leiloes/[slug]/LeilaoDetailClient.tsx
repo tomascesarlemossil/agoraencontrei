@@ -151,6 +151,106 @@ function RealDiscountPanel({ rd }: { rd: any }) {
   )
 }
 
+const INFLATED_UI: Record<string, { label: string; cls: string }> = {
+  INFLATED: { label: 'Avaliação possivelmente inflada', cls: 'bg-red-50 text-red-800 border-red-200' },
+  FAIR: { label: 'Avaliação alinhada ao mercado', cls: 'bg-green-50 text-green-800 border-green-200' },
+  BELOW: { label: 'Avaliação abaixo do mercado', cls: 'bg-blue-50 text-blue-800 border-blue-200' },
+  UNKNOWN: { label: 'Sem comparáveis suficientes', cls: 'bg-gray-50 text-gray-700 border-gray-200' },
+}
+
+function ComparablesPanel({ data }: { data: any }) {
+  const ia = data.inflatedAppraisal
+  const me = data.marketEstimate
+  const comps: any[] = data.comparables || []
+  const ui = INFLATED_UI[ia?.verdict] || INFLATED_UI.UNKNOWN
+  const fmt = (n: number | null | undefined) => formatCurrency(n)
+
+  return (
+    <div className="bg-white rounded-xl p-6 shadow-sm">
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <BarChart3 className="w-5 h-5 text-[#C9A84C]" />
+          <h2 className="text-lg font-bold text-gray-800">Comparáveis e avaliação de mercado</h2>
+        </div>
+        {ia?.verdict && <span className={`text-xs font-bold px-3 py-1 rounded-full border ${ui.cls}`}>{ui.label}</span>}
+      </div>
+
+      {/* Detector de avaliação inflada */}
+      {ia?.message && (
+        <div className={`mb-4 rounded-lg border p-3 text-sm ${ui.cls}`}>
+          <p>{ia.message}</p>
+          <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs opacity-90">
+            {ia.appraisalPerM2 != null && <span>Avaliação: <b>{fmt(ia.appraisalPerM2)}/m²</b></span>}
+            {ia.marketPerM2 != null && <span>Mercado: <b>{fmt(ia.marketPerM2)}/m²</b></span>}
+            {ia.announcedDiscountPercent != null && <span>Desconto anunciado: <b>{Math.round(ia.announcedDiscountPercent)}%</b></span>}
+            {ia.realDiscountPercent != null && <span>Desconto real (vs mercado): <b>{ia.realDiscountPercent}%</b></span>}
+          </div>
+        </div>
+      )}
+
+      {/* Faixa de valor de mercado */}
+      {me && (
+        <div className="mb-4 grid grid-cols-3 gap-3">
+          <div className="rounded-lg bg-gray-50 p-3 text-center">
+            <p className="text-[11px] text-gray-500">Conservador</p>
+            <p className="text-sm font-bold text-gray-800">{fmt(me.conservative)}</p>
+          </div>
+          <div className="rounded-lg bg-[#143A1F]/5 p-3 text-center">
+            <p className="text-[11px] text-gray-500">Provável</p>
+            <p className="text-base font-bold text-[#143A1F]">{fmt(me.likely)}</p>
+          </div>
+          <div className="rounded-lg bg-gray-50 p-3 text-center">
+            <p className="text-[11px] text-gray-500">Otimista</p>
+            <p className="text-sm font-bold text-gray-800">{fmt(me.optimistic)}</p>
+          </div>
+        </div>
+      )}
+      {me && (
+        <p className="mb-4 text-[11px] text-gray-400">
+          {me.note} Confiança {me.confidence}% · {me.breakdown.sameNeighborhood} no bairro, {me.breakdown.sameCity} na cidade.
+        </p>
+      )}
+
+      {/* Lista de comparáveis */}
+      {comps.length > 0 && (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-left text-xs text-gray-500 border-b">
+                <th className="py-2 pr-2">Imóvel</th>
+                <th className="py-2 pr-2">Bairro</th>
+                <th className="py-2 pr-2 text-right">Área</th>
+                <th className="py-2 pr-2 text-right">Avaliação</th>
+                <th className="py-2 pr-2 text-right">R$/m²</th>
+                <th className="py-2 text-right">Dist.</th>
+              </tr>
+            </thead>
+            <tbody>
+              {comps.map((c) => (
+                <tr key={c.slug} className="border-b last:border-0 hover:bg-gray-50">
+                  <td className="py-2 pr-2">
+                    <Link href={`/leiloes/${c.slug}`} className="text-[#143A1F] font-medium hover:underline line-clamp-1">{c.title}</Link>
+                  </td>
+                  <td className="py-2 pr-2 text-gray-600">
+                    {c.neighborhood || '—'}{c.sameNeighborhood && <span className="ml-1 text-[10px] text-green-700">•mesmo bairro</span>}
+                  </td>
+                  <td className="py-2 pr-2 text-right text-gray-600">{c.totalArea ? `${Math.round(c.totalArea)}m²` : '—'}</td>
+                  <td className="py-2 pr-2 text-right text-gray-700">{fmt(c.appraisalValue)}</td>
+                  <td className="py-2 pr-2 text-right font-semibold text-gray-800">{fmt(c.pricePerM2)}</td>
+                  <td className="py-2 text-right text-gray-500">{c.distanceKm != null ? `${c.distanceKm}km` : '—'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+      <p className="mt-3 text-[11px] leading-4 text-gray-400">
+        Comparáveis por preço/m² da avaliação de imóveis semelhantes na região (proxy de mercado). Anúncios de mercado real e visita técnica refinam a estimativa.
+      </p>
+    </div>
+  )
+}
+
 export default function LeilaoDetailClient({ auction, initialAnalysis = null }: { auction: any; initialAnalysis?: any }) {
   const [analysis, setAnalysis] = useState<any>(initialAnalysis)
 
@@ -280,6 +380,9 @@ export default function LeilaoDetailClient({ auction, initialAnalysis = null }: 
 
             {/* Desconto Real AE — vale a pena? (vantagem líquida real) */}
             {auction.realDiscount && <RealDiscountPanel rd={auction.realDiscount} />}
+
+            {/* Comparáveis automáticos + detector de avaliação inflada */}
+            {auction.comparables && <ComparablesPanel data={auction.comparables} />}
 
             {/* Title & Location */}
             <div className="bg-white rounded-xl p-6 shadow-sm">
