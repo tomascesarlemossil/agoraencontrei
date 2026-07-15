@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
 import { ArrowRight, Building2, Calculator, MapPin, ShieldCheck, TrendingUp } from 'lucide-react'
 import LeilaoDetailClient from './LeilaoDetailClient'
 
@@ -336,6 +337,12 @@ export default async function LeilaoPage(props: Props) {
     getAuction(params.slug),
     getAuctionAnalysis(params.slug),
   ])
+
+  // Item do feed público (public-{id}) resolvido para o leilão canônico:
+  // redireciona para o slug real para não duplicar conteúdo / canonical errado.
+  if (auction?.slug && auction.slug !== params.slug) {
+    redirect(`/leiloes/${auction.slug}`)
+  }
 
   if (!auction) {
     return (
