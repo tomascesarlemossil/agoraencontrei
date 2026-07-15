@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Calculator, TrendingUp, AlertTriangle, MessageCircle, BarChart3, ShieldCheck, ChevronDown, ChevronUp, Loader2 } from 'lucide-react'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'https://api-production-669c.up.railway.app'
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'https://api.agoraencontrei.com.br'
 
 interface Props {
   valorAvaliado: number

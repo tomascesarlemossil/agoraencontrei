@@ -2,13 +2,19 @@ import { test, expect, Page } from '@playwright/test';
 
 const BASE_URL = 'https://agoraencontrei.com.br';
 const DASHBOARD_URL = 'https://agoraencontrei.com.br/dashboard';
-const EMAIL = process.env.E2E_EMAIL || 'tomas@agoraencontrei.com.br';
-const PASSWORD = process.env.E2E_PASSWORD || 'Lemos2026@';
+const EMAIL = process.env.E2E_EMAIL;
+const PASSWORD = process.env.E2E_PASSWORD;
+const HAS_E2E_CREDENTIALS = Boolean(EMAIL && PASSWORD);
+
+function requireE2ECredentials() {
+  test.skip(!HAS_E2E_CREDENTIALS, 'Defina E2E_EMAIL e E2E_PASSWORD para testar jornadas autenticadas.');
+}
 
 // Login white-label em 2 etapas: 1) identificador (e-mail/telefone/CPF) →
 // "Continuar"; 2) senha → "Entrar". Mantém fallback para o fluxo antigo de
 // um passo caso a página ainda não tenha o novo layout.
 async function doLogin(page: Page) {
+  if (!EMAIL || !PASSWORD) throw new Error('E2E_EMAIL e E2E_PASSWORD são obrigatórios para o login E2E.');
   // Etapa 1 — identificador
   const identifier = page.locator('#identifier, input[name="email"], input[type="email"]').first();
   await identifier.fill(EMAIL);
@@ -81,6 +87,7 @@ test.describe('AgoraEncontrei — Testes E2E Completos', () => {
   });
 
   test('6. Login no dashboard (fluxo white-label em 2 etapas)', async ({ page }) => {
+    requireE2ECredentials();
     await page.goto(`${BASE_URL}/login`);
     await page.waitForLoadState('networkidle');
     await page.screenshot({ path: 'screenshots/06-pre-login.png' });
@@ -90,6 +97,7 @@ test.describe('AgoraEncontrei — Testes E2E Completos', () => {
   });
 
   test('7. Dashboard carrega sem crash', async ({ page }) => {
+    requireE2ECredentials();
     await loginIfNeeded(page);
     await page.waitForLoadState('networkidle');
     await page.screenshot({ path: 'screenshots/07-dashboard.png', fullPage: false });
@@ -98,6 +106,7 @@ test.describe('AgoraEncontrei — Testes E2E Completos', () => {
   });
 
   test('8. Página de imóveis do dashboard', async ({ page }) => {
+    requireE2ECredentials();
     await loginIfNeeded(page);
     await page.goto(`${DASHBOARD_URL}/imoveis`);
     await page.waitForLoadState('networkidle');
@@ -106,6 +115,7 @@ test.describe('AgoraEncontrei — Testes E2E Completos', () => {
   });
 
   test('9. Contratos carrega', async ({ page }) => {
+    requireE2ECredentials();
     await loginIfNeeded(page);
     await page.goto(`${DASHBOARD_URL}/contratos`);
     await page.waitForLoadState('networkidle');
@@ -114,6 +124,7 @@ test.describe('AgoraEncontrei — Testes E2E Completos', () => {
   });
 
   test('10. Leads carrega', async ({ page }) => {
+    requireE2ECredentials();
     await loginIfNeeded(page);
     await page.goto(`${DASHBOARD_URL}/leads`);
     await page.waitForLoadState('networkidle');
@@ -122,6 +133,7 @@ test.describe('AgoraEncontrei — Testes E2E Completos', () => {
   });
 
   test('12. Dashboard leilões carrega', async ({ page }) => {
+    requireE2ECredentials();
     await loginIfNeeded(page);
     await page.goto(`${DASHBOARD_URL}/leiloes`);
     await page.waitForLoadState('networkidle');
@@ -133,12 +145,14 @@ test.describe('AgoraEncontrei — Testes E2E Completos', () => {
   });
 
   test('14. Mobile dashboard (390x844)', async ({ page }) => {
+    requireE2ECredentials();
     await page.setViewportSize({ width: 390, height: 844 });
     await loginIfNeeded(page);
     await page.screenshot({ path: 'screenshots/14-mobile-dashboard.png', fullPage: false });
   });
 
   test('15. Logout', async ({ page }) => {
+    requireE2ECredentials();
     await loginIfNeeded(page);
     const logoutBtn = page.locator('a:has-text("Sair"), button:has-text("Sair")').first();
     if (await logoutBtn.isVisible({ timeout: 5000 }).catch(() => false)) {

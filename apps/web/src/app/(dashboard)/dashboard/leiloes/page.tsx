@@ -9,7 +9,7 @@ import {
   Filter, Search, ArrowUpDown, Eye, Star
 } from 'lucide-react'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'https://api-production-669c.up.railway.app'
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'https://api.agoraencontrei.com.br'
 
 // ── Tipos ─────────────────────────────────────────────────────────────────────
 interface AuctionStats {

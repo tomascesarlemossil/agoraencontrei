@@ -5,7 +5,7 @@
  */
 import { NextResponse } from 'next/server'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api-production-669c.up.railway.app'
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.agoraencontrei.com.br'
 
 export async function GET() {
   const checks: Record<string, { status: string; latency?: number }> = {}

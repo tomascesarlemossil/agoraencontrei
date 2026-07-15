@@ -10,7 +10,7 @@ import { SEOFooterLinks } from '@/components/SEOFooterLinks'
 import { isBuildPhase } from '@/lib/ssg-runtime'
 
 const API_URL =
-  process.env.NEXT_PUBLIC_API_URL ?? 'https://api-production-669c.up.railway.app'
+  process.env.NEXT_PUBLIC_API_URL ?? 'https://api.agoraencontrei.com.br'
 
 const WEB_URL = process.env.NEXT_PUBLIC_WEB_URL ?? 'https://agoraencontrei.com.br'
 

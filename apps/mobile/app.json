@@ -27,7 +27,7 @@
       }
     },
     "extra": {
-      "apiUrl": "https://api-production-669c.up.railway.app"
+      "apiUrl": "https://api.agoraencontrei.com.br"
     },
     "plugins": ["expo-splash-screen"]
   }

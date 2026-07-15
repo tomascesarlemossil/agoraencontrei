@@ -338,7 +338,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="pt-BR" suppressHydrationWarning>
       <head>
         {/* ── Preconnect para recursos externos críticos (melhora LCP/FCP) ── */}
-        <link rel="preconnect" href="https://api-production-669c.up.railway.app" />
+        <link rel="preconnect" href="https://api.agoraencontrei.com.br" />
         <link rel="preconnect" href="https://agoraencontrei-media.s3.us-east-1.amazonaws.com" />
         {/* Inter/Playfair Display agora são auto-hospedadas (apps/web/public/fonts,
             @font-face em globals.css) — sem round trip para fonts.googleapis.com/

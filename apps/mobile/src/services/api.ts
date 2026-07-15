@@ -10,7 +10,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 
 const API_URL: string =
   (Constants.expoConfig?.extra as any)?.apiUrl ||
-  'https://api-production-669c.up.railway.app'
+  'https://api.agoraencontrei.com.br'
 
 const TOKEN_KEY = '@auth_token'
 

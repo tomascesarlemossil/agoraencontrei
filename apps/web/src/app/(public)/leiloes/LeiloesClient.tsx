@@ -6,7 +6,7 @@ import dynamic from 'next/dynamic'
 import { getUserGeo, reverseGeocodeRegion, type UserGeo, type UserRegion } from '@/lib/geolocation'
 import { Search, MapPin, Filter, Calculator, Bell, TrendingUp, ChevronDown, X, ArrowRight, Building, Home, Map as MapIcon, Star, Clock, DollarSign, BarChart3, AlertTriangle, Loader2, CheckCircle, ExternalLink } from 'lucide-react'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'https://api-production-669c.up.railway.app'
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'https://api.agoraencontrei.com.br'
 const PUBLIC_AUCTIONS_URL = `${API_URL}/api/v1/public/auctions`
 const CAIXA_CSV_URL = '/api/caixa-csv?state=SP' // Vercel proxy (no geo-block)
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://oenbzvxcsgyzqjtlovdq.supabase.co'
@@ -352,7 +352,7 @@ export default function LeiloesClient() {
     setLeadSubmitting(true)
     setLeadError('')
     try {
-      const API = process.env.NEXT_PUBLIC_API_URL ?? 'https://api-production-669c.up.railway.app'
+      const API = process.env.NEXT_PUBLIC_API_URL ?? 'https://api.agoraencontrei.com.br'
       const res = await fetch(`${API}/api/v1/public/leads`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

@@ -13,7 +13,7 @@ import { CitySeoContent } from '@/components/public/CitySeoContent'
 import { isBuildPhase, limitSeoStaticItems } from '@/lib/ssg-runtime'
 
 const WEB_URL = process.env.NEXT_PUBLIC_WEB_URL || 'https://agoraencontrei.com.br'
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api-production-669c.up.railway.app'
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.agoraencontrei.com.br'
 
 // Mapeamento de cluster-slug para metadados
 const CLUSTER_META: Record<string, { title: string; h1: string; desc: string; schema: string; icon: string }> = {

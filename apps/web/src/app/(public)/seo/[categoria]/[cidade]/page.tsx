@@ -15,7 +15,7 @@ import { UNIQUE_CITIES } from '@/data/seo-cities'
 import { CitySeoContent } from '@/components/public/CitySeoContent'
 
 const WEB_URL = process.env.NEXT_PUBLIC_WEB_URL || 'https://www.agoraencontrei.com.br'
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api-production-669c.up.railway.app'
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.agoraencontrei.com.br'
 
 export const revalidate = 86400
 

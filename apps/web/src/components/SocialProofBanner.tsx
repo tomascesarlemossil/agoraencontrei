@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { X, TrendingUp, Home, Users, Database } from 'lucide-react'
 
 const API_URL =
-  process.env.NEXT_PUBLIC_API_URL ?? 'https://api-production-669c.up.railway.app'
+  process.env.NEXT_PUBLIC_API_URL ?? 'https://api.agoraencontrei.com.br'
 
 interface AuctionStats {
   totalActive?: number
