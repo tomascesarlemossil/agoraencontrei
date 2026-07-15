@@ -829,20 +829,24 @@ export async function runScheduledJobs(app: FastifyInstance) {
     app.log.error({ err }, '[scheduled] follow-ups failed')
   }
 
-  // ── 9. Street View batch: capture facades for auctions/properties missing images ──
+  // ── 9. Agente de imagem dos leilões: foto do leiloeiro/Caixa ou fachada ────
+  // Roda a cada passe (não só 13h): a maioria dos leilões entra sem foto e o
+  // card/landing acabaria no banner padrão. O agente tenta a foto oficial e,
+  // como fallback, a fachada via Street View. Lote pequeno por rodada.
+  try {
+    const { runAuctionImageBatch } = await import('./auction-image.service.js')
+    const imgResult = await runAuctionImageBatch(app.prisma, 40)
+    if (imgResult.withCover > 0) {
+      app.log.info(`[scheduled] auction-image: ${imgResult.withCover}/${imgResult.processed} leilões com imagem (${imgResult.withStreetView} via Street View)`)
+    }
+  } catch (err) {
+    app.log.error({ err }, '[scheduled] auction-image failed')
+  }
+
+  // Street View para IMÓVEIS (carteira própria) segue no passe diário das 13h.
   if (hour === 13 && minute < 30) {
     try {
       const { batchGenerateStreetView } = await import('./streetview.service.js')
-
-      // Process auctions first (most likely to be missing images)
-      const auctionResult = await batchGenerateStreetView(app.prisma, {
-        type: 'auction', limit: 30, onlyWithCoords: false,
-      })
-      if (auctionResult.updated > 0) {
-        app.log.info(`[scheduled] streetview-batch: Updated ${auctionResult.updated}/${auctionResult.processed} auctions`)
-      }
-
-      // Then properties
       const propResult = await batchGenerateStreetView(app.prisma, {
         type: 'property', limit: 20, onlyWithCoords: true,
       })
