@@ -684,20 +684,37 @@ export default async function auctionsRoutes(app: FastifyInstance) {
   app.get('/:slug', async (req: FastifyRequest<{ Params: { slug: string } }>, reply: FastifyReply) => {
     const { slug } = req.params
 
-    const auction = await app.prisma.auction.findUnique({
-      where: { slug },
-      include: {
-        bids: { orderBy: { bidDate: 'desc' }, take: 10 },
-        analyses: { orderBy: { createdAt: 'desc' }, take: 1 },
-        documents: {
-          orderBy: { capturedAt: 'desc' },
-          select: {
-            id: true, type: true, sourceUrl: true, s3Url: true,
-            mimeType: true, status: true, capturedAt: true,
-          },
+    const includeRelations = {
+      bids: { orderBy: { bidDate: 'desc' as const }, take: 10 },
+      analyses: { orderBy: { createdAt: 'desc' as const }, take: 1 },
+      documents: {
+        orderBy: { capturedAt: 'desc' as const },
+        select: {
+          id: true, type: true, sourceUrl: true, s3Url: true,
+          mimeType: true, status: true, capturedAt: true,
         },
       },
+    }
+
+    let auction = await app.prisma.auction.findUnique({
+      where: { slug },
+      include: includeRelations,
     })
+
+    // Fallback: itens do feed público da Caixa chegam como `public-{id}` (ou o
+    // próprio código do imóvel). Resolvemos para o leilão canônico pelo
+    // externalId — assim TODO leilão listado abre uma landing no AgoraEncontrei
+    // em vez de cair no site do leiloeiro.
+    if (!auction) {
+      const rawId = slug.replace(/^public[-_]/i, '').replace(/^caixa[-_]/i, '')
+      const digits = rawId.replace(/\D/g, '')
+      if (digits) {
+        auction = await app.prisma.auction.findFirst({
+          where: { externalId: { in: [`CAIXA-${digits}`, `CAIXA-${rawId}`, rawId, digits] } },
+          include: includeRelations,
+        })
+      }
+    }
 
     if (!auction) {
       return reply.status(404).send({ error: 'Leilão não encontrado' })

@@ -1112,15 +1112,6 @@ export default function LeiloesClient() {
                     data-testid="auction-card"
                     prefetch={false}
                     className="block"
-                    onClick={(e) => {
-                      // Itens do feed público da Caixa (ao vivo) não têm landing
-                      // própria — para esses, mantém o fluxo de captação. Todos os
-                      // demais abrem a página do leilão no AgoraEncontrei.
-                      if (auction.slug.startsWith('public-')) {
-                        e.preventDefault()
-                        openLeadModal(auction)
-                      }
-                    }}
                   >
                   {/* Image — Real photo > banner padrão de leilão (imagem ilustrativa) */}
                   <div className="relative h-48 bg-gray-200 overflow-hidden">
@@ -1238,6 +1229,20 @@ export default function LeiloesClient() {
                       {auction.auctioneerName && (
                         <span className="text-[10px] px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded font-medium">{auction.auctioneerName}</span>
                       )}
+                    </div>
+
+                    {/* CTAs: ver análise (landing) + captar interesse sem sair do card */}
+                    <div className="mt-3 flex items-center gap-2">
+                      <span className="flex-1 inline-flex items-center justify-center gap-1 rounded-lg bg-[#143A1F] px-3 py-2 text-xs font-bold text-white group-hover:bg-[#1c4d2a] transition">
+                        Ver análise <ArrowRight className="w-3.5 h-3.5" />
+                      </span>
+                      <button
+                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); openLeadModal(auction) }}
+                        className="inline-flex items-center justify-center gap-1 rounded-lg border border-[#C9A84C] px-3 py-2 text-xs font-bold text-[#8a6d1f] hover:bg-[#C9A84C]/10 transition"
+                        title="Tenho interesse neste imóvel"
+                      >
+                        Tenho interesse
+                      </button>
                     </div>
                   </div>
                   </Link>{/* close card link */}
