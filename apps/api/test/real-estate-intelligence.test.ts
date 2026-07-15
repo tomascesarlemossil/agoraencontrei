@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import { estimateMarketValue, identifyNeighborhood } from '../src/services/real-estate-intelligence.service.js'
 import { evaluateToolPolicy } from '../src/services/tomas-policy.js'
 import { capturePropertySnapshot, scoreDuplicate } from '../src/services/property-intelligence-ingestion.service.js'
+import { normalizeTerritorialName, resolveTerritorialAddress } from '../src/services/territorial-intelligence.service.js'
 
 test('ferramentas imobiliárias são leitura pública e preservam fail-closed', () => {
   for (const name of ['identificar_bairro', 'buscar_comparaveis', 'estimar_valor_imovel', 'consultar_indice_bairro', 'consultar_historico_preco']) {
@@ -36,6 +37,32 @@ test('bairro é tratado como inferência, não como fato oficial', async () => {
   assert.equal(result.neighborhood, 'Jardim Paulistano')
   assert.equal(result.classification, 'inference_from_listings')
   assert.match(result.warning, /fonte territorial oficial/i)
+})
+
+test('normalização territorial remove tipo e acentos sem destruir o nome', () => {
+  assert.equal(normalizeTerritorialName('Avenida São Vicente'), 'sao vicente')
+  assert.equal(normalizeTerritorialName('R. das Flores'), 'das flores')
+})
+
+test('cadastro territorial canônico tem precedência sobre inferência de anúncios', async () => {
+  let listingQueries = 0
+  const prisma = {
+    territorialCity: { findFirst: async () => ({ id: 'franca', name: 'Franca', stateCode: 'SP', ibgeCode: '3516200', confidence: 95 }) },
+    territorialStreet: { findFirst: async () => ({
+      id: 'rua-1', name: 'Rua Exemplo', streetType: 'Rua', postalCode: '14400000', confidence: 90,
+      neighborhood: { id: 'bairro-1', name: 'Centro', kind: 'OFFICIAL', confidence: 95 },
+    }) },
+    property: { findMany: async () => { listingQueries++; return [{ neighborhood: 'Bairro divergente' }] } },
+  } as any
+
+  const resolution = await resolveTerritorialAddress(prisma, { city: 'Franca', state: 'SP', street: 'Rua Exemplo' })
+  assert.equal(resolution.classification, 'canonical_street_mapping')
+  assert.equal(resolution.neighborhood?.name, 'Centro')
+
+  const result = await identifyNeighborhood(prisma, { city: 'Franca', street: 'Rua Exemplo' }, { publicOnly: true })
+  assert.equal(result.neighborhood, 'Centro')
+  assert.equal(result.classification, 'canonical_street_mapping')
+  assert.equal(listingQueries, 0)
 })
 
 test('deduplicação pontua candidato sem confirmar automaticamente evidência insuficiente', () => {

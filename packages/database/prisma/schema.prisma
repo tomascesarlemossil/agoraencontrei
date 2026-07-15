@@ -375,6 +375,12 @@ model Property {
   longitude       Float?
   showAddress     Boolean          @default(true)
   condoName       String?
+  territorialCityId         String?
+  territorialNeighborhoodId String?
+  territorialStreetId       String?
+  territorialCity           TerritorialCity?         @relation(fields: [territorialCityId], references: [id], onDelete: SetNull)
+  territorialNeighborhood   TerritorialNeighborhood? @relation(fields: [territorialNeighborhoodId], references: [id], onDelete: SetNull)
+  territorialStreet         TerritorialStreet?       @relation(fields: [territorialStreetId], references: [id], onDelete: SetNull)
 
   // Characteristics
   totalArea       Float?
@@ -506,6 +512,9 @@ model Property {
   @@index([status])
   @@index([type, purpose])
   @@index([city, neighborhood])
+  @@index([territorialCityId])
+  @@index([territorialNeighborhoodId])
+  @@index([territorialStreetId])
   @@index([externalId])
   // Performance indexes for public listing queries (Manus recommendation)
   @@index([companyId, status, authorizedPublish])
@@ -2830,6 +2839,92 @@ model PropertyValuation {
   @@index([propertyId])
   @@index([valuatedAt])
   @@map("property_valuations")
+}
+
+/// Município canônico usado pela inteligência territorial.
+model TerritorialCity {
+  id        String   @id @default(cuid())
+  name      String
+  stateCode String
+  ibgeCode  String?  @unique
+  slug      String
+  sourceId  String?
+  confidence Int     @default(50)
+  isActive  Boolean  @default(true)
+  metadata  Json     @default("{}")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  neighborhoods TerritorialNeighborhood[]
+  streets       TerritorialStreet[]
+  properties    Property[]
+
+  @@unique([stateCode, slug])
+  @@index([name, stateCode])
+  @@map("territorial_cities")
+}
+
+/// Bairro oficial ou operacional, com aliases separados para nomes populares.
+model TerritorialNeighborhood {
+  id           String   @id @default(cuid())
+  cityId       String
+  city         TerritorialCity @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  name         String
+  slug         String
+  kind         String   @default("OFFICIAL") // OFFICIAL | COMMERCIAL | POPULAR
+  sourceId     String?
+  confidence   Int      @default(50)
+  boundary     Json?
+  metadata     Json     @default("{}")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  aliases    TerritorialNeighborhoodAlias[]
+  streets    TerritorialStreet[]
+  properties Property[]
+
+  @@unique([cityId, slug])
+  @@index([cityId, name])
+  @@map("territorial_neighborhoods")
+}
+
+model TerritorialNeighborhoodAlias {
+  id             String   @id @default(cuid())
+  neighborhoodId String
+  neighborhood   TerritorialNeighborhood @relation(fields: [neighborhoodId], references: [id], onDelete: Cascade)
+  name           String
+  normalizedName String
+  sourceId       String?
+  createdAt      DateTime @default(now())
+
+  @@unique([neighborhoodId, normalizedName])
+  @@index([normalizedName])
+  @@map("territorial_neighborhood_aliases")
+}
+
+/// Logradouro canônico. Segmentos e geometria poderão ser acrescentados na etapa PostGIS.
+model TerritorialStreet {
+  id             String   @id @default(cuid())
+  cityId         String
+  city           TerritorialCity @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  neighborhoodId String?
+  neighborhood   TerritorialNeighborhood? @relation(fields: [neighborhoodId], references: [id], onDelete: SetNull)
+  name           String
+  normalizedName String
+  streetType     String?
+  postalCode     String?
+  sourceId       String?
+  confidence     Int      @default(50)
+  metadata       Json     @default("{}")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  properties Property[]
+
+  @@unique([cityId, normalizedName, neighborhoodId])
+  @@index([cityId, normalizedName])
+  @@index([postalCode])
+  @@map("territorial_streets")
 }
 
 /// Fonte autorizada utilizada pela inteligência imobiliária.

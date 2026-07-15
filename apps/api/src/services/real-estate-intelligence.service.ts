@@ -1,4 +1,5 @@
 import type { PrismaClient } from '@prisma/client'
+import { resolveTerritorialAddress } from './territorial-intelligence.service.js'
 
 type Scope = { companyId?: string; publicOnly: boolean }
 type ComparableInput = {
@@ -35,6 +36,23 @@ function scopedWhere(scope: Scope): Record<string, unknown> {
 }
 
 export async function identifyNeighborhood(prisma: PrismaClient, input: { city: string; street: string }, scope: Scope) {
+  try {
+    const territorial = await resolveTerritorialAddress(prisma, input)
+    if (territorial.resolved && territorial.neighborhood) {
+      const territorialConfidence = territorial.confidence ?? 0
+      return {
+        classification: territorial.classification,
+        neighborhood: territorial.neighborhood.name,
+        confidence: territorialConfidence >= 85 ? 'high' : territorialConfidence >= 60 ? 'moderate' : 'low',
+        confidenceScore: territorialConfidence,
+        references: 1,
+        candidates: [{ name: territorial.neighborhood.name, references: 1 }],
+        territorial,
+        warning: undefined,
+      }
+    }
+  } catch { /* cadastro territorial pode ainda não estar migrado */ }
+
   const rows = await prisma.property.findMany({
     where: { ...scopedWhere(scope), city: { contains: input.city, mode: 'insensitive' }, street: { contains: input.street, mode: 'insensitive' }, neighborhood: { not: null } } as any,
     select: { neighborhood: true }, take: 50,

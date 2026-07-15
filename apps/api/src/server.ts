@@ -1486,6 +1486,69 @@ async function runMigrations(prisma: any) {
     `CREATE UNIQUE INDEX IF NOT EXISTS "intelligence_data_sources_slug_key" ON "intelligence_data_sources"("slug")`,
     `CREATE INDEX IF NOT EXISTS "intelligence_data_sources_kind_isActive_idx" ON "intelligence_data_sources"("kind","isActive")`,
     `CREATE INDEX IF NOT EXISTS "intelligence_data_sources_legalStatus_idx" ON "intelligence_data_sources"("legalStatus")`,
+    `CREATE TABLE IF NOT EXISTS "territorial_cities" (
+      "id" TEXT PRIMARY KEY, "name" TEXT NOT NULL, "stateCode" TEXT NOT NULL,
+      "ibgeCode" TEXT, "slug" TEXT NOT NULL, "sourceId" TEXT,
+      "confidence" INTEGER NOT NULL DEFAULT 50, "isActive" BOOLEAN NOT NULL DEFAULT true,
+      "metadata" JSONB NOT NULL DEFAULT '{}', "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )`,
+    `CREATE UNIQUE INDEX IF NOT EXISTS "territorial_cities_ibgeCode_key" ON "territorial_cities"("ibgeCode")`,
+    `CREATE UNIQUE INDEX IF NOT EXISTS "territorial_cities_stateCode_slug_key" ON "territorial_cities"("stateCode","slug")`,
+    `CREATE INDEX IF NOT EXISTS "territorial_cities_name_stateCode_idx" ON "territorial_cities"("name","stateCode")`,
+    `CREATE TABLE IF NOT EXISTS "territorial_neighborhoods" (
+      "id" TEXT PRIMARY KEY, "cityId" TEXT NOT NULL, "name" TEXT NOT NULL, "slug" TEXT NOT NULL,
+      "kind" TEXT NOT NULL DEFAULT 'OFFICIAL', "sourceId" TEXT, "confidence" INTEGER NOT NULL DEFAULT 50,
+      "boundary" JSONB, "metadata" JSONB NOT NULL DEFAULT '{}', "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )`,
+    `CREATE UNIQUE INDEX IF NOT EXISTS "territorial_neighborhoods_cityId_slug_key" ON "territorial_neighborhoods"("cityId","slug")`,
+    `CREATE INDEX IF NOT EXISTS "territorial_neighborhoods_cityId_name_idx" ON "territorial_neighborhoods"("cityId","name")`,
+    `CREATE TABLE IF NOT EXISTS "territorial_neighborhood_aliases" (
+      "id" TEXT PRIMARY KEY, "neighborhoodId" TEXT NOT NULL, "name" TEXT NOT NULL,
+      "normalizedName" TEXT NOT NULL, "sourceId" TEXT, "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )`,
+    `CREATE UNIQUE INDEX IF NOT EXISTS "territorial_neighborhood_aliases_neighborhoodId_normalizedName_key" ON "territorial_neighborhood_aliases"("neighborhoodId","normalizedName")`,
+    `CREATE INDEX IF NOT EXISTS "territorial_neighborhood_aliases_normalizedName_idx" ON "territorial_neighborhood_aliases"("normalizedName")`,
+    `CREATE TABLE IF NOT EXISTS "territorial_streets" (
+      "id" TEXT PRIMARY KEY, "cityId" TEXT NOT NULL, "neighborhoodId" TEXT,
+      "name" TEXT NOT NULL, "normalizedName" TEXT NOT NULL, "streetType" TEXT,
+      "postalCode" TEXT, "sourceId" TEXT, "confidence" INTEGER NOT NULL DEFAULT 50,
+      "metadata" JSONB NOT NULL DEFAULT '{}', "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )`,
+    `CREATE UNIQUE INDEX IF NOT EXISTS "territorial_streets_cityId_normalizedName_neighborhoodId_key" ON "territorial_streets"("cityId","normalizedName","neighborhoodId")`,
+    `CREATE INDEX IF NOT EXISTS "territorial_streets_cityId_normalizedName_idx" ON "territorial_streets"("cityId","normalizedName")`,
+    `CREATE INDEX IF NOT EXISTS "territorial_streets_postalCode_idx" ON "territorial_streets"("postalCode")`,
+    `ALTER TABLE "properties" ADD COLUMN IF NOT EXISTS "territorialCityId" TEXT`,
+    `ALTER TABLE "properties" ADD COLUMN IF NOT EXISTS "territorialNeighborhoodId" TEXT`,
+    `ALTER TABLE "properties" ADD COLUMN IF NOT EXISTS "territorialStreetId" TEXT`,
+    `CREATE INDEX IF NOT EXISTS "properties_territorialCityId_idx" ON "properties"("territorialCityId")`,
+    `CREATE INDEX IF NOT EXISTS "properties_territorialNeighborhoodId_idx" ON "properties"("territorialNeighborhoodId")`,
+    `CREATE INDEX IF NOT EXISTS "properties_territorialStreetId_idx" ON "properties"("territorialStreetId")`,
+    `DO $$ BEGIN
+      IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'territorial_neighborhoods_cityId_fkey') THEN
+        ALTER TABLE "territorial_neighborhoods" ADD CONSTRAINT "territorial_neighborhoods_cityId_fkey" FOREIGN KEY ("cityId") REFERENCES "territorial_cities"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+      END IF;
+      IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'territorial_neighborhood_aliases_neighborhoodId_fkey') THEN
+        ALTER TABLE "territorial_neighborhood_aliases" ADD CONSTRAINT "territorial_neighborhood_aliases_neighborhoodId_fkey" FOREIGN KEY ("neighborhoodId") REFERENCES "territorial_neighborhoods"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+      END IF;
+      IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'territorial_streets_cityId_fkey') THEN
+        ALTER TABLE "territorial_streets" ADD CONSTRAINT "territorial_streets_cityId_fkey" FOREIGN KEY ("cityId") REFERENCES "territorial_cities"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+      END IF;
+      IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'territorial_streets_neighborhoodId_fkey') THEN
+        ALTER TABLE "territorial_streets" ADD CONSTRAINT "territorial_streets_neighborhoodId_fkey" FOREIGN KEY ("neighborhoodId") REFERENCES "territorial_neighborhoods"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+      END IF;
+      IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'properties_territorialCityId_fkey') THEN
+        ALTER TABLE "properties" ADD CONSTRAINT "properties_territorialCityId_fkey" FOREIGN KEY ("territorialCityId") REFERENCES "territorial_cities"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+      END IF;
+      IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'properties_territorialNeighborhoodId_fkey') THEN
+        ALTER TABLE "properties" ADD CONSTRAINT "properties_territorialNeighborhoodId_fkey" FOREIGN KEY ("territorialNeighborhoodId") REFERENCES "territorial_neighborhoods"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+      END IF;
+      IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'properties_territorialStreetId_fkey') THEN
+        ALTER TABLE "properties" ADD CONSTRAINT "properties_territorialStreetId_fkey" FOREIGN KEY ("territorialStreetId") REFERENCES "territorial_streets"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+      END IF;
+    END $$`,
     `CREATE TABLE IF NOT EXISTS "property_listing_snapshots" (
       "id" TEXT PRIMARY KEY, "propertyId" TEXT NOT NULL, "sourceId" TEXT,
       "externalListingId" TEXT, "sourceUrl" TEXT, "capturedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
