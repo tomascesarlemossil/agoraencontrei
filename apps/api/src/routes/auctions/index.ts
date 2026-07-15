@@ -6,6 +6,7 @@ import { calculateAcquisitionCosts, getStateCosts, validateDocument } from '../.
 import { CaixaScraper } from '../../services/scrapers/caixa-scraper.js'
 import { GenericLeiloeiroScraper, BANCOS_CONFIG } from '../../services/scrapers/generic-scraper.js'
 import { computeRealDiscount } from '../../services/auction-real-discount.service.js'
+import { findComparables } from '../../services/auction-comparables.service.js'
 
 // ── Schemas de validação ────────────────────────────────────────────────────
 
@@ -745,7 +746,28 @@ export default async function auctionsRoutes(app: FastifyInstance) {
       }).catch(() => null),
     ])
 
-    // Desconto Real AE — vantagem líquida real (mercado − lance − custos).
+    // Comparáveis automáticos + detector de avaliação inflada (§2/§6/§7).
+    const comparables = await findComparables(app.prisma, {
+      id: auction.id, city: auction.city, state: auction.state,
+      neighborhood: auction.neighborhood, propertyType: auction.propertyType,
+      latitude: auction.latitude, longitude: auction.longitude,
+      totalArea: auction.totalArea, builtArea: auction.builtArea, landArea: auction.landArea,
+      appraisalValue: auction.appraisalValue ? Number(auction.appraisalValue) : null,
+      minimumBid: auction.minimumBid ? Number(auction.minimumBid) : null,
+      discountPercent: auction.discountPercent,
+    }).catch(() => null)
+
+    // Desconto Real AE — usa os comparáveis como âncora de mercado quando há.
+    const marketOverride = comparables?.marketEstimate
+      ? {
+          conservative: comparables.marketEstimate.conservative,
+          confidence: comparables.marketEstimate.confidence,
+          pricePerM2: comparables.marketEstimate.pricePerM2,
+          sampleSize: comparables.marketEstimate.sampleSize,
+          originLabel: `Comparáveis da região (${comparables.marketEstimate.sampleSize} imóveis)`,
+          note: comparables.marketEstimate.note,
+        }
+      : null
     const realDiscount = await computeRealDiscount(app.prisma, {
       city: auction.city, state: auction.state, propertyType: auction.propertyType,
       totalArea: auction.totalArea, builtArea: auction.builtArea, landArea: auction.landArea,
@@ -753,9 +775,9 @@ export default async function auctionsRoutes(app: FastifyInstance) {
       minimumBid: auction.minimumBid ? Number(auction.minimumBid) : null,
       marketPriceEstimate: auction.marketPriceEstimate ? Number(auction.marketPriceEstimate) : null,
       occupation: auction.occupation, discountPercent: auction.discountPercent,
-    }).catch(() => null)
+    }, marketOverride).catch(() => null)
 
-    return reply.send({ ...auction, relatedAuctions, realDiscount })
+    return reply.send({ ...auction, relatedAuctions, realDiscount, comparables })
   })
 
   // ── POST /auctions/calculate — Calculadora financeira ──────────────────────
