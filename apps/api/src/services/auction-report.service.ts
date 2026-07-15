@@ -123,7 +123,7 @@ export async function buildAuctionReport(prisma: PrismaClient, f: AuctionReportF
       opportunityScore: true, totalArea: true, propertyType: true, category: true,
       neighborhood: true, city: true, state: true, status: true, occupation: true,
       auctionDate: true, auctionEndDate: true, editalUrl: true, registryNumber: true,
-      documentsUrls: true, createdAt: true,
+      registryOffice: true, documentsUrls: true, createdAt: true, soldDate: true,
     },
     take: CAP,
   })
@@ -196,6 +196,29 @@ export async function buildAuctionReport(prisma: PrismaClient, f: AuctionReportF
       occupation: r.occupation, auctionDate: r.auctionEndDate || r.auctionDate,
     }))
 
+  // Histórico permanente: leilões encerrados/arrematados continuam acessíveis
+  // (análise + matrícula) mesmo depois de finalizados. Ordena pelos mais
+  // recentes (data de arremate → fim → criação).
+  const closedStatuses = new Set(['SOLD', 'CLOSED', 'DESERTED', 'SUSPENDED'])
+  const historyTime = (r: typeof rows[number]) =>
+    (r.soldDate ? new Date(r.soldDate).getTime() : 0) ||
+    (r.auctionEndDate ? new Date(r.auctionEndDate).getTime() : 0) ||
+    (r.createdAt ? new Date(r.createdAt).getTime() : 0)
+  const history = rows
+    .filter((r) => closedStatuses.has(r.status))
+    .sort((a, b) => historyTime(b) - historyTime(a))
+    .slice(0, 40)
+    .map((r) => ({
+      slug: r.slug, title: r.title, city: r.city, state: r.state, neighborhood: r.neighborhood,
+      status: r.status, source: r.auctioneerName || r.source, coverImage: r.coverImage,
+      appraisalValue: toNum(r.appraisalValue), minimumBid: toNum(r.minimumBid),
+      soldValue: toNum(r.soldValue), soldDate: r.soldDate ?? null,
+      discountPercent: r.discountPercent,
+      registryNumber: r.registryNumber ?? null, registryOffice: r.registryOffice ?? null,
+      hasMatricula: !!r.registryNumber || (r.documentsUrls || []).some((u) => /matricula/i.test(u)),
+      hasDocuments: !!r.editalUrl || (r.documentsUrls || []).length > 0,
+    }))
+
   const count = (predicate: (r: typeof rows[number]) => boolean) => rows.filter(predicate).length
   const dataQuality = {
     withAppraisal: count((r) => toNum(r.appraisalValue) != null),
@@ -248,5 +271,6 @@ export async function buildAuctionReport(prisma: PrismaClient, f: AuctionReportF
     topNeighborhoods: neighborhoods,
     dataQuality,
     opportunities,
+    history,
   }
 }
