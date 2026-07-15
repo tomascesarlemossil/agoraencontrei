@@ -34,20 +34,28 @@ export async function resolveTerritorialAddress(prisma: PrismaClient, input: Ter
   if (!city) return { resolved: false, reason: 'city_not_mapped', classification: 'unresolved' }
 
   const normalizedStreet = normalizeTerritorialName(input.street)
-  const street = normalizedStreet
-    ? await client.territorialStreet?.findFirst({
-        where: {
-          cityId: city.id,
-          normalizedName: normalizedStreet,
-          ...(input.postalCode ? { postalCode: input.postalCode.replace(/\D/g, '') } : {}),
-        },
-        select: {
-          id: true, name: true, streetType: true, postalCode: true, confidence: true,
-          neighborhood: { select: { id: true, name: true, kind: true, confidence: true } },
-        },
+  const streetSelect = {
+    id: true, name: true, streetType: true, postalCode: true, confidence: true,
+    neighborhood: { select: { id: true, name: true, kind: true, confidence: true } },
+  }
+  let street = null
+  if (normalizedStreet) {
+    const normalizedPostalCode = input.postalCode?.replace(/\D/g, '')
+    if (normalizedPostalCode) {
+      street = await client.territorialStreet?.findFirst({
+        where: { cityId: city.id, normalizedName: normalizedStreet, postalCode: normalizedPostalCode },
+        select: streetSelect,
         orderBy: { confidence: 'desc' },
       })
-    : null
+    }
+    if (!street) {
+      street = await client.territorialStreet?.findFirst({
+        where: { cityId: city.id, normalizedName: normalizedStreet },
+        select: streetSelect,
+        orderBy: { confidence: 'desc' },
+      })
+    }
+  }
 
   let neighborhood = street?.neighborhood || null
   if (!neighborhood && input.neighborhood) {
@@ -75,4 +83,3 @@ export async function resolveTerritorialAddress(prisma: PrismaClient, input: Ter
     warning: street || neighborhood ? undefined : 'Cidade mapeada, mas logradouro e bairro ainda não foram confirmados no cadastro territorial.',
   }
 }
-

@@ -67,6 +67,21 @@ test('cadastro territorial canônico tem precedência sobre inferência de anún
   assert.equal(listingQueries, 0)
 })
 
+test('resolução territorial usa CEP como preferência e recua para rua oficial sem CEP', async () => {
+  let streetQueries = 0
+  const prisma = {
+    territorialCity: { findFirst: async () => ({ id: 'franca', name: 'Franca', stateCode: 'SP', confidence: 95 }) },
+    territorialStreet: { findFirst: async ({ where }: any) => {
+      streetQueries++
+      if (where.postalCode) return null
+      return { id: 'rua-ibge', name: 'Rua Exemplo', streetType: 'Rua', postalCode: null, confidence: 85, neighborhood: null }
+    } },
+  } as any
+  const result = await resolveTerritorialAddress(prisma, { city: 'Franca', state: 'SP', street: 'Rua Exemplo', postalCode: '14400-000' })
+  assert.equal(result.street?.id, 'rua-ibge')
+  assert.equal(streetQueries, 2)
+})
+
 test('importação territorial valida UF e confiança e aceita rua sem bairro confirmado', () => {
   assert.deepEqual(validateTerritorialImportRow({ city: 'Franca', state: 'SP', neighborhood: 'Centro' }), { valid: true, errors: [] })
   assert.deepEqual(validateTerritorialImportRow({ city: 'Franca', state: 'SP', street: 'Rua oficial sem bairro confirmado' }), { valid: true, errors: [] })
