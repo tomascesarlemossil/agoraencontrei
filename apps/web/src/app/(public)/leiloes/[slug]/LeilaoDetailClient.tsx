@@ -17,6 +17,66 @@ function formatDate(date: string | null | undefined): string {
   return new Date(date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })
 }
 
+// Relatório profissional em PDF (§15): abre uma janela com o dossiê formatado
+// e dispara a impressão (o usuário salva como PDF). Self-contained — monta o
+// HTML a partir dos dados de análise já em memória, sem dependências externas.
+function openReport(a: any) {
+  const brl = (n: number | null | undefined) => (n == null ? '—' : new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(Number(n)))
+  const esc = (s: any) => String(s ?? '').replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' } as any)[c])
+  const rd = a.realDiscount, sc = a.agoraScore, cmp = a.comparables, rm = a.riskMatrix, dv = a.divergences
+  const sec = (title: string, body: string) => body ? `<h2>${title}</h2>${body}` : ''
+
+  const scoreBody = sc ? `<p class="big">${sc.score}/100 — <b>${esc(sc.gradeLabel)}</b> · confiança ${sc.confidence}%</p>
+    <table>${(sc.criteria || []).map((c: any) => `<tr><td>${esc(c.label)}</td><td class="r">${c.points}/${c.weight}</td><td>${esc(c.note)}</td></tr>`).join('')}</table>` : ''
+
+  const rdBody = rd && rd.verdict !== 'INSUFFICIENT_DATA' ? `<table>
+    <tr><td>Lance mínimo</td><td class="r">${brl(rd.minimumBid)}</td></tr>
+    <tr><td>Investimento total estimado</td><td class="r">${brl(rd.totalInvestment)}</td></tr>
+    <tr><td>Valor de mercado (conservador)</td><td class="r">${brl(rd.marketValue?.conservative)}</td></tr>
+    <tr><td>Margem líquida</td><td class="r">${brl(rd.netMargin)} (${rd.netMarginPercent ?? '—'}%)</td></tr>
+    <tr><td>Desconto real AE</td><td class="r">${rd.realDiscountPercent ?? '—'}%</td></tr>
+    <tr><td>Lance máx. recomendado (${rd.targetReturnPercent}%)</td><td class="r">${brl(rd.maxRecommendedBid)}</td></tr>
+    </table><p class="small">Mercado: ${esc(rd.marketValue?.originLabel || '')} — ${esc(rd.marketValue?.note || '')}</p>` : ''
+
+  const cmpBody = cmp?.marketEstimate ? `<p>Conservador ${brl(cmp.marketEstimate.conservative)} · Provável ${brl(cmp.marketEstimate.likely)} · Otimista ${brl(cmp.marketEstimate.optimistic)} (confiança ${cmp.marketEstimate.confidence}%)</p>
+    ${cmp.inflatedAppraisal?.message ? `<p class="small">${esc(cmp.inflatedAppraisal.message)}</p>` : ''}
+    <table>${(cmp.comparables || []).slice(0, 8).map((c: any) => `<tr><td>${esc(c.title)}</td><td>${esc(c.neighborhood || '')}</td><td class="r">${c.totalArea ? Math.round(c.totalArea) + 'm²' : '—'}</td><td class="r">${brl(c.pricePerM2)}/m²</td></tr>`).join('')}</table>` : ''
+
+  const rmBody = rm ? `<p>Risco geral: <b>${esc(rm.overall)}</b></p><table>${(rm.dimensions || []).map((d: any) => `<tr><td>${esc(d.label)}</td><td class="r">${esc(d.level)}</td><td>${esc(d.situation)}</td></tr>`).join('')}</table>` : ''
+  const dvBody = dv?.count > 0 ? `<ul>${dv.divergences.map((d: any) => `<li>[${esc(d.severity)}] ${esc(d.message)}</li>`).join('')}</ul>` : ''
+
+  const html = `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Relatório — ${esc(a.title)}</title>
+  <style>
+    *{box-sizing:border-box} body{font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#1f2937;margin:32px;line-height:1.5}
+    header{border-bottom:3px solid #143A1F;padding-bottom:12px;margin-bottom:20px}
+    h1{font-size:20px;margin:0 0 4px} h2{font-size:14px;color:#143A1F;margin:20px 0 8px;border-bottom:1px solid #e5e7eb;padding-bottom:4px}
+    .muted{color:#6b7280;font-size:12px} .big{font-size:16px} .small{font-size:11px;color:#6b7280}
+    table{width:100%;border-collapse:collapse;font-size:12px;margin:6px 0} td{border-bottom:1px solid #f0f0f0;padding:4px 6px;vertical-align:top} .r{text-align:right;white-space:nowrap;font-weight:600}
+    ul{font-size:12px;margin:6px 0;padding-left:18px} .brand{color:#C9A84C;font-weight:700}
+    footer{margin-top:28px;border-top:1px solid #e5e7eb;padding-top:10px;font-size:10px;color:#9ca3af}
+    @media print{body{margin:12mm}}
+  </style></head><body>
+    <header>
+      <div class="brand">AgoraEncontrei — Inteligência de Leilões</div>
+      <h1>${esc(a.title)}</h1>
+      <div class="muted">${esc([a.neighborhood, a.city, a.state].filter(Boolean).join(', '))} · ${esc(sourceLabel(a.source))} · Lance mínimo ${brl(Number(a.minimumBid))}${a.analysisSnapshotAt ? ' · análise registrada no encerramento' : ''}</div>
+    </header>
+    ${sec('Nota AgoraEncontrei', scoreBody)}
+    ${sec('Desconto Real AE — vale a pena?', rdBody)}
+    ${sec('Comparáveis e valor de mercado', cmpBody)}
+    ${sec('Mapa de risco documental', rmBody)}
+    ${sec('Divergências encontradas', dvBody)}
+    <footer>Relatório gerado pelo AgoraEncontrei a partir de dados públicos e estimativas com premissas conservadoras. Não substitui a leitura do edital, da matrícula e de parecer jurídico. ${new Date().toLocaleString('pt-BR')}</footer>
+  </body></html>`
+
+  const w = window.open('', '_blank')
+  if (!w) return
+  w.document.write(html)
+  w.document.close()
+  w.focus()
+  setTimeout(() => w.print(), 350)
+}
+
 function sourceLabel(source: string): string {
   const labels: Record<string, string> = {
     CAIXA: 'Caixa Econômica', BANCO_DO_BRASIL: 'Banco do Brasil',
@@ -540,6 +600,11 @@ export default function LeilaoDetailClient({ auction, initialAnalysis = null }: 
                 <ExternalLink className="w-3.5 h-3.5" /> Ver Original
               </a>
             )}
+            <button
+              onClick={() => openReport(auction)}
+              className="flex items-center gap-1 text-sm font-semibold text-[#143A1F] hover:underline">
+              <FileText className="w-3.5 h-3.5" /> Baixar relatório
+            </button>
             <button
               onClick={() => navigator.share?.({ title: auction.title, url: window.location.href }).catch(() => {})}
               className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-800">
