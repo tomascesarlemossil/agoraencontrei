@@ -15,6 +15,7 @@ import Link from 'next/link'
 import { resolveTheme } from '@/lib/site-factory/theme-registry'
 import TomasWidget from '@/components/tomas/TomasWidget'
 import { PartnerChatWidget } from '@/components/partner/PartnerChatWidget'
+import PropertyImage from '@/components/partner/PropertyImage'
 
 // Render ao vivo: evita 404 preso no cache ISR/CDN quando a API tem um blip.
 export const dynamic = 'force-dynamic'
@@ -198,13 +199,22 @@ export default async function TenantPropertyPage({
             <div className={`${theme.card} border rounded-2xl overflow-hidden`}>
               {gallery.length > 0 ? (
                 <>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={gallery[0]} alt={property.title} className="w-full h-[280px] sm:h-[420px] object-cover" />
+                  <PropertyImage
+                    src={gallery[0]}
+                    alt={property.title}
+                    className="w-full h-[280px] sm:h-[420px] object-cover"
+                    fallbackStyle={{ background: `linear-gradient(135deg, ${accentColor}22, ${accentColor}0a)` }}
+                  />
                   {gallery.length > 1 && (
                     <div className="grid grid-cols-4 gap-1 p-1">
                       {gallery.slice(1, 9).map((img, i) => (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img key={i} src={img} alt={`${property.title} ${i + 2}`} className="w-full h-20 sm:h-24 object-cover rounded" />
+                        <PropertyImage
+                          key={i}
+                          src={img}
+                          alt={`${property.title} ${i + 2}`}
+                          className="w-full h-20 sm:h-24 object-cover rounded"
+                          fallbackStyle={{ background: `linear-gradient(135deg, ${accentColor}22, ${accentColor}0a)` }}
+                        />
                       ))}
                     </div>
                   )}

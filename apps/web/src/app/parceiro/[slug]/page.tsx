@@ -11,6 +11,7 @@ import type { Metadata } from 'next'
 import { resolveTheme, type ThemeConfig } from '@/lib/site-factory/theme-registry'
 import TomasWidget from '@/components/tomas/TomasWidget'
 import { PartnerChatWidget } from '@/components/partner/PartnerChatWidget'
+import PropertyImage from '@/components/partner/PropertyImage'
 
 // Render ao vivo: evita 404 preso no cache ISR/CDN quando a API tem um blip.
 export const dynamic = 'force-dynamic'
@@ -509,20 +510,12 @@ export default async function TenantPage({
                 >
                   {/* Imagem */}
                   <div className="h-48 relative overflow-hidden">
-                    {property.coverImage || (property.images && property.images.length > 0) ? (
-                      <img
-                        src={property.coverImage || property.images[0]}
-                        alt={property.title}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div
-                        className="w-full h-full flex items-center justify-center"
-                        style={{ background: `linear-gradient(135deg, ${accentColor}33, ${accentColor}11)` }}
-                      >
-                        <span className="text-4xl opacity-20">🏠</span>
-                      </div>
-                    )}
+                    <PropertyImage
+                      src={property.coverImage || property.images?.[0]}
+                      alt={property.title}
+                      className="w-full h-full object-cover"
+                      fallbackStyle={{ background: `linear-gradient(135deg, ${accentColor}33, ${accentColor}11)` }}
+                    />
                     {/* Badge de destaque */}
                     <PropertyBadge property={property} theme={theme} accentColor={accentColor} />
                     {/* Badge de tipo */}
