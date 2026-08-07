@@ -213,6 +213,32 @@ const INFLATED_UI: Record<string, { label: string; cls: string }> = {
   UNKNOWN: { label: 'Sem comparáveis suficientes', cls: 'bg-gray-50 text-gray-700 border-gray-200' },
 }
 
+const DIV_UI: Record<string, string> = {
+  ALTA: 'text-red-700 bg-red-500', MEDIA: 'text-yellow-700 bg-yellow-500', BAIXA: 'text-gray-600 bg-gray-400',
+}
+function DivergencesPanel({ d }: { d: any }) {
+  return (
+    <div className="bg-white rounded-xl p-6 shadow-sm border-l-4 border-amber-400">
+      <div className="mb-3 flex items-center gap-2">
+        <AlertTriangle className="w-5 h-5 text-amber-500" />
+        <h2 className="text-lg font-bold text-gray-800">Divergências encontradas ({d.count})</h2>
+      </div>
+      <ul className="space-y-2">
+        {d.divergences.map((item: any) => {
+          const cls = (DIV_UI[item.severity] || DIV_UI.BAIXA).split(' ')
+          return (
+            <li key={item.key} className="flex items-start gap-2">
+              <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${cls[1]}`} />
+              <p className="text-sm text-gray-700"><span className={`text-xs font-bold ${cls[0]}`}>[{item.severity}]</span> {item.message}</p>
+            </li>
+          )
+        })}
+      </ul>
+      <p className="mt-3 text-[11px] leading-4 text-gray-400">Sinais automáticos a partir dos dados publicados. Confirme os valores no edital e na matrícula antes de decidir.</p>
+    </div>
+  )
+}
+
 function PropertyTimelinePanel({ pt, currentSlug }: { pt: any; currentSlug: string }) {
   const reductions: any[] = pt.republication?.reasons || pt.republication?.reductions || []
   const totalRed = reductions.reduce((a: number, r: any) => a + (r.from - r.to), 0)
@@ -530,6 +556,9 @@ export default function LeilaoDetailClient({ auction, initialAnalysis = null }: 
 
             {/* Mapa de risco documental (§22) */}
             {auction.riskMatrix && <RiskMatrixPanel rm={auction.riskMatrix} />}
+
+            {/* Detector de divergências (§23) */}
+            {auction.divergences?.count > 0 && <DivergencesPanel d={auction.divergences} />}
 
             {/* Histórico deste imóvel — republicações e reduções (§6/§19) */}
             {auction.propertyTimeline && <PropertyTimelinePanel pt={auction.propertyTimeline} currentSlug={auction.slug} />}

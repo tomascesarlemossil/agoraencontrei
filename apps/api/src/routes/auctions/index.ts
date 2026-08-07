@@ -10,6 +10,7 @@ import { findComparables } from '../../services/auction-comparables.service.js'
 import { computeAgoraScore } from '../../services/auction-score.service.js'
 import { computeRiskMatrix } from '../../services/auction-risk.service.js'
 import { getPropertyTimeline } from '../../services/auction-identity.service.js'
+import { computeDivergences } from '../../services/auction-divergence.service.js'
 
 // ── Schemas de validação ────────────────────────────────────────────────────
 
@@ -798,6 +799,17 @@ export default async function auctionsRoutes(app: FastifyInstance) {
       }
     }
 
+    // Detector de divergências (§23) — inconsistências nos dados do leilão.
+    const divergences = computeDivergences({
+      title: auction.title, description: auction.description, propertyType: auction.propertyType,
+      totalArea: auction.totalArea, builtArea: auction.builtArea, landArea: auction.landArea,
+      bedrooms: auction.bedrooms,
+      appraisalValue: auction.appraisalValue ? Number(auction.appraisalValue) : null,
+      minimumBid: auction.minimumBid ? Number(auction.minimumBid) : null,
+      discountPercent: auction.discountPercent,
+      timeline: propertyTimeline?.timeline?.map((t: any) => ({ appraisalValue: t.appraisalValue, totalArea: null })) ?? null,
+    })
+
     // Mapa de risco documental (§22) — puro, a partir dos campos do leilão.
     const riskMatrix = computeRiskMatrix({
       occupation: auction.occupation, hasDebts: auction.hasDebts, debtDetails: auction.debtDetails,
@@ -817,7 +829,7 @@ export default async function auctionsRoutes(app: FastifyInstance) {
         comparables: snap.comparables ?? comparables,
         agoraScore: snap.agoraScore ?? null,
         analysisSnapshotAt: (auction as any).analysisSnapshotAt,
-        riskMatrix, propertyTimeline,
+        riskMatrix, propertyTimeline, divergences,
       })
     }
 
@@ -836,7 +848,7 @@ export default async function auctionsRoutes(app: FastifyInstance) {
       comparables,
     )
 
-    return reply.send({ ...auction, relatedAuctions, realDiscount, comparables, agoraScore, riskMatrix, propertyTimeline })
+    return reply.send({ ...auction, relatedAuctions, realDiscount, comparables, agoraScore, riskMatrix, propertyTimeline, divergences })
   })
 
   // ── POST /auctions/calculate — Calculadora financeira ──────────────────────
