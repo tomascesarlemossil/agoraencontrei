@@ -10,6 +10,7 @@ import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import { resolveTheme } from '@/lib/site-factory/theme-registry'
 import { MapSearch } from '@/app/(public)/imoveis/MapSearch'
+import PropertyImage from '@/components/partner/PropertyImage'
 
 // Render ao vivo: evita 404 preso no cache ISR/CDN quando a API tem um blip.
 export const dynamic = 'force-dynamic'
@@ -219,14 +220,12 @@ export default async function TenantCatalogPage({
                   className={`${theme.card} ${theme.cardHover} border rounded-xl overflow-hidden transition-all duration-300 block`}
                 >
                   <div className="h-48 relative overflow-hidden">
-                    {property.coverImage || property.images?.[0] ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={property.coverImage || property.images[0]} alt={property.title} className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center" style={{ background: `linear-gradient(135deg, ${accentColor}33, ${accentColor}11)` }}>
-                        <span className="text-4xl opacity-20">🏠</span>
-                      </div>
-                    )}
+                    <PropertyImage
+                      src={property.coverImage || property.images?.[0]}
+                      alt={property.title}
+                      className="w-full h-full object-cover"
+                      fallbackStyle={{ background: `linear-gradient(135deg, ${accentColor}33, ${accentColor}11)` }}
+                    />
                     {property.isPremium && <span className="absolute top-2 left-2 rounded-full px-2 py-0.5 text-[10px] font-bold text-white" style={{ backgroundColor: '#e11d48' }}>🌟 Super Destaque</span>}
                     {property.isFeatured && !property.isPremium && <span className="absolute top-2 left-2 rounded-full px-2 py-0.5 text-[10px] font-bold text-white" style={{ backgroundColor: accentColor }}>⭐ Destaque</span>}
                     <span className="absolute top-2 right-2 rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ backgroundColor: `${accentColor}22`, color: accentColor, backdropFilter: 'blur(4px)' }}>
