@@ -213,6 +213,92 @@ const INFLATED_UI: Record<string, { label: string; cls: string }> = {
   UNKNOWN: { label: 'Sem comparáveis suficientes', cls: 'bg-gray-50 text-gray-700 border-gray-200' },
 }
 
+const DOC_SEV_UI: Record<string, { label: string; dot: string; cls: string }> = {
+  ALTA: { label: 'Alta', dot: 'bg-red-500', cls: 'text-red-700' },
+  MEDIA: { label: 'Média', dot: 'bg-yellow-500', cls: 'text-yellow-700' },
+  BAIXA: { label: 'Baixa', dot: 'bg-gray-400', cls: 'text-gray-600' },
+  INFO: { label: 'Info', dot: 'bg-blue-400', cls: 'text-blue-700' },
+}
+
+function DocumentAnalysisSection({ slug }: { slug: string }) {
+  const [state, setState] = useState<'idle' | 'loading' | 'done' | 'error'>('idle')
+  const [data, setData] = useState<any>(null)
+
+  const analyze = async () => {
+    setState('loading')
+    try {
+      const r = await fetch(`${API_URL}/api/v1/auctions/${slug}/document-analysis`)
+      if (!r.ok) throw new Error('fail')
+      setData(await r.json())
+      setState('done')
+    } catch { setState('error') }
+  }
+
+  return (
+    <div className="bg-white rounded-xl p-6 shadow-sm">
+      <div className="mb-2 flex items-center gap-2">
+        <FileText className="w-5 h-5 text-[#C9A84C]" />
+        <h2 className="text-lg font-bold text-gray-800">Leitura do edital e da matrícula</h2>
+      </div>
+      {state === 'idle' && (
+        <>
+          <p className="mb-3 text-sm text-gray-500">Análise automática dos documentos arquivados: identifica matrícula, cartório, processo e pontos de atenção (penhora, hipoteca, usufruto, ocupação, débitos).</p>
+          <button onClick={analyze} className="rounded-lg bg-[#143A1F] px-4 py-2 text-sm font-bold text-white hover:bg-[#1c4d2a]">Analisar documentos</button>
+        </>
+      )}
+      {state === 'loading' && <p className="text-sm text-gray-500">Lendo documentos…</p>}
+      {state === 'error' && <p className="text-sm text-red-600">Não foi possível analisar os documentos agora.</p>}
+      {state === 'done' && data && (
+        !data.hasText ? (
+          <p className="text-sm text-gray-500">Os documentos deste leilão ainda não foram arquivados com texto legível. Consulte o edital/matrícula originais nos links acima.</p>
+        ) : (
+          <div className="space-y-4">
+            <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm">
+              {data.registryNumber && <span className="text-gray-500">Matrícula: <b className="text-gray-800">{data.registryNumber}</b></span>}
+              {data.registryOffice && <span className="text-gray-500">Cartório: <b className="text-gray-800">{data.registryOffice}</b></span>}
+              {data.processNumber && <span className="text-gray-500">Processo: <b className="text-gray-800">{data.processNumber}</b></span>}
+              <span className="text-gray-400">{data.documentsAnalyzed} documento(s) lido(s)</span>
+            </div>
+
+            {data.flags?.length > 0 ? (
+              <div>
+                <h3 className="mb-2 text-sm font-bold text-gray-700">Pontos de atenção</h3>
+                <ul className="space-y-2">
+                  {data.flags.map((f: any, i: number) => {
+                    const ui = DOC_SEV_UI[f.severity] || DOC_SEV_UI.INFO
+                    return (
+                      <li key={i} className="rounded-lg border border-gray-100 bg-gray-50 p-3">
+                        <div className="mb-1 flex items-center gap-2">
+                          <span className={`h-2 w-2 rounded-full ${ui.dot}`} />
+                          <span className="text-sm font-semibold text-gray-800">{f.label}</span>
+                          <span className={`text-xs font-bold ${ui.cls}`}>{ui.label}</span>
+                        </div>
+                        <p className="text-xs italic text-gray-500">"{f.excerpt}"</p>
+                      </li>
+                    )
+                  })}
+                </ul>
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500">Nenhum ônus/gravame evidente foi identificado automaticamente — ainda assim, confirme na matrícula atualizada.</p>
+            )}
+
+            {data.questions?.length > 0 && (
+              <div>
+                <h3 className="mb-2 text-sm font-bold text-gray-700">Perguntas que precisam de resposta</h3>
+                <ul className="list-disc space-y-1 pl-5 text-sm text-gray-600">
+                  {data.questions.map((q: string, i: number) => <li key={i}>{q}</li>)}
+                </ul>
+              </div>
+            )}
+            <p className="text-[11px] leading-4 text-gray-400">Extração automática por padrões — pode conter imprecisões. Não substitui a leitura integral do edital/matrícula nem parecer jurídico.</p>
+          </div>
+        )
+      )}
+    </div>
+  )
+}
+
 const DIV_UI: Record<string, string> = {
   ALTA: 'text-red-700 bg-red-500', MEDIA: 'text-yellow-700 bg-yellow-500', BAIXA: 'text-gray-600 bg-gray-400',
 }
@@ -559,6 +645,11 @@ export default function LeilaoDetailClient({ auction, initialAnalysis = null }: 
 
             {/* Detector de divergências (§23) */}
             {auction.divergences?.count > 0 && <DivergencesPanel d={auction.divergences} />}
+
+            {/* Leitor de edital/matrícula — análise de documentos sob demanda (§12/§21) */}
+            {(auction.documents?.length > 0 || auction.documentsUrls?.length > 0) && (
+              <DocumentAnalysisSection slug={auction.slug} />
+            )}
 
             {/* Histórico deste imóvel — republicações e reduções (§6/§19) */}
             {auction.propertyTimeline && <PropertyTimelinePanel pt={auction.propertyTimeline} currentSlug={auction.slug} />}

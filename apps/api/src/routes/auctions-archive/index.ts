@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { buildAuctionReport, type AuctionReportFilters } from '../../services/auction-report.service.js'
 import { getPropertyTimeline } from '../../services/auction-identity.service.js'
 import { buildHiddenOpportunities } from '../../services/auction-hidden-opportunity.service.js'
+import { runDocumentAnalysis } from '../../services/auction-document-analysis.service.js'
 
 /**
  * Endpoints públicos do arquivo histórico de leilões. Registrados no mesmo
@@ -66,6 +67,14 @@ export default async function auctionsArchiveRoutes(app: FastifyInstance) {
         currentBid: num(s.currentBid), soldValue: num(s.soldValue), discountPercent: s.discountPercent,
       })),
     })
+  })
+
+  // Leitor de edital/matrícula: análise determinística dos documentos (lazy).
+  app.get('/:slug/document-analysis', async (req, reply) => {
+    const { slug } = req.params as { slug: string }
+    const result = await runDocumentAnalysis(app.prisma, slug)
+    if (!result) return reply.status(404).send({ error: 'not_found' })
+    return reply.send(result)
   })
 
   // Documentos públicos arquivados (edital, matrícula, laudo, ata).
