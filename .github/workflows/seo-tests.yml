@@ -46,6 +46,13 @@ jobs:
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile
 
+      # Os testes de integração da API importam { PrismaClient } de '@prisma/client'.
+      # Sem `prisma generate`, o pacote não exporta PrismaClient e o import ESM
+      # falha na carga do módulo (SyntaxError), quebrando os testes ANTES do skip.
+      # (Os testes de banco pulam sem TEST_DATABASE_URL; só precisam do client gerado.)
+      - name: Prisma generate
+        run: pnpm db:generate
+
       # Os testes da API importam @agoraencontrei/tomas-knowledge pelo dist/
       # (gitignored), então o pacote precisa ser BUILDADO antes — senão os testes
       # do Tomás quebram com ERR_MODULE_NOT_FOUND.
