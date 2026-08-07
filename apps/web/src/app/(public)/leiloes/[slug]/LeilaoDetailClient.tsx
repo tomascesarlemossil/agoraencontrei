@@ -26,6 +26,11 @@ function sourceLabel(source: string): string {
   return labels[source] || source
 }
 
+const STATUS_COLORS: Record<string, string> = {
+  UPCOMING: '#64748b', OPEN: '#16a34a', FIRST_ROUND: '#2563eb', SECOND_ROUND: '#7c3aed',
+  SOLD: '#0f766e', DESERTED: '#d97706', CLOSED: '#475569', SUSPENDED: '#dc2626', CANCELLED: '#94a3b8',
+}
+
 function statusLabel(status: string): string {
   const labels: Record<string, string> = {
     UPCOMING: 'Em breve', OPEN: 'Aberto para Lances',
@@ -206,6 +211,42 @@ const INFLATED_UI: Record<string, { label: string; cls: string }> = {
   FAIR: { label: 'Avaliação alinhada ao mercado', cls: 'bg-green-50 text-green-800 border-green-200' },
   BELOW: { label: 'Avaliação abaixo do mercado', cls: 'bg-blue-50 text-blue-800 border-blue-200' },
   UNKNOWN: { label: 'Sem comparáveis suficientes', cls: 'bg-gray-50 text-gray-700 border-gray-200' },
+}
+
+function PropertyTimelinePanel({ pt, currentSlug }: { pt: any; currentSlug: string }) {
+  const reductions: any[] = pt.republication?.reasons || pt.republication?.reductions || []
+  const totalRed = reductions.reduce((a: number, r: any) => a + (r.from - r.to), 0)
+  return (
+    <div className="bg-white rounded-xl p-6 shadow-sm">
+      <div className="mb-2 flex items-center gap-2">
+        <Clock className="w-5 h-5 text-[#C9A84C]" />
+        <h2 className="text-lg font-bold text-gray-800">Histórico deste imóvel</h2>
+      </div>
+      <p className="mb-4 text-sm text-gray-600">
+        Este imóvel já foi identificado em <b>{pt.auctionCount}</b> leilões.
+        {reductions.length > 0 && <> Houve <b>{reductions.length}</b> redução(ões) de lance mínimo{totalRed > 0 ? <>, somando <b>{formatCurrency(totalRed)}</b></> : null}.</>}
+      </p>
+      <ol className="relative border-l border-gray-200 pl-5">
+        {pt.timeline.map((t: any, i: number) => {
+          const isCurrent = t.slug === currentSlug
+          return (
+            <li key={t.slug + i} className="mb-4 last:mb-0">
+              <span className="absolute -left-[6px] mt-1.5 h-3 w-3 rounded-full" style={{ background: isCurrent ? '#C9A84C' : '#cbd5e1' }} />
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-xs text-gray-400">{t.auctionDate ? new Date(t.auctionDate).toLocaleDateString('pt-BR') : (t.soldDate ? new Date(t.soldDate).toLocaleDateString('pt-BR') : '—')}</span>
+                <span className="text-xs font-semibold rounded-full px-2 py-0.5" style={{ background: (STATUS_COLORS[t.status] || '#94a3b8') + '22', color: STATUS_COLORS[t.status] || '#475569' }}>{statusLabel(t.status)}</span>
+                {t.source && <span className="text-xs text-gray-400">{sourceLabel(t.source)}</span>}
+              </div>
+              <div className="mt-0.5 text-sm">
+                {isCurrent ? <span className="font-semibold text-[#143A1F]">Este leilão</span> : <Link href={`/leiloes/${t.slug}`} className="font-medium text-[#1B2B5B] hover:underline">Ver este leilão</Link>}
+                <span className="text-gray-600"> — lance {formatCurrency(t.minimumBid)}{t.soldValue ? <> · arrematado {formatCurrency(t.soldValue)}</> : null}</span>
+              </div>
+            </li>
+          )
+        })}
+      </ol>
+    </div>
+  )
 }
 
 const RISK_UI: Record<string, { label: string; cls: string; dot: string }> = {
@@ -489,6 +530,9 @@ export default function LeilaoDetailClient({ auction, initialAnalysis = null }: 
 
             {/* Mapa de risco documental (§22) */}
             {auction.riskMatrix && <RiskMatrixPanel rm={auction.riskMatrix} />}
+
+            {/* Histórico deste imóvel — republicações e reduções (§6/§19) */}
+            {auction.propertyTimeline && <PropertyTimelinePanel pt={auction.propertyTimeline} currentSlug={auction.slug} />}
 
             {/* Title & Location */}
             <div className="bg-white rounded-xl p-6 shadow-sm">

@@ -9,6 +9,7 @@ import { computeRealDiscount } from '../../services/auction-real-discount.servic
 import { findComparables } from '../../services/auction-comparables.service.js'
 import { computeAgoraScore } from '../../services/auction-score.service.js'
 import { computeRiskMatrix } from '../../services/auction-risk.service.js'
+import { getPropertyTimeline } from '../../services/auction-identity.service.js'
 
 // ── Schemas de validação ────────────────────────────────────────────────────
 
@@ -779,6 +780,24 @@ export default async function auctionsRoutes(app: FastifyInstance) {
       occupation: auction.occupation, discountPercent: auction.discountPercent,
     }, marketOverride).catch(() => null)
 
+    // Linha do tempo do imóvel (§6/§19): todas as vezes que foi a leilão.
+    // Detecta republicação e reduções entre as ocorrências.
+    let propertyTimeline: any = null
+    if (auction.identityId) {
+      const tl = await getPropertyTimeline(app.prisma, auction.identityId).catch(() => null)
+      if (tl && tl.timeline.length > 1) {
+        // Reduções de lance mínimo entre ocorrências consecutivas.
+        const reductions: { from: number; to: number; percent: number }[] = []
+        const bids = tl.timeline.map((t) => t.minimumBid).filter((v): v is number => v != null && v > 0)
+        for (let i = 1; i < bids.length; i++) {
+          if (bids[i] < bids[i - 1]) {
+            reductions.push({ from: bids[i - 1], to: bids[i], percent: Math.round((1 - bids[i] / bids[i - 1]) * 100) })
+          }
+        }
+        propertyTimeline = { ...tl, republication: { count: tl.auctionCount, reductions } }
+      }
+    }
+
     // Mapa de risco documental (§22) — puro, a partir dos campos do leilão.
     const riskMatrix = computeRiskMatrix({
       occupation: auction.occupation, hasDebts: auction.hasDebts, debtDetails: auction.debtDetails,
@@ -798,7 +817,7 @@ export default async function auctionsRoutes(app: FastifyInstance) {
         comparables: snap.comparables ?? comparables,
         agoraScore: snap.agoraScore ?? null,
         analysisSnapshotAt: (auction as any).analysisSnapshotAt,
-        riskMatrix,
+        riskMatrix, propertyTimeline,
       })
     }
 
@@ -817,7 +836,7 @@ export default async function auctionsRoutes(app: FastifyInstance) {
       comparables,
     )
 
-    return reply.send({ ...auction, relatedAuctions, realDiscount, comparables, agoraScore, riskMatrix })
+    return reply.send({ ...auction, relatedAuctions, realDiscount, comparables, agoraScore, riskMatrix, propertyTimeline })
   })
 
   // ── POST /auctions/calculate — Calculadora financeira ──────────────────────
