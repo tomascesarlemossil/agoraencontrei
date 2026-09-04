@@ -195,3 +195,66 @@ R$ 27.107.284,57. Últimas competências pagas — 10/2025 R$ 179.799,00 ·
 4. Só então carregar em produção — e **reconciliar a carteira vigente** (valores
    atuais de aluguel, contratos novos, rescisões posteriores ao corte) antes de
    emitir qualquer cobrança ou repasse.
+
+---
+
+## 6. Carga executada em 04/09/2026 (produção)
+
+Ponto de restauração criado antes de qualquer escrita: branch Neon
+`restore-point-pre-uniloc-20260904` (`br-mute-water-annf3dz0`, LSN `C/459947F8`)
+no projeto `falling-sky-60940963` ("imob lemos"). Empresa alvo:
+`cmr6k6kqy0001gle5y1x3xtwi` (Imobiliária Lemos).
+
+### Estado antes × depois
+
+| | Antes | Depois | Uniloc (27/03/2026) |
+|---|---|---|---|
+| Contratos | 1.164 | 1.187 | 1.169 |
+| Contratos ativos | **315** | **197** | 181 |
+| Soma dos ativos | R$ 453.396,07 | R$ 333.085,77 | R$ 302.872,29 |
+| `owner_repasses` | **0** | **31.095** | 31.784 grupos |
+| Líquido em repasses | — | R$ 26.450.008,17 | — |
+
+Os 197 ativos = 181 do Uniloc + 14 fora do backup (`001530`–`001544`) + 2 que não
+existem no Uniloc (`000574`, `001281`). A divergência de status contra o Uniloc,
+contrato a contrato, é **zero**.
+
+### O que foi executado
+
+1. **Contratos** — 872 linhas corrigidas (`isActive`, `status`, `rentValue`,
+   `rescissionDate`) a partir do `contrato.dbf`. Foi o que derrubou os 146
+   contratos rescindidos que estavam marcados como ativos.
+2. **Favorecidos** — 61 clientes criados (upsert por `document`, conflito
+   ignorado), zerando os favorecidos ausentes: 317/317 vinculáveis.
+3. **Contratos ausentes** — 23 criados, entre eles os 4 ativos que faltavam
+   (`001455`, `001468`, `001485`, `001503`).
+4. **Repasses** — 31.095 `OwnerRepasse` carregados em 27 lotes idempotentes.
+
+### Como a carga foi feita (rede)
+
+A porta 5432 não sai deste ambiente, então o Prisma não conecta. A carga usou o
+**endpoint SQL sobre HTTPS do Neon** (`POST https://<host>/sql` com o header
+`Neon-Connection-String`), que sai pela 443. O payload de cada lote é um arquivo
+JSON local lido pelo `curl` — os dados vão do disco direto ao banco.
+
+Vínculo dos repasses: `contracts."legacyId"` para o contrato e
+`clients.document` para o favorecido. **Não** use `clients."legacyId"`: o espaço
+de códigos colide entre Uniloc (6 dígitos) e Univen (8), e há duplicatas. O
+`lanrepas` carrega `CIC`/`CGC` do favorecido em cada linha — é a chave confiável.
+
+### Diferenças conhecidas (não são erro)
+
+- **689 repasses não carregados** — pertencem a 91 códigos de contrato que
+  existem no razão `lanrepas` mas não no cadastro `contrato.dbf` (contratos
+  históricos já expurgados). `lanrepas` tem 1.216 códigos distintos contra 1.169
+  no cadastro.
+- Out/nov/dez de 2025 batem **exatamente** com o Uniloc. Jan/fev/mar de 2026
+  ficam ~R$ 890/mês abaixo, pelo mesmo motivo acima.
+- **433 linhas** do `lanrepas` sem CPF/CNPJ do favorecido e **60** sem `CODCON`.
+
+### Indício de um backup mais recente
+
+Os contratos `001530`–`001544` existem no banco (carga de 10/07/2026) mas **não**
+no backup de 27/03/2026, cujo maior código é `001529`. Numeração sequencial logo
+acima do corte indica que a carga de julho usou um backup do Uniloc **posterior**
+ao que temos. Vale procurá-lo: fecharia boa parte do buraco de abril a agosto.
