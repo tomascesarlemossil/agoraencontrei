@@ -314,3 +314,141 @@ Os contratos `001530`–`001544` existem no banco (carga de 10/07/2026) mas **n�
 no backup de 27/03/2026, cujo maior código é `001529`. Numeração sequencial logo
 acima do corte indica que a carga de julho usou um backup do Uniloc **posterior**
 ao que temos. Vale procurá-lo: fecharia boa parte do buraco de abril a agosto.
+
+---
+
+## Auditoria do pipeline de cobrança (04/09/2026)
+
+O aluguel entrava, mas **nada fechava sozinho**. As 99 cobranças reais criadas no
+Asaas em 04/04/2026 (R$ 106.833,06) continuavam `PENDING` cinco meses depois, e a
+tabela `scheduled_repasses` estava **vazia** — nenhum repasse jamais foi agendado.
+
+### Por que nada conciliava
+
+O webhook (`POST /api/v1/finance/webhook/asaas`) só entendia
+`externalReference` no formato `rental:<id>`. As quatro rotas que emitem cobrança
+gravavam quatro formatos diferentes:
+
+| Rota | O que gravava | Conciliava? |
+|---|---|---|
+| `billing/generate-charges` | `rental:` **vazio** — o rental nascia depois da cobrança | não |
+| `finance/automation/cobrar-lote-asaas` | id do rental **sem prefixo** | não |
+| `finance/charges` | `contract.legacyId` | não |
+| `finance/invoices/charge` | id da invoice **sem prefixo** | não |
+
+Somava-se a isso:
+
+- o webhook **nunca tocava em `invoices`** — o boleto ficava `PENDING` para sempre;
+- havia um **segundo webhook** em `/finance/invoices/webhook` registrado *depois*
+  do `preHandler` de autenticação: toda entrega do Asaas levava **401**;
+- `webhook_processed_events` existia no `schema.prisma` mas **não no banco** — o
+  webhook rodava sem idempotência nenhuma;
+- `POST /finance/rentals/:id/pay` gravava `paymentDocNum` e `paymentObs`, campos
+  que **não existem** no modelo. O `as any` escondia do TypeScript e o Prisma
+  derrubava a chamada: a baixa manual respondia **500 sempre**;
+- a baixa manual não agendava repasse (só o webhook agendava, e o webhook nunca
+  disparava) — daí os zero repasses;
+- `processDueRepasses` marcava `COMPLETED` **sem transferência efetivada**: o
+  proprietário aparecia pago no sistema e não no banco;
+- o repasse era calculado sobre o **valor pago** (boleto inteiro) enquanto
+  `/reports/proprietarios` calculava sobre o **aluguel** — R$ 903,15 contra
+  R$ 900,00 para o mesmo repasse.
+
+### Correções
+
+`resolvePaymentTarget()` resolve a parcela e o boleto por prefixo, por
+`invoice.asaasId` (funciona com qualquer formato legado) e por id nu.
+`syncInvoice()` espelha pago/vencido/estornado na `Invoice`. As quatro rotas
+passaram a gravar prefixo e a amarrar `invoice.rentalId`. A baixa manual agenda o
+repasse no dia do contrato (`landlordDueDay`); o estorno cancela o agendamento e
+avisa quando o repasse já saiu. Repasse sem transferência vira `AWAITING_MANUAL`.
+Base do repasse: **o aluguel**, nunca o total do boleto.
+
+**Trava de dobra em duas camadas:** `updateMany` com `status <> 'PAID'` (o Asaas
+manda `PAYMENT_RECEIVED` *e* `PAYMENT_CONFIRMED` da mesma cobrança) e recusa de
+segundo `ScheduledRepasse` para a mesma parcela.
+
+### Defasagem de schema em produção
+
+As migrations **não rodam em produção** — o bootstrap DDL do `server.ts` é a
+fonte. Comparando o `schema.prisma` com o Neon, só `invoices` estava defasada:
+faltavam **36 colunas** (todo o bloco de emissão, baixa, estorno e repasse,
+`rentalId` inclusive). Criadas no banco e adicionadas ao bootstrap. `rentals`,
+`contracts`, `clients`, `scheduled_repasses`, `owner_repasses` e `transactions`
+estavam em dia.
+
+> Ao mexer no `schema.prisma`, **sempre** replicar a coluna no bootstrap do
+> `server.ts`. Sem isso o código escreve numa coluna que não existe e quebra
+> em runtime, não no build.
+
+### Setembro/2026 estava impossível de faturar
+
+Das 220 parcelas de setembro: **150 com valor R$ 0,00** (as parcelas futuras do
+Uniloc vêm zeradas — o legado só gravava o valor ao emitir o boleto) e **70
+contratos sem parcela nenhuma**. Emitir cobrança teria gerado boleto zerado.
+
+Corrigido: valores preenchidos por `aluguel + condomínio + parcela de IPTU +
+tarifa` e as 70 parcelas criadas (id determinístico `gen_202609_<hash>`, rodar de
+novo não duplica). `gerar-cobracas-mes` agora **corrige** a parcela zerada em vez
+de pular o contrato, então outubro em diante se resolve pelo botão.
+
+| | antes | depois |
+|---|---|---|
+| Parcelas de setembro | 150 (todas R$ 0,00) | **220** |
+| Valor de setembro | R$ 0,00 | **R$ 373.506,76** |
+| Contratos que podem emitir boleto | 168 | **199** |
+| Valor emissível | — | **R$ 341.749,30** |
+
+### Backfill de cadastro
+
+A carga de julho lia só o campo `CIC` (CPF) e ignorava o `CGC` (CNPJ) — por isso
+todas as empresas ficaram sem documento, e sem documento o Asaas recusa a
+cobrança. O vínculo mais forte é `CONTRATO.DBF → C_CODINQ → INQUILI.DBF`, porque
+o cadastro do cliente veio de fontes diferentes e nem sempre carrega o `CODINQ`.
+
+- 88 documentos recuperados; 1.427 registros com e-mail/telefone completados
+- 4 inquilinos criados e vinculados a contratos que estavam sem locatário
+- Inquilinos ativos sem CPF: **45 → 21**; sem telefone: **97 → 38**
+
+Documento já usado por outro cadastro **não** é gravado (há duplicidades do mesmo
+inquilino) — esses ficam para a revisão com a Naira.
+
+### Três contratos na empresa errada
+
+`001078`, `001113` e `001285` estavam com `companyId` da empresa de teste
+*AgoraEncontrei*, não da *Imobiliária Lemos*. Como todas as rotas filtram por
+`req.user.cid`, eles eram **invisíveis** no painel. Movidos, com proprietário e
+inquilino religados.
+
+### Cancelamento em massa e disparo por dia
+
+As 99 cobranças de abril foram para **as pessoas erradas**. Não havia como zerá-las
+pelo sistema — só uma a uma no painel do Asaas.
+
+`POST /finance/automation/cancelar-cobrancas-asaas` cancela em lote. **Simulação
+por padrão**: a primeira chamada só lista quem seria cancelado; é preciso repetir
+com `{"dryRun": false}`. Não toca no que já foi pago. E só solta o vínculo no
+banco **depois** que o Asaas confirma — se limpasse o `asaasId` antes, a cobrança
+ficaria órfã lá, cobrando o inquilino sem o sistema saber.
+
+`POST /finance/automation/cobrar-lote-asaas` ganhou `dueDays: [5, 20]` (a carteira
+vence em blocos 05/10/15/20/25), `contractIds` e `preview: true`, que mostra quem
+seria cobrado, por quanto, e o que ficaria de fora com o motivo — conferência
+antes de disparar.
+
+### Como testar sem tocar em produção
+
+A porta 5432 não sai do container, então o Prisma não alcança o Neon. O caminho é
+subir um Postgres local, aplicar o schema real e rodar a API contra ele:
+
+```bash
+su postgres -c "/usr/lib/postgresql/16/bin/initdb -D /tmp/pgtest/data -U postgres --auth=trust"
+su postgres -c "/usr/lib/postgresql/16/bin/pg_ctl -D /tmp/pgtest/data -o '-p 55432' -l /tmp/pgtest/pg.log start"
+psql -h 127.0.0.1 -p 55432 -U postgres -c "create database agora_test"
+cd packages/database && DATABASE_URL=... DIRECT_DATABASE_URL=... npx prisma db push --skip-generate
+```
+
+Para o Asaas, um servidor de mentira em `ASAAS_BASE_URL` responde ao
+`DELETE /payments/:id` e permite testar o cancelamento sem cancelar nada de
+verdade. Foi assim que se verificou que, com o Asaas recusando, **nenhum** vínculo
+é solto.
