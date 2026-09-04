@@ -1,5 +1,4 @@
 import type { FastifyInstance } from 'fastify'
-import crypto from 'node:crypto'
 import {
   findOrCreateCustomer,
   createCharge,
@@ -118,7 +117,9 @@ export default async function invoiceRoutes(app: FastifyInstance) {
       value:             Number(invoice.amount),
       dueDate,
       description:       lancamentos.join('\n'),
-      externalReference: invoice.id,
+      // Prefixo `invoice:` — sem ele o webhook do Asaas nao distingue o id de
+      // um boleto do id de uma parcela e a baixa automatica nao acontece.
+      externalReference: `invoice:${invoice.id}`,
       ...(body.discount ? { discount: { value: body.discount, dueDateLimitDays: 5, type: 'PERCENTAGE' } } : {}),
       fine:              { value: 10 },     // 10% multa (padrão Imobiliária Lemos)
       interest:          { value: 1 },     // 1% ao mês juros de mora
@@ -133,7 +134,26 @@ export default async function invoiceRoutes(app: FastifyInstance) {
       } catch { /* PIX pode não estar disponível imediatamente */ }
     }
 
-    // 4. Atualiza invoice com dados do Asaas
+    // 4. Atualiza invoice com dados do Asaas. Se o boleto ainda nao aponta
+    //    para uma parcela, amarra na parcela do mes do vencimento — e o que
+    //    faz a baixa automatica refletir tambem no aluguel.
+    let rentalIdVinculado = invoice.rentalId
+    if (!rentalIdVinculado && invoice.contractId) {
+      const base = new Date(dueDate)
+      const parcela = await app.prisma.rental.findFirst({
+        where: {
+          contractId: invoice.contractId,
+          dueDate: {
+            gte: new Date(base.getFullYear(), base.getMonth(), 1),
+            lt:  new Date(base.getFullYear(), base.getMonth() + 1, 1),
+          },
+        },
+        select: { id: true },
+        orderBy: { dueDate: 'asc' },
+      }).catch(() => null)
+      rentalIdVinculado = parcela?.id ?? null
+    }
+
     const updated = await app.prisma.invoice.update({
       where: { id: invoice.id },
       data: {
@@ -141,8 +161,23 @@ export default async function invoiceRoutes(app: FastifyInstance) {
         asaasStatus:     charge.status,
         asaasBankSlipUrl: charge.bankSlipUrl ?? charge.invoiceUrl ?? null,
         asaasPixCode:    pixCode ?? null,
+        rentalId:        rentalIdVinculado,
+        status:          'EMITTED',
+        emittedAt:       new Date(),
       },
     })
+
+    // Guarda o boleto na parcela para a tela de aluguel mostrar o link.
+    if (rentalIdVinculado) {
+      await app.prisma.rental.update({
+        where: { id: rentalIdVinculado },
+        data: {
+          boletoId:      charge.id,
+          boletoUrl:     charge.bankSlipUrl ?? charge.invoiceUrl ?? null,
+          boletoPixCode: pixCode ?? null,
+        },
+      }).catch(() => {})
+    }
 
     return reply.send({ invoice: updated, charge })
   })
@@ -305,39 +340,9 @@ export default async function invoiceRoutes(app: FastifyInstance) {
     return reply.send(updated)
   })
 
-  // POST /api/v1/finance/invoices/webhook — recebe eventos do Asaas
-  app.post('/webhook', { config: { rawBody: true } }, async (req, reply) => {
-    // Validar assinatura HMAC se ASAAS_WEBHOOK_SECRET estiver configurado
-    if (env.ASAAS_WEBHOOK_SECRET) {
-      const signature = req.headers['asaas-access-token'] as string | undefined
-      if (!signature) {
-        return reply.status(401).send({ error: 'MISSING_SIGNATURE' })
-      }
-      const rawBody = (req as any).rawBody as Buffer | string | undefined
-      const bodyStr = rawBody ? rawBody.toString() : JSON.stringify(req.body)
-      const expected = crypto
-        .createHmac('sha256', env.ASAAS_WEBHOOK_SECRET)
-        .update(bodyStr)
-        .digest('hex')
-      if (!crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected))) {
-        app.log.warn({ signature, expected }, 'Asaas webhook signature mismatch')
-        // Aceita mesmo sem match — Asaas usa token fixo, não HMAC em todos os planos
-        // return reply.status(401).send({ error: 'INVALID_SIGNATURE' })
-      }
-    }
-
-    const event = req.body as { event: string; payment?: { id: string; status: string; externalReference?: string } }
-
-    app.log.info({ event: event.event, paymentId: event.payment?.id }, 'Asaas webhook received')
-
-    if (event.payment?.externalReference) {
-      await app.prisma.invoice.updateMany({
-        where: { id: event.payment.externalReference },
-        data:  { asaasStatus: event.payment.status },
-      })
-      app.log.info({ externalRef: event.payment.externalReference, status: event.payment.status }, 'Invoice status updated from webhook')
-    }
-
-    return reply.send({ received: true })
-  })
+  // NOTA: o antigo POST /api/v1/finance/invoices/webhook foi removido.
+  // Ele estava registrado DEPOIS de `app.addHook('preHandler', app.authenticate)`,
+  // entao toda entrega do Asaas levava 401 e nenhum boleto era baixado por ele.
+  // O webhook oficial e o publico em POST /api/v1/finance/webhook/asaas, que
+  // agora resolve rental E invoice (ver routes/finance/webhook.ts).
 }

@@ -196,6 +196,18 @@ export async function scheduleRepasseWithSplit(
   prisma: PrismaClient,
   input: SplitRepasseInput,
 ): Promise<any[]> {
+  // Trava de duplicidade: uma parcela so gera repasse UMA vez. Sem isso, uma
+  // reentrega do webhook do Asaas (ou uma baixa manual feita depois da baixa
+  // automatica) agendaria um segundo pagamento do mesmo aluguel ao
+  // proprietario — dinheiro saindo em dobro.
+  if (input.rentalId) {
+    const jaAgendado = await (prisma as any).scheduledRepasse.findFirst({
+      where: { rentalId: input.rentalId, status: { notIn: ['CANCELLED', 'FAILED'] } },
+      select: { id: true },
+    }).catch(() => null)
+    if (jaAgendado) return []
+  }
+
   const beneficiaries = input.contractId
     ? await (prisma as any).repasseBeneficiary.findMany({
         where: { contractId: input.contractId, isActive: true },
@@ -290,14 +302,14 @@ const DRAIN_ADVISORY_LOCK_KEY = 9234871 // arbitrary, app-wide constant
 
 export async function processDueRepasses(
   prisma: PrismaClient,
-): Promise<{ processed: number; succeeded: number; failed: number }> {
+): Promise<{ processed: number; succeeded: number; failed: number; awaitingManual: number }> {
   // Try to take the advisory lock. If we don't get it another pod is draining.
   const lockRows = await (prisma as any).$queryRawUnsafe(
     `SELECT pg_try_advisory_lock(${DRAIN_ADVISORY_LOCK_KEY}) AS locked`,
   ).catch(() => null) as Array<{ locked: boolean }> | null
   const gotLock = Array.isArray(lockRows) && lockRows[0]?.locked === true
   if (!gotLock) {
-    return { processed: 0, succeeded: 0, failed: 0 }
+    return { processed: 0, succeeded: 0, failed: 0, awaitingManual: 0 }
   }
 
   try {
@@ -324,6 +336,7 @@ export async function processDueRepasses(
 
   let succeeded = 0
   let failed = 0
+  let awaitingManual = 0
 
   for (const repasse of dueRepasses) {
     // Mark as processing
@@ -343,6 +356,27 @@ export async function processDueRepasses(
           `repasse:${repasse.id}`,
         )
         asaasTransferId = transferResult?.id || null
+      }
+
+      // Sem transferência efetivada, o repasse NÃO pode virar COMPLETED.
+      // Antes daqui, rodar o processador sem ASAAS_API_KEY (ou com a
+      // transferência recusada) marcava tudo como "repassado" sem um centavo
+      // ter saído — o proprietário aparecia pago no sistema e não no banco.
+      // A Imobiliária Lemos paga o repasse por PIX do Sicredi, fora do Asaas:
+      // o correto é sinalizar que está na vez de pagar e esperar a baixa
+      // manual (PATCH /finance/rentals/:id/repasse-paid).
+      if (!asaasTransferId) {
+        await (prisma as any).scheduledRepasse.update({
+          where: { id: repasse.id },
+          data: {
+            status: 'AWAITING_MANUAL',
+            failureReason: ASAAS_API_KEY
+              ? 'Transferência Asaas não retornou id — pagar manualmente e dar baixa.'
+              : 'Sem transferência automática configurada — pagar por PIX e dar baixa manual.',
+          },
+        })
+        awaitingManual++
+        continue
       }
 
       // Mark as completed
@@ -376,7 +410,7 @@ export async function processDueRepasses(
     }
   }
 
-  return { processed: dueRepasses.length, succeeded, failed }
+  return { processed: dueRepasses.length, succeeded, failed, awaitingManual }
   } finally {
     // Release the advisory lock regardless of outcome.
     await (prisma as any).$queryRawUnsafe(

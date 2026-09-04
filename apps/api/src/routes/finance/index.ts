@@ -3,6 +3,7 @@ import nodemailer from 'nodemailer'
 import { createCharge, findOrCreateCustomer, getPixQrCode } from '../../services/asaas.service.js'
 import { env } from '../../utils/env.js'
 import { createAuditLog } from '../../services/audit.service.js'
+import { scheduleRepasseWithSplit } from '../../services/repasse.service.js'
 
 export default async function financeRoutes(app: FastifyInstance) {
   app.addHook('preHandler', app.authenticate)
@@ -925,15 +926,35 @@ export default async function financeRoutes(app: FastifyInstance) {
 
     const rental = await app.prisma.rental.findFirst({
       where: { id, companyId: req.user.cid },
+      include: {
+        contract: {
+          select: {
+            id: true, companyId: true, landlordId: true, landlordName: true,
+            commission: true, landlordDueDay: true,
+          },
+        },
+      },
     })
     if (!rental) return reply.status(404).send({ error: 'NOT_FOUND' })
+    // Baixa em cima de baixa duplicaria o repasse ao proprietario.
+    if ((rental as any).status === 'PAID') {
+      return reply.status(409).send({
+        error: 'RENTAL_ALREADY_PAID',
+        message: 'Esta parcela já está baixada. Estorne antes de lançar outro pagamento.',
+        paymentDate: rental.paymentDate,
+        paidAmount: rental.paidAmount,
+      })
+    }
+
+    const valorPago = body.paidAmount ?? Number(rental.totalAmount ?? rental.rentAmount ?? 0)
+    const dataPagto = body.paymentDate ? new Date(body.paymentDate) : new Date()
 
     const updated = await app.prisma.rental.update({
       where: { id },
       data: {
         status:         'PAID',
-        paidAmount:     body.paidAmount   ?? Number(rental.totalAmount ?? rental.rentAmount ?? 0),
-        paymentDate:    body.paymentDate  ? new Date(body.paymentDate) : new Date(),
+        paidAmount:     valorPago,
+        paymentDate:    dataPagto,
         paymentMethod:  body.paymentMethod  ?? null,
         paymentBank:    body.bankName       ?? null,
         paymentDocNum:  body.docNumber      ?? null,
@@ -941,16 +962,66 @@ export default async function financeRoutes(app: FastifyInstance) {
       } as any,
     })
 
+    // ── Repasse ao proprietário ────────────────────────────────────────────
+    // A maior parte das baixas da Imobiliária Lemos é MANUAL (boleto Sicredi
+    // conferido no extrato). Até aqui só o webhook do Asaas agendava repasse,
+    // então nenhuma baixa feita pela tela gerava o pagamento ao proprietário —
+    // era preciso lançar tudo por fora. Agora a baixa agenda o repasse na
+    // data do contrato (landlordDueDay: 02/12/17/22/27 na carteira Lemos),
+    // rateando entre os beneficiários quando houver.
+    let repasses: any[] = []
+    const contrato = (rental as any).contract
+    if (contrato?.landlordId && valorPago > 0) {
+      const comissaoRaw = contrato.commission != null ? Number(contrato.commission) : null
+      const comissao = comissaoRaw != null && Number.isFinite(comissaoRaw) ? comissaoRaw : 10
+      const diaRepasse = typeof contrato.landlordDueDay === 'number'
+        && contrato.landlordDueDay >= 1 && contrato.landlordDueDay <= 31
+        ? contrato.landlordDueDay
+        : undefined
+      try {
+        repasses = await scheduleRepasseWithSplit(app.prisma as any, {
+          companyId: contrato.companyId,
+          contractId: contrato.id,
+          rentalId: id,
+          fallbackLandlordId: contrato.landlordId,
+          fallbackLandlordName: contrato.landlordName ?? undefined,
+          grossValue: valorPago,
+          commissionPercent: comissao,
+          fixedDay: diaRepasse,
+        })
+      } catch (e: any) {
+        // Rateio inválido (soma != 100%) não pode derrubar a baixa: o dinheiro
+        // do inquilino entrou. Registra e deixa o repasse para conserto manual.
+        app.log.error({ err: e }, `[finance/pay] repasse do rental ${id} não agendado: ${e?.message}`)
+      }
+    }
+
+    // Espelha a baixa no boleto correspondente, se existir.
+    await app.prisma.invoice.updateMany({
+      where: { rentalId: id },
+      data: {
+        status: 'PAID',
+        paidAt: dataPagto,
+        paidAmount: valorPago,
+        paymentMethod: body.paymentMethod ?? null,
+        paymentBank: body.bankName ?? null,
+        paidBy: req.user.sub,
+      },
+    }).catch(() => {})
+
     await createAuditLog({
       prisma: app.prisma as any, req,
       action: 'rental.pay',
       resource: 'rental',
       resourceId: id,
       before: { status: rental.status, paidAmount: rental.paidAmount },
-      after:  { status: 'PAID', paidAmount: updated.paidAmount, paymentDate: updated.paymentDate, paymentMethod: body.paymentMethod },
+      after:  {
+        status: 'PAID', paidAmount: updated.paidAmount, paymentDate: updated.paymentDate,
+        paymentMethod: body.paymentMethod, repassesAgendados: repasses.length,
+      },
     })
 
-    return reply.send(updated)
+    return reply.send({ ...updated, repassesAgendados: repasses.length })
   })
 
   // POST /api/v1/finance/rentals/:id/estornar — Estornar pagamento de aluguel
@@ -979,16 +1050,48 @@ export default async function financeRoutes(app: FastifyInstance) {
       } as any,
     })
 
+    // Cancela o repasse que a baixa tinha agendado — o aluguel foi estornado,
+    // o proprietário não pode receber. Só cancela o que ainda não saiu
+    // (SCHEDULED/PROCESSING); um repasse COMPLETED vira caso de acerto manual.
+    const repasseCancelado = await (app.prisma as any).scheduledRepasse.updateMany({
+      where: { rentalId: id, status: { in: ['SCHEDULED', 'PROCESSING'] } },
+      data: {
+        status: 'CANCELLED',
+        failureReason: `Estorno do aluguel em ${new Date().toISOString().slice(0, 10)}`
+          + (body.reason ? ` — ${body.reason}` : ''),
+      },
+    }).catch(() => ({ count: 0 }))
+
+    const repasseJaPago = await (app.prisma as any).scheduledRepasse.count({
+      where: { rentalId: id, status: 'COMPLETED' },
+    }).catch(() => 0)
+
+    await app.prisma.invoice.updateMany({
+      where: { rentalId: id },
+      data: {
+        status: 'REVERSED', paidAt: null, paidAmount: null,
+        reversedAt: new Date(), reversedBy: req.user.sub,
+        reversalReason: body.reason ?? 'Estorno manual',
+      },
+    }).catch(() => {})
+
     await createAuditLog({
       prisma: app.prisma as any, req,
       action: 'rental.estornar',
       resource: 'rental',
       resourceId: id,
       before: { status: 'PAID', paidAmount: rental.paidAmount, paymentDate: rental.paymentDate },
-      after:  { status: 'PENDING', reason: body.reason },
+      after:  { status: 'PENDING', reason: body.reason, repassesCancelados: repasseCancelado.count, repassesJaPagos: repasseJaPago },
     })
 
-    return reply.send(updated)
+    return reply.send({
+      ...updated,
+      repassesCancelados: repasseCancelado.count,
+      ...(repasseJaPago > 0 ? {
+        alerta: `${repasseJaPago} repasse(s) deste aluguel JÁ foram pagos ao proprietário. `
+          + 'Acerte manualmente — o estorno não desfaz um repasse concluído.',
+      } : {}),
+    })
   })
 
   // ── NEW ENDPOINTS ────────────────────────────────────────────────────────────
@@ -1456,6 +1559,45 @@ export default async function financeRoutes(app: FastifyInstance) {
       })
     }
 
+    // A Invoice nasce ANTES da cobranca: o externalReference precisa apontar
+    // para um registro que ja exista no banco, senao o webhook do Asaas nao
+    // consegue localizar o boleto na hora da baixa. Antes daqui ia
+    // `contract.legacyId`, que o webhook nao sabia resolver.
+    const invoiceDraft = await app.prisma.invoice.create({
+      data: {
+        companyId:  cid,
+        contractId: contract.id,
+        dueDate:    new Date(body.dueDate),
+        amount:     body.amount,
+        mensagem:   body.description,
+        tenantName: contract.tenant.name,
+        tenantId:   contract.tenant.id,
+        status:     'PENDING',
+      },
+      select: { id: true },
+    })
+
+    // Se ja existe a parcela do mes desse contrato, amarra o boleto nela —
+    // e o que faz a baixa automatica atualizar o aluguel tambem.
+    const competencia = new Date(body.dueDate)
+    const rentalDoMes = await app.prisma.rental.findFirst({
+      where: {
+        contractId: contract.id,
+        dueDate: {
+          gte: new Date(competencia.getFullYear(), competencia.getMonth(), 1),
+          lt:  new Date(competencia.getFullYear(), competencia.getMonth() + 1, 1),
+        },
+      },
+      select: { id: true },
+      orderBy: { dueDate: 'asc' },
+    }).catch(() => null)
+    if (rentalDoMes) {
+      await app.prisma.invoice.update({
+        where: { id: invoiceDraft.id },
+        data: { rentalId: rentalDoMes.id },
+      }).catch(() => {})
+    }
+
     // Create Asaas customer + charge (+ PIX QR code) — wrapped so any Asaas
     // failure surfaces as a controlled 502 instead of an unhandled 500.
     const billingType = body.billingType ?? 'PIX'
@@ -1476,7 +1618,7 @@ export default async function financeRoutes(app: FastifyInstance) {
         value:             body.amount,
         dueDate:           body.dueDate,
         description:       body.description,
-        externalReference: contract.legacyId ?? contract.id,
+        externalReference: rentalDoMes ? `rental:${rentalDoMes.id}` : `invoice:${invoiceDraft.id}`,
       })
 
       // createCharge({billingType:'PIX'}) does NOT return pixCode — fetch the QR code.
@@ -1489,6 +1631,8 @@ export default async function financeRoutes(app: FastifyInstance) {
       }
     } catch (err: any) {
       app.log.error({ err }, `[finance/charges] Asaas error: ${err?.message}`)
+      // Descarta o rascunho para nao deixar boleto fantasma na listagem.
+      await app.prisma.invoice.delete({ where: { id: invoiceDraft.id } }).catch(() => {})
       return reply.status(502).send({
         error:   'ASAAS_ERROR',
         message: err?.message ?? 'Falha ao gerar cobrança no Asaas.',
@@ -1497,18 +1641,16 @@ export default async function financeRoutes(app: FastifyInstance) {
 
     const boletoUrl = asaasCharge.bankSlipUrl ?? asaasCharge.invoiceUrl ?? null
 
-    // Persist invoice record in DB with asaasId for tracking
-    const invoice = await app.prisma.invoice.create({
+    // Completa o rascunho com os dados do Asaas.
+    const invoice = await app.prisma.invoice.update({
+      where: { id: invoiceDraft.id },
       data: {
-        companyId:       cid,
-        contractId:      contract.id,
-        dueDate:         new Date(body.dueDate),
-        amount:          body.amount,
-        mensagem:        body.description,
         asaasId:         asaasCharge.id,
         asaasStatus:     asaasCharge.status ?? 'PENDING',
         asaasBankSlipUrl: boletoUrl,
         asaasPixCode:    pixCode,
+        status:          'EMITTED',
+        emittedAt:       new Date(),
       },
     })
 
@@ -1716,15 +1858,22 @@ export default async function financeRoutes(app: FastifyInstance) {
       where: { id },
       data: { repassePaidAt },
     })
+    // Fecha também o repasse agendado. Sem isso, `rental.repassePaidAt` dizia
+    // "pago" enquanto o ScheduledRepasse continuava SCHEDULED — e a fila de
+    // repasses a pagar nunca esvaziava.
+    const fechados = await (app.prisma as any).scheduledRepasse.updateMany({
+      where: { rentalId: id, status: { in: ['SCHEDULED', 'PROCESSING', 'AWAITING_MANUAL', 'FAILED'] } },
+      data: { status: 'COMPLETED', processedAt: repassePaidAt },
+    }).catch(() => ({ count: 0 }))
     await createAuditLog({
       prisma: app.prisma as any, req,
       action: 'rental.repasse_paid',
       resource: 'rental',
       resourceId: id,
       before: { repassePaidAt: rental.repassePaidAt },
-      after:  { repassePaidAt },
+      after:  { repassePaidAt, repassesFechados: fechados.count },
     })
-    return reply.send(updated)
+    return reply.send({ ...updated, repassesFechados: fechados.count })
   })
 
   // ── ENDPOINTS DE DOCUMENTOS FINANCEIROS (boletos, reajustes, IPTU) ───────────
@@ -1873,14 +2022,19 @@ export default async function financeRoutes(app: FastifyInstance) {
       where: { id },
       data: { repassePaidAt: null },
     })
+    // Devolve o repasse para a fila de pendentes, espelhando o estorno.
+    const reabertos = await (app.prisma as any).scheduledRepasse.updateMany({
+      where: { rentalId: id, status: 'COMPLETED' },
+      data: { status: 'AWAITING_MANUAL', processedAt: null, failureReason: 'Repasse estornado — voltou para a fila.' },
+    }).catch(() => ({ count: 0 }))
     await createAuditLog({
       prisma: app.prisma as any, req,
       action: 'rental.repasse_estorno',
       resource: 'rental',
       resourceId: id,
       before: { repassePaidAt: rental.repassePaidAt },
-      after:  { repassePaidAt: null },
+      after:  { repassePaidAt: null, repassesReabertos: reabertos.count },
     })
-    return reply.send(updated)
+    return reply.send({ ...updated, repassesReabertos: reabertos.count })
   })
 }

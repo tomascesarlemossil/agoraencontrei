@@ -1153,6 +1153,23 @@ async function runMigrations(prisma: any) {
     `CREATE INDEX IF NOT EXISTS "kyc_checks_dealId_idx" ON "kyc_checks"("dealId")`,
     `CREATE INDEX IF NOT EXISTS "kyc_checks_companyId_idx" ON "kyc_checks"("companyId")`,
 
+    // ── webhook_processed_events ── idempotência de webhooks financeiros ─────
+    // O modelo existe no schema.prisma, mas a tabela nunca chegou ao banco de
+    // produção (as migrations não rodam lá — este bootstrap é a fonte). Sem
+    // ela o webhook do Asaas roda SEM idempotência: uma reentrega do mesmo
+    // PAYMENT_RECEIVED agendaria um segundo repasse do mesmo aluguel.
+    `CREATE TABLE IF NOT EXISTS "webhook_processed_events" (
+       "id" TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+       "eventKey" TEXT NOT NULL UNIQUE,
+       "provider" TEXT NOT NULL,
+       "eventType" TEXT NOT NULL,
+       "externalId" TEXT NOT NULL,
+       "payload" JSONB NOT NULL DEFAULT '{}',
+       "processedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+     )`,
+    `CREATE INDEX IF NOT EXISTS "webhook_processed_events_provider_type_idx" ON "webhook_processed_events"("provider","eventType")`,
+    `CREATE INDEX IF NOT EXISTS "webhook_processed_events_processedAt_idx" ON "webhook_processed_events"("processedAt")`,
+
     // ── outgoing_webhooks ── origin: 20260519000010_outgoing_webhooks ─────────
     `CREATE TABLE IF NOT EXISTS "outgoing_webhooks" (
        "id" TEXT PRIMARY KEY,

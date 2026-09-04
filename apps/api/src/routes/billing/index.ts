@@ -100,29 +100,21 @@ export default async function billingRoutes(app: FastifyInstance) {
         continue
       }
 
+      // Calculate due date based on tenant's due day
+      const dueDay = contract.tenantDueDay || 10
+      const dueDate = new Date(body.year, body.month - 1, dueDay)
+      const dueDateStr = dueDate.toISOString().split('T')[0]
+      const amount = Number(contract.rentValue)
+
+      // A parcela e criada ANTES da cobranca por dois motivos:
+      //   1. o externalReference do Asaas precisa carregar o id do rental
+      //      (`rental:<id>`) — e so o webhook consegue dar baixa depois. Antes
+      //      daqui a cobranca saia com "rental:" vazio e NUNCA reconciliava;
+      //   2. se a cobranca falhar, sobra uma parcela em aberto (corrigivel)
+      //      em vez de um boleto cobrando o inquilino sem lastro no sistema.
+      let rental: { id: string } | null = null
       try {
-        // Calculate due date based on tenant's due day
-        const dueDay = contract.tenantDueDay || 10
-        const dueDate = new Date(body.year, body.month - 1, dueDay)
-        const dueDateStr = dueDate.toISOString().split('T')[0]
-
-        const amount = Number(contract.rentValue)
-
-        // Create charge in Asaas
-        const charge = await createRentalCharge({
-          tenantName: contract.tenant.name,
-          tenantCpf: contract.tenant.document,
-          tenantEmail: contract.tenant.email || undefined,
-          tenantPhone: contract.tenant.phoneMobile || undefined,
-          propertyAddress: contract.propertyAddress || 'Imóvel',
-          amount,
-          dueDate: dueDateStr,
-          contractId: contract.id,
-          rentalId: '', // Will be updated below
-        })
-
-        // Create rental record
-        const rental = await app.prisma.rental.create({
+        rental = await app.prisma.rental.create({
           data: {
             companyId: cid,
             contractId: contract.id,
@@ -132,11 +124,54 @@ export default async function billingRoutes(app: FastifyInstance) {
             status: 'PENDING',
             competenceMonth: body.month,
             competenceYear: body.year,
+          },
+          select: { id: true },
+        })
+
+        const charge = await createRentalCharge({
+          tenantName: contract.tenant.name,
+          tenantCpf: contract.tenant.document,
+          tenantEmail: contract.tenant.email || undefined,
+          tenantPhone: contract.tenant.phoneMobile || undefined,
+          propertyAddress: contract.propertyAddress || 'Imóvel',
+          amount,
+          dueDate: dueDateStr,
+          contractId: contract.id,
+          rentalId: rental.id,
+        })
+
+        await app.prisma.rental.update({
+          where: { id: rental.id },
+          data: {
             boletoId: charge.id,
             boletoUrl: charge.bankSlipUrl || charge.invoiceUrl,
             boletoPixCode: charge.pixCode,
           },
         })
+
+        // Espelha em Invoice para a tela de boletos e para o webhook
+        // conseguir achar o alvo pelo asaasId.
+        await app.prisma.invoice.create({
+          data: {
+            companyId: cid,
+            contractId: contract.id,
+            rentalId: rental.id,
+            dueDate,
+            amount,
+            rentAmount: amount,
+            competenceMonth: body.month,
+            competenceYear: body.year,
+            tenantName: contract.tenant.name,
+            propertyAddress: contract.propertyAddress ?? null,
+            mensagem: `Aluguel — ${contract.propertyAddress ?? ''}`,
+            asaasId: charge.id,
+            asaasStatus: charge.status ?? 'PENDING',
+            asaasBankSlipUrl: charge.bankSlipUrl ?? charge.invoiceUrl ?? null,
+            asaasPixCode: charge.pixCode ?? null,
+            status: 'EMITTED',
+            emittedAt: new Date(),
+          },
+        }).catch((e: any) => app.log.warn(`[billing] invoice mirror failed: ${e.message}`))
 
         results.push({
           contractId: contract.id,
@@ -150,6 +185,7 @@ export default async function billingRoutes(app: FastifyInstance) {
       } catch (error: any) {
         results.push({
           contractId: contract.id,
+          rentalId: rental?.id,
           success: false,
           error: error.message,
         })

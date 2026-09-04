@@ -62,6 +62,131 @@ function isUniqueConstraintError(err: any): boolean {
   return err?.code === 'P2002'
 }
 
+/**
+ * Descobre a QUAL parcela (Rental) e a qual boleto (Invoice) um pagamento do
+ * Asaas se refere.
+ *
+ * Por que isso precisa ser tolerante: o sistema emite cobranca por quatro
+ * caminhos diferentes e cada um gravou o `externalReference` de um jeito —
+ * `rental:<id>`, o id do rental puro, o id da invoice puro e ate o
+ * `contract.legacyId`. Um webhook que so entendesse um formato deixaria de
+ * dar baixa em tudo que veio pelos outros tres (foi exatamente o que
+ * aconteceu com as 99 cobrancas de abril/2026, todas presas em PENDING).
+ *
+ * A ordem abaixo vai do sinal mais forte para o mais fraco:
+ *   1. prefixo explicito (`rental:` / `invoice:`);
+ *   2. a Invoice que ja guarda este `asaasId` — funciona para QUALQUER
+ *      formato de externalReference, inclusive os legados;
+ *   3. o id puro, testado como rental e depois como invoice.
+ *
+ * Quando chegamos na parcela pela invoice (ou vice-versa), completamos o par
+ * pelo `invoice.rentalId` / `invoice.contractId`, para que a baixa atualize
+ * os dois lados.
+ */
+async function resolvePaymentTarget(
+  app: FastifyInstance,
+  externalRef: string | undefined,
+  asaasPaymentId: string,
+): Promise<{ rentalId: string | null; invoiceId: string | null }> {
+  const ref = (externalRef ?? '').trim()
+  let rentalId: string | null = null
+  let invoiceId: string | null = null
+
+  // 1. Prefixo explicito.
+  if (ref.startsWith('rental:')) rentalId = ref.slice('rental:'.length) || null
+  else if (ref.startsWith('invoice:')) invoiceId = ref.slice('invoice:'.length) || null
+
+  // 2. Invoice pelo asaasId — o vinculo mais confiavel, porque foi gravado
+  //    no momento da emissao e nao depende do formato do externalReference.
+  if (!invoiceId) {
+    const byAsaas = await app.prisma.invoice.findFirst({
+      where: { asaasId: asaasPaymentId },
+      select: { id: true, rentalId: true },
+    }).catch(() => null)
+    if (byAsaas) {
+      invoiceId = byAsaas.id
+      rentalId = rentalId ?? byAsaas.rentalId ?? null
+    }
+  }
+
+  // 3. Id puro: pode ser de um rental ou de uma invoice.
+  if (!rentalId && !invoiceId && ref && !ref.includes(':')) {
+    const asRental = await app.prisma.rental.findUnique({
+      where: { id: ref }, select: { id: true },
+    }).catch(() => null)
+    if (asRental) rentalId = asRental.id
+    else {
+      const asInvoice = await app.prisma.invoice.findUnique({
+        where: { id: ref }, select: { id: true, rentalId: true },
+      }).catch(() => null)
+      if (asInvoice) {
+        invoiceId = asInvoice.id
+        rentalId = asInvoice.rentalId ?? null
+      }
+    }
+  }
+
+  // 4. Fecha o par nas duas direcoes.
+  if (rentalId && !invoiceId) {
+    const inv = await app.prisma.invoice.findFirst({
+      where: { rentalId }, select: { id: true }, orderBy: { createdAt: 'desc' },
+    }).catch(() => null)
+    invoiceId = inv?.id ?? null
+  }
+  if (invoiceId && !rentalId) {
+    const inv = await app.prisma.invoice.findUnique({
+      where: { id: invoiceId }, select: { rentalId: true },
+    }).catch(() => null)
+    rentalId = inv?.rentalId ?? null
+  }
+
+  // Se o rental apontado nao existe mais, nao adianta tentar atualizar.
+  if (rentalId) {
+    const exists = await app.prisma.rental.findUnique({
+      where: { id: rentalId }, select: { id: true },
+    }).catch(() => null)
+    if (!exists) rentalId = null
+  }
+
+  return { rentalId, invoiceId }
+}
+
+/** Espelha o status do Asaas na Invoice, para o boleto nao ficar eternamente PENDING. */
+async function syncInvoice(
+  app: FastifyInstance,
+  invoiceId: string | null,
+  payment: any,
+  event: string,
+): Promise<void> {
+  if (!invoiceId) return
+  const pago = event === 'PAYMENT_RECEIVED' || event === 'PAYMENT_CONFIRMED'
+  const estorno = event === 'PAYMENT_DELETED' || event === 'PAYMENT_REFUNDED'
+  const quando = payment.confirmedDate ? new Date(payment.confirmedDate) : new Date()
+
+  await app.prisma.invoice.update({
+    where: { id: invoiceId },
+    data: {
+      asaasStatus: payment.status ?? (pago ? 'RECEIVED' : undefined),
+      ...(pago ? {
+        status: 'PAID',
+        paidAt: quando,
+        paidAmount: payment.value ?? undefined,
+        paymentMethod: payment.billingType || 'UNDEFINED',
+        paidByName: 'Asaas (webhook)',
+        paymentRef: payment.id,
+      } : {}),
+      ...(event === 'PAYMENT_OVERDUE' ? { status: 'OVERDUE' } : {}),
+      ...(estorno ? {
+        status: 'REVERSED',
+        paidAt: null,
+        paidAmount: null,
+        reversedAt: new Date(),
+        reversalReason: event === 'PAYMENT_REFUNDED' ? 'Estorno via Asaas' : 'Cancelamento via Asaas',
+      } : {}),
+    },
+  }).catch((e: any) => app.log.warn(`[asaas-webhook] Invoice ${invoiceId} update failed: ${e.message}`))
+}
+
 function isMissingModelOrTableError(err: any): boolean {
   return err?.code === 'P2021' || err?.code === 'P2022' || /Cannot read properties of undefined|does not exist|doesn't exist/i.test(err?.message ?? '')
 }
@@ -130,9 +255,17 @@ export default async function asaasWebhookRoutes(app: FastifyInstance) {
         }
       }
 
-      // Extract rentalId from externalReference (format: "rental:clxxxxxx")
+      // Descobre a parcela e o boleto alvo. Tolerante aos quatro formatos de
+      // externalReference que as rotas de emissao ja gravaram (ver
+      // resolvePaymentTarget) e com fallback pelo asaasId da Invoice.
       const externalRef = (payment as any).externalReference as string | undefined
-      const rentalId = externalRef?.startsWith('rental:') ? externalRef.replace('rental:', '') : null
+      const { rentalId, invoiceId } = await resolvePaymentTarget(app, externalRef, payment.id)
+      if (!rentalId && !invoiceId && !externalRef?.startsWith('offline-license:')) {
+        app.log.warn(
+          `[asaas-webhook] Pagamento ${payment.id} sem alvo (externalReference="${externalRef ?? ''}") — ` +
+          'nenhuma parcela ou boleto correspondente no banco.',
+        )
+      }
 
       // ─── Idempotency gate ───────────────────────────────────────────────────
       // Asaas pode reentregar eventos em caso de timeout / retry.
@@ -184,17 +317,32 @@ export default async function asaasWebhookRoutes(app: FastifyInstance) {
               .catch((e: any) => app.log.error(`[offline-license] ${e?.message || e}`))
           }
 
-          // 1. Atualiza o rental para PAID
+          // 1a. Espelha o pagamento no boleto (Invoice), quando houver.
+          await syncInvoice(app, invoiceId, payment, event)
+
+          // 1. Atualiza o rental para PAID.
+          //    O `status: { not: 'PAID' }` no updateMany e a trava contra
+          //    dobra: o Asaas manda PAYMENT_RECEIVED e PAYMENT_CONFIRMED para
+          //    a mesma cobranca, e reentrega em caso de timeout. Sem isso, a
+          //    segunda passada agendaria um SEGUNDO repasse do mesmo aluguel.
+          let jaEstavaPago = false
           if (rentalId) {
-            await app.prisma.rental.update({
-              where: { id: rentalId },
+            const flip = await app.prisma.rental.updateMany({
+              where: { id: rentalId, status: { not: 'PAID' } },
               data: {
                 status: 'PAID',
                 paymentDate: payment.confirmedDate ? new Date(payment.confirmedDate) : new Date(),
-                paidAmount: payment.value ? { set: payment.value } : undefined,
+                paidAmount: payment.value ?? undefined,
                 paymentMethod: payment.billingType || 'UNDEFINED',
               },
-            }).catch((e: any) => app.log.warn(`[asaas-webhook] Rental update failed: ${e.message}`))
+            }).catch((e: any) => {
+              app.log.warn(`[asaas-webhook] Rental update failed: ${e.message}`)
+              return { count: 0 }
+            })
+            jaEstavaPago = flip.count === 0
+            if (jaEstavaPago) {
+              app.log.info(`[asaas-webhook] Rental ${rentalId} ja estava PAID — repasse nao sera reagendado`)
+            }
 
             // 2. Log the payment — pull landlordDueDay (c_venc_pro do Uniloc)
             // junto, porque cada contrato da Imobiliária Lemos tem sua própria
@@ -239,7 +387,7 @@ export default async function asaasWebhookRoutes(app: FastifyInstance) {
 
               // 3. Schedule repasse ao proprietário
               const contract = rental.contract as any
-              if (contract.landlordId && payment.value) {
+              if (contract.landlordId && payment.value && !jaEstavaPago) {
                 // Check if this company has a tenant (SaaS clone) for commission split
                 const tenant = await (app.prisma as any).tenant?.findFirst?.({
                   where: { companyId: contract.companyId, isActive: true },
@@ -357,6 +505,7 @@ export default async function asaasWebhookRoutes(app: FastifyInstance) {
         }
 
         case 'PAYMENT_OVERDUE': {
+          await syncInvoice(app, invoiceId, payment, event)
           if (rentalId) {
             await app.prisma.rental.update({
               where: { id: rentalId },
@@ -370,6 +519,7 @@ export default async function asaasWebhookRoutes(app: FastifyInstance) {
 
         case 'PAYMENT_DELETED':
         case 'PAYMENT_REFUNDED': {
+          await syncInvoice(app, invoiceId, payment, event)
           if (rentalId) {
             await app.prisma.rental.update({
               where: { id: rentalId },
