@@ -139,13 +139,15 @@ export default async function invoiceRoutes(app: FastifyInstance) {
     //    faz a baixa automatica refletir tambem no aluguel.
     let rentalIdVinculado = invoice.rentalId
     if (!rentalIdVinculado && invoice.contractId) {
-      const base = new Date(dueDate)
+      // Ano e mes vem da string YYYY-MM-DD: `new Date('2026-09-01')` e
+      // meia-noite UTC e viraria 31/08 num servidor a oeste de Greenwich.
+      const [anoComp, mesComp] = dueDate.split('-').map(Number)
       const parcela = await app.prisma.rental.findFirst({
         where: {
           contractId: invoice.contractId,
           dueDate: {
-            gte: new Date(base.getFullYear(), base.getMonth(), 1),
-            lt:  new Date(base.getFullYear(), base.getMonth() + 1, 1),
+            gte: new Date(anoComp, mesComp - 1, 1),
+            lt:  new Date(anoComp, mesComp, 1),
           },
         },
         select: { id: true },

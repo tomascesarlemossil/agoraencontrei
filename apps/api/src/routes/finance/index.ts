@@ -1597,13 +1597,17 @@ export default async function financeRoutes(app: FastifyInstance) {
 
     // Se ja existe a parcela do mes desse contrato, amarra o boleto nela —
     // e o que faz a baixa automatica atualizar o aluguel tambem.
-    const competencia = new Date(body.dueDate)
+    // Le o ano e o mes direto da string YYYY-MM-DD. `new Date('2026-09-01')`
+    // e meia-noite UTC; num servidor a oeste de Greenwich isso vira 31/08
+    // local e getMonth() devolveria AGOSTO — o boleto de vencimento dia 1
+    // procuraria a parcela no mes errado.
+    const [anoComp, mesComp] = body.dueDate.split('-').map(Number)
     const rentalDoMes = await app.prisma.rental.findFirst({
       where: {
         contractId: contract.id,
         dueDate: {
-          gte: new Date(competencia.getFullYear(), competencia.getMonth(), 1),
-          lt:  new Date(competencia.getFullYear(), competencia.getMonth() + 1, 1),
+          gte: new Date(anoComp, mesComp - 1, 1),
+          lt:  new Date(anoComp, mesComp, 1),
         },
       },
       select: { id: true },
