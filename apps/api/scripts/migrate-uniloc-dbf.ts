@@ -5,14 +5,18 @@
 import 'dotenv/config'
 import * as path from 'node:path'
 import * as fs from 'node:fs'
+import { fileURLToPath } from 'node:url'
 import { PrismaClient, ClientRole } from '@prisma/client'
+
+// A API roda como ES module: `__dirname` nao existe aqui.
+const scriptDir = path.dirname(fileURLToPath(import.meta.url))
 
 const CHUNK = 80
 const DRY_RUN = process.argv.includes('--dry-run')
 const FORCE = process.argv.includes('--force')
 const STEPS_ARG = process.argv.find(a => a.startsWith('--step='))
 const STEPS = STEPS_ARG ? STEPS_ARG.replace('--step=', '').split(',') : null
-const JSON_DIR = path.resolve(__dirname, '../../../data/uniloc/json')
+const JSON_DIR = path.resolve(scriptDir, '../../../data/uniloc/json')
 const prisma = new PrismaClient()
 
 function loadJSON<T = any>(name: string): T[] {
@@ -149,7 +153,12 @@ async function step2(companyId: string) {
       const tenantId = codinq ? clientByLegacy.get(`TENANT:${codinq}`) : undefined
       const guarantorId = codfia ? clientByLegacy.get(`GUARANTOR:${codfia}`) : undefined
       const imovel = codimo ? imovelMap.get(codimo) : undefined
-      const isActive = cleanStr((row as any).C_ATIVO)?.toUpperCase() !== 'NAO'
+      // C_ATIVO vem do FoxPro em cp1252: os valores sao 'SIM' e 'NÃO' (com til).
+      // Testar `!== 'NAO'` nunca casa com 'NÃO' e marcava todo contrato rescindido
+      // como ativo. Normalizamos o acento e testamos o valor POSITIVO.
+      const ativoRaw = (cleanStr((row as any).C_ATIVO) ?? '')
+        .normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase()
+      const isActive = ativoRaw === 'SIM' || ativoRaw === 'S'
       const rescission = parseDate((row as any).C_RESCISAO)
       const data: any = {
         company: { connect: { id: companyId } }, legacyId, legacyPropertyCode: codimo,
