@@ -957,9 +957,14 @@ export default async function financeRoutes(app: FastifyInstance) {
         paymentDate:    dataPagto,
         paymentMethod:  body.paymentMethod  ?? null,
         paymentBank:    body.bankName       ?? null,
-        paymentDocNum:  body.docNumber      ?? null,
-        paymentObs:     body.observations   ?? null,
-      } as any,
+        // Os campos corretos do modelo Rental sao `paymentRef` e `notes`.
+        // Antes daqui gravava-se `paymentDocNum` e `paymentObs`, que NAO
+        // existem: o `as any` escondia o erro do TypeScript e o Prisma
+        // derrubava a chamada com 500 — a baixa manual nunca funcionou.
+        paymentRef:     body.docNumber      ?? null,
+        notes:          body.observations   ?? null,
+        receivedBy:     req.user.sub,
+      },
     })
 
     // ── Repasse ao proprietário ────────────────────────────────────────────
@@ -969,9 +974,19 @@ export default async function financeRoutes(app: FastifyInstance) {
     // era preciso lançar tudo por fora. Agora a baixa agenda o repasse na
     // data do contrato (landlordDueDay: 02/12/17/22/27 na carteira Lemos),
     // rateando entre os beneficiários quando houver.
+    // Base do repasse: o ALUGUEL, nao o total do boleto.
+    // O boleto soma tarifa bancaria, condominio e parcela de IPTU; cobrar
+    // comissao sobre isso e repassar tudo ao proprietario inflaria o repasse.
+    // O relatorio /reports/proprietarios sempre calculou sobre o aluguel, entao
+    // usar o total aqui fazia as duas telas mostrarem valores diferentes para o
+    // mesmo repasse (R$ 900,00 no relatorio contra R$ 903,15 na fila).
+    const baseRepasse = Number((rental as any).rentAmount ?? 0) > 0
+      ? Number((rental as any).rentAmount)
+      : valorPago
+
     let repasses: any[] = []
     const contrato = (rental as any).contract
-    if (contrato?.landlordId && valorPago > 0) {
+    if (contrato?.landlordId && baseRepasse > 0) {
       const comissaoRaw = contrato.commission != null ? Number(contrato.commission) : null
       const comissao = comissaoRaw != null && Number.isFinite(comissaoRaw) ? comissaoRaw : 10
       const diaRepasse = typeof contrato.landlordDueDay === 'number'
@@ -985,7 +1000,7 @@ export default async function financeRoutes(app: FastifyInstance) {
           rentalId: id,
           fallbackLandlordId: contrato.landlordId,
           fallbackLandlordName: contrato.landlordName ?? undefined,
-          grossValue: valorPago,
+          grossValue: baseRepasse,
           commissionPercent: comissao,
           fixedDay: diaRepasse,
         })
@@ -1045,9 +1060,12 @@ export default async function financeRoutes(app: FastifyInstance) {
         paymentDate:    null,
         paymentMethod:  null,
         paymentBank:    null,
-        paymentDocNum:  null,
-        paymentObs:     body.reason ? `[ESTORNO] ${body.reason}` : '[ESTORNO]',
-      } as any,
+        paymentRef:     null,
+        reversedAt:     new Date(),
+        reversedBy:     req.user.sub,
+        reversalReason: body.reason ?? 'Estorno manual',
+        notes:          body.reason ? `[ESTORNO] ${body.reason}` : '[ESTORNO]',
+      },
     })
 
     // Cancela o repasse que a baixa tinha agendado — o aluguel foi estornado,

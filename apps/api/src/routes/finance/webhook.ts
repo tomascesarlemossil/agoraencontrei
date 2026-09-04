@@ -420,6 +420,15 @@ export default async function asaasWebhookRoutes(app: FastifyInstance) {
                 // Rateia entre os beneficiários do contrato (RepasseBeneficiary).
                 // Sem beneficiários cadastrados, cai em 1 repasse de 100% para
                 // contract.landlordId (comportamento histórico preservado).
+                // Base do repasse: o ALUGUEL, nao o total pago. O boleto soma
+                // tarifa bancaria, condominio e IPTU — cobrar comissao sobre
+                // isso e repassar tudo ao proprietario inflaria o repasse e
+                // divergiria do relatorio /reports/proprietarios, que sempre
+                // calculou sobre o aluguel.
+                const baseRepasse = Number(rental.rentAmount ?? 0) > 0
+                  ? Number(rental.rentAmount)
+                  : payment.value
+
                 await scheduleRepasseWithSplit(app.prisma as any, {
                   tenantId: tenant?.id || undefined,
                   companyId: contract.companyId,
@@ -427,7 +436,7 @@ export default async function asaasWebhookRoutes(app: FastifyInstance) {
                   rentalId,
                   fallbackLandlordId: contract.landlordId,
                   fallbackLandlordName: contract.landlordName ?? undefined,
-                  grossValue: payment.value,
+                  grossValue: baseRepasse,
                   commissionPercent,
                   delayDays,
                   fixedDay,
@@ -435,7 +444,7 @@ export default async function asaasWebhookRoutes(app: FastifyInstance) {
 
                 app.log.info(
                   `[asaas-webhook] Repasse scheduled for rental ${rentalId} ` +
-                  `(R$ ${payment.value}, landlordDueDay=${contractFixedDay ?? 'n/a'}, ` +
+                  `(R$ ${baseRepasse} de R$ ${payment.value} recebidos, landlordDueDay=${contractFixedDay ?? 'n/a'}, ` +
                   `tenantFixedDay=${tenantFixedDay ?? 'n/a'}, delayDays=${delayDays})`
                 )
               }
