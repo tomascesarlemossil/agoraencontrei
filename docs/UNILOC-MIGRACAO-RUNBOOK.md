@@ -19,14 +19,25 @@ python3 scripts/convert-dbf-to-json.py --audit --src /caminho/do/backup
 
 A saída termina com a data de corte e, se o backup for velho, um aviso explícito.
 
-### Situação do backup versionado neste repositório
+### Backups conhecidos
 
-| | |
-|---|---|
-| Local | `data/uniloc/backup_extraido/` |
-| Tabelas | 54 · 286.753 registros · leitura sem erros |
-| **Data de corte** | **2022-04-13** |
-| Cópias internas em `BACKUP/` | 03/02/2022, 23/03/2022, 22/07/2019 — todas **mais antigas** |
+| Origem | Tabelas | Registros | Data de corte |
+|---|---|---|---|
+| `data/uniloc/backup_extraido/` (versionado no repo) | 54 | 286.753 | 2022-04-13 |
+| `DADOS.rar` + `DEMAIS_ARQUIVOS.rar` (servidor da imobiliária) | **56** | **352.656** | **2026-03-27** ✅ |
+
+`DEMAIS_ARQUIVOS.rar` é superconjunto de `DADOS.rar` (acrescenta `modelos.dbf` e
+`versoes.dbf`); as 54 tabelas comuns são idênticas byte a byte. **Use o conjunto de
+2026** — o de 2022 serve apenas como referência histórica.
+
+As cópias internas em `backup_extraido/BACKUP/` (03/02/2022, 23/03/2022, 22/07/2019)
+são todas mais antigas e não têm utilidade.
+
+> ⚠️ **LGPD — pendência aberta:** os 620 arquivos de `data/uniloc/` estão
+> **versionados no Git**, incluindo `locador.dbf` e `inquili.dbf` com CPF, RG e
+> contas bancárias de mais de 1.000 pessoas. O repositório é privado, mas dado
+> pessoal em histórico de Git não se apaga com um commit — exige reescrita de
+> histórico. **Não acrescente o conjunto de 2026 ao repositório.**
 
 **Armadilha conhecida:** há datas de 2024 e até 2026-08 dentro do backup
 (`aluguel.A_VENCIALU` até 2024-04-10, `diversos.L_VENCIME` até 2026-08-20). São
@@ -34,9 +45,9 @@ A saída termina com a data de corte e, se o backup for velho, um aviso explíci
 criação dessas mesmas linhas (`L_DATACAD`) é ≤ 2022-04-12. Não confunda vencimento
 futuro com backup recente.
 
-➡️ Este backup serve como **base histórica**. Para operar (cobrar/repassar) é
-preciso um backup mais recente ou a reconstrução da carteira vigente a partir de
-extratos bancários e boletos recentes.
+➡️ O conjunto de **2026-03-27** é a base de operação. O de 2022 fica como referência histórica.
+
+Restam ~5 meses (abril a setembro/2026) a reconciliar com extratos bancários.
 
 ---
 
@@ -126,25 +137,53 @@ banco são pulados (seriam órfãos) e aparecem contados no log.
 
 ---
 
-## 4. Conteúdo do backup de 2022-04-13
+## 4. A carteira (corte 2026-03-27)
 
 | Entidade | Total | Ativos | Inativos |
 |---|---|---|---|
-| Contratos | 982 | 189 (R$ 244.024,17/mês) | 793 — todos com data de rescisão |
-| Imóveis | 623 | 288 | 335 |
-| Proprietários | 252 | | |
-| Inquilinos | 904 | | |
-| Fiadores | 1.025 | | |
+| Contratos | 1.169 | **181** (R$ 302.872,29/mês) | 988 — todos com data de rescisão |
+| Imóveis | 755 | 305 | 450 |
+| Proprietários | 317 | | |
+| Inquilinos | 1.088 | | |
+| Fiadores | 1.140 | | |
+| Secundários / Favorecidos | 36 / 83 | | |
 
-Movimento: 27.898 aluguéis · 67.674 linhas de repasse · 19.335 boletos · 36.040 caixa ·
-18.818 mov. bancária · 12.660 diversos · 9.505 IPTU · 809 rescisões · 322 acordos ·
-4.116 cheques.
+Movimento: 35.079 aluguéis · 84.792 linhas de repasse · 25.997 boletos · 36.543 caixa ·
+28.718 mov. bancária · 16.701 diversos · 11.801 IPTU · 1.008 rescisões · 354 acordos ·
+4.693 cheques · 2.592 lançamentos de rescisão.
 
-Integridade referencial: 982/982 contratos resolvem locador + inquilino + imóvel;
-0 pessoas sem CPF/CNPJ; coerência ativo ↔ rescisão de 100%.
+Integridade referencial: **1.169/1.169** contratos resolvem locador + inquilino + imóvel;
+apenas **1** pessoa sem CPF/CNPJ. Imóveis: Franca/SP 726, Patrocínio Paulista 11,
+Ibiraci 3, S. José da Bela Vista 1, 7 sem cidade.
 
-Distribuição: Franca/SP 598 imóveis, Patrocínio Paulista 9, Ibiraci 3,
-S. José da Bela Vista 1, 5 sem cidade. Residencial 622 · Comercial 1.
+### Posição operacional em 04/09/2026
+
+Aluguéis vencidos e em aberto de **contratos ativos** — o marcador correto de
+pagamento é **`A_SITUI`** (`'A'` = aberto), **não** `A_DATAPAG`: 239 parcelas têm
+`A_SITUI='P'` sem `A_DATAPAG` porque foram recebidas por outra via (`A_VALREC`
+preenchido). Usar `A_DATAPAG` infla a inadimplência em ~R$ 226 mil.
+
+| | Parcelas | Valor | Contratos |
+|---|---|---|---|
+| Até 26/03/2026 — inadimplência que já existia | 2.223 | R$ 3.100.840,15 | 80 |
+| De 27/03/2026 em diante — sem baixa (sistema fora do ar) | 740 | R$ 1.275.166,14 | 180 |
+| **Total** | **2.963** | **R$ 4.376.006,29** | 181 |
+
+Competências sem baixa: 04/2026 R$ 294.373,82 · 05/2026 R$ 269.303,37 ·
+06/2026 R$ 249.095,47 · 07/2026 R$ 236.236,58 · 08/2026 R$ 221.382,01.
+
+Perfil da inadimplência anterior ao corte: 24 contratos com 1–3 parcelas,
+17 com 4–12, 12 com 13–36 e **27 com 37+ parcelas** — estes últimos merecem revisão
+jurídica (contrato ativo com anos de atraso normalmente já deveria ter sido rescindido).
+
+Repasses: 31.983 grupos (contrato × favorecido × competência), líquido histórico
+R$ 27.107.284,57. Últimas competências pagas — 10/2025 R$ 179.799,00 ·
+11/2025 R$ 175.954,48 · 12/2025 R$ 178.571,40 · 01/2026 R$ 159.979,38 ·
+02/2026 R$ 178.038,01 · 03/2026 R$ 156.546,99.
+
+> O Uniloc gera parcelas com muita antecedência (aluguéis lançados até 2030,
+> IPTU até 11/2026). Parcela com vencimento futuro **não** é receita a cobrar —
+> filtre sempre por vencimento ≤ hoje.
 
 ---
 
