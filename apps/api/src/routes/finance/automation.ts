@@ -209,14 +209,23 @@ export default async function financeAutomationRoutes(app: FastifyInstance) {
         property: { select: { id: true, condoFee: true, iptu: true } },
         rentals: {
           where: { dueDate: { gte: periodStart, lte: periodEnd } },
+          orderBy: { dueDate: 'asc' },
           take: 1,
         },
       },
     })
 
-    // Separar contratos que já têm rental no mês dos que não têm
+    // Três baldes, não dois.
+    //
+    // A migração do Uniloc trouxe as parcelas FUTURAS já criadas, porém com
+    // valor R$ 0,00 (o legado só gravava o valor na hora de emitir o boleto).
+    // Como a rotina antiga só olhava "existe rental no mês?", ela pulava essas
+    // parcelas e o mês inteiro ficava zerado — emitir cobrança geraria boleto
+    // de R$ 0,00. Agora a parcela zerada é CORRIGIDA com o valor do contrato.
+    const valorDaParcela = (r: any) => Number(r?.totalAmount ?? r?.rentAmount ?? 0)
     const semCobranca = contracts.filter(c => c.rentals.length === 0)
-    const jaExistem   = contracts.filter(c => c.rentals.length > 0)
+    const zeradas     = contracts.filter(c => c.rentals.length > 0 && valorDaParcela(c.rentals[0]) <= 0)
+    const jaExistem   = contracts.filter(c => c.rentals.length > 0 && valorDaParcela(c.rentals[0]) > 0)
 
     if (body.preview) {
       return reply.send({
@@ -231,15 +240,25 @@ export default async function financeAutomationRoutes(app: FastifyInstance) {
           rentValue: Number(c.rentValue),
           dueDate: new Date(y, m - 1, c.tenantDueDay ?? 10).toISOString().split('T')[0],
         })),
+        aCorrigir: zeradas.map(c => ({
+          contractId: c.id,
+          rentalId: c.rentals[0].id,
+          tenantName: c.tenantName ?? c.tenant?.name,
+          propertyAddress: c.propertyAddress,
+          valorAtual: valorDaParcela(c.rentals[0]),
+          rentValue: Number(c.rentValue),
+        })),
         jaExistem: jaExistem.length,
       })
     }
 
     // Gerar rentals para os contratos sem cobrança
     const criados: any[] = []
+    const corrigidos: any[] = []
     const erros: any[] = []
 
-    for (const contract of semCobranca) {
+    for (const contract of [...semCobranca, ...zeradas]) {
+      const parcelaZerada = contract.rentals.length > 0 ? contract.rentals[0] : null
       try {
         const dueDay = contract.tenantDueDay ?? 10
         const dueDate = new Date(y, m - 1, dueDay)
@@ -273,18 +292,45 @@ export default async function financeAutomationRoutes(app: FastifyInstance) {
         // Verificar se está atrasado
         const status = dueDate < now ? 'LATE' : 'PENDING'
 
+        const valores = {
+          rentAmount:     rentValue,
+          condoAmount:    condoAmount > 0 ? condoAmount : null,
+          iptuAmount:     iptuAmount > 0 ? iptuAmount : null,
+          iptuParcela:    iptuParcela || null,
+          bankFeeAmount:  bankFee > 0 ? bankFee : null,
+          adminFeeAmount: adminPercent > 0 ? Math.round(rentValue * adminPercent / 100 * 100) / 100 : null,
+          totalAmount,
+        }
+
+        // Parcela zerada vinda do Uniloc: preenche o valor no lugar de criar
+        // uma segunda parcela para o mesmo mês (o que cobraria o inquilino
+        // duas vezes). Mantém dueDate e status originais se já estiver paga.
+        if (parcelaZerada) {
+          const corrigida = await app.prisma.rental.update({
+            where: { id: parcelaZerada.id },
+            data: {
+              ...valores,
+              ...(parcelaZerada.status === 'PAID' ? {} : { status }),
+            },
+          })
+          corrigidos.push({
+            rentalId: corrigida.id,
+            contractId: contract.id,
+            tenantName: contract.tenantName ?? contract.tenant?.name,
+            propertyAddress: contract.propertyAddress,
+            rentValue, iptuAmount, bankFee, condoAmount, totalAmount,
+            dueDate: corrigida.dueDate,
+            status: corrigida.status,
+          })
+          continue
+        }
+
         const rental = await app.prisma.rental.create({
           data: {
             companyId:      cid,
             contractId:     contract.id,
             dueDate,
-            rentAmount:     rentValue,
-            condoAmount:    condoAmount > 0 ? condoAmount : null,
-            iptuAmount:     iptuAmount > 0 ? iptuAmount : null,
-            iptuParcela:    iptuParcela || null,
-            bankFeeAmount:  bankFee > 0 ? bankFee : null,
-            adminFeeAmount: adminPercent > 0 ? Math.round(rentValue * adminPercent / 100 * 100) / 100 : null,
-            totalAmount,
+            ...valores,
             status,
           },
         })
@@ -312,15 +358,16 @@ export default async function financeAutomationRoutes(app: FastifyInstance) {
       resource: 'rental',
       resourceId: 'batch',
       before: null,
-      after: { month: monthStr, criados: criados.length, erros: erros.length },
+      after: { month: monthStr, criados: criados.length, corrigidos: corrigidos.length, erros: erros.length },
     })
 
     return reply.status(201).send({
       month: monthStr,
       criados: criados.length,
+      corrigidos: corrigidos.length,
       jaExistiam: jaExistem.length,
       erros: erros.length,
-      detalhes: { criados, erros: erros.slice(0, 10) },
+      detalhes: { criados, corrigidos, erros: erros.slice(0, 10) },
     })
   })
 
@@ -350,9 +397,19 @@ export default async function financeAutomationRoutes(app: FastifyInstance) {
   app.post('/cobrar-lote-asaas', async (req, reply) => {
     const cid = req.user.cid
     const body = req.body as {
-      rentalIds?: string[]   // IDs específicos ou todos os PENDING do mês
+      rentalIds?: string[]   // IDs específicos (cobrança uma a uma)
+      contractIds?: string[] // limita a contratos escolhidos
       billingType?: 'PIX' | 'BOLETO'
       month?: string         // YYYY-MM
+      /**
+       * Dias de vencimento a incluir, ex.: [5, 10]. É assim que a Imobiliária
+       * Lemos trabalha: a carteira vence em blocos (05, 10, 15, 20, 25) e a
+       * emissão sai por bloco, não a carteira inteira de uma vez.
+       */
+      dueDays?: number[]
+      /** true = só lista o que seria cobrado, sem tocar no Asaas. */
+      preview?: boolean
+      limit?: number
     }
 
     if (!env.ASAAS_API_KEY) {
@@ -378,10 +435,54 @@ export default async function financeAutomationRoutes(app: FastifyInstance) {
           companyId: cid,
           status: { in: ['PENDING', 'LATE'] },
           dueDate: { gte: periodStart, lte: periodEnd },
-          contract: { tenant: { document: { not: null } } },
+          contract: {
+            tenant: { document: { not: null } },
+            ...(body.contractIds?.length ? { id: { in: body.contractIds } } : {}),
+          },
         },
         include: { contract: { include: { tenant: true } } },
-        take: 100,
+        orderBy: { dueDate: 'asc' },
+        take: Math.min(body.limit ?? 500, 500),
+      })
+
+      // Filtra pelos dias de vencimento pedidos. Feito em memória porque o
+      // Prisma não expressa "extract(day from dueDate) in (...)".
+      if (body.dueDays?.length) {
+        const dias = new Set(body.dueDays)
+        rentals = rentals.filter(r => r.dueDate && dias.has(new Date(r.dueDate).getUTCDate()))
+      }
+    }
+
+    // Conferência antes de disparar: mostra exatamente quem seria cobrado,
+    // por quanto e o que ficaria de fora — sem criar nada no Asaas.
+    if (body.preview) {
+      const linhas = rentals.map(r => {
+        const valor = Number(r.totalAmount ?? r.rentAmount ?? 0)
+        const doc = r.contract?.tenant?.document
+        const motivo = !doc ? 'sem CPF/CNPJ'
+          : r.boletoId ? 'já cobrada'
+          : !(valor > 0) ? 'sem valor'
+          : null
+        return {
+          rentalId: r.id,
+          contrato: r.contract?.legacyId ?? r.contractId,
+          inquilino: r.contract?.tenantName ?? r.contract?.tenant?.name,
+          endereco: r.contract?.propertyAddress,
+          vencimento: r.dueDate ? new Date(r.dueDate).toISOString().slice(0, 10) : null,
+          valor,
+          bloqueio: motivo,
+        }
+      })
+      const aCobrar = linhas.filter(l => !l.bloqueio)
+      return reply.send({
+        preview: true,
+        month: body.month ?? null,
+        dueDays: body.dueDays ?? null,
+        aCobrar: aCobrar.length,
+        valorTotal: aCobrar.reduce((s, l) => s + l.valor, 0),
+        bloqueados: linhas.filter(l => l.bloqueio),
+        detalhes: aCobrar,
+        message: 'SIMULACAO — nada foi enviado ao Asaas. Confira a lista e repita sem `preview`.',
       })
     }
 
@@ -389,11 +490,28 @@ export default async function financeAutomationRoutes(app: FastifyInstance) {
     const enviados: any[] = []
     const erros: any[] = []
     const semCpf: any[] = []
+    const jaCobrados: any[] = []
+    const semValor: any[] = []
 
     for (const rental of rentals) {
       const tenant = rental.contract?.tenant
       if (!tenant?.document) {
         semCpf.push({ rentalId: rental.id, tenantName: rental.contract?.tenantName })
+        continue
+      }
+
+      // Nao cobrar duas vezes a mesma parcela. Rodar o lote de novo (por
+      // engano ou por retry) geraria um segundo boleto para o mesmo inquilino.
+      if (rental.boletoId) {
+        jaCobrados.push({ rentalId: rental.id, tenantName: rental.contract?.tenantName, asaasId: rental.boletoId })
+        continue
+      }
+
+      // Parcela sem valor gera boleto de R$ 0,00 no Asaas. As parcelas futuras
+      // importadas do Uniloc vieram justamente assim — barra antes de emitir.
+      const valorParcela = Number(rental.totalAmount ?? rental.rentAmount ?? 0)
+      if (!(valorParcela > 0)) {
+        semValor.push({ rentalId: rental.id, tenantName: rental.contract?.tenantName })
         continue
       }
 
@@ -415,25 +533,44 @@ export default async function financeAutomationRoutes(app: FastifyInstance) {
           value:             Number(rental.totalAmount ?? rental.rentAmount ?? 0),
           dueDate,
           description:       `Aluguel ${rental.contract?.propertyAddress ?? ''} — ${new Date(dueDate).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}\nNAO RECEBER APOS 5 DIAS DO VENCIMENTO\nApos o vencto cobrar multa de 10%\nApos o vencto cobrar juros de mora de 1% ao mes`,
-          externalReference: rental.id,
+          // Prefixo `rental:` — e assim que o webhook do Asaas identifica a
+          // parcela para dar baixa. Sem ele, o pagamento chega e nao acha alvo.
+          externalReference: `rental:${rental.id}`,
           fine:              { value: 10 },    // 10% multa (padrão Imobiliária Lemos)
           interest:          { value: 1 },    // 1% ao mês juros de mora
         })
 
-        // Criar invoice vinculado ao rental
+        // Criar invoice vinculado ao rental. O `rentalId` e o que permite o
+        // webhook fechar o par boleto <-> parcela mesmo quando o
+        // externalReference vier em outro formato.
         await app.prisma.invoice.create({
           data: {
             companyId:        cid,
             contractId:       rental.contractId ?? null,
+            rentalId:         rental.id,
             dueDate:          new Date(dueDate),
             amount:           Number(rental.totalAmount ?? rental.rentAmount ?? 0),
+            tenantName:       rental.contract?.tenantName ?? tenant.name,
+            propertyAddress:  rental.contract?.propertyAddress ?? null,
             mensagem:         `Aluguel ${rental.contract?.propertyAddress ?? ''}`,
             asaasId:          charge.id,
             asaasStatus:      charge.status ?? 'PENDING',
             asaasBankSlipUrl: charge.bankSlipUrl ?? null,
             asaasPixCode:     charge.pixCode ?? null,
+            status:           'EMITTED',
+            emittedAt:        new Date(),
           },
         })
+
+        // Guarda o boleto na propria parcela — e o que a tela de aluguel mostra.
+        await app.prisma.rental.update({
+          where: { id: rental.id },
+          data: {
+            boletoId:      charge.id,
+            boletoUrl:     charge.bankSlipUrl ?? charge.invoiceUrl ?? null,
+            boletoPixCode: charge.pixCode ?? null,
+          },
+        }).catch(() => {})
 
         enviados.push({
           rentalId:    rental.id,
@@ -453,7 +590,136 @@ export default async function financeAutomationRoutes(app: FastifyInstance) {
       enviados: enviados.length,
       erros: erros.length,
       semCpf: semCpf.length,
-      detalhes: { enviados, erros: erros.slice(0, 10), semCpf },
+      jaCobrados: jaCobrados.length,
+      semValor: semValor.length,
+      detalhes: { enviados, erros: erros.slice(0, 10), semCpf, jaCobrados, semValor },
+    })
+  })
+
+  // ── POST /api/v1/finance/automation/cancelar-cobrancas-asaas ────────────
+  // Zera as cobrancas em aberto no Asaas. Nasceu de um caso real: o lote de
+  // 04/04/2026 gerou 99 boletos para as pessoas ERRADAS e nenhum deles nunca
+  // conciliou (o webhook nao entendia o externalReference daquela rota). Para
+  // recomecar limpo e preciso apagar a cobranca no Asaas ANTES de soltar o
+  // vinculo no banco — senao a cobranca fica orfa la, cobrando o inquilino.
+  //
+  // Roda em duas etapas de proposito: a primeira chamada e sempre simulacao.
+  app.post('/cancelar-cobrancas-asaas', async (req, reply) => {
+    const cid = req.user.cid
+    if (!['SUPER_ADMIN', 'ADMIN'].includes(req.user.role)) {
+      return reply.status(403).send({ error: 'FORBIDDEN', message: 'Apenas administrador pode cancelar cobrancas.' })
+    }
+    if (!env.ASAAS_API_KEY) {
+      return reply.status(503).send({ error: 'ASAAS_NOT_CONFIGURED' })
+    }
+
+    const body = (req.body ?? {}) as {
+      dryRun?: boolean
+      invoiceIds?: string[]
+      /** Limita por competencia do vencimento, ex.: "2026-04". */
+      month?: string
+      /** Cancela tambem o que ja consta como pago (padrao: nao). */
+      incluirPagos?: boolean
+    }
+    const dryRun = body.dryRun !== false   // simulacao por padrao
+
+    const where: any = { companyId: cid, asaasId: { not: null } }
+    if (body.invoiceIds?.length) where.id = { in: body.invoiceIds }
+    if (!body.incluirPagos) where.asaasStatus = { notIn: ['RECEIVED', 'CONFIRMED', 'RECEIVED_IN_CASH'] }
+    if (body.month) {
+      const [y, m] = body.month.split('-').map(Number)
+      if (!y || !m) return reply.status(400).send({ error: 'INVALID_MONTH' })
+      where.dueDate = { gte: new Date(y, m - 1, 1), lte: new Date(y, m, 0, 23, 59, 59) }
+    }
+
+    const alvos = await app.prisma.invoice.findMany({
+      where,
+      select: {
+        id: true, asaasId: true, asaasStatus: true, amount: true, dueDate: true,
+        tenantName: true, contractId: true, rentalId: true,
+        contract: { select: { legacyId: true, tenantName: true } },
+      },
+      take: 1000,
+    })
+
+    const total = alvos.reduce((soma, i) => soma + Number(i.amount ?? 0), 0)
+
+    if (dryRun) {
+      return reply.send({
+        dryRun: true,
+        encontradas: alvos.length,
+        valorTotal: total,
+        amostra: alvos.slice(0, 20).map(i => ({
+          invoiceId: i.id, asaasId: i.asaasId, status: i.asaasStatus,
+          valor: Number(i.amount ?? 0),
+          vencimento: i.dueDate?.toISOString().slice(0, 10),
+          contrato: i.contract?.legacyId,
+          inquilino: i.tenantName ?? i.contract?.tenantName,
+        })),
+        message: `SIMULACAO — nada foi cancelado. ${alvos.length} cobranca(s), R$ ${total.toFixed(2)}. `
+          + 'Confira a amostra e repita com {"dryRun": false} para cancelar de verdade.',
+      })
+    }
+
+    const canceladas: any[] = []
+    const erros: any[] = []
+
+    for (const inv of alvos) {
+      try {
+        await cancelCharge(inv.asaasId!)
+        // So solta o vinculo DEPOIS que o Asaas confirmou o cancelamento.
+        await app.prisma.invoice.update({
+          where: { id: inv.id },
+          data: {
+            asaasId: null, asaasStatus: 'CANCELED',
+            asaasBankSlipUrl: null, asaasPixCode: null,
+            status: 'CANCELLED',
+            notes: `Cobranca cancelada no Asaas em ${new Date().toISOString().slice(0, 10)} (asaasId ${inv.asaasId})`,
+          },
+        })
+        if (inv.rentalId) {
+          await app.prisma.rental.update({
+            where: { id: inv.rentalId },
+            data: { boletoId: null, boletoUrl: null, boletoPixCode: null },
+          }).catch(() => {})
+        }
+        canceladas.push({ invoiceId: inv.id, asaasId: inv.asaasId, valor: Number(inv.amount ?? 0) })
+      } catch (err: any) {
+        erros.push({ invoiceId: inv.id, asaasId: inv.asaasId, error: err.message })
+      }
+    }
+
+    // Solta tambem o boleto que ficou preso na parcela sem passar por invoice.
+    const soltas = await app.prisma.rental.updateMany({
+      where: {
+        companyId: cid,
+        boletoId: { not: null },
+        status: { in: ['PENDING', 'LATE'] },
+        ...(body.month ? (() => {
+          const [y, m] = body.month!.split('-').map(Number)
+          return { dueDate: { gte: new Date(y, m - 1, 1), lte: new Date(y, m, 0, 23, 59, 59) } }
+        })() : {}),
+      },
+      data: { boletoId: null, boletoUrl: null, boletoPixCode: null },
+    }).catch(() => ({ count: 0 }))
+
+    await createAuditLog({
+      prisma: app.prisma as any, req,
+      action: 'finance.cancel' as any,
+      resource: 'invoice',
+      resourceId: 'batch',
+      before: null,
+      after: { canceladas: canceladas.length, erros: erros.length, valorTotal: total, month: body.month ?? null },
+    })
+
+    return reply.send({
+      canceladas: canceladas.length,
+      erros: erros.length,
+      parcelasLiberadas: soltas.count,
+      valorTotal: total,
+      detalhes: { canceladas: canceladas.slice(0, 50), erros: erros.slice(0, 20) },
+      message: `${canceladas.length} cobranca(s) canceladas no Asaas. `
+        + 'As parcelas voltaram a ficar disponiveis para nova emissao pelo sistema.',
     })
   })
 
@@ -486,10 +752,26 @@ export default async function financeAutomationRoutes(app: FastifyInstance) {
       }
     }
 
+    // Guarda os ids ANTES do update: depois do updateMany o filtro
+    // `repassePaidAt: null` não encontra mais nada e não daria para fechar
+    // os ScheduledRepasse correspondentes.
+    const alvos = await app.prisma.rental.findMany({ where, select: { id: true } })
+
     const result = await app.prisma.rental.updateMany({
       where,
       data: { repassePaidAt },
     })
+
+    // Espelha na fila de repasses — senão a fila nunca esvazia.
+    const fechados = alvos.length
+      ? await (app.prisma as any).scheduledRepasse.updateMany({
+          where: {
+            rentalId: { in: alvos.map(r => r.id) },
+            status: { in: ['SCHEDULED', 'PROCESSING', 'AWAITING_MANUAL', 'FAILED'] },
+          },
+          data: { status: 'COMPLETED', processedAt: repassePaidAt },
+        }).catch(() => ({ count: 0 }))
+      : { count: 0 }
 
     await createAuditLog({
       prisma: app.prisma as any, req,
@@ -497,11 +779,12 @@ export default async function financeAutomationRoutes(app: FastifyInstance) {
       resource: 'rental',
       resourceId: 'batch',
       before: null,
-      after: { count: result.count, repassePaidAt },
+      after: { count: result.count, repassePaidAt, repassesFechados: fechados.count },
     })
 
     return reply.send({
       pagos: result.count,
+      repassesFechados: fechados.count,
       repassePaidAt,
       message: `${result.count} repasses marcados como pagos`,
     })

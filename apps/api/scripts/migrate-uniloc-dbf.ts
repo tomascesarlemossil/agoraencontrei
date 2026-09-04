@@ -5,14 +5,18 @@
 import 'dotenv/config'
 import * as path from 'node:path'
 import * as fs from 'node:fs'
+import { fileURLToPath } from 'node:url'
 import { PrismaClient, ClientRole } from '@prisma/client'
+
+// A API roda como ES module: `__dirname` nao existe aqui.
+const scriptDir = path.dirname(fileURLToPath(import.meta.url))
 
 const CHUNK = 80
 const DRY_RUN = process.argv.includes('--dry-run')
 const FORCE = process.argv.includes('--force')
 const STEPS_ARG = process.argv.find(a => a.startsWith('--step='))
 const STEPS = STEPS_ARG ? STEPS_ARG.replace('--step=', '').split(',') : null
-const JSON_DIR = path.resolve(__dirname, '../../../data/uniloc/json')
+const JSON_DIR = path.resolve(scriptDir, '../../../data/uniloc/json')
 const prisma = new PrismaClient()
 
 function loadJSON<T = any>(name: string): T[] {
@@ -149,7 +153,12 @@ async function step2(companyId: string) {
       const tenantId = codinq ? clientByLegacy.get(`TENANT:${codinq}`) : undefined
       const guarantorId = codfia ? clientByLegacy.get(`GUARANTOR:${codfia}`) : undefined
       const imovel = codimo ? imovelMap.get(codimo) : undefined
-      const isActive = cleanStr((row as any).C_ATIVO)?.toUpperCase() !== 'NAO'
+      // C_ATIVO vem do FoxPro em cp1252: os valores sao 'SIM' e 'NÃO' (com til).
+      // Testar `!== 'NAO'` nunca casa com 'NÃO' e marcava todo contrato rescindido
+      // como ativo. Normalizamos o acento e testamos o valor POSITIVO.
+      const ativoRaw = (cleanStr((row as any).C_ATIVO) ?? '')
+        .normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase()
+      const isActive = ativoRaw === 'SIM' || ativoRaw === 'S'
       const rescission = parseDate((row as any).C_RESCISAO)
       const data: any = {
         company: { connect: { id: companyId } }, legacyId, legacyPropertyCode: codimo,
@@ -377,6 +386,134 @@ async function step7(companyId: string) {
   console.log(`  OK Seguros — ${loadJSON('incendio.json').length} registros`)
 }
 
+/**
+ * Reconstroi os mapas de vinculo a partir do banco. Necessario para rodar um
+ * step isolado (--step=8), quando os steps que populam os mapas nao rodaram.
+ */
+async function hydrateMaps(companyId: string) {
+  if (contractByLegacy.size === 0) {
+    const all = await prisma.contract.findMany({ where: { companyId }, select: { id: true, legacyId: true } })
+    for (const c of all) { if (c.legacyId) contractByLegacy.set(c.legacyId, c.id) }
+  }
+  if (clientByLegacy.size === 0) {
+    const all = await prisma.client.findMany({ where: { companyId }, select: { id: true, legacyId: true, roles: true } })
+    for (const c of all) { if (c.legacyId) { for (const role of c.roles) clientByLegacy.set(`${role}:${c.legacyId}`, c.id) } }
+  }
+}
+
+/**
+ * STEP 8: Repasses ao proprietario (lanrepas.dbf -> OwnerRepasse)
+ *
+ * O Uniloc nao guarda "um repasse" — guarda um RAZAO de lancamentos. Cada linha
+ * e um credito (aluguel, IPTU, multa, condominio) ou um debito (taxa de
+ * administracao, agua/luz, acertos, bonificacao), JA RATEADO pelo percentual do
+ * favorecido: VAL_FAV = VALOR x PORCENTA/100. Quando o imovel tem varios donos,
+ * a mesma competencia aparece repetida uma vez por favorecido, com percentuais
+ * diferentes (ex.: 16,67% / 16,66% / 50%).
+ *
+ * Um OwnerRepasse da plataforma equivale portanto a um grupo
+ * (contrato x favorecido x competencia), com:
+ *   grossValue      = soma dos creditos
+ *   commissionValue = debitos de comissao (ORIGEM COMISSAO/COMISDEP, TX ADMIN.)
+ *   adminFeeValue   = demais debitos deduzidos (agua, luz, condominio, acertos)
+ *   netValue        = bruto - comissao - demais debitos
+ *
+ * Os lancamentos do backup ja foram efetivamente repassados, entao entram como
+ * PAID com paidAt na data de vencimento do repasse.
+ */
+async function step8(companyId: string) {
+  console.log('\n=== STEP 8: Repasses ao proprietario ===')
+  const rows = loadJSON('lanrepas.json')
+  if (!rows.length) return
+  const existing = await prisma.ownerRepasse.count({ where: { companyId } })
+  if (existing > 0 && !FORCE) { console.log(`  ${existing} ja existem. Use --force.`); return }
+  if (FORCE && existing > 0 && !DRY_RUN) { await prisma.ownerRepasse.deleteMany({ where: { companyId } }) }
+  await hydrateMaps(companyId)
+
+  const RECEBE_METODO: Record<string, string> = {
+    DEP: 'DEPOSITO', DIN: 'DINHEIRO', CRE: 'CREDITO', IMO: 'RETIDO_IMOBILIARIA',
+  }
+  type Bucket = {
+    codcon: string; codigo: string; codloc?: string; month: number; year: number
+    gross: number; commission: number; otherDebits: number
+    receive?: string; grupos: Set<string>; dueDate: Date
+  }
+  const buckets = new Map<string, Bucket>()
+  let semVenc = 0, semContrato = 0
+
+  for (const row of rows as any[]) {
+    const due = parseDate(row.VENCIMENTO)
+    if (!due) { semVenc++; continue }
+    const codcon = cleanStr(row.CODCON)
+    if (!codcon) { semContrato++; continue }
+    const codigo = cleanStr(row.CODIGO) ?? cleanStr(row.CODLOC) ?? ''
+    const month = due.getUTCMonth() + 1
+    const year = due.getUTCFullYear()
+    const key = `${codcon}|${codigo}|${year}-${month}`
+
+    let b = buckets.get(key)
+    if (!b) {
+      b = { codcon, codigo, codloc: cleanStr(row.CODLOC), month, year,
+            gross: 0, commission: 0, otherDebits: 0,
+            receive: cleanStr(row.RECEBE), grupos: new Set(), dueDate: due }
+      buckets.set(key, b)
+    }
+    // VAL_FAV ja vem rateado pelo percentual do favorecido; VALOR e o cheio.
+    const val = Number(row.VAL_FAV ?? row.VALOR ?? 0) || 0
+    const grupo = (cleanStr(row.GRUPO) ?? '').toUpperCase()
+    const origem = (cleanStr(row.ORIGEM) ?? '').toUpperCase()
+    const isCredito = (cleanStr(row.DEBCRED) ?? '').toUpperCase().startsWith('C')
+    if (isCredito) {
+      b.gross += val
+      if (grupo) b.grupos.add(grupo)
+    } else if (origem.startsWith('COMIS') || grupo.startsWith('TX ADMIN')) {
+      b.commission += val
+    } else {
+      b.otherDebits += val
+      if (grupo) b.grupos.add(`-${grupo}`)
+    }
+    if (due > b.dueDate) b.dueDate = due
+  }
+
+  const money = (n: number) => Math.round(n * 100) / 100
+  let created = 0, semVinculo = 0
+  const pend: any[] = []
+  for (const b of buckets.values()) {
+    const contractId = contractByLegacy.get(b.codcon)
+    const landlordId = clientByLegacy.get(`LANDLORD:${b.codigo}`)
+      ?? clientByLegacy.get(`BENEFICIARY:${b.codigo}`)
+      ?? clientByLegacy.get(`SECONDARY:${b.codigo}`)
+      ?? (b.codloc ? clientByLegacy.get(`LANDLORD:${b.codloc}`) : undefined)
+    // OwnerRepasse exige contrato e proprietario; sem vinculo o registro seria orfao.
+    if (!contractId || !landlordId) { semVinculo++; continue }
+    pend.push({
+      companyId, contractId, landlordId, month: b.month, year: b.year,
+      grossValue: money(b.gross), commissionValue: money(b.commission),
+      adminFeeValue: money(b.otherDebits), netValue: money(b.gross - b.commission - b.otherDebits),
+      status: 'PAID', paidAt: b.dueDate,
+      paymentMethod: b.receive ? (RECEBE_METODO[b.receive] ?? b.receive) : undefined,
+      notes: `Uniloc lanrepas — ${Array.from(b.grupos).join(', ') || 'sem grupo'}`,
+    })
+  }
+
+  for (let i = 0; i < pend.length; i += CHUNK) {
+    const batch = pend.slice(i, i + CHUNK)
+    if (!DRY_RUN && batch.length > 0) {
+      if (i > 0 && i % 2000 === 0) { await prisma.$disconnect(); await prisma.$connect() }
+      await prisma.ownerRepasse.createMany({ data: batch })
+    }
+    created += batch.length
+    process.stdout.write(`\r  Repasses: ${Math.min(i + CHUNK, pend.length)}/${pend.length}`)
+  }
+  const bruto = pend.reduce((s, r) => s + r.grossValue, 0)
+  const liquido = pend.reduce((s, r) => s + r.netValue, 0)
+  console.log(`\n  OK Repasses — ${created.toLocaleString()} inseridos de ${buckets.size.toLocaleString()} grupos`)
+  console.log(`     bruto R$ ${bruto.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} | liquido R$ ${liquido.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`)
+  if (semVinculo || semContrato || semVenc) {
+    console.log(`     ignorados: ${semVinculo} sem contrato/proprietario no banco, ${semContrato} sem CODCON, ${semVenc} sem vencimento`)
+  }
+}
+
 async function main() {
   console.log('MIGRACAO COMPLETA: Uniloc DBF -> AgoraEncontrei/Lemosbank')
   console.log(`  Modo: ${DRY_RUN ? 'DRY-RUN' : 'ESCRITA REAL'} | Force: ${FORCE}`)
@@ -390,6 +527,7 @@ async function main() {
   if (shouldRun('5')) await step5(companyId)
   if (shouldRun('6')) await step6(companyId)
   if (shouldRun('7')) await step7(companyId)
+  if (shouldRun('8')) await step8(companyId)
   console.log('\nMIGRACAO CONCLUIDA!')
   if (!DRY_RUN) {
     const s = { clientes: await prisma.client.count({ where: { companyId } }),
@@ -397,7 +535,8 @@ async function main() {
       alugueis: await prisma.rental.count({ where: { companyId } }),
       transacoes: await prisma.transaction.count({ where: { companyId } }),
       boletos: await prisma.invoice.count({ where: { companyId } }),
-      previsoes: await prisma.financialForecast.count({ where: { companyId } }) }
+      previsoes: await prisma.financialForecast.count({ where: { companyId } }),
+      repasses: await prisma.ownerRepasse.count({ where: { companyId } }) }
     for (const [k, v] of Object.entries(s)) console.log(`  ${k}: ${v.toLocaleString()}`)
   }
 }

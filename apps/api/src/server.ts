@@ -1153,6 +1153,66 @@ async function runMigrations(prisma: any) {
     `CREATE INDEX IF NOT EXISTS "kyc_checks_dealId_idx" ON "kyc_checks"("dealId")`,
     `CREATE INDEX IF NOT EXISTS "kyc_checks_companyId_idx" ON "kyc_checks"("companyId")`,
 
+    // ── invoices: colunas de emissao/baixa/estorno/repasse ───────────────────
+    // Estavam no schema.prisma mas nunca chegaram ao banco de producao (as
+    // migrations nao rodam la; este bootstrap e a fonte). Sem elas, qualquer
+    // baixa que grave paidAt/paidAmount/rentalId quebra em runtime.
+    `ALTER TABLE "invoices" ADD COLUMN IF NOT EXISTS "rentalId" TEXT`,
+    `ALTER TABLE "invoices" ADD COLUMN IF NOT EXISTS "tenantId" TEXT`,
+    `ALTER TABLE "invoices" ADD COLUMN IF NOT EXISTS "tenantName" TEXT`,
+    `ALTER TABLE "invoices" ADD COLUMN IF NOT EXISTS "propertyId" TEXT`,
+    `ALTER TABLE "invoices" ADD COLUMN IF NOT EXISTS "propertyAddress" TEXT`,
+    `ALTER TABLE "invoices" ADD COLUMN IF NOT EXISTS "competenceMonth" INTEGER`,
+    `ALTER TABLE "invoices" ADD COLUMN IF NOT EXISTS "competenceYear" INTEGER`,
+    `ALTER TABLE "invoices" ADD COLUMN IF NOT EXISTS "description" TEXT`,
+    `ALTER TABLE "invoices" ADD COLUMN IF NOT EXISTS "rentAmount" DECIMAL(12,2)`,
+    `ALTER TABLE "invoices" ADD COLUMN IF NOT EXISTS "condoAmount" DECIMAL(12,2)`,
+    `ALTER TABLE "invoices" ADD COLUMN IF NOT EXISTS "waterAmount" DECIMAL(12,2)`,
+    `ALTER TABLE "invoices" ADD COLUMN IF NOT EXISTS "electricAmount" DECIMAL(12,2)`,
+    `ALTER TABLE "invoices" ADD COLUMN IF NOT EXISTS "iptuAmount" DECIMAL(12,2)`,
+    `ALTER TABLE "invoices" ADD COLUMN IF NOT EXISTS "insuranceAmount" DECIMAL(12,2)`,
+    `ALTER TABLE "invoices" ADD COLUMN IF NOT EXISTS "interestAmount" DECIMAL(12,2)`,
+    `ALTER TABLE "invoices" ADD COLUMN IF NOT EXISTS "penaltyAmount" DECIMAL(12,2)`,
+    `ALTER TABLE "invoices" ADD COLUMN IF NOT EXISTS "discountAmount" DECIMAL(12,2)`,
+    `ALTER TABLE "invoices" ADD COLUMN IF NOT EXISTS "otherAmount" DECIMAL(12,2)`,
+    `ALTER TABLE "invoices" ADD COLUMN IF NOT EXISTS "otherDescription" TEXT`,
+    `ALTER TABLE "invoices" ADD COLUMN IF NOT EXISTS "paidAmount" DECIMAL(12,2)`,
+    `ALTER TABLE "invoices" ADD COLUMN IF NOT EXISTS "paidAt" TIMESTAMPTZ`,
+    `ALTER TABLE "invoices" ADD COLUMN IF NOT EXISTS "paidBy" TEXT`,
+    `ALTER TABLE "invoices" ADD COLUMN IF NOT EXISTS "paidByName" TEXT`,
+    `ALTER TABLE "invoices" ADD COLUMN IF NOT EXISTS "paymentMethod" TEXT`,
+    `ALTER TABLE "invoices" ADD COLUMN IF NOT EXISTS "paymentBank" TEXT`,
+    `ALTER TABLE "invoices" ADD COLUMN IF NOT EXISTS "paymentRef" TEXT`,
+    `ALTER TABLE "invoices" ADD COLUMN IF NOT EXISTS "reversedAt" TIMESTAMPTZ`,
+    `ALTER TABLE "invoices" ADD COLUMN IF NOT EXISTS "reversedBy" TEXT`,
+    `ALTER TABLE "invoices" ADD COLUMN IF NOT EXISTS "reversalReason" TEXT`,
+    `ALTER TABLE "invoices" ADD COLUMN IF NOT EXISTS "repasValue" DECIMAL(12,2)`,
+    `ALTER TABLE "invoices" ADD COLUMN IF NOT EXISTS "repasAt" TIMESTAMPTZ`,
+    `ALTER TABLE "invoices" ADD COLUMN IF NOT EXISTS "repasMethod" TEXT`,
+    `ALTER TABLE "invoices" ADD COLUMN IF NOT EXISTS "repasRef" TEXT`,
+    `ALTER TABLE "invoices" ADD COLUMN IF NOT EXISTS "emittedAt" TIMESTAMPTZ`,
+    `ALTER TABLE "invoices" ADD COLUMN IF NOT EXISTS "emittedBy" TEXT`,
+    `ALTER TABLE "invoices" ADD COLUMN IF NOT EXISTS "notes" TEXT`,
+    `CREATE INDEX IF NOT EXISTS "invoices_rentalId_idx" ON "invoices"("rentalId")`,
+    `CREATE INDEX IF NOT EXISTS "invoices_tenantId_idx" ON "invoices"("tenantId")`,
+
+    // ── webhook_processed_events ── idempotência de webhooks financeiros ─────
+    // O modelo existe no schema.prisma, mas a tabela nunca chegou ao banco de
+    // produção (as migrations não rodam lá — este bootstrap é a fonte). Sem
+    // ela o webhook do Asaas roda SEM idempotência: uma reentrega do mesmo
+    // PAYMENT_RECEIVED agendaria um segundo repasse do mesmo aluguel.
+    `CREATE TABLE IF NOT EXISTS "webhook_processed_events" (
+       "id" TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+       "eventKey" TEXT NOT NULL UNIQUE,
+       "provider" TEXT NOT NULL,
+       "eventType" TEXT NOT NULL,
+       "externalId" TEXT NOT NULL,
+       "payload" JSONB NOT NULL DEFAULT '{}',
+       "processedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+     )`,
+    `CREATE INDEX IF NOT EXISTS "webhook_processed_events_provider_type_idx" ON "webhook_processed_events"("provider","eventType")`,
+    `CREATE INDEX IF NOT EXISTS "webhook_processed_events_processedAt_idx" ON "webhook_processed_events"("processedAt")`,
+
     // ── outgoing_webhooks ── origin: 20260519000010_outgoing_webhooks ─────────
     `CREATE TABLE IF NOT EXISTS "outgoing_webhooks" (
        "id" TEXT PRIMARY KEY,
