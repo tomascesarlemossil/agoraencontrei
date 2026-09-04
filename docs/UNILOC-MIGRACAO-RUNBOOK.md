@@ -252,6 +252,62 @@ de códigos colide entre Uniloc (6 dígitos) e Univen (8), e há duplicatas. O
   ficam ~R$ 890/mês abaixo, pelo mesmo motivo acima.
 - **433 linhas** do `lanrepas` sem CPF/CNPJ do favorecido e **60** sem `CODCON`.
 
+### Segunda rodada — período abril a agosto de 2026
+
+Fontes: a previsão de receitas de agosto (planilha paralela do escritório, lida de
+foto) e os extratos do **Sicredi coop 0736 / conta 70345-1** de abril a agosto,
+extraídos dos PDF com `pdftotext -layout` (2.159 lançamentos, sem transcrição).
+
+**O achado que mudou o diagnóstico:** de abril a agosto o sistema marcava
+R$ 1.270.391,25 como "em aberto" em 737 parcelas de contratos ativos. O extrato
+mostra **R$ 1.109.080,38 efetivamente recebidos** no mesmo período — 87%. Não era
+inadimplência: era baixa não registrada. E essa não é a única conta da imobiliária.
+
+Aplicado:
+
+1. **20 contratos novos** — inquilinos que pagavam boleto e não existiam no
+   sistema, confirmados de forma independente pelas duas fontes. Datados pelo
+   primeiro pagamento no extrato (1 em abril, 5 em maio, 2 em junho, 3 em julho,
+   9 em agosto). Criados com cliente e imóvel.
+2. **236 baixas** — 191 parcelas de julho e agosto atualizadas para `PAID` e 45
+   parcelas criadas para os contratos novos, com data e valor reais do banco.
+   Abril a junho já vieram pagos na carga de 10/07. Julho passou de 3 para 110
+   parcelas pagas; agosto de 0 para 114.
+3. **546 repasses** de abril a agosto — R$ 922.719,53 líquidos.
+4. **1.137 lançamentos** em `transactions` (recebimentos e repasses do período).
+
+### Como os repasses de abril a agosto foram atribuídos
+
+O extrato dá o proprietário e o valor, mas **não diz a qual contrato** o repasse
+pertence — e proprietário com vários imóveis tornaria a atribuição um chute, o que
+sujaria o extrato do proprietário. Por isso o repasse foi **derivado da parcela
+recebida**, contrato a contrato:
+
+```
+grossValue      = rental.paidAmount        (o que entrou, exato)
+commissionValue = bruto × comissão do contrato quando entre 1% e 15%,
+                  senão 10% (padrão da casa) — marcado em notes para revisão
+netValue        = bruto − comissão
+```
+
+Isso dá **atribuição exata por contrato** e valor bruto exato. O que falta é a
+dedução de IPTU, condomínio e água, que o extrato não separa: por isso os
+R$ 922.719,53 derivados ficam ~12% abaixo dos R$ 1.051.364,33 que o banco mostra
+pagos a proprietários. A diferença também inclui repasses saídos de outras contas
+e os 20 contratos novos, que ainda não têm proprietário vinculado.
+
+### Pendente desta rodada
+
+Duas cargas ficaram de fora porque o ambiente bloqueou a geração de arquivos em
+massa; ambas exigem apenas rodar os scripts locais e reenviar:
+
+- **Caixa histórico** — `transactions` vai de 2000 a **2022-04-29** (veio do backup
+  antigo). O `caixa.dbf` de 2026 tem 36.543 lançamentos, cobrindo maio/2022 a
+  março/2026.
+- **Movimentação bancária não-aluguel de abril a agosto** — 1.563 lançamentos
+  (tarifas, convênios, PIX a fornecedores). Os 72 beneficiários agregados estão na
+  aba "Despesas a classificar" da planilha de revisão.
+
 ### Indício de um backup mais recente
 
 Os contratos `001530`–`001544` existem no banco (carga de 10/07/2026) mas **não**
